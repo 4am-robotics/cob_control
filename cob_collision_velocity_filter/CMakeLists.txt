@@ -39,8 +39,8 @@ add_executable(collision_velocity_filter
 
 target_link_libraries(collision_velocity_filter ${catkin_LIBRARIES})
 
-add_dependencies(collision_velocity_filter ${PROJECT_NAME}_gencfg)
-add_dependencies(collision_velocity_filter cob_footprint_observer_gencpp)
+add_dependencies(collision_velocity_filter ${${PROJECT_NAME}_EXPORTED_TARGETS})
+add_dependencies(collision_velocity_filter ${catkin}_EXPORTED_TARGETS})
 
 
 #############
