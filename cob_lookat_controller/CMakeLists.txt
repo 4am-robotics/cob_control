@@ -94,9 +94,21 @@ include_directories(${orocos_kdl_INCLUDE_DIRS})
 
 ## Declare a cpp library
 add_library(cob_lookat_driver src/cob_lookat_driver.cpp )
+
+add_dependencies(cob_lookat_driver cob_srvs_gencpp)
+add_dependencies(cob_lookat_driver brics_actuator_gencpp)
+
+
 add_library(cob_lookat_controller src/cob_lookat_controller.cpp )
 target_link_libraries(cob_lookat_controller ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
+
+add_dependencies(cob_lookat_controller cob_srvs_gencpp)
+add_dependencies(cob_lookat_controller brics_actuator_gencpp)
+
 add_library(cob_frame_tracker src/cob_frame_tracker.cpp )
+add_dependencies(cob_frame_tracker cob_srvs_gencpp)
+add_dependencies(cob_frame_tracker brics_actuator_gencpp)
+
 
 ## Declare a cpp executable
 add_executable(cob_lookat_driver_node src/cob_lookat_driver_node.cpp)
