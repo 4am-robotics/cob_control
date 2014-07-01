@@ -100,6 +100,8 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES
 add_executable(${PROJECT_NAME}_node src/cob_twist_controller_node.cpp)
 target_link_libraries(${PROJECT_NAME}_node ${PROJECT_NAME} ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 
+add_dependencies(${PROJECT_NAME} brics_actuator_gencpp)
+
 #############
 ## Install ##
 #############
