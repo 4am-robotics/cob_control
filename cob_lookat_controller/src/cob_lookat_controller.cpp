@@ -68,6 +68,7 @@ void CobLookatController::initialize()
 	}
 	chain_limits_vel_.assign(chain_dof_, vel_param);
 	
+	
 	if (nh_.hasParam("base_link"))
 	{
 		nh_.getParam("base_link", chain_base_);
@@ -109,11 +110,11 @@ void CobLookatController::initialize()
 	{	ROS_ERROR("Parameter chain_vel_pub_topic not set");	}
 	
 	///initialize ROS interfaces
-	jointstate_sub = nh_.subscribe("/joint_states", 10, &CobLookatController::jointstate_cb, this);
+	jointstate_sub = nh_.subscribe("/joint_states", 1, &CobLookatController::jointstate_cb, this);
 	//lookatstate_sub = nh_.subscribe("/lookat_controller/joint_states", 1, &CobLookatController::lookatstate_cb, this);
 	twist_sub = nh_.subscribe("command_twist", 1, &CobLookatController::twist_cb, this);
-	chain_vel_pub = nh_.advertise<brics_actuator::JointVelocities>(chain_vel_pub_topic_, 10);
-	lookat_vel_pub = nh_.advertise<brics_actuator::JointVelocities>("lookat_command_vel", 10);
+	chain_vel_pub = nh_.advertise<brics_actuator::JointVelocities>(chain_vel_pub_topic_, 1);
+	lookat_vel_pub = nh_.advertise<brics_actuator::JointVelocities>("lookat_command_vel", 1);
 	
 	
 	///initialize variables and current joint values and velocities
@@ -188,7 +189,16 @@ void CobLookatController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 		{
 			chain_vel_msg.velocities[i].joint_uri = chain_joints_[i].c_str();
 			chain_vel_msg.velocities[i].unit = "rad";
-			chain_vel_msg.velocities[i].value = (std::fabs(q_dot_ik(i)) >= chain_limits_vel_[i]) ? chain_limits_vel_[i] : q_dot_ik(i);
+			if(std::fabs(q_dot_ik(i)) >= chain_limits_vel_[i])
+			{
+				ROS_WARN("JointVel %s: %f exceeds limit %f", chain_joints_[i].c_str(), q_dot_ik(i), chain_limits_vel_[i]);
+				chain_vel_msg.velocities[i].value = chain_limits_vel_[i];
+			}
+			else
+			{
+				chain_vel_msg.velocities[i].value = q_dot_ik(i);
+			}
+			//chain_vel_msg.velocities[i].value = (std::fabs(q_dot_ik(i)) >= chain_limits_vel_[i]) ? chain_limits_vel_[i] : q_dot_ik(i);
 		}
 		brics_actuator::JointVelocities lookat_vel_msg;
 		lookat_vel_msg.velocities.resize(lookat_dof_);
@@ -196,9 +206,8 @@ void CobLookatController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 		{
 			lookat_vel_msg.velocities[i].joint_uri = lookat_joints_[i].c_str();
 			lookat_vel_msg.velocities[i].unit = "rad";
-			lookat_vel_msg.velocities[i].value = (q_dot_ik(chain_dof_ + i) >= 0.2) ? 0.2 : q_dot_ik(chain_dof_ + i);
+			lookat_vel_msg.velocities[i].value = q_dot_ik(chain_dof_ + i);
 		}
-		
 		
 		chain_vel_pub.publish(chain_vel_msg);
 		lookat_vel_pub.publish(lookat_vel_msg);
