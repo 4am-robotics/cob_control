@@ -36,7 +36,7 @@ void CobFrameTracker::initialize()
 	if (nh_.hasParam("update_rate"))
 	{	nh_.getParam("update_rate", update_rate_);	}
 	else
-	{	update_rate_ = 10.0;	}	//hz
+	{	update_rate_ = 68.0;	}	//hz
 	
 	if (nh_.hasParam("max_vel_lin"))
 	{	nh_.getParam("max_vel_lin", max_vel_lin_);	}
@@ -88,6 +88,21 @@ void CobFrameTracker::publish_twist()
 	//twist_msg.linear.x = transform_msg.transform.translation.x/(max_vel_lin_/update_rate_);
 	//twist_msg.linear.y = transform_msg.transform.translation.y/(max_vel_lin_/update_rate_);
 	//twist_msg.linear.z = transform_msg.transform.translation.z/(max_vel_lin_/update_rate_);
+	
+	///debug only
+	if(std::fabs(transform_msg.transform.translation.x) >= max_vel_lin_)
+		ROS_WARN("Twist.linear.x: %f exceeds limit %f", transform_msg.transform.translation.x, max_vel_lin_);
+	if(std::fabs(transform_msg.transform.translation.y) >= max_vel_lin_)
+		ROS_WARN("Twist.linear.y: %f exceeds limit %f", transform_msg.transform.translation.y, max_vel_lin_);
+	if(std::fabs(transform_msg.transform.translation.z) >= max_vel_lin_)
+		ROS_WARN("Twist.linear.z: %f exceeds limit %f", transform_msg.transform.translation.z, max_vel_lin_);
+	if(std::fabs(transform_msg.transform.rotation.x) >= max_vel_rot_)
+		ROS_WARN("Twist.angular.x: %f exceeds limit %f", transform_msg.transform.rotation.x, max_vel_rot_);
+	if(std::fabs(transform_msg.transform.rotation.y) >= max_vel_rot_)
+		ROS_WARN("Twist.angular.y: %f exceeds limit %f", transform_msg.transform.rotation.y, max_vel_rot_);
+	if(std::fabs(transform_msg.transform.rotation.z) >= max_vel_rot_)
+		ROS_WARN("Twist.angular.z: %f exceeds limit %f", transform_msg.transform.rotation.z, max_vel_rot_);
+	
 	twist_msg.linear.x = copysign(std::min(max_vel_lin_, std::fabs(transform_msg.transform.translation.x)),transform_msg.transform.translation.x);
 	twist_msg.linear.y = copysign(std::min(max_vel_lin_, std::fabs(transform_msg.transform.translation.y)),transform_msg.transform.translation.y);
 	twist_msg.linear.z = copysign(std::min(max_vel_lin_, std::fabs(transform_msg.transform.translation.z)),transform_msg.transform.translation.z);
