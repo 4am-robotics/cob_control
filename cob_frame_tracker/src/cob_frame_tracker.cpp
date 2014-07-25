@@ -12,9 +12,9 @@
  * \note
  *   Project name: care-o-bot
  * \note
- *   ROS stack name: cob_driver
+ *   ROS stack name: cob_control
  * \note
- *   ROS package name: cob_lookat_controller
+ *   ROS package name: cob_cob_frame_tracker
  *
  * \author
  *   Author: Felix Messmer, email: Felix.Messmer@ipa.fraunhofer.de
@@ -27,7 +27,7 @@
  ****************************************************************/
 #include <ros/ros.h>
 
-#include <cob_lookat_controller/cob_frame_tracker.h>
+#include <cob_frame_tracker/cob_frame_tracker.h>
 
 
 void CobFrameTracker::initialize()
@@ -41,12 +41,12 @@ void CobFrameTracker::initialize()
 	if (nh_.hasParam("max_vel_lin"))
 	{	nh_.getParam("max_vel_lin", max_vel_lin_);	}
 	else
-	{	max_vel_lin_ = 0.5;	}	//m/sec
+	{	max_vel_lin_ = 10.0;	}	//m/sec
 	
 	if (nh_.hasParam("max_vel_rot"))
 	{	nh_.getParam("max_vel_rot", max_vel_rot_);	}
 	else
-	{	max_vel_rot_ = 0.3;	}	//rad/sec
+	{	max_vel_rot_ = 6.28;	}	//rad/sec
 	
 	start_server_ = nh_.advertiseService("start_tracking", &CobFrameTracker::start_tracking_cb, this);
 	stop_server_ = nh_.advertiseService("stop_tracking", &CobFrameTracker::stop_tracking_cb, this);

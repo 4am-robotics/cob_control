@@ -18,9 +18,10 @@
   <run_depend>cob_base_velocity_smoother</run_depend>
   <run_depend>cob_collision_velocity_filter</run_depend>
   <run_depend>cob_footprint_observer</run_depend>
-  <run_depend>cob_lookat_controller</run_depend>
   <run_depend>cob_trajectory_controller</run_depend>
   <run_depend>cob_twist_controller</run_depend>
+  <run_depend>cob_lookat_controller</run_depend>
+  <run_depend>cob_frame_tracker</run_depend>
   <run_depend>cob_hardware_interface</run_depend>
 
 
