@@ -1,24 +1,27 @@
 #!/usr/bin/python
+import sys
+import math
+import copy
+from copy import deepcopy
 
 import roslib 
 roslib.load_manifest('cob_frame_tracker')
+
 import rospy
+import tf
+from std_srvs.srv import Empty
+from cob_srvs.srv import SetString
+from geometry_msgs.msg import Point, PoseStamped
 from visualization_msgs.msg import Marker, InteractiveMarker, InteractiveMarkerControl
 from interactive_markers.interactive_marker_server import *
 from interactive_markers.menu_handler import *
-from geometry_msgs.msg import Point, PoseStamped
-from std_srvs.srv import Empty
-from cob_srvs.srv import SetString
-
-import copy
-import math
-import tf
-import actionlib
-from copy import deepcopy
 
 
-class InteractiveFrameTarget():
-	def __init__(self):
+class InteractiveFrameTarget:
+	def __init__(self, active_frame, tracking_frame):
+		self.active_frame = active_frame
+		self.tracking_frame = tracking_frame
+		
 		print "Waiting for StartTrackingServer..."
 		rospy.wait_for_service('start_tracking')
 		print "...done!"
@@ -39,13 +42,13 @@ class InteractiveFrameTarget():
 		transform_available = False
 		while not transform_available:
 			try:
-				(trans,rot) = self.listener.lookupTransform('/base_link', '/lookat_focus_frame', rospy.Time(0))
+				(trans,rot) = self.listener.lookupTransform('/base_link', self.active_frame, rospy.Time(0))
 			except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
 				rospy.logwarn("Waiting for transform...")
 				rospy.sleep(0.5)
 				continue
 			transform_available = True
-			
+		
 		self.target_pose.pose.position.x = trans[0]
 		self.target_pose.pose.position.y = trans[1]
 		self.target_pose.pose.position.z = trans[2]
@@ -54,10 +57,10 @@ class InteractiveFrameTarget():
 		self.int_marker = InteractiveMarker()
 		self.int_marker.header.frame_id = "base_link"
 		self.int_marker.pose = self.target_pose.pose
-		self.int_marker.name = "lookat_target"
-		self.int_marker.description = "virtual lookat target"
-		self.int_marker.scale = 0.5
-
+		self.int_marker.name = "interactive_target"
+		self.int_marker.description = self.tracking_frame
+		self.int_marker.scale = 0.8
+		
 		# create a grey box marker
 		box_marker = Marker()
 		box_marker.type = Marker.CUBE
@@ -72,7 +75,7 @@ class InteractiveFrameTarget():
 		box_control.always_visible = True
 		box_control.markers.append( box_marker )
 		self.int_marker.controls.append(box_control)
-
+		
 		control = InteractiveMarkerControl()
 		control.always_visible = True
 		control.orientation.w = 1
@@ -106,52 +109,34 @@ class InteractiveFrameTarget():
 		self.int_marker.controls.append(deepcopy(control))
 		
 		self.ia_server.insert(self.int_marker, self.marker_fb)
-
+		
 		#create menu
 		self.menu_handler = MenuHandler()
-		#self.menu_handler.insert( "Lookat", callback=self.lookat )
 		self.menu_handler.insert( "StartTracking", callback=self.start_tracking )
 		self.menu_handler.insert( "StopTracking", callback=self.stop_tracking )
 		self.int_marker_menu = InteractiveMarker()
 		self.int_marker_menu.header.frame_id = "base_link"
-		self.int_marker_menu.name = "lookat_menu"
-		self.int_marker_menu.description = "Menu"
+		self.int_marker_menu.name = "marker_menu"
+		self.int_marker_menu.description = rospy.get_namespace()
 		self.int_marker_menu.scale = 1.0
 		self.int_marker_menu.pose.position.z = 1.2
 		control = InteractiveMarkerControl()
 		control.interaction_mode = InteractiveMarkerControl.MENU
-		control.description="Lookat"
-		control.name = "menu_only_control"
+		control.name = "menu_control"
+		control.description= "InteractiveTargetMenu"
 		self.int_marker_menu.controls.append(copy.deepcopy(control))
 		self.ia_server.insert(self.int_marker_menu, self.menu_fb)
 		self.menu_handler.apply( self.ia_server, self.int_marker_menu.name )
 		self.ia_server.applyChanges()
-
-	#def lookat(self, fb):
-		#print "lookat pressed, handle at " + str(self.handle_pose.x) + ", " + str(self.handle_pose.y)
-		## Creates a goal to send to the action server.
-		#goal = cob_lookat_action.msg.LookAtGoal()
-		##goal.target = fk_res.pose_stamped[0]
-		#focus = PoseStamped()
-		#focus.header.stamp = rospy.Time.now()
-		#focus.header.frame_id = "base_link"
-		#focus.pose.position = self.handle_pose
-		#focus.pose.orientation.w = 1.0
-		#goal.target = focus
-		#self.client.send_goal(goal)
-		## Waits for the server to finish performing the action.
-		#self.client.wait_for_result()
-		#result = self.client.get_result()
-		#print result
 	
 	def start_tracking(self, fb):
 		#print "start_tracking pressed, handle at " + str(self.handle_pose.x) + ", " + str(self.handle_pose.y)
 		try:
-			res = self.start_tracking_client(data='lookat_target')
+			res = self.start_tracking_client(data=self.tracking_frame)
 			print res
 		except rospy.ServiceException, e:
 			print "Service call failed: %s"%e
-		
+	
 	def stop_tracking(self, fb):
 		#print "stop_tracking pressed, handle at " + str(self.handle_pose.x) + ", " + str(self.handle_pose.y)
 		try:
@@ -160,10 +145,9 @@ class InteractiveFrameTarget():
 		except rospy.ServiceException, e:
 			print "Service call failed: %s"%e
 	
-	
 	def menu_fb(self, fb):
 		pass
-
+	
 	def marker_fb(self, fb):
 		#p = feedback.pose.position
 		#print feedback.marker_name + " is now at " + str(p.x) + ", " + str(p.y) + ", " + str(p.z)
@@ -172,28 +156,26 @@ class InteractiveFrameTarget():
 		self.ia_server.applyChanges()
 
  	def run(self):
- 		#self.max_angle = 20
- 		#if(self.focus != 4):
- 			#focus_transformed = self.listener.transformPose("head_ids_middle_frame",self.focus)
- 			#max_dist = math.sqrt(focus_transformed.pose.position.y*focus_transformed.pose.position.y + focus_transformed.pose.position.z * focus_transformed.pose.position.z)
- 			#cur_max_angle = math.fabs(math.degrees(math.tan(max_dist/focus_transformed.pose.position.x)))
- 			#print cur_max_angle
- 			#if(cur_max_angle > self.max_angle and cur_max_angle < 90):
- 				#goal = cob_lookat_action.msg.LookAtGoal()
- 				#goal.target = self.focus
- 				#self.client.send_goal(goal)
-				## Waits for the server to finish performing the action.
-				#self.client.wait_for_result()
-				#result = self.client.get_result()
-				#print result
-		#self.br.sendTransform((self.handle_pose.x, self.handle_pose.y, self.handle_pose.z), tf.transformations.quaternion_from_euler(0, 0, 0),rospy.Time.now(), "prace_handle", "base_link")
-		self.br.sendTransform((self.target_pose.pose.position.x, self.target_pose.pose.position.y, self.target_pose.pose.position.z), tf.transformations.quaternion_from_euler(0, 0, 0), rospy.Time.now(), "lookat_target", self.target_pose.header.frame_id)
-		
+		self.br.sendTransform((self.target_pose.pose.position.x, self.target_pose.pose.position.y, self.target_pose.pose.position.z), tf.transformations.quaternion_from_euler(0, 0, 0), rospy.Time.now(), self.tracking_frame, self.target_pose.header.frame_id)
+
 
 if __name__ == "__main__":
 	rospy.init_node("interactive_frame_target")
-	ilt = InteractiveFrameTarget()
-	#ilt.run()
+	
+	#get this from the frame_tracker parameters
+	if rospy.has_param('active_frame'):
+		active_frame = rospy.get_param("active_frame")
+	else:
+		rospy.logerr("No active_frame specified. Aborting!")
+		sys.exit()
+	if rospy.has_param('tracking_frame'):
+		tracking_frame = rospy.get_param("tracking_frame")
+	else:
+		rospy.logerr("No tracking_frame specified. Aborting!")
+		sys.exit()
+	
+	ilt = InteractiveFrameTarget(active_frame, tracking_frame)
+
  	r = rospy.Rate(68)
  	while not rospy.is_shutdown():
    		ilt.run()

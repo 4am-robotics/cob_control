@@ -48,11 +48,21 @@ void CobFrameTracker::initialize()
 	else
 	{	max_vel_rot_ = 6.28;	}	//rad/sec
 	
+	if (nh_.hasParam("active_frame"))
+	{
+		nh_.getParam("active_frame", active_frame_);
+	}
+	else
+	{
+		ROS_ERROR("No active_frame specified. Aborting!");
+		nh_.shutdown();
+	}
+	
 	start_server_ = nh_.advertiseService("start_tracking", &CobFrameTracker::start_tracking_cb, this);
 	stop_server_ = nh_.advertiseService("stop_tracking", &CobFrameTracker::stop_tracking_cb, this);
 	twist_pub_ = nh_.advertise<geometry_msgs::Twist> ("command_twist", 1);
 	
-	tracking_frame_ = "/lookat_focus_frame";
+	tracking_frame_ = active_frame_;
 	tracking_ = false;
 	
 	ROS_INFO("...initialized!");
@@ -77,7 +87,7 @@ void CobFrameTracker::publish_twist()
 	geometry_msgs::TransformStamped transform_msg;
 	geometry_msgs::Twist twist_msg;
 	try{
-		tf_listener_.lookupTransform("/lookat_focus_frame", tracking_frame_, ros::Time(0), transform_tf);
+		tf_listener_.lookupTransform(active_frame_, tracking_frame_, ros::Time(0), transform_tf);
 	}
 	catch (tf::TransformException ex){
 		ROS_ERROR("%s",ex.what());
@@ -125,7 +135,7 @@ bool CobFrameTracker::start_tracking_cb(cob_srvs::SetString::Request& request, c
 
 bool CobFrameTracker::stop_tracking_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
 {
-	tracking_frame_ = "/lookat_focus_frame";
+	tracking_frame_ = active_frame_;
 	tracking_ = false;
 	
 	//publish zero Twist for stopping
