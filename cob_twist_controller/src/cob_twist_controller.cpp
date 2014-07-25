@@ -60,9 +60,7 @@ void CobTwistController::initialize()
 	{
 		nh_.getParam("ptp_vel", vel_param);
 	}
-	limits_vel_.push_back(vel_param);
-	limits_vel_.push_back(vel_param);
-	limits_vel_.push_back(vel_param);
+	limits_vel_.assign(dof_, vel_param);
 	
 	if (nh_.hasParam("base_link"))
 	{
@@ -72,7 +70,6 @@ void CobTwistController::initialize()
 	{
 		nh_.getParam("tip_link", chain_tip_);
 	}
-	
 	
 	
 	///parse robot_description and generate KDL chains
@@ -89,7 +86,6 @@ void CobTwistController::initialize()
 		ROS_ERROR("Failed to initialize kinematic chain");
 		return;
 	}
-	
 	
 	////used only for p_iksolver_pos_
 	//KDL::JntArray chain_min(limits_min_.size());
@@ -111,10 +107,10 @@ void CobTwistController::initialize()
 	//p_iksolver_vel_wdls_->setWeightJS(Mq);
 	//Eigen::MatrixXd Mx;
 	//p_iksolver_vel_wdls_->setWeightTS(Mx);
-	double max_vel = vel_param;
-	//double lambda = 1.0/(2*max_vel);
-	double lambda = 100.0;
-	p_iksolver_vel_wdls_->setLambda(lambda);
+	//double max_vel = vel_param;
+	////double lambda = 1.0/(2*max_vel);
+	//double lambda = 100.0;
+	//p_iksolver_vel_wdls_->setLambda(lambda);
 	
 	//p_iksolver_pos_ = new KDL::ChainIkSolverPos_NR_JL(chain_, chain_min, chain_max, *p_fksolver_pos_, *p_iksolver_vel_, 50, 0.001);
 	
@@ -160,6 +156,8 @@ void CobTwistController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 	//ROS_INFO("Twist Vel (%f, %f, %f)", twist.vel.x(), twist.vel.y(), twist.vel.z());
 	//ROS_INFO("Twist Rot (%f, %f, %f)", twist.rot.x(), twist.rot.y(), twist.rot.z());
 	
+	
+	///ToDo: Verify this transformation
 	KDL::Twist twist_transformed = frame*twist;
 	
 	//ROS_INFO("TwistTransformed Vel (%f, %f, %f)", twist_transformed.vel.x(), twist_transformed.vel.y(), twist_transformed.vel.z());

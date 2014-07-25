@@ -102,6 +102,10 @@ void CobLookatController::initialize()
 	//p_iksolver_vel_wdls_->setWeightJS(Mq);
 	//Eigen::MatrixXd Mx;
 	//p_iksolver_vel_wdls_->setWeightTS(Mx);
+	//double max_vel = vel_param;
+	////double lambda = 1.0/(2*max_vel);
+	//double lambda = 100.0;
+	//p_iksolver_vel_wdls_->setLambda(lambda);
 	
 	
 	if (nh_.hasParam("chain_vel_pub_topic"))
@@ -257,30 +261,30 @@ void CobLookatController::jointstate_cb(const sensor_msgs::JointState::ConstPtr&
 	}
 }
 
-void CobLookatController::lookatstate_cb(const sensor_msgs::JointState::ConstPtr& msg)
-{
-	KDL::JntArray q_temp = last_q_;
-	KDL::JntArray q_dot_temp = last_q_dot_;
-	int count = 0;
+//void CobLookatController::lookatstate_cb(const sensor_msgs::JointState::ConstPtr& msg)
+//{
+	//KDL::JntArray q_temp = last_q_;
+	//KDL::JntArray q_dot_temp = last_q_dot_;
+	//int count = 0;
 	
-	for(unsigned int j = 0; j < lookat_dof_; j++)
-	{
-		for(unsigned int i = 0; i < msg->name.size(); i++)
-		{
-			if(strcmp(msg->name[i].c_str(), lookat_joints_[j].c_str()) == 0)
-			{
-				q_temp(chain_dof_ + j) = msg->position[i];
-				q_dot_temp(chain_dof_ + j) = msg->velocity[i];
-				count++;
-				break;
-			}
-		}
-	}
+	//for(unsigned int j = 0; j < lookat_dof_; j++)
+	//{
+		//for(unsigned int i = 0; i < msg->name.size(); i++)
+		//{
+			//if(strcmp(msg->name[i].c_str(), lookat_joints_[j].c_str()) == 0)
+			//{
+				//q_temp(chain_dof_ + j) = msg->position[i];
+				//q_dot_temp(chain_dof_ + j) = msg->velocity[i];
+				//count++;
+				//break;
+			//}
+		//}
+	//}
 	
-	if(count == lookat_dof_)
-	{
-		ROS_DEBUG("Done Parsing");
-		last_q_ = q_temp;
-		last_q_dot_ = q_dot_temp;
-	}
-}
+	//if(count == lookat_dof_)
+	//{
+		//ROS_DEBUG("Done Parsing");
+		//last_q_ = q_temp;
+		//last_q_dot_ = q_dot_temp;
+	//}
+//}
