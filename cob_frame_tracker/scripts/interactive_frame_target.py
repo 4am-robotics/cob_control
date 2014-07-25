@@ -45,13 +45,17 @@ class InteractiveFrameTarget:
 				(trans,rot) = self.listener.lookupTransform('/base_link', self.active_frame, rospy.Time(0))
 			except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
 				rospy.logwarn("Waiting for transform...")
-				rospy.sleep(0.5)
+				rospy.sleep(0.1)
 				continue
 			transform_available = True
 		
 		self.target_pose.pose.position.x = trans[0]
 		self.target_pose.pose.position.y = trans[1]
 		self.target_pose.pose.position.z = trans[2]
+		self.target_pose.pose.orientation.x = rot[0]
+		self.target_pose.pose.orientation.y = rot[1] 
+		self.target_pose.pose.orientation.z = rot[2]
+		self.target_pose.pose.orientation.w = rot[3]
 		
 		self.ia_server = InteractiveMarkerServer("marker_server")
 		self.int_marker = InteractiveMarker()
@@ -114,6 +118,7 @@ class InteractiveFrameTarget:
 		self.menu_handler = MenuHandler()
 		self.menu_handler.insert( "StartTracking", callback=self.start_tracking )
 		self.menu_handler.insert( "StopTracking", callback=self.stop_tracking )
+		self.menu_handler.insert( "ResetTracking", callback=self.reset_tracking )
 		self.int_marker_menu = InteractiveMarker()
 		self.int_marker_menu.header.frame_id = "base_link"
 		self.int_marker_menu.name = "marker_menu"
@@ -130,7 +135,7 @@ class InteractiveFrameTarget:
 		self.ia_server.applyChanges()
 	
 	def start_tracking(self, fb):
-		#print "start_tracking pressed, handle at " + str(self.handle_pose.x) + ", " + str(self.handle_pose.y)
+		#print "start_tracking pressed"
 		try:
 			res = self.start_tracking_client(data=self.tracking_frame)
 			print res
@@ -138,12 +143,41 @@ class InteractiveFrameTarget:
 			print "Service call failed: %s"%e
 	
 	def stop_tracking(self, fb):
-		#print "stop_tracking pressed, handle at " + str(self.handle_pose.x) + ", " + str(self.handle_pose.y)
+		#print "stop_tracking pressed"
 		try:
 			res = self.stop_tracking_client()
 			print res
 		except rospy.ServiceException, e:
 			print "Service call failed: %s"%e
+	
+	def reset_tracking(self, fb):
+		#print "reset_tracking pressed"
+		self.stop_tracking(fb)
+		
+		transform_available = False
+		while not transform_available:
+			try:
+				(trans,rot) = self.listener.lookupTransform('/base_link', self.active_frame, rospy.Time(0))
+			except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+				rospy.logwarn("Waiting for transform...")
+				rospy.sleep(0.1)
+				continue
+			transform_available = True
+		
+		reset_pose = PoseStamped()
+		reset_pose.header.frame_id = "/base_link"
+		reset_pose.header.stamp = rospy.Time.now()
+		reset_pose.pose.position.x = trans[0]
+		reset_pose.pose.position.y = trans[1]
+		reset_pose.pose.position.z = trans[2]
+		reset_pose.pose.orientation.x = rot[0]
+		reset_pose.pose.orientation.y = rot[1] 
+		reset_pose.pose.orientation.z = rot[2]
+		reset_pose.pose.orientation.w = rot[3]
+		
+		self.target_pose = reset_pose
+		self.ia_server.setPose(self.int_marker.name, reset_pose.pose);
+		self.ia_server.applyChanges()
 	
 	def menu_fb(self, fb):
 		pass
