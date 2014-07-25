@@ -12,9 +12,9 @@
  * \note
  *   Project name: care-o-bot
  * \note
- *   ROS stack name: cob_driver
+ *   ROS stack name: cob_control
  * \note
- *   ROS package name: cob_lookat_controller
+ *   ROS package name: cob_frame_tracker
  *
  * \author
  *   Author: Felix Messmer, email: Felix.Messmer@ipa.fraunhofer.de

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import roslib 
-roslib.load_manifest('cob_lookat_controller')
+roslib.load_manifest('cob_frame_tracker')
 import rospy
 from visualization_msgs.msg import Marker, InteractiveMarker, InteractiveMarkerControl
 from interactive_markers.interactive_marker_server import *
@@ -9,7 +9,7 @@ from interactive_markers.menu_handler import *
 from geometry_msgs.msg import Point, PoseStamped
 from std_srvs.srv import Empty
 from cob_srvs.srv import SetString
-#import cob_lookat_action.msg
+
 import copy
 import math
 import tf
@@ -17,28 +17,22 @@ import actionlib
 from copy import deepcopy
 
 
-class InteractiveLookatTarget():
+class InteractiveFrameTarget():
 	def __init__(self):
-		#self.client = actionlib.SimpleActionClient('lookat_action', cob_lookat_action.msg.LookAtAction)
-		#print "Waiting for Server..."
-		##self.client.wait_for_server()
-		#print "...done!"
-		
 		print "Waiting for StartTrackingServer..."
-		rospy.wait_for_service('/lookat_controller/start_tracking')
+		rospy.wait_for_service('start_tracking')
 		print "...done!"
-		self.start_tracking_client = rospy.ServiceProxy('/lookat_controller/start_tracking', SetString)
+		self.start_tracking_client = rospy.ServiceProxy('start_tracking', SetString)
 		
 		print "Waiting for StopTrackingServer..."
-		rospy.wait_for_service('/lookat_controller/stop_tracking')
+		rospy.wait_for_service('stop_tracking')
 		print "...done!"
-		self.stop_tracking_client = rospy.ServiceProxy('/lookat_controller/stop_tracking', Empty)
+		self.stop_tracking_client = rospy.ServiceProxy('stop_tracking', Empty)
 		
 		self.target_pose = PoseStamped()
 		self.target_pose.header.stamp = rospy.Time.now()
 		self.target_pose.header.frame_id = "base_link"
 		self.target_pose.pose.orientation.w = 1.0
-		#self.viz_pub = rospy.Publisher('lookat_target', PoseStamped)
 		self.br = tf.TransformBroadcaster()
 		self.listener = tf.TransformListener()
 		
@@ -197,8 +191,8 @@ class InteractiveLookatTarget():
 		
 
 if __name__ == "__main__":
-	rospy.init_node("interactive_lookat_target")
-	ilt = InteractiveLookatTarget()
+	rospy.init_node("interactive_frame_target")
+	ilt = InteractiveFrameTarget()
 	#ilt.run()
  	r = rospy.Rate(68)
  	while not rospy.is_shutdown():
