@@ -60,7 +60,8 @@ public:
 	double update_rate_;
 	
 	bool tracking_;
-	std::string tracking_frame_;
+	std::string tracking_frame_;	//goal frame
+	std::string active_frame_;		//twists with respect to this frame
 	double max_vel_lin_;
 	double max_vel_rot_;
 	
