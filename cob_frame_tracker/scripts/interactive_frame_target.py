@@ -18,9 +18,35 @@ from interactive_markers.menu_handler import *
 
 
 class InteractiveFrameTarget:
-	def __init__(self, active_frame, tracking_frame):
-		self.active_frame = active_frame
-		self.tracking_frame = tracking_frame
+	def __init__(self):
+		#get this from the frame_tracker parameters
+		if rospy.has_param('active_frame'):
+			self.active_frame = rospy.get_param("active_frame")
+		else:
+			rospy.logerr("No active_frame specified. Aborting!")
+			sys.exit()
+		if rospy.has_param('tracking_frame'):
+			self.tracking_frame = rospy.get_param("tracking_frame")
+		else:
+			rospy.logerr("No tracking_frame specified. Aborting!")
+			sys.exit()
+		if rospy.has_param('root_frame'):
+			self.root_frame = rospy.get_param("root_frame")
+		else:
+			rospy.logerr("No root_frame specified. Setting to 'base_link'!")
+			self.root_frame = "base_link"
+		
+		if rospy.has_param('movable_trans'):
+			self.movable_trans = rospy.get_param("movable_trans")
+		else:
+			rospy.logerr("No movable_trans specified. Setting True!")
+			self.movable_trans = True
+		if rospy.has_param('movable_rot'):
+			self.movable_rot = rospy.get_param("movable_rot")
+		else:
+			rospy.logerr("No movable_rot specified. Setting True!")
+			self.movable_rot = True
+		
 		
 		print "Waiting for StartTrackingServer..."
 		rospy.wait_for_service('start_tracking')
@@ -34,7 +60,7 @@ class InteractiveFrameTarget:
 		
 		self.target_pose = PoseStamped()
 		self.target_pose.header.stamp = rospy.Time.now()
-		self.target_pose.header.frame_id = "base_link"
+		self.target_pose.header.frame_id = self.root_frame
 		self.target_pose.pose.orientation.w = 1.0
 		self.br = tf.TransformBroadcaster()
 		self.listener = tf.TransformListener()
@@ -42,7 +68,7 @@ class InteractiveFrameTarget:
 		transform_available = False
 		while not transform_available:
 			try:
-				(trans,rot) = self.listener.lookupTransform('/base_link', self.active_frame, rospy.Time(0))
+				(trans,rot) = self.listener.lookupTransform(self.root_frame, self.active_frame, rospy.Time(0))
 			except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
 				rospy.logwarn("Waiting for transform...")
 				rospy.sleep(0.1)
@@ -59,7 +85,7 @@ class InteractiveFrameTarget:
 		
 		self.ia_server = InteractiveMarkerServer("marker_server")
 		self.int_marker = InteractiveMarker()
-		self.int_marker.header.frame_id = "base_link"
+		self.int_marker.header.frame_id = self.root_frame
 		self.int_marker.pose = self.target_pose.pose
 		self.int_marker.name = "interactive_target"
 		self.int_marker.description = self.tracking_frame
@@ -86,31 +112,42 @@ class InteractiveFrameTarget:
 		control.orientation.x = 1
 		control.orientation.y = 0
 		control.orientation.z = 0
-		control.name = "move_3D"
-		control.interaction_mode = InteractiveMarkerControl.MOVE_3D
-		self.int_marker.controls.append(deepcopy(control))
-		control.name = "move_x"
-		control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
-		self.int_marker.controls.append(deepcopy(control))
-		control.name = "rotate_x"
-		control.interaction_mode = InteractiveMarkerControl.ROTATE_AXIS
-		self.int_marker.controls.append(deepcopy(control))
-		control.name = "move_y"
-		control.orientation.x = 0
-		control.orientation.y = 1
-		control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
-		self.int_marker.controls.append(deepcopy(control))
-		control.name = "rotate_y"
-		control.interaction_mode = InteractiveMarkerControl.ROTATE_AXIS
-		self.int_marker.controls.append(deepcopy(control))
-		control.name = "move_z"
-		control.orientation.y = 0
-		control.orientation.z = 1
-		control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
-		self.int_marker.controls.append(deepcopy(control))
-		control.name = "rotate_z"
-		control.interaction_mode = InteractiveMarkerControl.ROTATE_AXIS
-		self.int_marker.controls.append(deepcopy(control))
+		#control.name = "move_3D"
+		#control.interaction_mode = InteractiveMarkerControl.MOVE_3D
+		#self.int_marker.controls.append(deepcopy(control))
+		if(self.movable_trans):
+			control.name = "move_x"
+			control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
+			self.int_marker.controls.append(deepcopy(control))
+			control.name = "move_y"
+			control.orientation.x = 0
+			control.orientation.y = 1
+			control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
+			self.int_marker.controls.append(deepcopy(control))
+			control.name = "move_z"
+			control.orientation.y = 0
+			control.orientation.z = 1
+			control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
+			self.int_marker.controls.append(deepcopy(control))
+		if(self.movable_rot):
+			control.orientation.w = 1
+			control.orientation.x = 1
+			control.orientation.y = 0
+			control.orientation.z = 0
+			control.name = "rotate_x"
+			control.interaction_mode = InteractiveMarkerControl.ROTATE_AXIS
+			self.int_marker.controls.append(deepcopy(control))
+			control.name = "rotate_y"
+			control.orientation.x = 0
+			control.orientation.y = 1
+			control.interaction_mode = InteractiveMarkerControl.ROTATE_AXIS
+			self.int_marker.controls.append(deepcopy(control))
+			control.name = "rotate_z"
+			control.orientation.y = 0
+			control.orientation.z = 1
+			control.interaction_mode = InteractiveMarkerControl.ROTATE_AXIS
+			self.int_marker.controls.append(deepcopy(control))
+			
 		
 		self.ia_server.insert(self.int_marker, self.marker_fb)
 		
@@ -120,7 +157,7 @@ class InteractiveFrameTarget:
 		self.menu_handler.insert( "StopTracking", callback=self.stop_tracking )
 		self.menu_handler.insert( "ResetTracking", callback=self.reset_tracking )
 		self.int_marker_menu = InteractiveMarker()
-		self.int_marker_menu.header.frame_id = "base_link"
+		self.int_marker_menu.header.frame_id = self.root_frame
 		self.int_marker_menu.name = "marker_menu"
 		self.int_marker_menu.description = rospy.get_namespace()
 		self.int_marker_menu.scale = 1.0
@@ -157,7 +194,7 @@ class InteractiveFrameTarget:
 		transform_available = False
 		while not transform_available:
 			try:
-				(trans,rot) = self.listener.lookupTransform('/base_link', self.active_frame, rospy.Time(0))
+				(trans,rot) = self.listener.lookupTransform(self.root_frame, self.active_frame, rospy.Time(0))
 			except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
 				rospy.logwarn("Waiting for transform...")
 				rospy.sleep(0.1)
@@ -165,7 +202,7 @@ class InteractiveFrameTarget:
 			transform_available = True
 		
 		reset_pose = PoseStamped()
-		reset_pose.header.frame_id = "/base_link"
+		reset_pose.header.frame_id = self.root_frame
 		reset_pose.header.stamp = rospy.Time.now()
 		reset_pose.pose.position.x = trans[0]
 		reset_pose.pose.position.y = trans[1]
@@ -190,25 +227,16 @@ class InteractiveFrameTarget:
 		self.ia_server.applyChanges()
 
  	def run(self):
-		self.br.sendTransform((self.target_pose.pose.position.x, self.target_pose.pose.position.y, self.target_pose.pose.position.z), tf.transformations.quaternion_from_euler(0, 0, 0), rospy.Time.now(), self.tracking_frame, self.target_pose.header.frame_id)
+		self.br.sendTransform(
+			(self.target_pose.pose.position.x, self.target_pose.pose.position.y, self.target_pose.pose.position.z), 
+			(self.target_pose.pose.orientation.x, self.target_pose.pose.orientation.y, self.target_pose.pose.orientation.z, self.target_pose.pose.orientation.w), 
+			rospy.Time.now(), self.tracking_frame, self.target_pose.header.frame_id)
 
 
 if __name__ == "__main__":
 	rospy.init_node("interactive_frame_target")
 	
-	#get this from the frame_tracker parameters
-	if rospy.has_param('active_frame'):
-		active_frame = rospy.get_param("active_frame")
-	else:
-		rospy.logerr("No active_frame specified. Aborting!")
-		sys.exit()
-	if rospy.has_param('tracking_frame'):
-		tracking_frame = rospy.get_param("tracking_frame")
-	else:
-		rospy.logerr("No tracking_frame specified. Aborting!")
-		sys.exit()
-	
-	ilt = InteractiveFrameTarget(active_frame, tracking_frame)
+	ilt = InteractiveFrameTarget()
 
  	r = rospy.Rate(68)
  	while not rospy.is_shutdown():

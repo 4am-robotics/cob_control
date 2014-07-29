@@ -4,7 +4,7 @@ project(cob_frame_tracker)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS roscpp geometry_msgs std_srvs cob_srvs tf tf_conversions )
+find_package(catkin REQUIRED COMPONENTS roscpp geometry_msgs std_srvs cob_srvs tf tf_conversions control_toolbox)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -77,7 +77,7 @@ find_package(catkin REQUIRED COMPONENTS roscpp geometry_msgs std_srvs cob_srvs t
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES cob_frame_tracker
-  CATKIN_DEPENDS roscpp geometry_msgs std_srvs cob_srvs
+  CATKIN_DEPENDS roscpp geometry_msgs std_srvs cob_srvs control_toolbox
 #  DEPENDS system_lib
 )
 
