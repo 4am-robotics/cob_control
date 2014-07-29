@@ -193,7 +193,14 @@ void CobTwistController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 		{
 			vel_msg.velocities[i].joint_uri = joints_[i].c_str();
 			vel_msg.velocities[i].unit = "rad";
-			vel_msg.velocities[i].value = (std::fabs(q_dot_ik(i)) >= limits_vel_[i]) ? limits_vel_[i] : q_dot_ik(i);
+			
+			///clamping to the vel_limit does not need to be done here as it is done correctly in the ros_controllers!
+			//vel_msg.velocities[i].value = (std::fabs(q_dot_ik(i)) >= limits_vel_[i]) ? limits_vel_[i] : q_dot_ik(i);
+			
+			vel_msg.velocities[i].value = q_dot_ik(i);
+			if(std::fabs(q_dot_ik(i)) >= limits_vel_[i])
+				ROS_WARN("DesiredVel %d: %f", i, q_dot_ik(i));
+				
 		}
 		vel_pub.publish(vel_msg);
 	}
