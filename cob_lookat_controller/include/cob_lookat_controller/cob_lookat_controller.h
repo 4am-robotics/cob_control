@@ -87,6 +87,8 @@ public:
 	void jointstate_cb(const sensor_msgs::JointState::ConstPtr& msg);
 	void lookatstate_cb(const sensor_msgs::JointState::ConstPtr& msg);
 	void twist_cb(const geometry_msgs::Twist::ConstPtr& msg);
+	
+	void safety_stop_tracking();
 };
 
 #endif
