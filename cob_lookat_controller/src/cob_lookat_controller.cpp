@@ -233,8 +233,8 @@ void CobLookatController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 			if(std::fabs(q_dot_ik(i)) >= chain_limits_vel_[i])
 			{
 				ROS_WARN("JointVel %s: %f exceeds limit %f", chain_joints_[i].c_str(), q_dot_ik(i), chain_limits_vel_[i]);
-				safety_stop_tracking();
-				//chain_vel_msg.velocities[i].value = chain_limits_vel_[i];
+				//safety_stop_tracking();
+				chain_vel_msg.velocities[i].value = chain_limits_vel_[i];
 			}
 			else
 			{
