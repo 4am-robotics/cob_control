@@ -3,6 +3,7 @@
 #include <hardware_interface/joint_state_interface.h>
 #include <hardware_interface/robot_hw.h>
 #include "control_msgs/JointTrajectoryControllerState.h"
+#include "sensor_msgs/JointState.h"
 #include "brics_actuator/JointVelocities.h"
 #include "brics_actuator/JointValue.h"
 
@@ -14,6 +15,7 @@ class CobHWInterfaceVel : public hardware_interface::RobotHW
         void read();
         void write();
         void state_callback(const control_msgs::JointTrajectoryControllerState::ConstPtr& msg);
+        void jointstates_callback(const sensor_msgs::JointState::ConstPtr& msg);
 
     private:
         hardware_interface::JointStateInterface jnt_state_interface;
@@ -21,6 +23,7 @@ class CobHWInterfaceVel : public hardware_interface::RobotHW
         ros::NodeHandle n;
         ros::Publisher pub;
         ros::Subscriber sub;
+        ros::Subscriber jointstates_sub;
         std::vector<std::string> joint_names;        
         std::vector<double> cmd;
         std::vector<double> pos;
