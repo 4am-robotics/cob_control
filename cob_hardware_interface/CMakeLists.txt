@@ -10,7 +10,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS system thread)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -95,6 +95,7 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
 )
 
 ## Declare a cpp library
@@ -113,6 +114,7 @@ add_executable(cob_hwinterface_vel_node src/cob_hwinterface_vel_node.cpp)
 target_link_libraries(cob_hwinterface_vel_node
   cob_hwinterface_vel
   ${catkin_LIBRARIES}
+  ${Boost_LIBRARIES}
 )
 
 #############
