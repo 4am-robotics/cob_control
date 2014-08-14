@@ -58,6 +58,8 @@ class InteractiveFrameTarget:
 		print "...done!"
 		self.stop_tracking_client = rospy.ServiceProxy('stop_tracking', Empty)
 		
+		self.tracking = False
+		
 		self.target_pose = PoseStamped()
 		self.target_pose.header.stamp = rospy.Time.now()
 		self.target_pose.header.frame_id = self.root_frame
@@ -176,21 +178,27 @@ class InteractiveFrameTarget:
 		try:
 			res = self.start_tracking_client(data=self.tracking_frame)
 			print res
+			self.tracking = True
 		except rospy.ServiceException, e:
 			print "Service call failed: %s"%e
+			self.tracking = False
 	
 	def stop_tracking(self, fb):
 		#print "stop_tracking pressed"
 		try:
 			res = self.stop_tracking_client()
 			print res
+			self.tracking = False
 		except rospy.ServiceException, e:
 			print "Service call failed: %s"%e
+			self.tracking = False
 	
 	def reset_tracking(self, fb):
 		#print "reset_tracking pressed"
 		self.stop_tracking(fb)
+		self.update_marker()
 		
+	def update_marker(self):
 		transform_available = False
 		while not transform_available:
 			try:
@@ -227,6 +235,9 @@ class InteractiveFrameTarget:
 		self.ia_server.applyChanges()
 
  	def run(self):
+		if(not self.tracking):
+			self.update_marker()
+		
 		self.br.sendTransform(
 			(self.target_pose.pose.position.x, self.target_pose.pose.position.y, self.target_pose.pose.position.z), 
 			(self.target_pose.pose.orientation.x, self.target_pose.pose.orientation.y, self.target_pose.pose.orientation.z, self.target_pose.pose.orientation.w), 
