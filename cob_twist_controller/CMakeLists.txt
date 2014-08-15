@@ -9,6 +9,12 @@ find_package(catkin REQUIRED COMPONENTS roscpp sensor_msgs geometry_msgs brics_a
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 find_package(orocos_kdl REQUIRED)
+include_directories(${orocos_kdl_INCLUDE_DIRS})
+
+find_package(Eigen REQUIRED)
+include_directories(${EIGEN_INCLUDE_DIRS})
+add_definitions(${EIGEN_DEFINITIONS})
+
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -77,7 +83,7 @@ find_package(orocos_kdl REQUIRED)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
    INCLUDE_DIRS include
-   LIBRARIES cob_twist_controller
+   LIBRARIES cob_twist_controller augmented_solver
    CATKIN_DEPENDS roscpp sensor_msgs geometry_msgs brics_actuator
 #  DEPENDS system_lib
 )
@@ -90,11 +96,13 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(include)
 include_directories(${catkin_INCLUDE_DIRS})
-include_directories(${orocos_kdl_INCLUDE_DIRS})
 
 ## Declare a cpp library
+add_library(augmented_solver src/augmented_solver.cpp)
+target_link_libraries(augmented_solver ${orocos_kdl_LIBRARIES})
+
 add_library(${PROJECT_NAME} src/cob_twist_controller.cpp )
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} augmented_solver ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 
 ## Declare a cpp executable
 add_executable(${PROJECT_NAME}_node src/cob_twist_controller_node.cpp)
@@ -117,7 +125,7 @@ add_dependencies(${PROJECT_NAME} brics_actuator_gencpp)
 # )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
+install(TARGETS ${PROJECT_NAME} augmented_solver ${PROJECT_NAME}_node
  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
