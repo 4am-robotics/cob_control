@@ -406,13 +406,14 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
         tmp(i) = sum;
     }
     
-    ///next is S*Ut*v_in
+    ///next is S^-1*Ut*v_in
     for (i=0;i<jac.columns();i++) //n
     {
-        ///If the singular value is too small (<eps), don't invert it but
-        ///set the inverted singular value to zero (truncated svd)
+        /////exact solution
+        ////tmp(i) = tmp(i)*1.0/S(i);
+        ///truncated svd
+        ///If the singular value is too small (<eps), don't invert it but set the inverted singular value to zero 
         tmp(i) = tmp(i)*(fabs(S(i))<eps?0.0:1.0/S(i));
-        //tmp(i) = tmp(i)*1.0/S(i);
     }
     ///tmp is now: tmp=S_pinv*Ut*v_in, 
     
