@@ -38,7 +38,7 @@ class InteractiveLookatTarget():
 		self.target_pose.header.stamp = rospy.Time.now()
 		self.target_pose.header.frame_id = "base_link"
 		self.target_pose.pose.orientation.w = 1.0
-		#self.viz_pub = rospy.Publisher('lookat_target', PoseStamped)
+		#self.viz_pub = rospy.Publisher('lookat_target', PoseStamped, queue_size=1)
 		self.br = tf.TransformBroadcaster()
 		self.listener = tf.TransformListener()
 		
