@@ -92,6 +92,7 @@ include_directories(${catkin_INCLUDE_DIRS})
 
 ## Declare a cpp library
 add_library(cob_frame_tracker src/cob_frame_tracker.cpp )
+add_dependencies(cob_frame_tracker cob_srvs_gencpp)
 
 ## Declare a cpp executable
 add_executable(cob_frame_tracker_node src/cob_frame_tracker_node.cpp)

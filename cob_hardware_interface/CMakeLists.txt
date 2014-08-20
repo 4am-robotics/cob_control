@@ -7,6 +7,7 @@ project(cob_hardware_interface)
 find_package(catkin REQUIRED COMPONENTS
   hardware_interface
   controller_manager
+  brics_actuator
 )
 
 ## System dependencies are found with CMake's conventions
@@ -99,9 +100,8 @@ include_directories(
 )
 
 ## Declare a cpp library
-add_library(cob_hwinterface_vel
-  src/cob_hwinterface_vel.cpp
-)
+add_library(cob_hwinterface_vel src/cob_hwinterface_vel.cpp )
+add_dependencies(cob_hwinterface_vel brics_actuator_gencpp)
 
 ## Declare a cpp executable
 add_executable(cob_hwinterface_vel_node src/cob_hwinterface_vel_node.cpp)
