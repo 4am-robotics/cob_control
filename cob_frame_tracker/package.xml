@@ -30,8 +30,7 @@
   <run_depend>control_toolbox</run_depend>
 
 
-  <!-- The export tag contains other, unspecified, tags -->
   <export>
-    <!-- Other tools can request additional information be placed here -->
+
   </export>
 </package>

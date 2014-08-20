@@ -31,8 +31,8 @@
   <run_depend>tf</run_depend>
   <run_depend>tf_conversions</run_depend>
 
-  <!-- The export tag contains other, unspecified, tags -->
+
   <export>
-    <!-- Other tools can request additional information be placed here -->
+
   </export>
 </package>
