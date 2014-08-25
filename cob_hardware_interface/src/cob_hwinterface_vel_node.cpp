@@ -25,7 +25,7 @@ class CobControllerManager
             else
             {
                 ROS_ERROR("No parameter 'load_controller' specified. Aborting.");
-                return 0;
+                return;
             }
 
             cm = new controller_manager::ControllerManager(&robot);
