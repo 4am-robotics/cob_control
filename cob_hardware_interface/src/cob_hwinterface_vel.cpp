@@ -1,10 +1,10 @@
 #include <cob_hardware_interface/cob_hwinterface_vel.h>
+#include <iostream>
 
 CobHWInterfaceVel::CobHWInterfaceVel()
 { 
-    //Get joint names from parameter server
-    
-    std::string param="/torso_controller/joint_names";
+    //Get joint names from parameter server    
+    std::string param="joint_names";
     XmlRpc::XmlRpcValue jointNames_XMLRPC;
     if (n.hasParam(param))
     {
@@ -18,8 +18,7 @@ CobHWInterfaceVel::CobHWInterfaceVel()
 
     for (int i=0; i<jointNames_XMLRPC.size(); i++)
     {
-        joint_names.push_back(static_cast<std::string>(jointNames_XMLRPC[i]));  
-        ROS_INFO("JointNames: %s", joint_names[i].c_str());
+        joint_names.push_back(static_cast<std::string>(jointNames_XMLRPC[i]));          
     }
    
     pos.resize(joint_names.size());
@@ -47,19 +46,19 @@ CobHWInterfaceVel::CobHWInterfaceVel()
     registerInterface(&jnt_vel_interface);
    
     //initialize the according subscriber and publisher here   
-    pub = n.advertise<brics_actuator::JointVelocities>("command_vel",1);
-    sub = n.subscribe("state",1, &CobHWInterfaceVel::state_callback,this);
-    //jointstates_sub = n.subscribe("/joint_states",1, &CobHWInterfaceVel::jointstates_callback,this);
+    pub = n.advertise<brics_actuator::JointVelocities>("command_direct",1);
+    sub = n.subscribe("/command_vel",1, &CobHWInterfaceVel::command_vel_callback,this);
+    jointstates_sub = n.subscribe("/joint_states",1, &CobHWInterfaceVel::jointstates_callback,this);
 }
 
-void CobHWInterfaceVel::state_callback(const control_msgs::JointTrajectoryControllerState::ConstPtr& msg)
-{
+//void CobHWInterfaceVel::state_callback(const control_msgs::JointTrajectoryControllerState::ConstPtr& msg)
+//{
     //save the contents of the message in temporary vectors
-    vel_temp = msg->actual.velocities;
-    
+    //vel_temp = msg->actual.velocities;
+    //
     //if(msg->actual.positions.size()!=joint_names.size())
     //{
-        //ROS_ERROR("Message size different from number of joints");
+      //ROS_ERROR("Message size different from number of joints");
     //}
     //else
     //{
@@ -70,25 +69,31 @@ void CobHWInterfaceVel::state_callback(const control_msgs::JointTrajectoryContro
             //eff_temp[i]=msg->actual.effort[i];
         //}        
     //}
-}
+//}
 
 void CobHWInterfaceVel::jointstates_callback(const sensor_msgs::JointState::ConstPtr& msg)
 {
-    //save the contents of the message in temporary vectors
+    //save the contents of the message in temporary vectors    
+    for (unsigned int i=0; i<msg->name.size(); i++) 
+    {
+        for( unsigned int j=0; i<joint_names.size(); j++)
+        {
+            if(msg->name[i] == joint_names[j])
+            {
+                pos_temp[j]=msg->position[i];                
+                // vel_temp[j]=msg->velocity[i];                
+                // eff_temp[j]=msg->effort[i];                
+                break;
+            }
+        }
+    }
+}
+
+void CobHWInterfaceVel::command_vel_callback(const brics_actuator::JointVelocities::ConstPtr& msg)
+{
+    //ToDo: Implement strategy for switching controller from Trajectory to JointVelocity controller
     
-    //for (unsigned int i=0; i<msg->name.size(); i++) 
-    //{
-        //for( unsigned int j=0; i<joint_names.size(); j++)
-        //{
-            //if(msg->name[i] == joint_names[j])
-            //{
-                //pos_temp[j]=msg->position[i];
-                //vel_temp[j]=msg->velocity[i];
-                //eff_temp[j]=msg->effort[i];
-                //break;
-            //}
-        //}
-    //}
+    //pub.publish(msg);
 }
 
 void CobHWInterfaceVel::read()
@@ -96,7 +101,9 @@ void CobHWInterfaceVel::read()
     //pos, vel, eff are updated!
     //this should be done by safely (access-control!) writing the cu    rrent values that were received through a callback function for the subscription to /joint_states or the respective hw-driver directly 
     
-    vel = vel_temp;
+    pos = pos_temp;
+    vel = vel_temp;    
+    eff = eff_temp;
     
     //for (unsigned int i=0; i<joint_names.size(); i++) 
     //{
@@ -117,15 +124,15 @@ void CobHWInterfaceVel::write()
     brics_actuator::JointVelocities command;    
     
     for (unsigned int i=0; i<joint_names.size(); i++) 
-    {        
+    {   
         brics_actuator::JointValue value;
-        value.joint_uri = joint_names[i];
-        value.unit = "rad";
+        value.joint_uri = joint_names[i];        
+        value.unit = "rad";        
         value.value=cmd[i];
         command.velocities.push_back(value);
     }
-       
-    pub.publish(command);
+        
+    pub.publish(command);    
     
     return;
 }
