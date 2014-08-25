@@ -9,8 +9,8 @@
     Thus, it can be used for both velocity-controlled real hardware as well as velocity-controlled simulation (i.e. using the JointVelocityControllers)
   </description>
 
-  <maintainer email="fxm@ipa.fhg.de">Felix Meßmer</maintainer>
-  <author email="fxm@ipa.fhg.de">Felix Meßmer</author>
+  <maintainer email="fxm@ipa.fhg.de">Felix Messmer</maintainer>
+  <author email="fxm@ipa.fhg.de">Felix Messmer</author>
   
   <license>BSD</license>
 

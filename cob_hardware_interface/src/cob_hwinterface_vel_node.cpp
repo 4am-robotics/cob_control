@@ -26,12 +26,11 @@ class CobControllerManager
             else
             {
                 ROS_ERROR("No parameter 'load_controller' specified. Aborting.");
-                //return 0;
-                load_controller="torso_controller/torso_controller";
+                return;
             }
 
             cm = new controller_manager::ControllerManager(&robot);
-            
+            //cmd_vel_sub = nh.subscribe("command_vel",1, &CobHWInterfaceVel::command_vel_callback,this);
             
             start_thread = boost::thread(boost::bind(&CobControllerManager::start_controller, this, load_controller));
             
@@ -69,6 +68,8 @@ class CobControllerManager
     private:
         ros::NodeHandle nh;
         std::string load_controller;
+        
+        //ros::Subscriber cmd_vel_sub;
         
         CobHWInterfaceVel robot;
         controller_manager::ControllerManager* cm;
