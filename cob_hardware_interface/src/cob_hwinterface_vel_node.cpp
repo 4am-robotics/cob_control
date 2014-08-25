@@ -11,13 +11,12 @@ class CobControllerManager
     public:
         ~CobControllerManager()
         {
-            start_thread.join();
+            start_thread.join();            
         }
         
         void initialize()
         {
             nh = ros::NodeHandle("~");
-            ROS_INFO("Namespace %s", nh.getNamespace().c_str());
             if (nh.hasParam("load_controller"))
             {
                 nh.getParam("load_controller", load_controller);
@@ -26,17 +25,20 @@ class CobControllerManager
             else
             {
                 ROS_ERROR("No parameter 'load_controller' specified. Aborting.");
-                //return 0;
-                load_controller="torso_controller/torso_controller";
+                return 0;
             }
 
             cm = new controller_manager::ControllerManager(&robot);
-            
+            //cmd_vel_sub = nh.subscribe("command_vel",1, &CobHWInterfaceVel::command_vel_callback,this);
+
             
             start_thread = boost::thread(boost::bind(&CobControllerManager::start_controller, this, load_controller));
+                
             
-            update_rate = 100;  //[hz]
-            control_period = ros::Duration(0.01);    
+            update_rate = 100;  //[hz]            
+            control_period = ros::Duration(0.01);   
+            
+            
         }
         
         void run()
@@ -53,14 +55,12 @@ class CobControllerManager
                 
                 if(period >= control_period)
                 {
-                    last_update_time = time;
-                    
-                    robot.read();
+                    last_update_time = time;                            
+                    robot.read();                    
                     cm->update(time, period);
                 }
                 
                 robot.write();
-                
                 ros::spinOnce();
                 r.sleep();
             }
@@ -68,7 +68,9 @@ class CobControllerManager
         
     private:
         ros::NodeHandle nh;
-        std::string load_controller;
+        std::string load_controller;        
+                
+        //ros::Subscriber cmd_vel_sub;
         
         CobHWInterfaceVel robot;
         controller_manager::ControllerManager* cm;
@@ -95,13 +97,14 @@ class CobControllerManager
                 ROS_INFO("Switch controller...");
                 success = cm->switchController(start_controllers, stop_controllers, 2);
                 ROS_INFO("...done");
-            }
+            }            
+            
             
             if(success)
                 ROS_INFO("Controller should be running!");
             else
                 ROS_ERROR("Failed to start controller!");
-        }
+        }      
      
 };
 
@@ -114,7 +117,7 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "cob_hwinterface_vel_node");
     
     CobControllerManager* ccm = new CobControllerManager();
-    ccm->initialize();
+    ccm->initialize();    
     ccm->run();
     
     return 0;

@@ -14,8 +14,10 @@ class CobHWInterfaceVel : public hardware_interface::RobotHW
         CobHWInterfaceVel();
         void read();
         void write();
-        void state_callback(const control_msgs::JointTrajectoryControllerState::ConstPtr& msg);
+        //void state_callback(const control_msgs::JointTrajectoryControllerState::ConstPtr& msg);
         void jointstates_callback(const sensor_msgs::JointState::ConstPtr& msg);
+        void command_vel_callback(const brics_actuator::JointVelocities::ConstPtr& msg);
+
 
     private:
         hardware_interface::JointStateInterface jnt_state_interface;
