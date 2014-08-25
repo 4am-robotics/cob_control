@@ -7,6 +7,7 @@ project(cob_hardware_interface)
 find_package(catkin REQUIRED COMPONENTS
   hardware_interface
   controller_manager
+  brics_actuator
 )
 
 ## System dependencies are found with CMake's conventions
