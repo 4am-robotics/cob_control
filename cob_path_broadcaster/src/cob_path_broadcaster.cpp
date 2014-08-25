@@ -30,6 +30,7 @@
 #include <cob_path_broadcaster/cob_path_broadcaster.h>
 #include <tf/transform_broadcaster.h>
 #include <std_msgs/Float64.h>
+#include <visualization_msgs/Marker.h>
 
 
 
@@ -83,6 +84,8 @@ void CobPathBroadcaster::initialize()
 	start_angle_=start_angle_*M_PI/180;
 	fwd=true;
 	
+	set_markers_=0;
+	marker_id_=0;
 	
 	ROS_INFO("...initialized!");
 }
@@ -98,7 +101,7 @@ void CobPathBroadcaster::run()
 	ros::Rate r(update_rate_);
 	ros::NodeHandle nh_;
 	
-	//ros::Publisher vis_pub = nh_.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
+	vis_pub_ = nh_.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
 	ros::Subscriber sub = nh_.subscribe("/arm_controller/manipulability2", 5, &CobPathBroadcaster::manipulability_Callback,this);
 
 
@@ -160,12 +163,12 @@ void CobPathBroadcaster::broadcast_circle_path()
 	if(angle_>=end_angle_){
 		//angle_=start_angle_;
 		fwd=false;
+		set_markers_++; // Stoping the marker publisher
 	}
 	
 	if(angle_<=start_angle_ && fwd==false){
 		fwd=true;
 	}
-	ROS_INFO("start_angle: %f end_angle: %f angle: %f",start_angle_,end_angle_,angle_);
 
 	br_.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), "world", "br"));
 }
@@ -268,33 +271,93 @@ double CobPathBroadcaster::betrag(double num){
 
 void CobPathBroadcaster::manipulability_Callback(const std_msgs::Float64& msg)
 {
-	/*
+	if(set_markers_<1){
   	visualization_msgs::Marker marker;
-	marker.header.frame_id = "base_link";
+	marker.header.frame_id = "arm_7_link";
 	marker.header.stamp = ros::Time();
-	marker.ns = "my_namespace";
-	marker.id = 0;
+	marker.ns = "cob_path_broadcaster";
+	marker.id = marker_id_;
 	marker.type = visualization_msgs::Marker::SPHERE;
 	marker.action = visualization_msgs::Marker::ADD;
 	
 	
-	marker.pose.position.x = transform_.getOrigin().x();
-	marker.pose.position.y = transform_.getOrigin().y();
-	marker.pose.position.z = transform_.getOrigin().z();
+	
+	marker.pose.position.x = stampedTransform_.getOrigin().x();
+	marker.pose.position.y = stampedTransform_.getOrigin().y();
+	marker.pose.position.z = stampedTransform_.getOrigin().z();
 	marker.pose.orientation.x = 0.0;
 	marker.pose.orientation.y = 0.0;
 	marker.pose.orientation.z = 0.0;
 	marker.pose.orientation.w = 1.0;
 	
-	marker.scale.x = 0.1;
-	marker.scale.y = 0.1;
-	marker.scale.z = 0.1;
+	marker.scale.x = 0.007;
+	marker.scale.y = 0.007;
+	marker.scale.z = 0.007;
+	
+	
 	marker.color.a = 1.0;
-	marker.color.r = 0.0;
-	marker.color.g = 1.0;
-	marker.color.b = 0.0;
-	vis_pub.publish( marker );
+	/*
+	// Transform YMI into RGB Colors 
+	int color = msg.data * 10000000;// / 0xFFFFFF00;
+	int normalized_color = color * (16777215/110000);
+	
+	ROS_INFO("normalized: %i",normalized_color);
+	
+	uint8_t red 	= 	(normalized_color & 0xFF0000) >> 16;
+	uint8_t green 	=	(normalized_color & 0x00FF00) >> 8;
+	uint8_t blue 	= 	(normalized_color & 0x0000FF);
+	
+	ROS_INFO("red   %i",red);
+	ROS_INFO("green %i",green);
+	ROS_INFO("blue  %i",blue);
+	
+	float red_normalized = ((float)red) * 0.003921569;
+	float green_normalized = ((float)green) * 0.003921569;
+	float blue_normalized = ((float)blue) * 0.003921569;
+		
+	ROS_INFO("red_norm   %f",red_normalized);
+	ROS_INFO("green_norm %f",green_normalized);
+	ROS_INFO("blue_norm  %f",blue_normalized);
+	
+	//uint8_t test = (16777215 & 0xFF0000)>>20;
+	//ROS_INFO("16777215 & 0xFF0000 = %i",test);
+				//1111 1111 0000 0000 0000 0000
+				//1111 1111 1111 1111 1111 1111
+				//1111 1111 0000 0000 0000 0000
+	marker.color.r = red_normalized;
+	marker.color.g = green_normalized;
+	marker.color.b = blue_normalized;
 	*/
+	
+	float value = msg.data * 9.090909091;
+
+
+		if (0 <= value && value <= 0.125) {
+			marker.color.r = 4*value + .5; 
+			marker.color.g = 0;
+			marker.color.b = 0; 
+			
+		} else if (0.125 < value && value <= 0.375) {
+			marker.color.r = 1;
+			marker.color.g = 0; 
+			marker.color.b = 4*value - .5;
+			
+		} else if (0.375 < value && value <= 0.625) {
+			marker.color.r = -4*value + 2.5;;
+			marker.color.g = 0;
+			marker.color.b = 0;
+			
+		}else if (0.625 < value && value <= 1) {
+			marker.color.r = 0;
+			marker.color.g = 4*value + .5;
+			marker.color.b = 0;
+		}
+
+	
+	
+	marker_id_++;
+	vis_pub_.publish( marker );
+	}
 }
 
 

@@ -5,11 +5,14 @@ project(cob_path_broadcaster)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  cmake_modules
   roscpp
   rospy
   std_msgs
   tf
 )
+
+find_package(TinyXML REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -84,6 +87,7 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES cob_path_broadcaster
   CATKIN_DEPENDS roscpp rospy std_msgs tf
+  #DEPENDS TinyXML
 #  DEPENDS system_lib
 )
 
@@ -95,14 +99,20 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(include)
-include_directories(${catkin_INCLUDE_DIRS})
+include_directories(${catkin_INCLUDE_DIRS} ${TinyXML_INCLUDE_DIRS})
+
 
 ## Declare a cpp library
 add_library(cob_path_broadcaster src/cob_path_broadcaster.cpp )
+add_library(cob_articulation src/cob_articulation.cpp )
 
 ## Declare a cpp executable
 add_executable(cob_path_broadcaster_node src/cob_path_broadcaster_node.cpp)
 target_link_libraries(cob_path_broadcaster_node cob_path_broadcaster ${catkin_LIBRARIES})
+
+add_executable(cob_articulation_node src/cob_articulation_node.cpp)
+target_link_libraries(cob_articulation_node cob_articulation ${catkin_LIBRARIES} ${TinyXML_LIBRARIES})
+
 
 
 ## Add cmake target dependencies of the executable/library
