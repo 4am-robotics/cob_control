@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(cob_path_broadcaster)
 
 # Load catkin and all dependencies required for this package
-find_package(catkin REQUIRED COMPONENTS roscpp std_msgs tf )
+find_package(catkin REQUIRED COMPONENTS roscpp std_msgs tf cmake_modules)
 
 # Declare catkin package
 catkin_package(
