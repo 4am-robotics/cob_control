@@ -10,7 +10,7 @@ find_package(eigen REQUIRED)
 #######################################
 
 generate_dynamic_reconfigure_options(
-  cfg/cob_trajectory_controller.cfg
+  cfg/CobTrajectoryController.cfg
 )
 
 
@@ -21,7 +21,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
     DEPENDS orocos_kdl
     CATKIN_DEPENDS roscpp std_msgs cob_srvs brics_actuator sensor_msgs actionlib control_msgs geometry_msgs message_runtime
-    INCLUDE_DIRS # TODO include
+    INCLUDE_DIRS common/include
     LIBRARIES # TODO
 )
 
