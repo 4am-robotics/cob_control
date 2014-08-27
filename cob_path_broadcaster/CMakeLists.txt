@@ -39,11 +39,6 @@ install(DIRECTORY include/${PROJECT_NAME}/
  PATTERN ".svn" EXCLUDE
 )
 
-# Mark other files for installation (e.g. launch and bag files, etc.)
-install(PROGRAMS scripts/test_cmd_vel_publisher.py
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/scripts
+install(DIRECTORY launch config movement
+ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
-
-#install(DIRECTORY launch config
- #DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-#)
