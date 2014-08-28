@@ -2,37 +2,33 @@
 #include <hardware_interface/joint_command_interface.h>
 #include <hardware_interface/joint_state_interface.h>
 #include <hardware_interface/robot_hw.h>
-#include "control_msgs/JointTrajectoryControllerState.h"
-#include "sensor_msgs/JointState.h"
-#include "brics_actuator/JointVelocities.h"
-#include "brics_actuator/JointValue.h"
+#include <sensor_msgs/JointState.h>
+#include <brics_actuator/JointVelocities.h>
 
+#include <boost/thread.hpp>
 
 class CobHWInterfaceVel : public hardware_interface::RobotHW
 {
-    public:
-        CobHWInterfaceVel();
-        void read();
-        void write();
-        //void state_callback(const control_msgs::JointTrajectoryControllerState::ConstPtr& msg);
-        void jointstates_callback(const sensor_msgs::JointState::ConstPtr& msg);
-        void command_vel_callback(const brics_actuator::JointVelocities::ConstPtr& msg);
+  public:
+    CobHWInterfaceVel();
+    void read();
+    void write();
+    void jointstates_callback(const sensor_msgs::JointState::ConstPtr& msg);
+
+  private:
+    hardware_interface::JointStateInterface jnt_state_interface;
+    hardware_interface::VelocityJointInterface jnt_vel_interface;
+    
+    ros::NodeHandle nh;
+    std::vector<std::string> joint_names;
+    
+    ros::Publisher cmd_vel_pub;
+    ros::Subscriber jointstates_sub;
 
 
-    private:
-        hardware_interface::JointStateInterface jnt_state_interface;
-        hardware_interface::VelocityJointInterface jnt_vel_interface;
-        ros::NodeHandle n;
-        ros::Publisher pub;
-        ros::Subscriber sub;
-        ros::Subscriber jointstates_sub;
-        std::vector<std::string> joint_names;        
-        std::vector<double> cmd;
-        std::vector<double> pos;
-        std::vector<double> vel;
-        std::vector<double> eff;
-        std::vector<double> cmd_temp;
-        std::vector<double> pos_temp;
-        std::vector<double> vel_temp;
-        std::vector<double> eff_temp;          
+    std::vector<double> pos;
+    std::vector<double> vel;
+    std::vector<double> eff;
+    std::vector<double> cmd;
+    boost::mutex mtx_;
 };
