@@ -35,6 +35,9 @@
 #include <tinyxml.h>
 #include <std_msgs/Float64.h>
 #include <visualization_msgs/Marker.h>
+#include <vector>
+
+
 class CobArticulation
 {
 public:
@@ -42,31 +45,49 @@ public:
     {
    		double x,y,z,alpha,beta,gamma;
 	};
-	CobArticulation() {;}
+
 	
+	struct Path
+    {
+   		std::vector<double> x;
+   		std::vector<double> y;
+   		std::vector<double> z;
+   		std::vector<double> roll;
+   		std::vector<double> pitch;
+   		std::vector<double> yaw;
+	};
 
+	
+	struct WayPoint
+    {
+   		double x,y,z,roll,pitch,yaw;
+	};
 
+	CobArticulation() {;}
 	
 	void initialize();
 	void run();
 	void load(const char*);
 	
-	void broadcast_circle_path();
-	void broadcast_linear_path(double*,double*,double*,int);
-	void linear_interpolation(double*,double,double,double*,double,double,double*,double, double, double);
-	bool drive_homeposition(double,double,double,double);
+	void broadcast_path(std::vector<double>*,std::vector<double>*,std::vector<double>*);
+	void linear_interpolation(std::vector<double>*,double,double,std::vector<double>*,double,double,std::vector<double>*,double,double,double,double,std::string);
+	void circular_interpolation(std::vector<double>*,double,std::vector<double>*,double,std::vector<double>*,double,double,double,double,double,double,std::string);
+	//Path circular_interpolation(CobArticulation::WayPoint,double,double,double,double,double,std::string);
+	bool move_ptp(double,double,double,double);
 	void hold_position(double,double,double);
 	double betrag(double);
 	bool epsilon_area(double,double,double,double);
 	Position getEndeffectorPosition();
 	void manipulability_Callback(const std_msgs::Float64& msg);
 	void timerCallback(const ros::TimerEvent&);
+	void calculateProfile(std::vector<double>*,double, double, double,std::string);
     // Polling
 	double update_rate_;
 
 
 	
 private:
+
 	//TF Broadcaster-Var
 	tf::TransformBroadcaster br_;
    	tf::Transform transform_;
@@ -82,7 +103,8 @@ private:
 	bool hold_;
 	double angle_;
 	
-	double x_,y_,z_,x_new_,y_new_,z_new_,r_,holdTime_,vel_;
+	double x_,y_,z_,x_new_,y_new_,z_new_,x_center_,y_center_,z_center_,r_,holdTime_,vel_,accl_,startAngle_,endAngle_;
+	std::string profile_;
 	
 	Position pos_;
 	int marker_id_;
