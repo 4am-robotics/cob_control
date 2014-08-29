@@ -1,29 +1,19 @@
 <?xml version="1.0"?>
 <launch>
 
-	<arg name="robot"/>
-	<arg name="component_name"/>
-	<arg name="version"/>
-	<arg name="side" default=""/>
-	
-	
-	<!--JointNames-->
-	<rosparam ns="$(arg component_name)$(arg side)_controller" command="load" file="$(find cob_hardware_config)/$(arg robot)/config/$(arg component_name)$(arg side)_controller.yaml"/>
-	
-	<!--JointVelocityController-->
-	<rosparam ns="$(arg component_name)$(arg side)_controller" command="load" file="$(find cob_controller_configuration_gazebo)/controller/$(arg component_name)/$(arg component_name)_controller_$(arg version)$(arg side)_velocityinterfaces.yaml"/>
-	
-	<!--JointTrajectoryController-->
-	<rosparam ns="$(arg component_name)$(arg side)_controller" command="load" file="$(find cob_controller_configuration_gazebo)/controller/$(arg component_name)/$(arg component_name)_controller_$(arg version)$(arg side)_velocityinterfaces_fjt.yaml"/>
-	
-	
-<!-- loading controller using the spawner or via direct service_call does not work due to threading problems -->
-	
-	
-	<!-- the cob_hardware_interface will try to load the given load_controller -->
-	<node ns="$(arg component_name)$(arg side)_controller" name="cob_hardware_interface_node" pkg="cob_hardware_interface" type="cob_hwinterface_vel_node" cwd="node" respawn="false" output="screen">
-		<param name="load_controller" value="$(arg component_name)$(arg side)_controller"/>
-		<remap from="/$(arg component_name)$(arg side)_controller/$(arg component_name)$(arg side)_controller/follow_joint_trajectory" to="/$(arg component_name)$(arg side)_controller/follow_joint_trajectory"/>
-	</node>
+  <arg name="component_name"/>
+  <arg name="side" default=""/>
+
+  <!-- 
+  * starts a controller_manager which is registered to the topic-based 
+  * hardware_interface and tries to load the JointTrajectoryController
+  *
+  * topic in: /joint_states
+  * topic out: /<ns>/command_vel 
+  -->  
+  <node ns="$(arg component_name)$(arg side)_controller" name="cob_hardware_interface_node" pkg="cob_hardware_interface" type="cob_hwinterface_vel_node" cwd="node" respawn="false" output="screen">
+    <param name="load_controller" value="$(arg component_name)$(arg side)_controller"/>
+    <remap from="/$(arg component_name)$(arg side)_controller/$(arg component_name)$(arg side)_controller/follow_joint_trajectory" to="/$(arg component_name)$(arg side)_controller/follow_joint_trajectory"/>
+  </node>
 
 </launch>
