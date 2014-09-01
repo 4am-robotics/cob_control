@@ -64,16 +64,18 @@ CollisionVelocityFilter::CollisionVelocityFilter()
   if(!nh_.hasParam("costmap_parameter_source")) ROS_WARN("Checking default source [/local_costmap_node/costmap] for costmap parameters");
   nh_.param("costmap_parameter_source",costmap_parameter_source, std::string("/local_costmap_node/costmap"));
 
-  ros::NodeHandle local_costmap_nh_(costmap_parameter_source); 	
+  ros::NodeHandle local_costmap_nh_(costmap_parameter_source);
+  
+  nh_.param("costmap_obstacle_treshold", costmap_obstacle_treshold_, 50);
 
   // implementation of topics to publish (command for base and list of relevant obstacles)
   topic_pub_command_ = nh_.advertise<geometry_msgs::Twist>("command", 1);
-  topic_pub_relevant_obstacles_ = nh_.advertise<nav_msgs::GridCells>("relevant_obstacles", 1);
+  topic_pub_relevant_obstacles_ = nh_.advertise<nav_msgs::OccupancyGrid>("relevant_obstacles_grid", 1);
 
   // subscribe to twist-movement of teleop 
   joystick_velocity_sub_ = nh_.subscribe<geometry_msgs::Twist>("teleop_twist", 1, boost::bind(&CollisionVelocityFilter::joystickVelocityCB, this, _1));
   // subscribe to the costmap to receive inflated cells
-  obstacles_sub_ = nh_.subscribe<nav_msgs::GridCells>("obstacles", 1, boost::bind(&CollisionVelocityFilter::obstaclesCB, this, _1));
+  obstacles_sub_ = nh_.subscribe<nav_msgs::OccupancyGrid>("obstacles", 1, boost::bind(&CollisionVelocityFilter::obstaclesCB, this, _1));
 
   // create service client
   srv_client_get_footprint_ = nh_.serviceClient<cob_footprint_observer::GetFootprint>("/get_footprint");
@@ -175,13 +177,13 @@ void CollisionVelocityFilter::joystickVelocityCB(const geometry_msgs::Twist::Con
 }
 
 // obstaclesCB reads obstacles from costmap
-void CollisionVelocityFilter::obstaclesCB(const nav_msgs::GridCells::ConstPtr &obstacles){
+void CollisionVelocityFilter::obstaclesCB(const nav_msgs::OccupancyGrid::ConstPtr &obstacles){
   pthread_mutex_lock(&m_mutex);
 
-  if(obstacles->cells.size()!=0) costmap_received_ = true;
+  if(obstacles->data.size()!=0) costmap_received_ = true;
   last_costmap_received_ = * obstacles;
 
-  if(stop_threshold_ < obstacles->cell_width / 2.0f || stop_threshold_ < obstacles->cell_height / 2.0f)
+  if(stop_threshold_ < (obstacles->info.resolution / 2.0f) )
     ROS_WARN("You specified a stop_threshold that is smaller than resolution of received costmap!");
 
   pthread_mutex_unlock(&m_mutex);
@@ -443,72 +445,90 @@ void CollisionVelocityFilter::obstacleHandler() {
   //find relevant obstacles
   pthread_mutex_lock(&m_mutex);
   relevant_obstacles_.header = last_costmap_received_.header;
-  relevant_obstacles_.cell_width = last_costmap_received_.cell_width;
-  relevant_obstacles_.cell_height = last_costmap_received_.cell_height;
-  relevant_obstacles_.cells.clear();
+  relevant_obstacles_.info = last_costmap_received_.info;
+  relevant_obstacles_.data.clear();
 
-  for(unsigned int i = 0; i < last_costmap_received_.cells.size(); i++) {
-    cur_obstacle_relevant = false;
-    cur_distance_to_center = getDistance2d(zero_position, last_costmap_received_.cells[i]);
-    //check whether current obstacle lies inside the circumscribed_radius of the robot -> prevent collisions while rotating
-    if(use_circumscribed && cur_distance_to_center <= circumscribed_radius) {
-      cur_obstacle_robot = last_costmap_received_.cells[i];
+  for(unsigned int i = 0; i < last_costmap_received_.data.size(); i++) {
+    if (last_costmap_received_.data[i] == -1) {
+      relevant_obstacles_.data.push_back(-1);
+    }
+    else if (last_costmap_received_.data[i] < costmap_obstacle_treshold_) { // add trshold
+      relevant_obstacles_.data.push_back(0);
+    }
+    else {
+      
+      // calculate cell in 2D space where robot is is point (0, 0)
+      geometry_msgs::Point cell;
+      cell.x = (i%(int)(last_costmap_received_.info.width))*last_costmap_received_.info.resolution + last_costmap_received_.info.origin.position.x;
+      cell.y = (i/(int)(last_costmap_received_.info.width))*last_costmap_received_.info.resolution + last_costmap_received_.info.origin.position.y;
+      cell.z = 0.0f;
 
-      if( obstacleValid(cur_obstacle_robot.x, cur_obstacle_robot.y) ) {
-        cur_obstacle_relevant = true;
-        relevant_obstacles_.cells.push_back(last_costmap_received_.cells[i]);
-        obstacle_theta_robot = atan2(cur_obstacle_robot.y, cur_obstacle_robot.x);
-      }
+      cur_obstacle_relevant = false;
+      cur_distance_to_center = getDistance2d(zero_position, cell); 
+      //check whether current obstacle lies inside the circumscribed_radius of the robot -> prevent collisions while rotating
+      if(use_circumscribed && cur_distance_to_center <= circumscribed_radius) {
+        cur_obstacle_robot = cell;
 
-      //for each obstacle, now check whether it lies in the tube or not:
-    } else if(use_tube && cur_distance_to_center < influence_radius_) {
-      cur_obstacle_robot = last_costmap_received_.cells[i];
+        if( obstacleValid(cur_obstacle_robot.x, cur_obstacle_robot.y) ) {
+          cur_obstacle_relevant = true;
+          obstacle_theta_robot = atan2(cur_obstacle_robot.y, cur_obstacle_robot.x);
+        }
 
-      if( obstacleValid(cur_obstacle_robot.x, cur_obstacle_robot.y) ) {
-        obstacle_theta_robot = atan2(cur_obstacle_robot.y, cur_obstacle_robot.x);
-        obstacle_delta_theta_robot = obstacle_theta_robot - velocity_angle;
-        obstacle_dist_vel_dir = sin(obstacle_delta_theta_robot) * cur_distance_to_center;
+        //for each obstacle, now check whether it lies in the tube or not:
+      } else if(use_tube && cur_distance_to_center < influence_radius_) {
+        cur_obstacle_robot = cell;
 
-        if(obstacle_dist_vel_dir <= tube_left_border && obstacle_dist_vel_dir >= tube_right_border) {
-          //found obstacle that lies inside of observation tube
+        if( obstacleValid(cur_obstacle_robot.x, cur_obstacle_robot.y) ) {
+          obstacle_theta_robot = atan2(cur_obstacle_robot.y, cur_obstacle_robot.x);
+          obstacle_delta_theta_robot = obstacle_theta_robot - velocity_angle;
+          obstacle_dist_vel_dir = sin(obstacle_delta_theta_robot) * cur_distance_to_center;
 
-          if( sign(obstacle_dist_vel_dir) >= 0) { 
-            if(cos(obstacle_delta_theta_robot) * cur_distance_to_center >= tube_left_origin) {
-              //relevant obstacle in tube found
-              cur_obstacle_relevant = true;
-              relevant_obstacles_.cells.push_back(last_costmap_received_.cells[i]);
-            }
-          } else { // obstacle in right part of tube
-            if(cos(obstacle_delta_theta_robot) * cur_distance_to_center >= tube_right_origin) {
-              //relevant obstacle in tube found
-              cur_obstacle_relevant = true;
-              relevant_obstacles_.cells.push_back(last_costmap_received_.cells[i]);
+          if(obstacle_dist_vel_dir <= tube_left_border && obstacle_dist_vel_dir >= tube_right_border) {
+            //found obstacle that lies inside of observation tube
+
+            if( sign(obstacle_dist_vel_dir) >= 0) { 
+              if(cos(obstacle_delta_theta_robot) * cur_distance_to_center >= tube_left_origin) {
+                //relevant obstacle in tube found
+                cur_obstacle_relevant = true;
+              }
+            } else { // obstacle in right part of tube
+              if(cos(obstacle_delta_theta_robot) * cur_distance_to_center >= tube_right_origin) {
+                //relevant obstacle in tube found
+                cur_obstacle_relevant = true;
+              }
             }
           }
         }
       }
-    }
-    
-    if(cur_obstacle_relevant) { //now calculate distance of current, relevant obstacle to robot
-      if(obstacle_theta_robot >= corner_front_right && obstacle_theta_robot < corner_front_left) {
-        //obstacle in front:
-        cur_distance_to_border = cur_distance_to_center - fabs(footprint_front_) / fabs(cos(obstacle_theta_robot));
-      } else if(obstacle_theta_robot >= corner_front_left && obstacle_theta_robot < corner_rear_left) {
-        //obstacle left:
-        cur_distance_to_border = cur_distance_to_center - fabs(footprint_left_) / fabs(sin(obstacle_theta_robot));
-      } else if(obstacle_theta_robot >= corner_rear_left || obstacle_theta_robot < corner_rear_right) {
-        //obstacle in rear:
-        cur_distance_to_border = cur_distance_to_center - fabs(footprint_rear_) / fabs(cos(obstacle_theta_robot));
-      } else {
-        //obstacle right:
-        cur_distance_to_border = cur_distance_to_center - fabs(footprint_right_) / fabs(sin(obstacle_theta_robot));
-      }
 
-      if(cur_distance_to_border < closest_obstacle_dist_) {
-        closest_obstacle_dist_ = cur_distance_to_border;
-        closest_obstacle_angle_ = obstacle_theta_robot;
+      if(cur_obstacle_relevant) {
+        //relevant obstacle in tube found
+        relevant_obstacles_.data.push_back(100);
+
+        //now calculate distance of current, relevant obstacle to robot
+        if(obstacle_theta_robot >= corner_front_right && obstacle_theta_robot < corner_front_left) {
+          //obstacle in front:
+          cur_distance_to_border = cur_distance_to_center - fabs(footprint_front_) / fabs(cos(obstacle_theta_robot));
+        } else if(obstacle_theta_robot >= corner_front_left && obstacle_theta_robot < corner_rear_left) {
+          //obstacle left:
+          cur_distance_to_border = cur_distance_to_center - fabs(footprint_left_) / fabs(sin(obstacle_theta_robot));
+        } else if(obstacle_theta_robot >= corner_rear_left || obstacle_theta_robot < corner_rear_right) {
+          //obstacle in rear:
+          cur_distance_to_border = cur_distance_to_center - fabs(footprint_rear_) / fabs(cos(obstacle_theta_robot));
+        } else {
+          //obstacle right:
+          cur_distance_to_border = cur_distance_to_center - fabs(footprint_right_) / fabs(sin(obstacle_theta_robot));
+        }
+
+        if(cur_distance_to_border < closest_obstacle_dist_) {
+          closest_obstacle_dist_ = cur_distance_to_border;
+          closest_obstacle_angle_ = obstacle_theta_robot;
+        }
       }
-    }	
+      else {
+        relevant_obstacles_.data.push_back(0);
+      }
+    }
   }
   pthread_mutex_unlock(&m_mutex);
 
