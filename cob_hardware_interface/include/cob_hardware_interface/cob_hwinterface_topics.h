@@ -7,10 +7,10 @@
 
 #include <boost/thread.hpp>
 
-class CobHWInterfaceVel : public hardware_interface::RobotHW
+class CobHWInterfaceTopics : public hardware_interface::RobotHW
 {
   public:
-    CobHWInterfaceVel();
+    CobHWInterfaceTopics();
     void read();
     void write();
     void jointstates_callback(const sensor_msgs::JointState::ConstPtr& msg);

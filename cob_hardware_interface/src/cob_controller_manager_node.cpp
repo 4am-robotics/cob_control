@@ -1,4 +1,4 @@
-#include <cob_hardware_interface/cob_hwinterface_vel.h>
+#include <cob_hardware_interface/cob_hwinterface_topics.h>
 #include <controller_manager/controller_manager.h>
 
 #include <boost/thread.hpp>
@@ -48,7 +48,7 @@ class CobControllerManager
   private:
     ros::NodeHandle nh_p;
     
-    CobHWInterfaceVel robot;
+    CobHWInterfaceTopics robot;
     controller_manager::ControllerManager* cm;
     std::string load_controller;
     
@@ -85,7 +85,7 @@ class CobControllerManager
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "cob_hwinterface_vel_node");
+  ros::init(argc, argv, "cob_controller_manager_node");
   ros::AsyncSpinner spinner(0);
   spinner.start();
   

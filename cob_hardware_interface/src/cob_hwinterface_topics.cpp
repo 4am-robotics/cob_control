@@ -1,6 +1,6 @@
-#include <cob_hardware_interface/cob_hwinterface_vel.h>
+#include <cob_hardware_interface/cob_hwinterface_topics.h>
 
-CobHWInterfaceVel::CobHWInterfaceVel()
+CobHWInterfaceTopics::CobHWInterfaceTopics()
 {
   //Get joint names from parameter server  
   std::string param="joint_names";
@@ -42,10 +42,10 @@ CobHWInterfaceVel::CobHWInterfaceVel()
    
   //initialize the according subscriber and publisher here   
   cmd_vel_pub = nh.advertise<brics_actuator::JointVelocities>("command_vel",1);
-  jointstates_sub = nh.subscribe("/joint_states",1, &CobHWInterfaceVel::jointstates_callback,this);
+  jointstates_sub = nh.subscribe("/joint_states",1, &CobHWInterfaceTopics::jointstates_callback,this);
 }
 
-void CobHWInterfaceVel::jointstates_callback(const sensor_msgs::JointState::ConstPtr& msg)
+void CobHWInterfaceTopics::jointstates_callback(const sensor_msgs::JointState::ConstPtr& msg)
 {
   boost::lock_guard<boost::mutex> guard(mtx_);
   for(unsigned int i=0; i<msg->name.size(); i++) 
@@ -63,13 +63,13 @@ void CobHWInterfaceVel::jointstates_callback(const sensor_msgs::JointState::Cons
   }
 }
 
-void CobHWInterfaceVel::read()
+void CobHWInterfaceTopics::read()
 {
   //pos, vel, eff are updated!
   boost::lock_guard<boost::mutex> guard(mtx_);
 }
 
-void CobHWInterfaceVel::write()
+void CobHWInterfaceTopics::write()
 {
   //here the current cmd values need to be propagated to the actual hardware
   brics_actuator::JointVelocities command;
