@@ -40,11 +40,8 @@ void CobArticulation::initialize()
 	if (nh_.hasParam("update_rate"))
 	{	nh_.getParam("update_rate", update_rate_);	}
 
-
 	update_rate_=68;
-	homepos_=false;
-	set_markers_=0;
-	marker_id_=0;
+	
 	ROS_INFO("...initialized!");
 }
 
@@ -52,27 +49,21 @@ void CobArticulation::initialize()
 
 void CobArticulation::run()
 {	
-	
-	ros::Time time = ros::Time::now();
-	ros::Time last_update_time = time;
-	ros::Duration period = time - last_update_time;
-	
 	ros::Rate r(update_rate_);
 
 	vis_pub_ = nh_.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
-	ros::Subscriber sub = nh_.subscribe("/arm_controller/manipulability2", 5, &CobArticulation::manipulability_Callback,this);
+	speed_pub_ = nh_.advertise<std_msgs::Float64> ("linear_vel", 1);
+	accl_pub_ = nh_.advertise<std_msgs::Float64> ("linear_accl", 1);
+	path_pub_ = nh_.advertise<std_msgs::Float64> ("linear_path", 1);
+	
 	ros::spinOnce();
 	load( "/home/fxm-cm_local/catkin_ws/src/cob_control/cob_path_broadcaster/movement/move.prog" );
-	
-	ROS_INFO("load okay");
 }
 
 
 
 void CobArticulation::load(const char* pFilename)
-{
-	int interpolation_elements;
-	
+{	
 	std::vector <double> x_val;
 	std::vector <double> y_val;
 	std::vector <double> z_val;
@@ -81,8 +72,8 @@ void CobArticulation::load(const char* pFilename)
 	bool loadOkay = doc.LoadFile();
 	if (loadOkay)
 	{
-			
-		TiXmlHandle hDoc(&doc);
+		ROS_INFO("load okay");
+
 		TiXmlHandle docHandle( &doc );
 		TiXmlElement* child = docHandle.FirstChild( "Movement" ).FirstChild( "Move" ).ToElement();
 		Position p;
@@ -94,7 +85,6 @@ void CobArticulation::load(const char* pFilename)
 		
 		for( child; child; child=child->NextSiblingElement() )
 		{		
-			//x_new_=y_new_=z_new_=vel_=accl_=0;
 			movement = child->Attribute( "move");
 
 			if ("move_lin" == movement){
@@ -108,7 +98,7 @@ void CobArticulation::load(const char* pFilename)
 				
 
 				linear_interpolation(&x_val,x_,x_new_,&y_val,y_,y_new_,&z_val,z_,z_new_,vel_,accl_,profile_);
-				broadcast_path(&x_val,&y_val,&z_val);
+				broadcast_path(&x_val,&y_val,&z_val,roll_,pitch_,yaw_);
 			}
 			
 			if("move_ptp" == movement){
@@ -116,7 +106,10 @@ void CobArticulation::load(const char* pFilename)
 				x_new_ = atof(child->Attribute( "x"));
 				y_new_ = atof(child->Attribute( "y"));
 				z_new_ = atof(child->Attribute( "z"));
-				move_ptp(x_new_,y_new_,z_new_,0.03);
+				roll_ = atof(child->Attribute( "roll"));
+				pitch_ = atof(child->Attribute( "pitch"));
+				yaw_ = atof(child->Attribute( "yaw"));
+				move_ptp(x_new_,y_new_,z_new_,roll_,pitch_,yaw_,0.03);
 			}
 			
 			if("move_circ" == movement){
@@ -131,11 +124,11 @@ void CobArticulation::load(const char* pFilename)
 				vel_		= atof(child->Attribute( "vel"));
 				accl_ 		= atof(child->Attribute( "accl"));
 				profile_ 	= child->Attribute( "profile");
-				
+				level_ 	= child->Attribute( "level");
 
 				
-				circular_interpolation(&x_val,x_center_,&y_val,y_center_,&z_val,z_center_,startAngle_,endAngle_,r_,vel_,accl_, profile_);
-				broadcast_path(&x_val,&y_val,&z_val);
+				circular_interpolation(&x_val,x_center_,&y_val,y_center_,&z_val,z_center_,startAngle_,endAngle_,r_,vel_,accl_, level_,profile_);
+				broadcast_path(&x_val,&y_val,&z_val,roll_,pitch_,yaw_);
 
 				x_new_=cos(endAngle_*M_PI/180)*r_;
 				y_new_=sin(endAngle_*M_PI/180)*r_;
@@ -149,7 +142,7 @@ void CobArticulation::load(const char* pFilename)
 				holdTime_ = atof(child->Attribute( "time"));
 				ros::Timer timer = nh_.createTimer(ros::Duration(holdTime_), &CobArticulation::timerCallback, this);
 				hold_=true;
-				hold_position(x_,y_,z_);
+				hold_position(x_,y_,z_,roll_,pitch_,yaw_);
 			}
 			
 			x_val.clear();
@@ -168,20 +161,22 @@ void CobArticulation::load(const char* pFilename)
 }
 
 
-bool CobArticulation::move_ptp(double x_home, double y_home, double z_home, double epsilon){
-	reached_home_=false;
+void CobArticulation::move_ptp(double x, double y, double z, double roll, double pitch, double yaw, double epsilon){
+	reached_pos_=false;
 	int reached_home_counter=0;	
+	double ro,pi,ya;
 	ros::Rate rate(update_rate_);
 	ros::Time now;
+	
 	
 	while(ros::ok()){
 		now = ros::Time::now();
 
 		// Linearkoordinaten
-		transform_.setOrigin( tf::Vector3(x_home,y_home,z_home) );
+		transform_.setOrigin( tf::Vector3(x,y,z) );
 	
 		// RPY Winkel
-		q_.setRPY(0, 0, 0);
+		q_.setRPY(roll, pitch, yaw);
 		transform_.setRotation(q_);
 				
 		// Send br Frame
@@ -196,32 +191,64 @@ bool CobArticulation::move_ptp(double x_home, double y_home, double z_home, doub
 			ROS_ERROR("%s",ex.what());
 		}
 		
+		// Get current RPY out of quaternion
+		tf::Quaternion quatern = stampedTransform_.getRotation();
+		tf::Matrix3x3(quatern).getRPY(ro,pi,ya);
+				
+				
 		// Wait for arm_7_link to be in position
-		if(epsilon_area(stampedTransform_.getOrigin().x(), stampedTransform_.getOrigin().y(), stampedTransform_.getOrigin().z(), epsilon)){
+		if(epsilon_area(stampedTransform_.getOrigin().x(), stampedTransform_.getOrigin().y(), stampedTransform_.getOrigin().z(),ro,pi,ya,epsilon)){
 			reached_home_counter++;	// Count up if end effector position is in the epsilon area to avoid wrong values
 		}
 		
 		if(reached_home_counter>=50){	
-			reached_home_=true;
+			reached_pos_=true;
 		}
 		
-		if(reached_home_==true){	// Cancle while loop
+		if(reached_pos_==true){	// Cancle while loop
 			break;
 		}
 		rate.sleep();
 	ros::spinOnce();
 	}
-	
-	return true;
+
 }
 
 
 
 
-void CobArticulation::broadcast_path(std::vector <double> *x,std::vector <double> *y, std::vector <double> *z){
+void CobArticulation::broadcast_path(std::vector <double> *x,std::vector <double> *y, std::vector <double> *z,double roll,double pitch, double yaw){
 	ros::Rate rate(update_rate_);
 	ros::Time now;
 
+	double T_IPO=pow(update_rate_,-1);
+	std_msgs::Float64 msg_vel;
+	std_msgs::Float64 msg_accl;
+	std_msgs::Float64 msg_path;
+
+	std::vector <double> path;
+	std::vector <double> velocity;
+	std::vector <double> acceleration;
+	
+//--------------------------------------------------------------------------------------------------------------------------------------------------------	
+	// Calculate the path curve
+	for(int i=0;i<x->size()-1;i++){
+		if(i==0)
+			path.push_back(sqrt(pow( (x->at(i+1)-x->at(i)),2) + pow(( y->at(i+1)-y->at(i) ),2) + pow( ( z->at(i+1)-z->at(i) ),2)));	
+		else	
+			path.push_back(path.at(i-1)+sqrt(pow( (x->at(i+1)-x->at(i)),2) + pow(( y->at(i+1)-y->at(i) ),2) + pow( ( z->at(i+1)-z->at(i) ),2)));
+	}
+	
+	// Calculate the velocity curve
+	for(int i=0;i<x->size()-1;i++){
+			velocity.push_back(sqrt(pow( (x->at(i+1)-x->at(i)),2) + pow(( y->at(i+1)-y->at(i) ),2) + pow( ( z->at(i+1)-z->at(i) ),2))/T_IPO);	
+	}
+	// Calculate the acceleration curve
+	 for(int i=0;i<velocity.size()-1;i++){
+			acceleration.push_back( (velocity.at(i+1) - velocity.at(i))/T_IPO);	
+	}
+//--------------------------------------------------------------------------------------------------------------------------------------------------------	
+		
 	for(int i=0; i<x->size()-2; i++){
 		now = ros::Time::now();
 		
@@ -229,10 +256,21 @@ void CobArticulation::broadcast_path(std::vector <double> *x,std::vector <double
 		transform_.setOrigin( tf::Vector3( x->at(i),y->at(i),z->at(i) ) );
 		
 		// RPY Winkel
-		q_.setRPY(0, 0, 0);
+		q_.setRPY(roll, pitch, yaw);
 		transform_.setRotation(q_);   
 
+		marker(tf::StampedTransform(transform_, ros::Time::now(), "world", "br"));
+		
 		br_.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), "world", "br"));
+		
+		// Publish profile data
+		msg_path.data = path.at(i);
+		msg_vel.data = velocity.at(i);
+		msg_accl.data = acceleration.at(i);	
+		path_pub_.publish(msg_path);
+		speed_pub_.publish(msg_vel);
+		accl_pub_.publish(msg_accl);
+		
 		ros::spinOnce();
 		rate.sleep();
 	}
@@ -240,7 +278,7 @@ void CobArticulation::broadcast_path(std::vector <double> *x,std::vector <double
 
 
 
-void CobArticulation::hold_position(double x, double y, double z){
+void CobArticulation::hold_position(double x, double y, double z,double roll,double pitch, double yaw){
 	
 	ros::Rate rate(update_rate_);
 	ros::Time now;
@@ -253,7 +291,7 @@ void CobArticulation::hold_position(double x, double y, double z){
 		transform_.setOrigin( tf::Vector3(x,y,z) );
 	
 		// RPY Winkel
-		q_.setRPY(0, 0, 0);
+		q_.setRPY(roll, pitch, yaw);
 		transform_.setRotation(q_);   	
 	
 		br_.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), "world", "br"));
@@ -266,9 +304,9 @@ void CobArticulation::hold_position(double x, double y, double z){
 // Helper Functions 
 //--------------------------------------------------------------------------------------------------------------
 void CobArticulation::linear_interpolation(std::vector <double> *x,double x_start, double x_end,
-										  std::vector <double> *y,double y_start, double y_end,
-										  std::vector <double> *z,double z_start, double z_end,
-										  double VelMax, double AcclMax, std::string profile) 
+										   std::vector <double> *y,double y_start, double y_end,
+										   std::vector <double> *z,double z_start, double z_end,
+										   double VelMax, double AcclMax, std::string profile) 
 {     
 	double Se = sqrt(pow((x_end-x_start),2)+pow((y_end-y_start),2)+pow((z_end-z_start),2));
 	std::vector<double> pathArray;
@@ -290,24 +328,78 @@ void CobArticulation::circular_interpolation(std::vector<double>* x,double x_mit
 										     std::vector<double>* y,double y_mittel, 
 										     std::vector<double>* z,double z_mittel,
 										     double startAngle, double endAngle,
-										     double r, double VelMax, double AcclMax, std::string profile)  
+										     double r, double VelMax, double AcclMax, std::string level, std::string profile)  
 {
 	startAngle=startAngle*M_PI/180;
 	endAngle=endAngle*M_PI/180;
 	
 	double Se = endAngle-startAngle;
+	bool forward;
+	
+	if(Se < 0)
+		forward=false;
+	else
+		forward=true;
+		
+	Se = betrag(Se);
+		
 	std::vector<double> pathArray;
 	
 	// Calculates the Path with Ramp - or Sinoidprofile
 	calculateProfile(&pathArray,Se,VelMax,AcclMax,profile);
-
+		
+		
 	// Interpolate the circular path
-	for(int i=0;i<pathArray.size();i++){	
-		x->push_back(cos(pathArray.at(i))*r);
-		y->push_back(y_mittel+sin(pathArray.at(i))*r);
-		z->push_back(z_mittel);
+	if(level=="XY"){
+		if(forward){
+			for(int i=0;i<pathArray.size();i++){	
+				x->push_back(x_mittel+cos(pathArray.at(i))*r);
+				y->push_back(y_mittel+sin(pathArray.at(i))*r);
+				z->push_back(z_mittel);
+			}
+		}
+		else{
+			for(int i=0;i<pathArray.size();i++){	
+				x->push_back(x_mittel+cos(startAngle-pathArray.at(i))*r);
+				y->push_back(y_mittel+sin(startAngle-pathArray.at(i))*r);
+				z->push_back(z_mittel);
+			}
+		}
 	}
-
+	
+	if(level=="XZ"){
+		if(forward){
+			for(int i=0;i<pathArray.size();i++){	
+				x->push_back(x_mittel+cos(pathArray.at(i))*r);
+				y->push_back(y_mittel);
+				z->push_back(z_mittel+sin(pathArray.at(i))*r);
+			}
+		}
+		else{
+			for(int i=0;i<pathArray.size();i++){	
+				x->push_back(x_mittel+cos(startAngle-pathArray.at(i))*r);
+				y->push_back(y_mittel);
+				z->push_back(z_mittel+sin(startAngle-pathArray.at(i))*r);
+			}
+		}
+	}
+	
+	if(level=="YZ"){
+		if(forward){
+			for(int i=0;i<pathArray.size();i++){	
+				x->push_back(x_mittel);
+				y->push_back(y_mittel+cos(pathArray.at(i))*r);
+				z->push_back(z_mittel+sin(pathArray.at(i))*r);
+			}
+		}
+		else{
+			for(int i=0;i<pathArray.size();i++){	
+				x->push_back(x_mittel);
+				y->push_back(y_mittel+cos(startAngle-pathArray.at(i))*r);
+				z->push_back(z_mittel+sin(startAngle-pathArray.at(i))*r);
+			}
+		}
+	}
 }
 
 
@@ -380,7 +472,7 @@ void CobArticulation::calculateProfile(std::vector<double> *pathArray,double Se,
 		// Calculate the sinoide profile path
 		// 0 <= t <= tb
 		for(int i=0;i<=steps_tb-1;i++){	
-			pathArray->push_back(AcclMax*(0.25*(pow(i*T_IPO,2) + pow(tb,2)/(8*pow(M_PI,2)) *(cos(2*M_PI/tb * (i*T_IPO))-1))));
+			pathArray->push_back(  AcclMax*(0.25*pow(i*T_IPO,2) + pow(tb,2)/(8*pow(M_PI,2)) *(cos(2*M_PI/tb * (i*T_IPO))-1))  );
 		}
 		// tb <= t <= tv
 		for(int i=steps_tb;i<=(steps_tb+steps_tv-1);i++){	
@@ -430,21 +522,26 @@ CobArticulation::Position CobArticulation::getEndeffectorPosition()
 
 
 // Checks if the endeffector is in the area of the 'br' frame
-bool CobArticulation::epsilon_area(double x,double y, double z,double epsilon)
+bool CobArticulation::epsilon_area(double x,double y, double z, double roll, double pitch, double yaw,double epsilon)
 {
 	bool x_okay=false, y_okay=false, z_okay=false;
+	bool roll_okay=false, pitch_okay=false, yaw_okay=false;
 	
 	x=betrag(x);
 	y=betrag(y);
 	z=betrag(z);
-	
+	roll=betrag(roll);
+	pitch=betrag(pitch);
+	yaw=betrag(yaw);
 	
 	if(x < epsilon){ x_okay = true; };
 	if(y < epsilon){ y_okay = true; };
 	if(z < epsilon){ z_okay = true; };
-
+	if(roll < epsilon){ roll_okay = true; };
+	if(pitch < epsilon){ pitch_okay = true; };
+	if(yaw < epsilon){ yaw_okay = true; };
 	
-	if(x_okay && y_okay && z_okay){
+	if(x_okay && y_okay && z_okay && roll_okay && pitch_okay && yaw_okay){
 		return true;
 	}else{
 		return false;
@@ -454,19 +551,20 @@ bool CobArticulation::epsilon_area(double x,double y, double z,double epsilon)
 
 
 
-void CobArticulation::manipulability_Callback(const std_msgs::Float64& msg)
+void CobArticulation::marker(tf::StampedTransform tf)
 {
+	int marker_id;
   	visualization_msgs::Marker marker;
-	marker.header.frame_id = "arm_7_link";
+	marker.header.frame_id = "world";
 	marker.header.stamp = ros::Time();
 	marker.ns = "cob_articulation";
-	marker.id = marker_id_;
+	marker.id = marker_id;
 	marker.type = visualization_msgs::Marker::SPHERE;
 	marker.action = visualization_msgs::Marker::ADD;
 		
-	marker.pose.position.x = stampedTransform_.getOrigin().x();
-	marker.pose.position.y = stampedTransform_.getOrigin().y();
-	marker.pose.position.z = stampedTransform_.getOrigin().z();
+	marker.pose.position.x = tf.getOrigin().x();
+	marker.pose.position.y = tf.getOrigin().y();
+	marker.pose.position.z = tf.getOrigin().z();
 	marker.pose.orientation.x = 0.0;
 	marker.pose.orientation.y = 0.0;
 	marker.pose.orientation.z = 0.0;
@@ -475,35 +573,13 @@ void CobArticulation::manipulability_Callback(const std_msgs::Float64& msg)
 	marker.scale.x = 0.01;
 	marker.scale.y = 0.01;
 	marker.scale.z = 0.01;
-	
+	marker.color.r = 0.0;
+	marker.color.g = 1.0;
+	marker.color.b = 0.0;
 	
 	marker.color.a = 1.0;
 
-	float value = msg.data * 9.090909091;
-
-
-		if (0 <= value && value <= 0.125) {
-			marker.color.r = 4*value + .5; 
-			marker.color.g = 0;
-			marker.color.b = 0; 
-			
-		} else if (0.125 < value && value <= 0.375) {
-			marker.color.r = 1;
-			marker.color.g = 0; 
-			marker.color.b = 4*value - .5;
-			
-		} else if (0.375 < value && value <= 0.625) {
-			marker.color.r = -4*value + 2.5;;
-			marker.color.g = 0;
-			marker.color.b = 0;
-			
-		}else if (0.625 < value && value <= 1) {
-			marker.color.r = 0;
-			marker.color.g = 4*value + .5;
-			marker.color.b = 0;
-		}
-
-	marker_id_++;
+	marker_id++;
 	vis_pub_.publish( marker );
 	
 }
@@ -511,3 +587,4 @@ void CobArticulation::manipulability_Callback(const std_msgs::Float64& msg)
 void CobArticulation::timerCallback(const ros::TimerEvent& event){
 	hold_=false;
 }
+
