@@ -38,9 +38,25 @@ void CobArticulation::initialize()
 {
 	///get params
 	if (nh_.hasParam("update_rate"))
-	{	nh_.getParam("update_rate", update_rate_);	}
-
-	update_rate_=68;
+	{nh_.getParam("update_rate", update_rate_);}
+	else{ update_rate_=68; }
+	
+	if (nh_.hasParam("path"))
+	{nh_.getParam("path", stringPath_);}
+	
+	if (nh_.hasParam("reference_frame"))
+	{nh_.getParam("reference_frame", referenceFrame_);}
+	
+	if (nh_.hasParam("goal_frame"))
+	{nh_.getParam("goal_frame", goalFrame_);}
+	
+	if (nh_.hasParam("endeffector_frame"))
+	{nh_.getParam("endeffector_frame", endeffectorFrame_);}
+	
+	
+	
+	
+	charPath_ = stringPath_.c_str();
 	
 	ROS_INFO("...initialized!");
 }
@@ -55,9 +71,10 @@ void CobArticulation::run()
 	speed_pub_ = nh_.advertise<std_msgs::Float64> ("linear_vel", 1);
 	accl_pub_ = nh_.advertise<std_msgs::Float64> ("linear_accl", 1);
 	path_pub_ = nh_.advertise<std_msgs::Float64> ("linear_path", 1);
-	
+	jerk_pub_ = nh_.advertise<std_msgs::Float64> ("linear_jerk", 1);
+
 	ros::spinOnce();
-	load( "/home/fxm-cm_local/catkin_ws/src/cob_control/cob_path_broadcaster/movement/move.prog" );
+	load( charPath_ );
 }
 
 
@@ -163,7 +180,7 @@ void CobArticulation::load(const char* pFilename)
 
 void CobArticulation::move_ptp(double x, double y, double z, double roll, double pitch, double yaw, double epsilon){
 	reached_pos_=false;
-	int reached_home_counter=0;	
+	int reached_pos_counter=0;	
 	double ro,pi,ya;
 	ros::Rate rate(update_rate_);
 	ros::Time now;
@@ -180,12 +197,12 @@ void CobArticulation::move_ptp(double x, double y, double z, double roll, double
 		transform_.setRotation(q_);
 				
 		// Send br Frame
-		br_.sendTransform(tf::StampedTransform(transform_, now, "world", "br"));
+		br_.sendTransform(tf::StampedTransform(transform_, now, referenceFrame_, goalFrame_));
 
 		// Get transformation
 		try{
-			listener_.waitForTransform("/br","/arm_7_target", now, ros::Duration(0.5));
-			listener_.lookupTransform("/br","/arm_7_target", now, stampedTransform_);
+			listener_.waitForTransform(goalFrame_,endeffectorFrame_, now, ros::Duration(0.5));
+			listener_.lookupTransform(goalFrame_,endeffectorFrame_, now, stampedTransform_);
 		}
 		catch (tf::TransformException &ex) {
 			ROS_ERROR("%s",ex.what());
@@ -198,10 +215,10 @@ void CobArticulation::move_ptp(double x, double y, double z, double roll, double
 				
 		// Wait for arm_7_link to be in position
 		if(epsilon_area(stampedTransform_.getOrigin().x(), stampedTransform_.getOrigin().y(), stampedTransform_.getOrigin().z(),ro,pi,ya,epsilon)){
-			reached_home_counter++;	// Count up if end effector position is in the epsilon area to avoid wrong values
+			reached_pos_counter++;	// Count up if end effector position is in the epsilon area to avoid wrong values
 		}
 		
-		if(reached_home_counter>=50){	
+		if(reached_pos_counter>=50){	
 			reached_pos_=true;
 		}
 		
@@ -225,10 +242,12 @@ void CobArticulation::broadcast_path(std::vector <double> *x,std::vector <double
 	std_msgs::Float64 msg_vel;
 	std_msgs::Float64 msg_accl;
 	std_msgs::Float64 msg_path;
-
+	std_msgs::Float64 msg_jerk;
+	
 	std::vector <double> path;
 	std::vector <double> velocity;
 	std::vector <double> acceleration;
+	std::vector <double> jerk;	
 	
 //--------------------------------------------------------------------------------------------------------------------------------------------------------	
 	// Calculate the path curve
@@ -247,6 +266,11 @@ void CobArticulation::broadcast_path(std::vector <double> *x,std::vector <double
 	 for(int i=0;i<velocity.size()-1;i++){
 			acceleration.push_back( (velocity.at(i+1) - velocity.at(i))/T_IPO);	
 	}
+	// Calculate the jerk curve
+	 for(int i=0;i<acceleration.size()-1;i++){
+			jerk.push_back( (acceleration.at(i+1) - acceleration.at(i))/T_IPO);	
+	}
+	
 //--------------------------------------------------------------------------------------------------------------------------------------------------------	
 		
 	for(int i=0; i<x->size()-2; i++){
@@ -259,21 +283,27 @@ void CobArticulation::broadcast_path(std::vector <double> *x,std::vector <double
 		q_.setRPY(roll, pitch, yaw);
 		transform_.setRotation(q_);   
 
-		marker(tf::StampedTransform(transform_, ros::Time::now(), "world", "br"));
+		marker(tf::StampedTransform(transform_, ros::Time::now(), referenceFrame_, goalFrame_));
 		
-		br_.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), "world", "br"));
+		br_.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), referenceFrame_, goalFrame_));
 		
 		// Publish profile data
 		msg_path.data = path.at(i);
 		msg_vel.data = velocity.at(i);
 		msg_accl.data = acceleration.at(i);	
+		if(i<jerk.size())
+			msg_jerk.data = jerk.at(i);
+		
+		
 		path_pub_.publish(msg_path);
 		speed_pub_.publish(msg_vel);
 		accl_pub_.publish(msg_accl);
+		jerk_pub_.publish(msg_jerk);
 		
 		ros::spinOnce();
 		rate.sleep();
 	}
+	
 }
 
 
@@ -294,7 +324,7 @@ void CobArticulation::hold_position(double x, double y, double z,double roll,dou
 		q_.setRPY(roll, pitch, yaw);
 		transform_.setRotation(q_);   	
 	
-		br_.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), "world", "br"));
+		br_.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), referenceFrame_, goalFrame_));
 		ros::spinOnce();
 		rate.sleep();
 	}
@@ -504,8 +534,8 @@ CobArticulation::Position CobArticulation::getEndeffectorPosition()
 		ros::Time now = ros::Time::now();;
 		// Get transformation
 		try{
-			listener_.waitForTransform("/arm_base_link","/arm_7_target", now, ros::Duration(0.5));
-			listener_.lookupTransform("/arm_base_link","/arm_7_target", now, stampedTransform_);
+			listener_.waitForTransform(referenceFrame_,endeffectorFrame_, now, ros::Duration(0.5));
+			listener_.lookupTransform(referenceFrame_,endeffectorFrame_, now, stampedTransform_);
 		}
 		catch (tf::TransformException &ex) {
 			ROS_ERROR("%s",ex.what());
@@ -553,12 +583,11 @@ bool CobArticulation::epsilon_area(double x,double y, double z, double roll, dou
 
 void CobArticulation::marker(tf::StampedTransform tf)
 {
-	int marker_id;
   	visualization_msgs::Marker marker;
-	marker.header.frame_id = "world";
+	marker.header.frame_id = referenceFrame_;
 	marker.header.stamp = ros::Time();
 	marker.ns = "cob_articulation";
-	marker.id = marker_id;
+	marker.id = marker_id_;
 	marker.type = visualization_msgs::Marker::SPHERE;
 	marker.action = visualization_msgs::Marker::ADD;
 		
@@ -579,7 +608,7 @@ void CobArticulation::marker(tf::StampedTransform tf)
 	
 	marker.color.a = 1.0;
 
-	marker_id++;
+	marker_id_++;
 	vis_pub_.publish( marker );
 	
 }

@@ -75,7 +75,8 @@ private:
 	ros::Publisher	path_pub_;
 	ros::Publisher	speed_pub_;
 	ros::Publisher	accl_pub_;
-
+	ros::Publisher	jerk_pub_;
+	
 	//TF Broadcaster-Var
 	tf::TransformBroadcaster br_;
    	tf::Transform transform_;
@@ -93,9 +94,13 @@ private:
 	// For endeffector Postion
 	Position pos_;
 	
-	// Update Rate
+	// yaml params
 	double update_rate_;
+	std::string stringPath_,referenceFrame_,goalFrame_,endeffectorFrame_;
+	const char* charPath_;
 	
+	
+	int marker_id_;
 };
 
 #endif
