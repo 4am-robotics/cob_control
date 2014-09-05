@@ -11,6 +11,7 @@ class CobControlModeAdapter
     void initialize()
     {
       bool success = false;
+      bool is_simulation = false;
       
       joint_names_.clear();
       current_controller_names_.clear();
@@ -19,6 +20,56 @@ class CobControlModeAdapter
       vel_controller_pubs_.clear();
       
       current_control_mode_="NONE";
+      
+      //wait for services from controller manager
+      //also: this is used to determine whether simulation or real hardware is used
+      ROS_INFO("Waiting for Service 'load_controller'...");
+      ros::service::waitForService("/controller_manager/load_controller", ros::Duration(5.0));
+      if(ros::service::exists("/controller_manager/load_controller", false))
+      {
+        ROS_INFO("..Global service available. Using controller_manager from gazebo_ros_control plugin");
+        is_simulation = true;
+        load_client_ = nh_.serviceClient<controller_manager_msgs::LoadController>("/controller_manager/load_controller");
+      }
+      else
+      {
+        ros::service::waitForService("controller_manager/load_controller", ros::Duration(5.0));
+        if(ros::service::exists("controller_manager/load_controller", false))
+        {
+          ROS_INFO("..Local service available. Using controller_manager from hardware_interface");
+          is_simulation = false;
+          load_client_ = nh_.serviceClient<controller_manager_msgs::LoadController>("controller_manager/load_controller");
+        }
+        else
+        {
+          ROS_ERROR("...Load service not available!");
+          return;
+        }
+      }
+      
+      ROS_INFO("Waiting for Service 'switch_controller'...");
+      ros::service::waitForService("/controller_manager/switch_controller", ros::Duration(5.0));
+      if(ros::service::exists("/controller_manager/switch_controller", false))
+      {
+        ROS_INFO("..Global service available. Using controller_manager from gazebo_ros_control plugin");
+        is_simulation = true;
+        switch_client_ = nh_.serviceClient<controller_manager_msgs::SwitchController>("/controller_manager/switch_controller");
+      }
+      else
+      {
+        ros::service::waitForService("controller_manager/switch_controller", ros::Duration(5.0));
+        if(ros::service::exists("controller_manager/switch_controller", false))
+        {
+          ROS_INFO("..Local service available. Using controller_manager from hardware_interface");
+          is_simulation = false;
+          switch_client_ = nh_.serviceClient<controller_manager_msgs::SwitchController>("controller_manager/switch_controller");
+        }
+        else
+        {
+          ROS_ERROR("...Load service not available!");
+          return;
+        }
+      }
       
       //Get joint names from parameter server
       std::string param="joint_names";
@@ -38,8 +89,18 @@ class CobControlModeAdapter
         joint_names_.push_back(static_cast<std::string>(jointNames_XMLRPC[i]));  
         ROS_INFO("JointNames: %s", joint_names_[i].c_str());
         
-        ros::Publisher pub = nh_.advertise<std_msgs::Float64>(joint_names_[i]+"_velocity_controller/command", 1);
-        vel_controller_pubs_.push_back(pub);
+        if(is_simulation)
+        {
+          //advertise in global namespace
+          ros::Publisher pub = nh_.advertise<std_msgs::Float64>("/"+joint_names_[i]+"_velocity_controller/command", 1);
+          vel_controller_pubs_.push_back(pub);
+        }
+        else
+        {
+          //advertise in local namespace
+          ros::Publisher pub = nh_.advertise<std_msgs::Float64>(joint_names_[i]+"_velocity_controller/command", 1);
+          vel_controller_pubs_.push_back(pub);
+        }
         vel_controller_names_.push_back(joint_names_[i]+"_velocity_controller");
       }
       
@@ -56,51 +117,8 @@ class CobControlModeAdapter
       
       traj_controller_names_.push_back(nh_.getNamespace());
       
-      ROS_INFO("Waiting for Service 'load_controller'...");
-      ros::service::waitForService("/controller_manager/load_controller", ros::Duration(5.0));
-      if(ros::service::exists("/controller_manager/load_controller", false))
-      {
-        ROS_INFO("..Global service available");
-        load_client_ = nh_.serviceClient<controller_manager_msgs::LoadController>("/controller_manager/load_controller");
-      }
-      else
-      {
-        ros::service::waitForService("controller_manager/load_controller", ros::Duration(5.0));
-        if(ros::service::exists("controller_manager/load_controller", false))
-        {
-          ROS_INFO("..Local service available");
-          load_client_ = nh_.serviceClient<controller_manager_msgs::LoadController>("controller_manager/load_controller");
-        }
-        else
-        {
-          ROS_ERROR("...Load service not available!");
-          return;
-        }
-      }
       
-      ROS_INFO("Waiting for Service 'switch_controller'...");
-      ros::service::waitForService("/controller_manager/switch_controller", ros::Duration(5.0));
-      if(ros::service::exists("/controller_manager/switch_controller", false))
-      {
-        ROS_INFO("..Global service available");
-        switch_client_ = nh_.serviceClient<controller_manager_msgs::SwitchController>("/controller_manager/switch_controller");
-      }
-      else
-      {
-        ros::service::waitForService("controller_manager/switch_controller", ros::Duration(5.0));
-        if(ros::service::exists("controller_manager/switch_controller", false))
-        {
-          ROS_INFO("..Local service available");
-          switch_client_ = nh_.serviceClient<controller_manager_msgs::SwitchController>("controller_manager/switch_controller");
-        }
-        else
-        {
-          ROS_ERROR("...Load service not available!");
-          return;
-        }
-      }
-      
-      
+      //load all required controllers
       for (unsigned int i=0; i<traj_controller_names_.size(); i++)
       {
         success = load_controller(traj_controller_names_[i]);
