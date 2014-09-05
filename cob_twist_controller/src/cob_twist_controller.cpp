@@ -72,6 +72,19 @@ void CobTwistController::initialize()
 		return;
 	}
 	
+	///parse robot_description and set velocity limits
+	urdf::Model model;
+	if (!model.initParam("/robot_description"))
+	{
+		ROS_ERROR("Failed to parse urdf file");
+	}
+	
+	ROS_INFO("Successfully parsed urdf file");
+	for(unsigned int i=0; i<dof_; i++)
+	{
+		limits_vel_.push_back(model.getJoint(joints_[i])->limits->velocity);
+	}
+	
 	///initialize configuration control solver
 	//p_iksolver_vel_ = new KDL::ChainIkSolverVel_pinv(chain_, 0.001, 5);
 	p_augmented_solver_ = new augmented_solver(chain_, 0.001, 5);
@@ -134,9 +147,11 @@ void CobTwistController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 	}
 	else
 	{
+		q_dot_ik = normalize_velocities(q_dot_ik);
+		
 		brics_actuator::JointVelocities vel_msg;
 		vel_msg.velocities.resize(joints_.size());
-		for(int i=0; i<joints_.size(); i++)
+		for(unsigned int i=0; i<dof_; i++)
 		{
 			vel_msg.velocities[i].joint_uri = joints_[i].c_str();
 			vel_msg.velocities[i].unit = "rad";
@@ -155,7 +170,7 @@ void CobTwistController::jointstate_cb(const sensor_msgs::JointState::ConstPtr& 
 	KDL::JntArray q_dot_temp = last_q_dot_;
 	int count = 0;
 	
-	for(unsigned int j = 0; j < joints_.size(); j++)
+	for(unsigned int j = 0; j < dof_; j++)
 	{
 		for(unsigned int i = 0; i < msg->name.size(); i++)
 		{
@@ -176,3 +191,36 @@ void CobTwistController::jointstate_cb(const sensor_msgs::JointState::ConstPtr& 
 		last_q_dot_ = q_dot_temp;
 	}
 }
+
+
+
+
+
+KDL::JntArray CobTwistController::normalize_velocities(KDL::JntArray q_dot_ik)
+{
+	KDL::JntArray q_dot_norm = q_dot_ik;
+	double max_factor = 1;
+	for(unsigned int i=0; i<dof_; i++)
+	{
+		if(max_factor < (q_dot_ik(i)/limits_vel_[i]))
+		{
+			max_factor = (q_dot_ik(i)/limits_vel_[i]);
+			ROS_WARN("Joint %d exceeds limit: Desired %f, Limit %f, Factor %f", i, q_dot_ik(i), limits_vel_[i], max_factor);
+		}
+	}
+	if(max_factor > 1)
+	{
+		ROS_INFO("Normalizing velocities!");
+		for(unsigned int i=0; i<dof_; i++)
+		{
+			q_dot_norm(i) = q_dot_ik(i)/max_factor;
+			ROS_WARN("Joint %d Normalized %f", i, q_dot_norm(i));
+		}
+	}
+	
+	return q_dot_norm;
+}
+
+
+
+
