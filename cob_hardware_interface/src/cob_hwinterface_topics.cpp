@@ -25,6 +25,10 @@ CobHWInterfaceTopics::CobHWInterfaceTopics()
   vel.resize(joint_names.size());
   eff.resize(joint_names.size());
   cmd.resize(joint_names.size());
+  
+  //initialize the according subscriber and publisher here   
+  cmd_vel_pub = nh.advertise<brics_actuator::JointVelocities>("command_vel_direct",1);
+  jointstates_sub = nh.subscribe("/joint_states",1, &CobHWInterfaceTopics::jointstates_callback,this);
    
   for(unsigned int i=0; i<joint_names.size(); i++)
   {
@@ -39,15 +43,11 @@ CobHWInterfaceTopics::CobHWInterfaceTopics()
 
   registerInterface(&jnt_state_interface);
   registerInterface(&jnt_vel_interface);
-   
-  //initialize the according subscriber and publisher here   
-  cmd_vel_pub = nh.advertise<brics_actuator::JointVelocities>("command_vel",1);
-  jointstates_sub = nh.subscribe("/joint_states",1, &CobHWInterfaceTopics::jointstates_callback,this);
 }
 
 void CobHWInterfaceTopics::jointstates_callback(const sensor_msgs::JointState::ConstPtr& msg)
 {
-  boost::lock_guard<boost::mutex> guard(mtx_);
+  //boost::lock_guard<boost::mutex> guard(mtx_);
   for(unsigned int i=0; i<msg->name.size(); i++) 
   {
     for(unsigned int j=0; j<joint_names.size(); j++)
@@ -65,25 +65,33 @@ void CobHWInterfaceTopics::jointstates_callback(const sensor_msgs::JointState::C
 
 void CobHWInterfaceTopics::read()
 {
+  //ROS_INFO("Reading Interface");
   //pos, vel, eff are updated!
-  boost::lock_guard<boost::mutex> guard(mtx_);
+  //boost::lock_guard<boost::mutex> guard(mtx_);
 }
 
 void CobHWInterfaceTopics::write()
 {
+  //ROS_INFO("Writing Interface");
+  //for(unsigned int k=0; k<cmd.size(); k++)
+  //{
+    //ROS_INFO("CMD[%d]: %f", k, cmd[k]);
+  //}
   //here the current cmd values need to be propagated to the actual hardware
   brics_actuator::JointVelocities command;
+  ros::Time update_time = ros::Time::now();
   
-  mtx_.lock();
+  //mtx_.lock();
   for (unsigned int i=0; i<joint_names.size(); i++) 
   {    
     brics_actuator::JointValue value;
+    value.timeStamp = update_time;
     value.joint_uri = joint_names[i];
     value.unit = "rad";
     value.value=cmd[i];
     command.velocities.push_back(value);
   }
-  mtx_.unlock();
+  //mtx_.unlock();
      
   cmd_vel_pub.publish(command);
   
