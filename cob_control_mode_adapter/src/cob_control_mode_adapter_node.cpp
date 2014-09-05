@@ -54,20 +54,52 @@ class CobControlModeAdapter
         max_vel_command_silence_=0.5;
       }
       
-      
-      
       traj_controller_names_.push_back(nh_.getNamespace());
       
       ROS_INFO("Waiting for Service 'load_controller'...");
-      ros::service::waitForService("/controller_manager/load_controller");
-      ROS_INFO("..Service available");
+      ros::service::waitForService("/controller_manager/load_controller", ros::Duration(5.0));
+      if(ros::service::exists("/controller_manager/load_controller", false))
+      {
+        ROS_INFO("..Global service available");
+        load_client_ = nh_.serviceClient<controller_manager_msgs::LoadController>("/controller_manager/load_controller");
+      }
+      else
+      {
+        ros::service::waitForService("controller_manager/load_controller", ros::Duration(5.0));
+        if(ros::service::exists("controller_manager/load_controller", false))
+        {
+          ROS_INFO("..Local service available");
+          load_client_ = nh_.serviceClient<controller_manager_msgs::LoadController>("controller_manager/load_controller");
+        }
+        else
+        {
+          ROS_ERROR("...Load service not available!");
+          return;
+        }
+      }
       
       ROS_INFO("Waiting for Service 'switch_controller'...");
-      ros::service::waitForService("/controller_manager/switch_controller");
-      ROS_INFO("..Service available");
+      ros::service::waitForService("/controller_manager/switch_controller", ros::Duration(5.0));
+      if(ros::service::exists("/controller_manager/switch_controller", false))
+      {
+        ROS_INFO("..Global service available");
+        switch_client_ = nh_.serviceClient<controller_manager_msgs::SwitchController>("/controller_manager/switch_controller");
+      }
+      else
+      {
+        ros::service::waitForService("controller_manager/switch_controller", ros::Duration(5.0));
+        if(ros::service::exists("controller_manager/switch_controller", false))
+        {
+          ROS_INFO("..Local service available");
+          switch_client_ = nh_.serviceClient<controller_manager_msgs::SwitchController>("controller_manager/switch_controller");
+        }
+        else
+        {
+          ROS_ERROR("...Load service not available!");
+          return;
+        }
+      }
       
-      load_client_ = nh_.serviceClient<controller_manager_msgs::LoadController>("/controller_manager/load_controller");
-      switch_client_ = nh_.serviceClient<controller_manager_msgs::SwitchController>("/controller_manager/switch_controller");
       
       for (unsigned int i=0; i<traj_controller_names_.size(); i++)
       {
@@ -82,6 +114,10 @@ class CobControlModeAdapter
       //start trajectory controller by default
       success = switch_controller(traj_controller_names_, current_controller_names_);
       current_control_mode_="TRAJECTORY";
+      
+      ////start velocity controllers
+      //success = switch_controller(vel_controller_names_, current_controller_names_);
+      //current_control_mode_="VELOCITY";
       
       cmd_vel_sub_ = nh_.subscribe("command_vel", 1, &CobControlModeAdapter::cmd_vel_cb, this);
       
@@ -135,6 +171,7 @@ class CobControlModeAdapter
     
     void cmd_vel_cb(const brics_actuator::JointVelocities::ConstPtr& msg)
     {
+      last_vel_command_=ros::Time::now();
       if(current_control_mode_!="VELOCITY")
       {
         bool success = switch_controller(vel_controller_names_, current_controller_names_);
@@ -143,8 +180,14 @@ class CobControlModeAdapter
           ROS_ERROR("Unable to switch to velocity_controllers. Not executing command_vel...");
           return;
         }
+        else
+        {
+          ROS_INFO("Successfully switched to velocity_controllers");
+          current_control_mode_="VELOCITY";
+        }
       }
-      for(unsigned int i=0; i<=joint_names_.size(); i++)
+      
+      for(unsigned int i=0; i<joint_names_.size(); i++)
       {
         std_msgs::Float64 cmd;
         cmd.data= msg->velocities[i].value;
