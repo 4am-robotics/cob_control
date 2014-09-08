@@ -1,0 +1,7 @@
+radius: 0.7
+circle_level: 'xz'
+start_angle: 60
+end_angle: 150
+offset_x : 0
+offset_y : 0
+offset_z : 0

@@ -1,5 +1,5 @@
 #include <ros/ros.h>
-#include <cob_lookat_controller/cob_frame_tracker.h>
+#include <cob_frame_tracker/cob_frame_tracker.h>
 
 int main(int argc, char **argv)
 {

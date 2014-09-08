@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="component_name"/>
+  <arg name="side" default=""/>
+
+  <!-- 
+  * starts a controller_manager which is registered to the topic-based 
+  * hardware_interface and tries to load the JointTrajectoryController
+  *
+  * topic in: /joint_states
+  * topic out: /<ns>/command_vel 
+  -->  
+  <node ns="$(arg component_name)$(arg side)_controller" name="cob_controller_manager_node" pkg="cob_hardware_interface" type="cob_controller_manager_node" cwd="node" respawn="false" output="screen">
+    <param name="load_controller" value="$(arg component_name)$(arg side)_controller"/>
+    <remap from="/$(arg component_name)$(arg side)_controller/$(arg component_name)$(arg side)_controller/follow_joint_trajectory" to="/$(arg component_name)$(arg side)_controller/follow_joint_trajectory"/>
+  </node>
+
+</launch>

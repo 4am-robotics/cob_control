@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<package>
+  <name>cob_control_mode_adapter</name>
+  <version>0.6.0</version>
+  <description>The cob_control_mode_adapter package</description>
+
+  <maintainer email="fxm@ipa.fhg.de">Felix Messmer</maintainer>
+  <author email="fxm@ipa.fhg.de">Felix Messmer</author>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  
+  <build_depend>roscpp</build_depend>  
+  <build_depend>std_msgs</build_depend>
+  <build_depend>control_msgs</build_depend>
+  <build_depend>controller_manager_msgs</build_depend>
+  <build_depend>brics_actuator</build_depend>
+  
+  <run_depend>roscpp</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>control_msgs</run_depend>
+  <run_depend>controller_manager_msgs</run_depend>
+  <run_depend>brics_actuator</run_depend>
+
+
+  <export>
+
+  </export>
+</package>

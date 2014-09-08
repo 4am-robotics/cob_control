@@ -7,7 +7,7 @@ from brics_actuator.msg import JointVelocities, JointValue
 def start_node():
     rospy.init_node('test_cmd_vel_publisher', anonymous=True)
     #advertise topic
-    pub = rospy.Publisher('/lookat_controller/command_vel', JointVelocities)
+    pub = rospy.Publisher('/lookat_controller/command_vel', JointVelocities, queue_size=1)
     rospy.sleep(1.0)
     
     msg = JointVelocities()

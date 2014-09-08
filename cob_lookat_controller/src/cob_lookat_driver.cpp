@@ -50,10 +50,11 @@ void CobLookatDriver::initialize()
 	if (nh_.hasParam("update_rate"))
 	{	nh_.getParam("update_rate", update_rate_);	}
 	else
-	{	update_rate_ = 100.0;	}
+	{	update_rate_ = 68.0;	}
 	
 	command_vel_sub_ = nh_.subscribe("command_vel", 1, &CobLookatDriver::command_vel_cb, this);
 	jointstate_pub_ = nh_.advertise<sensor_msgs::JointState> ("joint_states", 1);
+	debug_jointstate_pub_ = nh_.advertise<sensor_msgs::JointState> ("debug_joint_states", 1);
 	
 	ROS_INFO("...initialized!");
 }
@@ -94,6 +95,7 @@ void CobLookatDriver::publish_state()
 	}
 	
 	jointstate_pub_.publish(msg);
+	debug_jointstate_pub_.publish(msg);
 }
 
 void CobLookatDriver::command_vel_cb(const brics_actuator::JointVelocities::ConstPtr& msg)

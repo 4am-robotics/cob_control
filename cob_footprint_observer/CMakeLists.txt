@@ -40,7 +40,7 @@ catkin_package(
 include_directories(include ${Boost_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
 
 add_executable(footprint_observer src/cob_footprint_observer.cpp)
-add_dependencies(footprint_observer ${PROJECT_NAME}_gencpp)
+add_dependencies(footprint_observer ${${PROJECT_NAME}_EXPORTED_TARGETS})
 target_link_libraries(footprint_observer ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 
