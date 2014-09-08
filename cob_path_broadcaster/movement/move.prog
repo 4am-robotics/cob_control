@@ -1,0 +1,21 @@
+<?xml version="1.0" ?>
+<Movement>
+	<Move move="move_ptp" x="0" y="0" z="0.8"/>
+	
+	<Move move="move_lin" x="0.5" y="0" z="0.6" vel="0.1" accl="0.05" profile="sinoid"/>
+	
+	
+	<Move move="move_circ" x_center="0" y_center="0" z_center="0.6" vel="0.1" accl="0.05" profile="sinoid" r="0.5" startangle="0" endangle="120" />
+	<Move move="hold" time="2"/>
+	
+	<Move move="move_lin" x="-0.3" y="0.4" z="0.6" vel="0.1" accl="0.05" profile="ramp"/>
+	<Move move="hold" time="2"/>
+	<Move move="move_lin" x="0.3" y="0.4" z="0.5" vel="0.1" accl="0.05" profile="sinoid"/>
+	
+	<Move move="move_lin" x="0.5" y="0.4" z="0.6" vel="0.1" accl="0.05" profile="ramp"/>
+	<Move move="hold" time="2"/>
+	<Move move="move_lin" x="-0.35" y="0.4" z="0.4" vel="0.4" accl="0.05" profile="sinoid"/>
+	<Move move="hold" time="2"/>
+	<Move move="move_ptp" x="0" y="0" z="0.8"/>
+	<Move move="hold" time="2"/>
+</Movement>

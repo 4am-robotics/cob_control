@@ -35,13 +35,10 @@
 #include <geometry_msgs/Twist.h>
 #include <brics_actuator/JointVelocities.h>
 
+#include <urdf/model.h>
 #include <kdl_parser/kdl_parser.hpp>
-#include <kdl/chainfksolverpos_recursive.hpp>
-#include <kdl/chainfksolvervel_recursive.hpp>
 #include <kdl/chainiksolvervel_pinv.hpp>
-#include <kdl/chainiksolvervel_wdls.hpp>
-#include <kdl/chainiksolverpos_nr.hpp>
-#include <kdl/chainiksolverpos_nr_jl.hpp>
+#include <cob_twist_controller/augmented_solver.h>
 #include <kdl/jntarray.hpp>
 #include <kdl/jntarrayvel.hpp>
 #include <kdl/frames.hpp>
@@ -63,11 +60,8 @@ private:
 	std::string chain_base_;
 	std::string chain_tip_;
 	
-	//KDL::ChainFkSolverPos_recursive* p_fksolver_pos_;
-	//KDL::ChainFkSolverVel_recursive* p_fksolver_vel_;
 	KDL::ChainIkSolverVel_pinv* p_iksolver_vel_;
-	KDL::ChainIkSolverVel_wdls* p_iksolver_vel_wdls_;
-	//KDL::ChainIkSolverPos_NR_JL* p_iksolver_pos_;
+	augmented_solver* p_augmented_solver_;
 	
 	std::vector<std::string> joints_;
 	unsigned int dof_;
@@ -88,6 +82,9 @@ public:
 	
 	void jointstate_cb(const sensor_msgs::JointState::ConstPtr& msg);
 	void twist_cb(const geometry_msgs::Twist::ConstPtr& msg);
+	
+	
+	KDL::JntArray normalize_velocities(KDL::JntArray q_dot_ik);
 };
 
 #endif

@@ -12,7 +12,7 @@
  * \note
  *   Project name: care-o-bot
  * \note
- *   ROS stack name: cob_driver
+ *   ROS stack name: cob_control
  * \note
  *   ROS package name: cob_twist_controller
  *
@@ -46,23 +46,6 @@ void CobTwistController::initialize()
 	for(unsigned int i=0; i<dof_; i++)
 	{	joints_.push_back((std::string)jn_param[i]);	}
 	
-	////used only for p_iksolver_pos_
-	//limits_min_.push_back(-6.2831);
-	//limits_min_.push_back(-6.2831);
-	//limits_min_.push_back(-6.2831);
-	//limits_max_.push_back(6.2831);
-	//limits_max_.push_back(6.2831);
-	//limits_max_.push_back(6.2831);
-	
-	//ToDo: get this from urdf
-	double vel_param;
-	if (nh_.hasParam("ptp_vel"))
-	{
-		nh_.getParam("ptp_vel", vel_param);
-	}
-	limits_vel_.push_back(vel_param);
-	limits_vel_.push_back(vel_param);
-	limits_vel_.push_back(vel_param);
 	
 	if (nh_.hasParam("base_link"))
 	{
@@ -72,7 +55,6 @@ void CobTwistController::initialize()
 	{
 		nh_.getParam("tip_link", chain_tip_);
 	}
-	
 	
 	
 	///parse robot_description and generate KDL chains
@@ -90,34 +72,22 @@ void CobTwistController::initialize()
 		return;
 	}
 	
+	///parse robot_description and set velocity limits
+	urdf::Model model;
+	if (!model.initParam("/robot_description"))
+	{
+		ROS_ERROR("Failed to parse urdf file");
+	}
 	
-	////used only for p_iksolver_pos_
-	//KDL::JntArray chain_min(limits_min_.size());
-	//KDL::JntArray chain_max(limits_max_.size());
-	//for(unsigned int i=0; i<limits_min_.size(); i++)
-	//{
-		//chain_min(i)=limits_min_[i];
-		//chain_max(i)=limits_max_[i];
-	//}
-	
+	ROS_INFO("Successfully parsed urdf file");
+	for(unsigned int i=0; i<dof_; i++)
+	{
+		limits_vel_.push_back(model.getJoint(joints_[i])->limits->velocity);
+	}
 	
 	///initialize configuration control solver
-	//p_fksolver_pos_ = new KDL::ChainFkSolverPos_recursive(chain_);
-	//p_fksolver_vel_ = new KDL::ChainFkSolverVel_recursive(chain_);
-	
-	p_iksolver_vel_ = new KDL::ChainIkSolverVel_pinv(chain_, 0.001, 5);
-	p_iksolver_vel_wdls_ = new KDL::ChainIkSolverVel_wdls(chain_, 0.001, 5);
-	//Eigen::MatrixXd Mq;
-	//p_iksolver_vel_wdls_->setWeightJS(Mq);
-	//Eigen::MatrixXd Mx;
-	//p_iksolver_vel_wdls_->setWeightTS(Mx);
-	double max_vel = vel_param;
-	//double lambda = 1.0/(2*max_vel);
-	double lambda = 100.0;
-	p_iksolver_vel_wdls_->setLambda(lambda);
-	
-	//p_iksolver_pos_ = new KDL::ChainIkSolverPos_NR_JL(chain_, chain_min, chain_max, *p_fksolver_pos_, *p_iksolver_vel_, 50, 0.001);
-	
+	//p_iksolver_vel_ = new KDL::ChainIkSolverVel_pinv(chain_, 0.001, 5);
+	p_augmented_solver_ = new augmented_solver(chain_, 0.001, 5);
 	
 	///initialize ROS interfaces
 	jointstate_sub = nh_.subscribe("/joint_states", 1, &CobTwistController::jointstate_cb, this);
@@ -160,21 +130,16 @@ void CobTwistController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 	//ROS_INFO("Twist Vel (%f, %f, %f)", twist.vel.x(), twist.vel.y(), twist.vel.z());
 	//ROS_INFO("Twist Rot (%f, %f, %f)", twist.rot.x(), twist.rot.y(), twist.rot.z());
 	
+	///ToDo: Verify this transformation
 	KDL::Twist twist_transformed = frame*twist;
 	
 	//ROS_INFO("TwistTransformed Vel (%f, %f, %f)", twist_transformed.vel.x(), twist_transformed.vel.y(), twist_transformed.vel.z());
 	//ROS_INFO("TwistTransformed Rot (%f, %f, %f)", twist_transformed.rot.x(), twist_transformed.rot.y(), twist_transformed.rot.z());
 	
-	//std::cout << "Current q: ";
-	//for(unsigned int i=0; i<last_q_.rows(); i++)
-	//{
-		//std::cout << last_q_(i) << ", ";
-	//}
-	//std::cout << std::endl;
-	
 	
 	//int ret_ik = p_iksolver_vel_->CartToJnt(last_q_, twist_transformed, q_dot_ik);
-	int ret_ik = p_iksolver_vel_wdls_->CartToJnt(last_q_, twist_transformed, q_dot_ik);
+	int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist_transformed, q_dot_ik);
+	
 	
 	if(ret_ik < 0)
 	{
@@ -182,20 +147,17 @@ void CobTwistController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 	}
 	else
 	{
-		//std::cout << "Solution q_dot: ";
-		//for(unsigned int i=0; i<q_dot_ik.rows(); i++)
-		//{
-			//std::cout << q_dot_ik(i) << ", ";
-		//}
-		//std::cout << std::endl;
+		q_dot_ik = normalize_velocities(q_dot_ik);
 		
 		brics_actuator::JointVelocities vel_msg;
 		vel_msg.velocities.resize(joints_.size());
-		for(int i=0; i<joints_.size(); i++)
+		for(unsigned int i=0; i<dof_; i++)
 		{
 			vel_msg.velocities[i].joint_uri = joints_[i].c_str();
 			vel_msg.velocities[i].unit = "rad";
-			vel_msg.velocities[i].value = (std::fabs(q_dot_ik(i)) >= limits_vel_[i]) ? limits_vel_[i] : q_dot_ik(i);
+			vel_msg.velocities[i].value = q_dot_ik(i);
+			
+			ROS_WARN("DesiredVel %d: %f", i, q_dot_ik(i));
 		}
 		vel_pub.publish(vel_msg);
 	}
@@ -208,7 +170,7 @@ void CobTwistController::jointstate_cb(const sensor_msgs::JointState::ConstPtr& 
 	KDL::JntArray q_dot_temp = last_q_dot_;
 	int count = 0;
 	
-	for(unsigned int j = 0; j < joints_.size(); j++)
+	for(unsigned int j = 0; j < dof_; j++)
 	{
 		for(unsigned int i = 0; i < msg->name.size(); i++)
 		{
@@ -229,3 +191,36 @@ void CobTwistController::jointstate_cb(const sensor_msgs::JointState::ConstPtr& 
 		last_q_dot_ = q_dot_temp;
 	}
 }
+
+
+
+
+
+KDL::JntArray CobTwistController::normalize_velocities(KDL::JntArray q_dot_ik)
+{
+	KDL::JntArray q_dot_norm = q_dot_ik;
+	double max_factor = 1;
+	for(unsigned int i=0; i<dof_; i++)
+	{
+		if(max_factor < (q_dot_ik(i)/limits_vel_[i]))
+		{
+			max_factor = (q_dot_ik(i)/limits_vel_[i]);
+			ROS_WARN("Joint %d exceeds limit: Desired %f, Limit %f, Factor %f", i, q_dot_ik(i), limits_vel_[i], max_factor);
+		}
+	}
+	if(max_factor > 1)
+	{
+		ROS_INFO("Normalizing velocities!");
+		for(unsigned int i=0; i<dof_; i++)
+		{
+			q_dot_norm(i) = q_dot_ik(i)/max_factor;
+			ROS_WARN("Joint %d Normalized %f", i, q_dot_norm(i));
+		}
+	}
+	
+	return q_dot_norm;
+}
+
+
+
+

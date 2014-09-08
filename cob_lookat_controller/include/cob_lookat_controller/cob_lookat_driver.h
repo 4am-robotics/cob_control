@@ -61,6 +61,7 @@ public:
 	
 	ros::Subscriber command_vel_sub_;
 	ros::Publisher jointstate_pub_;
+	ros::Publisher debug_jointstate_pub_;
 };
 
 #endif

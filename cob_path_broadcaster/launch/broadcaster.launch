@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+		
+
+<launch>
+<rosparam file="$(find cob_path_broadcaster)/config/params.yaml" command="load" ns="cob_path_broadcaster"/>
+	<group ns="cob_path_broadcaster">
+	       <node pkg="cob_path_broadcaster" name="path_broadcaster" type="cob_path_broadcaster_node" output="screen"/>
+	</group>
+
+
+	
+</launch>

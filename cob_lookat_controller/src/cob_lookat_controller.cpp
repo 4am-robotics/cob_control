@@ -32,6 +32,9 @@
 #include <kdl_conversions/kdl_msg.h>
 #include <tf/transform_datatypes.h>
 
+#include <urdf/model.h>
+#include <std_srvs/Empty.h>
+
 
 void CobLookatController::initialize()
 {
@@ -60,13 +63,26 @@ void CobLookatController::initialize()
 	total_joints_ = chain_joints_;
 	total_joints_.insert(total_joints_.end(), lookat_joints_.begin(), lookat_joints_.end());
 	
-	//ToDo: get this from urdf
+	///parse robot_description and set velocity limits
+	urdf::Model model;
+	if (!model.initParam("/robot_description")){
+		ROS_ERROR("Failed to parse urdf file");
+	}
+		ROS_INFO("Successfully parsed urdf file");
+		
+	chain_limits_vel_.push_back(model.getJoint("torso_1_joint")->limits->velocity);
+	chain_limits_vel_.push_back(model.getJoint("torso_2_joint")->limits->velocity);
+	chain_limits_vel_.push_back(model.getJoint("torso_3_joint")->limits->velocity);
+	
+	///old stuff
+	/*
 	double vel_param;
 	if (nh_.hasParam("ptp_vel"))
 	{
 		nh_.getParam("ptp_vel", vel_param);
 	}
 	chain_limits_vel_.assign(chain_dof_, vel_param);
+	*/
 	
 	if (nh_.hasParam("base_link"))
 	{
@@ -95,12 +111,38 @@ void CobLookatController::initialize()
 	
 	
 	///initialize configuration control solver
-	p_iksolver_vel_ = new KDL::ChainIkSolverVel_pinv(chain_, 0.001, 5);
+	//p_iksolver_vel_ = new KDL::ChainIkSolverVel_pinv(chain_, 0.001, 5);
 	p_iksolver_vel_wdls_ = new KDL::ChainIkSolverVel_wdls(chain_, 0.001, 5);
-	//Eigen::MatrixXd Mq;
-	//p_iksolver_vel_wdls_->setWeightJS(Mq);
+
+	///set weights for JointSpace
+	Eigen::MatrixXd Mq(7,7);
+	for (int i=0; i<7; i++) {
+		for (int j=0; j<7; j++) {
+			Mq(i,j) = 0;
+		}
+	}
+	std::cout << Mq << std::endl;
+	Mq(0,0) = 1; ///weight of joint 1 (R torso 1)
+	Mq(1,1) = 1; ///weight of joint 2 (R torso 2)
+	Mq(2,2) = 1; ///weight of joint 3 (R torso 3)
+	Mq(3,3) = 1; ///weight of joint 4 (P lookat 1)
+	Mq(4,4) = 1; ///weight of joint 5 (R lookat 2)
+	Mq(5,5) = 1; ///weight of joint 6 (R lookat 3)
+	Mq(6,6) = 1; ///weight of joint 7 (R lookat 4)
+	std::cout << Mq << std::endl;
+
+	///set weights for TaskSpace
+	p_iksolver_vel_wdls_->setWeightJS(Mq);
+	//p_iksolver_vel_wdls_->setLambda(0.01);
+
 	//Eigen::MatrixXd Mx;
 	//p_iksolver_vel_wdls_->setWeightTS(Mx);
+
+	///set Lambda
+	//double max_vel = vel_param;
+	////double lambda = 1.0/(2*max_vel);
+	//double lambda = 100.0;
+	//p_iksolver_vel_wdls_->setLambda(lambda);
 	
 	
 	if (nh_.hasParam("chain_vel_pub_topic"))
@@ -109,11 +151,11 @@ void CobLookatController::initialize()
 	{	ROS_ERROR("Parameter chain_vel_pub_topic not set");	}
 	
 	///initialize ROS interfaces
-	jointstate_sub = nh_.subscribe("/joint_states", 10, &CobLookatController::jointstate_cb, this);
+	jointstate_sub = nh_.subscribe("/joint_states", 1, &CobLookatController::jointstate_cb, this);
 	//lookatstate_sub = nh_.subscribe("/lookat_controller/joint_states", 1, &CobLookatController::lookatstate_cb, this);
 	twist_sub = nh_.subscribe("command_twist", 1, &CobLookatController::twist_cb, this);
-	chain_vel_pub = nh_.advertise<brics_actuator::JointVelocities>(chain_vel_pub_topic_, 10);
-	lookat_vel_pub = nh_.advertise<brics_actuator::JointVelocities>("lookat_command_vel", 10);
+	chain_vel_pub = nh_.advertise<brics_actuator::JointVelocities>(chain_vel_pub_topic_, 1);
+	lookat_vel_pub = nh_.advertise<brics_actuator::JointVelocities>("lookat_command_vel", 1);
 	
 	
 	///initialize variables and current joint values and velocities
@@ -188,7 +230,17 @@ void CobLookatController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 		{
 			chain_vel_msg.velocities[i].joint_uri = chain_joints_[i].c_str();
 			chain_vel_msg.velocities[i].unit = "rad";
-			chain_vel_msg.velocities[i].value = (std::fabs(q_dot_ik(i)) >= chain_limits_vel_[i]) ? chain_limits_vel_[i] : q_dot_ik(i);
+			if(std::fabs(q_dot_ik(i)) >= chain_limits_vel_[i])
+			{
+				ROS_WARN("JointVel %s: %f exceeds limit %f", chain_joints_[i].c_str(), q_dot_ik(i), chain_limits_vel_[i]);
+				//safety_stop_tracking();
+				chain_vel_msg.velocities[i].value = chain_limits_vel_[i];
+			}
+			else
+			{
+				chain_vel_msg.velocities[i].value = q_dot_ik(i);
+			}
+			//chain_vel_msg.velocities[i].value = (std::fabs(q_dot_ik(i)) >= chain_limits_vel_[i]) ? chain_limits_vel_[i] : q_dot_ik(i);
 		}
 		brics_actuator::JointVelocities lookat_vel_msg;
 		lookat_vel_msg.velocities.resize(lookat_dof_);
@@ -196,9 +248,8 @@ void CobLookatController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 		{
 			lookat_vel_msg.velocities[i].joint_uri = lookat_joints_[i].c_str();
 			lookat_vel_msg.velocities[i].unit = "rad";
-			lookat_vel_msg.velocities[i].value = (q_dot_ik(chain_dof_ + i) >= 0.2) ? 0.2 : q_dot_ik(chain_dof_ + i);
+			lookat_vel_msg.velocities[i].value = q_dot_ik(chain_dof_ + i);
 		}
-		
 		
 		chain_vel_pub.publish(chain_vel_msg);
 		lookat_vel_pub.publish(lookat_vel_msg);
@@ -248,30 +299,43 @@ void CobLookatController::jointstate_cb(const sensor_msgs::JointState::ConstPtr&
 	}
 }
 
-void CobLookatController::lookatstate_cb(const sensor_msgs::JointState::ConstPtr& msg)
+//void CobLookatController::lookatstate_cb(const sensor_msgs::JointState::ConstPtr& msg)
+//{
+	//KDL::JntArray q_temp = last_q_;
+	//KDL::JntArray q_dot_temp = last_q_dot_;
+	//int count = 0;
+	
+	//for(unsigned int j = 0; j < lookat_dof_; j++)
+	//{
+		//for(unsigned int i = 0; i < msg->name.size(); i++)
+		//{
+			//if(strcmp(msg->name[i].c_str(), lookat_joints_[j].c_str()) == 0)
+			//{
+				//q_temp(chain_dof_ + j) = msg->position[i];
+				//q_dot_temp(chain_dof_ + j) = msg->velocity[i];
+				//count++;
+				//break;
+			//}
+		//}
+	//}
+	
+	//if(count == lookat_dof_)
+	//{
+		//ROS_DEBUG("Done Parsing");
+		//last_q_ = q_temp;
+		//last_q_dot_ = q_dot_temp;
+	//}
+//}
+
+void CobLookatController::safety_stop_tracking()
 {
-	KDL::JntArray q_temp = last_q_;
-	KDL::JntArray q_dot_temp = last_q_dot_;
-	int count = 0;
-	
-	for(unsigned int j = 0; j < lookat_dof_; j++)
-	{
-		for(unsigned int i = 0; i < msg->name.size(); i++)
-		{
-			if(strcmp(msg->name[i].c_str(), lookat_joints_[j].c_str()) == 0)
-			{
-				q_temp(chain_dof_ + j) = msg->position[i];
-				q_dot_temp(chain_dof_ + j) = msg->velocity[i];
-				count++;
-				break;
-			}
+	ros::ServiceClient savety_client = nh_.serviceClient<std_srvs::Empty>("/lookat_controller/stop_tracking");
+    std_srvs::Empty srv_save_stop;
+    srv_save_stop.request;
+    if (savety_client.call(srv_save_stop)) {
+		ROS_INFO("Lookat stopped for savety issues");
 		}
-	}
-	
-	if(count == lookat_dof_)
-	{
-		ROS_DEBUG("Done Parsing");
-		last_q_ = q_temp;
-		last_q_dot_ = q_dot_temp;
-	}
+    	else {
+			ROS_ERROR("Lookat stop failed! FATAL!");
+		}
 }
