@@ -46,48 +46,37 @@ public:
    		double x,y,z,alpha,beta,gamma;
 	};
 
-	
-	struct Path
-    {
-   		std::vector<double> x;
-   		std::vector<double> y;
-   		std::vector<double> z;
-   		std::vector<double> roll;
-   		std::vector<double> pitch;
-   		std::vector<double> yaw;
-	};
-
-	
-	struct WayPoint
-    {
-   		double x,y,z,roll,pitch,yaw;
-	};
-
 	CobArticulation() {;}
 	
 	void initialize();
 	void run();
 	void load(const char*);
 	
-	void broadcast_path(std::vector<double>*,std::vector<double>*,std::vector<double>*);
+	// Main functions
+	void broadcast_path(std::vector<double>*,std::vector<double>*,std::vector<double>*,double,double,double);
 	void linear_interpolation(std::vector<double>*,double,double,std::vector<double>*,double,double,std::vector<double>*,double,double,double,double,std::string);
-	void circular_interpolation(std::vector<double>*,double,std::vector<double>*,double,std::vector<double>*,double,double,double,double,double,double,std::string);
-	//Path circular_interpolation(CobArticulation::WayPoint,double,double,double,double,double,std::string);
-	bool move_ptp(double,double,double,double);
-	void hold_position(double,double,double);
+	void circular_interpolation(std::vector<double>*,double,std::vector<double>*,double,std::vector<double>*,double,double,double,double,double,double,std::string,std::string);
+	void move_ptp(double,double,double,double,double,double,double);
+	void hold_position(double,double,double,double,double,double);
+	
+	// Helper function
 	double betrag(double);
-	bool epsilon_area(double,double,double,double);
+	bool epsilon_area(double,double,double,double,double,double,double);
 	Position getEndeffectorPosition();
-	void manipulability_Callback(const std_msgs::Float64& msg);
+	void marker(tf::StampedTransform);
 	void timerCallback(const ros::TimerEvent&);
 	void calculateProfile(std::vector<double>*,double, double, double,std::string);
-    // Polling
-	double update_rate_;
-
-
 	
 private:
-
+	ros::NodeHandle nh_;
+	
+	// Publisher
+	ros::Publisher  vis_pub_;
+	ros::Publisher	path_pub_;
+	ros::Publisher	speed_pub_;
+	ros::Publisher	accl_pub_;
+	ros::Publisher	jerk_pub_;
+	
 	//TF Broadcaster-Var
 	tf::TransformBroadcaster br_;
    	tf::Transform transform_;
@@ -95,22 +84,23 @@ private:
    	tf::TransformListener listener_;
    	tf::StampedTransform stampedTransform_;
 
-	ros::NodeHandle nh_;
-	ros::Publisher vis_pub_;
+	// Var for XML Parser
+	double x_,y_,z_,x_new_,y_new_,z_new_,x_center_,y_center_,z_center_,r_,holdTime_,vel_,accl_,startAngle_,endAngle_,roll_,pitch_,yaw_;
+	std::string profile_,level_;
 	
-	bool homepos_;
-	bool reached_home_;
-	bool hold_;
-	double angle_;
+	// Var for PTP Movement and hold Position
+	bool reached_pos_,hold_;
 	
-	double x_,y_,z_,x_new_,y_new_,z_new_,x_center_,y_center_,z_center_,r_,holdTime_,vel_,accl_,startAngle_,endAngle_;
-	std::string profile_;
-	
+	// For endeffector Postion
 	Position pos_;
-	int marker_id_;
-	int set_markers_;
-
 	
+	// yaml params
+	double update_rate_;
+	std::string stringPath_,referenceFrame_,goalFrame_,endeffectorFrame_;
+	const char* charPath_;
+	
+	
+	int marker_id_;
 };
 
 #endif
