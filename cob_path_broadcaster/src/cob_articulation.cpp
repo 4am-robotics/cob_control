@@ -17,7 +17,7 @@
  *   ROS package name: cob_articulation
  *
  * \author
- *   Author: Christoph Mark, email: Christoph.Mark@ipa.fraunhofer.de
+ *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de
  *
  * \date Date of creation: August, 2014
  *
@@ -33,6 +33,7 @@
 #include <std_msgs/Float64.h>
 #include <visualization_msgs/Marker.h>
 #include <vector>
+#include <kdl_conversions/kdl_msg.h>
 
 void CobArticulation::initialize()
 {
@@ -53,11 +54,10 @@ void CobArticulation::initialize()
 	if (nh_.hasParam("endeffector_frame"))
 	{nh_.getParam("endeffector_frame", endeffectorFrame_);}
 	
-	
-	
-	
 	charPath_ = stringPath_.c_str();
 	
+	marker1_=0;
+	marker2_=0;
 	ROS_INFO("...initialized!");
 }
 
@@ -84,6 +84,11 @@ void CobArticulation::load(const char* pFilename)
 	std::vector <double> x_val;
 	std::vector <double> y_val;
 	std::vector <double> z_val;
+	std::vector <double> angle;
+	std::vector <double> roll;
+	std::vector <double> pitch;
+	std::vector <double> yaw;
+	
 	
 	TiXmlDocument doc(pFilename);
 	bool loadOkay = doc.LoadFile();
@@ -152,6 +157,46 @@ void CobArticulation::load(const char* pFilename)
 				z_new_=z_center_;
 			}
 			
+
+			
+			if("move_circ_fixed" == movement){
+				ROS_INFO("move_circ_fixed");
+				
+				x_center_ 	= atof(child->Attribute( "x_center"));
+				y_center_ 	= atof(child->Attribute( "y_center"));
+				z_center_	= atof(child->Attribute( "z_center"));
+				r_			= atof(child->Attribute( "r"));
+				startAngle_ = atof(child->Attribute( "startangle"));
+				endAngle_	= atof(child->Attribute( "endangle"));
+				vel_		= atof(child->Attribute( "vel"));
+				accl_ 		= atof(child->Attribute( "accl"));
+				profile_ 	= child->Attribute( "profile");
+				level_ 		= child->Attribute( "level");
+				fixAxis_	= child->Attribute( "fixAxis");
+
+				
+				circular_interpolation(&x_val,0,x_center_,&y_val,0,y_center_,&z_val,0,z_center_,startAngle_,endAngle_,&angle,r_,vel_,accl_, level_,profile_);
+
+				for(int i=0;i<x_val.size();i++){
+					roll.push_back(0);
+					pitch.push_back(0);
+					yaw.push_back(0);
+				}
+
+				if("x" == fixAxis_)
+					broadcast_path(&x_val,&y_val,&z_val,&angle,&pitch,&yaw,startAngle_,endAngle_,fixAxis_);
+					
+				if("y" == fixAxis_)
+					broadcast_path(&x_val,&y_val,&z_val,&roll,&angle,&yaw,startAngle_,endAngle_,fixAxis_);
+					
+				if("z" == fixAxis_)
+					broadcast_path(&x_val,&y_val,&z_val,&roll,&pitch,&angle,startAngle_,endAngle_,fixAxis_);
+					
+				x_new_=cos(endAngle_*M_PI/180)*r_;
+				y_new_=sin(endAngle_*M_PI/180)*r_;
+				z_new_=z_center_;
+				
+			}
 		
 			
 			if("hold" == movement){
@@ -173,8 +218,6 @@ void CobArticulation::load(const char* pFilename)
 	}else{
 		ROS_WARN("Error loading File");
 	}
-	
-	 
 }
 
 
@@ -228,7 +271,6 @@ void CobArticulation::move_ptp(double x, double y, double z, double roll, double
 		rate.sleep();
 	ros::spinOnce();
 	}
-
 }
 
 
@@ -247,7 +289,7 @@ void CobArticulation::broadcast_path(std::vector <double> *x,std::vector <double
 	std::vector <double> path;
 	std::vector <double> velocity;
 	std::vector <double> acceleration;
-	std::vector <double> jerk;	
+	std::vector <double> jerk;
 	
 //--------------------------------------------------------------------------------------------------------------------------------------------------------	
 	// Calculate the path curve
@@ -283,7 +325,10 @@ void CobArticulation::broadcast_path(std::vector <double> *x,std::vector <double
 		q_.setRPY(roll, pitch, yaw);
 		transform_.setRotation(q_);   
 
-		marker(tf::StampedTransform(transform_, ros::Time::now(), referenceFrame_, goalFrame_));
+		marker(tf::StampedTransform(transform_, ros::Time::now(), referenceFrame_, goalFrame_),marker1_, 0 , 1.0 , 0 ,"goalFrame");
+		getEndeffectorPosition();
+
+		marker(tf::StampedTransform(transform_, ros::Time::now(), referenceFrame_, endeffectorFrame_),marker2_, 1.0 , 0 , 0 , "TCP");
 		
 		br_.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), referenceFrame_, goalFrame_));
 		
@@ -299,6 +344,102 @@ void CobArticulation::broadcast_path(std::vector <double> *x,std::vector <double
 		speed_pub_.publish(msg_vel);
 		accl_pub_.publish(msg_accl);
 		jerk_pub_.publish(msg_jerk);
+		
+		marker1_++;
+		marker2_++;
+	
+		ros::spinOnce();
+		rate.sleep();
+	}
+	
+}
+
+
+
+void CobArticulation::broadcast_path(std::vector <double> *x,std::vector <double> *y, std::vector <double> *z,std::vector <double> * roll,std::vector <double> * pitch, std::vector <double> * yaw, double startAngle, double endAngle, std::string fixed){
+	ros::Rate rate(update_rate_);
+	ros::Time now;
+
+	double T_IPO=pow(update_rate_,-1);
+	std_msgs::Float64 msg_vel;
+	std_msgs::Float64 msg_accl;
+	std_msgs::Float64 msg_path;
+	
+	std::vector <double> path;
+	std::vector <double> velocity;
+	std::vector <double> acceleration;
+	
+//--------------------------------------------------------------------------------------------------------------------------------------------------------	
+	// Calculate the path curve
+	for(int i=0;i<x->size()-1;i++){
+		if(i==0)
+			path.push_back(sqrt(pow( (x->at(i+1)-x->at(i)),2) + pow(( y->at(i+1)-y->at(i) ),2) + pow( ( z->at(i+1)-z->at(i) ),2)));	
+		else	
+			path.push_back(path.at(i-1)+sqrt(pow( (x->at(i+1)-x->at(i)),2) + pow(( y->at(i+1)-y->at(i) ),2) + pow( ( z->at(i+1)-z->at(i) ),2)));
+	}
+	
+	// Calculate the velocity curve
+	for(int i=0;i<x->size()-1;i++){
+			velocity.push_back(sqrt(pow( (x->at(i+1)-x->at(i)),2) + pow(( y->at(i+1)-y->at(i) ),2) + pow( ( z->at(i+1)-z->at(i) ),2))/T_IPO);	
+	}
+	// Calculate the acceleration curve
+	 for(int i=0;i<velocity.size()-1;i++){
+			acceleration.push_back( (velocity.at(i+1) - velocity.at(i))/T_IPO);	
+	}
+
+//--------------------------------------------------------------------------------------------------------------------------------------------------------	
+		
+	for(int i=0; i<x->size()-2; i++){
+		now = ros::Time::now();
+		
+		// Linearkoordinaten
+		transform_.setOrigin( tf::Vector3( x->at(i),y->at(i),z->at(i) ) );
+		
+		// RPY Winkel
+		if(fixed=="x"){
+			if(endAngle<startAngle){
+				q_.setRPY(startAngle-roll->at(i),	pitch->at(i),	yaw->at(i));			
+			}else{
+				q_.setRPY(roll->at(i),	pitch->at(i),	yaw->at(i));
+			}		
+		}
+		
+		if(fixed=="y"){
+			if(endAngle<startAngle){
+				q_.setRPY(roll->at(i),	pitch->at(i),	yaw->at(i));			
+			}else{
+				q_.setRPY(roll->at(i),	startAngle-pitch->at(i),	yaw->at(i));
+			}		
+		}
+		
+		if(fixed=="z")
+		{
+			if(endAngle<startAngle){
+				q_.setRPY(roll->at(i), pitch->at(i),startAngle-yaw->at(i));			
+			}else{
+				q_.setRPY(roll->at(i), pitch->at(i),yaw->at(i));
+			}
+		}
+		
+		transform_.setRotation(q_);   
+
+		marker(tf::StampedTransform(transform_, ros::Time::now(), referenceFrame_, goalFrame_),marker1_, 0 , 1.0 , 0 ,"goalFrame");
+		marker(tf::StampedTransform(transform_, ros::Time::now(), referenceFrame_, endeffectorFrame_),marker2_, 1.0 , 0 , 0 , "TCP");
+				
+		br_.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), referenceFrame_, goalFrame_));
+		
+		// Publish profile data
+		msg_path.data = path.at(i);
+		msg_vel.data = velocity.at(i);
+		msg_accl.data = acceleration.at(i);	
+
+		
+		path_pub_.publish(msg_path);
+		speed_pub_.publish(msg_vel);
+		accl_pub_.publish(msg_accl);
+		
+		marker1_++;
+		marker2_++;
 		
 		ros::spinOnce();
 		rate.sleep();
@@ -353,7 +494,7 @@ void CobArticulation::linear_interpolation(std::vector <double> *x,double x_star
 }
 
 
-
+// Interpolate circles in fixed level "xy" "xz" "yz"
 void CobArticulation::circular_interpolation(std::vector<double>* x,double x_mittel,
 										     std::vector<double>* y,double y_mittel, 
 										     std::vector<double>* z,double z_mittel,
@@ -431,6 +572,135 @@ void CobArticulation::circular_interpolation(std::vector<double>* x,double x_mit
 		}
 	}
 }
+
+
+// Overloaded function for interpolating circles in user defined levels
+void CobArticulation::circular_interpolation(std::vector<double>* x,double x_start, double x_mittel,
+										     std::vector<double>* y,double y_start, double y_mittel, 
+										     std::vector<double>* z,double z_start,	double z_mittel,
+										     double startAngle, double endAngle, std::vector<double> *pathArray,
+										     double r, double VelMax, double AcclMax, std::string level, std::string profile)  
+{
+	startAngle=startAngle*M_PI/180;
+	endAngle=endAngle*M_PI/180;
+	double roll,pitch,yaw;
+	double Se = endAngle-startAngle;
+	bool forward;
+	
+	if(Se < 0)
+		forward=false;
+	else
+		forward=true;
+		
+	Se = betrag(Se);
+		
+	
+	// Calculates the Path with Ramp - or Sinoidprofile
+	calculateProfile(pathArray,Se,VelMax,AcclMax,profile);
+	
+	// Interpolate the circular path
+		if(level=="XY"){
+			if(forward){
+				for(int i=0;i<pathArray->size();i++){
+				
+					x->push_back(x_mittel+cos(pathArray->at(i))*r);
+					y->push_back(y_mittel+sin(pathArray->at(i))*r);
+					z->push_back(z_mittel);
+				}
+			}
+			else{
+				for(int i=0;i<pathArray->size();i++){	
+					x->push_back(x_mittel+cos(startAngle-pathArray->at(i))*r);
+					y->push_back(y_mittel+sin(startAngle-pathArray->at(i))*r);
+					z->push_back(z_mittel);
+				}
+			}
+		}
+		
+		if(level=="XZ"){
+			if(forward){
+				for(int i=0;i<pathArray->size();i++){	
+					x->push_back(x_mittel+cos(pathArray->at(i))*r);
+					y->push_back(y_mittel);
+					z->push_back(z_mittel+sin(pathArray->at(i))*r);
+				}
+			}
+			else{
+				for(int i=0;i<pathArray->size();i++){	
+					x->push_back(x_mittel+cos(startAngle-pathArray->at(i))*r);
+					y->push_back(y_mittel);
+					z->push_back(z_mittel+sin(startAngle-pathArray->at(i))*r);
+				}
+			}
+		}
+		
+		if(level=="YZ"){
+			if(forward){
+				for(int i=0;i<pathArray->size();i++){	
+					x->push_back(x_mittel);
+					y->push_back(y_mittel+cos(pathArray->at(i))*r);
+					z->push_back(z_mittel+sin(pathArray->at(i))*r);
+				}
+			}
+			else{
+				for(int i=0;i<pathArray->size();i++){	
+					x->push_back(x_mittel);
+					y->push_back(y_mittel+cos(startAngle-pathArray->at(i))*r);
+					z->push_back(z_mittel+sin(startAngle-pathArray->at(i))*r);
+				}
+			}
+		}
+}
+
+
+
+/*
+void CobArticulation::circular_interpolation_any_level(	std::vector<double>* x,std::vector<double>* y,std::vector<double>* z,
+														double M_x,double M_y,double M_z,
+														double M_roll,double M_pitch,double M_yaw,
+														double startAngle, double endAngle,double r, double VelMax, double AcclMax,
+														std::string profile)  
+{
+	tf::Transform M,P;
+	tf::Quaternion q;
+	startAngle=startAngle*M_PI/180;
+	endAngle=endAngle*M_PI/180;
+	
+	double Se = endAngle-startAngle;
+	bool forward;
+	
+	if(Se < 0)
+		forward=false;
+	else
+		forward=true;
+		
+	Se = betrag(Se);
+		
+	std::vector<double> pathArray;
+	
+	// Calculates the Path with Ramp - or Sinoidprofile
+	calculateProfile(&pathArray,Se,VelMax,AcclMax,profile);
+		
+	
+	M.setOrigin( tf::Vector3(M_x,M_y,M_z) );
+    M.setRotation( q.setRPY(M_roll,M_pitch,M_yaw) );
+	
+		
+			
+	// Interpolate the circular path
+		if(forward){
+			for(int i=0;i<pathArray.size();i++){	
+				x->push_back();
+			}
+		}
+		else{
+			for(int i=0;i<pathArray.size();i++){	
+
+			}
+		}
+}
+
+*/
 
 
 void CobArticulation::calculateProfile(std::vector<double> *pathArray,double Se, double VelMax, double AcclMax, std::string profile){
@@ -580,14 +850,13 @@ bool CobArticulation::epsilon_area(double x,double y, double z, double roll, dou
 
 
 
-
-void CobArticulation::marker(tf::StampedTransform tf)
+void CobArticulation::marker(tf::StampedTransform tf,int marker_id,double red, double green, double blue,std::string ns)
 {
   	visualization_msgs::Marker marker;
 	marker.header.frame_id = referenceFrame_;
 	marker.header.stamp = ros::Time();
-	marker.ns = "cob_articulation";
-	marker.id = marker_id_;
+	marker.ns = ns;
+	marker.id = marker_id;
 	marker.type = visualization_msgs::Marker::SPHERE;
 	marker.action = visualization_msgs::Marker::ADD;
 		
@@ -602,13 +871,12 @@ void CobArticulation::marker(tf::StampedTransform tf)
 	marker.scale.x = 0.01;
 	marker.scale.y = 0.01;
 	marker.scale.z = 0.01;
-	marker.color.r = 0.0;
-	marker.color.g = 1.0;
-	marker.color.b = 0.0;
+	marker.color.r = red;
+	marker.color.g = green;
+	marker.color.b = blue;
 	
-	marker.color.a = 1.0;
+	marker.color.a = 0.5;
 
-	marker_id_++;
 	vis_pub_.publish( marker );
 	
 }

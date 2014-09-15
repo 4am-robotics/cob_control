@@ -2,4 +2,4 @@ path: "/home/fxm-cm_local/catkin_ws/src/cob_control/cob_path_broadcaster/movemen
 update_rate: 68
 reference_frame: "world" 
 goal_frame: "br"
-endeffector_frame: "arm_7_target"
+endeffector_frame: "arm_7_link"

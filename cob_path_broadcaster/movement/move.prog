@@ -1,12 +1,15 @@
 <?xml version="1.0" ?>
 <Movement>
-
 	<Move move="move_ptp" x="0" y="0" z="0.9" roll="0" pitch="0" yaw="0"/>	
-	<Move move="hold" time="2"/>
-	<Move move="move_lin" x="-0.35" y="0.4" z="0.5" vel="0.1" accl="0.05" profile="ramp"/>
 	<Move move="hold" time="3"/>
-	<Move move="move_circ" x_center="0" y_center="0" z_center="0.5" r="0.531507291" startangle="131.1859252" endangle="50" vel="0.1" accl="0.05" level="XY" profile="sinoide"/>
-	<Move move="hold" time="10"/>
+	<Move move="move_lin" x="0.5" y="0" z="0.5" vel="0.1" accl="0.05" profile="ramp"/>
+	<Move move="hold" time="3"/>
+	<Move move="move_circ_fixed" x_center="0" y_center="0" z_center="0.5" r="0.5" startangle="0" endangle="180" vel="0.2" accl="0.05" fixAxis="z" level="XY" profile="sinoide"/>
+	<Move move="hold" time="3"/>
 	<Move move="move_lin" x="0" y="0" z="0.9" vel="0.1" accl="0.05" profile="sinoid"/>
-	<Move move="hold" time="10"/>
+	<Move move="hold" time="3"/>
+	<Move move="move_lin" x="0.5" y="0" z="0.5" vel="0.1" accl="0.05" profile="ramp"/>
+	<Move move="hold" time="3"/>
+	<Move move="move_circ" x_center="0" y_center="0" z_center="0.5" r="0.5" startangle="0" endangle="90" vel="0.2" accl="0.05" level="YZ" profile="sinoide"/>
+	<Move move="hold" time="3"/>
 </Movement>

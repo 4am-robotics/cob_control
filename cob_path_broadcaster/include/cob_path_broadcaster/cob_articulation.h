@@ -46,16 +46,24 @@ public:
    		double x,y,z,alpha,beta,gamma;
 	};
 
-	CobArticulation() {;}
-	
 	void initialize();
 	void run();
 	void load(const char*);
 	
 	// Main functions
 	void broadcast_path(std::vector<double>*,std::vector<double>*,std::vector<double>*,double,double,double);
+	void broadcast_path(std::vector<double>*,std::vector<double>*,std::vector<double>*,std::vector<double>*,std::vector<double>*,std::vector<double>*,double,double,std::string);
+
 	void linear_interpolation(std::vector<double>*,double,double,std::vector<double>*,double,double,std::vector<double>*,double,double,double,double,std::string);
 	void circular_interpolation(std::vector<double>*,double,std::vector<double>*,double,std::vector<double>*,double,double,double,double,double,double,std::string,std::string);
+	void circular_interpolation(std::vector<double>*,double,double,std::vector<double>*,double,double,std::vector<double>*,double,double,double,double,std::vector<double> *,double,double,double,std::string,std::string);
+	/*
+	void CobArticulation::circular_interpolation_any_level(	std::vector<double>* x,std::vector<double>* y,std::vector<double>* z,
+															double M_x,double M_y,double M_z,
+															double M_roll,double M_pitch,double M_yaw,
+															double startAngle, double endAngle,double r, double VelMax, double AcclMax,
+															std::string profile) ;
+															* */
 	void move_ptp(double,double,double,double,double,double,double);
 	void hold_position(double,double,double,double,double,double);
 	
@@ -63,7 +71,7 @@ public:
 	double betrag(double);
 	bool epsilon_area(double,double,double,double,double,double,double);
 	Position getEndeffectorPosition();
-	void marker(tf::StampedTransform);
+	void marker(tf::StampedTransform,int,double,double,double,std::string);
 	void timerCallback(const ros::TimerEvent&);
 	void calculateProfile(std::vector<double>*,double, double, double,std::string);
 	
@@ -86,7 +94,7 @@ private:
 
 	// Var for XML Parser
 	double x_,y_,z_,x_new_,y_new_,z_new_,x_center_,y_center_,z_center_,r_,holdTime_,vel_,accl_,startAngle_,endAngle_,roll_,pitch_,yaw_;
-	std::string profile_,level_;
+	std::string profile_,level_,fixAxis_;
 	
 	// Var for PTP Movement and hold Position
 	bool reached_pos_,hold_;
@@ -100,7 +108,7 @@ private:
 	const char* charPath_;
 	
 	
-	int marker_id_;
+	int marker1_,marker2_;
 };
 
 #endif
