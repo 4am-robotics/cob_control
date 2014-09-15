@@ -35,6 +35,7 @@
 #include <geometry_msgs/Twist.h>
 #include <brics_actuator/JointVelocities.h>
 
+#include <urdf/model.h>
 #include <kdl_parser/kdl_parser.hpp>
 #include <kdl/chainiksolvervel_pinv.hpp>
 #include <cob_twist_controller/augmented_solver.h>
@@ -81,6 +82,9 @@ public:
 	
 	void jointstate_cb(const sensor_msgs::JointState::ConstPtr& msg);
 	void twist_cb(const geometry_msgs::Twist::ConstPtr& msg);
+	
+	
+	KDL::JntArray normalize_velocities(KDL::JntArray q_dot_ik);
 };
 
 #endif

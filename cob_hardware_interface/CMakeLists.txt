@@ -18,17 +18,17 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} )
 
 ## Build
 # Declare a cpp library
-add_library(cob_hwinterface_vel src/cob_hwinterface_vel.cpp )
-add_dependencies(cob_hwinterface_vel brics_actuator_gencpp)
+add_library(cob_hwinterface_topics src/cob_hwinterface_topics.cpp )
+add_dependencies(cob_hwinterface_topics brics_actuator_gencpp)
 
 ## Declare a cpp executable
-add_executable(cob_hwinterface_vel_node src/cob_hwinterface_vel_node.cpp)
-target_link_libraries(cob_hwinterface_vel_node cob_hwinterface_vel ${catkin_LIBRARIES} ${Boost_LIBRARIES} )
+add_executable(cob_controller_manager_node src/cob_controller_manager_node.cpp)
+target_link_libraries(cob_controller_manager_node cob_hwinterface_topics ${catkin_LIBRARIES} ${Boost_LIBRARIES} )
 
 
 ## Install
 # Mark executables and/or libraries for installation
-install(TARGETS cob_hwinterface_vel cob_hwinterface_vel_node
+install(TARGETS cob_hwinterface_topics cob_controller_manager_node
  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

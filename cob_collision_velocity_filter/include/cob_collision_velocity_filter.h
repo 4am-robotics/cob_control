@@ -66,7 +66,7 @@
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/PolygonStamped.h>
 #include <geometry_msgs/Polygon.h>
-#include <nav_msgs/GridCells.h>
+#include <nav_msgs/OccupancyGrid.h>
 
 #include <boost/tokenizer.hpp>
 #include <boost/foreach.hpp>
@@ -113,7 +113,7 @@ class CollisionVelocityFilter
     /// @brief  reads obstacles from costmap
     /// @param  obstacles - 2D occupancy grid in rolling window mode!
     ///
-    void obstaclesCB(const nav_msgs::GridCells::ConstPtr &obstacles);
+    void obstaclesCB(const nav_msgs::OccupancyGrid::ConstPtr &obstacles);
 
 
     ///
@@ -202,6 +202,9 @@ class CollisionVelocityFilter
     void stopMovement();
 
     pthread_mutex_t m_mutex;
+    
+    //obstacle_treshold
+    int costmap_obstacle_treshold_;
 
     //frames
     std::string global_frame_, robot_frame_;
@@ -216,7 +219,7 @@ class CollisionVelocityFilter
     double footprint_left_, footprint_right_, footprint_front_, footprint_rear_;
     double footprint_left_initial_, footprint_right_initial_, footprint_front_initial_, footprint_rear_initial_;
     bool costmap_received_;
-    nav_msgs::GridCells last_costmap_received_, relevant_obstacles_;
+    nav_msgs::OccupancyGrid last_costmap_received_, relevant_obstacles_;
     double influence_radius_, stop_threshold_, obstacle_damping_dist_, use_circumscribed_threshold_;
     double closest_obstacle_dist_, closest_obstacle_angle_;
 
