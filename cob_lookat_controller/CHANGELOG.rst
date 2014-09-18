@@ -2,8 +2,8 @@
 Changelog for package cob_lookat_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.0 (2014-09-18)
+------------------
 * update changelog
 * Merge branch 'indigo_dev' of github.com:ipa-fxm/cob_control into velocity_interface_controller_indigo
 * Merge branch 'indigo_dev' into velocity_interface_controller_indigo
