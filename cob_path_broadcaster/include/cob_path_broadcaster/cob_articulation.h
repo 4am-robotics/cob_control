@@ -41,39 +41,33 @@
 class CobArticulation
 {
 public:
-	struct Position
-    {
-   		double x,y,z,alpha,beta,gamma;
-	};
-
 	void initialize();
 	void run();
 	void load(const char*);
 	
 	// Main functions
-	void broadcast_path(std::vector<double>*,std::vector<double>*,std::vector<double>*,double,double,double);
-	void broadcast_path(std::vector<double>*,std::vector<double>*,std::vector<double>*,std::vector<double>*,std::vector<double>*,std::vector<double>*,double,double,std::string);
-
-	void linear_interpolation(std::vector<double>*,double,double,std::vector<double>*,double,double,std::vector<double>*,double,double,double,double,std::string);
-	void circular_interpolation(std::vector<double>*,double,std::vector<double>*,double,std::vector<double>*,double,double,double,double,double,double,std::string,std::string);
-	void circular_interpolation(std::vector<double>*,double,double,std::vector<double>*,double,double,std::vector<double>*,double,double,double,double,std::vector<double> *,double,double,double,std::string,std::string);
-	/*
-	void CobArticulation::circular_interpolation_any_level(	std::vector<double>* x,std::vector<double>* y,std::vector<double>* z,
-															double M_x,double M_y,double M_z,
-															double M_roll,double M_pitch,double M_yaw,
-															double startAngle, double endAngle,double r, double VelMax, double AcclMax,
-															std::string profile) ;
-															* */
+	void broadcast_path(std::vector<double>*,std::vector<double>*,std::vector<double>*,std::vector<double>*,std::vector<double>*,std::vector<double>*,double,double,std::string);	
+	void pose_path_broadcaster(std::vector <geometry_msgs::Pose> *);
+	void linear_interpolation(std::vector <geometry_msgs::Pose> *poseVector,geometry_msgs::Pose, geometry_msgs::Pose,double,double,std::string,bool); 			
+	void circular_interpolation_any_level(std::vector<geometry_msgs::Pose>*,double,double,double,double,double,double,double,double,double,double,double,std::string);																							
 	void move_ptp(double,double,double,double,double,double,double);
-	void hold_position(double,double,double,double,double,double);
+	void hold_position(geometry_msgs::Pose);
 	
 	// Helper function
 	double betrag(double);
 	bool epsilon_area(double,double,double,double,double,double,double);
-	Position getEndeffectorPosition();
+	geometry_msgs::Pose getEndeffectorPosition();
 	void marker(tf::StampedTransform,int,double,double,double,std::string);
+	void showDot(double,double,double,int,double,double,double,std::string);
+	void showLevel(tf::Transform,int,double,double,double,std::string);
 	void timerCallback(const ros::TimerEvent&);
-	void calculateProfile(std::vector<double>*,double, double, double,std::string);
+	void calculateProfile(std::vector<double>*,double,double,double,std::string);
+	void calculateProfileForAngularMovements(std::vector<double> *,double,double,double,double,double,double,std::string,bool);
+	void generatePath(std::vector<double>*,double,double,double,double,int,std::string);
+	void start_tracking();
+	void stop_tracking();
+	
+
 	
 private:
 	ros::NodeHandle nh_;
@@ -93,14 +87,12 @@ private:
    	tf::StampedTransform stampedTransform_;
 
 	// Var for XML Parser
-	double x_,y_,z_,x_new_,y_new_,z_new_,x_center_,y_center_,z_center_,r_,holdTime_,vel_,accl_,startAngle_,endAngle_,roll_,pitch_,yaw_;
-	std::string profile_,level_,fixAxis_;
+	double x_,y_,z_,x_new_,y_new_,z_new_,x_center_,y_center_,z_center_,r_,holdTime_,vel_,accl_,startAngle_,endAngle_,roll_,pitch_,yaw_,quat_x_,quat_y_,quat_z_,quat_w_;
+	std::string profile_,level_,fixAxis_,justRotate_;
 	
 	// Var for PTP Movement and hold Position
 	bool reached_pos_,hold_;
 	
-	// For endeffector Postion
-	Position pos_;
 	
 	// yaml params
 	double update_rate_;
