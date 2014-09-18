@@ -2,19 +2,16 @@ cmake_minimum_required(VERSION 2.8.3)
 project(cob_path_broadcaster)
 
 # Load catkin and all dependencies required for this package
-find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs tf cmake_modules kdl_conversions)
+find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs visualization_msgs tf cmake_modules kdl_conversions)
 
 find_package(TinyXML REQUIRED)
 find_package(orocos_kdl REQUIRED)
 
-FIND_PACKAGE(PythonInterp)
-FIND_PACKAGE(PythonLibs)
-FIND_PACKAGE(Boost COMPONENTS python)
+find_package(PythonInterp)
+find_package(PythonLibs)
+find_package(Boost COMPONENTS python)
 
 include_directories (${PYTHON_INCLUDE_DIRS})
-find_package(orocos_kdl REQUIRED)
-
-find_package(Boost 1.45.0 COMPONENTS python)
 include_directories (${Boost_INCLUDE_DIRS})
 
 
@@ -22,7 +19,7 @@ include_directories (${Boost_INCLUDE_DIRS})
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES cob_path_broadcaster cob_articulation cob_articulation_py
-  CATKIN_DEPENDS roscpp rospy std_msgs tf rospy
+  CATKIN_DEPENDS roscpp rospy std_msgs visualization_msgs tf
 #  DEPENDS system_lib
 )
 

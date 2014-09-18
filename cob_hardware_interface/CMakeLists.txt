@@ -2,13 +2,13 @@ cmake_minimum_required(VERSION 2.8.3)
 project(cob_hardware_interface)
 
 # Load catkin and all dependencies required for this package
-find_package(catkin REQUIRED COMPONENTS hardware_interface controller_manager brics_actuator )
+find_package(catkin REQUIRED COMPONENTS hardware_interface controller_manager sensor_msgs brics_actuator )
 
 find_package(Boost REQUIRED COMPONENTS system thread)
 
 # Declare catkin package
 catkin_package(
-  CATKIN_DEPENDS 
+  CATKIN_DEPENDS hardware_interface controller_manager sensor_msgs brics_actuator
   INCLUDE_DIRS include
   LIBRARIES cob_hwinterface_vel
 )

@@ -12,7 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES cob_control_mode_adapter
-#  CATKIN_DEPENDS brics_actuator control_msgs roscpp
+  CATKIN_DEPENDS roscpp std_msgs control_msgs controller_manager_msgs brics_actuator 
 #  DEPENDS system_lib
 )
 
