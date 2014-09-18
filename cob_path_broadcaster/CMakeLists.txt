@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(cob_path_broadcaster)
 
 # Load catkin and all dependencies required for this package
-find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs visualization_msgs tf cmake_modules kdl_conversions)
+find_package(catkin REQUIRED COMPONENTS roscpp cmake_modules std_msgs geometry_msgs visualization_msgs std_srvs cob_srvs tf kdl_conversions)
 
 find_package(TinyXML REQUIRED)
 find_package(orocos_kdl REQUIRED)
@@ -18,8 +18,8 @@ include_directories (${Boost_INCLUDE_DIRS})
 # Declare catkin package
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES cob_path_broadcaster cob_articulation cob_articulation_py
-  CATKIN_DEPENDS roscpp rospy std_msgs visualization_msgs tf
+  LIBRARIES cob_path_broadcaster cob_articulation cob_articulation_py std_srvs cob_srvs
+  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs visualization_msgs std_srvs cob_srvs tf kdl_conversions
 #  DEPENDS system_lib
 )
 
@@ -30,6 +30,8 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${TinyXML_INCLUDE_DIRS} ${oro
 add_library(cob_path_broadcaster src/cob_path_broadcaster.cpp )
 add_library(cob_articulation src/cob_articulation.cpp )
 #add_library(cob_articulation_py src/modules.cpp )
+
+add_dependencies(cob_articulation cob_srvs_gencpp)
 
 ## Declare a cpp executable
 add_executable(cob_path_broadcaster_node src/cob_path_broadcaster_node.cpp)
