@@ -4,6 +4,7 @@ Changelog for package cob_lookat_controller
 
 Forthcoming
 -----------
+* update changelog
 * Merge branch 'indigo_dev' of github.com:ipa-fxm/cob_control into velocity_interface_controller_indigo
 * Merge branch 'indigo_dev' into velocity_interface_controller_indigo
 * beautify package xml and CMakeLists
@@ -18,7 +19,7 @@ Forthcoming
 * comparing lookat_controller and twist_controller
 * moved frame_tracker to separate package
 * debug stuff for lookat_controller
-* Contributors: Christian Ehrmann, Felix Messmer, ipa-fxm
+* Contributors: Christian Ehrmann, Felix Messmer, Florian Weisshardt, ipa-fxm
 
 0.5.4 (2014-08-26)
 ------------------
