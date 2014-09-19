@@ -2,19 +2,16 @@ cmake_minimum_required(VERSION 2.8.3)
 project(cob_path_broadcaster)
 
 # Load catkin and all dependencies required for this package
-find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs geometry_msgs tf cmake_modules kdl_conversions std_srvs cob_srvs)
+find_package(catkin REQUIRED COMPONENTS roscpp cmake_modules std_msgs geometry_msgs visualization_msgs std_srvs cob_srvs tf kdl_conversions)
 
 find_package(TinyXML REQUIRED)
 find_package(orocos_kdl REQUIRED)
 
-FIND_PACKAGE(PythonInterp)
-FIND_PACKAGE(PythonLibs)
-FIND_PACKAGE(Boost COMPONENTS python)
+find_package(PythonInterp)
+find_package(PythonLibs)
+find_package(Boost COMPONENTS python)
 
 include_directories (${PYTHON_INCLUDE_DIRS})
-find_package(orocos_kdl REQUIRED)
-
-find_package(Boost 1.45.0 COMPONENTS python)
 include_directories (${Boost_INCLUDE_DIRS})
 
 
@@ -22,19 +19,19 @@ include_directories (${Boost_INCLUDE_DIRS})
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES cob_path_broadcaster cob_articulation cob_articulation_py std_srvs cob_srvs
-  CATKIN_DEPENDS roscpp rospy std_msgs tf rospy geometry_msgs
+  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs visualization_msgs std_srvs cob_srvs tf kdl_conversions
 #  DEPENDS system_lib
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${TinyXML_INCLUDE_DIRS} ${orocos_kdl_INCLUDE_DIRS})
-
-
 
 ## Build
 # Declare a cpp library
 add_library(cob_path_broadcaster src/cob_path_broadcaster.cpp )
 add_library(cob_articulation src/cob_articulation.cpp )
 #add_library(cob_articulation_py src/modules.cpp )
+
+add_dependencies(cob_articulation cob_srvs_gencpp)
 
 ## Declare a cpp executable
 add_executable(cob_path_broadcaster_node src/cob_path_broadcaster_node.cpp)

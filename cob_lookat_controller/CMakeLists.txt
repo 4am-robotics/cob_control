@@ -2,13 +2,13 @@ cmake_minimum_required(VERSION 2.8.3)
 project(cob_lookat_controller)
 
 # Load catkin and all dependencies required for this package
-find_package(catkin REQUIRED COMPONENTS roscpp sensor_msgs geometry_msgs brics_actuator kdl_parser kdl_conversions tf tf_conversions )
+find_package(catkin REQUIRED COMPONENTS roscpp sensor_msgs geometry_msgs brics_actuator std_srvs kdl_parser kdl_conversions tf tf_conversions )
 
 find_package(orocos_kdl REQUIRED)
 
 # Declare catkin package
 catkin_package(
-  CATKIN_DEPENDS roscpp sensor_msgs geometry_msgs brics_actuator
+  CATKIN_DEPENDS roscpp sensor_msgs geometry_msgs brics_actuator std_srvs
   INCLUDE_DIRS include
   LIBRARIES cob_lookat_driver cob_lookat_controller
 )
