@@ -187,7 +187,7 @@ void CobArticulation::load(const char* pFilename)
 				// Broadcast the linearpath
 				pose_path_broadcaster(&posVec);
 				
-				//actualTcpPosition=end;
+				actualTcpPosition=end;
 			}
 			
 			if("move_ptp" == movement){
@@ -270,7 +270,7 @@ void CobArticulation::load(const char* pFilename)
 				holdTime_ = atof(child->Attribute( "time"));
 				ros::Timer timer = nh_.createTimer(ros::Duration(holdTime_), &CobArticulation::timerCallback, this);
 				hold_=true;
-				hold_position(holdPose);
+				hold_position(actualTcpPosition);
 			}
 
 			x_=x_new_;
@@ -689,7 +689,7 @@ void CobArticulation::calculateProfileForAngularMovements(std::vector<double> *p
 	params[0][1] = AcclMax;
 	
 	
-	// Calculate the velocity and acceleration for the angular paths
+	// Calculate the velocity and acceleration of each angle in dependence of the linear path timings tb and tv.
 	for(int i=1;i<4;i++){
 		if(profile == "ramp"){
 			params[i][1] = Se_array[i]		/ (tb*tv); 	// Acceleration
