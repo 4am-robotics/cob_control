@@ -49,7 +49,7 @@ public:
 	void pose_path_broadcaster(std::vector <geometry_msgs::Pose> *);
 	void linear_interpolation(std::vector <geometry_msgs::Pose> *poseVector,geometry_msgs::Pose, geometry_msgs::Pose,double,double,std::string,bool); 			
 	void circular_interpolation(std::vector<geometry_msgs::Pose>*,double,double,double,double,double,double,double,double,double,double,double,std::string);																							
-	void move_ptp(double,double,double,double,double,double,double);
+	void move_ptp(geometry_msgs::Pose targetPose, double epsilon);
 	void hold_position(geometry_msgs::Pose);
 	
 	// Helper function
@@ -86,10 +86,6 @@ private:
    	tf::TransformListener listener_;
    	tf::StampedTransform currentEndeffectorStampedTransform_;
 
-	// Var for XML Parser
-	double x_,y_,z_,x_new_,y_new_,z_new_,x_center_,y_center_,z_center_,r_,holdTime_,vel_,accl_,startAngle_,endAngle_,roll_,pitch_,yaw_,quat_x_,quat_y_,quat_z_,quat_w_;
-	std::string profile_,level_,fixAxis_,justRotate_;
-	
 	// Var for PTP Movement and hold Position
 	bool reached_pos_,hold_;
 	

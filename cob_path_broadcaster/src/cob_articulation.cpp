@@ -82,11 +82,14 @@ void CobArticulation::load()
 	stop_tracking();
 	ROS_INFO("Stopping current tracking");
 	std::vector <geometry_msgs::Pose> posVec;
-	geometry_msgs::Pose pose,p,actualTcpPose;
+	geometry_msgs::Pose pose,actualTcpPose,start,end;
 	tf::Quaternion q;
-	geometry_msgs::Pose start,end;
 	tf::Transform trans;
-	double roll_actual,pitch_actual,yaw_actual;
+	double roll_actual,pitch_actual,yaw_actual,roll,pitch,yaw,quat_x,quat_y,quat_z,quat_w;
+	double x,y,z,x_new,y_new,z_new,x_center,y_center,z_center;
+	double r,holdTime,vel,accl,startAngle,endAngle;
+	std::string profile,rotateOnly;
+	bool justRotate;
 	
 	TiXmlDocument doc(charPath_);
 	bool loadOkay = doc.LoadFile();
@@ -108,73 +111,59 @@ void CobArticulation::load()
 
 			if ("move_lin" == movement){
 
-				bool justRotate;
+				
 				
 				ROS_INFO("move_linear");
 				
 				// Read Attributes
-				x_new_ = atof(child->Attribute( "x"));
-				y_new_ = atof(child->Attribute( "y"));
-				z_new_ = atof(child->Attribute( "z"));
-				roll_ = atof(child->Attribute( "roll"));
-				pitch_ = atof(child->Attribute( "pitch"));
-				yaw_ = atof(child->Attribute( "yaw"));
-				vel_ = atof(child->Attribute( "vel"));
-				accl_ = atof(child->Attribute( "accl"));
-				profile_ = child->Attribute( "profile");
-				justRotate_ = child->Attribute( "RotateOnly");
+				x_new = atof(child->Attribute( "x"));
+				y_new = atof(child->Attribute( "y"));
+				z_new = atof(child->Attribute( "z"));
+				roll = atof(child->Attribute( "roll"));
+				pitch = atof(child->Attribute( "pitch"));
+				yaw = atof(child->Attribute( "yaw"));
+				vel = atof(child->Attribute( "vel"));
+				accl = atof(child->Attribute( "accl"));
+				profile = child->Attribute( "profile");
+				rotateOnly = child->Attribute( "RotateOnly");
 				
-				roll_=roll_*M_PI/180;
-				pitch_=pitch_*M_PI/180;
-				yaw_=yaw_*M_PI/180;
+				roll*=M_PI/180;
+				pitch*=M_PI/180;
+				yaw*=M_PI/180;
 				
-				if(justRotate_ == "Yes")
+				if(rotateOnly == "Yes")
 					justRotate=true;
 				else
 					justRotate=false;
 				
 				// Get actuall position and orientation
-				p = getEndeffectorPose();
-				x_=p.position.x;
-				y_=p.position.y;
-				z_=p.position.z;
-				quat_x_ = p.orientation.x;
-				quat_y_ = p.orientation.y;
-				quat_z_ = p.orientation.z;
-				quat_w_ = p.orientation.w;
+				pose = getEndeffectorPose();
 
 				// Define Start Pose
-				start.position.x = x_;
-				start.position.y = y_;
-				start.position.z = z_;
-				start.orientation.x = quat_x_;
-				start.orientation.y = quat_y_;
-				start.orientation.z = quat_z_;
-				start.orientation.w = quat_w_;
-				
-				
+				start = pose;
+		
 				//start = actualTcpPose;
 				
 				// Transform RPY to Quaternion
-				q.setRPY(roll_,pitch_,yaw_);
+				q.setRPY(roll,pitch,yaw);
 				trans.setRotation(q);
 				
 				// Define End Pose
-				end.position.x = x_new_;
-				end.position.y = y_new_;
-				end.position.z = z_new_;
+				end.position.x = x_new;
+				end.position.y = y_new;
+				end.position.z = z_new;
 				end.orientation.x = trans.getRotation()[0];
 				end.orientation.y = trans.getRotation()[1];
 				end.orientation.z = trans.getRotation()[2];
 				end.orientation.w = trans.getRotation()[3];
 				
 				q = tf::Quaternion(trans.getRotation()[0],trans.getRotation()[1],trans.getRotation()[2],trans.getRotation()[3]);
-				tf::Matrix3x3(q).getRPY(roll_,pitch_,yaw_);	
+				tf::Matrix3x3(q).getRPY(roll,pitch,yaw);	
 				ROS_INFO("CALL ...   Quaternions: %f %f %f %f",trans.getRotation()[0],trans.getRotation()[1],trans.getRotation()[2],trans.getRotation()[3]);
-				ROS_INFO("Call ...   roll: %f   pitch: %f   yaw: %f",roll_,pitch_,yaw_);
+				ROS_INFO("Call ...   roll: %f   pitch: %f   yaw: %f",roll,pitch,yaw);
 				
 				// Interpolate the path
-				linear_interpolation(&posVec,start,end,vel_,accl_,profile_,justRotate);		
+				linear_interpolation(&posVec,start,end,vel,accl,profile,justRotate);		
 				
 				// Broadcast the linearpath
 				pose_path_broadcaster(&posVec);
@@ -184,77 +173,74 @@ void CobArticulation::load()
 			
 			if("move_ptp" == movement){
 				ROS_INFO("move_ptp");
-				x_new_ = atof(child->Attribute( "x"));
-				y_new_ = atof(child->Attribute( "y"));
-				z_new_ = atof(child->Attribute( "z"));
-				roll_ = atof(child->Attribute( "roll"));
-				pitch_ = atof(child->Attribute( "pitch"));
-				yaw_ = atof(child->Attribute( "yaw"));
+				x_new = atof(child->Attribute( "x"));
+				y_new = atof(child->Attribute( "y"));
+				z_new = atof(child->Attribute( "z"));
+				roll = atof(child->Attribute( "roll"));
+				pitch = atof(child->Attribute( "pitch"));
+				yaw = atof(child->Attribute( "yaw"));
 				
-				roll_=roll_*M_PI/180;
-				pitch_=pitch_*M_PI/180;
-				yaw_=yaw_*M_PI/180;
-				
-				move_ptp(x_new_,y_new_,z_new_,roll_,pitch_,yaw_,0.03);
-				
-				actualTcpPose.position.x = x_new_;
-				actualTcpPose.position.y = y_new_;
-				actualTcpPose.position.z = z_new_;
+				roll*=M_PI/180;
+				pitch*=M_PI/180;
+				yaw*=M_PI/180;
 				
 				// Transform RPY to Quaternion
-				q.setRPY(roll_,pitch_,yaw_);
+				q.setRPY(roll,pitch,yaw);
 				trans.setRotation(q);
 				
-				actualTcpPose.orientation.x = trans.getRotation()[0];
-				actualTcpPose.orientation.y = trans.getRotation()[1];
-				actualTcpPose.orientation.z = trans.getRotation()[2];
-				actualTcpPose.orientation.w = trans.getRotation()[3];
+				pose.position.x = x_new;
+				pose.position.y = y_new;
+				pose.position.z = z_new;
+				pose.orientation.x = trans.getRotation()[0];
+				pose.orientation.y = trans.getRotation()[1];
+				pose.orientation.z = trans.getRotation()[2];
+				pose.orientation.w = trans.getRotation()[3];
+				
+				move_ptp(pose,0.03);
+				
+				actualTcpPose = pose;
 			}
 											
 			if("move_circ" == movement){
 				ROS_INFO("move_circ");
 				
-				x_center_ 	= atof(child->Attribute( "x_center"));
-				y_center_ 	= atof(child->Attribute( "y_center"));
-				z_center_	= atof(child->Attribute( "z_center"));
-				roll_ 		= atof(child->Attribute( "roll_center"));
-				pitch_		= atof(child->Attribute( "pitch_center"));
-				yaw_ 		= atof(child->Attribute( "yaw_center"));
-				r_			= atof(child->Attribute( "r"));
-				startAngle_ = atof(child->Attribute( "startangle"));
-				endAngle_	= atof(child->Attribute( "endangle"));
-				vel_		= atof(child->Attribute( "vel"));
-				accl_ 		= atof(child->Attribute( "accl"));
-				profile_ 	= child->Attribute( "profile");
+				x_center 	= atof(child->Attribute( "x_center"));
+				y_center 	= atof(child->Attribute( "y_center"));
+				z_center	= atof(child->Attribute( "z_center"));
+				roll 		= atof(child->Attribute( "roll_center"));
+				pitch		= atof(child->Attribute( "pitch_center"));
+				yaw 		= atof(child->Attribute( "yaw_center"));
+				r			= atof(child->Attribute( "r"));
+				startAngle  = atof(child->Attribute( "startangle"));
+				endAngle	= atof(child->Attribute( "endangle"));
+				vel	  		= atof(child->Attribute( "vel"));
+				accl 		= atof(child->Attribute( "accl"));
+				profile 	= child->Attribute( "profile");
 
 
-				p = getEndeffectorPose();
-				quat_x_ = p.orientation.x;
-				quat_y_ = p.orientation.y;
-				quat_z_ = p.orientation.z;
-				quat_w_ = p.orientation.w;
+				pose = getEndeffectorPose();
+				quat_x = pose.orientation.x;
+				quat_y = pose.orientation.y;
+				quat_z = pose.orientation.z;
+				quat_w = pose.orientation.w;
 
 				int marker3=0;
 				
-				showDot(x_center_,y_center_,z_center_,marker3,1.0,0,0,"Center_point");
-				circular_interpolation(&posVec,x_center_,y_center_,z_center_,roll_,pitch_,yaw_,startAngle_,endAngle_,r_,vel_,accl_,profile_);
+				showDot(x_center,y_center,z_center,marker3,1.0,0,0,"Center_point");
+				circular_interpolation(&posVec,x_center,y_center,z_center,roll,pitch,yaw,startAngle,endAngle,r,vel,accl,profile);
 				pose_path_broadcaster(&posVec);
-				
-				
+							
 			}
 		
 			
 			if("hold" == movement){		
 				ROS_INFO("Hold position");
-				holdTime_ = atof(child->Attribute( "time"));
-				ros::Timer timer = nh_.createTimer(ros::Duration(holdTime_), &CobArticulation::timerCallback, this);
+				holdTime = atof(child->Attribute( "time"));
+				ros::Timer timer = nh_.createTimer(ros::Duration(holdTime), &CobArticulation::timerCallback, this);
 				hold_=true;
 				hold_position(actualTcpPose);
 			}
 
-			x_=x_new_;
-			y_=y_new_;
-			z_=z_new_;
 			posVec.clear();
 		}	
 	}else{
@@ -264,31 +250,31 @@ void CobArticulation::load()
 }
 
 // Pseudo PTP
-void CobArticulation::move_ptp(double x, double y, double z, double roll, double pitch, double yaw, double epsilon){
+void CobArticulation::move_ptp(geometry_msgs::Pose targetPose, double epsilon){
 	reached_pos_=false;
 	int reached_pos_counter=0;	
 	double ro,pi,ya;
 	ros::Rate rate(update_rate_);
 	ros::Time now;
 	tf::StampedTransform stampedTransform;
+	tf::Quaternion q;
 	bool transformed=false;
 	
 	while(ros::ok()){
 		now = ros::Time::now();
 
 		// Linearkoordinaten
-		transform_.setOrigin( tf::Vector3(x,y,z) );
+		transform_.setOrigin( tf::Vector3(targetPose.position.x,targetPose.position.y,targetPose.position.z) );
 	
-		// RPY Winkel
-		q_.setRPY(roll, pitch, yaw);
-		transform_.setRotation(q_);
+		q = tf::Quaternion(targetPose.orientation.x,targetPose.orientation.y,targetPose.orientation.z,targetPose.orientation.w);
+		transform_.setRotation(q);
 				
 		// Send br Frame
 		br_.sendTransform(tf::StampedTransform(transform_, now, referenceFrame_, targetFrame_));
 
 		// Get transformation
 		try{
-			listener_.lookupTransform(targetFrame_,endeffectorFrame_,now, stampedTransform);
+			listener_.lookupTransform(targetFrame_,endeffectorFrame_,ros::Time(0), stampedTransform);
 		}
 		catch (tf::TransformException &ex) {
 			ROS_ERROR("%s",ex.what());
@@ -313,7 +299,7 @@ void CobArticulation::move_ptp(double x, double y, double z, double roll, double
 			break;
 		}
 		rate.sleep();
-	ros::spinOnce();
+		ros::spinOnce();
 	}
 }
 
