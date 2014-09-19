@@ -42,22 +42,20 @@ class CobArticulation
 {
 public:
 	void initialize();
-	void run();
-	void load(const char*);
+	void load();
 	
 	// Main functions
 	void broadcast_path(std::vector<double>*,std::vector<double>*,std::vector<double>*,std::vector<double>*,std::vector<double>*,std::vector<double>*,double,double,std::string);	
 	void pose_path_broadcaster(std::vector <geometry_msgs::Pose> *);
 	void linear_interpolation(std::vector <geometry_msgs::Pose> *poseVector,geometry_msgs::Pose, geometry_msgs::Pose,double,double,std::string,bool); 			
-	void circular_interpolation_any_level(std::vector<geometry_msgs::Pose>*,double,double,double,double,double,double,double,double,double,double,double,std::string);																							
-	void move_ptp(double,double,double,double,double,double,double);
+	void circular_interpolation(std::vector<geometry_msgs::Pose>*,double,double,double,double,double,double,double,double,double,double,double,std::string);																							
+	void move_ptp(geometry_msgs::Pose targetPose, double epsilon);
 	void hold_position(geometry_msgs::Pose);
 	
 	// Helper function
-	double betrag(double);
 	bool epsilon_area(double,double,double,double,double,double,double);
-	geometry_msgs::Pose getEndeffectorPosition();
-	void marker(tf::StampedTransform,int,double,double,double,std::string);
+	geometry_msgs::Pose getEndeffectorPose();
+	void showMarker(tf::StampedTransform,int,double,double,double,std::string);
 	void showDot(double,double,double,int,double,double,double,std::string);
 	void showLevel(tf::Transform,int,double,double,double,std::string);
 	void timerCallback(const ros::TimerEvent&);
@@ -78,25 +76,23 @@ private:
 	ros::Publisher	speed_pub_;
 	ros::Publisher	accl_pub_;
 	ros::Publisher	jerk_pub_;
+	ros::ServiceClient startTracking_;
+	ros::ServiceClient stopTracking_;
 	
 	//TF Broadcaster-Var
 	tf::TransformBroadcaster br_;
    	tf::Transform transform_;
    	tf::Quaternion q_;
    	tf::TransformListener listener_;
-   	tf::StampedTransform stampedTransform_;
+   	tf::StampedTransform currentEndeffectorStampedTransform_;
 
-	// Var for XML Parser
-	double x_,y_,z_,x_new_,y_new_,z_new_,x_center_,y_center_,z_center_,r_,holdTime_,vel_,accl_,startAngle_,endAngle_,roll_,pitch_,yaw_,quat_x_,quat_y_,quat_z_,quat_w_;
-	std::string profile_,level_,fixAxis_,justRotate_;
-	
 	// Var for PTP Movement and hold Position
 	bool reached_pos_,hold_;
 	
 	
 	// yaml params
 	double update_rate_;
-	std::string stringPath_,referenceFrame_,goalFrame_,endeffectorFrame_;
+	std::string stringPath_,referenceFrame_,targetFrame_,endeffectorFrame_;
 	const char* charPath_;
 	
 	
