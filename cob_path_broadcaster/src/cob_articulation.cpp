@@ -53,8 +53,8 @@ void CobArticulation::initialize()
 	if (nh_.hasParam("reference_frame"))
 	{nh_.getParam("reference_frame", referenceFrame_);}
 	
-	if (nh_.hasParam("goal_frame"))
-	{nh_.getParam("goal_frame", goalFrame_);}
+	if (nh_.hasParam("target_frame"))
+	{nh_.getParam("target_frame", targetFrame_);}
 	
 	if (nh_.hasParam("endeffector_frame"))
 	{nh_.getParam("endeffector_frame", endeffectorFrame_);}
@@ -63,45 +63,37 @@ void CobArticulation::initialize()
 	
 	marker1_=0;
 	marker2_=0;
-	start_tracking();
 	
-	ROS_INFO("...initialized!");
-}
-
-
-
-void CobArticulation::run()
-{	
-	ros::Rate r(update_rate_);
-
 	vis_pub_ = nh_.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
 	speed_pub_ = nh_.advertise<std_msgs::Float64> ("linear_vel", 1);
 	accl_pub_ = nh_.advertise<std_msgs::Float64> ("linear_accl", 1);
 	path_pub_ = nh_.advertise<std_msgs::Float64> ("linear_path", 1);
 	jerk_pub_ = nh_.advertise<std_msgs::Float64> ("linear_jerk", 1);
+	startTracking_ = nh_.serviceClient<cob_srvs::SetString>("/arm_controller/start_tracking");
+	stopTracking_ = nh_.serviceClient<std_srvs::Empty>("/arm_controller/stop_tracking");
 
-	ros::spinOnce();
-	load( charPath_ );
-	stop_tracking();
+	ROS_INFO("...initialized!");
 }
 
 
 
-void CobArticulation::load(const char* pFilename)
+void CobArticulation::load()
 {	
-
+	stop_tracking();
+	ROS_INFO("Stopping current tracking");
 	std::vector <geometry_msgs::Pose> posVec;
-	geometry_msgs::Pose pose,p,actualTcpPosition;
+	geometry_msgs::Pose pose,p,actualTcpPose;
 	tf::Quaternion q;
 	geometry_msgs::Pose start,end;
 	tf::Transform trans;
 	double roll_actual,pitch_actual,yaw_actual;
 	
-	TiXmlDocument doc(pFilename);
+	TiXmlDocument doc(charPath_);
 	bool loadOkay = doc.LoadFile();
 	if (loadOkay)
 	{
 		ROS_INFO("load okay");
+		start_tracking();
 
 		TiXmlHandle docHandle( &doc );
 		TiXmlElement* child = docHandle.FirstChild( "Movement" ).FirstChild( "Move" ).ToElement();
@@ -142,7 +134,7 @@ void CobArticulation::load(const char* pFilename)
 					justRotate=false;
 				
 				// Get actuall position and orientation
-				p = getEndeffectorPosition();
+				p = getEndeffectorPose();
 				x_=p.position.x;
 				y_=p.position.y;
 				z_=p.position.z;
@@ -161,7 +153,7 @@ void CobArticulation::load(const char* pFilename)
 				start.orientation.w = quat_w_;
 				
 				
-				//start = actualTcpPosition;
+				//start = actualTcpPose;
 				
 				// Transform RPY to Quaternion
 				q.setRPY(roll_,pitch_,yaw_);
@@ -187,7 +179,7 @@ void CobArticulation::load(const char* pFilename)
 				// Broadcast the linearpath
 				pose_path_broadcaster(&posVec);
 				
-				actualTcpPosition=end;
+				actualTcpPose=end;
 			}
 			
 			if("move_ptp" == movement){
@@ -205,21 +197,21 @@ void CobArticulation::load(const char* pFilename)
 				
 				move_ptp(x_new_,y_new_,z_new_,roll_,pitch_,yaw_,0.03);
 				
-				actualTcpPosition.position.x = x_new_;
-				actualTcpPosition.position.y = y_new_;
-				actualTcpPosition.position.z = z_new_;
+				actualTcpPose.position.x = x_new_;
+				actualTcpPose.position.y = y_new_;
+				actualTcpPose.position.z = z_new_;
 				
 				// Transform RPY to Quaternion
 				q.setRPY(roll_,pitch_,yaw_);
 				trans.setRotation(q);
 				
-				actualTcpPosition.orientation.x = trans.getRotation()[0];
-				actualTcpPosition.orientation.y = trans.getRotation()[1];
-				actualTcpPosition.orientation.z = trans.getRotation()[2];
-				actualTcpPosition.orientation.w = trans.getRotation()[3];
+				actualTcpPose.orientation.x = trans.getRotation()[0];
+				actualTcpPose.orientation.y = trans.getRotation()[1];
+				actualTcpPose.orientation.z = trans.getRotation()[2];
+				actualTcpPose.orientation.w = trans.getRotation()[3];
 			}
 											
-			if("move_circ_any_level" == movement){
+			if("move_circ" == movement){
 				ROS_INFO("move_circ");
 				
 				x_center_ 	= atof(child->Attribute( "x_center"));
@@ -236,7 +228,7 @@ void CobArticulation::load(const char* pFilename)
 				profile_ 	= child->Attribute( "profile");
 
 
-				p = getEndeffectorPosition();
+				p = getEndeffectorPose();
 				quat_x_ = p.orientation.x;
 				quat_y_ = p.orientation.y;
 				quat_z_ = p.orientation.z;
@@ -245,32 +237,19 @@ void CobArticulation::load(const char* pFilename)
 				int marker3=0;
 				
 				showDot(x_center_,y_center_,z_center_,marker3,1.0,0,0,"Center_point");
-				circular_interpolation_any_level(&posVec,x_center_,y_center_,z_center_,roll_,pitch_,yaw_,startAngle_,endAngle_,r_,vel_,accl_,profile_);
+				circular_interpolation(&posVec,x_center_,y_center_,z_center_,roll_,pitch_,yaw_,startAngle_,endAngle_,r_,vel_,accl_,profile_);
 				pose_path_broadcaster(&posVec);
 				
 				
 			}
 		
 			
-			if("hold" == movement){
-				geometry_msgs::Pose holdPose;
-				// Get actuall position and orientation
-				
-				p = getEndeffectorPosition();
-				holdPose.position.x=x_new_;
-				holdPose.position.y=y_new_;
-				holdPose.position.z=z_new_;
-				holdPose.orientation.x = p.orientation.x;
-				holdPose.orientation.y = p.orientation.y;
-				holdPose.orientation.z = p.orientation.z;
-				holdPose.orientation.w = p.orientation.w;
-			
-				
+			if("hold" == movement){		
 				ROS_INFO("Hold position");
 				holdTime_ = atof(child->Attribute( "time"));
 				ros::Timer timer = nh_.createTimer(ros::Duration(holdTime_), &CobArticulation::timerCallback, this);
 				hold_=true;
-				hold_position(actualTcpPosition);
+				hold_position(actualTcpPose);
 			}
 
 			x_=x_new_;
@@ -281,6 +260,7 @@ void CobArticulation::load(const char* pFilename)
 	}else{
 		ROS_WARN("Error loading File");
 	}
+	stop_tracking();
 }
 
 // Pseudo PTP
@@ -290,7 +270,8 @@ void CobArticulation::move_ptp(double x, double y, double z, double roll, double
 	double ro,pi,ya;
 	ros::Rate rate(update_rate_);
 	ros::Time now;
-	
+	tf::StampedTransform stampedTransform;
+	bool transformed=false;
 	
 	while(ros::ok()){
 		now = ros::Time::now();
@@ -303,24 +284,24 @@ void CobArticulation::move_ptp(double x, double y, double z, double roll, double
 		transform_.setRotation(q_);
 				
 		// Send br Frame
-		br_.sendTransform(tf::StampedTransform(transform_, now, referenceFrame_, goalFrame_));
+		br_.sendTransform(tf::StampedTransform(transform_, now, referenceFrame_, targetFrame_));
 
 		// Get transformation
 		try{
-			listener_.waitForTransform(goalFrame_,endeffectorFrame_, now, ros::Duration(0.5));
-			listener_.lookupTransform(goalFrame_,endeffectorFrame_, now, stampedTransform_);
+			listener_.lookupTransform(targetFrame_,endeffectorFrame_,now, stampedTransform);
 		}
 		catch (tf::TransformException &ex) {
 			ROS_ERROR("%s",ex.what());
-		}
+		}	
+
 		
 		// Get current RPY out of quaternion
-		tf::Quaternion quatern = stampedTransform_.getRotation();
+		tf::Quaternion quatern = stampedTransform.getRotation();
 		tf::Matrix3x3(quatern).getRPY(ro,pi,ya);
 				
 				
 		// Wait for arm_7_link to be in position
-		if(epsilon_area(stampedTransform_.getOrigin().x(), stampedTransform_.getOrigin().y(), stampedTransform_.getOrigin().z(),ro,pi,ya,epsilon)){
+		if(epsilon_area(stampedTransform.getOrigin().x(), stampedTransform.getOrigin().y(), stampedTransform.getOrigin().z(),ro,pi,ya,epsilon)){
 			reached_pos_counter++;	// Count up if end effector position is in the epsilon area to avoid wrong values
 		}
 		
@@ -357,10 +338,10 @@ void CobArticulation::pose_path_broadcaster(std::vector <geometry_msgs::Pose> *p
 		
 		transform_.setRotation(q);   
 		
-		marker(tf::StampedTransform(transform_, ros::Time::now(), referenceFrame_, goalFrame_),marker1_, 0 , 1.0 , 0 ,"goalFrame");
-		//marker(stampedTransform_,marker2_, 1.0 , 0 , 0 , "TCP");				
+		showMarker(tf::StampedTransform(transform_, ros::Time::now(), referenceFrame_, targetFrame_),marker1_, 0 , 1.0 , 0 ,"goalFrame");
+		//showMarker(stampedTransform_,marker2_, 1.0 , 0 , 0 , "TCP");				
 		
-		br_.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), referenceFrame_, goalFrame_));
+		br_.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), referenceFrame_, targetFrame_));
 		
 
 		marker1_++;
@@ -382,14 +363,14 @@ void CobArticulation::hold_position(geometry_msgs::Pose holdPose)
 	while(hold_){
 		now = ros::Time::now();
 		
-		// Linearkoordinaten
+		// Linearcoordinates
 		transform_.setOrigin( tf::Vector3(holdPose.position.x,holdPose.position.y,holdPose.position.z) );
 	
-		// RPY Winkel
+		// RPY Angles
 		q = tf::Quaternion(holdPose.orientation.x,holdPose.orientation.y,holdPose.orientation.z,holdPose.orientation.w);
 		transform_.setRotation(q);   	
 	
-		br_.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), referenceFrame_, goalFrame_));
+		br_.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), referenceFrame_, targetFrame_));
 		ros::spinOnce();
 		rate.sleep();
 	}
@@ -420,9 +401,9 @@ void CobArticulation::linear_interpolation(	std::vector <geometry_msgs::Pose> *p
 	ROS_INFO("BLABLA   endroll: %f",end_roll);
 	
 	// Calculate path length for the angular movement
-	double Se_roll = betrag(end_roll-start_roll);
-	double Se_pitch = betrag(end_pitch-start_pitch);
-	double Se_yaw = betrag(end_yaw-start_yaw);
+	double Se_roll = std::fabs(end_roll-start_roll);
+	double Se_pitch = std::fabs(end_pitch-start_pitch);
+	double Se_yaw = std::fabs(end_yaw-start_yaw);
 	
 	// Calculate path for each Angle
 	calculateProfileForAngularMovements(pathMatrix,Se,Se_roll,Se_pitch,Se_yaw,VelMax,AcclMax,profile,justRotate);
@@ -466,7 +447,7 @@ void CobArticulation::linear_interpolation(	std::vector <geometry_msgs::Pose> *p
 
 
 
-void CobArticulation::circular_interpolation_any_level(	std::vector<geometry_msgs::Pose>* poseVector,
+void CobArticulation::circular_interpolation(	std::vector<geometry_msgs::Pose>* poseVector,
 														double M_x,double M_y,double M_z,
 														double M_roll,double M_pitch,double M_yaw,
 														double startAngle, double endAngle,double r, double VelMax, double AcclMax,
@@ -493,7 +474,7 @@ void CobArticulation::circular_interpolation_any_level(	std::vector<geometry_msg
 	else
 		forward=true;
 		
-	Se = betrag(Se);
+	Se = std::fabs(Se);
 	
 	
 	// Calculates the Path with Ramp - or Sinoidprofile
@@ -721,37 +702,35 @@ void CobArticulation::calculateProfileForAngularMovements(std::vector<double> *p
 
 
 
-double CobArticulation::betrag(double num){
-	if(num<0){
-		num=num*(-1.0);
-	}
-	return num;
-}
 
 
-
-geometry_msgs::Pose CobArticulation::getEndeffectorPosition()
+geometry_msgs::Pose CobArticulation::getEndeffectorPose()
 {	
 	geometry_msgs::Pose pos;	
-	for(int i=0;i<3;i++){
-		ros::Time now = ros::Time::now();;
+	tf::StampedTransform stampedTransform;
+	bool transformed=false;
+	do{
 		// Get transformation
 		try{
-			listener_.waitForTransform(referenceFrame_,endeffectorFrame_, now, ros::Duration(0.5));
-			listener_.lookupTransform(referenceFrame_,endeffectorFrame_, now, stampedTransform_);
+			listener_.lookupTransform(referenceFrame_,endeffectorFrame_, ros::Time(0), stampedTransform);
+			transformed=true;
 		}
 		catch (tf::TransformException &ex) {
 			ROS_ERROR("%s",ex.what());
+			transformed = false;
+			ros::Duration(0.1).sleep();
 		}	
-	}
+	}while(!transformed);
 	
-	pos.position.x=stampedTransform_.getOrigin().x();
-	pos.position.y=stampedTransform_.getOrigin().y();
-	pos.position.z=stampedTransform_.getOrigin().z();
-	pos.orientation.x = stampedTransform_.getRotation()[0];
-	pos.orientation.y = stampedTransform_.getRotation()[1];
-	pos.orientation.z = stampedTransform_.getRotation()[2];
-	pos.orientation.w = stampedTransform_.getRotation()[3];
+	currentEndeffectorStampedTransform_ = stampedTransform;
+	
+	pos.position.x=stampedTransform.getOrigin().x();
+	pos.position.y=stampedTransform.getOrigin().y();
+	pos.position.z=stampedTransform.getOrigin().z();
+	pos.orientation.x = stampedTransform.getRotation()[0];
+	pos.orientation.y = stampedTransform.getRotation()[1];
+	pos.orientation.z = stampedTransform.getRotation()[2];
+	pos.orientation.w = stampedTransform.getRotation()[3];
 			
 	return pos;
 }
@@ -764,12 +743,12 @@ bool CobArticulation::epsilon_area(double x,double y, double z, double roll, dou
 	bool x_okay=false, y_okay=false, z_okay=false;
 	bool roll_okay=false, pitch_okay=false, yaw_okay=false;
 	
-	x=betrag(x);
-	y=betrag(y);
-	z=betrag(z);
-	roll=betrag(roll);
-	pitch=betrag(pitch);
-	yaw=betrag(yaw);
+	x=std::fabs(x);
+	y=std::fabs(y);
+	z=std::fabs(z);
+	roll=std::fabs(roll);
+	pitch=std::fabs(pitch);
+	yaw=std::fabs(yaw);
 	
 	if(x < epsilon){ x_okay = true; };
 	if(y < epsilon){ y_okay = true; };
@@ -787,7 +766,7 @@ bool CobArticulation::epsilon_area(double x,double y, double z, double roll, dou
 
 
 
-void CobArticulation::marker(tf::StampedTransform tf,int marker_id,double red, double green, double blue,std::string ns)
+void CobArticulation::showMarker(tf::StampedTransform tf,int marker_id,double red, double green, double blue,std::string ns)
 {
   	visualization_msgs::Marker marker;
 	marker.header.frame_id = referenceFrame_;
@@ -888,10 +867,10 @@ void CobArticulation::timerCallback(const ros::TimerEvent& event){
 
 void CobArticulation::start_tracking()
 {	
-	ros::ServiceClient startTracking = nh_.serviceClient<cob_srvs::SetString>("/arm_controller/start_tracking");
+	
     cob_srvs::SetString start;
-    start.request.data = goalFrame_;
-    startTracking.call(start);
+    start.request.data = targetFrame_;
+    startTracking_.call(start);
     
     if(start.response.success==true){
 		ROS_INFO("...service called!");
@@ -899,7 +878,6 @@ void CobArticulation::start_tracking()
 	else{
 		ROS_INFO("...service failed");
 	}
-
 }
 
 
@@ -907,10 +885,9 @@ void CobArticulation::start_tracking()
 
 void CobArticulation::stop_tracking()
 {
-	ros::ServiceClient savety_client = nh_.serviceClient<std_srvs::Empty>("/arm_controller/stop_tracking");
     std_srvs::Empty srv_save_stop;
     srv_save_stop.request;
-    if (savety_client.call(srv_save_stop)) {
+    if (stopTracking_.call(srv_save_stop)) {
 		ROS_INFO("Lookat stopped for savety issues");
 		}
     	else {
