@@ -41,76 +41,62 @@
 class CobArticulation
 {
 public:
-	struct Position
-    {
-   		double x,y,z,alpha,beta,gamma;
-	};
-
-	
-	struct Path
-    {
-   		std::vector<double> x;
-   		std::vector<double> y;
-   		std::vector<double> z;
-   		std::vector<double> roll;
-   		std::vector<double> pitch;
-   		std::vector<double> yaw;
-	};
-
-	
-	struct WayPoint
-    {
-   		double x,y,z,roll,pitch,yaw;
-	};
-
-	CobArticulation() {;}
-	
 	void initialize();
-	void run();
-	void load(const char*);
+	void load();
 	
-	void broadcast_path(std::vector<double>*,std::vector<double>*,std::vector<double>*);
-	void linear_interpolation(std::vector<double>*,double,double,std::vector<double>*,double,double,std::vector<double>*,double,double,double,double,std::string);
-	void circular_interpolation(std::vector<double>*,double,std::vector<double>*,double,std::vector<double>*,double,double,double,double,double,double,std::string);
-	//Path circular_interpolation(CobArticulation::WayPoint,double,double,double,double,double,std::string);
-	bool move_ptp(double,double,double,double);
-	void hold_position(double,double,double);
-	double betrag(double);
-	bool epsilon_area(double,double,double,double);
-	Position getEndeffectorPosition();
-	void manipulability_Callback(const std_msgs::Float64& msg);
+	// Main functions
+	void broadcast_path(std::vector<double>*,std::vector<double>*,std::vector<double>*,std::vector<double>*,std::vector<double>*,std::vector<double>*,double,double,std::string);	
+	void pose_path_broadcaster(std::vector <geometry_msgs::Pose> *);
+	void linear_interpolation(std::vector <geometry_msgs::Pose> *poseVector,geometry_msgs::Pose, geometry_msgs::Pose,double,double,std::string,bool); 			
+	void circular_interpolation(std::vector<geometry_msgs::Pose>*,double,double,double,double,double,double,double,double,double,double,double,std::string);																							
+	void move_ptp(geometry_msgs::Pose targetPose, double epsilon);
+	void hold_position(geometry_msgs::Pose);
+	
+	// Helper function
+	bool epsilon_area(double,double,double,double,double,double,double);
+	geometry_msgs::Pose getEndeffectorPose();
+	void showMarker(tf::StampedTransform,int,double,double,double,std::string);
+	void showDot(double,double,double,int,double,double,double,std::string);
+	void showLevel(tf::Transform,int,double,double,double,std::string);
 	void timerCallback(const ros::TimerEvent&);
-	void calculateProfile(std::vector<double>*,double, double, double,std::string);
-    // Polling
-	double update_rate_;
-
+	void calculateProfile(std::vector<double>*,double,double,double,std::string);
+	void calculateProfileForAngularMovements(std::vector<double> *,double,double,double,double,double,double,std::string,bool);
+	void generatePath(std::vector<double>*,double,double,double,double,int,std::string);
+	void start_tracking();
+	void stop_tracking();
+	
 
 	
 private:
-
+	ros::NodeHandle nh_;
+	
+	// Publisher
+	ros::Publisher  vis_pub_;
+	ros::Publisher	path_pub_;
+	ros::Publisher	speed_pub_;
+	ros::Publisher	accl_pub_;
+	ros::Publisher	jerk_pub_;
+	ros::ServiceClient startTracking_;
+	ros::ServiceClient stopTracking_;
+	
 	//TF Broadcaster-Var
 	tf::TransformBroadcaster br_;
    	tf::Transform transform_;
    	tf::Quaternion q_;
    	tf::TransformListener listener_;
-   	tf::StampedTransform stampedTransform_;
+   	tf::StampedTransform currentEndeffectorStampedTransform_;
 
-	ros::NodeHandle nh_;
-	ros::Publisher vis_pub_;
+	// Var for PTP Movement and hold Position
+	bool reached_pos_,hold_;
 	
-	bool homepos_;
-	bool reached_home_;
-	bool hold_;
-	double angle_;
 	
-	double x_,y_,z_,x_new_,y_new_,z_new_,x_center_,y_center_,z_center_,r_,holdTime_,vel_,accl_,startAngle_,endAngle_;
-	std::string profile_;
+	// yaml params
+	double update_rate_;
+	std::string stringPath_,referenceFrame_,targetFrame_,endeffectorFrame_;
+	const char* charPath_;
 	
-	Position pos_;
-	int marker_id_;
-	int set_markers_;
-
 	
+	int marker1_,marker2_;
 };
 
 #endif
