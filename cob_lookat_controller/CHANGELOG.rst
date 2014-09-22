@@ -2,8 +2,8 @@
 Changelog for package cob_lookat_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.1 (2014-09-22)
+------------------
 * Merge branch 'indigo_dev' into indigo_release_candidate
 * missing dependencies
 * Contributors: Florian Weisshardt, ipa-fxm
