@@ -7,7 +7,7 @@ int main(int argc, char **argv)
 	CobArticulation *pb = new CobArticulation();
 	
 	pb->initialize();
-	pb->run();
+	pb->load();
 	
 	return 0;
 }
