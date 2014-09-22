@@ -2,6 +2,9 @@
 Changelog for package cob_trajectory_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.5.3 (2014-03-31)
 ------------------
 * install tags

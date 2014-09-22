@@ -2,6 +2,9 @@
 Changelog for package cob_control_mode_adapter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.6.0 (2014-09-18)
 ------------------
 * resolve namespace problem with velocity controller topics hardware vs. simulation
