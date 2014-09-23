@@ -41,7 +41,7 @@
 class CobArticulation
 {
 public:
-	void initialize();
+	bool initialize();
 	void load();
 	
 	// Main functions
@@ -60,11 +60,12 @@ public:
 	void showLevel(tf::Transform,int,double,double,double,std::string);
 	void timerCallback(const ros::TimerEvent&);
 	void calculateProfile(std::vector<double>*,double,double,double,std::string);
-	void calculateProfileForAngularMovements(std::vector<double> *,double,double,double,double,double,double,std::string,bool);
+	void calculateProfileForAngularMovements(std::vector<double> *pathMatrix,double,double,double,double,double,double,double,double,double,std::string,bool);	
 	void generatePath(std::vector<double>*,double,double,double,double,int,std::string);
+	void generatePathWithTe(std::vector<double> *pathArray,double T_IPO, double te, double AcclMax,double Se_max, int steps_max,double start_angle,std::string profile);
 	void start_tracking();
 	void stop_tracking();
-	
+	void PoseToRPY(geometry_msgs::Pose pose,double &roll, double &pitch, double &yaw);
 
 	
 private:
@@ -92,7 +93,7 @@ private:
 	
 	// yaml params
 	double update_rate_;
-	std::string stringPath_,referenceFrame_,targetFrame_,endeffectorFrame_;
+	std::string stringPath_,fileName_,referenceFrame_,targetFrame_,endeffectorFrame_;
 	const char* charPath_;
 	
 	
