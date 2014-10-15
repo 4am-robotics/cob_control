@@ -54,11 +54,9 @@
 #ifndef UndercarriageCtrlGeom_INCLUDEDEF_H
 #define UndercarriageCtrlGeom_INCLUDEDEF_H
 
-//#include <time.h>
 
-#include <cob_utilities/IniFile.h>
-#include <cob_utilities/MathSup.h>
-#include <cob_utilities/TimeStamp.h>
+#include <vector>
+#include <string>
 
 class UndercarriageCtrlGeom
 {

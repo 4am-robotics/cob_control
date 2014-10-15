@@ -51,7 +51,23 @@
  *
  ****************************************************************/
 
-#include <cob_undercarriage_ctrl/UndercarriageCtrlGeom.h>
+#include <cob_omni_drive_controller/UndercarriageCtrlGeom.h>
+
+#include <math.h>
+#include <angles/angles.h>
+
+namespace MathSup {
+    const double PI = 3.14159265358979323846;
+    void normalizePi(double &val) { val = angles::normalize_angle(val); }
+
+    double atan4quad(double y, double x)
+    {
+        if((x==0.0) && (y==0.0)) throw 0;
+        return atan2(y,x);
+    }
+
+}
+
 
 // Constructor
 UndercarriageCtrlGeom::UndercarriageCtrlGeom(std::string sIniDirectory)
@@ -61,9 +77,9 @@ UndercarriageCtrlGeom::UndercarriageCtrlGeom(std::string sIniDirectory)
 	// init EMStop flag
 	m_bEMStopActive = false;
 	
-	IniFile iniFile;
-	iniFile.SetFileName(m_sIniDirectory + "Platform.ini", "UnderCarriageCtrlGeom.cpp");
-	iniFile.GetKeyInt("Config", "NumberOfWheels", &m_iNumberOfDrives, true);
+// 	IniFile iniFile;
+// 	iniFile.SetFileName(m_sIniDirectory + "Platform.ini", "UnderCarriageCtrlGeom.cpp");
+// 	iniFile.GetKeyInt("Config", "NumberOfWheels", &m_iNumberOfDrives, true);
 
 	// init vectors
 	m_vdVelGearDriveRadS.assign(4,0);
@@ -157,73 +173,73 @@ void UndercarriageCtrlGeom::InitUndercarriageCtrl(void)
 {
 	//LOG_OUT("Initializing Undercarriage-Controller (Geom)");
 
-	IniFile iniFile;
-
-	iniFile.SetFileName(m_sIniDirectory + "Platform.ini", "UnderCarriageCtrlGeom.cpp");
-	iniFile.GetKeyInt("Geom", "DistWheels", &m_UnderCarriagePrms.iDistWheels, true);
-	iniFile.GetKeyInt("Geom", "RadiusWheel", &m_UnderCarriagePrms.iRadiusWheelMM, true);
-	iniFile.GetKeyInt("Geom", "DistSteerAxisToDriveWheelCenter", &m_UnderCarriagePrms.iDistSteerAxisToDriveWheelMM, true);
-
-	iniFile.GetKeyDouble("Geom", "Wheel1XPos", &m_vdWheelXPosMM[0], true);
-	iniFile.GetKeyDouble("Geom", "Wheel1YPos", &m_vdWheelYPosMM[0], true);
-	iniFile.GetKeyDouble("Geom", "Wheel2XPos", &m_vdWheelXPosMM[1], true);
-	iniFile.GetKeyDouble("Geom", "Wheel2YPos", &m_vdWheelYPosMM[1], true);
-	iniFile.GetKeyDouble("Geom", "Wheel3XPos", &m_vdWheelXPosMM[2], true);
-	iniFile.GetKeyDouble("Geom", "Wheel3YPos", &m_vdWheelYPosMM[2], true);
-	iniFile.GetKeyDouble("Geom", "Wheel4XPos", &m_vdWheelXPosMM[3], true);
-	iniFile.GetKeyDouble("Geom", "Wheel4YPos", &m_vdWheelYPosMM[3], true);
-
-	iniFile.GetKeyDouble("DrivePrms", "MaxDriveRate", &m_UnderCarriagePrms.dMaxDriveRateRadpS, true);
-	iniFile.GetKeyDouble("DrivePrms", "MaxSteerRate", &m_UnderCarriagePrms.dMaxSteerRateRadpS, true);
-
-	iniFile.GetKeyDouble("DrivePrms", "Wheel1SteerDriveCoupling", &m_UnderCarriagePrms.vdSteerDriveCoupling[0], true);
-	iniFile.GetKeyDouble("DrivePrms", "Wheel2SteerDriveCoupling", &m_UnderCarriagePrms.vdSteerDriveCoupling[1], true);
-	iniFile.GetKeyDouble("DrivePrms", "Wheel3SteerDriveCoupling", &m_UnderCarriagePrms.vdSteerDriveCoupling[2], true);
-	iniFile.GetKeyDouble("DrivePrms", "Wheel4SteerDriveCoupling", &m_UnderCarriagePrms.vdSteerDriveCoupling[3], true);
-
-	iniFile.GetKeyDouble("DrivePrms", "Wheel1NeutralPosition", &m_UnderCarriagePrms.WheelNeutralPos[0], true);
-	iniFile.GetKeyDouble("DrivePrms", "Wheel2NeutralPosition", &m_UnderCarriagePrms.WheelNeutralPos[1], true);
-	iniFile.GetKeyDouble("DrivePrms", "Wheel3NeutralPosition", &m_UnderCarriagePrms.WheelNeutralPos[2], true);
-	iniFile.GetKeyDouble("DrivePrms", "Wheel4NeutralPosition", &m_UnderCarriagePrms.WheelNeutralPos[3], true);
-	
-	for(int i = 0; i<4; i++)
-	{	
-		m_UnderCarriagePrms.WheelNeutralPos[i] = MathSup::convDegToRad(m_UnderCarriagePrms.WheelNeutralPos[i]);
-		// provisorial --> skip interpolation
-		m_vdAngGearSteerCmdRad[i] = m_UnderCarriagePrms.WheelNeutralPos[i];
-		//m_vdAngGearSteerIntpRad[i] = m_UnderCarriagePrms.WheelNeutralPos[i];
-		
-		// also Init choosen Target angle
-		m_vdAngGearSteerTargetRad[i] = m_UnderCarriagePrms.WheelNeutralPos[i];
-	}
-	
-	iniFile.GetKeyDouble("Thread", "ThrUCarrCycleTimeS", &m_UnderCarriagePrms.dCmdRateS, true);
-
-	// Read Values for Steering Position Controller from IniFile
-	iniFile.SetFileName(m_sIniDirectory + "MotionCtrl.ini", "PltfHardwareCoB3.h");
-	// Prms of Impedance-Ctrlr
-	iniFile.GetKeyDouble("SteerCtrl", "Spring", &m_dSpring, true);
-	iniFile.GetKeyDouble("SteerCtrl", "Damp", &m_dDamp, true);
-	iniFile.GetKeyDouble("SteerCtrl", "VirtMass", &m_dVirtM, true);
-	iniFile.GetKeyDouble("SteerCtrl", "DPhiMax", &m_dDPhiMax, true);
-	iniFile.GetKeyDouble("SteerCtrl", "DDPhiMax", &m_dDDPhiMax, true);
-
-	// calculate polar coords of Wheel Axis in robot coordinate frame
-	for(int i=0; i<4; i++)
-	{
-		m_vdWheelDistMM[i] = sqrt( (m_vdWheelXPosMM[i] * m_vdWheelXPosMM[i]) + (m_vdWheelYPosMM[i] * m_vdWheelYPosMM[i]) );
-		m_vdWheelAngRad[i] = MathSup::atan4quad(m_vdWheelXPosMM[i], m_vdWheelYPosMM[i]);
-	}
-
-	// Calculate exact position of wheels in cart. and polar coords in robot coordinate frame
-	CalcExWheelPos();
-
-	// calculate compensation factor for velocity
-	for(int i = 0; i<4; i++)
-	{
-		m_UnderCarriagePrms.vdFactorVel[i] = - m_UnderCarriagePrms.vdSteerDriveCoupling[i]
-				     +(double(m_UnderCarriagePrms.iDistSteerAxisToDriveWheelMM) / double(m_UnderCarriagePrms.iRadiusWheelMM));
-	}
+// 	IniFile iniFile;
+// 
+// 	iniFile.SetFileName(m_sIniDirectory + "Platform.ini", "UnderCarriageCtrlGeom.cpp");
+// 	iniFile.GetKeyInt("Geom", "DistWheels", &m_UnderCarriagePrms.iDistWheels, true);
+// 	iniFile.GetKeyInt("Geom", "RadiusWheel", &m_UnderCarriagePrms.iRadiusWheelMM, true);
+// 	iniFile.GetKeyInt("Geom", "DistSteerAxisToDriveWheelCenter", &m_UnderCarriagePrms.iDistSteerAxisToDriveWheelMM, true);
+// 
+// 	iniFile.GetKeyDouble("Geom", "Wheel1XPos", &m_vdWheelXPosMM[0], true);
+// 	iniFile.GetKeyDouble("Geom", "Wheel1YPos", &m_vdWheelYPosMM[0], true);
+// 	iniFile.GetKeyDouble("Geom", "Wheel2XPos", &m_vdWheelXPosMM[1], true);
+// 	iniFile.GetKeyDouble("Geom", "Wheel2YPos", &m_vdWheelYPosMM[1], true);
+// 	iniFile.GetKeyDouble("Geom", "Wheel3XPos", &m_vdWheelXPosMM[2], true);
+// 	iniFile.GetKeyDouble("Geom", "Wheel3YPos", &m_vdWheelYPosMM[2], true);
+// 	iniFile.GetKeyDouble("Geom", "Wheel4XPos", &m_vdWheelXPosMM[3], true);
+// 	iniFile.GetKeyDouble("Geom", "Wheel4YPos", &m_vdWheelYPosMM[3], true);
+// 
+// 	iniFile.GetKeyDouble("DrivePrms", "MaxDriveRate", &m_UnderCarriagePrms.dMaxDriveRateRadpS, true);
+// 	iniFile.GetKeyDouble("DrivePrms", "MaxSteerRate", &m_UnderCarriagePrms.dMaxSteerRateRadpS, true);
+// 
+// 	iniFile.GetKeyDouble("DrivePrms", "Wheel1SteerDriveCoupling", &m_UnderCarriagePrms.vdSteerDriveCoupling[0], true);
+// 	iniFile.GetKeyDouble("DrivePrms", "Wheel2SteerDriveCoupling", &m_UnderCarriagePrms.vdSteerDriveCoupling[1], true);
+// 	iniFile.GetKeyDouble("DrivePrms", "Wheel3SteerDriveCoupling", &m_UnderCarriagePrms.vdSteerDriveCoupling[2], true);
+// 	iniFile.GetKeyDouble("DrivePrms", "Wheel4SteerDriveCoupling", &m_UnderCarriagePrms.vdSteerDriveCoupling[3], true);
+// 
+// 	iniFile.GetKeyDouble("DrivePrms", "Wheel1NeutralPosition", &m_UnderCarriagePrms.WheelNeutralPos[0], true);
+// 	iniFile.GetKeyDouble("DrivePrms", "Wheel2NeutralPosition", &m_UnderCarriagePrms.WheelNeutralPos[1], true);
+// 	iniFile.GetKeyDouble("DrivePrms", "Wheel3NeutralPosition", &m_UnderCarriagePrms.WheelNeutralPos[2], true);
+// 	iniFile.GetKeyDouble("DrivePrms", "Wheel4NeutralPosition", &m_UnderCarriagePrms.WheelNeutralPos[3], true);
+// 	
+// 	for(int i = 0; i<4; i++)
+// 	{	
+// 		m_UnderCarriagePrms.WheelNeutralPos[i] = MathSup::convDegToRad(m_UnderCarriagePrms.WheelNeutralPos[i]);
+// 		// provisorial --> skip interpolation
+// 		m_vdAngGearSteerCmdRad[i] = m_UnderCarriagePrms.WheelNeutralPos[i];
+// 		//m_vdAngGearSteerIntpRad[i] = m_UnderCarriagePrms.WheelNeutralPos[i];
+// 		
+// 		// also Init choosen Target angle
+// 		m_vdAngGearSteerTargetRad[i] = m_UnderCarriagePrms.WheelNeutralPos[i];
+// 	}
+// 	
+// 	iniFile.GetKeyDouble("Thread", "ThrUCarrCycleTimeS", &m_UnderCarriagePrms.dCmdRateS, true);
+// 
+// 	// Read Values for Steering Position Controller from IniFile
+// 	iniFile.SetFileName(m_sIniDirectory + "MotionCtrl.ini", "PltfHardwareCoB3.h");
+// 	// Prms of Impedance-Ctrlr
+// 	iniFile.GetKeyDouble("SteerCtrl", "Spring", &m_dSpring, true);
+// 	iniFile.GetKeyDouble("SteerCtrl", "Damp", &m_dDamp, true);
+// 	iniFile.GetKeyDouble("SteerCtrl", "VirtMass", &m_dVirtM, true);
+// 	iniFile.GetKeyDouble("SteerCtrl", "DPhiMax", &m_dDPhiMax, true);
+// 	iniFile.GetKeyDouble("SteerCtrl", "DDPhiMax", &m_dDDPhiMax, true);
+// 
+// 	// calculate polar coords of Wheel Axis in robot coordinate frame
+// 	for(int i=0; i<4; i++)
+// 	{
+// 		m_vdWheelDistMM[i] = sqrt( (m_vdWheelXPosMM[i] * m_vdWheelXPosMM[i]) + (m_vdWheelYPosMM[i] * m_vdWheelYPosMM[i]) );
+// 		m_vdWheelAngRad[i] = MathSup::atan4quad(m_vdWheelXPosMM[i], m_vdWheelYPosMM[i]);
+// 	}
+// 
+// 	// Calculate exact position of wheels in cart. and polar coords in robot coordinate frame
+// 	CalcExWheelPos();
+// 
+// 	// calculate compensation factor for velocity
+// 	for(int i = 0; i<4; i++)
+// 	{
+// 		m_UnderCarriagePrms.vdFactorVel[i] = - m_UnderCarriagePrms.vdSteerDriveCoupling[i]
+// 				     +(double(m_UnderCarriagePrms.iDistSteerAxisToDriveWheelMM) / double(m_UnderCarriagePrms.iRadiusWheelMM));
+// 	}
 
 }
 
