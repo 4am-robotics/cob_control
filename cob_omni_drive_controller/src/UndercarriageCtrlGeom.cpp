@@ -112,7 +112,6 @@ UndercarriageCtrlGeom::UndercarriageCtrlGeom(std::string sIniDirectory)
 	m_dCmdVelLongMMS = 0;
 	m_dCmdVelLatMMS = 0;
 	m_dCmdRotRobRadS = 0;
-	m_dCmdRotVelRadS = 0;
 	
 	m_UnderCarriagePrms.WheelNeutralPos.assign(4,0);
 	m_UnderCarriagePrms.vdSteerDriveCoupling.assign(4,0);
@@ -207,7 +206,7 @@ void UndercarriageCtrlGeom::InitUndercarriageCtrl(void)
 }
 
 // Set desired value for Plattfrom Velocity to UndercarriageCtrl (Sollwertvorgabe)
-void UndercarriageCtrlGeom::SetDesiredPltfVelocity(double dCmdVelLongMMS, double dCmdVelLatMMS, double dCmdRotRobRadS, double dCmdRotVelRadS)
+void UndercarriageCtrlGeom::SetDesiredPltfVelocity(double dCmdVelLongMMS, double dCmdVelLatMMS, double dCmdRotRobRadS)
 {	
 	// declare auxiliary variables
 	double dCurrentPosWheelRAD;
@@ -219,7 +218,6 @@ void UndercarriageCtrlGeom::SetDesiredPltfVelocity(double dCmdVelLongMMS, double
 	m_dCmdVelLongMMS = dCmdVelLongMMS;
 	m_dCmdVelLatMMS = dCmdVelLatMMS;
 	m_dCmdRotRobRadS = dCmdRotRobRadS;
-	m_dCmdRotVelRadS = dCmdRotVelRadS;
 
 	CalcInverse();
 
@@ -298,7 +296,7 @@ void UndercarriageCtrlGeom::GetSteerDriveSetValues(std::vector<double> & vdVelGe
 
 // Get set point values for the Wheels (including controller) from UndercarriangeCtrl
 void UndercarriageCtrlGeom::GetNewCtrlStateSteerDriveSetValues(std::vector<double> & vdVelGearDriveRadS, std::vector<double> & vdVelGearSteerRadS, std::vector<double> & vdAngGearSteerRad,
-								 double & dVelLongMMS, double & dVelLatMMS, double & dRotRobRadS, double & dRotVelRadS)
+								 double & dVelLongMMS, double & dVelLatMMS, double & dRotRobRadS)
 {
 
         //Calculate next step
@@ -311,7 +309,6 @@ void UndercarriageCtrlGeom::GetNewCtrlStateSteerDriveSetValues(std::vector<doubl
 	dVelLongMMS = m_dCmdVelLongMMS;
 	dVelLatMMS = m_dCmdVelLatMMS;
 	dRotRobRadS = m_dCmdRotRobRadS;
-	dRotVelRadS = m_dCmdRotVelRadS;
 
 }
 
@@ -330,7 +327,7 @@ void UndercarriageCtrlGeom::CalcInverse(void)
 	double dtempAxVelXRobMMS, dtempAxVelYRobMMS;	
 
 	// check if zero movement commanded -> keep orientation of wheels, set wheel velocity to zero
-	if((m_dCmdVelLongMMS == 0) && (m_dCmdVelLatMMS == 0) && (m_dCmdRotRobRadS == 0) && (m_dCmdRotVelRadS == 0))
+	if((m_dCmdVelLongMMS == 0) && (m_dCmdVelLatMMS == 0) && (m_dCmdRotRobRadS == 0))
 	{
 		for(int i = 0; i<4; i++)
 		{
@@ -467,7 +464,7 @@ void UndercarriageCtrlGeom::CalcExWheelPos(void)
 void UndercarriageCtrlGeom::CalcControlStep(void)
 {	
 	// check if zero movement commanded -> keep orientation of wheels, set steer velocity to zero
-	if ((m_dCmdVelLongMMS == 0) && (m_dCmdVelLatMMS == 0) && (m_dCmdRotRobRadS == 0) && (m_dCmdRotVelRadS == 0))
+	if ((m_dCmdVelLongMMS == 0) && (m_dCmdVelLatMMS == 0) && (m_dCmdRotRobRadS == 0))
 	{
 		m_vdVelGearDriveCmdRadS.assign(4,0.0);		// set velocity for drives to zero
 		m_vdVelGearSteerCmdRadS.assign(4,0.0);		// set velocity for steers to zero

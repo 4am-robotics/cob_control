@@ -81,7 +81,6 @@ private:
 	double m_dCmdVelLongMMS;
 	double m_dCmdVelLatMMS;
 	double m_dCmdRotRobRadS;
-	double m_dCmdRotVelRadS;
 
 	// Desired Wheelspeeds set to ELMO-Ctrl's (calculated from desired Pltf-Movement)
 	std::vector<double> m_vdVelGearDriveCmdRadS;
@@ -183,7 +182,7 @@ public:
 	void InitUndercarriageCtrl(void);
 
 	// Set desired value for Plattform Velocity to UndercarriageCtrl (Sollwertvorgabe)
-	void SetDesiredPltfVelocity(double dCmdVelLongMMS, double dCmdVelLatMMS, double dCmdRotRobRadS, double dCmdRotVelRadS);
+	void SetDesiredPltfVelocity(double dCmdVelLongMMS, double dCmdVelLatMMS, double dCmdRotRobRadS);
 
 	// Set actual values of wheels (steer/drive velocity/position) (Istwerte)
 	void SetActualWheelValues(std::vector<double> vdVelGearDriveRadS, std::vector<double> vdVelGearSteerRadS, std::vector<double> vdDltAngGearDriveRad, std::vector<double> vdAngGearSteerRad);
@@ -193,7 +192,7 @@ public:
 
 	// Get set point values for the Wheels (including controller) from UndercarriangeCtrl
 	void GetNewCtrlStateSteerDriveSetValues(std::vector<double> & vdVelGearDriveRadS, std::vector<double> & vdVelGearSteerRadS, std::vector<double> & vdAngGearSteerRad,
-						double & dVelLongMMS, double & dVelLatMMS, double & dRotRobRadS, double & dRotVelRadS);
+						double & dVelLongMMS, double & dVelLatMMS, double & dRotRobRadS);
 
 	// Get result of direct kinematics
 	void GetActualPltfVelocity(double & dVelLongMMS, double & dVelLatMMS, double & dRotRobRadS);
