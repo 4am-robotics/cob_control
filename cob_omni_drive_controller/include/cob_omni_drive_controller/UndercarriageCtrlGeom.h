@@ -70,7 +70,6 @@ private:
 	double m_dVelLongMMS;
 	double m_dVelLatMMS;
 	double m_dRotRobRadS;
-	double m_dRotVelRadS;
 
 	// Actual Wheelspeed (read from Motor-Ctrls)
 	std::vector<double> m_vdVelGearDriveRadS;
@@ -197,9 +196,25 @@ public:
 						double & dVelLongMMS, double & dVelLatMMS, double & dRotRobRadS, double & dRotVelRadS);
 
 	// Get result of direct kinematics
-	void GetActualPltfVelocity(double & dDeltaLongMM, double & dDeltaLatMM, double & dDeltaRotRobRad, double & dDeltaRotVelRad,
-					double & dVelLongMMS, double & dVelLatMMS, double & dRotRobRadS, double & dRotVelRadS);
+	void GetActualPltfVelocity(double & dVelLongMMS, double & dVelLatMMS, double & dRotRobRadS);
 
+
+        void GetActualPltfVelocity(double & dDeltaLongMM, double & dDeltaLatMM, double & dDeltaRotRobRad, double & dDeltaRotVelRad,
+                                        double & dVelLongMMS, double & dVelLatMMS, double & dRotRobRadS, double & dRotVelRadS, const double dCmdRateS)
+        {
+                GetActualPltfVelocity(dVelLongMMS, dVelLatMMS, dRotRobRadS);
+
+                dRotVelRadS = 0; // not used
+                
+                // calculate travelled distance and angle (from velocity) for output
+                // ToDo: make sure this corresponds to cycle-freqnecy of calling node
+                //       --> specify via config file
+                dDeltaLongMM = dVelLongMMS * dCmdRateS;
+                dDeltaLatMM = dVelLatMMS * dCmdRateS;
+                dDeltaRotRobRad = dRotRobRadS * dCmdRateS;
+                dDeltaRotVelRad = dRotVelRadS * dCmdRateS;
+        }
+        
 };
 #endif
 

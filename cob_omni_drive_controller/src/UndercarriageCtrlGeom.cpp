@@ -316,21 +316,11 @@ void UndercarriageCtrlGeom::GetNewCtrlStateSteerDriveSetValues(std::vector<doubl
 }
 
 // Get result of direct kinematics
-void UndercarriageCtrlGeom::GetActualPltfVelocity(double & dDeltaLongMM, double & dDeltaLatMM, double & dDeltaRotRobRad, double & dDeltaRotVelRad,
-												  double & dVelLongMMS, double & dVelLatMMS, double & dRotRobRadS, double & dRotVelRadS)
+void UndercarriageCtrlGeom::GetActualPltfVelocity(double & dVelLongMMS, double & dVelLatMMS, double & dRotRobRadS)
 {
 	dVelLongMMS = m_dVelLongMMS;
 	dVelLatMMS = m_dVelLatMMS;
 	dRotRobRadS = m_dRotRobRadS;
-	dRotVelRadS = m_dRotVelRadS;
-
-	// calculate travelled distance and angle (from velocity) for output
-	// ToDo: make sure this corresponds to cycle-freqnecy of calling node
-	//       --> specify via config file
-	dDeltaLongMM = dVelLongMMS * m_UnderCarriagePrms.dCmdRateS;
-	dDeltaLatMM = dVelLatMMS * m_UnderCarriagePrms.dCmdRateS;
-	dDeltaRotRobRad = dRotRobRadS * m_UnderCarriagePrms.dCmdRateS;
-	dDeltaRotVelRad = dRotVelRadS * m_UnderCarriagePrms.dCmdRateS;
 }
 
 // calculate inverse kinematics
@@ -446,7 +436,6 @@ void UndercarriageCtrlGeom::CalcDirect(void)
 
 	// assign rotational velocities for output
 	m_dRotRobRadS = dtempRotRobRADPS/m_iNumberOfDrives;
-	m_dRotVelRadS = 0; // currently not used to represent 3rd degree of freedom -> set to zero
 
 	// assign linear velocity of robot for output
 	m_dVelLongMMS = dtempVelXRobMMS/m_iNumberOfDrives;
