@@ -295,8 +295,7 @@ void UndercarriageCtrlGeom::GetSteerDriveSetValues(std::vector<double> & vdVelGe
 }
 
 // Get set point values for the Wheels (including controller) from UndercarriangeCtrl
-void UndercarriageCtrlGeom::GetNewCtrlStateSteerDriveSetValues(std::vector<double> & vdVelGearDriveRadS, std::vector<double> & vdVelGearSteerRadS, std::vector<double> & vdAngGearSteerRad,
-								 double & dVelLongMMS, double & dVelLatMMS, double & dRotRobRadS)
+void UndercarriageCtrlGeom::GetNewCtrlStateSteerDriveSetValues(std::vector<double> & vdVelGearDriveRadS, std::vector<double> & vdVelGearSteerRadS, std::vector<double> & vdAngGearSteerRad)
 {
 
         //Calculate next step
@@ -305,11 +304,6 @@ void UndercarriageCtrlGeom::GetNewCtrlStateSteerDriveSetValues(std::vector<doubl
 	vdVelGearDriveRadS = m_vdVelGearDriveCmdRadS;
 	vdVelGearSteerRadS = m_vdVelGearSteerCmdRadS;
 	vdAngGearSteerRad = m_vdAngGearSteerCmdRad;
-
-	dVelLongMMS = m_dCmdVelLongMMS;
-	dVelLatMMS = m_dCmdVelLatMMS;
-	dRotRobRadS = m_dCmdRotRobRadS;
-
 }
 
 // Get result of direct kinematics

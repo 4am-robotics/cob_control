@@ -191,8 +191,7 @@ public:
 	void GetSteerDriveSetValues(std::vector<double> & vdVelGearDriveRadS, std::vector<double> & vdAngGearSteerRad);
 
 	// Get set point values for the Wheels (including controller) from UndercarriangeCtrl
-	void GetNewCtrlStateSteerDriveSetValues(std::vector<double> & vdVelGearDriveRadS, std::vector<double> & vdVelGearSteerRadS, std::vector<double> & vdAngGearSteerRad,
-						double & dVelLongMMS, double & dVelLatMMS, double & dRotRobRadS);
+	void GetNewCtrlStateSteerDriveSetValues(std::vector<double> & vdVelGearDriveRadS, std::vector<double> & vdVelGearSteerRadS, std::vector<double> & vdAngGearSteerRad);
 
 	// Get result of direct kinematics
 	void GetActualPltfVelocity(double & dVelLongMMS, double & dVelLatMMS, double & dRotRobRadS);
