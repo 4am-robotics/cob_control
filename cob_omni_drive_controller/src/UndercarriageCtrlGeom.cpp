@@ -74,9 +74,6 @@ UndercarriageCtrlGeom::UndercarriageCtrlGeom(std::string sIniDirectory)
 {
 	m_sIniDirectory = sIniDirectory;
 	
-	// init EMStop flag
-	m_bEMStopActive = false;
-	
 // 	IniFile iniFile;
 // 	iniFile.SetFileName(m_sIniDirectory + "Platform.ini", "UnderCarriageCtrlGeom.cpp");
 // 	iniFile.GetKeyInt("Config", "NumberOfWheels", &m_iNumberOfDrives, true);
@@ -132,40 +129,6 @@ UndercarriageCtrlGeom::UndercarriageCtrlGeom(std::string sIniDirectory)
 	m_dVirtM = 0.1;
 	m_dDPhiMax = 12.0;
 	m_dDDPhiMax = 100.0;
-
-	/*// Logging for debugging
-	// Init timestamp for startup of the robot
-	m_StartTime.SetNow();
-	// open Files for PltfVel
-	m_pfileDesVel = fopen("LogCtrl/DesPltfVel.txt","w");
-	m_pfileMeasVel = fopen("LogCtrl/MeasPltfVel.txt","w");
-	// open Files for corresponding Joint-Configuration
-	m_pfileSteerAngTarget1 = fopen("LogCtrl/SteerAngTarget1.txt","w");
-	m_pfileSteerAngTarget2 = fopen("LogCtrl/SteerAngTarget2.txt","w");
-	m_pfileSteerAngTarget = fopen("LogCtrl/SteerAngTarget.txt","w");
-	m_pfileDriveVelTarget = fopen("LogCtrl/DriveVelTarget.txt","w");
-	// open Files for resulting Joint-Commands
-	m_pfileSteerAngCmd = fopen("LogCtrl/SteerAngCmd.txt","w");
-	m_pfileSteerVelCmd = fopen("LogCtrl/SteerVelCmd.txt","w");
-	m_pfileDriveVelCmd = fopen("LogCtrl/DriveVelCmd.txt","w");*/
-
-}
-
-// Destructor
-UndercarriageCtrlGeom::~UndercarriageCtrlGeom(void)
-{
-		/*fclose(m_pfileDesVel);
-		fclose(m_pfileMeasVel);
-
-		fclose(m_pfileSteerAngTarget1);
-		fclose(m_pfileSteerAngTarget2);
-
-		fclose(m_pfileSteerAngTarget);
-		fclose(m_pfileDriveVelTarget);
-
-		fclose(m_pfileSteerAngCmd);
-		fclose(m_pfileSteerVelCmd);
-		fclose(m_pfileDriveVelCmd);*/
 }
 
 // Initialize Parameters for Controller and Kinematics
@@ -301,51 +264,8 @@ void UndercarriageCtrlGeom::SetDesiredPltfVelocity(double dCmdVelLongMMS, double
 			m_vdAngGearSteerTargetRad[i] = m_vdAngGearSteerTarget2Rad[i];
 		}
 		
-		// provisorial --> skip interpolation and always take Target1
-		//m_vdVelGearDriveCmdRadS[i] = m_vdVelGearDriveTarget1RadS[i];
-		//m_vdAngGearSteerCmdRad[i] = m_vdAngGearSteerTarget1Rad[i];
-
-		/*// interpolate between last setpoint and theone of the new setpoint, which is closest to the current configuration
-		if (fabs(dtempDeltaPhi1RAD) <= fabs(dtempDeltaPhi2RAD))
-		{
-			// difference between new target orientation and last (interpolated) target orientation
-			dtempDeltaPhi1RAD = m_vdAngGearSteerTarget1Rad[i] - m_vdAngGearSteerIntpRad[i];
-			MathSup::normalizePi(dtempDeltaPhi1RAD);
-
-			// calculate interpolation step sizes, to reach target at end of the cycle
-			m_vdDeltaAngIntpRad[i] = dtempDeltaPhi1RAD;
-			m_vdDeltaDriveIntpRadS[i] = (m_vdVelGearDriveTarget1RadS[i] - m_vdVelGearDriveIntpRadS[i]);
-
-			// additionally calculate meen change in angular config for feedforward cmd
-			//m_vdVelGearSteerIntpRadS[i] = dtempDeltaPhi1RAD/m_UnderCarriagePrms.dCmdRateS;
-		}
-		else
-		{
-			// difference between new target orientation and last (interpolated) target orientation
-			dtempDeltaPhi2RAD = m_vdAngGearSteerTarget2Rad[i] - m_vdAngGearSteerIntpRad[i];
-			MathSup::normalizePi(dtempDeltaPhi2RAD);
-
-			// calculate interpolation step sizes, to reach target at end of the cycle
-			m_vdDeltaAngIntpRad[i] = dtempDeltaPhi2RAD;
-			m_vdDeltaDriveIntpRadS[i] = (m_vdVelGearDriveTarget2RadS[i] - m_vdVelGearDriveIntpRadS[i]);
-
-			// additionally calculate meen change in angular config for feedforward cmd
-			//m_vdVelGearSteerIntpRadS[i] = dtempDeltaPhi2RAD/m_UnderCarriagePrms.dCmdRateS;
-		}*/
 	}
 
-	/*// Logging for debugging	
-	// get current time
-	m_RawTime.SetNow();
-	m_dNowTime = m_RawTime - m_StartTime;
-	// Log out Pltf-Velocities
-	fprintf(m_pfileDesVel, "%f %f %f %f \n", m_dNowTime, dCmdVelLongMMS, dCmdVelLatMMS, dCmdRotRobRadS);
-	fprintf(m_pfileMeasVel, "%f %f %f %f \n", m_dNowTime, m_dVelLongMMS, m_dVelLatMMS, m_dRotRobRadS);
-	// Log out corresponding Joint-Configuration
-	fprintf(m_pfileSteerAngTarget1, "%f %f %f %f %f \n", m_dNowTime, m_vdAngGearSteerTarget1Rad[0], m_vdAngGearSteerTarget1Rad[1], m_vdAngGearSteerTarget1Rad[2], m_vdAngGearSteerTarget1Rad[3]);
-	fprintf(m_pfileSteerAngTarget2, "%f %f %f %f %f \n", m_dNowTime, m_vdAngGearSteerTarget2Rad[0], m_vdAngGearSteerTarget2Rad[1], m_vdAngGearSteerTarget2Rad[2], m_vdAngGearSteerTarget2Rad[3]);
-	fprintf(m_pfileSteerAngTarget, "%f %f %f %f %f \n", m_dNowTime, m_vdAngGearSteerTargetRad[0], m_vdAngGearSteerTargetRad[1], m_vdAngGearSteerTargetRad[2], m_vdAngGearSteerTargetRad[3]);
-	fprintf(m_pfileDriveVelTarget, "%f %f %f %f %f \n", m_dNowTime, m_vdVelGearDriveTargetRadS[0], m_vdVelGearDriveTargetRadS[1], m_vdVelGearDriveTargetRadS[2], m_vdVelGearDriveTargetRadS[3]);*/
 }
 
 // Set actual values of wheels (steer/drive velocity/position) (Istwerte)
@@ -381,11 +301,8 @@ void UndercarriageCtrlGeom::GetNewCtrlStateSteerDriveSetValues(std::vector<doubl
 								 double & dVelLongMMS, double & dVelLatMMS, double & dRotRobRadS, double & dRotVelRadS)
 {
 
-	if(m_bEMStopActive == false)
-	{
-		//Calculate next step
-		CalcControlStep();
-	}
+        //Calculate next step
+        CalcControlStep();
 
 	vdVelGearDriveRadS = m_vdVelGearDriveCmdRadS;
 	vdVelGearSteerRadS = m_vdVelGearSteerCmdRadS;
@@ -396,14 +313,6 @@ void UndercarriageCtrlGeom::GetNewCtrlStateSteerDriveSetValues(std::vector<doubl
 	dRotRobRadS = m_dCmdRotRobRadS;
 	dRotVelRadS = m_dCmdRotVelRadS;
 
-	/*// Logging for debugging		
-	// get current time
-	m_RawTime.SetNow();
-	m_dNowTime = m_RawTime - m_StartTime;
-	// Log out resulting joint-commands
-	fprintf(m_pfileSteerAngCmd, "%f %f %f %f %f \n", m_dNowTime, m_vdAngGearSteerCmdRad[0], m_vdAngGearSteerCmdRad[1], m_vdAngGearSteerCmdRad[2], m_vdAngGearSteerCmdRad[3]);
-	fprintf(m_pfileSteerVelCmd, "%f %f %f %f %f \n", m_dNowTime, m_vdVelGearSteerCmdRadS[0], m_vdVelGearSteerCmdRadS[1], m_vdVelGearSteerCmdRadS[2], m_vdVelGearSteerCmdRadS[3]);
-	fprintf(m_pfileDriveVelCmd, "%f %f %f %f %f \n", m_dNowTime, m_vdVelGearDriveCmdRadS[0], m_vdVelGearDriveCmdRadS[1], m_vdVelGearDriveCmdRadS[2], m_vdVelGearDriveCmdRadS[3]);*/
 }
 
 // Get result of direct kinematics
@@ -593,17 +502,6 @@ void UndercarriageCtrlGeom::CalcControlStep(void)
 		// provisorial --> skip interpolation and always take Target
 		m_vdVelGearDriveCmdRadS[i] = m_vdVelGearDriveTargetRadS[i];
 		m_vdAngGearSteerCmdRad[i] = m_vdAngGearSteerTargetRad[i];
-
-		// provisorial --> skip interpolation and always take Target1
-		//m_vdVelGearDriveCmdRadS[i] = m_vdVelGearDriveTarget1RadS[i];
-		//m_vdAngGearSteerCmdRad[i] = m_vdAngGearSteerTarget1Rad[i];
-
-		/*m_vdAngGearSteerIntpRad[i] += m_vdDeltaAngIntpRad[i];
-		MathSup::normalizePi(m_vdAngGearSteerIntpRad[i]);
-		m_vdVelGearDriveIntpRadS[i] += m_vdDeltaDriveIntpRadS[i];
-
-		m_vdVelGearDriveCmdRadS[i] = m_vdVelGearDriveIntpRadS[i];
-		m_vdAngGearSteerCmdRad[i] = m_vdAngGearSteerIntpRad[i];*/
 	}
 
 
@@ -662,66 +560,6 @@ void UndercarriageCtrlGeom::CalcControlStep(void)
 
 }
 
-// operator overloading
-void UndercarriageCtrlGeom::operator=(const UndercarriageCtrlGeom & GeomCtrl)
-{
-	// Actual Values for PltfMovement (calculated from Actual Wheelspeeds)
-	m_dVelLongMMS = GeomCtrl.m_dVelLongMMS;
-	m_dVelLatMMS = GeomCtrl.m_dVelLatMMS;
-	m_dRotRobRadS = GeomCtrl.m_dRotRobRadS;
-	m_dRotVelRadS = GeomCtrl.m_dRotVelRadS;
-
-	// Actual Wheelspeed (read from Motor-Ctrls)
-	m_vdVelGearDriveRadS = GeomCtrl.m_vdVelGearDriveRadS;
-	m_vdVelGearSteerRadS = GeomCtrl.m_vdVelGearSteerRadS;
-	m_vdDltAngGearDriveRad = GeomCtrl.m_vdDltAngGearDriveRad;
-	m_vdAngGearSteerRad = GeomCtrl.m_vdAngGearSteerRad;
-
-	// Desired Pltf-Movement (set from PltfHwItf)
-	m_dCmdVelLongMMS = GeomCtrl.m_dCmdVelLongMMS;
-	m_dCmdVelLatMMS = GeomCtrl.m_dCmdVelLatMMS;
-	m_dCmdRotRobRadS = GeomCtrl.m_dCmdRotRobRadS;
-	m_dCmdRotVelRadS = GeomCtrl.m_dCmdRotVelRadS;
-
-	// Desired Wheelspeeds (calculated from desired ICM-configuration)
-	m_vdVelGearDriveCmdRadS = GeomCtrl.m_vdVelGearDriveCmdRadS;
-	m_vdVelGearSteerCmdRadS = GeomCtrl.m_vdVelGearSteerCmdRadS;
-	m_vdAngGearSteerCmdRad = GeomCtrl.m_vdAngGearSteerCmdRad;
-
-	// Target Wheelspeed and -angle (calculated from desired Pltf-Movement with Inverse without controle!)
-	// alternativ 1 for steering angle
-	m_vdAngGearSteerTarget1Rad = GeomCtrl.m_vdAngGearSteerTarget1Rad;
-	m_vdVelGearDriveTarget1RadS = GeomCtrl.m_vdVelGearDriveTarget1RadS;
-	// alternativ 2 for steering angle (+/- PI)
-	m_vdAngGearSteerTarget2Rad = GeomCtrl.m_vdAngGearSteerTarget2Rad;
-	m_vdVelGearDriveTarget2RadS = GeomCtrl.m_vdVelGearDriveTarget2RadS;
-
-	// Position of the Wheels' Steering Axis'
-	m_vdWheelXPosMM = GeomCtrl.m_vdWheelXPosMM;
-	m_vdWheelYPosMM = GeomCtrl.m_vdWheelYPosMM;
-	m_vdWheelDistMM = GeomCtrl.m_vdWheelDistMM;
-	m_vdWheelAngRad = GeomCtrl.m_vdWheelAngRad;
-
-	// Exact Position of the Wheels' itself
-	m_vdExWheelXPosMM = GeomCtrl.m_vdExWheelXPosMM;
-	m_vdExWheelYPosMM = GeomCtrl.m_vdExWheelYPosMM;
-	m_vdExWheelDistMM = GeomCtrl.m_vdExWheelDistMM;
-	m_vdExWheelAngRad = GeomCtrl.m_vdExWheelAngRad;
-
-	// Prms
-	m_UnderCarriagePrms = GeomCtrl.m_UnderCarriagePrms;
-
-	// Position Controller Steer Wheels
-	// Impedance-Ctrlr
-	m_dSpring = GeomCtrl.m_dSpring;
-	m_dDamp = GeomCtrl.m_dDamp;
-	m_dVirtM = GeomCtrl.m_dDPhiMax;
-	m_dDPhiMax = GeomCtrl.m_dDPhiMax;
-	m_dDDPhiMax = GeomCtrl.m_dDDPhiMax;
-	// Storage for internal controller states
-	m_vdCtrlVal = GeomCtrl.m_vdCtrlVal;
-}
-
 void UndercarriageCtrlGeom::resetController()
 {
         // Steermodules
@@ -738,18 +576,5 @@ void UndercarriageCtrlGeom::resetController()
                 m_vdVelGearDriveCmdRadS[i] = 0.0;
                 m_vdVelGearSteerCmdRadS[i] = 0.0;
         }
-
-}
-
-// set EM Flag and stop ctrlr if active
-void UndercarriageCtrlGeom::setEMStopActive(bool bEMStopActive)
-{
-	m_bEMStopActive = bEMStopActive;
-
-	// if emergency stop reset ctrlr to zero
-	if(m_bEMStopActive)
-	{
-                resetController();
-	}
 
 }

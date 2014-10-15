@@ -62,22 +62,9 @@ class UndercarriageCtrlGeom
 {
 private:
 	
-	bool m_bEMStopActive;
-	
 	int m_iNumberOfDrives;
 	
 	std::string m_sIniDirectory;
-	
-	/*// Logging for debugging
-	// create Filepointers
-	FILE * m_pfileDesVel, * m_pfileMeasVel;
-	FILE * m_pfileSteerAngTarget1, * m_pfileSteerAngTarget2;
-	FILE * m_pfileSteerAngTarget, * m_pfileDriveVelTarget;
-	FILE * m_pfileSteerAngCmd, * m_pfileSteerVelCmd, * m_pfileDriveVelCmd;
-	// create TimeStamp
-	TimeStamp m_RawTime, m_StartTime;
-	double m_dNowTime;*/
-
 	
 	// Actual Values for PltfMovement (calculated from Actual Wheelspeeds)
 	double m_dVelLongMMS;
@@ -96,15 +83,6 @@ private:
 	double m_dCmdVelLatMMS;
 	double m_dCmdRotRobRadS;
 	double m_dCmdRotVelRadS;
-
-	/*// Interpolated Wheelspeeds (calculated from desired and current Pltf-Config)
-	std::vector<double> m_vdVelGearDriveIntpRadS;
-	std::vector<double> m_vdVelGearSteerIntpRadS;
-	std::vector<double> m_vdAngGearSteerIntpRad;
-
-	// Delta values for interpolating between two commands
-	std::vector<double> m_vdDeltaAngIntpRad;
-	std::vector<double> m_vdDeltaDriveIntpRadS;*/
 
 	// Desired Wheelspeeds set to ELMO-Ctrl's (calculated from desired Pltf-Movement)
 	std::vector<double> m_vdVelGearDriveCmdRadS;
@@ -202,9 +180,6 @@ public:
 	// Constructor
 	UndercarriageCtrlGeom(std::string sIniDirectory);
 
-	// Destructor
-	~UndercarriageCtrlGeom(void);
-
 	// Initialize Parameters for Controller and Kinematics
 	void InitUndercarriageCtrl(void);
 
@@ -225,11 +200,6 @@ public:
 	void GetActualPltfVelocity(double & dDeltaLongMM, double & dDeltaLatMM, double & dDeltaRotRobRad, double & dDeltaRotVelRad,
 					double & dVelLongMMS, double & dVelLatMMS, double & dRotRobRadS, double & dRotVelRadS);
 
-	// Set EM flag and stop Ctrlr
-	void setEMStopActive(bool bEMStopActive);
-	
-	// operator overloading
-	void operator=(const UndercarriageCtrlGeom & GeomCtrl);
 };
 #endif
 
