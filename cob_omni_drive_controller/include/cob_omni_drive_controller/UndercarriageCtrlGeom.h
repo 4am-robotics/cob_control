@@ -195,6 +195,8 @@ private:
 	// perform one discrete Controle Step
 	void CalcControlStep(void);
 
+        void resetController();
+
 public:
 
 	// Constructor

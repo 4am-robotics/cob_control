@@ -722,6 +722,25 @@ void UndercarriageCtrlGeom::operator=(const UndercarriageCtrlGeom & GeomCtrl)
 	m_vdCtrlVal = GeomCtrl.m_vdCtrlVal;
 }
 
+void UndercarriageCtrlGeom::resetController()
+{
+        // Steermodules
+        for(int i=0; i<4; i++)
+        {
+                for(int j=0; j< 2; j++)
+                {
+                        m_vdCtrlVal[i][j] = 0.0;
+                }
+        }
+        // Outputs
+        for(int i=0; i<4; i++)
+        {
+                m_vdVelGearDriveCmdRadS[i] = 0.0;
+                m_vdVelGearSteerCmdRadS[i] = 0.0;
+        }
+
+}
+
 // set EM Flag and stop ctrlr if active
 void UndercarriageCtrlGeom::setEMStopActive(bool bEMStopActive)
 {
@@ -730,20 +749,7 @@ void UndercarriageCtrlGeom::setEMStopActive(bool bEMStopActive)
 	// if emergency stop reset ctrlr to zero
 	if(m_bEMStopActive)
 	{
-		// Steermodules
-		for(int i=0; i<4; i++)
-		{
-			for(int j=0; j< 2; j++)
-			{
-				m_vdCtrlVal[i][j] = 0.0;
-			}
-		}
-		// Outputs
-		for(int i=0; i<4; i++)
-		{
-			m_vdVelGearDriveCmdRadS[i] = 0.0;
-			m_vdVelGearSteerCmdRadS[i] = 0.0;
-		}
+                resetController();
 	}
 
 }
