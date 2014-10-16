@@ -2,7 +2,7 @@
  *
  * Copyright (c) 2010
  *
- * Fraunhofer Institute for Manufacturing Engineering	
+ * Fraunhofer Institute for Manufacturing Engineering   
  * and Automation (IPA)
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -11,9 +11,9 @@
  * ROS stack name: cob_driver
  * ROS package name: cob_undercarriage_ctrl
  * Description:
- *								
+ *                              
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- *			
+ *          
  * Author: Christian Connette, email:christian.connette@ipa.fhg.de
  * Supervised by: Christian Connette, email:christian.connette@ipa.fhg.de
  *
@@ -56,163 +56,119 @@
 
 
 #include <vector>
-#include <string>
 
 class UndercarriageCtrlGeom
 {
-private:
-	
-	int m_iNumberOfDrives;
-	
-	std::string m_sIniDirectory;
-	
-	// Actual Values for PltfMovement (calculated from Actual Wheelspeeds)
-	double m_dVelLongMMS;
-	double m_dVelLatMMS;
-	double m_dRotRobRadS;
-
-	// Actual Wheelspeed (read from Motor-Ctrls)
-	std::vector<double> m_vdVelGearDriveRadS;
-	std::vector<double> m_vdVelGearSteerRadS;
-	std::vector<double> m_vdDltAngGearDriveRad;
-	std::vector<double> m_vdAngGearSteerRad;
-
-	// Desired Pltf-Movement (set from PltfHwItf)
-	double m_dCmdVelLongMMS;
-	double m_dCmdVelLatMMS;
-	double m_dCmdRotRobRadS;
-
-	// Desired Wheelspeeds set to ELMO-Ctrl's (calculated from desired Pltf-Movement)
-	std::vector<double> m_vdVelGearDriveCmdRadS;
-	std::vector<double> m_vdVelGearSteerCmdRadS;
-	std::vector<double> m_vdAngGearSteerCmdRad;
-
-	// Target Wheelspeed and -angle (calculated from desired Pltf-Movement with Inverse without controle!)
-	// This Values might not be valid (to high step response in steering rate, ...) for commanding the drives
-	std::vector<double> m_vdAngGearSteerTarget1Rad; // alternativ 1 for steering angle
-	std::vector<double> m_vdVelGearDriveTarget1RadS;
-	std::vector<double> m_vdAngGearSteerTarget2Rad; // alternativ 2 for steering angle (+/- PI)
-	std::vector<double> m_vdVelGearDriveTarget2RadS;
-	std::vector<double> m_vdAngGearSteerTargetRad; // choosen alternativ for steering angle
-	std::vector<double> m_vdVelGearDriveTargetRadS;
-
-	/** Position of the Wheels' Steering Axis'
-	 *  in cartesian (X/Y) and polar (Dist/Ang) coordinates
-	 *  relative to robot coordinate System
-	 */
-	std::vector<double> m_vdWheelXPosMM;
-	std::vector<double> m_vdWheelYPosMM;
-	std::vector<double> m_vdWheelDistMM;
-	std::vector<double> m_vdWheelAngRad;
-
-	/** Exact Position of the Wheels' itself
-	 *  in cartesian (X/Y) and polar (Dist/Ang) coordinates
-	 *  relative to robot coordinate System
-	 */
-	std::vector<double> m_vdExWheelXPosMM;
-	std::vector<double> m_vdExWheelYPosMM;
-	std::vector<double> m_vdExWheelDistMM;
-	std::vector<double> m_vdExWheelAngRad;
-
-	struct ParamType
-	{
-		int iDistWheels;
-		int iRadiusWheelMM;
-
-		int iDistSteerAxisToDriveWheelMM;
-
-		double dMaxDriveRateRadpS;
-		double dMaxSteerRateRadpS;
-		double dCmdRateS;
-		std::vector<double> WheelNeutralPos;
-		std::vector<double> vdSteerDriveCoupling;
-		/** Factor between steering motion and steering induced motion of drive wheels
-		 *  subtract from Drive-Wheel Vel to get effective Drive Velocity (Direct Kinematics)
-		 *  add to Drive-Wheel Vel (Inverse Kinematics) to account for coupling when commanding velos
-		 */
-		std::vector<double> vdFactorVel;
-	};
-
-	ParamType m_UnderCarriagePrms;
-
-	/** ------- Position Controller Steer Wheels -------
-	 * Impedance-Ctrlr Prms
-	 *  -> model Stiffness via Spring-Damper-Modell
-	 *  -> only oriented at impedance-ctrl (no forces commanded)
-	 *  m_dSpring	Spring-constant (elasticity)
-	 *  m_dDamp		Damping coefficient (also prop. for Velocity Feedforward)
-	 *  m_dVirtM	Virtual Mass of Spring-Damper System
-	 *  m_dDPhiMax	maximum angular velocity (cut-off)
-	 *  m_dDDPhiMax	maximum angular acceleration (cut-off)
-	 */
-	double m_dSpring, m_dDamp, m_dVirtM, m_dDPhiMax, m_dDDPhiMax;
-	/** storage for internal controller states
-	 *  m_vdCtrlVal is Vector with stored Controller-values of all wheels
-	 *  m_vdCtrlVal[iWheelNr][iVariableNr]
-	 *  iWheelNr: 		Index of Wheel Number (0..3)
-	 *  iVariableNr:	0: previous Commanded deltaPhi e(k-1)
-	 *					1: pre-previous Commanded deltaPhi e(k-2)
-	 *					2: previous Commanded Velocity u(k-1)
-	 */
-	std::vector< std::vector<double> > m_vdCtrlVal;
-
-	// Factor for thread cycle time of ThreadMotionPltfCtrl and ThreadUnderCarriageCtrl	
-	//double m_dThreadCycleMultiplier;
-	
-	// calculate inverse kinematics
-	void CalcInverse(void);
-
-	// calculate direct kinematics
-	void CalcDirect(void);
-
-	// calculate Exact Wheel Position in robot coordinates
-	void CalcExWheelPos(void);
-
-	// perform one discrete Controle Step
-	void CalcControlStep(void);
-
-        void resetController();
-
 public:
+    struct PlatformState{
+        double dVelLongMMS;
+        double dVelLatMMS;
+        double dRotRobRadS;
 
-	// Constructor
-	UndercarriageCtrlGeom(std::string sIniDirectory);
-
-	// Initialize Parameters for Controller and Kinematics
-	void InitUndercarriageCtrl(void);
-
-	// Set desired value for Plattform Velocity to UndercarriageCtrl (Sollwertvorgabe)
-	void SetDesiredPltfVelocity(double dCmdVelLongMMS, double dCmdVelLatMMS, double dCmdRotRobRadS);
-
-	// Set actual values of wheels (steer/drive velocity/position) (Istwerte)
-	void SetActualWheelValues(std::vector<double> vdVelGearDriveRadS, std::vector<double> vdVelGearSteerRadS, std::vector<double> vdDltAngGearDriveRad, std::vector<double> vdAngGearSteerRad);
-
-	// Get result of inverse kinematics (without controller)
-	void GetSteerDriveSetValues(std::vector<double> & vdVelGearDriveRadS, std::vector<double> & vdAngGearSteerRad);
-
-	// Get set point values for the Wheels (including controller) from UndercarriangeCtrl
-	void GetNewCtrlStateSteerDriveSetValues(std::vector<double> & vdVelGearDriveRadS, std::vector<double> & vdVelGearSteerRadS, std::vector<double> & vdAngGearSteerRad);
-
-	// Get result of direct kinematics
-	void GetActualPltfVelocity(double & dVelLongMMS, double & dVelLatMMS, double & dRotRobRadS);
-
-
-        void GetActualPltfVelocity(double & dDeltaLongMM, double & dDeltaLatMM, double & dDeltaRotRobRad, double & dDeltaRotVelRad,
-                                        double & dVelLongMMS, double & dVelLatMMS, double & dRotRobRadS, double & dRotVelRadS, const double dCmdRateS)
-        {
-                GetActualPltfVelocity(dVelLongMMS, dVelLatMMS, dRotRobRadS);
-
-                dRotVelRadS = 0; // not used
-                
-                // calculate travelled distance and angle (from velocity) for output
-                // ToDo: make sure this corresponds to cycle-freqnecy of calling node
-                //       --> specify via config file
-                dDeltaLongMM = dVelLongMMS * dCmdRateS;
-                dDeltaLatMM = dVelLatMMS * dCmdRateS;
-                dDeltaRotRobRad = dRotRobRadS * dCmdRateS;
-                dDeltaRotVelRad = dRotVelRadS * dCmdRateS;
-        }
+        PlatformState() : dVelLongMMS(0), dVelLatMMS(0),dRotRobRadS(0) {}
+    };
+    struct WheelState {
+        double dVelGearDriveRadS;
+        double dVelGearSteerRadS;
+        double dAngGearSteerRad;
+        WheelState() : dVelGearDriveRadS(0), dVelGearSteerRadS(0), dAngGearSteerRad(0) {}
+    };
+    struct WheelParams{
+        /** Position of the Wheels' Steering Axis'
+        *  in cartesian (X/Y) coordinates
+        *  relative to robot coordinate System
+        */
+        double dWheelXPosMM;
+        double dWheelYPosMM;
         
+        double dWheelNeutralPos;
+        double dSteerDriveCoupling;
+        
+        /** Factor between steering motion and steering induced motion of drive wheels
+            *  subtract from Drive-Wheel Vel to get effective Drive Velocity (Direct Kinematics)
+            *  add to Drive-Wheel Vel (Inverse Kinematics) to account for coupling when commanding velos
+            */
+        double dFactorVel;
+
+        double dRadiusWheelMM;
+        double dDistSteerAxisToDriveWheelMM;
+
+        double dMaxDriveRateRadpS;
+        double dMaxSteerRateRadpS;
+        
+        /** ------- Position Controller Steer Wheels -------
+        * Impedance-Ctrlr Prms
+        *  -> model Stiffness via Spring-Damper-Modell
+        *  -> only oriented at impedance-ctrl (no forces commanded)
+        *  m_dSpring   Spring-constant (elasticity)
+        *  m_dDamp             Damping coefficient (also prop. for Velocity Feedforward)
+        *  m_dVirtM    Virtual Mass of Spring-Damper System
+        *  m_dDPhiMax  maximum angular velocity (cut-off)
+        *  m_dDDPhiMax maximum angular acceleration (cut-off)
+        */
+        double dSpring, dDamp, dVirtM, dDPhiMax, dDDPhiMax;
+    };
+private:
+
+    struct WheelData{
+        WheelParams params_;
+        
+        WheelState state_;
+
+        double m_dAngGearSteerTargetRad; // choosen alternativ for steering angle
+        double m_dVelGearDriveTargetRadS;
+
+        /** Exact Position of the Wheels' itself
+            *  in cartesian (X/Y) and polar (Dist/Ang) coordinates
+            *  relative to robot coordinate System
+            */
+        double m_dExWheelXPosMM;
+        double m_dExWheelYPosMM;
+        double m_dExWheelDistMM;
+        double m_dExWheelAngRad;
+
+        double m_dVelWheelMMS;
+        
+        // previous Commanded deltaPhi e(k-1)
+        // double m_dCtrlDeltaPhi; not used
+        // previous Commanded Velocity u(k-1)
+        double m_dCtrlVelCmdInt;
+
+        // calculate inverse kinematics
+        void setTarget(const PlatformState &state);
+
+        void updateState(const WheelState &state);
+
+        void calcControlStep(WheelState &command, double dCmdRateS, bool reset);
+
+        static double mergeRotRobRadS(const WheelData &wheel1, const WheelData &wheel2);
+        
+        WheelData(const WheelParams &params) : params_(params), /*m_dCtrlDeltaPhi(0),*/  m_dCtrlVelCmdInt(0){
+            updateState(WheelState());
+            setTarget(PlatformState());
+        }
+
+    };
+
+    std::vector<WheelData> wheels_;
+        
+public:
+    // Constructor
+    UndercarriageCtrlGeom(const std::vector<WheelParams> &params);
+
+    // Set desired value for Plattform Velocity to UndercarriageCtrl (Sollwertvorgabe)
+    void setTarget(const PlatformState &state);
+
+    // Get result of direct kinematics
+    void calcDirect(PlatformState &state);
+
+    // Set actual values of wheels (steer/drive velocity/position) (Istwerte)
+    void updateWheelStates(const std::vector<WheelState> &states);
+
+    // Get set point values for the Wheels (including controller) from UndercarriangeCtrl
+    void calcControlStep(std::vector<WheelState> &states, double dCmdRateS, bool reset);
+
+
+
 };
 #endif
-
