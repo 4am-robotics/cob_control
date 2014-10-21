@@ -1,6 +1,7 @@
 #include "ros/ros.h"
 
 #include "cob_twist_controller/augmented_solver.h"
+#include <fstream>
 
 #define DEBUG true
 
