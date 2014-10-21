@@ -1,10 +1,14 @@
 #ifndef AUGMENTED_SOLVER_HPP
 #define AUGMENTED_SOLVER_HPP
 
+#include <math.h>
 #include <kdl/chainiksolver.hpp>
 #include <kdl/chainjnttojacsolver.hpp>
 #include <kdl/utilities/svd_HH.hpp>
+#include <Eigen/Core>
+
 #include <Eigen/LU>
+#include <Eigen/SVD> 
 #include <iostream>
 
 
@@ -31,7 +35,7 @@ public:
      * default: 150
      *
      */
-    augmented_solver(const KDL::Chain& chain, double eps=0.00001, int maxiter=150);
+    augmented_solver(const KDL::Chain& chain, double eps=0.001);
     ~augmented_solver();
 
     /** CartToJnt for chain NOT including base **/
@@ -52,17 +56,23 @@ public:
 
     //void setBaseToArmFactor(double base_to_arm_factor){ base_to_arm_factor_ = base_to_arm_factor; }
 
-private:
-    const KDL::Chain chain;
+private:	
+
+	const KDL::Chain chain;
     KDL::ChainJntToJacSolver jnt2jac;
     KDL::Jacobian jac;
-    KDL::SVD_HH svd;
-    std::vector<KDL::JntArray> U;
-    KDL::JntArray S;
-    std::vector<KDL::JntArray> V;
-    KDL::JntArray tmp;
     double eps;
-    int maxiter;
+    int task_size;
+    Eigen::MatrixXd We;    
+    Eigen::MatrixXd Wc;
+    Eigen::MatrixXd Wv;    
+    Eigen::MatrixXd Jc;
+    Eigen::MatrixXd Jcm1;
+    double damping_factor;
+    double wkm1;
+    bool firstIterationDone;
+    double quasiZero;
+    Eigen::VectorXd v_out_ant;
     //bool base_is_actived_;
     //double base_to_arm_factor_;
 

@@ -87,8 +87,8 @@ void CobTwistController::initialize()
 	
 	///initialize configuration control solver
 	//p_iksolver_vel_ = new KDL::ChainIkSolverVel_pinv(chain_, 0.001, 5);
-	p_augmented_solver_ = new augmented_solver(chain_, 0.001, 5);
-	
+	//p_augmented_solver_ = new augmented_solver(chain_, 0.001, 200);
+	p_augmented_solver_ = new augmented_solver(chain_, 0.001);
 	///initialize ROS interfaces
 	jointstate_sub = nh_.subscribe("/joint_states", 1, &CobTwistController::jointstate_cb, this);
 	twist_sub = nh_.subscribe("command_twist", 1, &CobTwistController::twist_cb, this);
@@ -112,8 +112,8 @@ void CobTwistController::run()
 void CobTwistController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 {
 	tf::StampedTransform transform_tf;
-	KDL::Frame frame;
-	try{
+	KDL::Frame frame;	
+	try{		
 		tf_listener_.lookupTransform(chain_base_, chain_tip_, ros::Time(0), transform_tf);
 		frame.p = KDL::Vector(transform_tf.getOrigin().x(), transform_tf.getOrigin().y(), transform_tf.getOrigin().z());
 		frame.M = KDL::Rotation::Quaternion(transform_tf.getRotation().x(), transform_tf.getRotation().y(), transform_tf.getRotation().z(), transform_tf.getRotation().w());
@@ -131,14 +131,14 @@ void CobTwistController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 	//ROS_INFO("Twist Rot (%f, %f, %f)", twist.rot.x(), twist.rot.y(), twist.rot.z());
 	
 	///ToDo: Verify this transformation
-	KDL::Twist twist_transformed = frame*twist;
+	//KDL::Twist twist_transformed = frame*twist; ???
 	
 	//ROS_INFO("TwistTransformed Vel (%f, %f, %f)", twist_transformed.vel.x(), twist_transformed.vel.y(), twist_transformed.vel.z());
 	//ROS_INFO("TwistTransformed Rot (%f, %f, %f)", twist_transformed.rot.x(), twist_transformed.rot.y(), twist_transformed.rot.z());
 	
 	
 	//int ret_ik = p_iksolver_vel_->CartToJnt(last_q_, twist_transformed, q_dot_ik);
-	int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist_transformed, q_dot_ik);
+	int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik);
 	
 	
 	if(ret_ik < 0)
@@ -147,7 +147,7 @@ void CobTwistController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 	}
 	else
 	{
-		q_dot_ik = normalize_velocities(q_dot_ik);
+		//q_dot_ik = normalize_velocities(q_dot_ik);
 		
 		brics_actuator::JointVelocities vel_msg;
 		vel_msg.velocities.resize(joints_.size());
@@ -157,9 +157,9 @@ void CobTwistController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 			vel_msg.velocities[i].unit = "rad";
 			vel_msg.velocities[i].value = q_dot_ik(i);
 			
-			ROS_WARN("DesiredVel %d: %f", i, q_dot_ik(i));
+			ROS_WARN("DesiredVel %d: %f", i, q_dot_ik(i));			
 		}
-		vel_pub.publish(vel_msg);
+	vel_pub.publish(vel_msg);
 	}
 }
 
@@ -202,9 +202,9 @@ KDL::JntArray CobTwistController::normalize_velocities(KDL::JntArray q_dot_ik)
 	double max_factor = 1;
 	for(unsigned int i=0; i<dof_; i++)
 	{
-		if(max_factor < (q_dot_ik(i)/limits_vel_[i]))
-		{
-			max_factor = (q_dot_ik(i)/limits_vel_[i]);
+		if(max_factor < (std::abs(q_dot_ik(i))/limits_vel_[i]))
+		{			
+			max_factor = (std::abs(q_dot_ik(i))/limits_vel_[i]);
 			ROS_WARN("Joint %d exceeds limit: Desired %f, Limit %f, Factor %f", i, q_dot_ik(i), limits_vel_[i], max_factor);
 		}
 	}
