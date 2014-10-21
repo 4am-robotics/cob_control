@@ -2,16 +2,15 @@
 
 #include "cob_twist_controller/augmented_solver.h"
 
-#define DEBUG true
 
+#define DEBUG true
 
 augmented_solver::augmented_solver(const KDL::Chain& _chain, double _eps, int _maxiter):
     chain(_chain),
     jnt2jac(chain),
-    jac(chain.getNrOfJoints()),
-    svd(jac),
+    jac(chain.getNrOfJoints()),    
     U(6,KDL::JntArray(chain.getNrOfJoints())),
-    S(chain.getNrOfJoints()),
+    //S(chain.getNrOfJoints()),
     V(chain.getNrOfJoints(), KDL::JntArray(chain.getNrOfJoints())),
     tmp(chain.getNrOfJoints()),
     eps(_eps),
@@ -23,6 +22,7 @@ augmented_solver::augmented_solver(const KDL::Chain& _chain, double _eps, int _m
     //vel_y_ = 0.0;
     //vel_theta_ = 0.0;
 }
+
 
 augmented_solver::~augmented_solver()
 {
@@ -370,9 +370,34 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
     /// Vt: nxn
     /// qdot_out: nx1
     /// v_in: mx1
-    ret = svd.calculate(jac,U,S,V,maxiter);
-    if(DEBUG)
-        std::cout << "Singular Values:\n " << S.data << "\n";
+    
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd(jac.data,Eigen::ComputeFullU | Eigen::ComputeFullV);
+    
+    Eigen::VectorXd S = svd.singularValues();
+    
+    Eigen::VectorXd v_in_vec = Eigen::VectorXd::Zero(jac.rows());
+    
+    Eigen::MatrixXd S_inv = Eigen::MatrixXd::Zero(jac.columns(),jac.rows());
+    
+    for (int i=0; i<(jac.rows()<jac.columns()?jac.rows():jac.columns());i++)
+		S_inv(i,i)=((S(i)<eps)?0:1/S(i));
+		
+	for (int i=0; i<jac.rows(); i++)
+		v_in_vec(i)=v_in(i);
+    
+    Eigen::MatrixXd qdot_out_vec= svd.matrixV()*S_inv*svd.matrixU().transpose()*v_in_vec;
+    
+    for(int i=0; i<jac.columns(); i++)
+		qdot_out(i)=qdot_out_vec(i,0);
+    
+    //ret = svd.calculate(jac,U,S,V,maxiter);    
+    
+    if(DEBUG) 
+    {
+        std::cout << "Singular Values:\n " << S << "\n";        
+        std::cout << "Singular Values inv:\n " << S_inv << "\n";
+        std::cout << "Salida:\n " << qdot_out_vec << "\n";
+    }
         
     if(DEBUG)
     {
@@ -382,52 +407,60 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
         ///     International Journal of Robotics Research, 4(2):3-9, 1985
         Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> prod = jac.data * jac.data.transpose();
         double d = prod.determinant();
-        double kappa = std::sqrt(d);
-        
+        double kappa = std::sqrt(d);        
         std::cout << "\nManipulability: " << kappa << "\n";
     }
     
-
+       
     /// We have to calculate qdot_out = jac_pinv*v_in
     /// Using the svd decomposition this becomes(jac_pinv=V*S_pinv*Ut):
     /// qdot_out = V*S_pinv*Ut*v_in
 
+      
+    
     double sum;
     unsigned int i,j;
 
-    ///first we calculate Ut*v_in
-    for (i=0;i<jac.columns();i++) //n
-    {
-        sum = 0.0;
-        for (j=0;j<jac.rows();j++) //m
-        {
-            sum+= U[j](i)*v_in(j);
-        }
-        tmp(i) = sum;
-    }
+
+	//for (int i=0; i<tmp.rows();i++)
+		//std::cout<<"TMP("<<i<<"):"<<tmp(i)<<std::endl;
+
+	//first we calculate Ut*v_in
+    //for (i=0;i<jac.rows();i++) //m
+    //{
+        //sum = 0.0;
+        //for (j=0;j<jac.rows();j++) //m
+        //{
+            //sum+= U[j](i)*v_in(j);
+        //}
+        //tmp(i) = sum;
+    //}
+    //
+    //next is S^-1*Ut*v_in
+    //for (i=0;i<jac.columns();i++) //n
+    //{
+        //exact solution
+        //tmp(i) = tmp(i)*1.0/S(i);
+        //truncated svd
+        //If the singular value is too small (<eps), don't invert it but set the inverted singular value to zero 
+        //if(i<jac.rows()-1)
+			//tmp(i) = tmp(i)*(fabs(S(i))<eps?0.0:1.0/S(i));
+    //}
+    //tmp is now: tmp=S_pinv*Ut*v_in, 
+       //
+    //we still have to left-multiply it with V to get qdot_out
+    //for (i=0;i<jac.columns();i++) //n
+    //{
+        //sum = 0.0;
+        //for (j=0;j<jac.columns();j++) //n
+        //{
+            //sum+=V[i](j)*tmp(j);
+        //}
+        //Put the result in qdot_out
+        //qdot_out(i)=sum;
+    //}    
     
-    ///next is S^-1*Ut*v_in
-    for (i=0;i<jac.columns();i++) //n
-    {
-        /////exact solution
-        ////tmp(i) = tmp(i)*1.0/S(i);
-        ///truncated svd
-        ///If the singular value is too small (<eps), don't invert it but set the inverted singular value to zero 
-        tmp(i) = tmp(i)*(fabs(S(i))<eps?0.0:1.0/S(i));
-    }
-    ///tmp is now: tmp=S_pinv*Ut*v_in, 
-    
-    ///we still have to left-multiply it with V to get qdot_out
-    for (i=0;i<jac.columns();i++) //n
-    {
-        sum = 0.0;
-        for (j=0;j<jac.columns();j++) //n
-        {
-            sum+=V[i](j)*tmp(j);
-        }
-        ///Put the result in qdot_out
-        qdot_out(i)=sum;
-    }
+    ret=1;
     
     return ret;
 }

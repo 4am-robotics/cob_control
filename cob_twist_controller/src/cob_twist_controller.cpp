@@ -33,6 +33,8 @@
 #include <tf/transform_datatypes.h>
 
 
+
+
 void CobTwistController::initialize()
 {
 	///get params
@@ -40,7 +42,9 @@ void CobTwistController::initialize()
 	if (nh_.hasParam("joint_names"))
 	{	nh_.getParam("joint_names", jn_param);	}
 	else
-	{	ROS_ERROR("Parameter joint_names not set");	}
+	{	
+		ROS_ERROR("Parameter joint_names not set");	
+	}
 	
 	dof_ = jn_param.size();
 	for(unsigned int i=0; i<dof_; i++)
@@ -93,11 +97,13 @@ void CobTwistController::initialize()
 	jointstate_sub = nh_.subscribe("/joint_states", 1, &CobTwistController::jointstate_cb, this);
 	twist_sub = nh_.subscribe("command_twist", 1, &CobTwistController::twist_cb, this);
 	vel_pub = nh_.advertise<brics_actuator::JointVelocities>("command_vel", 10);
-	
+	twist_pub_ = nh_.advertise<geometry_msgs::Twist> ("command_twist_normalized", 1);
+
 	
 	///initialize variables and current joint values and velocities
 	last_q_ = KDL::JntArray(chain_.getNrOfJoints());
 	last_q_dot_ = KDL::JntArray(chain_.getNrOfJoints());
+	
 	
 	ROS_INFO("...initialized!");
 }
@@ -123,6 +129,8 @@ void CobTwistController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 		return;
 	}
 	
+
+	
 	KDL::Twist twist;
 	tf::twistMsgToKDL(*msg, twist);
 	KDL::JntArray q_dot_ik(chain_.getNrOfJoints());
@@ -138,8 +146,8 @@ void CobTwistController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 	
 	
 	//int ret_ik = p_iksolver_vel_->CartToJnt(last_q_, twist_transformed, q_dot_ik);
+			//int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist_transformed, q_dot_ik);
 	int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist_transformed, q_dot_ik);
-	
 	
 	if(ret_ik < 0)
 	{
@@ -150,6 +158,7 @@ void CobTwistController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 		q_dot_ik = normalize_velocities(q_dot_ik);
 		
 		brics_actuator::JointVelocities vel_msg;
+		
 		vel_msg.velocities.resize(joints_.size());
 		for(unsigned int i=0; i<dof_; i++)
 		{
@@ -160,6 +169,23 @@ void CobTwistController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 			ROS_WARN("DesiredVel %d: %f", i, q_dot_ik(i));
 		}
 		vel_pub.publish(vel_msg);
+		
+		
+		/// Normalized q_dot into Twist
+		KDL::FrameVel FrameVel;
+		geometry_msgs::Twist twist_msg;
+		KDL::JntArrayVel jntArrayVel = KDL::JntArrayVel(last_q_,q_dot_ik);
+
+		jntToCartSolver_vel_ = new KDL::ChainFkSolverVel_recursive(chain_);
+		int ret = jntToCartSolver_vel_->JntToCart(jntArrayVel,FrameVel,-1);
+	
+		if(ret>=0){			
+			KDL::Twist twist = FrameVel.GetTwist();
+			tf::twistKDLToMsg(twist,twist_msg);
+		}
+		twist_pub_.publish(twist_msg);
+		///---------------------------------------------------------------------
+
 	}
 }
 

@@ -4,7 +4,9 @@
 #include <kdl/chainiksolver.hpp>
 #include <kdl/chainjnttojacsolver.hpp>
 #include <kdl/utilities/svd_HH.hpp>
+#include <Eigen/Core>
 #include <Eigen/LU>
+#include <Eigen/SVD> 
 #include <iostream>
 
 
@@ -52,13 +54,14 @@ public:
 
     //void setBaseToArmFactor(double base_to_arm_factor){ base_to_arm_factor_ = base_to_arm_factor; }
 
-private:
-    const KDL::Chain chain;
+private:	
+
+	const KDL::Chain chain;
     KDL::ChainJntToJacSolver jnt2jac;
     KDL::Jacobian jac;
-    KDL::SVD_HH svd;
+    //KDL::SVD_HH svd;
     std::vector<KDL::JntArray> U;
-    KDL::JntArray S;
+    //KDL::JntArray S;
     std::vector<KDL::JntArray> V;
     KDL::JntArray tmp;
     double eps;
