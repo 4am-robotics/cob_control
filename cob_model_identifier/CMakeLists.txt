@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(cob_model_identifier)
 
 # Load catkin and all dependencies required for this package
-find_package(catkin REQUIRED COMPONENTS roscpp std_msgs geometry_msgs cmake_modules tf eigen_utils kdl_parser kdl_conversions std_srvs cob_srvs)
+find_package(catkin REQUIRED COMPONENTS roscpp std_msgs geometry_msgs cmake_modules tf kdl_parser kdl_conversions std_srvs cob_srvs)
 find_package(Eigen REQUIRED)
 add_definitions(${EIGEN_DEFINITIONS})
 
@@ -22,7 +22,6 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${oroco
 # Declare a cpp library
 add_library(input_generator src/input_generator/input_generator.cpp )
 add_library(output_recorder src/output_recorder/output_recorder.cpp )
-add_dependencies(cob_articulation cob_srvs_gencpp)
 
 ## Declare a cpp executable
 add_executable(input_generator_node src/input_generator/input_generator_node.cpp)

@@ -15,7 +15,7 @@
  * \note
  *   ROS stack name: cob_control
  * \note
- *   ROS package name: cob_articulation
+ *   ROS package name: cob_model_identifier
  *
  * \author
  *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de

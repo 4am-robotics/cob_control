@@ -212,9 +212,9 @@ void OutputRecorder::run()
 	
 	
 	/// Generate Octave Files
-	writeToMFile("x_linear",&x_dot_lin_vec_in_,&x_dot_lin_vec_out_,&x_lin_vec_out_,&x_dot_lin_integrated);
-	writeToMFile("y_linear",&y_dot_lin_vec_in_,&y_dot_lin_vec_out_,&y_lin_vec_out_,&y_dot_lin_integrated);
-	writeToMFile("z_linear",&z_dot_lin_vec_in_,&z_dot_lin_vec_out_,&z_lin_vec_out_,&z_dot_lin_integrated);
+	writeToMFile("x_linear",&x_dot_lin_vec_in_,&x_dot_lin_vec_out_,&x_lin_vec_out_,&x_dot_lin_integrated,&trans_x_vect_in_normalized_);
+	writeToMFile("y_linear",&y_dot_lin_vec_in_,&y_dot_lin_vec_out_,&y_lin_vec_out_,&y_dot_lin_integrated,&trans_y_vect_in_normalized_);
+	writeToMFile("z_linear",&z_dot_lin_vec_in_,&z_dot_lin_vec_out_,&z_lin_vec_out_,&z_dot_lin_integrated,&trans_z_vect_in_normalized_);
 }
 
 
@@ -658,7 +658,7 @@ void OutputRecorder::euler(std::vector<double> *out, double in, double dt){
 		}
 }
 
-void OutputRecorder::writeToMFile(std::string fileName,std::vector<double> *dot_in,std::vector<double> *dot_out,std::vector<double> *pos_out,std::vector<double> *dot_integrated){
+void OutputRecorder::writeToMFile(std::string fileName,std::vector<double> *dot_in,std::vector<double> *dot_out,std::vector<double> *pos_out,std::vector<double> *dot_integrated,std::vector<double> *dot_normalized_in){
 	std::ofstream myfile;
 	std::string name;
 	std::vector <double> errVec;
@@ -678,7 +678,11 @@ void OutputRecorder::writeToMFile(std::string fileName,std::vector<double> *dot_
 	}
     myfile << "]; \n" << std::endl;
   
-  
+  myfile << fileName << "_dot_normalized_in = [" << std::endl;
+	for (int i=0;i<dot_normalized_in->size()-1;i++){
+	myfile << dot_normalized_in->at(i) <<std::endl;
+	}
+	myfile << "]; \n" << std::endl;
   
 	myfile << fileName << "_dot_out = [" << std::endl;
 	for (int i=0;i<dot_out->size()-1;i++){
@@ -704,7 +708,8 @@ void OutputRecorder::writeToMFile(std::string fileName,std::vector<double> *dot_
     myfile << "]; \n" << std::endl;
     
 	//myfile << "t = linspace(0,size(" << fileName << "_dot_in*" << dt_ <<"),size(" <<fileName << "_dot_in));" << std::endl;
-	myfile << "t = linspace(0,5,size(" <<fileName << "_dot_in));" << std::endl;
+  myfile << "k = size(" <<fileName << "_dot_in);" << std::endl;
+	myfile << "t = linspace(0,k(1)*" << dt_ << ",size(" <<fileName << "_dot_in));" << std::endl;
 
     /// Generate Velocity Model --------------------------------------------------------------------------------------------------------------------
     //myfile << "s = tf('s'); z=tf('z'," << dt_ << ");" << std::endl;
@@ -816,12 +821,14 @@ void OutputRecorder::writeToMFile(std::string fileName,std::vector<double> *dot_
     myfile << "title('" << fileName << " step response','interpreter','none')"  << std::endl;
     myfile << "grid" << std::endl;
 	
+	/*
 	/// Plot everything
 	myfile << "figure" << std::endl;
 	myfile << "plot(t," << fileName << "_dot_in,t," << fileName << "_dot_out,t," << fileName << "_pos_out,t," << fileName << "_dot_integrated,t,Gs_" << fileName << "_out_integrated2)" << std::endl;
     myfile << "c=legend('" << fileName << "-dot-in','" << fileName << "-dot-out','" << fileName << "-pos-out','" << fileName << "-dot-out-integrated','PT2 Velocitymodel','" << "IT1_Positionmodel'); \n set(c,'Interpreter','none');" << std::endl;
     myfile << "title('" << fileName << " step response','interpreter','none')"  << std::endl;
     myfile << "grid" << std::endl;
+  */
     
     /// Plot step response
     myfile << "t1 = linspace(0,size(" << fileName << "_dot_in),1/68);" << std::endl;

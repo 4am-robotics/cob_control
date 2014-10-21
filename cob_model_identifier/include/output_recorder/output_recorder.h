@@ -15,7 +15,7 @@
  * \note
  *   ROS stack name: cob_control
  * \note
- *   ROS package name: cob_articulation
+ *   ROS package name: cob_model_identifier
  *
  * \author
  *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de
@@ -76,7 +76,7 @@ public:
 	void stop_tracking();
 	void normalized_twist_cb(const geometry_msgs::Twist::ConstPtr& msg);
 	void euler(std::vector<double> *out, double in, double dt);	
-	void writeToMFile(std::string fileName,std::vector<double> *dot_in,std::vector<double> *dot_out,std::vector<double> *pos_out,std::vector<double> *dot_integrated);
+	void writeToMFile(std::string fileName,std::vector<double> *dot_in,std::vector<double> *dot_out,std::vector<double> *pos_out,std::vector<double> *dot_integrated, std::vector<double> *dot_normalized_in);
 	Eigen::VectorXd lsmr(Eigen::MatrixXd & A, Eigen::VectorXd & b);
 	Eigen::VectorXd getTheta(Eigen::MatrixXd &F, Eigen::VectorXd &y);
 
