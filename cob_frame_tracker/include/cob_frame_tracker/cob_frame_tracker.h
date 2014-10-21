@@ -60,6 +60,7 @@ public:
 private:
 	double update_rate_;
 	
+	double last_err_x_,last_err_y_,last_err_z_;
 	bool tracking_;
 	std::string tracking_frame_;	//goal frame
 	std::string active_frame_;		//twists with respect to this frame
@@ -73,7 +74,10 @@ private:
 	bool movable_trans_;
 	bool movable_rot_;
 	
-	control_toolbox::Pid pid_controller_trans_;       /**< Internal PID controller. */
+	control_toolbox::Pid pid_controller_trans_x_;       /**< Internal PID controller. */
+	control_toolbox::Pid pid_controller_trans_y_;
+	control_toolbox::Pid pid_controller_trans_z_;
+	
 	control_toolbox::Pid pid_controller_rot_;         /**< Internal PID controller. */
 };
 
