@@ -1,6 +1,7 @@
 #ifndef AUGMENTED_SOLVER_HPP
 #define AUGMENTED_SOLVER_HPP
 
+#include <math.h>
 #include <kdl/chainiksolver.hpp>
 #include <kdl/chainjnttojacsolver.hpp>
 #include <Eigen/Core>
@@ -35,20 +36,24 @@ public:
     augmented_solver(const KDL::Chain& chain, double eps=0.00001, int maxiter=150);
     ~augmented_solver();
     
-    /** CartToJnt for chain NOT including base **/
+    /** CartToJnt for chain NOT including base using truncated SVD **/
     virtual int CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL::JntArray& qdot_out);
+    /** CartToJnt for chain NOT including base using SVD with Damping **/
+    virtual int CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL::JntArray& qdot_out, std::string damping_method);
     
     /** not (yet) implemented. */
     virtual int CartToJnt(const KDL::JntArray& q_init, const KDL::FrameVel& v_in, KDL::JntArrayVel& q_out){return -1;};
 
 private:
-
     const KDL::Chain chain;
     KDL::Jacobian jac;
     KDL::ChainJntToJacSolver jnt2jac;
     double eps;
     int maxiter;
-
+    
+    Eigen::MatrixXd Jcm1;
+    double wkm1;
+    bool initial_iteration;
 };
 #endif
 

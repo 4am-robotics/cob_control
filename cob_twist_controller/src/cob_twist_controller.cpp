@@ -116,7 +116,8 @@ void CobTwistController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 	KDL::JntArray q_dot_ik(chain_.getNrOfJoints());
 	
 	//int ret_ik = p_iksolver_vel_->CartToJnt(last_q_, twist, q_dot_ik);
-	int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik);
+	//int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik);
+	int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik, "trackingError");
 	
 	if(ret_ik < 0)
 	{
@@ -124,7 +125,8 @@ void CobTwistController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 	}
 	else
 	{
-		q_dot_ik = normalize_velocities(q_dot_ik);
+		///normalize guarantees that velocities are within limits --- only needed for CartToJnt without damping
+		//q_dot_ik = normalize_velocities(q_dot_ik);
 		
 		brics_actuator::JointVelocities vel_msg;
 		vel_msg.velocities.resize(joints_.size());
@@ -197,9 +199,9 @@ KDL::JntArray CobTwistController::normalize_velocities(KDL::JntArray q_dot_ik)
 	double max_factor = 1;
 	for(unsigned int i=0; i<dof_; i++)
 	{
-		if(max_factor < (q_dot_ik(i)/limits_vel_[i]))
+		if(max_factor < std::fabs((q_dot_ik(i)/limits_vel_[i])))
 		{
-			max_factor = (q_dot_ik(i)/limits_vel_[i]);
+			max_factor = std::fabs((q_dot_ik(i)/limits_vel_[i]));
 			ROS_WARN("Joint %d exceeds limit: Desired %f, Limit %f, Factor %f", i, q_dot_ik(i), limits_vel_[i], max_factor);
 		}
 	}
