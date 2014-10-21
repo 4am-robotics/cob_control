@@ -111,34 +111,12 @@ void CobTwistController::run()
 
 void CobTwistController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 {
-	tf::StampedTransform transform_tf;
-	KDL::Frame frame;
-	try{
-		tf_listener_.lookupTransform(chain_base_, chain_tip_, ros::Time(0), transform_tf);
-		frame.p = KDL::Vector(transform_tf.getOrigin().x(), transform_tf.getOrigin().y(), transform_tf.getOrigin().z());
-		frame.M = KDL::Rotation::Quaternion(transform_tf.getRotation().x(), transform_tf.getRotation().y(), transform_tf.getRotation().z(), transform_tf.getRotation().w());
-	}
-	catch (tf::TransformException ex){
-		ROS_ERROR("%s",ex.what());
-		return;
-	}
-	
 	KDL::Twist twist;
 	tf::twistMsgToKDL(*msg, twist);
 	KDL::JntArray q_dot_ik(chain_.getNrOfJoints());
 	
-	//ROS_INFO("Twist Vel (%f, %f, %f)", twist.vel.x(), twist.vel.y(), twist.vel.z());
-	//ROS_INFO("Twist Rot (%f, %f, %f)", twist.rot.x(), twist.rot.y(), twist.rot.z());
-	
-	///ToDo: Verify this transformation
-	KDL::Twist twist_transformed = frame*twist;
-	
-	//ROS_INFO("TwistTransformed Vel (%f, %f, %f)", twist_transformed.vel.x(), twist_transformed.vel.y(), twist_transformed.vel.z());
-	//ROS_INFO("TwistTransformed Rot (%f, %f, %f)", twist_transformed.rot.x(), twist_transformed.rot.y(), twist_transformed.rot.z());
-	
-	
-	//int ret_ik = p_iksolver_vel_->CartToJnt(last_q_, twist_transformed, q_dot_ik);
-	int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist_transformed, q_dot_ik);
+	//int ret_ik = p_iksolver_vel_->CartToJnt(last_q_, twist, q_dot_ik);
+	int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik);
 	
 	if(ret_ik < 0)
 	{
