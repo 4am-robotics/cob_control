@@ -45,6 +45,7 @@
 
 #include <tf/transform_listener.h>
 
+#include <kdl/chainfksolvervel_recursive.hpp>
 
 class CobTwistController
 {
@@ -55,6 +56,7 @@ private:
 	ros::Subscriber jointstate_sub;
 	ros::Subscriber twist_sub;
 	ros::Publisher vel_pub;
+	ros::Publisher twist_pub_;
 	
 	KDL::Chain chain_;
 	std::string chain_base_;
@@ -71,7 +73,9 @@ private:
 	
 	KDL::JntArray last_q_;
 	KDL::JntArray last_q_dot_;
-	
+		
+	KDL::ChainFkSolverVel_recursive* jntToCartSolver_vel_;
+
 	
 public:
 	CobTwistController() {;}
