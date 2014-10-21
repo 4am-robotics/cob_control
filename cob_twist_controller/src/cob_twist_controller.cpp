@@ -87,13 +87,13 @@ void CobTwistController::initialize()
 	
 	///initialize configuration control solver
 	//p_iksolver_vel_ = new KDL::ChainIkSolverVel_pinv(chain_, 0.001, 5);
-	//p_augmented_solver_ = new augmented_solver(chain_, 0.001, 200);
-	p_augmented_solver_ = new augmented_solver(chain_, 0.001);
+	p_augmented_solver_ = new augmented_solver(chain_, 0.001, 5);
+	
 	///initialize ROS interfaces
 	jointstate_sub = nh_.subscribe("/joint_states", 1, &CobTwistController::jointstate_cb, this);
 	twist_sub = nh_.subscribe("command_twist", 1, &CobTwistController::twist_cb, this);
 	vel_pub = nh_.advertise<brics_actuator::JointVelocities>("command_vel", 10);
-	
+	twist_pub_ = nh_.advertise<geometry_msgs::Twist> ("command_twist_normalized", 1);
 	
 	///initialize variables and current joint values and velocities
 	last_q_ = KDL::JntArray(chain_.getNrOfJoints());
@@ -111,35 +111,13 @@ void CobTwistController::run()
 
 void CobTwistController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 {
-	tf::StampedTransform transform_tf;
-	KDL::Frame frame;	
-	try{		
-		tf_listener_.lookupTransform(chain_base_, chain_tip_, ros::Time(0), transform_tf);
-		frame.p = KDL::Vector(transform_tf.getOrigin().x(), transform_tf.getOrigin().y(), transform_tf.getOrigin().z());
-		frame.M = KDL::Rotation::Quaternion(transform_tf.getRotation().x(), transform_tf.getRotation().y(), transform_tf.getRotation().z(), transform_tf.getRotation().w());
-	}
-	catch (tf::TransformException ex){
-		ROS_ERROR("%s",ex.what());
-		return;
-	}
-	
 	KDL::Twist twist;
 	tf::twistMsgToKDL(*msg, twist);
 	KDL::JntArray q_dot_ik(chain_.getNrOfJoints());
 	
-	//ROS_INFO("Twist Vel (%f, %f, %f)", twist.vel.x(), twist.vel.y(), twist.vel.z());
-	//ROS_INFO("Twist Rot (%f, %f, %f)", twist.rot.x(), twist.rot.y(), twist.rot.z());
-	
-	///ToDo: Verify this transformation
-	//KDL::Twist twist_transformed = frame*twist; ???
-	
-	//ROS_INFO("TwistTransformed Vel (%f, %f, %f)", twist_transformed.vel.x(), twist_transformed.vel.y(), twist_transformed.vel.z());
-	//ROS_INFO("TwistTransformed Rot (%f, %f, %f)", twist_transformed.rot.x(), twist_transformed.rot.y(), twist_transformed.rot.z());
-	
-	
-	//int ret_ik = p_iksolver_vel_->CartToJnt(last_q_, twist_transformed, q_dot_ik);
-	int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik);
-	
+	//int ret_ik = p_iksolver_vel_->CartToJnt(last_q_, twist, q_dot_ik);
+	//int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik);
+	int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik, "trackingError");
 	
 	if(ret_ik < 0)
 	{
@@ -147,6 +125,7 @@ void CobTwistController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 	}
 	else
 	{
+		///normalize guarantees that velocities are within limits --- only needed for CartToJnt without damping
 		//q_dot_ik = normalize_velocities(q_dot_ik);
 		
 		brics_actuator::JointVelocities vel_msg;
@@ -157,9 +136,27 @@ void CobTwistController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 			vel_msg.velocities[i].unit = "rad";
 			vel_msg.velocities[i].value = q_dot_ik(i);
 			
-			ROS_WARN("DesiredVel %d: %f", i, q_dot_ik(i));			
+			ROS_WARN("DesiredVel %d: %f", i, q_dot_ik(i));
 		}
-	vel_pub.publish(vel_msg);
+		vel_pub.publish(vel_msg);
+		
+		
+		///---------------------------------------------------------------------
+		/// Normalized q_dot into Twist
+		KDL::FrameVel FrameVel;
+		geometry_msgs::Twist twist_msg;
+		KDL::JntArrayVel jntArrayVel = KDL::JntArrayVel(last_q_,q_dot_ik);
+		
+		jntToCartSolver_vel_ = new KDL::ChainFkSolverVel_recursive(chain_);
+		int ret = jntToCartSolver_vel_->JntToCart(jntArrayVel,FrameVel,-1);
+		
+		if(ret>=0)
+		{
+			KDL::Twist twist = FrameVel.GetTwist();
+			tf::twistKDLToMsg(twist,twist_msg);
+		}
+		twist_pub_.publish(twist_msg);
+		///---------------------------------------------------------------------
 	}
 }
 
@@ -202,9 +199,9 @@ KDL::JntArray CobTwistController::normalize_velocities(KDL::JntArray q_dot_ik)
 	double max_factor = 1;
 	for(unsigned int i=0; i<dof_; i++)
 	{
-		if(max_factor < (std::abs(q_dot_ik(i))/limits_vel_[i]))
-		{			
-			max_factor = (std::abs(q_dot_ik(i))/limits_vel_[i]);
+		if(max_factor < std::fabs((q_dot_ik(i)/limits_vel_[i])))
+		{
+			max_factor = std::fabs((q_dot_ik(i)/limits_vel_[i]));
 			ROS_WARN("Joint %d exceeds limit: Desired %f, Limit %f, Factor %f", i, q_dot_ik(i), limits_vel_[i], max_factor);
 		}
 	}

@@ -26,11 +26,11 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${orocos_kdl_INCLUDE_DIRS} ${
 add_library(augmented_solver src/augmented_solver.cpp)
 target_link_libraries(augmented_solver ${orocos_kdl_LIBRARIES})
 
-
 add_library(${PROJECT_NAME} src/cob_twist_controller.cpp )
-add_library(output_publisher src/output_publisher.cpp )
 add_dependencies(${PROJECT_NAME} brics_actuator_gencpp)
 target_link_libraries(${PROJECT_NAME} augmented_solver ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
+
+add_library(output_publisher src/output_publisher.cpp )
 
 ## Declare a cpp executable
 add_executable(${PROJECT_NAME}_node src/cob_twist_controller_node.cpp)
@@ -39,9 +39,10 @@ target_link_libraries(${PROJECT_NAME}_node ${PROJECT_NAME} ${catkin_LIBRARIES} $
 add_executable(output_publisher_node src/output_publisher_node.cpp)
 target_link_libraries(output_publisher_node output_publisher ${catkin_LIBRARIES} ${orocos_kdl_INCLUDE_DIRS} )
 
+
 ## Install
 # Mark executables and/or libraries for installation
-install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node augmented_solver output_publisher_node output_publisher
+install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node augmented_solver output_publisher output_publisher_node
  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
