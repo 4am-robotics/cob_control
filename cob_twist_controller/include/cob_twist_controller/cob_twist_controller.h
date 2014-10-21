@@ -37,6 +37,7 @@
 
 #include <urdf/model.h>
 #include <kdl_parser/kdl_parser.hpp>
+#include <kdl/chainfksolvervel_recursive.hpp>
 #include <kdl/chainiksolvervel_pinv.hpp>
 #include <cob_twist_controller/augmented_solver.h>
 #include <kdl/jntarray.hpp>
@@ -44,8 +45,6 @@
 #include <kdl/frames.hpp>
 
 #include <tf/transform_listener.h>
-
-#include <kdl/chainfksolvervel_recursive.hpp>
 
 class CobTwistController
 {
@@ -62,6 +61,7 @@ private:
 	std::string chain_base_;
 	std::string chain_tip_;
 	
+	KDL::ChainFkSolverVel_recursive* jntToCartSolver_vel_;
 	KDL::ChainIkSolverVel_pinv* p_iksolver_vel_;
 	augmented_solver* p_augmented_solver_;
 	
@@ -73,9 +73,7 @@ private:
 	
 	KDL::JntArray last_q_;
 	KDL::JntArray last_q_dot_;
-		
-	KDL::ChainFkSolverVel_recursive* jntToCartSolver_vel_;
-
+	
 	
 public:
 	CobTwistController() {;}
