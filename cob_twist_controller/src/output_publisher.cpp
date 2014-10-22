@@ -28,7 +28,7 @@
 #include <ros/ros.h>
 #include <tinyxml.h>
 #include <vector>
-#include <output_publisher/output_publisher.h>
+#include <cob_twist_controller/output_publisher.h>
 #include <tf/transform_broadcaster.h>
 #include <vector>
 #include <iostream>

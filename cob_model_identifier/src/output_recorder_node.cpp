@@ -1,5 +1,5 @@
 #include <ros/ros.h>
-#include <output_recorder/output_recorder.h>
+#include <cob_model_identifier/output_recorder.h>
 
 int main(int argc, char **argv)
 {
