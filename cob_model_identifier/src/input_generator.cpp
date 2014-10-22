@@ -159,7 +159,7 @@ void InputGenerator::publish_twist(bool sendZero)
 		float noise = 0.f;
 
 
-			random = ((float)rand() / (float)(RAND_MAX + 1));
+			random = ((float)rand() / (float)(RAND_MAX));
 			noise = (2.f * ((random * c2) + (random * c2) + (random * c2)) - 3.f * (c2 - 1.f)) * c3;
 	
 		noise += 3;
