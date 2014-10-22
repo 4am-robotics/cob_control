@@ -27,7 +27,7 @@
  ****************************************************************/
 #include <ros/ros.h>
 #include <vector>
-#include <input_generator/input_generator.h>
+#include <cob_model_identifier/input_generator.h>
 
 
 void InputGenerator::initialize()

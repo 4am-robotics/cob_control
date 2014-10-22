@@ -1,5 +1,5 @@
 #include <ros/ros.h>
-#include <output_publisher/output_publisher.h>
+#include <cob_twist_controller/output_publisher.h>
 
 int main(int argc, char **argv)
 {

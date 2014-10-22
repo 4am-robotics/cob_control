@@ -4,11 +4,10 @@ project(cob_twist_controller)
 # Load catkin and all dependencies required for this package
 find_package(catkin REQUIRED COMPONENTS cmake_modules roscpp sensor_msgs geometry_msgs brics_actuator kdl_parser kdl_conversions tf tf_conversions )
 
-find_package(orocos_kdl REQUIRED)
-
 find_package(Eigen REQUIRED)
 add_definitions(${EIGEN_DEFINITIONS})
 
+find_package(orocos_kdl REQUIRED)
 
 # Declare catkin package
 catkin_package(
@@ -18,7 +17,7 @@ catkin_package(
 #  DEPENDS system_lib
 )
 
-include_directories(include ${catkin_INCLUDE_DIRS} ${orocos_kdl_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${orocos_kdl_INCLUDE_DIRS} )
 
 
 ## Build
@@ -37,7 +36,7 @@ add_executable(${PROJECT_NAME}_node src/cob_twist_controller_node.cpp)
 target_link_libraries(${PROJECT_NAME}_node ${PROJECT_NAME} ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 
 add_executable(output_publisher_node src/output_publisher_node.cpp)
-target_link_libraries(output_publisher_node output_publisher ${catkin_LIBRARIES} ${orocos_kdl_INCLUDE_DIRS} )
+target_link_libraries(output_publisher_node output_publisher ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 
 
 ## Install
