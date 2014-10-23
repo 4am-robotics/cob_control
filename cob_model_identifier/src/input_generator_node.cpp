@@ -1,5 +1,5 @@
 #include <ros/ros.h>
-#include <input_generator/input_generator.h>
+#include <cob_model_identifier/input_generator.h>
 
 int main(int argc, char **argv)
 {

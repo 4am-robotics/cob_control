@@ -28,7 +28,7 @@
 #include <ros/ros.h>
 #include <tinyxml.h>
 #include <vector>
-#include <output_recorder/output_recorder.h>
+#include <cob_model_identifier/output_recorder.h>
 #include <tf/transform_broadcaster.h>
 #include <vector>
 #include <iostream>
