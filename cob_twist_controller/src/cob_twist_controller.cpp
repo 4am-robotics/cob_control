@@ -92,7 +92,8 @@ void CobTwistController::initialize()
 	///initialize ROS interfaces
 	jointstate_sub = nh_.subscribe("/joint_states", 1, &CobTwistController::jointstate_cb, this);
 	twist_sub = nh_.subscribe("command_twist", 1, &CobTwistController::twist_cb, this);
-	vel_pub = nh_.advertise<brics_actuator::JointVelocities>("command_vel", 10);
+	twist_stamped_sub = nh_.subscribe("command_twist_stamped", 1, &CobTwistController::twist_stamped_cb, this);
+	vel_pub = nh_.advertise<brics_actuator::JointVelocities>("command_vel", 1);
 	twist_pub_ = nh_.advertise<geometry_msgs::Twist> ("command_twist_normalized", 1);
 	
 	///initialize variables and current joint values and velocities
@@ -109,15 +110,51 @@ void CobTwistController::run()
 }
 
 
+/// Orientation of twist_stamped_msg is with respect to coordinate system given in header.frame_id
+void CobTwistController::twist_stamped_cb(const geometry_msgs::TwistStamped::ConstPtr& msg)
+{
+	tf::StampedTransform transform_tf;
+	KDL::Frame frame;
+	KDL::Twist twist, twist_transformed;
+	
+	try{
+		tf_listener_.lookupTransform(chain_base_, msg->header.frame_id, ros::Time(0), transform_tf);
+		frame.p = KDL::Vector(0.0, 0.0, 0.0);
+		frame.M = KDL::Rotation::Quaternion(transform_tf.getRotation().x(), transform_tf.getRotation().y(), transform_tf.getRotation().z(), transform_tf.getRotation().w());
+	}
+	catch (tf::TransformException ex){
+		ROS_ERROR("%s",ex.what());
+		return;
+	}
+	
+	tf::twistMsgToKDL(msg->twist, twist);
+	twist_transformed = frame*twist;
+	
+	//ROS_DEBUG("Twist Vel (%f, %f, %f)", twist.vel.x(), twist.vel.y(), twist.vel.z());
+	//ROS_DEBUG("Twist Rot (%f, %f, %f)", twist.rot.x(), twist.rot.y(), twist.rot.z());
+	//ROS_DEBUG("TwistTransformed Vel (%f, %f, %f)", twist_transformed.vel.x(), twist_transformed.vel.y(), twist_transformed.vel.z());
+	//ROS_DEBUG("TwistTransformed Rot (%f, %f, %f)", twist_transformed.rot.x(), twist_transformed.rot.y(), twist_transformed.rot.z());
+	
+	solve_twist(twist_transformed);
+}
+
+/// Orientation of twist_msg is with respect to chain_base coordinate system
 void CobTwistController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 {
 	KDL::Twist twist;
 	tf::twistMsgToKDL(*msg, twist);
+	
+	solve_twist(twist);
+}
+
+/// Orientation of twist is with respect to chain_base coordinate system
+void CobTwistController::solve_twist(KDL::Twist twist)
+{
 	KDL::JntArray q_dot_ik(chain_.getNrOfJoints());
 	
 	//int ret_ik = p_iksolver_vel_->CartToJnt(last_q_, twist, q_dot_ik);
-	//int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik);
-	int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik, "trackingError");
+	int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik);
+	//int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik, "trackingError");
 	
 	if(ret_ik < 0)
 	{
@@ -126,7 +163,7 @@ void CobTwistController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 	else
 	{
 		///normalize guarantees that velocities are within limits --- only needed for CartToJnt without damping
-		//q_dot_ik = normalize_velocities(q_dot_ik);
+		q_dot_ik = normalize_velocities(q_dot_ik);
 		
 		brics_actuator::JointVelocities vel_msg;
 		vel_msg.velocities.resize(joints_.size());

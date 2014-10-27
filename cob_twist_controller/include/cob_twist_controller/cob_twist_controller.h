@@ -54,6 +54,7 @@ private:
 	
 	ros::Subscriber jointstate_sub;
 	ros::Subscriber twist_sub;
+	ros::Subscriber twist_stamped_sub;
 	ros::Publisher vel_pub;
 	ros::Publisher twist_pub_;
 	
@@ -84,6 +85,8 @@ public:
 	
 	void jointstate_cb(const sensor_msgs::JointState::ConstPtr& msg);
 	void twist_cb(const geometry_msgs::Twist::ConstPtr& msg);
+	void twist_stamped_cb(const geometry_msgs::TwistStamped::ConstPtr& msg);
+	void solve_twist(KDL::Twist twist);
 	
 	
 	KDL::JntArray normalize_velocities(KDL::JntArray q_dot_ik);
