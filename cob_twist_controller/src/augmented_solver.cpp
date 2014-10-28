@@ -44,21 +44,21 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
     for(int i=0; i<jac.columns(); i++)
     {    qdot_out(i)=qdot_out_vec(i,0);    }
     
-    if(DEBUG) 
-    {
-        ///compute manipulability
-        ///kappa = sqrt(norm(J*Jt)) 
-        ///see  T.Yoshikawa "Manipulability of robotic mechanisms"
-        ///     International Journal of Robotics Research, 4(2):3-9, 1985
-        Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> prod = jac.data * jac.data.transpose();
-        double d = prod.determinant();
-        double kappa = std::sqrt(d);
-        std::cout << "\nManipulability: " << kappa << "\n";
+    //if(DEBUG) 
+    //{
+        /////compute manipulability
+        /////kappa = sqrt(norm(J*Jt)) 
+        /////see  T.Yoshikawa "Manipulability of robotic mechanisms"
+        /////     International Journal of Robotics Research, 4(2):3-9, 1985
+        //Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> prod = jac.data * jac.data.transpose();
+        //double d = prod.determinant();
+        //double kappa = std::sqrt(d);
+        //std::cout << "\nManipulability: " << kappa << "\n";
         
-        std::cout << "Singular Values:\n " << S << "\n";
-        std::cout << "Singular Values inv:\n " << S_inv << "\n";
-        std::cout << "Result:\n " << qdot_out_vec << "\n";
-    }
+        //std::cout << "Singular Values:\n " << S << "\n";
+        //std::cout << "Singular Values inv:\n " << S_inv << "\n";
+        //std::cout << "Result:\n " << qdot_out_vec << "\n";
+    //}
     
     return 1;
 }

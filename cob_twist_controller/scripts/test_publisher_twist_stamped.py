@@ -12,10 +12,10 @@ def velPub():
   twist_stamped_msg =  TwistStamped()
 
   #twist_stamped_msg.header.frame_id = "base_link"
-  #twist_stamped_msg.header.frame_id = "arm_7_link"
-  twist_stamped_msg.header.frame_id = "base_laser_front_link"
+  twist_stamped_msg.header.frame_id = "arm_7_link"
+  #twist_stamped_msg.header.frame_id = "odom_combined"
   twist_stamped_msg.twist.linear.x = 0
-  twist_stamped_msg.twist.linear.y = 0.1
+  twist_stamped_msg.twist.linear.y = 0
   twist_stamped_msg.twist.linear.z = 0
   twist_stamped_msg.twist.angular.x = 0
   twist_stamped_msg.twist.angular.y = 0

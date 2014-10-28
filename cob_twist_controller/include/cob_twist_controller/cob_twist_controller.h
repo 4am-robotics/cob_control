@@ -33,6 +33,7 @@
 #include <std_msgs/Float64.h>
 #include <sensor_msgs/JointState.h>
 #include <geometry_msgs/Twist.h>
+#include <nav_msgs/Odometry.h>
 #include <brics_actuator/JointVelocities.h>
 
 #include <urdf/model.h>
@@ -53,16 +54,18 @@ private:
 	tf::TransformListener tf_listener_;
 	
 	ros::Subscriber jointstate_sub;
+	ros::Subscriber odometry_sub;
 	ros::Subscriber twist_sub;
 	ros::Subscriber twist_stamped_sub;
 	ros::Publisher vel_pub;
 	ros::Publisher twist_pub_;
+	ros::Publisher twist_real_pub_;
 	
 	KDL::Chain chain_;
 	std::string chain_base_;
 	std::string chain_tip_;
 	
-	KDL::ChainFkSolverVel_recursive* jntToCartSolver_vel_;
+	KDL::ChainFkSolverVel_recursive* p_fksolver_vel_;
 	KDL::ChainIkSolverVel_pinv* p_iksolver_vel_;
 	augmented_solver* p_augmented_solver_;
 	
@@ -75,6 +78,11 @@ private:
 	KDL::JntArray last_q_;
 	KDL::JntArray last_q_dot_;
 	
+	bool base_active_;
+	double base_ratio_;
+	
+	KDL::Twist twist_odometry_;
+	
 	
 public:
 	CobTwistController() {;}
@@ -84,6 +92,7 @@ public:
 	void run();
 	
 	void jointstate_cb(const sensor_msgs::JointState::ConstPtr& msg);
+	void odometry_cb(const nav_msgs::Odometry::ConstPtr& msg);
 	void twist_cb(const geometry_msgs::Twist::ConstPtr& msg);
 	void twist_stamped_cb(const geometry_msgs::TwistStamped::ConstPtr& msg);
 	void solve_twist(KDL::Twist twist);
