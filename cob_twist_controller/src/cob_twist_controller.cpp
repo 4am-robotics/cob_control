@@ -98,6 +98,9 @@ void CobTwistController::initialize()
 	//p_iksolver_vel_ = new KDL::ChainIkSolverVel_pinv(chain_, 0.001, 5);
 	p_augmented_solver_ = new augmented_solver(chain_, 0.001, 5);
 	
+	///ToDo: We need to be able to activate the base and change base_ratio ON-THE-FLY!
+	p_augmented_solver_->SetBaseProperties(base_active_, base_ratio_);
+	
 	///initialize variables and current joint values and velocities
 	last_q_ = KDL::JntArray(chain_.getNrOfJoints());
 	last_q_dot_ = KDL::JntArray(chain_.getNrOfJoints());
@@ -111,6 +114,8 @@ void CobTwistController::initialize()
 	twist_sub = nh_.subscribe("command_twist", 1, &CobTwistController::twist_cb, this);
 	twist_stamped_sub = nh_.subscribe("command_twist_stamped", 1, &CobTwistController::twist_stamped_cb, this);
 	vel_pub = nh_.advertise<brics_actuator::JointVelocities>("command_vel", 1);
+	//base_vel_pub = nh_.advertise<geometry_msgs::Twist>("/base_controller/command", 1);
+	base_vel_pub = nh_.advertise<geometry_msgs::Twist>("/base_controller/command_direct", 1);
 	twist_pub_ = nh_.advertise<geometry_msgs::Twist> ("command_twist_normalized", 1);
 	twist_real_pub_ = nh_.advertise<geometry_msgs::Twist> ("current_twist", 1);
 	
@@ -165,18 +170,22 @@ void CobTwistController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 /// Orientation of twist is with respect to chain_base coordinate system
 void CobTwistController::solve_twist(KDL::Twist twist)
 {
+	KDL::JntArray q_dot_ik(chain_.getNrOfJoints());
+	
 	if(base_active_)
 	{
+		q_dot_ik.resize(chain_.getNrOfJoints()+3);
+		
 		//ROS_INFO("TwistIn Vel (%f, %f, %f)", twist.vel.x(), twist.vel.y(), twist.vel.z());
 		//ROS_INFO("TwistIn Rot (%f, %f, %f)", twist.rot.x(), twist.rot.y(), twist.rot.z());
+		
 		twist = twist - twist_odometry_;
+		
 		//ROS_INFO("TwistOdometry Vel (%f, %f, %f)", twist_odometry_.vel.x(), twist_odometry_.vel.y(), twist_odometry_.vel.z());
 		//ROS_INFO("TwistOdometry Rot (%f, %f, %f)", twist_odometry_.rot.x(), twist_odometry_.rot.y(), twist_odometry_.rot.z());
 		//ROS_INFO("TwistDesired Vel (%f, %f, %f)", twist.vel.x(), twist.vel.y(), twist.vel.z());
 		//ROS_INFO("TwistDesired Rot (%f, %f, %f)", twist.rot.x(), twist.rot.y(), twist.rot.z());
 	}
-	
-	KDL::JntArray q_dot_ik(chain_.getNrOfJoints());
 	
 	//int ret_ik = p_iksolver_vel_->CartToJnt(last_q_, twist, q_dot_ik);
 	int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik);
@@ -200,6 +209,15 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 			vel_msg.velocities[i].value = q_dot_ik(i);
 			
 			//ROS_WARN("DesiredVel %d: %f", i, q_dot_ik(i));
+		}
+		if(base_active_)
+		{
+			geometry_msgs::Twist base_vel_msg;
+			base_vel_msg.linear.x = q_dot_ik(dof_);
+			base_vel_msg.linear.y = q_dot_ik(dof_+1);
+			base_vel_msg.angular.z = q_dot_ik(dof_+2);
+			
+			base_vel_pub.publish(base_vel_msg);
 		}
 		vel_pub.publish(vel_msg);
 		
@@ -313,6 +331,25 @@ KDL::JntArray CobTwistController::normalize_velocities(KDL::JntArray q_dot_ik)
 			ROS_WARN("Joint %d exceeds limit: Desired %f, Limit %f, Factor %f", i, q_dot_ik(i), limits_vel_[i], max_factor);
 		}
 	}
+	//TEST: limit base_velocities
+	double max_trans_velocity = 0.2;
+	double max_rot_velocity = 0.2;
+	if(max_factor < std::fabs((q_dot_ik(dof_)/max_trans_velocity)))
+	{
+		max_factor = std::fabs((q_dot_ik(dof_)/max_trans_velocity));
+		ROS_WARN("BaseTransX exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_), max_trans_velocity, max_factor);
+	}
+	if(max_factor < std::fabs((q_dot_ik(dof_+1)/max_trans_velocity)))
+	{
+		max_factor = std::fabs((q_dot_ik(dof_+1)/max_trans_velocity));
+		ROS_WARN("BaseTransY exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+1), max_trans_velocity, max_factor);
+	}
+	if(max_factor < std::fabs((q_dot_ik(dof_+2)/max_rot_velocity)))
+	{
+		max_factor = std::fabs((q_dot_ik(dof_+2)/max_rot_velocity));
+		ROS_WARN("BaseRotZ exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+2), max_rot_velocity, max_factor);
+	}
+	
 	if(max_factor > 1)
 	{
 		ROS_INFO("Normalizing velocities!");

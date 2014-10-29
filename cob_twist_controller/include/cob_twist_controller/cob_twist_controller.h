@@ -58,6 +58,7 @@ private:
 	ros::Subscriber twist_sub;
 	ros::Subscriber twist_stamped_sub;
 	ros::Publisher vel_pub;
+	ros::Publisher base_vel_pub;
 	ros::Publisher twist_pub_;
 	ros::Publisher twist_real_pub_;
 	

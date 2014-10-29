@@ -12,7 +12,9 @@ augmented_solver::augmented_solver(const KDL::Chain& _chain, double _eps, int _m
     jnt2jac(chain),
     eps(_eps),
     maxiter(_maxiter),
-    initial_iteration(true)
+    initial_iteration(true),
+    base_active_(false),
+    base_ratio_(0.0)
 {}
 
 augmented_solver::~augmented_solver()
@@ -21,8 +23,40 @@ augmented_solver::~augmented_solver()
 
 int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL::JntArray& qdot_out)
 {
-    ///Let the ChainJntToJacSolver calculate the jacobian "jac" for the current joint positions "q_in"
-    jnt2jac.JntToJac(q_in,jac);
+    ///Let the ChainJntToJacSolver calculate the jacobian "jac_chain" for the current joint positions "q_in"
+    KDL::Jacobian jac_chain(chain.getNrOfJoints());
+    jnt2jac.JntToJac(q_in, jac_chain);
+    
+    if(base_active_)
+    {
+        //Create standard platform jacobian
+        Eigen::Matrix<double,6,3> jac_base;
+        jac_base.setZero();
+
+        jac_base(0,0) = base_ratio_;    //linear_x
+        jac_base(1,1) = base_ratio_;    //linear_y
+        jac_base(5,2) = base_ratio_;    //angular_z
+
+        //combine chain Jacobian and platform Jacobian
+        Eigen::Matrix<double, 6, Eigen::Dynamic> jac_full;
+        jac_full.resize(6,chain.getNrOfJoints() + jac_base.cols());
+        jac_full << jac_chain.data, jac_base;
+        
+        //std::cout << "Combined jacobian:\n " << jac_full << "\n";
+        //ROS_INFO_STREAM("JacBase: rows " <<jac_base.rows()<<"; cols "<<jac_base.cols());
+        //ROS_INFO_STREAM("JacFull: rows " <<jac_full.rows()<<"; cols "<<jac_full.cols());
+        
+        //ROS_INFO_STREAM("JacANTE: rows " <<jac.rows()<<"; cols "<<jac.columns());
+        jac.resize(chain.getNrOfJoints() + jac_base.cols());
+        //ROS_INFO_STREAM("JacPOST: rows " <<jac.rows()<<"; cols "<<jac.columns());
+        
+        jac.data << jac_full;
+    }
+    else
+    {
+        jac.resize(chain.getNrOfJoints());
+        jac.data << jac_chain.data;
+    }
     
     ///Use Eigen::JacobiSVD
     Eigen::JacobiSVD<Eigen::MatrixXd> svd(jac.data, Eigen::ComputeFullU | Eigen::ComputeFullV);

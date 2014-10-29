@@ -43,6 +43,9 @@ public:
     
     /** not (yet) implemented. */
     virtual int CartToJnt(const KDL::JntArray& q_init, const KDL::FrameVel& v_in, KDL::JntArrayVel& q_out){return -1;};
+    
+    
+    void SetBaseProperties(bool base_active, double base_ratio){base_active_ = base_active; base_ratio_ = base_ratio;}
 
 private:
     const KDL::Chain chain;
@@ -54,6 +57,9 @@ private:
     Eigen::MatrixXd Jcm1;
     double wkm1;
     bool initial_iteration;
+    
+    bool base_active_;
+    double base_ratio_;
 };
 #endif
 
