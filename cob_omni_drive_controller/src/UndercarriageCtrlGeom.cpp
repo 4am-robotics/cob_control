@@ -169,11 +169,14 @@ double limit_value(double value, double limit){
     }
     return value;
 }
+void UndercarriageCtrlGeom::WheelData::reset(){
+    //m_dCtrlDeltaPhi = 0.0;
+    m_dCtrlVelCmdInt = 0.0;
+
+}
 void UndercarriageCtrlGeom::WheelData::calcControlStep(WheelState &command, double dCmdRateS, bool reset){
     if(reset){
-        //m_dCtrlDeltaPhi = 0.0;
-        m_dCtrlVelCmdInt = 0.0;
-
+        this->reset();
         command.dVelGearDriveRadS = 0.0;
         command.dVelGearSteerRadS = 0.0;
         command.dAngGearSteerRad = state_.dAngGearSteerRad;
@@ -277,3 +280,12 @@ void UndercarriageCtrlGeom::calcControlStep(std::vector<WheelState> &states, dou
     }
 
 }
+
+void UndercarriageCtrlGeom::reset()
+{
+    for(size_t i = 0; i < wheels_.size(); ++i){
+        wheels_[i].reset();
+    }
+
+}
+

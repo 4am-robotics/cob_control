@@ -148,6 +148,8 @@ private:
             setTarget(PlatformState());
         }
 
+        void reset();
+
     };
 
     std::vector<WheelData> wheels_;
@@ -168,6 +170,7 @@ public:
     // Get set point values for the Wheels (including controller) from UndercarriangeCtrl
     void calcControlStep(std::vector<WheelState> &states, double dCmdRateS, bool reset);
 
+    void reset();
 
 
 };
