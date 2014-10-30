@@ -5,7 +5,7 @@ project(cob_omni_drive_controller)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  controller_interface angles
+  controller_interface angles hardware_interface sensor_msgs geometry_msgs
 )
 
 ## System dependencies are found with CMake's conventions
@@ -79,8 +79,8 @@ find_package(Boost REQUIRED) # COMPONENTS system)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES cob_omni_drive_controller
-  # CATKIN_DEPENDS 
+  LIBRARIES cob_omni_drive_geom cob_omni_drive_controller
+  CATKIN_DEPENDS sensor_msgs
 #  DEPENDS system_lib
 )
 
@@ -93,14 +93,19 @@ catkin_package(
 # include_directories(include)
 include_directories(
   include
+  src
   ${catkin_INCLUDE_DIRS}
   ${Boost_INCLUDE_DIRS}
 )
 
 ## Declare a cpp library
-add_library(cob_omni_drive_controller
+add_library(cob_omni_drive_geom
   src/UndercarriageCtrlGeom.cpp
 )
+
+add_library(cob_omni_drive_controller src/odom_plugin.cpp src/control_plugin.cpp)
+target_link_libraries(cob_omni_drive_controller cob_omni_drive_geom ${catkin_LIBRARIES})
+add_dependencies(cob_omni_drive_controller cob_omni_drive_controller_generate_messages_cpp)
 
 ## Declare a cpp executable
 # add_executable(cob_omni_drive_controller_node src/cob_omni_drive_controller_node.cpp)
