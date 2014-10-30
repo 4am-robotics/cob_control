@@ -89,7 +89,6 @@ public:
         double dWheelYPosMM;
         
         double dWheelNeutralPos;
-        double dSteerDriveCoupling;
         
         /** Factor between steering motion and steering induced motion of drive wheels
             *  subtract from Drive-Wheel Vel to get effective Drive Velocity (Direct Kinematics)
