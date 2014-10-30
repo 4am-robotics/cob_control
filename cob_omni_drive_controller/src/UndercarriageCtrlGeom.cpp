@@ -289,3 +289,50 @@ void UndercarriageCtrlGeom::reset()
 
 }
 
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ini_parser.hpp>
+#include <boost/lexical_cast.hpp>
+
+void UndercarriageCtrlGeom::parseIniFiles(std::vector<WheelParams> &params, const std::string &path){
+    params.clear();
+
+    using boost::property_tree::ptree;
+    ptree pt;
+
+    read_ini(path + "Platform.ini", pt);
+    read_ini(path + "MotionCtrl.ini", pt);
+    
+    WheelParams param;
+
+    // Prms of Impedance-Ctrlr
+    param.dSpring = pt.get("SteerCtrl.Spring", 10.0);
+    param.dDamp = pt.get("SteerCtrl.Damp", 2.5);
+    param.dVirtM = pt.get("SteerCtrl.VirtMass", 0.1);
+    param.dDPhiMax = pt.get("SteerCtrl.DPhiMax", 12.0);
+    param.dDDPhiMax= pt.get("SteerCtrl.DDPhiMax", 100.0);
+
+
+    param.dRadiusWheelMM = pt.get<double>("Geom.RadiusWheel");
+    param.dDistSteerAxisToDriveWheelMM = pt.get<double>("Geom.DistSteerAxisToDriveWheelCenter", 0.0);
+
+    param.dMaxDriveRateRadpS = pt.get<double>("DrivePrms.MaxDriveRate");
+    param.dMaxSteerRateRadpS = pt.get<double>("DrivePrms.dMaxSteerRateRadpS");
+
+
+    int num_wheels = pt.get<int>("Config.NumberOfWheels");
+    for(int i=1; i <= num_wheels; ++i){
+        std::string num = boost::lexical_cast<std::string>(i);
+        param.dWheelXPosMM = pt.get<double>("Geom.Wheel"+num+"XPos");
+        param.dWheelYPosMM = pt.get<double>("Geom.Wheel"+num+"YPos");
+
+        double deg = pt.get<double>("DrivePrms.Wheel"+num+"NeutralPosition", 0.0);
+        param.dWheelNeutralPos = angles::from_degrees(deg);
+
+        double coupling = pt.get<double>("DrivePrms.Wheel"+num+"SteerDriveCoupling", 0.0);
+
+        param.dFactorVel = - coupling + param.dDistSteerAxisToDriveWheelMM / param.dRadiusWheelMM;
+
+        params.push_back(param);
+    }
+
+}

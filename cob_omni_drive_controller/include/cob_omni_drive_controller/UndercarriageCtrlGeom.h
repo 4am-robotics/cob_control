@@ -56,6 +56,7 @@
 
 
 #include <vector>
+#include <string>
 
 class UndercarriageCtrlGeom
 {
@@ -157,6 +158,8 @@ private:
 public:
     // Constructor
     UndercarriageCtrlGeom(const std::vector<WheelParams> &params);
+
+    static void parseIniFiles(std::vector<WheelParams> &params, const std::string &path);
 
     // Set desired value for Plattform Velocity to UndercarriageCtrl (Sollwertvorgabe)
     void setTarget(const PlatformState &state);
