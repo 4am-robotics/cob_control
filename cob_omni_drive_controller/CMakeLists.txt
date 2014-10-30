@@ -134,7 +134,7 @@ add_dependencies(cob_omni_drive_controller cob_omni_drive_controller_generate_me
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS cob_omni_drive_controller cob_omni_drive_controller_node
+# install(TARGETS cob_omni_drive_geom cob_omni_drive_controller_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -153,6 +153,18 @@ add_dependencies(cob_omni_drive_controller cob_omni_drive_controller_generate_me
 #   # myfile2
 #   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 # )
+
+
+# Install
+install(TARGETS cob_omni_drive_geom cob_omni_drive_controller
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  )
+
+install(FILES controller_plugins.xml
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+
 
 #############
 ## Testing ##
