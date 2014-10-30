@@ -66,6 +66,12 @@ public:
         double dVelLatMMS;
         double dRotRobRadS;
 
+        const double get_vel_x() { return dVelLongMMS / 1000.0; }
+        const double get_vel_y() { return dVelLatMMS / 1000.0; }
+
+        void set_vel_x(const double val) { dVelLongMMS  = val * 1000.0; }
+        void set_vel_y(const double val) { dVelLatMMS = val * 1000.0; }
+        
         PlatformState() : dVelLongMMS(0), dVelLatMMS(0),dRotRobRadS(0) {}
     };
     struct WheelState {
