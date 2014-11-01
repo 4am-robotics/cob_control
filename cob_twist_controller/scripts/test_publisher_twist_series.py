@@ -7,7 +7,7 @@ from geometry_msgs.msg import Twist
 finished_timer = 0
 initial_time=0
  
-def velPub():
+def twistPub():
   rospy.init_node("velPub", anonymous=True)
   
   print("Ejecutando")
@@ -74,5 +74,5 @@ def velPub():
 
 if __name__ == '__main__':
   try:
-      velPub()
+      twistPub()
   except rospy.ROSInterruptException: pass

@@ -5,7 +5,7 @@ import math
 from geometry_msgs.msg import TwistStamped
 
  
-def velPub():
+def twistPub():
   rospy.init_node("test_publisher_twist_stamped", anonymous=True)
   
   pub = rospy.Publisher("/arm_controller/command_twist_stamped", TwistStamped, queue_size=1)
@@ -30,5 +30,5 @@ def velPub():
 
 if __name__ == '__main__':
   try:
-      velPub()
+      twistPub()
   except rospy.ROSInterruptException: pass
