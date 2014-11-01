@@ -33,42 +33,64 @@
 #include <tf/transform_datatypes.h>
 
 
-void CobTwistController::initialize()
+bool CobTwistController::initialize()
 {
-	///get params
-	XmlRpc::XmlRpcValue jn_param;
-	if (nh_.hasParam("joint_names"))
-	{	nh_.getParam("joint_names", jn_param);	}
-	else
-	{	ROS_ERROR("Parameter joint_names not set");	}
-	
-	dof_ = jn_param.size();
-	for(unsigned int i=0; i<dof_; i++)
-	{	joints_.push_back((std::string)jn_param[i]);	}
-	
-	
-	if (nh_.hasParam("base_link"))
+	// JointNames
+	if(!nh_.getParam("joint_names", joints_))
 	{
-		nh_.getParam("base_link", chain_base_);
+		ROS_ERROR("Parameter 'joint_names' not set");
+		return false;
 	}
-	if (nh_.hasParam("tip_link"))
+	dof_ = joints_.size();
+	
+	// Chain
+	if(!nh_.getParam("base_link", chain_base_))
 	{
-		nh_.getParam("tip_link", chain_tip_);
+		ROS_ERROR("Parameter 'base_link' not set");
+		return false;
 	}
-	if (nh_.hasParam("base_active"))
+	if (!nh_.getParam("tip_link", chain_tip_))
 	{
-		nh_.getParam("base_active", base_active_);
-		if (nh_.hasParam("base_ratio"))
+		ROS_ERROR("Parameter 'tip_link' not set");
+		return false;
+	}
+	
+	// Cartesian VelLimits
+	if (!nh_.getParam("max_vel_lin", max_vel_lin_))
+	{
+		max_vel_lin_ = 10.0;	//m/sec
+		ROS_WARN_STREAM("Parameter 'max_vel_lin' not set. Useing default: " << max_vel_lin_);
+	}
+	if (!nh_.getParam("max_vel_rot", max_vel_rot_))
+	{
+		max_vel_rot_ = 6.28;	//rad/sec
+		ROS_WARN_STREAM("Parameter 'max_vel_rot' not set. Useing default: " << max_vel_rot_);
+	}
+	
+	// SyncMM
+	if (nh_.getParam("base_active", base_active_))
+	{
+		if(base_active_)
 		{
-			nh_.getParam("base_ratio", base_ratio_);
+			if(!nh_.getParam("base_ratio", base_ratio_))
+			{
+				base_ratio_ = 1.0;
+				ROS_WARN_STREAM("Parameter 'base_ratio' not set. Useing default: " << base_ratio_);
+			}
+		}
+		else
+		{
+			ROS_WARN_STREAM("Base disabled!");
+			base_active_ = false;
+			base_ratio_ = 0.0;
 		}
 	}
 	else
 	{
+		ROS_WARN_STREAM("Parameter 'base_active' not set. Base disabled!");
 		base_active_ = false;
 		base_ratio_ = 0.0;
 	}
-	
 	
 	///parse robot_description and generate KDL chains
 	KDL::Tree my_tree;
@@ -76,23 +98,23 @@ void CobTwistController::initialize()
 	nh_.param("/robot_description", robot_desc_string, std::string());
 	if (!kdl_parser::treeFromString(robot_desc_string, my_tree)){
 		ROS_ERROR("Failed to construct kdl tree");
-		return;
+		return false;
 	}
 	my_tree.getChain(chain_base_, chain_tip_, chain_);
 	if(chain_.getNrOfJoints() == 0)
 	{
 		ROS_ERROR("Failed to initialize kinematic chain");
-		return;
+		return false;
 	}
 	
 	///parse robot_description and set velocity limits
 	urdf::Model model;
 	if (!model.initParam("/robot_description"))
 	{
-		ROS_ERROR("Failed to parse urdf file");
+		ROS_ERROR("Failed to parse urdf file for JointLimits");
+		return false;
 	}
 	
-	ROS_INFO("Successfully parsed urdf file");
 	for(unsigned int i=0; i<dof_; i++)
 	{
 		limits_vel_.push_back(model.getJoint(joints_[i])->limits->velocity);
@@ -126,6 +148,7 @@ void CobTwistController::initialize()
 	
 	
 	ROS_INFO("...initialized!");
+	return true;
 }
 
 void CobTwistController::run()
@@ -175,6 +198,12 @@ void CobTwistController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 /// Orientation of twist is with respect to chain_base coordinate system
 void CobTwistController::solve_twist(KDL::Twist twist)
 {
+	//// calculate Cartesian velocity
+	//// last resort for rejection in case it's too high
+	//double vel_lin = std::sqrt(std::pow(twist.vel.x(), 2) + std::pow(twist.vel.y(), 2) + std::pow(twist.vel.z(), 2));
+	//double vel_rot = std::sqrt(std::pow(twist.rot.x(), 2) + std::pow(twist.rot.y(), 2) + std::pow(twist.rot.z(), 2));
+	//ROS_INFO_STREAM("INPUT: NormTwistLin: " << vel_lin << "; NormTwistRot: " << vel_rot);
+	
 	KDL::JntArray q_dot_ik(chain_.getNrOfJoints());
 	
 	if(base_active_)
@@ -191,6 +220,8 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 		//ROS_INFO("TwistDesired Vel (%f, %f, %f)", twist.vel.x(), twist.vel.y(), twist.vel.z());
 		//ROS_INFO("TwistDesired Rot (%f, %f, %f)", twist.rot.x(), twist.rot.y(), twist.rot.z());
 	}
+	
+	
 	
 	//int ret_ik = p_iksolver_vel_->CartToJnt(last_q_, twist, q_dot_ik);
 	int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik);

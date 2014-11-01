@@ -47,7 +47,7 @@ public:
 	CobFrameTracker() {;}
 	~CobFrameTracker();
 	
-	void initialize();
+	bool initialize();
 	void run();
 	
 	void publish_twist(ros::Duration period);

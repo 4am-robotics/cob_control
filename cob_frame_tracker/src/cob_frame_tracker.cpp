@@ -30,42 +30,19 @@
 #include <cob_frame_tracker/cob_frame_tracker.h>
 
 
-void CobFrameTracker::initialize()
+bool CobFrameTracker::initialize()
 {
 	///get params
-	if (nh_.hasParam("update_rate"))
-	{	nh_.getParam("update_rate", update_rate_);	}
-	else
-	{	update_rate_ = 68.0;	}	//hz
+	if (!nh_.getParam("update_rate", update_rate_))	{	update_rate_ = 68.0;	}	//hz
 	
-	if (nh_.hasParam("max_vel_lin"))
-	{	nh_.getParam("max_vel_lin", max_vel_lin_);	}
-	else
-	{	max_vel_lin_ = 10.0;	}	//m/sec
-	
-	if (nh_.hasParam("max_vel_rot"))
-	{	nh_.getParam("max_vel_rot", max_vel_rot_);	}
-	else
-	{	max_vel_rot_ = 6.28;	}	//rad/sec
-	
-	if (nh_.hasParam("active_frame"))
-	{
-		nh_.getParam("active_frame", active_frame_);
-	}
-	else
+	if (!nh_.getParam("active_frame", active_frame_))
 	{
 		ROS_ERROR("No active_frame specified. Aborting!");
-		nh_.shutdown();
+		return false;
 	}
 	
-	if (nh_.hasParam("movable_trans"))
-	{	nh_.getParam("movable_trans", movable_trans_);	}
-	else
-	{	movable_trans_ = true;	}
-	if (nh_.hasParam("movable_rot"))
-	{	nh_.getParam("movable_rot", movable_rot_);	}
-	else
-	{	movable_rot_ = true;	}
+	if (!nh_.getParam("movable_trans", movable_trans_))	{	movable_trans_ = true;	}
+	if (!nh_.getParam("movable_rot", movable_rot_))	{	movable_rot_ = true;	}
 	
 	// Load PID Controller using gains set on parameter server
 	pid_controller_trans_x_.init(ros::NodeHandle(nh_, "pid_trans_x"));
@@ -89,7 +66,9 @@ void CobFrameTracker::initialize()
 	last_err_x_=0;
 	last_err_y_=0;
 	last_err_z_=0;
+	
 	ROS_INFO("...initialized!");
+	return true;
 }
 
 void CobFrameTracker::run()
@@ -149,27 +128,8 @@ void CobFrameTracker::publish_twist(ros::Duration period)
 		twist_msg.angular.y = pid_controller_rot_.computeCommand(transform_msg.transform.rotation.y, period);
 		twist_msg.angular.z = pid_controller_rot_.computeCommand(transform_msg.transform.rotation.z, period);
 	}
-	
-	/////debug only
-	//if(std::fabs(transform_msg.transform.translation.x) >= max_vel_lin_)
-		//ROS_WARN("Twist.linear.x: %f exceeds limit %f", transform_msg.transform.translation.x, max_vel_lin_);
-	//if(std::fabs(transform_msg.transform.translation.y) >= max_vel_lin_)
-		//ROS_WARN("Twist.linear.y: %f exceeds limit %f", transform_msg.transform.translation.y, max_vel_lin_);
-	//if(std::fabs(transform_msg.transform.translation.z) >= max_vel_lin_)
-		//ROS_WARN("Twist.linear.z: %f exceeds limit %f", transform_msg.transform.translation.z, max_vel_lin_);
-	//if(std::fabs(transform_msg.transform.rotation.x) >= max_vel_rot_)
-		//ROS_WARN("Twist.angular.x: %f exceeds limit %f", transform_msg.transform.rotation.x, max_vel_rot_);
-	//if(std::fabs(transform_msg.transform.rotation.y) >= max_vel_rot_)
-		//ROS_WARN("Twist.angular.y: %f exceeds limit %f", transform_msg.transform.rotation.y, max_vel_rot_);
-	//if(std::fabs(transform_msg.transform.rotation.z) >= max_vel_rot_)
-		//ROS_WARN("Twist.angular.z: %f exceeds limit %f", transform_msg.transform.rotation.z, max_vel_rot_);
-	
-	//twist_msg.linear.x = copysign(std::min(max_vel_lin_, std::fabs(transform_msg.transform.translation.x)),transform_msg.transform.translation.x);
-	//twist_msg.linear.y = copysign(std::min(max_vel_lin_, std::fabs(transform_msg.transform.translation.y)),transform_msg.transform.translation.y);
-	//twist_msg.linear.z = copysign(std::min(max_vel_lin_, std::fabs(transform_msg.transform.translation.z)),transform_msg.transform.translation.z);
-	//twist_msg.angular.x = copysign(std::min(max_vel_rot_, std::fabs(transform_msg.transform.rotation.x)),transform_msg.transform.rotation.x);
-	//twist_msg.angular.y = copysign(std::min(max_vel_rot_, std::fabs(transform_msg.transform.rotation.y)),transform_msg.transform.rotation.y);
-	//twist_msg.angular.z = copysign(std::min(max_vel_rot_, std::fabs(transform_msg.transform.rotation.z)),transform_msg.transform.rotation.z);
+	// no restriction to published Twist here
+	// limitation/rejection is done in TwistController
 	
 	twist_pub_.publish(twist_msg);
 }

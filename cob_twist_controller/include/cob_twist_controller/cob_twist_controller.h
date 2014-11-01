@@ -76,6 +76,9 @@ private:
 	std::vector<float> limits_max_;
 	std::vector<float> limits_vel_;
 	
+	double max_vel_lin_;
+	double max_vel_rot_;
+	
 	KDL::JntArray last_q_;
 	KDL::JntArray last_q_dot_;
 	
@@ -92,7 +95,7 @@ public:
 	{;}
 	~CobTwistController();
 	
-	void initialize();
+	bool initialize();
 	void run();
 	
 	void jointstate_cb(const sensor_msgs::JointState::ConstPtr& msg);
