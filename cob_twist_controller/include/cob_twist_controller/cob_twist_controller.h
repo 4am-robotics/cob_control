@@ -86,7 +86,10 @@ private:
 	
 	
 public:
-	CobTwistController() {;}
+	CobTwistController():
+		base_active_(false),
+		base_ratio_(0.0)
+	{;}
 	~CobTwistController();
 	
 	void initialize();
@@ -103,4 +106,3 @@ public:
 };
 
 #endif
-

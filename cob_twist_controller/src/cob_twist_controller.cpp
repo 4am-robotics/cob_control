@@ -63,6 +63,11 @@ void CobTwistController::initialize()
 			nh_.getParam("base_ratio", base_ratio_);
 		}
 	}
+	else
+	{
+		base_active_ = false;
+		base_ratio_ = 0.0;
+	}
 	
 	
 	///parse robot_description and generate KDL chains
@@ -331,23 +336,27 @@ KDL::JntArray CobTwistController::normalize_velocities(KDL::JntArray q_dot_ik)
 			ROS_WARN("Joint %d exceeds limit: Desired %f, Limit %f, Factor %f", i, q_dot_ik(i), limits_vel_[i], max_factor);
 		}
 	}
-	//TEST: limit base_velocities
-	double max_trans_velocity = 0.2;
-	double max_rot_velocity = 0.2;
-	if(max_factor < std::fabs((q_dot_ik(dof_)/max_trans_velocity)))
+	
+	if(base_active_)
 	{
-		max_factor = std::fabs((q_dot_ik(dof_)/max_trans_velocity));
-		ROS_WARN("BaseTransX exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_), max_trans_velocity, max_factor);
-	}
-	if(max_factor < std::fabs((q_dot_ik(dof_+1)/max_trans_velocity)))
-	{
-		max_factor = std::fabs((q_dot_ik(dof_+1)/max_trans_velocity));
-		ROS_WARN("BaseTransY exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+1), max_trans_velocity, max_factor);
-	}
-	if(max_factor < std::fabs((q_dot_ik(dof_+2)/max_rot_velocity)))
-	{
-		max_factor = std::fabs((q_dot_ik(dof_+2)/max_rot_velocity));
-		ROS_WARN("BaseRotZ exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+2), max_rot_velocity, max_factor);
+		//TEST: limit base_velocities
+		double max_trans_velocity = 0.2;
+		double max_rot_velocity = 0.2;
+		if(max_factor < std::fabs((q_dot_ik(dof_)/max_trans_velocity)))
+		{
+			max_factor = std::fabs((q_dot_ik(dof_)/max_trans_velocity));
+			ROS_WARN("BaseTransX exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_), max_trans_velocity, max_factor);
+		}
+		if(max_factor < std::fabs((q_dot_ik(dof_+1)/max_trans_velocity)))
+		{
+			max_factor = std::fabs((q_dot_ik(dof_+1)/max_trans_velocity));
+			ROS_WARN("BaseTransY exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+1), max_trans_velocity, max_factor);
+		}
+		if(max_factor < std::fabs((q_dot_ik(dof_+2)/max_rot_velocity)))
+		{
+			max_factor = std::fabs((q_dot_ik(dof_+2)/max_rot_velocity));
+			ROS_WARN("BaseRotZ exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+2), max_rot_velocity, max_factor);
+		}
 	}
 	
 	if(max_factor > 1)
