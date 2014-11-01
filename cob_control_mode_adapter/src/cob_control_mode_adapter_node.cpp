@@ -1,5 +1,6 @@
 #include "ros/ros.h"
 #include <std_msgs/Float64.h>
+#include <std_msgs/Float64MultiArray.h>
 #include <brics_actuator/JointVelocities.h>
 #include <controller_manager_msgs/LoadController.h>
 #include <controller_manager_msgs/SwitchController.h>
@@ -71,24 +72,30 @@ class CobControlModeAdapter
         }
       }
       
-      //Get joint names from parameter server
-      std::string param="joint_names";
-      XmlRpc::XmlRpcValue jointNames_XMLRPC;
+      std::string param="max_vel_command_silence";
       if (nh_.hasParam(param))
       {
-        nh_.getParam(param, jointNames_XMLRPC);
+        nh_.getParam(param, max_vel_command_silence_);
       }
       else
+      {
+        ROS_ERROR("Parameter %s not set, using default 0.5s...", param.c_str());
+        max_vel_command_silence_=0.5;
+      }
+      
+      // List of controlled joints
+      param="joint_names";
+      if(!nh_.getParam(param, joint_names_))
       {
         ROS_ERROR("Parameter %s not set, shutting down node...", param.c_str());
         nh_.shutdown();
       }
+      
+/**
+      /// Use this without JointGroupVelocityController
 
-      for (unsigned int i=0; i<jointNames_XMLRPC.size(); i++)
+      for (unsigned int i=0; i<joint_names_.size(); i++)
       {
-        joint_names_.push_back(static_cast<std::string>(jointNames_XMLRPC[i]));  
-        ROS_INFO("JointNames: %s", joint_names_[i].c_str());
-        
         if(is_simulation)
         {
           //advertise in global namespace
@@ -104,18 +111,25 @@ class CobControlModeAdapter
         vel_controller_names_.push_back(joint_names_[i]+"_velocity_controller");
       }
       
-      param="max_vel_command_silence";
-      if (nh_.hasParam(param))
+      traj_controller_names_.push_back(nh_.getNamespace());
+**/
+      
+      /// This with JointGroupVelocityController
+      if(is_simulation)
       {
-        nh_.getParam(param, max_vel_command_silence_);
+        //advertise in global namespace
+        ros::Publisher pub = nh_.advertise<std_msgs::Float64MultiArray>("/arm_velocity_controller/command", 1);
+        vel_controller_pubs_.push_back(pub);
       }
       else
       {
-        ROS_ERROR("Parameter %s not set, using default 0.5s...", param.c_str());
-        max_vel_command_silence_=0.5;
+        //advertise in local namespace
+        ros::Publisher pub = nh_.advertise<std_msgs::Float64MultiArray>("arm_velocity_controller/command", 1);
+        vel_controller_pubs_.push_back(pub);
       }
+      vel_controller_names_.push_back("arm_velocity_controller");
       
-      traj_controller_names_.push_back(nh_.getNamespace());
+      traj_controller_names_.push_back("arm_follow_joint_trajectory_controller_pos");
       
       
       //load all required controllers
@@ -187,6 +201,8 @@ class CobControlModeAdapter
       return false;
     }
     
+/**
+    /// Use this without JointGroupVelocityController
     void cmd_vel_cb(const brics_actuator::JointVelocities::ConstPtr& msg)
     {
       last_vel_command_=ros::Time::now();
@@ -212,6 +228,37 @@ class CobControlModeAdapter
         vel_controller_pubs_[i].publish(cmd);
       }
     }
+**/
+    
+    /// This with JointGroupVelocityController
+    void cmd_vel_cb(const brics_actuator::JointVelocities::ConstPtr& msg)
+    {
+      last_vel_command_=ros::Time::now();
+      if(current_control_mode_!="VELOCITY")
+      {
+        bool success = switch_controller(vel_controller_names_, current_controller_names_);
+        if(!success)
+        {
+          ROS_ERROR("Unable to switch to velocity_controllers. Not executing command_vel...");
+          return;
+        }
+        else
+        {
+          ROS_INFO("Successfully switched to velocity_controllers");
+          current_control_mode_="VELOCITY";
+        }
+      }
+      
+      std_msgs::Float64MultiArray cmd;
+      for(unsigned int i=0; i<msg->velocities.size(); i++)
+      {
+        cmd.data.push_back(msg->velocities[i].value);
+      }
+      vel_controller_pubs_.front().publish(cmd);
+    }
+    
+    
+    
 
     void update(const ros::TimerEvent& event)
     {
