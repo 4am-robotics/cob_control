@@ -87,7 +87,7 @@ void CobTwistController::initialize()
 	
 	///initialize configuration control solver
 	//p_iksolver_vel_ = new KDL::ChainIkSolverVel_pinv(chain_, 0.001, 5);
-	p_augmented_solver_ = new augmented_solver(chain_, 0.001, 5);
+	p_augmented_solver_ = new augmented_solver(chain_, 0.005 , 1000);
 	
 	///initialize ROS interfaces
 	jointstate_sub = nh_.subscribe("/joint_states", 1, &CobTwistController::jointstate_cb, this);
@@ -117,7 +117,7 @@ void CobTwistController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 	
 	//int ret_ik = p_iksolver_vel_->CartToJnt(last_q_, twist, q_dot_ik);
 	//int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik);
-	int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik, "trackingError");
+	int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik, "manipulabilityRate");
 	
 	if(ret_ik < 0)
 	{
