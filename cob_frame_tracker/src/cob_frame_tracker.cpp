@@ -86,9 +86,6 @@ void CobFrameTracker::initialize()
 	
 	tracking_frame_ = active_frame_;
 	tracking_ = false;
-	last_err_x_=0;
-	last_err_y_=0;
-	last_err_z_=0;
 	ROS_INFO("...initialized!");
 }
 
@@ -131,13 +128,10 @@ void CobFrameTracker::publish_twist(ros::Duration period)
 	
 	if(movable_trans_)
 	{
-		twist_msg.linear.x = pid_controller_trans_x_.computeCommand(transform_msg.transform.translation.x,last_err_x_/period.toSec(), period);
-		twist_msg.linear.y = pid_controller_trans_y_.computeCommand(transform_msg.transform.translation.y,last_err_y_/period.toSec(), period);
-		twist_msg.linear.z = pid_controller_trans_z_.computeCommand(transform_msg.transform.translation.z,last_err_z_/period.toSec(), period);
-		last_err_x_ = transform_msg.transform.translation.x;
-		last_err_y_ = transform_msg.transform.translation.y;
-		last_err_z_ = transform_msg.transform.translation.z;
-		
+		/// Use pid_trans_x .. y .. z as controller parameters. Has to be changed in arm_controller_sim.yaml !
+		twist_msg.linear.x = pid_controller_trans_x_.computeCommand(transform_msg.transform.translation.x, period);
+		twist_msg.linear.y = pid_controller_trans_y_.computeCommand(transform_msg.transform.translation.y, period);
+		twist_msg.linear.z = pid_controller_trans_z_.computeCommand(transform_msg.transform.translation.z, period);
 	}
 	
 	if(movable_rot_)

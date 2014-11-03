@@ -77,8 +77,8 @@ public:
 	void normalized_twist_cb(const geometry_msgs::Twist::ConstPtr& msg);
 	void euler(std::vector<double> *out, double in, double dt);	
 	void writeToMFile(std::string fileName,std::vector<double> *dot_in,std::vector<double> *dot_out,std::vector<double> *pos_out,std::vector<double> *dot_integrated, std::vector<double> *dot_normalized_in);
-	Eigen::VectorXd lsmr(Eigen::MatrixXd & A, Eigen::VectorXd & b);
 	Eigen::VectorXd getTheta(Eigen::MatrixXd &F, Eigen::VectorXd &y);
+	void stepResponsePlot(std::string fileName,std::vector<double> *in, std::vector<double> *x_lin_out,std::vector<double> *y_lin_out,std::vector<double> *z_lin_out,std::vector<double> *x_rot_out,std::vector<double> *y_rot_out,std::vector<double> *z_rot_out);
 
 	
 private:
@@ -93,11 +93,12 @@ private:
 	std::string chain_tip_;
 	KDL::JntArray last_q_;
 	KDL::JntArray last_q_dot_;
-	std::vector<std::string> joints_;		
+	std::vector<std::string> joints_;
 	KDL::JntArrayVel JntArrayVel_;
 	KDL::ChainFkSolverVel_recursive* jntToCartSolver_vel_;
 	unsigned int dof_;
 	KDL::Vector vector_vel_,vector_rot_;
+	double samples_;
 
 	
 	/// Outputs
@@ -125,7 +126,6 @@ private:
 	double x_lin_in_normalized_,y_lin_in_normalized_,z_lin_in_normalized_;
 	double x_rot_in_normalized_,y_rot_in_normalized_,z_rot_in_normalized_;
 	
-
 	/// Frametracker
 	ros::ServiceClient startTracking_;
 	ros::ServiceClient stopTracking_;
@@ -146,6 +146,8 @@ private:
 	
 	/// Euler Integration
 	double dt_;
+	
+	std::vector <double> timeVec;
 };
 
 #endif

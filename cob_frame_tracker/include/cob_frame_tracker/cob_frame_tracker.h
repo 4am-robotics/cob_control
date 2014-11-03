@@ -60,7 +60,6 @@ public:
 private:
 	double update_rate_;
 	
-	double last_err_x_,last_err_y_,last_err_z_;
 	bool tracking_;
 	std::string tracking_frame_;	//goal frame
 	std::string active_frame_;		//twists with respect to this frame

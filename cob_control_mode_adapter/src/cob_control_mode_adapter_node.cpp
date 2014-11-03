@@ -215,16 +215,16 @@ class CobControlModeAdapter
 
     void update(const ros::TimerEvent& event)
     {
-      //ros::Duration period = event.current_real - last_vel_command_;
-      //if(current_control_mode_!="TRAJECTORY" && period.toSec() >= max_vel_command_silence_)
-      //{
-        //bool success = switch_controller(traj_controller_names_, current_controller_names_);
-        //if(success)
-        //{
-          //ROS_INFO("Have not heard a vel command for %f seconds, switched back to trajectory_controller", period.toSec());
-          //current_control_mode_="TRAJECTORY";
-        //}
-      //}
+      ros::Duration period = event.current_real - last_vel_command_;
+      if(current_control_mode_!="TRAJECTORY" && period.toSec() >= max_vel_command_silence_)
+      {
+        bool success = switch_controller(traj_controller_names_, current_controller_names_);
+        if(success)
+        {
+          ROS_INFO("Have not heard a vel command for %f seconds, switched back to trajectory_controller", period.toSec());
+          current_control_mode_="TRAJECTORY";
+        }
+      }
     }
 
   private:

@@ -1055,5 +1055,5 @@ void CobArticulation::generatePathWithTe(std::vector<double> *pathArray,double T
 
 void CobArticulation::PoseToRPY(geometry_msgs::Pose pose,double &roll, double &pitch, double &yaw){
 	tf::Quaternion q = tf::Quaternion(pose.orientation.x,pose.orientation.y,pose.orientation.z,pose.orientation.w);
-	tf::Matrix3x3(q).getRPY(roll,pitch,yaw);	
+	tf::Matrix3x3(q).getRPY(roll,pitch,yaw);
 }

@@ -126,7 +126,7 @@ void CobTwistController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 	else
 	{
 		///normalize guarantees that velocities are within limits --- only needed for CartToJnt without damping
-		//q_dot_ik = normalize_velocities(q_dot_ik);
+		q_dot_ik = normalize_velocities(q_dot_ik);
 		
 		brics_actuator::JointVelocities vel_msg;
 		vel_msg.velocities.resize(joints_.size());

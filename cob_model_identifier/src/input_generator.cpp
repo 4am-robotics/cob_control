@@ -96,12 +96,16 @@ void InputGenerator::run()
 	for(int i=350;i<500;i++){
 		pbrs.push_back(-0.01);
 	}
+	for(int i=500;i<750;i++){
+		pbrs.push_back(0.1);
+	}
+	
 	
 	calls = 0.02;
 	/* Generate a new random seed from system time - do this once in your constructor */
 	srand(time(0));
 	
-	ros::Rate r(68.0);
+	ros::Rate r(100.0);
 	twist_pub_ = nh_.advertise<geometry_msgs::Twist> ("/arm_controller/command_twist", 1);
 	wait1sec_=false;
 	wait10sec_=false;
@@ -111,6 +115,7 @@ void InputGenerator::run()
 		ros::spinOnce();
 		r.sleep();
 	}
+
 	ROS_INFO("Timer 1 finished");
 	timer2 = nh_.createTimer(ros::Duration(10.0), &InputGenerator::timerCallback10sec, this,true);
 	while(!wait10sec_){
@@ -165,10 +170,15 @@ void InputGenerator::publish_twist(bool sendZero)
 		noise += 3;
 		noise = noise/10;
 		///----------------------------------------------------------
+		/*
+		twist_msg.linear.x = pbrs.at(pbrs_counter);
+		twist_msg.linear.y = pbrs.at(pbrs_counter);
+		twist_msg.linear.z = -pbrs.at(pbrs_counter);
+		*/
+		twist_msg.linear.x = trans_x_;
+		twist_msg.linear.y = trans_y_;
+		twist_msg.linear.z = trans_z_;
 		
-		twist_msg.linear.x = trans_x_;//pbrs.at(pbrs_counter);
-		twist_msg.linear.y = trans_y_;//pbrs.at(pbrs_counter);
-		twist_msg.linear.z = trans_z_;//-pbrs.at(pbrs_counter);
 
 		twist_msg.angular.x = rot_x_;
 		twist_msg.angular.y = rot_y_;
