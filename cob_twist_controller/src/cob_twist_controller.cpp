@@ -225,8 +225,9 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 	
 	//int ret_ik = p_iksolver_vel_->CartToJnt(last_q_, twist, q_dot_ik);
 	//int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik);
-	int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik, "trackingError");
-	//int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik, "manipulability");
+	//int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik, "constant");
+	//int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik, "trackingError");
+	int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik, "manipulability");
 	
 	if(ret_ik < 0)
 	{
@@ -235,7 +236,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 	else
 	{
 		///normalize guarantees that velocities are within limits --- only needed for CartToJnt without damping
-		q_dot_ik = normalize_velocities(q_dot_ik);
+		//q_dot_ik = normalize_velocities(q_dot_ik);
 		
 		brics_actuator::JointVelocities vel_msg;
 		vel_msg.velocities.resize(joints_.size());

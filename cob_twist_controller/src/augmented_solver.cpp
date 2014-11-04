@@ -23,6 +23,15 @@ augmented_solver::~augmented_solver()
 
 int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL::JntArray& qdot_out)
 {
+    return CartToJnt(q_in, v_in, qdot_out, "truncation");
+}
+
+
+int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL::JntArray& qdot_out, std::string damping_method)
+{
+    ///used only for debugging
+    std::ofstream file("test_end_effect.txt", std::ofstream::app);
+    
     ///Let the ChainJntToJacSolver calculate the jacobian "jac_chain" for the current joint positions "q_in"
     KDL::Jacobian jac_chain(chain.getNrOfJoints());
     jnt2jac.JntToJac(q_in, jac_chain);
@@ -58,65 +67,7 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
         jac.data << jac_chain.data;
     }
     
-    ///Use Eigen::JacobiSVD
-    Eigen::JacobiSVD<Eigen::MatrixXd> svd(jac.data, Eigen::ComputeFullU | Eigen::ComputeFullV);
-    Eigen::VectorXd S = svd.singularValues();
-    Eigen::VectorXd v_in_vec = Eigen::VectorXd::Zero(jac.rows());
-    Eigen::MatrixXd S_inv = Eigen::MatrixXd::Zero(jac.columns(),jac.rows());
-    
-    ///truncated S(i)
-    for (int i=0; i<(jac.rows()<jac.columns()?jac.rows():jac.columns());i++)
-    {    S_inv(i,i)=((S(i)<eps)?0:1/S(i));    }
-    
-    ///convert input
-    for (int i=0; i<jac.rows(); i++)
-    {    v_in_vec(i)=v_in(i);    }
-    
-    Eigen::MatrixXd qdot_out_vec= svd.matrixV()*S_inv*svd.matrixU().transpose()*v_in_vec;
-    
-    ///convert output
-    for(int i=0; i<jac.columns(); i++)
-    {    qdot_out(i)=qdot_out_vec(i,0);    }
-    
-    //if(DEBUG) 
-    //{
-        /////compute manipulability
-        /////kappa = sqrt(norm(J*Jt)) 
-        /////see  T.Yoshikawa "Manipulability of robotic mechanisms"
-        /////     International Journal of Robotics Research, 4(2):3-9, 1985
-        //Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> prod = jac.data * jac.data.transpose();
-        //double d = prod.determinant();
-        //double kappa = std::sqrt(d);
-        //std::cout << "\nManipulability: " << kappa << "\n";
-        
-        //std::cout << "Singular Values:\n " << S << "\n";
-        //std::cout << "Singular Values inv:\n " << S_inv << "\n";
-        //std::cout << "Result:\n " << qdot_out_vec << "\n";
-    //}
-    
-    return 1;
-}
-
-
-int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL::JntArray& qdot_out, std::string damping_method = "trackingError")
-{
-    ///used only for debugging
-    std::ofstream file("test_end_effect.txt", std::ofstream::app);
-    
-    ///Let the ChainJntToJacSolver calculate the jacobian "jac" for the current joint positions "q_in"
-    jnt2jac.JntToJac(q_in,jac);
-
-    Eigen::MatrixXd qdot_out_vec;
-    int task_size = 1;
-            
-    Eigen::MatrixXd We = Eigen::MatrixXd::Identity(jac.rows(), jac.rows());
-    Eigen::MatrixXd Wc = Eigen::MatrixXd::Zero(task_size,task_size);
-    Eigen::MatrixXd Wv = Eigen::MatrixXd::Identity(jac.columns(), jac.columns());
-    Eigen::MatrixXd Jc = Eigen::MatrixXd::Zero(task_size,jac.columns());
-
     Eigen::JacobiSVD<Eigen::MatrixXd> svd(jac.data,Eigen::ComputeFullU | Eigen::ComputeFullV);
-    
-    Eigen::VectorXd v_in_vec = Eigen::VectorXd::Zero(jac.rows());
     Eigen::VectorXd S = svd.singularValues();
     
     double damping_factor = 0.0;
@@ -148,7 +99,7 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
             if(wkm1==0) //division by zero
             {    damping_factor = lambda0;    }
             else
-            {    damping_factor = (std::abs(w/wkm1) > wt ? lambda0 * (1-w/wkm1) : 0);    }
+            {    damping_factor = (std::fabs(w/wkm1) > wt ? lambda0 * (1-w/wkm1) : 0);    }
         }
         
         std::cout<<"w: "<<w<<" wk-1: "<< wkm1 << " condition:" << (bool)(w/wkm1 <wt) << std::endl;
@@ -158,17 +109,17 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
     else if (damping_method == "trackingError")    
     {
         double deltaRMax = 0.05;
-        damping_factor = (svd.singularValues())(0);
+        double min_singular_value = svd.singularValues()(0);
         for (int i=1; i<jac.rows();i++) 
         {                    
-            if(damping_factor>(svd.singularValues())(i) && ((svd.singularValues())(i))>eps) //What is a zero singular value, and what is not. Less than 0.005 seems OK
+            if(svd.singularValues()(i) < min_singular_value && svd.singularValues()(i)>eps) //What is a zero singular value, and what is not. Less than 0.005 seems OK
             {
-                damping_factor = (svd.singularValues())(i);            
-                //file << "Minimum sv:"<< damping_factor << std::endl;
+                min_singular_value = svd.singularValues()(i);            
+                //file << "Minimum sv:"<< min_singular_value << std::endl;
             }
         }        
                 
-        damping_factor=pow(damping_factor,2)*deltaRMax/(1-deltaRMax);    
+        damping_factor=pow(min_singular_value,2)*deltaRMax/(1-deltaRMax);    
     }
     
     else if (damping_method == "singularRegion")
@@ -183,44 +134,59 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
         damping_factor = 0.01;
     }
     
-    ///use calculated damping value lambda for SVD
-    Wv=Wv*damping_factor*damping_factor;
-    Eigen::MatrixXd tmp = (jac.data.transpose()*We*jac.data+Jc.transpose()*Wc*Jc+Wv).inverse();
+    else if (damping_method == "truncation")
+    {
+        damping_factor = 0.0;
+    }
     
-    ///catch isNaN
-    //if(isnan(tmp.determinant()))
-    //{    return -1;    }
+    
+
+    int task_size = 1;
+    
+    //Weighting matrix for endeffector Jacobian Je (jac)
+    Eigen::MatrixXd We = Eigen::MatrixXd::Identity(jac.rows(), jac.rows());
+    
+    //Weighting matrix for additional/task constraints Jc
+    Eigen::MatrixXd Wc = Eigen::MatrixXd::Identity(task_size,task_size);
+    Eigen::MatrixXd Jc = Eigen::MatrixXd::Zero(task_size,jac.columns());
+    
+    //Weighting matrix for damping 
+    Eigen::MatrixXd Wv = Eigen::MatrixXd::Identity(jac.columns(), jac.columns());
+    
+    Eigen::VectorXd v_in_vec = Eigen::VectorXd::Zero(jac.rows());
+    Eigen::MatrixXd qdot_out_vec;
+
+
+    ///use calculated damping value lambda for SVD
+    Wv=Wv*damping_factor*damping_factor; //why squared?
     
     ///convert input
     for (int i=0; i<jac.rows(); i++)
     {    v_in_vec(i)=v_in(i);    }
     
-    //if(damping_factor==0) 
-    //{
-        //Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> prod = jac.data.transpose() * jac.data;
-        //Eigen::JacobiSVD<Eigen::MatrixXd> prod_svd(prod,Eigen::ComputeFullU | Eigen::ComputeFullV);
-        //Eigen::VectorXd prod_S = prod_svd.singularValues();
-        //Eigen::MatrixXd prod_S_inv = Eigen::MatrixXd::Zero(jac.columns(),jac.columns());
-        //for (int i=0; i<jac.columns()-1; i++)
-        //{   prod_S_inv(i,i)=(prod_S(i)==0?0:1/prod_S(i));   }
-        //
-        //qdot_out_vec= prod_svd.matrixV()*prod_S_inv*prod_svd.matrixU().transpose()*(jac.data.transpose()*We*v_in_vec);
-        
-        Eigen::MatrixXd sum = Eigen::MatrixXd::Zero(jac.columns(),jac.rows());
-        
-        for (int i=0; i<jac.rows() ; i++)
+    
+    ///// formula from book (2.3.19)
+    ////reults in oscillation without task constraints and damping close to 0.0 (when far from singularity)?
+    //Eigen::MatrixXd tmp = (jac.data.transpose()*We*jac.data+Jc.transpose()*Wc*Jc+Wv).inverse();
+    //qdot_out_vec= tmp*(jac.data.transpose()*We*v_in_vec);
+    
+    /// formula from book (2.3.14)
+    //additional task constraints can not be considered
+    Eigen::MatrixXd jac_pinv = Eigen::MatrixXd::Zero(jac.columns(),jac.rows());
+    Eigen::MatrixXd temp = Eigen::MatrixXd::Zero(jac.columns(),jac.rows());
+    for (int i=0; i<jac.rows() ; i++)
+    {
+        for (int j=0; j<jac.rows() ;j++)
         {
-            for (int j=0; j<jac.rows() ;j++)
-                for (int k=0; k<jac.columns(); k++)
-                    sum(k,j)+=S(i)*svd.matrixV()(k,i)*svd.matrixU()(j,i)*(pow(S(i),2)+pow(damping_factor,2)==0?0:1/(pow(S(i),2)+pow(damping_factor,2)));
+            for (int k=0; k<jac.columns(); k++)
+            {
+                double denominator = pow(S(i),2)+pow(damping_factor,2);
+                double factor = (denominator < eps) ? 0.0 : S(i)/denominator;
+                jac_pinv(k,j)+=factor*svd.matrixV()(k,i)*svd.matrixU()(j,i);
+            }
         }
-        
-        qdot_out_vec= sum*v_in_vec;
-    //}
-    //else
-    //{
-        //qdot_out_vec= tmp*(jac.data.transpose()*We*v_in_vec);
-    //}
+    }
+    qdot_out_vec= jac_pinv*v_in_vec;
     
     
     ///convert output
@@ -228,31 +194,31 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
     {    qdot_out(i)=qdot_out_vec(i,0);    }
     
     
-    ///write debug info to file
-    for(int i=0; i<jac.columns(); i++)
-    {    
-        if(std::abs(qdot_out_vec(i,0))>500)
-        {
-            if (file.is_open())
-            {
-                Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> prod = jac.data * jac.data.transpose();                    
+    /////write debug info to file
+    //for(int i=0; i<jac.columns(); i++)
+    //{    
+        //if(std::abs(qdot_out_vec(i,0))>500)
+        //{
+            //if (file.is_open())
+            //{
+                //Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> prod = jac.data * jac.data.transpose();                    
                 
-                double d = prod.determinant();
-                double kappa = std::sqrt(d);
-                file << "Here is the Jacobian:\n" << jac.data << '\n';
-                file << "Last Jacobian:\n" << Jcm1 << '\n';
-                file << "Here is prod:\n" << prod << '\n';
-                file << "And here is the other stuff:"<< std::endl << "damping_factor" <<damping_factor<<std::endl;
-                file << "Singular values:\n" << svd.singularValues();
-                file << "\nManipulability: " << kappa << "\n";
-                file<<"El twist deberia ser:\n"<<jac.data*qdot_out_vec<<std::endl;
-                file << "La entrada fue: \n" << v_in_vec<<std::endl;
-                file << "La salida es: \n" << qdot_out_vec <<'\n';
-                file << "inv(jac' jac):\n" << (jac.data.transpose()*jac.data).inverse();
-            }
-            break;
-        }
-    }
+                //double d = prod.determinant();
+                //double kappa = std::sqrt(d);
+                //file << "Here is the Jacobian:\n" << jac.data << '\n';
+                //file << "Last Jacobian:\n" << Jcm1 << '\n';
+                //file << "Here is prod:\n" << prod << '\n';
+                //file << "And here is the other stuff:"<< std::endl << "damping_factor" <<damping_factor<<std::endl;
+                //file << "Singular values:\n" << svd.singularValues();
+                //file << "\nManipulability: " << kappa << "\n";
+                //file<<"El twist deberia ser:\n"<<jac.data*qdot_out_vec<<std::endl;
+                //file << "La entrada fue: \n" << v_in_vec<<std::endl;
+                //file << "La salida es: \n" << qdot_out_vec <<'\n';
+                //file << "inv(jac' jac):\n" << (jac.data.transpose()*jac.data).inverse();
+            //}
+            //break;
+        //}
+    //}
     
     if(DEBUG)
     {

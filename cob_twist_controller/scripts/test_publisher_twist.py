@@ -11,9 +11,9 @@ def twistPub():
   pub = rospy.Publisher("/arm_controller/command_twist", Twist, queue_size=1)
   twist_msg =  Twist()
 
-  twist_msg.linear.x = 0.1
+  twist_msg.linear.x = 0
   twist_msg.linear.y = 0
-  twist_msg.linear.z = -0.1
+  twist_msg.linear.z = 0
   twist_msg.angular.x = 0
   twist_msg.angular.y = 0
   twist_msg.angular.z = 0
