@@ -84,10 +84,13 @@ bool CobArticulation::initialize()
 	accl_pub_ = nh_.advertise<std_msgs::Float64> ("linear_accl", 1);
 	path_pub_ = nh_.advertise<std_msgs::Float64> ("linear_path", 1);
 	jerk_pub_ = nh_.advertise<std_msgs::Float64> ("linear_jerk", 1);
-	startTracking_ = nh_.serviceClient<cob_srvs::SetString>("/arm_controller/start_tracking");
-	stopTracking_ = nh_.serviceClient<std_srvs::Empty>("/arm_controller/stop_tracking");
+	
+	ROS_WARN("Waiting for Services...");
 	success = ros::service::waitForService("/arm_controller/start_tracking");
 	success = ros::service::waitForService("/arm_controller/stop_tracking");
+	startTracking_ = nh_.serviceClient<cob_srvs::SetString>("/arm_controller/start_tracking");
+	stopTracking_ = nh_.serviceClient<std_srvs::Empty>("/arm_controller/stop_tracking");
+	ROS_INFO("...done!");
 	
 	if(success){
 		return true;
@@ -1055,5 +1058,5 @@ void CobArticulation::generatePathWithTe(std::vector<double> *pathArray,double T
 
 void CobArticulation::PoseToRPY(geometry_msgs::Pose pose,double &roll, double &pitch, double &yaw){
 	tf::Quaternion q = tf::Quaternion(pose.orientation.x,pose.orientation.y,pose.orientation.z,pose.orientation.w);
-	tf::Matrix3x3(q).getRPY(roll,pitch,yaw);	
+	tf::Matrix3x3(q).getRPY(roll,pitch,yaw);
 }

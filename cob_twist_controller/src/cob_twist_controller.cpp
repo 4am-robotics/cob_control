@@ -224,8 +224,9 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 	
 	
 	//int ret_ik = p_iksolver_vel_->CartToJnt(last_q_, twist, q_dot_ik);
-	int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik);
-	//int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik, "trackingError");
+	//int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik);
+	int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik, "trackingError");
+	//int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik, "manipulability");
 	
 	if(ret_ik < 0)
 	{

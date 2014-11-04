@@ -31,7 +31,7 @@
   <run_depend>kdl_parser</run_depend>
   <run_depend>kdl_conversions</run_depend>
   <run_depend>orocos_kdl</run_depend>
-   <run_depend>std_srvs</run_depend>
+  <run_depend>std_srvs</run_depend>
   <run_depend>cob_srvs</run_depend>
   <export>
 

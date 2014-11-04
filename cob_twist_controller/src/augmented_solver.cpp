@@ -125,10 +125,10 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
         Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> prod = jac.data * jac.data.transpose();
         double d = prod.determinant();        
         double w = std::sqrt(std::abs(d));      
-        double lambda0 = 0.11;
+        double lambda0 = 0.05;
         double wt = 0.0005;
         damping_factor = (w<wt ? lambda0 * pow((1 - w/wt),2) : 0);
-        //std::cout << "w" << w << " wt" <<wt << " Condicion" << (bool)(w<wt) << "\n";
+        //std::cout << "w" << w << " wt" <<wt << " Condition" << (bool)(w<wt) << "\n";
     }
     
     else if (damping_method=="manipulabilityRate")

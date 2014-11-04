@@ -129,7 +129,7 @@ class CobControlModeAdapter
       }
       vel_controller_names_.push_back("arm_velocity_controller");
       
-      traj_controller_names_.push_back("arm_follow_joint_trajectory_controller_pos");
+      traj_controller_names_.push_back("arm_joint_trajectory_controller");
       
       
       //load all required controllers
