@@ -44,27 +44,36 @@ def twistPub():
 
     if finished_timer==1:
       #print "First segment, time: %.3f" % (rospy.get_time()-initial_time)
-      twist_msg.linear.x = -0.04*math.sqrt(2)*math.cos(math.pi/4)
+      #twist_msg.linear.x = -0.04*math.sqrt(2)*math.cos(math.pi/4)
+      #twist_msg.linear.y = 0.0
+      #twist_msg.linear.z = -0.04*math.sqrt(2)*math.sin(math.pi/4)
+      twist_msg.linear.x = -0.04
       twist_msg.linear.y = 0.0
-      twist_msg.linear.z = -0.04*math.sqrt(2)*math.sin(math.pi/4)
+      twist_msg.linear.z = -0.04
       twist_msg.angular.x = 0
       twist_msg.angular.y = 0
       twist_msg.angular.z = 0      
       
     if finished_timer==2:
       #print "Second segment, time: %.3f" % (rospy.get_time()-initial_time)
-      twist_msg.linear.x = 0.04
+      #twist_msg.linear.x = 0.04
+      #twist_msg.linear.z = 0
+      twist_msg.linear.x = 0
       twist_msg.linear.z = 0
+      twist_msg.angular.x = 0.3
     
     if finished_timer==3:
       #print "Third segment, time: %.3f" % (rospy.get_time()-initial_time)
-      twist_msg.linear.x = 0
-      twist_msg.linear.z = 0.04
+      #twist_msg.linear.x = 0
+      #twist_msg.linear.z = 0.04
+      twist_msg.angular.x = 0
+      twist_msg.angular.z = 0.1
 	  
     if finished_timer==4:
       #print("Done")
       twist_msg.linear.x = 0
       twist_msg.linear.z = 0
+      twist_msg.angular.z = 0.0
 	  
       
     pub.publish(twist_msg)

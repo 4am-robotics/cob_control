@@ -102,8 +102,10 @@ void OutputPublisher::initialize()
 	
 	jointstate_sub_ = nh_.subscribe("/joint_states", 1, &OutputPublisher::jointstate_cb, this);
 	end_eff_vel_pub_ = nh_.advertise<geometry_msgs::Twist> ("end_effector_vel", 1);
-	end_eff_pos_pub_ = nh_.advertise<geometry_msgs::Twist> ("end_effector_pos", 1);;
-		
+	end_eff_pos_pub_ = nh_.advertise<geometry_msgs::Twist> ("end_effector_pos", 1);
+	manipulability_pub_ = nh_.advertise<std_msgs::Float64> ("manipulability", 1);
+	rcond_pub_ = nh_.advertise<std_msgs::Float64> ("rcond", 1);
+	
 	ROS_INFO("...initialized!");
 }
 
@@ -138,9 +140,11 @@ void OutputPublisher::run()
 	y_lin_start = q_ist.position.y;
 	z_lin_start = q_ist.position.z;
 	
+	initial_iteration=true;
+	
 	while (ros::ok()){	
 		
-		ROS_WARN("In cycle");
+		//ROS_WARN("In cycle");
 		
 		time = ros::Time::now();
 		period = time - last_update_time;		
@@ -188,20 +192,24 @@ void OutputPublisher::run()
 		end_eff_pos_pub_.publish(end_effector_pos_msg);
 		
 		if(iterations > 2){
-			dt_ += period.toSec();	
+			dt_ += period.toSec();
 			samples++;
 		}
 		
-		iterations++;		
+		iterations++;
 		
 		//if(samples >= 500){
 			//dt_ /=  samples;
 			//std::cout << "dt_ = " << dt_ <<std::endl;
 			//break;
-		//}		
+		//}
+		
+		
 		last_update_time = time;
 		ros::spinOnce();
 		r.sleep();
+		
+		
 	}
 	
 
@@ -256,7 +264,7 @@ void OutputPublisher::jointstate_cb(const sensor_msgs::JointState::ConstPtr& msg
 			ret = jntToCartSolver_pos_->JntToCart(jntArray,FramePos,-1);
 			
 			if(ret>=0){			
-				vector_pos_lin_= FramePos.p;				
+				vector_pos_lin_= FramePos.p;
 			}
 			else{
 				ROS_WARN("ChainFkSolverVel failed!");
@@ -264,6 +272,42 @@ void OutputPublisher::jointstate_cb(const sensor_msgs::JointState::ConstPtr& msg
 			
 			
 		}
+		
+		KDL::ChainJntToJacSolver jnt2jac(chain_);
+		KDL::Jacobian jac(chain_.getNrOfJoints());
+		jnt2jac.JntToJac(last_q_,jac);
+		
+		//compute manipulability
+        ///kappa = sqrt(norm(J*Jt))
+        ///see  T.Yoshikawa "Manipulability of robotic mechanisms"
+        ///     International Journal of Robotics Research, 4(2):3-9, 1985
+        Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> prod = jac.data * jac.data.transpose();
+        double d = prod.determinant();
+        double kappa = std::sqrt(std::abs(d));
+        std_msgs::Float64 manipulability_msg;
+        manipulability_msg.data=kappa;
+        //
+        //prod = jac.data.transpose() *jac.data;
+        //std::cout<<"prod.norm() "<<prod.norm()<<std::endl;
+        //std::cout<<"prod.inverse().norm() "<<prod.inverse().norm()<<std::endl;        
+        //double rcond = 1/(prod.norm()*prod.inverse().norm());
+        //
+        //std_msgs::Float64 rcond_msg;
+        //rcond_msg.data=rcond;
+        
+        //if (initial_iteration)
+        //{
+            //wkm1=kappa;
+            //initial_iteration = false;
+        //}
+        //
+        //manipulability_msg.data=(wkm1==0?0:kappa/wkm1);
+        //
+        //wkm1=kappa;
+        
+        manipulability_pub_.publish(manipulability_msg);
+        //rcond_pub_.publish(rcond_msg);        
+        
 }
 
 void OutputPublisher::euler(std::vector<double> *out, double in, double dt){

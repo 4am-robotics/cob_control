@@ -32,9 +32,11 @@
 #include <ros/ros.h>
 #include <vector>
 #include <geometry_msgs/Twist.h>
+#include <std_msgs/Float64.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
 #include <Eigen/Dense>
+#include <Eigen/Core>
 #include <Eigen/SVD>
 #include <kdl_parser/kdl_parser.hpp>
 #include <kdl/chainiksolvervel_pinv.hpp>
@@ -64,7 +66,10 @@ private:
 	ros::Subscriber jointstate_sub_;
 	ros::Publisher end_eff_vel_pub_;
 	ros::Publisher end_eff_pos_pub_;
+	ros::Publisher manipulability_pub_;
+	ros::Publisher rcond_pub_;
 	void euler(std::vector<double> *out, double in, double dt);	
+	
 	
 	/// KDL Conversion
 	KDL::Chain chain_;
@@ -96,6 +101,9 @@ private:
 	
 	/// Euler Integration
 	double dt_;
+	
+	double wkm1;
+	bool initial_iteration;
 };
 
 #endif

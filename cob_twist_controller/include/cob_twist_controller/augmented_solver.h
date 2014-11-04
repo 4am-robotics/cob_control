@@ -9,7 +9,6 @@
 #include <Eigen/SVD> 
 #include <iostream>
 
-
 /**
 * Implementation of a inverse velocity kinematics algorithm based
 * on the generalize pseudo inverse to calculate the velocity
@@ -53,7 +52,6 @@ private:
     KDL::ChainJntToJacSolver jnt2jac;
     double eps;
     int maxiter;
-    
     Eigen::MatrixXd Jcm1;
     double wkm1;
     bool initial_iteration;
