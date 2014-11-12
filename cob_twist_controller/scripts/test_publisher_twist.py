@@ -8,7 +8,7 @@ from geometry_msgs.msg import Twist
 def twistPub():
   rospy.init_node("test_publisher_twist", anonymous=True)
   
-  pub = rospy.Publisher("/arm_controller/command_twist", Twist, queue_size=1)
+  pub = rospy.Publisher("/arm/twist_controller/command_twist", Twist, queue_size=1)
   twist_msg =  Twist()
 
   twist_msg.linear.x = 0

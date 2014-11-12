@@ -35,6 +35,9 @@
 
 bool CobTwistController::initialize()
 {
+	ros::NodeHandle nh_twist("twist_controller");
+	ros::NodeHandle nh_cartesian("cartesian_controller");
+	
 	// JointNames
 	if(!nh_.getParam("joint_names", joints_))
 	{
@@ -44,12 +47,12 @@ bool CobTwistController::initialize()
 	dof_ = joints_.size();
 	
 	// Chain
-	if(!nh_.getParam("base_link", chain_base_))
+	if(!nh_cartesian.getParam("base_link", chain_base_))
 	{
 		ROS_ERROR("Parameter 'base_link' not set");
 		return false;
 	}
-	if (!nh_.getParam("tip_link", chain_tip_))
+	if (!nh_cartesian.getParam("tip_link", chain_tip_))
 	{
 		ROS_ERROR("Parameter 'tip_link' not set");
 		return false;
@@ -58,25 +61,25 @@ bool CobTwistController::initialize()
 	// Cartesian VelLimits
 	///Currently not used...
 	///Shall we use these parameters here to reject Twists that are too high???
-	if (!nh_.getParam("max_vel_lin", max_vel_lin_))
+	if (!nh_cartesian.getParam("max_vel_lin", max_vel_lin_))
 	{
 		max_vel_lin_ = 10.0;	//m/sec
 		ROS_WARN_STREAM("Parameter 'max_vel_lin' not set. Using default: " << max_vel_lin_);
 	}
-	if (!nh_.getParam("max_vel_rot", max_vel_rot_))
+	if (!nh_cartesian.getParam("max_vel_rot", max_vel_rot_))
 	{
 		max_vel_rot_ = 6.28;	//rad/sec
 		ROS_WARN_STREAM("Parameter 'max_vel_rot' not set. Using default: " << max_vel_rot_);
 	}
 	
 	// SyncMM
-	if (!nh_.getParam("base_compensation", base_compensation_))
+	if (!nh_cartesian.getParam("base_compensation", base_compensation_))
 	{
 		base_compensation_ = false;
 		ROS_WARN_STREAM("Base compensation disabled!");
 	}
 	
-	if (!nh_.getParam("base_active", base_active_))
+	if (!nh_cartesian.getParam("base_active", base_active_))
 	{
 		base_active_ = false;
 		ROS_WARN_STREAM("Parameter 'base_active' not set. Base disabled!");
@@ -148,7 +151,7 @@ bool CobTwistController::initialize()
 	p_augmented_solver_->SetAugmentedSolverParams(params);
 	
 	///Setting up dynamic_reconfigure server for the AugmentedSolverParams
-	reconfigure_server_.reset(new dynamic_reconfigure::Server<cob_twist_controller::TwistControllerConfig>(reconfig_mutex_, nh_));
+	reconfigure_server_.reset(new dynamic_reconfigure::Server<cob_twist_controller::TwistControllerConfig>(reconfig_mutex_, nh_cartesian));
 	reconfigure_server_->setCallback(boost::bind(&CobTwistController::reconfigure_callback,   this, _1, _2));
 	
 	///initialize variables and current joint values and velocities
@@ -161,13 +164,13 @@ bool CobTwistController::initialize()
 	///initialize ROS interfaces
 	jointstate_sub = nh_.subscribe("/joint_states", 1, &CobTwistController::jointstate_cb, this);
 	odometry_sub = nh_.subscribe("/base_controller/odometry", 1, &CobTwistController::odometry_cb, this);
-	twist_sub = nh_.subscribe("command_twist", 1, &CobTwistController::twist_cb, this);
-	twist_stamped_sub = nh_.subscribe("command_twist_stamped", 1, &CobTwistController::twist_stamped_cb, this);
-	vel_pub = nh_.advertise<brics_actuator::JointVelocities>("command_vel", 1);
+	twist_sub = nh_twist.subscribe("command_twist", 1, &CobTwistController::twist_cb, this);
+	twist_stamped_sub = nh_twist.subscribe("command_twist_stamped", 1, &CobTwistController::twist_stamped_cb, this);
+	vel_pub = nh_.advertise<std_msgs::Float64MultiArray>("joint_group_velocity_controller/command", 1);
 	//base_vel_pub = nh_.advertise<geometry_msgs::Twist>("/base_controller/command", 1);
 	base_vel_pub = nh_.advertise<geometry_msgs::Twist>("/base_controller/command_direct", 1);
-	twist_pub_ = nh_.advertise<geometry_msgs::Twist> ("command_twist_normalized", 1);
-	twist_real_pub_ = nh_.advertise<geometry_msgs::Twist> ("current_twist", 1);
+	twist_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("command_twist_normalized", 1);
+	twist_real_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("current_twist", 1);
 	
 	
 	ROS_INFO("...initialized!");
@@ -284,14 +287,10 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 		///normalize guarantees that velocities are within limits --- only needed for CartToJnt without damping
 		//q_dot_ik = normalize_velocities(q_dot_ik);
 		
-		brics_actuator::JointVelocities vel_msg;
-		vel_msg.velocities.resize(joints_.size());
+		std_msgs::Float64MultiArray vel_msg;
 		for(unsigned int i=0; i<dof_; i++)
 		{
-			vel_msg.velocities[i].joint_uri = joints_[i].c_str();
-			vel_msg.velocities[i].unit = "rad";
-			vel_msg.velocities[i].value = q_dot_ik(i);
-			
+			vel_msg.data.push_back(q_dot_ik(i));
 			//ROS_WARN("DesiredVel %d: %f", i, q_dot_ik(i));
 		}
 		if(base_active_)
