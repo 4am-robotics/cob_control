@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+		
+
+<launch>
+<rosparam file="$(find cob_model_identifier)/config/params.yaml" command="load" ns="cob_model_identifier"/>
+	<group ns="cob_model_identifier">
+
+			<node pkg="cob_model_identifier" name="input_generator" type="input_generator_node" output="screen"/> 
+
+			<node pkg="cob_model_identifier" name="output_recorder" type="output_recorder_node" output="screen"/>
+	</group>
+</launch>

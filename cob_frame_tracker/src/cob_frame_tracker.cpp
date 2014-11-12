@@ -30,7 +30,7 @@
 #include <cob_frame_tracker/cob_frame_tracker.h>
 
 
-void CobFrameTracker::initialize()
+bool CobFrameTracker::initialize()
 {
 	///get params
 	if (nh_.hasParam("update_rate"))
@@ -55,7 +55,7 @@ void CobFrameTracker::initialize()
 	else
 	{
 		ROS_ERROR("No active_frame specified. Aborting!");
-		nh_.shutdown();
+		return false;
 	}
 	
 	if (nh_.hasParam("movable_trans"))
@@ -68,8 +68,15 @@ void CobFrameTracker::initialize()
 	{	movable_rot_ = true;	}
 	
 	// Load PID Controller using gains set on parameter server
-	pid_controller_trans_.init(ros::NodeHandle(nh_, "pid_trans"));
-	pid_controller_trans_.reset();
+	pid_controller_trans_x_.init(ros::NodeHandle(nh_, "pid_trans_x"));
+	pid_controller_trans_x_.reset();
+	
+	pid_controller_trans_y_.init(ros::NodeHandle(nh_, "pid_trans_y"));
+	pid_controller_trans_y_.reset();
+	
+	pid_controller_trans_z_.init(ros::NodeHandle(nh_, "pid_trans_z"));
+	pid_controller_trans_z_.reset();
+	
 	pid_controller_rot_.init(ros::NodeHandle(nh_, "pid_rot"));
 	pid_controller_rot_.reset();
 	
@@ -81,6 +88,7 @@ void CobFrameTracker::initialize()
 	tracking_ = false;
 	
 	ROS_INFO("...initialized!");
+	return true;
 }
 
 void CobFrameTracker::run()
@@ -122,9 +130,10 @@ void CobFrameTracker::publish_twist(ros::Duration period)
 	
 	if(movable_trans_)
 	{
-		twist_msg.linear.x = pid_controller_trans_.computeCommand(transform_msg.transform.translation.x, period);
-		twist_msg.linear.y = pid_controller_trans_.computeCommand(transform_msg.transform.translation.y, period);
-		twist_msg.linear.z = pid_controller_trans_.computeCommand(transform_msg.transform.translation.z, period);
+		/// Use pid_trans_x .. y .. z as controller parameters. Has to be changed in arm_controller_sim.yaml !
+		twist_msg.linear.x = pid_controller_trans_x_.computeCommand(transform_msg.transform.translation.x, period);
+		twist_msg.linear.y = pid_controller_trans_y_.computeCommand(transform_msg.transform.translation.y, period);
+		twist_msg.linear.z = pid_controller_trans_z_.computeCommand(transform_msg.transform.translation.z, period);
 	}
 	
 	if(movable_rot_)
