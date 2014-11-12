@@ -47,6 +47,13 @@
 
 #include <tf/transform_listener.h>
 
+#include <boost/thread/mutex.hpp>
+#include <dynamic_reconfigure/server.h>
+#include <cob_twist_controller/TwistControllerConfig.h>
+
+
+
+
 class CobTwistController
 {
 private:
@@ -82,21 +89,26 @@ private:
 	KDL::JntArray last_q_;
 	KDL::JntArray last_q_dot_;
 	
+	bool base_compensation_;
 	bool base_active_;
-	double base_ratio_;
 	
 	KDL::Twist twist_odometry_;
 	
 	
 public:
 	CobTwistController():
-		base_active_(false),
-		base_ratio_(0.0)
+		base_compensation_(false),
+		base_active_(false)
 	{;}
 	~CobTwistController();
 	
 	bool initialize();
 	void run();
+	
+	boost::recursive_mutex reconfig_mutex_;
+	boost::shared_ptr< dynamic_reconfigure::Server<cob_twist_controller::TwistControllerConfig> > reconfigure_server_;
+	void reconfigure_callback(cob_twist_controller::TwistControllerConfig &config, uint32_t level);
+	
 	
 	void jointstate_cb(const sensor_msgs::JointState::ConstPtr& msg);
 	void odometry_cb(const nav_msgs::Odometry::ConstPtr& msg);
@@ -107,5 +119,4 @@ public:
 	
 	KDL::JntArray normalize_velocities(KDL::JntArray q_dot_ik);
 };
-
 #endif

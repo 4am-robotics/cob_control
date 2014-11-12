@@ -2,12 +2,16 @@ cmake_minimum_required(VERSION 2.8.3)
 project(cob_twist_controller)
 
 # Load catkin and all dependencies required for this package
-find_package(catkin REQUIRED COMPONENTS cmake_modules roscpp sensor_msgs geometry_msgs brics_actuator kdl_parser kdl_conversions tf tf_conversions )
+find_package(catkin REQUIRED COMPONENTS cmake_modules roscpp sensor_msgs geometry_msgs brics_actuator kdl_parser kdl_conversions tf tf_conversions dynamic_reconfigure)
 
 find_package(Eigen REQUIRED)
 add_definitions(${EIGEN_DEFINITIONS})
 
 find_package(orocos_kdl REQUIRED)
+
+generate_dynamic_reconfigure_options(
+  cfg/TwistController.cfg
+)
 
 # Declare catkin package
 catkin_package(
@@ -27,6 +31,7 @@ target_link_libraries(augmented_solver ${orocos_kdl_LIBRARIES})
 
 add_library(${PROJECT_NAME} src/cob_twist_controller.cpp )
 add_dependencies(${PROJECT_NAME} brics_actuator_gencpp)
+add_dependencies(augmented_solver ${PROJECT_NAME}_gencfg)
 target_link_libraries(${PROJECT_NAME} augmented_solver ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 
 add_library(output_publisher src/output_publisher.cpp )

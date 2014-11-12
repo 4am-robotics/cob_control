@@ -6,7 +6,7 @@
 #include <kdl/chainjnttojacsolver.hpp>
 #include <Eigen/Core>
 #include <Eigen/LU>
-#include <Eigen/SVD> 
+#include <Eigen/SVD>
 #include <iostream>
 
 /**
@@ -18,6 +18,31 @@
 *
 * @ingroup KinematicFamily
 */
+
+struct AugmentedSolverParams {
+    int damping_method;
+    double eps;
+    double damping_factor;
+    double lambda0;
+    double wt;
+    double deltaRMax;
+    
+    bool base_compensation;
+    bool base_active;
+    double base_ratio;
+};
+
+enum DampingMethodTypes {
+    MANIPULABILITY = 0,
+    MANIPULABILITY_RATE = 1,
+    TRACKING_ERROR = 2,
+    SINGULAR_REGION = 3,
+    CONSTANT = 4,
+    TRUNCATION = 5
+};
+
+
+
 class augmented_solver
 {
 public:
@@ -32,32 +57,26 @@ public:
      * default: 150
      *
      */
-    augmented_solver(const KDL::Chain& chain, double eps=0.00001, int maxiter=150);
+    augmented_solver(const KDL::Chain& chain, double eps=0.001, int maxiter=5);
     ~augmented_solver();
     
-    /** CartToJnt for chain NOT including base using truncated SVD **/
+    /** CartToJnt for chain using SVD including base and various DampingMethods **/
     virtual int CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL::JntArray& qdot_out);
-    /** CartToJnt for chain NOT including base using SVD with Damping **/
-    virtual int CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL::JntArray& qdot_out, std::string damping_method);
     
     /** not (yet) implemented. */
     virtual int CartToJnt(const KDL::JntArray& q_init, const KDL::FrameVel& v_in, KDL::JntArrayVel& q_out){return -1;};
     
-    
-    void SetBaseProperties(bool base_active, double base_ratio){base_active_ = base_active; base_ratio_ = base_ratio;}
+    void SetAugmentedSolverParams(AugmentedSolverParams params){params_ = params;}
 
 private:
     const KDL::Chain chain;
     KDL::Jacobian jac;
     KDL::ChainJntToJacSolver jnt2jac;
-    double eps;
     int maxiter;
     Eigen::MatrixXd Jcm1;
     double wkm1;
     bool initial_iteration;
     
-    bool base_active_;
-    double base_ratio_;
+    AugmentedSolverParams params_;
 };
 #endif
-

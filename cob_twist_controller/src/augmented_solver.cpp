@@ -10,11 +10,8 @@ augmented_solver::augmented_solver(const KDL::Chain& _chain, double _eps, int _m
     chain(_chain),
     jac(chain.getNrOfJoints()),
     jnt2jac(chain),
-    eps(_eps),
     maxiter(_maxiter),
-    initial_iteration(true),
-    base_active_(false),
-    base_ratio_(0.0)
+    initial_iteration(true)
 {}
 
 augmented_solver::~augmented_solver()
@@ -23,12 +20,6 @@ augmented_solver::~augmented_solver()
 
 int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL::JntArray& qdot_out)
 {
-    return CartToJnt(q_in, v_in, qdot_out, "truncation");
-}
-
-
-int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL::JntArray& qdot_out, std::string damping_method)
-{
     ///used only for debugging
     std::ofstream file("test_end_effect.txt", std::ofstream::app);
     
@@ -36,15 +27,15 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
     KDL::Jacobian jac_chain(chain.getNrOfJoints());
     jnt2jac.JntToJac(q_in, jac_chain);
     
-    if(base_active_)
+    if(params_.base_active)
     {
         //Create standard platform jacobian
         Eigen::Matrix<double,6,3> jac_base;
         jac_base.setZero();
 
-        jac_base(0,0) = base_ratio_;    //linear_x
-        jac_base(1,1) = base_ratio_;    //linear_y
-        jac_base(5,2) = base_ratio_;    //angular_z
+        jac_base(0,0) = params_.base_ratio;    //linear_x
+        jac_base(1,1) = params_.base_ratio;    //linear_y
+        jac_base(5,2) = params_.base_ratio;    //angular_z
 
         //combine chain Jacobian and platform Jacobian
         Eigen::Matrix<double, 6, Eigen::Dynamic> jac_full;
@@ -71,72 +62,68 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
     Eigen::VectorXd S = svd.singularValues();
     
     double damping_factor = 0.0;
-    if (damping_method=="manipulability")
-    {
-        Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> prod = jac.data * jac.data.transpose();
-        double d = prod.determinant();        
-        double w = std::sqrt(std::abs(d));      
-        double lambda0 = 0.05;
-        double wt = 0.0005;
-        damping_factor = (w<wt ? lambda0 * pow((1 - w/wt),2) : 0);
-        //std::cout << "w" << w << " wt" <<wt << " Condition" << (bool)(w<wt) << "\n";
-    }
-    
-    else if (damping_method=="manipulabilityRate")
+    if (params_.damping_method == MANIPULABILITY)
     {
         Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> prod = jac.data * jac.data.transpose();
         double d = prod.determinant();
         double w = std::sqrt(std::abs(d));
-        double wt = 1.2;
-        double lambda0 = 0.008;
+        damping_factor = ((w<params_.wt) ? (params_.lambda0 * pow((1 - w/params_.wt),2)) : 0);
+        //std::cout << "w" << w << " wt" <<wt << " Condition" << (bool)(w<wt) << "\n";
+    }
+    
+    else if (params_.damping_method == MANIPULABILITY_RATE)
+    {
+        Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> prod = jac.data * jac.data.transpose();
+        double d = prod.determinant();
+        double w = std::sqrt(std::abs(d));
         if (initial_iteration)
         {
-            damping_factor=lambda0;
+            damping_factor = params_.lambda0;
             initial_iteration = false;
         }
         else
         {
-            if(wkm1==0) //division by zero
-            {    damping_factor = lambda0;    }
+            if(wkm1 == 0) //division by zero
+            {    damping_factor = params_.lambda0;    }
             else
-            {    damping_factor = (std::fabs(w/wkm1) > wt ? lambda0 * (1-w/wkm1) : 0);    }
+            {    damping_factor = ((std::fabs(w/wkm1) > params_.wt) ? (params_.lambda0 * (1-w/wkm1)) : 0);    }
         }
-        
-        std::cout<<"w: "<<w<<" wk-1: "<< wkm1 << " condition:" << (bool)(w/wkm1 <wt) << std::endl;
+        //std::cout<<"w: "<<w<<" wk-1: "<< wkm1 << " condition:" << (bool)(w/wkm1 <params_.wt) << std::endl;
         wkm1=w;
     }
     
-    else if (damping_method == "trackingError")    
+    else if (params_.damping_method == TRACKING_ERROR)
     {
-        double deltaRMax = 0.05;
         double min_singular_value = svd.singularValues()(0);
-        for (int i=1; i<jac.rows();i++) 
-        {                    
-            if(svd.singularValues()(i) < min_singular_value && svd.singularValues()(i)>eps) //What is a zero singular value, and what is not. Less than 0.005 seems OK
+        for (int i=1; i<jac.rows(); i++) 
+        {
+            if((svd.singularValues()(i) < min_singular_value) && (svd.singularValues()(i)>params_.eps)) //What is a zero singular value, and what is not. Less than 0.005 seems OK
             {
-                min_singular_value = svd.singularValues()(i);            
+                min_singular_value = svd.singularValues()(i);
                 //file << "Minimum sv:"<< min_singular_value << std::endl;
             }
-        }        
-                
-        damping_factor=pow(min_singular_value,2)*deltaRMax/(1-deltaRMax);    
+        }
+        damping_factor = pow(min_singular_value,2) * params_.deltaRMax/(1-params_.deltaRMax);
     }
     
-    else if (damping_method == "singularRegion")
+    else if (params_.damping_method == SINGULAR_REGION)
     {
-        //Eigen::VectorXd S = svd.singularValues();
-        double lambda0 = 0.01;        
-        damping_factor = S(S.size()-1)>=eps ? 0 : sqrt(1-pow(S(S.size()-1)/eps,2))*lambda0; //The last singular value seems to be less than 0.01 near singular configurations
+        damping_factor = ((S(S.size()-1)>=params_.eps) ? 0 : (sqrt(1-pow(S(S.size()-1)/params_.eps,2))*params_.lambda0)); //The last singular value seems to be less than 0.01 near singular configurations
     }
     
-    else if (damping_method == "constant")
+    else if (params_.damping_method == CONSTANT)
     {
-        damping_factor = 0.01;
+        damping_factor = params_.damping_factor;
     }
     
-    else if (damping_method == "truncation")
+    else if (params_.damping_method == TRUNCATION)
     {
         damping_factor = 0.0;
+    }
+    else
+    {
+        ROS_ERROR("DampingMethod %d not defined! Aborting!", params_.damping_method);
+        return -1;
     }
     
     
@@ -158,7 +145,7 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
 
 
     ///use calculated damping value lambda for SVD
-    Wv=Wv*damping_factor*damping_factor; //why squared?
+    Wv = Wv*damping_factor*damping_factor; //why squared?
     
     ///convert input
     for (int i=0; i<jac.rows(); i++)
@@ -174,19 +161,19 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
     //additional task constraints can not be considered
     Eigen::MatrixXd jac_pinv = Eigen::MatrixXd::Zero(jac.columns(),jac.rows());
     Eigen::MatrixXd temp = Eigen::MatrixXd::Zero(jac.columns(),jac.rows());
-    for (int i=0; i<jac.rows() ; i++)
+    for (int i=0; i<jac.rows(); i++)
     {
-        for (int j=0; j<jac.rows() ;j++)
+        for (int j=0; j<jac.rows(); j++)
         {
             for (int k=0; k<jac.columns(); k++)
             {
                 double denominator = pow(S(i),2)+pow(damping_factor,2);
-                double factor = (denominator < eps) ? 0.0 : S(i)/denominator;
+                double factor = (denominator < params_.eps) ? 0.0 : S(i)/denominator;
                 jac_pinv(k,j)+=factor*svd.matrixV()(k,i)*svd.matrixU()(j,i);
             }
         }
     }
-    qdot_out_vec= jac_pinv*v_in_vec;
+    qdot_out_vec = jac_pinv*v_in_vec;
     
     
     ///convert output
@@ -196,12 +183,12 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
     
     /////write debug info to file
     //for(int i=0; i<jac.columns(); i++)
-    //{    
-        //if(std::abs(qdot_out_vec(i,0))>500)
+    //{
+        //if(std::fabs(qdot_out_vec(i,0))>500)
         //{
             //if (file.is_open())
             //{
-                //Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> prod = jac.data * jac.data.transpose();                    
+                //Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> prod = jac.data * jac.data.transpose();
                 
                 //double d = prod.determinant();
                 //double kappa = std::sqrt(d);
@@ -238,14 +225,12 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
         //std::cout << "Current Wv:\n " << Wv << "\n";
         //std::cout << "Jc:\n " << Jc << "\n";
         //std::cout<<"Singular values"<<svd.singularValues()<<std::endl;
-        std::cout << "Damping factor" << damping_factor << std::endl;
+        //std::cout << "Damping factor" << damping_factor << std::endl;
         //std::cout << "Reciprocal Condition number" << 1/(prod.norm()*prod.inverse().norm())<<'\n';
         //std::cout << "DEBUG END" << std::endl;
     }
     
     return 1;
 }
-
-
 
 
