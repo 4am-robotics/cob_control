@@ -53,8 +53,8 @@ public:
         try{
             UndercarriageCtrlGeom::parseIniFiles(params, ini_directory);
         }
-        catch(...){
-            ROS_ERROR("INI file parsing failed");
+        catch(const std::exception &e){
+            ROS_ERROR_STREAM("INI file parsing failed " << e.what());
             return false;
         }
         geom_.reset(new UndercarriageCtrlGeom(params));
