@@ -1,7 +1,6 @@
 #include "ros/ros.h"
 #include <std_msgs/Float64.h>
 #include <std_msgs/Float64MultiArray.h>
-#include <brics_actuator/JointVelocities.h>
 #include <controller_manager_msgs/LoadController.h>
 #include <controller_manager_msgs/SwitchController.h>
 
