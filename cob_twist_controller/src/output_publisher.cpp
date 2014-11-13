@@ -39,7 +39,10 @@ using namespace std;
 
 
 void OutputPublisher::initialize()
-{	
+{
+	ros::NodeHandle nh_twist("twist_controller");
+	ros::NodeHandle nh_cartesian("cartesian_controller");
+	
 		///get params
 	XmlRpc::XmlRpcValue jn_param;
 	if (nh_.hasParam("joint_names"))
@@ -56,29 +59,29 @@ void OutputPublisher::initialize()
 	}
 	
 	
-	if (nh_.hasParam("base_link"))
+	if (nh_cartesian.hasParam("base_link"))
 	{
-		nh_.getParam("base_link", chain_base_);
+		nh_cartesian.getParam("base_link", chain_base_);
 	}else{
 			ROS_ERROR("no base link");
 	}
-	if (nh_.hasParam("tip_link"))
+	if (nh_cartesian.hasParam("tip_link"))
 	{
-		nh_.getParam("tip_link", chain_tip_);
+		nh_cartesian.getParam("tip_link", chain_tip_);
 	}
-	if (nh_.hasParam("reference_frame"))
+	if (nh_cartesian.hasParam("reference_frame"))
 	{
-		nh_.getParam("reference_frame", referenceFrame_);
-	}
-	
-	if (nh_.hasParam("endeffector_frame"))
-	{
-		nh_.getParam("endeffector_frame", endeffectorFrame_);
+		nh_cartesian.getParam("reference_frame", referenceFrame_);
 	}
 	
-	if (nh_.hasParam("tracking_frame"))
+	if (nh_cartesian.hasParam("endeffector_frame"))
 	{
-		nh_.getParam("tracking_frame", trackingFrame_);
+		nh_cartesian.getParam("endeffector_frame", endeffectorFrame_);
+	}
+	
+	if (nh_cartesian.hasParam("tracking_frame"))
+	{
+		nh_cartesian.getParam("tracking_frame", trackingFrame_);
 	}
 	
 	///parse robot_description and generate KDL chains
@@ -101,10 +104,10 @@ void OutputPublisher::initialize()
 	last_q_dot_ = KDL::JntArray(chain_.getNrOfJoints());
 	
 	jointstate_sub_ = nh_.subscribe("/joint_states", 1, &OutputPublisher::jointstate_cb, this);
-	end_eff_vel_pub_ = nh_.advertise<geometry_msgs::Twist> ("end_effector_vel", 1);
-	end_eff_pos_pub_ = nh_.advertise<geometry_msgs::Twist> ("end_effector_pos", 1);
-	manipulability_pub_ = nh_.advertise<std_msgs::Float64> ("manipulability", 1);
-	rcond_pub_ = nh_.advertise<std_msgs::Float64> ("rcond", 1);
+	end_eff_vel_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/end_effector_vel", 1);
+	end_eff_pos_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/end_effector_pos", 1);
+	manipulability_pub_ = nh_twist.advertise<std_msgs::Float64> ("debug/manipulability", 1);
+	rcond_pub_ = nh_twist.advertise<std_msgs::Float64> ("debug/rcond", 1);
 	
 	ROS_INFO("...initialized!");
 }

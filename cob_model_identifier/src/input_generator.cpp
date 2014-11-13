@@ -32,43 +32,49 @@
 
 void InputGenerator::initialize()
 {
+	ros::NodeHandle nh_twist("twist_controller");
+	ros::NodeHandle nh_identifier("model_identifier");
+	
 	///get params
-	if (nh_.hasParam("axis"))
+	if (nh_identifier.hasParam("axis"))
 	{
-		nh_.getParam("axis",axis_);
+		nh_identifier.getParam("axis",axis_);
 	}
 
-	if (nh_.hasParam("trans_x"))
+	if (nh_identifier.hasParam("trans_x"))
 	{
-		nh_.getParam("trans_x",trans_x_);
+		nh_identifier.getParam("trans_x",trans_x_);
 	}
 	
 	
-	if (nh_.hasParam("trans_y"))
+	if (nh_identifier.hasParam("trans_y"))
 	{
-		nh_.getParam("trans_y",trans_y_);
+		nh_identifier.getParam("trans_y",trans_y_);
 	}
 	
 	
-	if (nh_.hasParam("trans_z"))
+	if (nh_identifier.hasParam("trans_z"))
 	{
-		nh_.getParam("trans_z",trans_z_);
+		nh_identifier.getParam("trans_z",trans_z_);
 	}
 
-	if (nh_.hasParam("rot_x"))
+	if (nh_identifier.hasParam("rot_x"))
 	{
-		nh_.getParam("rot_x",rot_x_);
+		nh_identifier.getParam("rot_x",rot_x_);
 	}
 	
-	if (nh_.hasParam("rot_y"))
+	if (nh_identifier.hasParam("rot_y"))
 	{
-		nh_.getParam("rot_y",rot_y_);
+		nh_identifier.getParam("rot_y",rot_y_);
 	}
 	
-	if (nh_.hasParam("rot_z"))
+	if (nh_identifier.hasParam("rot_z"))
 	{
-		nh_.getParam("rot_z",rot_z_);
-	}	
+		nh_identifier.getParam("rot_z",rot_z_);
+	}
+	
+	twist_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("command_twist", 1);
+	
 	ROS_INFO("...initialized input generator!");
 }
 
@@ -106,7 +112,6 @@ void InputGenerator::run()
 	srand(time(0));
 	
 	ros::Rate r(100.0);
-	twist_pub_ = nh_.advertise<geometry_msgs::Twist> ("/arm_controller/command_twist", 1);
 	wait1sec_=false;
 	wait10sec_=false;
 

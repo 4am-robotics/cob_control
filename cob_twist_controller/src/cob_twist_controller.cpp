@@ -169,8 +169,8 @@ bool CobTwistController::initialize()
 	vel_pub = nh_.advertise<std_msgs::Float64MultiArray>("joint_group_velocity_controller/command", 1);
 	//base_vel_pub = nh_.advertise<geometry_msgs::Twist>("/base_controller/command", 1);
 	base_vel_pub = nh_.advertise<geometry_msgs::Twist>("/base_controller/command_direct", 1);
-	twist_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/command_twist_normalized", 1);
-	twist_real_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("current_twist", 1);
+	twist_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_normalized", 1);
+	twist_real_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_current", 1);
 	
 	
 	ROS_INFO("...initialized!");

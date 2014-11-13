@@ -39,12 +39,15 @@ using namespace std;
 
 
 void OutputRecorder::initialize()
-{	
+{
+	ros::NodeHandle nh_twist("twist_controller");
+	ros::NodeHandle nh_identifier("model_identifier");
+	
 		///get params
 	XmlRpc::XmlRpcValue jn_param;
-	if (nh_.hasParam("joint_names"))
+	if (nh_identifier.hasParam("joint_names"))
 	{	
-		nh_.getParam("joint_names", jn_param);	
+		nh_identifier.getParam("joint_names", jn_param);	
 	}
 	else
 	{	ROS_ERROR("Parameter joint_names not set");	}
@@ -56,34 +59,34 @@ void OutputRecorder::initialize()
 	}
 	
 	
-	if (nh_.hasParam("base_link"))
+	if (nh_identifier.hasParam("base_link"))
 	{
-		nh_.getParam("base_link", chain_base_);
+		nh_identifier.getParam("base_link", chain_base_);
 	}else{
 			ROS_ERROR("no base link");
 	}
-	if (nh_.hasParam("tip_link"))
+	if (nh_identifier.hasParam("tip_link"))
 	{
-		nh_.getParam("tip_link", chain_tip_);
+		nh_identifier.getParam("tip_link", chain_tip_);
 	}
-	if (nh_.hasParam("reference_frame"))
+	if (nh_identifier.hasParam("reference_frame"))
 	{
-		nh_.getParam("reference_frame", referenceFrame_);
-	}
-	
-	if (nh_.hasParam("endeffector_frame"))
-	{
-		nh_.getParam("endeffector_frame", endeffectorFrame_);
+		nh_identifier.getParam("reference_frame", referenceFrame_);
 	}
 	
-	if (nh_.hasParam("tracking_frame"))
+	if (nh_identifier.hasParam("endeffector_frame"))
 	{
-		nh_.getParam("tracking_frame", trackingFrame_);
+		nh_identifier.getParam("endeffector_frame", endeffectorFrame_);
 	}
 	
-	if (nh_.hasParam("samples"))
+	if (nh_identifier.hasParam("tracking_frame"))
 	{
-		nh_.getParam("samples", samples_);
+		nh_identifier.getParam("tracking_frame", trackingFrame_);
+	}
+	
+	if (nh_identifier.hasParam("samples"))
+	{
+		nh_identifier.getParam("samples", samples_);
 	}
 	
 	///parse robot_description and generate KDL chains
@@ -107,13 +110,12 @@ void OutputRecorder::initialize()
 	
 	jointstate_sub_ = nh_.subscribe("/joint_states", 1, &OutputRecorder::jointstate_cb, this);
 	
-	twist_sub_ = nh_.subscribe("/arm_controller/command_twist", 1, &OutputRecorder::twist_cb, this);
-	twist_sub_norm_ = nh_.subscribe("/arm_controller/command_twist_normalized", 1, &OutputRecorder::normalized_twist_cb, this);
-	twist_pub_ = nh_.advertise<geometry_msgs::Twist> ("command_twist", 1);
-	model_pub_ = nh_.advertise<geometry_msgs::Twist> ("model_twist", 1);
-	startTracking_ = nh_.serviceClient<cob_srvs::SetString>("/arm_controller/start_tracking");
-	stopTracking_ = nh_.serviceClient<std_srvs::Empty>("/arm_controller/stop_tracking");
-
+	twist_sub_ = nh_twist.subscribe("command_twist", 1, &OutputRecorder::twist_cb, this);
+	twist_sub_norm_ = nh_twist.subscribe("debug/twist_normalized", 1, &OutputRecorder::normalized_twist_cb, this);
+	//twist_pub_ = nh_identifier.advertise<geometry_msgs::Twist> ("command_twist", 1);
+	//model_pub_ = nh_identifier.advertise<geometry_msgs::Twist> ("model_twist", 1);
+	startTracking_ = nh_.serviceClient<cob_srvs::SetString>("start_tracking");
+	stopTracking_ = nh_.serviceClient<std_srvs::Empty>("stop_tracking");
 	
 	ROS_INFO("...initialized!");
 }
