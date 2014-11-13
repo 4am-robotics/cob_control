@@ -103,8 +103,9 @@ void OutputPublisher::initialize()
 	jointstate_sub_ = nh_.subscribe("/joint_states", 1, &OutputPublisher::jointstate_cb, this);
 	end_eff_vel_pub_ = nh_.advertise<geometry_msgs::Twist> ("end_effector_vel", 1);
 	end_eff_pos_pub_ = nh_.advertise<geometry_msgs::Twist> ("end_effector_pos", 1);
+	last_sing_pub_ = nh_.advertise<std_msgs::Float64> ("last_sing_value", 1);
 	manipulability_pub_ = nh_.advertise<std_msgs::Float64> ("manipulability", 1);
-	rcond_pub_ = nh_.advertise<std_msgs::Float64> ("rcond", 1);
+	//rcond_pub_ = nh_.advertise<std_msgs::Float64> ("rcond", 1);
 	
 	ROS_INFO("...initialized!");
 }
@@ -282,10 +283,12 @@ void OutputPublisher::jointstate_cb(const sensor_msgs::JointState::ConstPtr& msg
         ///see  T.Yoshikawa "Manipulability of robotic mechanisms"
         ///     International Journal of Robotics Research, 4(2):3-9, 1985
         Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> prod = jac.data * jac.data.transpose();
+        Eigen::JacobiSVD<Eigen::MatrixXd> svd(jac.data,Eigen::ComputeFullU | Eigen::ComputeFullV);
         double d = prod.determinant();
         double kappa = std::sqrt(std::abs(d));
         std_msgs::Float64 manipulability_msg;
-        manipulability_msg.data=kappa;
+        std_msgs::Float64 last_sing_val_msg;
+        last_sing_val_msg.data=svd.singularValues()(svd.singularValues().size()-1);
         //
         //prod = jac.data.transpose() *jac.data;
         //std::cout<<"prod.norm() "<<prod.norm()<<std::endl;
@@ -305,7 +308,8 @@ void OutputPublisher::jointstate_cb(const sensor_msgs::JointState::ConstPtr& msg
         //
         //wkm1=kappa;
         
-        manipulability_pub_.publish(manipulability_msg);
+        //manipulability_pub_.publish(manipulability_msg);
+        last_sing_pub_.publish(last_sing_val_msg);
         //rcond_pub_.publish(rcond_msg);        
         
 }

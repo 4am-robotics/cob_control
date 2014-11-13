@@ -118,12 +118,14 @@ bool CobTwistController::initialize()
 	for(unsigned int i=0; i<dof_; i++)
 	{
 		limits_vel_.push_back(model.getJoint(joints_[i])->limits->velocity);
+		limits_min_.push_back(model.getJoint(joints_[i])->limits->lower);
+		limits_max_.push_back(model.getJoint(joints_[i])->limits->upper);
 	}
 	
 	///initialize configuration control solver
 	p_fksolver_vel_ = new KDL::ChainFkSolverVel_recursive(chain_);	//used for debugging
 	//p_iksolver_vel_ = new KDL::ChainIkSolverVel_pinv(chain_, 0.001, 5);
-	p_augmented_solver_ = new augmented_solver(chain_, 0.001, 5);
+	p_augmented_solver_ = new augmented_solver(chain_, 0.04, 5);
 	
 	///ToDo: We need to be able to activate the base and change base_ratio ON-THE-FLY!
 	p_augmented_solver_->SetBaseProperties(base_active_, base_ratio_);

@@ -67,7 +67,7 @@ private:
 	ros::Publisher end_eff_vel_pub_;
 	ros::Publisher end_eff_pos_pub_;
 	ros::Publisher manipulability_pub_;
-	ros::Publisher rcond_pub_;
+	ros::Publisher last_sing_pub_;
 	void euler(std::vector<double> *out, double in, double dt);	
 	
 	
