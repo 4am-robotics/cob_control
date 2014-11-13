@@ -1,5 +1,7 @@
 <?xml version="1.0" ?>
 <Movement>
+<Move move="move_ptp" x="0.2" y="0.2" z="0.7" roll="0" pitch="0" yaw="0"/>
+<Move move="hold" time="3"/>
 <Move move="move_ptp" x="0.01" y="0.01" z="0.9" roll="0" pitch="0" yaw="0"/>
 <Move move="hold" time="3"/>
 <Move move="move_lin" x="0.5" y="-0.2" z="0.5" roll="1" pitch="1" yaw="1" vel="0.05" accl="0.03" profile="sinoide" RotateOnly="No" />

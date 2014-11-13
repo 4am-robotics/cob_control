@@ -42,32 +42,34 @@
 
 bool CobArticulation::initialize()
 {
+	ros::NodeHandle nh_articulation("cob_articulation");
+	
 	bool success=true;
 	///get params
-	if (nh_.hasParam("update_rate"))
+	if (nh_articulation.hasParam("update_rate"))
 	{
-		nh_.getParam("update_rate", update_rate_);
+		nh_articulation.getParam("update_rate", update_rate_);
 	}
 	else{ update_rate_=68; }
 	
-	if (nh_.hasParam("file_name"))
+	if (nh_articulation.hasParam("file_name"))
 	{
-		nh_.getParam("file_name", fileName_);
+		nh_articulation.getParam("file_name", fileName_);
 	}else{ success = false; }
 	
-	if (nh_.hasParam("reference_frame"))
+	if (nh_articulation.hasParam("reference_frame"))
 	{
-		nh_.getParam("reference_frame", referenceFrame_);
+		nh_articulation.getParam("reference_frame", referenceFrame_);
 	}else{ success = false; }
 	
-	if (nh_.hasParam("target_frame"))
+	if (nh_articulation.hasParam("target_frame"))
 	{
-		nh_.getParam("target_frame", targetFrame_);
+		nh_articulation.getParam("target_frame", targetFrame_);
 	}else{ success = false; }
 	
-	if (nh_.hasParam("endeffector_frame"))
+	if (nh_articulation.hasParam("endeffector_frame"))
 	{
-		nh_.getParam("endeffector_frame", endeffectorFrame_);
+		nh_articulation.getParam("endeffector_frame", endeffectorFrame_);
 	}else{ success = false; }
 	
 	
@@ -78,17 +80,17 @@ bool CobArticulation::initialize()
 	marker1_=0;
 	marker2_=0;
 	
-	vis_pub_ = nh_.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
-	speed_pub_ = nh_.advertise<std_msgs::Float64> ("linear_vel", 1);
-	accl_pub_ = nh_.advertise<std_msgs::Float64> ("linear_accl", 1);
-	path_pub_ = nh_.advertise<std_msgs::Float64> ("linear_path", 1);
-	jerk_pub_ = nh_.advertise<std_msgs::Float64> ("linear_jerk", 1);
+	vis_pub_ = nh_articulation.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
+	speed_pub_ = nh_articulation.advertise<std_msgs::Float64> ("debug/linear_vel", 1);
+	accl_pub_ = nh_articulation.advertise<std_msgs::Float64> ("debug/linear_accl", 1);
+	path_pub_ = nh_articulation.advertise<std_msgs::Float64> ("debug/linear_path", 1);
+	jerk_pub_ = nh_articulation.advertise<std_msgs::Float64> ("debug/linear_jerk", 1);
 	
 	ROS_WARN("Waiting for Services...");
-	success = ros::service::waitForService("/arm_controller/start_tracking");
-	success = ros::service::waitForService("/arm_controller/stop_tracking");
-	startTracking_ = nh_.serviceClient<cob_srvs::SetString>("/arm_controller/start_tracking");
-	stopTracking_ = nh_.serviceClient<std_srvs::Empty>("/arm_controller/stop_tracking");
+	success = ros::service::waitForService("start_tracking");
+	success = ros::service::waitForService("stop_tracking");
+	startTracking_ = nh_.serviceClient<cob_srvs::SetString>("start_tracking");
+	stopTracking_ = nh_.serviceClient<std_srvs::Empty>("stop_tracking");
 	ROS_INFO("...done!");
 	
 	if(success){

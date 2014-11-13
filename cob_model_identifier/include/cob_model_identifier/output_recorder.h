@@ -89,6 +89,7 @@ private:
 	
 	/// KDL Conversion
 	KDL::Chain chain_;
+	std::string output_file_path_;
 	std::string chain_base_;
 	std::string chain_tip_;
 	KDL::JntArray last_q_;
@@ -133,7 +134,7 @@ private:
 	
 	
 	/// Transform Listener
-   	tf::Transform transform_;
+	tf::Transform transform_;
    	tf::Quaternion q_;
    	tf::TransformListener listener_;
    	tf::TransformBroadcaster br_;

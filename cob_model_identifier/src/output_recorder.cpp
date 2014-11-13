@@ -59,6 +59,14 @@ void OutputRecorder::initialize()
 	}
 	
 	
+		if (nh_identifier.hasParam("output_file_path"))
+	{
+		nh_identifier.getParam("output_file_path", output_file_path_);
+	}else{
+			ROS_ERROR("No parameter 'output_file_path'! Using default %s", output_file_path_.c_str());
+			output_file_path_="~/m-files/";
+	}
+	
 	if (nh_identifier.hasParam("base_link"))
 	{
 		nh_identifier.getParam("base_link", chain_base_);
@@ -157,7 +165,7 @@ void OutputRecorder::run()
 	ros::Time time = ros::Time::now();
 	ros::Time last_update_time = time;
 	ros::Duration period = time - last_update_time;
-	start_tracking();
+	//start_tracking();
 	
 	q_ist = getEndeffectorPose();
 	x_lin_start = q_ist.position.x;
@@ -232,7 +240,7 @@ void OutputRecorder::run()
 		ros::spinOnce();
 		r.sleep();
 	}
-	stop_tracking();
+	//stop_tracking();
 	
 	/// Generate Octave Files
 	writeToMFile("x_linear",&x_dot_lin_vec_in_,&x_dot_lin_vec_out_,&x_lin_vec_out_,&x_dot_lin_integrated,&trans_x_vect_in_normalized_);
@@ -694,7 +702,8 @@ void OutputRecorder::stepResponsePlot(std::string fileName,std::vector<double> *
 	std::string name;
 
 
-	name = "/home/fxm-cm_local/m-files/" +fileName + ".m";
+	name = output_file_path_ + fileName + ".m";
+	ROS_INFO("Writing results to: %s", name.c_str());
 	const char* charPath = name.c_str();
 
 	myfile.open (charPath);
@@ -761,7 +770,8 @@ void OutputRecorder::writeToMFile(std::string fileName,std::vector<double> *dot_
 	double a1,a2,a3,b1,b2,b3=0;
 	std::ostringstream a1_str,a2_str,a3_str,b1_str,b2_str,b3_str;
 
-	name = "/home/fxm-cm_local/m-files/" +fileName + ".m";
+	name = output_file_path_ + fileName + ".m";
+	ROS_INFO("Writing results to: %s", name.c_str());
 	const char* charPath = name.c_str();
 
 	myfile.open (charPath);
