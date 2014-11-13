@@ -45,10 +45,9 @@ public:
 	void load();
 	
 	// Main functions
-	void broadcast_path(std::vector<double>*,std::vector<double>*,std::vector<double>*,std::vector<double>*,std::vector<double>*,std::vector<double>*,double,double,std::string);	
 	void pose_path_broadcaster(std::vector <geometry_msgs::Pose> *);
-	void linear_interpolation(std::vector <geometry_msgs::Pose> *poseVector,geometry_msgs::Pose, geometry_msgs::Pose,double,double,std::string,bool); 			
-	void circular_interpolation(std::vector<geometry_msgs::Pose>*,double,double,double,double,double,double,double,double,double,double,double,std::string);																							
+	void linear_interpolation(std::vector <geometry_msgs::Pose> *poseVector,geometry_msgs::Pose, geometry_msgs::Pose,double,double,std::string,bool); 
+	void circular_interpolation(std::vector<geometry_msgs::Pose>*,double,double,double,double,double,double,double,double,double,double,double,std::string);
 	void move_ptp(geometry_msgs::Pose targetPose, double epsilon);
 	void hold_position(geometry_msgs::Pose);
 	

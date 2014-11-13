@@ -32,8 +32,8 @@ target_link_libraries(augmented_solver ${orocos_kdl_LIBRARIES})
 add_library(${PROJECT_NAME} src/cob_twist_controller.cpp )
 add_dependencies(augmented_solver ${PROJECT_NAME}_gencfg)
 target_link_libraries(${PROJECT_NAME} augmented_solver ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
-
 add_library(output_publisher src/output_publisher.cpp )
+add_dependencies(output_publisher cob_srvs_gencpp)
 
 ## Declare a cpp executable
 add_executable(${PROJECT_NAME}_node src/cob_twist_controller_node.cpp)

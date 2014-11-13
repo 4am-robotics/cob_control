@@ -146,9 +146,9 @@ void OutputRecorder::run()
 	q_.setRPY(0,0,M_PI);
 	trans.setRotation(q_);
 	
-	ptpPose.position.x = 0.3;
-	ptpPose.position.y = 0.3;
-	ptpPose.position.z = 0.3;
+	ptpPose.position.x = 0.4;
+	ptpPose.position.y = 0.4;
+	ptpPose.position.z = 0.5;
 	ptpPose.orientation.x = trans.getRotation()[0];
 	ptpPose.orientation.y = trans.getRotation()[1];
 	ptpPose.orientation.z = trans.getRotation()[2];
@@ -174,7 +174,6 @@ void OutputRecorder::run()
 		time = ros::Time::now();
 		period = time - last_update_time;
 		//move_ptp(ptpPose);
-
 		q_ist = getEndeffectorPose();
 
 		/// Ist Position
@@ -599,7 +598,7 @@ geometry_msgs::Pose OutputRecorder::getEndeffectorPose()
 geometry_msgs::Pose OutputRecorder::getTrackingFramePosition()
 {	
 	ros::Time now = ros::Time::now();
-	geometry_msgs::Pose pos;	
+	geometry_msgs::Pose pos;
 	tf::StampedTransform stampedTransform;
 	bool transformed=false;
 
@@ -619,7 +618,6 @@ geometry_msgs::Pose OutputRecorder::getTrackingFramePosition()
 	pos.orientation.y = stampedTransform.getRotation()[1];
 	pos.orientation.z = stampedTransform.getRotation()[2];
 	pos.orientation.w = stampedTransform.getRotation()[3];
-			
 	return pos;
 }
 

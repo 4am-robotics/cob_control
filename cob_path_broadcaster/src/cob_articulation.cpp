@@ -40,7 +40,6 @@
 #include <algorithm>
 #include "ros/package.h"
 
-
 bool CobArticulation::initialize()
 {
 	bool success=true;
@@ -173,7 +172,7 @@ void CobArticulation::load()
 				PoseToRPY(actualTcpPose,roll,pitch,yaw);
 				ROS_INFO("..........................actualTcpPose roll: %f pitch: %f yaw: %f",roll,pitch,yaw);
 				// Interpolate the path
-				linear_interpolation(&posVec,actualTcpPose,end,vel,accl,profile,justRotate);		
+				linear_interpolation(&posVec,actualTcpPose,end,vel,accl,profile,justRotate);
 				
 				// Broadcast the linearpath
 				pose_path_broadcaster(&posVec);
@@ -215,7 +214,6 @@ void CobArticulation::load()
 				PoseToRPY(actualTcpPose,roll,pitch,yaw);
 				ROS_INFO("PTP End Orientation: %f %f %f",roll,pitch,yaw);
 			}
-											
 			if("move_circ" == movement){
 				ROS_INFO("move_circ");
 				
@@ -246,7 +244,7 @@ void CobArticulation::load()
 				
 				move_ptp(posVec.at(0),0.03);
 				pose_path_broadcaster(&posVec);	
-				actualTcpPose=posVec.at(posVec.size()-1);		
+				actualTcpPose=posVec.at(posVec.size()-1);
 			}
 		
 			
@@ -270,7 +268,7 @@ void CobArticulation::load()
 // Pseudo PTP
 void CobArticulation::move_ptp(geometry_msgs::Pose targetPose, double epsilon){
 	reached_pos_=false;
-	int reached_pos_counter=0;	
+	int reached_pos_counter=0;
 	double ro,pi,ya;
 	ros::Rate rate(update_rate_);
 	ros::Time now;
@@ -309,7 +307,7 @@ void CobArticulation::move_ptp(geometry_msgs::Pose targetPose, double epsilon){
 			reached_pos_counter++;	// Count up if end effector position is in the epsilon area to avoid wrong values
 		}
 		
-		if(reached_pos_counter>=50){	
+		if(reached_pos_counter>=50){
 			reached_pos_=true;
 		}
 		
@@ -372,7 +370,7 @@ void CobArticulation::hold_position(geometry_msgs::Pose holdPose)
 	
 		// RPY Angles
 		q = tf::Quaternion(holdPose.orientation.x,holdPose.orientation.y,holdPose.orientation.z,holdPose.orientation.w);
-		transform_.setRotation(q);   	
+		transform_.setRotation(q);
 	
 		br_.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), referenceFrame_, targetFrame_));
 		ros::spinOnce();
@@ -423,11 +421,11 @@ void CobArticulation::linear_interpolation(	std::vector <geometry_msgs::Pose> *p
 	*/
 	
 	// Interpolate the linear path
-	for(int i=0;i<pathMatrix[0].size();i++){	
+	for(int i=0;i<pathMatrix[0].size();i++){
 		if(!justRotate){
 			pose.position.x = start.position.x + linearPath.at(i) * (end.position.x-start.position.x)/Se;
 			pose.position.y = start.position.y + linearPath.at(i) * (end.position.y-start.position.y)/Se;
-			pose.position.z = start.position.z + linearPath.at(i) * (end.position.z-start.position.z)/Se;	
+			pose.position.z = start.position.z + linearPath.at(i) * (end.position.z-start.position.z)/Se;
 		}
 		else{
 			pose.position.x = start.position.x;
@@ -445,17 +443,17 @@ void CobArticulation::linear_interpolation(	std::vector <geometry_msgs::Pose> *p
 		pose.orientation.z = transform.getRotation()[2];
 		pose.orientation.w = transform.getRotation()[3];
 		poseVector->push_back(pose);
-	}	
+	}
 }
 
 
 
 
 void CobArticulation::circular_interpolation(	std::vector<geometry_msgs::Pose>* poseVector,
-														double M_x,double M_y,double M_z,
-														double M_roll,double M_pitch,double M_yaw,
-														double startAngle, double endAngle,double r, double VelMax, double AcclMax,
-														std::string profile)  
+												double M_x,double M_y,double M_z,
+												double M_roll,double M_pitch,double M_yaw,
+												double startAngle, double endAngle,double r, double VelMax, double AcclMax,
+												std::string profile)  
 {
 	tf::Transform C,P,T;
 	tf::Quaternion q;
@@ -515,7 +513,7 @@ void CobArticulation::circular_interpolation(	std::vector<geometry_msgs::Pose>* 
 		pose.orientation.x = P.getRotation()[0];
 		pose.orientation.y = P.getRotation()[1];
 		pose.orientation.z = P.getRotation()[2];
-		pose.orientation.w = P.getRotation()[3];	
+		pose.orientation.w = P.getRotation()[3];
 		
 		// Put the pose into the pose Vector
 		poseVector->push_back(pose);
@@ -600,11 +598,11 @@ void CobArticulation::calculateProfile(std::vector<double> *pathArray,double Se,
 			pathArray->push_back(  AcclMax*(0.25*pow(i*T_IPO,2) + pow(tb,2)/(8*pow(M_PI,2)) *(cos(2*M_PI/tb * (i*T_IPO))-1))  );
 		}
 		// tb <= t <= tv
-		for(int i=steps_tb;i<=(steps_tb+steps_tv-1);i++){	
+		for(int i=steps_tb;i<=(steps_tb+steps_tv-1);i++){
 			pathArray->push_back(VelMax*(i*T_IPO-0.5*tb));
 		}
 		// tv <= t <= te
-		for(int i=(steps_tb+steps_tv);i<(steps_tv+steps_tb+steps_te-1);i++){	
+		for(int i=(steps_tb+steps_tv);i<(steps_tv+steps_tb+steps_te-1);i++){
 			pathArray->push_back(0.5*AcclMax*( te*(i*T_IPO + tb)  -  0.5*(pow(i*T_IPO,2)+pow(te,2)+2*pow(tb,2))  + (pow(tb,2)/(4*pow(M_PI,2))) * (1-cos( ((2*M_PI)/tb) * (i*T_IPO-tv)))));
 		}
 	}	
@@ -1060,3 +1058,6 @@ void CobArticulation::PoseToRPY(geometry_msgs::Pose pose,double &roll, double &p
 	tf::Quaternion q = tf::Quaternion(pose.orientation.x,pose.orientation.y,pose.orientation.z,pose.orientation.w);
 	tf::Matrix3x3(q).getRPY(roll,pitch,yaw);
 }
+
+
+
