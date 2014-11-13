@@ -35,7 +35,6 @@
 #include <sensor_msgs/JointState.h>
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
-//#include <brics_actuator/JointVelocities.h>
 
 #include <urdf/model.h>
 #include <kdl_parser/kdl_parser.hpp>
