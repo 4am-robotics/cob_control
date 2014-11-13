@@ -143,6 +143,8 @@ bool CobTwistController::initialize()
 	for(unsigned int i=0; i<dof_; i++)
 	{
 		limits_vel_.push_back(model.getJoint(joints_[i])->limits->velocity);
+		limits_min_.push_back(model.getJoint(joints_[i])->limits->lower);
+		limits_max_.push_back(model.getJoint(joints_[i])->limits->upper);
 	}
 	
 	///initialize configuration control solver
