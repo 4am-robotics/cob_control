@@ -23,6 +23,7 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${oroco
 # Declare a cpp library
 add_library(input_generator src/input_generator.cpp )
 add_library(output_recorder src/output_recorder.cpp )
+add_dependencies(output_recorder cob_srvs_gencpp)
 
 ## Declare a cpp executable
 add_executable(input_generator_node src/input_generator_node.cpp)

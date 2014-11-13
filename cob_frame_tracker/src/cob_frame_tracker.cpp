@@ -32,25 +32,28 @@
 
 bool CobFrameTracker::initialize()
 {
+	ros::NodeHandle nh_twist("twist_controller");
+	ros::NodeHandle nh_cartesian("cartesian_controller");
+	
 	///get params
-	if (nh_.hasParam("update_rate"))
-	{	nh_.getParam("update_rate", update_rate_);	}
+	if (nh_cartesian.hasParam("update_rate"))
+	{	nh_cartesian.getParam("update_rate", update_rate_);	}
 	else
 	{	update_rate_ = 68.0;	}	//hz
 	
-	if (nh_.hasParam("max_vel_lin"))
-	{	nh_.getParam("max_vel_lin", max_vel_lin_);	}
+	if (nh_cartesian.hasParam("max_vel_lin"))
+	{	nh_cartesian.getParam("max_vel_lin", max_vel_lin_);	}
 	else
 	{	max_vel_lin_ = 10.0;	}	//m/sec
 	
-	if (nh_.hasParam("max_vel_rot"))
-	{	nh_.getParam("max_vel_rot", max_vel_rot_);	}
+	if (nh_cartesian.hasParam("max_vel_rot"))
+	{	nh_cartesian.getParam("max_vel_rot", max_vel_rot_);	}
 	else
 	{	max_vel_rot_ = 6.28;	}	//rad/sec
 	
-	if (nh_.hasParam("active_frame"))
+	if (nh_cartesian.hasParam("active_frame"))
 	{
-		nh_.getParam("active_frame", active_frame_);
+		nh_cartesian.getParam("active_frame", active_frame_);
 	}
 	else
 	{
@@ -58,31 +61,31 @@ bool CobFrameTracker::initialize()
 		return false;
 	}
 	
-	if (nh_.hasParam("movable_trans"))
-	{	nh_.getParam("movable_trans", movable_trans_);	}
+	if (nh_cartesian.hasParam("movable_trans"))
+	{	nh_cartesian.getParam("movable_trans", movable_trans_);	}
 	else
 	{	movable_trans_ = true;	}
-	if (nh_.hasParam("movable_rot"))
-	{	nh_.getParam("movable_rot", movable_rot_);	}
+	if (nh_cartesian.hasParam("movable_rot"))
+	{	nh_cartesian.getParam("movable_rot", movable_rot_);	}
 	else
 	{	movable_rot_ = true;	}
 	
 	// Load PID Controller using gains set on parameter server
-	pid_controller_trans_x_.init(ros::NodeHandle(nh_, "pid_trans_x"));
+	pid_controller_trans_x_.init(ros::NodeHandle(nh_cartesian, "pid_trans_x"));
 	pid_controller_trans_x_.reset();
 	
-	pid_controller_trans_y_.init(ros::NodeHandle(nh_, "pid_trans_y"));
+	pid_controller_trans_y_.init(ros::NodeHandle(nh_cartesian, "pid_trans_y"));
 	pid_controller_trans_y_.reset();
 	
-	pid_controller_trans_z_.init(ros::NodeHandle(nh_, "pid_trans_z"));
+	pid_controller_trans_z_.init(ros::NodeHandle(nh_cartesian, "pid_trans_z"));
 	pid_controller_trans_z_.reset();
 	
-	pid_controller_rot_.init(ros::NodeHandle(nh_, "pid_rot"));
+	pid_controller_rot_.init(ros::NodeHandle(nh_cartesian, "pid_rot"));
 	pid_controller_rot_.reset();
 	
 	start_server_ = nh_.advertiseService("start_tracking", &CobFrameTracker::start_tracking_cb, this);
 	stop_server_ = nh_.advertiseService("stop_tracking", &CobFrameTracker::stop_tracking_cb, this);
-	twist_pub_ = nh_.advertise<geometry_msgs::Twist> ("command_twist", 1);
+	twist_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("command_twist", 1);
 	
 	tracking_frame_ = active_frame_;
 	tracking_ = false;

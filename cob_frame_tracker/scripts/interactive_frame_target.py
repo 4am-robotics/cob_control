@@ -23,29 +23,29 @@ class InteractiveFrameTarget:
 		self.listener = tf.TransformListener()
 		
 		#get this from the frame_tracker parameters
-		if rospy.has_param('active_frame'):
-			self.active_frame = rospy.get_param("active_frame")
+		if rospy.has_param('cartesian_controller/active_frame'):
+			self.active_frame = rospy.get_param("cartesian_controller/active_frame")
 		else:
 			rospy.logerr("No active_frame specified. Aborting!")
 			sys.exit()
-		if rospy.has_param('tracking_frame'):
-			self.tracking_frame = rospy.get_param("tracking_frame")
+		if rospy.has_param('cartesian_controller/tracking_frame'):
+			self.tracking_frame = rospy.get_param("cartesian_controller/tracking_frame")
 		else:
 			rospy.logerr("No tracking_frame specified. Aborting!")
 			sys.exit()
-		if rospy.has_param('root_frame'):
-			self.root_frame = rospy.get_param("root_frame")
+		if rospy.has_param('cartesian_controller/root_frame'):
+			self.root_frame = rospy.get_param("cartesian_controller/root_frame")
 		else:
 			rospy.logerr("No root_frame specified. Setting to 'base_link'!")
 			self.root_frame = "base_link"
 		
-		if rospy.has_param('movable_trans'):
-			self.movable_trans = rospy.get_param("movable_trans")
+		if rospy.has_param('cartesian_controller/movable_trans'):
+			self.movable_trans = rospy.get_param("cartesian_controller/movable_trans")
 		else:
 			rospy.logerr("No movable_trans specified. Setting True!")
 			self.movable_trans = True
-		if rospy.has_param('movable_rot'):
-			self.movable_rot = rospy.get_param("movable_rot")
+		if rospy.has_param('cartesian_controller/movable_rot'):
+			self.movable_rot = rospy.get_param("cartesian_controller/movable_rot")
 		else:
 			rospy.logerr("No movable_rot specified. Setting True!")
 			self.movable_rot = True

@@ -18,6 +18,8 @@ class CobControlModeAdapter
       traj_controller_names_.clear();
       pos_controller_names_.clear();
       vel_controller_names_.clear();
+      last_pos_command_=ros::Time::now();
+      last_vel_command_=ros::Time::now();
       
       current_control_mode_="NONE";
       
@@ -85,13 +87,17 @@ class CobControlModeAdapter
         success = load_controller(vel_controller_names_[i]);
       }
       
+      //start position controllers
+      success = switch_controller(pos_controller_names_, current_controller_names_);
+      current_control_mode_="POSITION";
+      
+      //start velocity controllers
+      success = switch_controller(vel_controller_names_, current_controller_names_);
+      current_control_mode_="VELOCITY";
+      
       //start trajectory controller by default
       success = switch_controller(traj_controller_names_, current_controller_names_);
       current_control_mode_="TRAJECTORY";
-      
-      ////start velocity controllers
-      //success = switch_controller(vel_controller_names_, current_controller_names_);
-      //current_control_mode_="VELOCITY";
       
       cmd_pos_sub_ = nh_.subscribe("joint_group_position_controller/command", 1, &CobControlModeAdapter::cmd_pos_cb, this);
       cmd_vel_sub_ = nh_.subscribe("joint_group_velocity_controller/command", 1, &CobControlModeAdapter::cmd_vel_cb, this);
@@ -127,6 +133,7 @@ class CobControlModeAdapter
       switch_srv.request.start_controllers = start_controllers;
       switch_srv.request.stop_controllers = stop_controllers;
       switch_srv.request.strictness = 2; //STRICT
+      
       if(switch_client_.call(switch_srv))
       {
         if(switch_srv.response.ok)
@@ -188,7 +195,7 @@ class CobControlModeAdapter
     void update(const ros::TimerEvent& event)
     {
       ros::Duration period_vel = event.current_real - last_vel_command_;
-      if(current_control_mode_!="TRAJECTORY" && period_vel.toSec() >= max_command_silence_)
+      if(current_control_mode_=="VELOCITY" && period_vel.toSec() >= max_command_silence_)
       {
         bool success = switch_controller(traj_controller_names_, current_controller_names_);
         if(success)
@@ -198,7 +205,7 @@ class CobControlModeAdapter
         }
       }
       ros::Duration period_pos = event.current_real - last_pos_command_;
-      if(current_control_mode_!="TRAJECTORY" && period_pos.toSec() >= max_command_silence_)
+      if(current_control_mode_=="POSITION" && period_pos.toSec() >= max_command_silence_)
       {
         bool success = switch_controller(traj_controller_names_, current_controller_names_);
         if(success)

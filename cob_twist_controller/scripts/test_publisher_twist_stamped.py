@@ -8,7 +8,7 @@ from geometry_msgs.msg import TwistStamped
 def twistPub():
   rospy.init_node("test_publisher_twist_stamped", anonymous=True)
   
-  pub = rospy.Publisher("/arm_controller/command_twist_stamped", TwistStamped, queue_size=1)
+  pub = rospy.Publisher("/arm/twist_controller/command_twist_stamped", TwistStamped, queue_size=1)
   twist_stamped_msg =  TwistStamped()
 
   twist_stamped_msg.header.frame_id = "base_link"
