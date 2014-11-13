@@ -33,11 +33,6 @@
 void InputGenerator::initialize()
 {
 	///get params
-	if (nh_.hasParam("axis"))
-	{
-		nh_.getParam("axis",axis_);
-	}
-
 	if (nh_.hasParam("trans_x"))
 	{
 		nh_.getParam("trans_x",trans_x_);
@@ -73,38 +68,8 @@ void InputGenerator::initialize()
 }
 
 
-
-
-
-
 void InputGenerator::run()
-{	
-	/// PBRS
-	pbrs_counter=0;
-	for(int i=0;i<100;i++){
-		pbrs.push_back(0.01);
-	}
-	for(int i=100;i<150;i++){
-		pbrs.push_back(-0.05);
-	}
-	for(int i=150;i<250;i++){
-		pbrs.push_back(0.075);
-	}
-	for(int i=250;i<350;i++){
-		pbrs.push_back(0.1);
-	}
-	for(int i=350;i<500;i++){
-		pbrs.push_back(-0.01);
-	}
-	for(int i=500;i<750;i++){
-		pbrs.push_back(0.1);
-	}
-	
-	
-	calls = 0.02;
-	/* Generate a new random seed from system time - do this once in your constructor */
-	srand(time(0));
-	
+{
 	ros::Rate r(100.0);
 	twist_pub_ = nh_.advertise<geometry_msgs::Twist> ("/arm_controller/command_twist", 1);
 	wait1sec_=false;
@@ -116,21 +81,13 @@ void InputGenerator::run()
 		r.sleep();
 	}
 
-	ROS_INFO("Timer 1 finished");
-	timer2 = nh_.createTimer(ros::Duration(10.0), &InputGenerator::timerCallback10sec, this,true);
+	timer2 = nh_.createTimer(ros::Duration(6.0), &InputGenerator::timerCallback10sec, this,true);
 	while(!wait10sec_){
 		publish_twist(false);
 		ros::spinOnce();
 		r.sleep();
 	}
-	ROS_INFO("Timer 2 finished");
-	/*
-	for(int i=0;i<500;i++){
-		publish_twist(false);
-		ros::spinOnce();
-		r.sleep();
-	}
-	* */
+
 }
 
 void InputGenerator::publish_twist(bool sendZero)
@@ -147,39 +104,10 @@ void InputGenerator::publish_twist(bool sendZero)
 		twist_msg.angular.z = 0;
 	}
 	else{
-		calls+=0.001;
-		
-
-		/// White noise generator
-		/* Setup constants */
-		const static int q = 1;
-		const static float c1 = (1 << q) - 1;
-		const static float c2 = ((int)(c1 / 3)) + 1;
-		const static float c3 = 1.f / c1;
-
-		/* random number in range 0 - 1 not including 1 */
-		float random = 0.f;
-
-		/* the white noise */
-		float noise = 0.f;
-
-
-			random = ((float)rand() / (float)(RAND_MAX));
-			noise = (2.f * ((random * c2) + (random * c2) + (random * c2)) - 3.f * (c2 - 1.f)) * c3;
-	
-		noise += 3;
-		noise = noise/10;
-		///----------------------------------------------------------
-		/*
-		twist_msg.linear.x = pbrs.at(pbrs_counter);
-		twist_msg.linear.y = pbrs.at(pbrs_counter);
-		twist_msg.linear.z = -pbrs.at(pbrs_counter);
-		*/
 		twist_msg.linear.x = trans_x_;
 		twist_msg.linear.y = trans_y_;
 		twist_msg.linear.z = trans_z_;
 		
-
 		twist_msg.angular.x = rot_x_;
 		twist_msg.angular.y = rot_y_;
 		twist_msg.angular.z = rot_z_;
