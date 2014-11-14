@@ -161,7 +161,7 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
     //additional task constraints can not be considered
     Eigen::MatrixXd jac_pinv = Eigen::MatrixXd::Zero(jac.columns(),jac.rows());
     Eigen::MatrixXd temp = Eigen::MatrixXd::Zero(jac.columns(),jac.rows());
-    for (int i=0; i<jac.rows(); i++)
+    for (int i=0; i<S.rows(); i++)
     {
         for (int j=0; j<jac.rows(); j++)
         {
