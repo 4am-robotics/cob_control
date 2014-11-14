@@ -40,35 +40,36 @@
 #include <algorithm>
 #include "ros/package.h"
 
-
 bool CobArticulation::initialize()
 {
+	ros::NodeHandle nh_articulation("cob_articulation");
+	
 	bool success=true;
 	///get params
-	if (nh_.hasParam("update_rate"))
+	if (nh_articulation.hasParam("update_rate"))
 	{
-		nh_.getParam("update_rate", update_rate_);
+		nh_articulation.getParam("update_rate", update_rate_);
 	}
 	else{ update_rate_=68; }
 	
-	if (nh_.hasParam("file_name"))
+	if (nh_articulation.hasParam("file_name"))
 	{
-		nh_.getParam("file_name", fileName_);
+		nh_articulation.getParam("file_name", fileName_);
 	}else{ success = false; }
 	
-	if (nh_.hasParam("reference_frame"))
+	if (nh_articulation.hasParam("reference_frame"))
 	{
-		nh_.getParam("reference_frame", referenceFrame_);
+		nh_articulation.getParam("reference_frame", referenceFrame_);
 	}else{ success = false; }
 	
-	if (nh_.hasParam("target_frame"))
+	if (nh_articulation.hasParam("target_frame"))
 	{
-		nh_.getParam("target_frame", targetFrame_);
+		nh_articulation.getParam("target_frame", targetFrame_);
 	}else{ success = false; }
 	
-	if (nh_.hasParam("endeffector_frame"))
+	if (nh_articulation.hasParam("endeffector_frame"))
 	{
-		nh_.getParam("endeffector_frame", endeffectorFrame_);
+		nh_articulation.getParam("endeffector_frame", endeffectorFrame_);
 	}else{ success = false; }
 	
 	
@@ -79,17 +80,17 @@ bool CobArticulation::initialize()
 	marker1_=0;
 	marker2_=0;
 	
-	vis_pub_ = nh_.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
-	speed_pub_ = nh_.advertise<std_msgs::Float64> ("linear_vel", 1);
-	accl_pub_ = nh_.advertise<std_msgs::Float64> ("linear_accl", 1);
-	path_pub_ = nh_.advertise<std_msgs::Float64> ("linear_path", 1);
-	jerk_pub_ = nh_.advertise<std_msgs::Float64> ("linear_jerk", 1);
+	vis_pub_ = nh_articulation.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
+	speed_pub_ = nh_articulation.advertise<std_msgs::Float64> ("debug/linear_vel", 1);
+	accl_pub_ = nh_articulation.advertise<std_msgs::Float64> ("debug/linear_accl", 1);
+	path_pub_ = nh_articulation.advertise<std_msgs::Float64> ("debug/linear_path", 1);
+	jerk_pub_ = nh_articulation.advertise<std_msgs::Float64> ("debug/linear_jerk", 1);
 	
 	ROS_WARN("Waiting for Services...");
-	success = ros::service::waitForService("/arm_controller/start_tracking");
-	success = ros::service::waitForService("/arm_controller/stop_tracking");
-	startTracking_ = nh_.serviceClient<cob_srvs::SetString>("/arm_controller/start_tracking");
-	stopTracking_ = nh_.serviceClient<std_srvs::Empty>("/arm_controller/stop_tracking");
+	success = ros::service::waitForService("start_tracking");
+	success = ros::service::waitForService("stop_tracking");
+	startTracking_ = nh_.serviceClient<cob_srvs::SetString>("start_tracking");
+	stopTracking_ = nh_.serviceClient<std_srvs::Empty>("stop_tracking");
 	ROS_INFO("...done!");
 	
 	if(success){
@@ -173,7 +174,7 @@ void CobArticulation::load()
 				PoseToRPY(actualTcpPose,roll,pitch,yaw);
 				ROS_INFO("..........................actualTcpPose roll: %f pitch: %f yaw: %f",roll,pitch,yaw);
 				// Interpolate the path
-				linear_interpolation(&posVec,actualTcpPose,end,vel,accl,profile,justRotate);		
+				linear_interpolation(&posVec,actualTcpPose,end,vel,accl,profile,justRotate);
 				
 				// Broadcast the linearpath
 				pose_path_broadcaster(&posVec);
@@ -215,7 +216,6 @@ void CobArticulation::load()
 				PoseToRPY(actualTcpPose,roll,pitch,yaw);
 				ROS_INFO("PTP End Orientation: %f %f %f",roll,pitch,yaw);
 			}
-											
 			if("move_circ" == movement){
 				ROS_INFO("move_circ");
 				
@@ -246,7 +246,7 @@ void CobArticulation::load()
 				
 				move_ptp(posVec.at(0),0.03);
 				pose_path_broadcaster(&posVec);	
-				actualTcpPose=posVec.at(posVec.size()-1);		
+				actualTcpPose=posVec.at(posVec.size()-1);
 			}
 		
 			
@@ -270,7 +270,7 @@ void CobArticulation::load()
 // Pseudo PTP
 void CobArticulation::move_ptp(geometry_msgs::Pose targetPose, double epsilon){
 	reached_pos_=false;
-	int reached_pos_counter=0;	
+	int reached_pos_counter=0;
 	double ro,pi,ya;
 	ros::Rate rate(update_rate_);
 	ros::Time now;
@@ -309,7 +309,7 @@ void CobArticulation::move_ptp(geometry_msgs::Pose targetPose, double epsilon){
 			reached_pos_counter++;	// Count up if end effector position is in the epsilon area to avoid wrong values
 		}
 		
-		if(reached_pos_counter>=50){	
+		if(reached_pos_counter>=50){
 			reached_pos_=true;
 		}
 		
@@ -372,7 +372,7 @@ void CobArticulation::hold_position(geometry_msgs::Pose holdPose)
 	
 		// RPY Angles
 		q = tf::Quaternion(holdPose.orientation.x,holdPose.orientation.y,holdPose.orientation.z,holdPose.orientation.w);
-		transform_.setRotation(q);   	
+		transform_.setRotation(q);
 	
 		br_.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), referenceFrame_, targetFrame_));
 		ros::spinOnce();
@@ -423,11 +423,11 @@ void CobArticulation::linear_interpolation(	std::vector <geometry_msgs::Pose> *p
 	*/
 	
 	// Interpolate the linear path
-	for(int i=0;i<pathMatrix[0].size();i++){	
+	for(int i=0;i<pathMatrix[0].size();i++){
 		if(!justRotate){
 			pose.position.x = start.position.x + linearPath.at(i) * (end.position.x-start.position.x)/Se;
 			pose.position.y = start.position.y + linearPath.at(i) * (end.position.y-start.position.y)/Se;
-			pose.position.z = start.position.z + linearPath.at(i) * (end.position.z-start.position.z)/Se;	
+			pose.position.z = start.position.z + linearPath.at(i) * (end.position.z-start.position.z)/Se;
 		}
 		else{
 			pose.position.x = start.position.x;
@@ -445,17 +445,17 @@ void CobArticulation::linear_interpolation(	std::vector <geometry_msgs::Pose> *p
 		pose.orientation.z = transform.getRotation()[2];
 		pose.orientation.w = transform.getRotation()[3];
 		poseVector->push_back(pose);
-	}	
+	}
 }
 
 
 
 
 void CobArticulation::circular_interpolation(	std::vector<geometry_msgs::Pose>* poseVector,
-														double M_x,double M_y,double M_z,
-														double M_roll,double M_pitch,double M_yaw,
-														double startAngle, double endAngle,double r, double VelMax, double AcclMax,
-														std::string profile)  
+												double M_x,double M_y,double M_z,
+												double M_roll,double M_pitch,double M_yaw,
+												double startAngle, double endAngle,double r, double VelMax, double AcclMax,
+												std::string profile)  
 {
 	tf::Transform C,P,T;
 	tf::Quaternion q;
@@ -515,7 +515,7 @@ void CobArticulation::circular_interpolation(	std::vector<geometry_msgs::Pose>* 
 		pose.orientation.x = P.getRotation()[0];
 		pose.orientation.y = P.getRotation()[1];
 		pose.orientation.z = P.getRotation()[2];
-		pose.orientation.w = P.getRotation()[3];	
+		pose.orientation.w = P.getRotation()[3];
 		
 		// Put the pose into the pose Vector
 		poseVector->push_back(pose);
@@ -600,11 +600,11 @@ void CobArticulation::calculateProfile(std::vector<double> *pathArray,double Se,
 			pathArray->push_back(  AcclMax*(0.25*pow(i*T_IPO,2) + pow(tb,2)/(8*pow(M_PI,2)) *(cos(2*M_PI/tb * (i*T_IPO))-1))  );
 		}
 		// tb <= t <= tv
-		for(int i=steps_tb;i<=(steps_tb+steps_tv-1);i++){	
+		for(int i=steps_tb;i<=(steps_tb+steps_tv-1);i++){
 			pathArray->push_back(VelMax*(i*T_IPO-0.5*tb));
 		}
 		// tv <= t <= te
-		for(int i=(steps_tb+steps_tv);i<(steps_tv+steps_tb+steps_te-1);i++){	
+		for(int i=(steps_tb+steps_tv);i<(steps_tv+steps_tb+steps_te-1);i++){
 			pathArray->push_back(0.5*AcclMax*( te*(i*T_IPO + tb)  -  0.5*(pow(i*T_IPO,2)+pow(te,2)+2*pow(tb,2))  + (pow(tb,2)/(4*pow(M_PI,2))) * (1-cos( ((2*M_PI)/tb) * (i*T_IPO-tv)))));
 		}
 	}	
@@ -1060,3 +1060,6 @@ void CobArticulation::PoseToRPY(geometry_msgs::Pose pose,double &roll, double &p
 	tf::Quaternion q = tf::Quaternion(pose.orientation.x,pose.orientation.y,pose.orientation.z,pose.orientation.w);
 	tf::Matrix3x3(q).getRPY(roll,pitch,yaw);
 }
+
+
+
