@@ -23,8 +23,8 @@ class CobControlModeAdapter
       current_control_mode_="NONE";
       
       //wait for services from controller manager
-      ROS_INFO("Waiting for Service 'load_controller'...");
-      ros::service::waitForService("controller_manager/load_controller", ros::Duration(30.0));
+      while (not ros::service::waitForService("controller_manager/load_controller", ros::Duration(5.0))){;}
+        
       if(ros::service::exists("controller_manager/load_controller", false))
       {
         load_client_ = nh_.serviceClient<controller_manager_msgs::LoadController>("controller_manager/load_controller");
@@ -35,8 +35,8 @@ class CobControlModeAdapter
         return;
       }
       
-      ROS_INFO("Waiting for Service 'switch_controller'...");
-      ros::service::waitForService("controller_manager/switch_controller", ros::Duration(30.0));
+      while (not ros::service::waitForService("controller_manager/switch_controller", ros::Duration(5.0))){;}
+
       if(ros::service::exists("controller_manager/switch_controller", false))
       {
         switch_client_ = nh_.serviceClient<controller_manager_msgs::SwitchController>("controller_manager/switch_controller");
