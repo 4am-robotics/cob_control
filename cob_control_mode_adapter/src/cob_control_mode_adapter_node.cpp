@@ -121,23 +121,36 @@ class CobControlModeAdapter
       }
       else
         ROS_ERROR("ServiceCall failed: load_controller");
-        
+
       return false;
     }
-    
-    
+
+
     bool switch_controller(std::vector< std::string > start_controllers, std::vector< std::string > stop_controllers)
     {
       controller_manager_msgs::SwitchController switch_srv;
       switch_srv.request.start_controllers = start_controllers;
       switch_srv.request.stop_controllers = stop_controllers;
       switch_srv.request.strictness = 2; //STRICT
-      
+
       if(switch_client_.call(switch_srv))
       {
         if(switch_srv.response.ok)
         {
-          ROS_INFO("Switched Controllers");
+         std::string str_start;
+         std::string str_stop;
+
+         if(start_controllers.empty())
+           str_start = "no_start_controller_defined";
+         else
+           str_start = start_controllers.back();
+         if(stop_controllers.empty())
+           str_stop = "no_stop_controller_defined";
+         else
+           str_stop  = stop_controllers.back();
+
+         ROS_INFO("Switched Controllers. From %s to %s", str_stop.c_str(), str_start.c_str());
+
           current_controller_names_=start_controllers;
           return true;
         }
@@ -146,10 +159,10 @@ class CobControlModeAdapter
       }
       else
         ROS_ERROR("ServiceCall failed: switch_controller");
-        
+
       return false;
     }
-    
+
     void cmd_pos_cb(const std_msgs::Float64MultiArray::ConstPtr& msg)
     {
       last_pos_command_=ros::Time::now();
