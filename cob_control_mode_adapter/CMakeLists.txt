@@ -6,13 +6,12 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   control_msgs
   controller_manager_msgs
-  brics_actuator
 )
 
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES cob_control_mode_adapter
-  CATKIN_DEPENDS roscpp std_msgs control_msgs controller_manager_msgs brics_actuator 
+  CATKIN_DEPENDS roscpp std_msgs control_msgs controller_manager_msgs 
 #  DEPENDS system_lib
 )
 
@@ -26,7 +25,7 @@ include_directories(
 
 # Declare a cpp executable
 add_executable(cob_control_mode_adapter_node src/cob_control_mode_adapter_node.cpp)
-add_dependencies(cob_control_mode_adapter_node brics_actuator_gencpp)
+add_dependencies(cob_control_mode_adapter_node controller_manager_msgs_gencpp)
 
 # Specify libraries to link a library or executable target against
 target_link_libraries(cob_control_mode_adapter_node

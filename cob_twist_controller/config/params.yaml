@@ -1,0 +1,10 @@
+
+joint_names: ["arm_1_joint","arm_2_joint","arm_3_joint","arm_4_joint","arm_5_joint","arm_6_joint", "arm_7_joint"]
+tip_link: 'arm_7_link'
+base_link: 'arm_base_link'
+
+tracking_frame: "br"
+reference_frame: "world" 
+endeffector_frame: "arm_7_link"
+axis : "trans.x"
+
