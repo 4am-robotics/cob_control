@@ -17,8 +17,8 @@ class CobControlModeAdapter
       traj_controller_names_.clear();
       pos_controller_names_.clear();
       vel_controller_names_.clear();
-      last_pos_command_=ros::Time::now();
-      last_vel_command_=ros::Time::now();
+      last_pos_command_=ros::Time();
+      last_vel_command_=ros::Time();
       
       current_control_mode_="NONE";
       
