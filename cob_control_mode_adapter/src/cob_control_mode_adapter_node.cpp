@@ -219,16 +219,19 @@ class CobControlModeAdapter
       }else{
         if(current_control_mode_!=TRAJECTORY)
         {
+            if(current_control_mode_==POSITION)
+            {
+                ROS_INFO("Have not heard a pos command for %f seconds, switched back to trajectory_controller", period_pos.toSec());    
+            }
+            else
+            {
+                  ROS_INFO("Have not heard a vel command for %f seconds, switched back to trajectory_controller", period_vel.toSec());
+            }
             bool success = switch_controller(traj_controller_names_, current_controller_names_);
+            
             if(success)
             {
                 current_control_mode_=TRAJECTORY;
-                if(current_control_mode_!=POSITION){
-                    ROS_INFO("Have not heard a pos command for %f seconds, switched back to trajectory_controller", period_pos.toSec());
-                    
-                }else{
-                    ROS_INFO("Have not heard a vel command for %f seconds, switched back to trajectory_controller", period_vel.toSec());
-                }
             }else{
                 ROS_ERROR("Unable to switch to trajectory_controller. Not executing command...");
             }
