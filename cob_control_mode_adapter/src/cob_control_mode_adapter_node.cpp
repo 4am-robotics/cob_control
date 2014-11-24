@@ -20,7 +20,7 @@ class CobControlModeAdapter
       last_pos_command_=ros::Time();
       last_vel_command_=ros::Time();
       
-      current_control_mode_="NONE";
+      current_control_mode_=NONE;
       
       //wait for services from controller manager
       while (not ros::service::waitForService("controller_manager/load_controller", ros::Duration(5.0))){;}
@@ -88,15 +88,15 @@ class CobControlModeAdapter
       
       //start position controllers
       success = switch_controller(pos_controller_names_, current_controller_names_);
-      current_control_mode_="POSITION";
+      current_control_mode_=POSITION;
       
       //start velocity controllers
       success = switch_controller(vel_controller_names_, current_controller_names_);
-      current_control_mode_="VELOCITY";
+      current_control_mode_=VELOCITY;
       
       //start trajectory controller by default
       success = switch_controller(traj_controller_names_, current_controller_names_);
-      current_control_mode_="TRAJECTORY";
+      current_control_mode_=TRAJECTORY;
       
       cmd_pos_sub_ = nh_.subscribe("joint_group_position_controller/command", 1, &CobControlModeAdapter::cmd_pos_cb, this);
       cmd_vel_sub_ = nh_.subscribe("joint_group_velocity_controller/command", 1, &CobControlModeAdapter::cmd_vel_cb, this);
@@ -188,7 +188,7 @@ class CobControlModeAdapter
       lock.unlock();
 
       if(period_vel.toSec() < max_command_silence_){
-        if(current_control_mode_!="VELOCITY")
+        if(current_control_mode_!=VELOCITY)
         {
             bool success = switch_controller(vel_controller_names_, current_controller_names_);
             if(!success)
@@ -198,11 +198,11 @@ class CobControlModeAdapter
             else
             {
                 ROS_INFO("Successfully switched to velocity_controllers");
-                current_control_mode_="VELOCITY";
+                current_control_mode_=VELOCITY;
             }
         }
       }else if(period_pos.toSec() < max_command_silence_){
-        if(current_control_mode_!="POSITION")
+        if(current_control_mode_!=POSITION)
         {
             bool success = switch_controller(pos_controller_names_, current_controller_names_);
             if(!success)
@@ -212,18 +212,18 @@ class CobControlModeAdapter
             else
             {
                 ROS_INFO("Successfully switched to position_controllers");
-                current_control_mode_="POSITION";
+                current_control_mode_=POSITION;
             }
       }
         
       }else{
-        if(current_control_mode_!="TRAJECTORY")
+        if(current_control_mode_!=TRAJECTORY)
         {
             bool success = switch_controller(traj_controller_names_, current_controller_names_);
             if(success)
             {
-                current_control_mode_="TRAJECTORY";
-                if(current_control_mode_!="POSITION"){
+                current_control_mode_=TRAJECTORY;
+                if(current_control_mode_!=POSITION){
                     ROS_INFO("Have not heard a pos command for %f seconds, switched back to trajectory_controller", period_pos.toSec());
                     
                 }else{
@@ -244,7 +244,9 @@ class CobControlModeAdapter
     
     std::vector< std::string > joint_names_;
     
-    std::string current_control_mode_;
+    enum{
+        NONE, VELOCITY, POSITION, TRAJECTORY
+    } current_control_mode_;
     std::vector< std::string > current_controller_names_;
     std::vector< std::string > traj_controller_names_;
     std::vector< std::string > pos_controller_names_;
