@@ -166,39 +166,11 @@ class CobControlModeAdapter
     void cmd_pos_cb(const std_msgs::Float64MultiArray::ConstPtr& msg)
     {
       last_pos_command_=ros::Time::now();
-      if(current_control_mode_!="POSITION")
-      {
-        bool success = switch_controller(pos_controller_names_, current_controller_names_);
-        if(!success)
-        {
-          ROS_ERROR("Unable to switch to position_controllers. Not executing command...");
-          return;
-        }
-        else
-        {
-          ROS_INFO("Successfully switched to position_controllers");
-          current_control_mode_="POSITION";
-        }
-      }
     }
     
     void cmd_vel_cb(const std_msgs::Float64MultiArray::ConstPtr& msg)
     {
       last_vel_command_=ros::Time::now();
-      if(current_control_mode_!="VELOCITY")
-      {
-        bool success = switch_controller(vel_controller_names_, current_controller_names_);
-        if(!success)
-        {
-          ROS_ERROR("Unable to switch to velocity_controllers. Not executing command...");
-          return;
-        }
-        else
-        {
-          ROS_INFO("Successfully switched to velocity_controllers");
-          current_control_mode_="VELOCITY";
-        }
-      }
     }
     
     
@@ -207,23 +179,53 @@ class CobControlModeAdapter
     void update(const ros::TimerEvent& event)
     {
       ros::Duration period_vel = event.current_real - last_vel_command_;
-      if(current_control_mode_=="VELOCITY" && period_vel.toSec() >= max_command_silence_)
-      {
-        bool success = switch_controller(traj_controller_names_, current_controller_names_);
-        if(success)
-        {
-          ROS_INFO("Have not heard a vel command for %f seconds, switched back to trajectory_controller", period_vel.toSec());
-          current_control_mode_="TRAJECTORY";
-        }
-      }
       ros::Duration period_pos = event.current_real - last_pos_command_;
-      if(current_control_mode_=="POSITION" && period_pos.toSec() >= max_command_silence_)
-      {
-        bool success = switch_controller(traj_controller_names_, current_controller_names_);
-        if(success)
+
+      if(period_vel.toSec() < max_command_silence_){
+        if(current_control_mode_!="VELOCITY")
         {
-          ROS_INFO("Have not heard a pos command for %f seconds, switched back to trajectory_controller", period_pos.toSec());
-          current_control_mode_="TRAJECTORY";
+            bool success = switch_controller(vel_controller_names_, current_controller_names_);
+            if(!success)
+            {
+                ROS_ERROR("Unable to switch to velocity_controllers. Not executing command...");
+            }
+            else
+            {
+                ROS_INFO("Successfully switched to velocity_controllers");
+                current_control_mode_="VELOCITY";
+            }
+        }
+      }else if(period_pos.toSec() < max_command_silence_){
+        if(current_control_mode_!="POSITION")
+        {
+            bool success = switch_controller(pos_controller_names_, current_controller_names_);
+            if(!success)
+            {
+                ROS_ERROR("Unable to switch to position_controllers. Not executing command...");
+            }
+            else
+            {
+                ROS_INFO("Successfully switched to position_controllers");
+                current_control_mode_="POSITION";
+            }
+      }
+        
+      }else{
+        if(current_control_mode_!="TRAJECTORY")
+        {
+            bool success = switch_controller(traj_controller_names_, current_controller_names_);
+            if(success)
+            {
+                current_control_mode_="TRAJECTORY";
+                if(current_control_mode_!="POSITION"){
+                    ROS_INFO("Have not heard a pos command for %f seconds, switched back to trajectory_controller", period_pos.toSec());
+                    
+                }else{
+                    ROS_INFO("Have not heard a vel command for %f seconds, switched back to trajectory_controller", period_vel.toSec());
+                }
+            }else{
+                ROS_ERROR("Unable to switch to trajectory_controller. Not executing command...");
+            }
         }
       }
     }
