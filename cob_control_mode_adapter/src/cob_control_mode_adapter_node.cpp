@@ -3,7 +3,7 @@
 #include <std_msgs/Float64MultiArray.h>
 #include <controller_manager_msgs/LoadController.h>
 #include <controller_manager_msgs/SwitchController.h>
-
+#include <boost/thread/mutex.hpp>
 
 class CobControlModeAdapter
 {
@@ -165,11 +165,13 @@ class CobControlModeAdapter
 
     void cmd_pos_cb(const std_msgs::Float64MultiArray::ConstPtr& msg)
     {
+      boost::mutex::scoped_lock lock(mutex_);
       last_pos_command_=ros::Time::now();
     }
     
     void cmd_vel_cb(const std_msgs::Float64MultiArray::ConstPtr& msg)
     {
+      boost::mutex::scoped_lock lock(mutex_);
       last_vel_command_=ros::Time::now();
     }
     
@@ -178,8 +180,12 @@ class CobControlModeAdapter
 
     void update(const ros::TimerEvent& event)
     {
+      boost::mutex::scoped_lock lock(mutex_);
+      
       ros::Duration period_vel = event.current_real - last_vel_command_;
       ros::Duration period_pos = event.current_real - last_pos_command_;
+
+      lock.unlock();
 
       if(period_vel.toSec() < max_command_silence_){
         if(current_control_mode_!="VELOCITY")
@@ -253,6 +259,7 @@ class CobControlModeAdapter
     double max_command_silence_;
     ros::Time last_pos_command_;
     ros::Time last_vel_command_;
+    boost::mutex mutex_;
 };
 
 
