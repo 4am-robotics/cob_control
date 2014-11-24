@@ -8,6 +8,8 @@ find_package(catkin REQUIRED COMPONENTS
   controller_manager_msgs
 )
 
+find_package(Boost REQUIRED COMPONENTS thread )
+
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES cob_control_mode_adapter
@@ -21,6 +23,7 @@ catkin_package(
 
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
 )
 
 # Declare a cpp executable
@@ -30,6 +33,7 @@ add_dependencies(cob_control_mode_adapter_node controller_manager_msgs_gencpp)
 # Specify libraries to link a library or executable target against
 target_link_libraries(cob_control_mode_adapter_node
  ${catkin_LIBRARIES}
+ ${Boost_LIBRARIES}
 )
 
 #############
