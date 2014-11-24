@@ -46,11 +46,12 @@
 #include <kdl/frames.hpp>
 
 #include <tf/transform_listener.h>
+#include <tf/tf.h>
 
 #include <boost/thread/mutex.hpp>
 #include <dynamic_reconfigure/server.h>
 #include <cob_twist_controller/TwistControllerConfig.h>
-
+#include <Eigen/Dense>
 
 
 
@@ -59,6 +60,8 @@ class CobTwistController
 private:
 	ros::NodeHandle nh_;
 	tf::TransformListener tf_listener_;
+	tf::Transformer twist_listener_;
+	
 	
 	ros::Subscriber jointstate_sub;
 	ros::Subscriber odometry_sub;
@@ -115,6 +118,7 @@ public:
 	void twist_cb(const geometry_msgs::Twist::ConstPtr& msg);
 	void twist_stamped_cb(const geometry_msgs::TwistStamped::ConstPtr& msg);
 	void solve_twist(KDL::Twist twist);
+	KDL::Twist getBaseCompensatedTwist(KDL::Twist,KDL::Twist);
 	
 	
 	KDL::JntArray normalize_velocities(KDL::JntArray q_dot_ik);

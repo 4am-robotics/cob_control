@@ -61,8 +61,9 @@ public:
     ~augmented_solver();
     
     /** CartToJnt for chain using SVD including base and various DampingMethods **/
+    virtual int CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL::JntArray& qdot_out, KDL::Frame &base_position);
     virtual int CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL::JntArray& qdot_out);
-    
+
     /** not (yet) implemented. */
     virtual int CartToJnt(const KDL::JntArray& q_init, const KDL::FrameVel& v_in, KDL::JntArrayVel& q_out){return -1;};
     

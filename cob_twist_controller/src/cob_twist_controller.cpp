@@ -175,7 +175,6 @@ bool CobTwistController::initialize()
 	twist_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_normalized", 1);
 	twist_real_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_current", 1);
 	
-	
 	ROS_INFO("...initialized!");
 	return true;
 }
@@ -247,11 +246,21 @@ void CobTwistController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 	solve_twist(twist);
 }
 
+KDL::Twist CobTwistController::getBaseCompensatedTwist(KDL::Twist twist,KDL::Twist twist_odometry){
+	return (twist-twist_odometry);
+}
+
 /// Orientation of twist is with respect to chain_base coordinate system
 void CobTwistController::solve_twist(KDL::Twist twist)
 {
-	//// calculate Cartesian velocity
-	//// last resort for rejection in case it's too high
+	int ret_ik;
+	KDL::Twist base_twist;
+	KDL::Frame frame;
+	tf::StampedTransform transform_footprint_tip;
+	geometry_msgs::Twist base_vel_msg;
+	tf::StampedTransform tf_foot_odom;
+	// calculate Cartesian velocity
+	 //last resort for rejection in case it's too high
 	//double vel_lin = std::sqrt(std::pow(twist.vel.x(), 2) + std::pow(twist.vel.y(), 2) + std::pow(twist.vel.z(), 2));
 	//double vel_rot = std::sqrt(std::pow(twist.rot.x(), 2) + std::pow(twist.rot.y(), 2) + std::pow(twist.rot.z(), 2));
 	//ROS_INFO_STREAM("INPUT: NormTwistLin: " << vel_lin << "; NormTwistRot: " << vel_rot);
@@ -261,34 +270,85 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 	if(base_active_)
 	{
 		q_dot_ik.resize(chain_.getNrOfJoints()+3);
+
+		//try{
+			//tf_listener_.waitForTransform("base_footprint",chain_tip_, ros::Time(0), ros::Duration(0.5));
+			//tf_listener_.lookupTransform("base_footprint",chain_tip_, ros::Time(0), transform_footprint_tip);
+		//}catch (tf::TransformException ex){
+			//ROS_ERROR("%s",ex.what());
+			//return;
+		//}
+		//double base_ratio = 1;
+		//base_twist.vel = twist.vel * base_ratio;
+		//double base_twist_vel_x = twist.vel.x();
+		//double base_twist_vel_y = twist.vel.y();
+		//
+		//
+		//double max=0,max_x=0,max_y=0;
+		//
+		//if(std::fabs(base_twist_vel_x) > 1)
+			//max_x = base_twist_vel_x / 1;
+			//
+		//if(std::fabs(base_twist_vel_y) > 1)
+			//max_y = base_twist_vel_y / 1;
+			//
+		//if(std::fabs(max_x) > std::fabs(max_y)){
+			//max = max_x;
+		//}else{
+			//max = max_y;
+		//}
+		//if(max != 0){
+			//base_twist_vel_x/=std::fabs(max);
+			//base_twist_vel_y/=std::fabs(max);
+		//}
+		
+		//double angular_z = atan2(base_twist_vel_y,base_twist_vel_x);
+		//double angular_z = tan(base_twist_vel_y/base_twist_vel_x);
+		
+		
+		//base_vel_msg.angular.z = q_dot_ik(dof_+2);
+		//base_twist.vel = KDL::Vector(base_twist_vel_x,base_twist_vel_y,0);
+		//twist = twist-base_twist;
+		//base_vel_msg.linear.x = base_twist.vel.x();
+		//base_vel_msg.linear.y = base_twist.vel.y();
+		//ROS_INFO("x: %f  y: %f  yaw: %f",base_vel_msg.linear.x,base_vel_msg.linear.y,base_vel_msg.angular.z);
+		//base_vel_pub.publish(base_vel_msg);
+
+		//try{
+			//tf_listener_.waitForTransform("base_footprint","odom_combined", ros::Time(0), ros::Duration(0.5));
+			//tf_listener_.lookupTransform("base_footprint","odom_combined", ros::Time(0), tf_foot_odom);
+			//frame.p = KDL::Vector(tf_foot_odom.getOrigin().x(), tf_foot_odom.getOrigin().y(), tf_foot_odom.getOrigin().z());
+			//frame.M = KDL::Rotation::Quaternion(tf_foot_odom.getRotation().x(), tf_foot_odom.getRotation().y(), tf_foot_odom.getRotation().z(), tf_foot_odom.getRotation().w());
+		//}
+		//catch (tf::TransformException ex){
+			//ROS_ERROR("%s",ex.what());
+			//return;
+		//}
+		//
+		//ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik,frame);
+		
 	}
 	
 	if(base_compensation_)
 	{
-		//ROS_INFO("TwistIn Vel (%f, %f, %f)", twist.vel.x(), twist.vel.y(), twist.vel.z());
-		//ROS_INFO("TwistIn Rot (%f, %f, %f)", twist.rot.x(), twist.rot.y(), twist.rot.z());
-		
-		twist = twist - twist_odometry_;
-		
-		//ROS_INFO("TwistOdometry Vel (%f, %f, %f)", twist_odometry_.vel.x(), twist_odometry_.vel.y(), twist_odometry_.vel.z());
-		//ROS_INFO("TwistOdometry Rot (%f, %f, %f)", twist_odometry_.rot.x(), twist_odometry_.rot.y(), twist_odometry_.rot.z());
-		//ROS_INFO("TwistDesired Vel (%f, %f, %f)", twist.vel.x(), twist.vel.y(), twist.vel.z());
-		//ROS_INFO("TwistDesired Rot (%f, %f, %f)", twist.rot.x(), twist.rot.y(), twist.rot.z());
+		twist = getBaseCompensatedTwist(twist,twist_odometry_);
 	}
 	
 	
-	
-	//int ret_ik = p_iksolver_vel_->CartToJnt(last_q_, twist, q_dot_ik);
-	int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik);
-	
+	if(!base_active_){
+		ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik);
+	}
+ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik);
 	if(ret_ik < 0)
 	{
 		ROS_ERROR("No Vel-IK found!");
 	}
 	else
 	{
-		///normalize guarantees that velocities are within limits --- only needed for CartToJnt without damping
-		//q_dot_ik = normalize_velocities(q_dot_ik);
+		if(base_active_){
+			///normalize guarantees that velocities are within limits --- only needed for CartToJnt without damping
+			q_dot_ik = normalize_velocities(q_dot_ik);
+		}
 		
 		std_msgs::Float64MultiArray vel_msg;
 		for(unsigned int i=0; i<dof_; i++)
@@ -299,10 +359,32 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 		if(base_active_)
 		{
 			geometry_msgs::Twist base_vel_msg;
-			base_vel_msg.linear.x = q_dot_ik(dof_);
-			base_vel_msg.linear.y = q_dot_ik(dof_+1);
-			base_vel_msg.angular.z = q_dot_ik(dof_+2);
+			if(q_dot_ik(dof_) / std::fabs(q_dot_ik(dof_)) < 0 && twist.vel.x()/(std::fabs(twist.vel.x()) > 0)){
+				base_vel_msg.linear.x = q_dot_ik(dof_) * (-1);
+			}
+			else{
+				base_vel_msg.linear.x = q_dot_ik(dof_);
+			}
 			
+			if(q_dot_ik(dof_+1) / std::fabs(q_dot_ik(dof_+1)) < 0 && twist.vel.y()/(std::fabs(twist.vel.y()) > 0)){
+				base_vel_msg.linear.y = q_dot_ik(dof_+1) * (-1);
+			}
+			else{
+				base_vel_msg.linear.y = q_dot_ik(dof_+1);
+			}
+			if(q_dot_ik(dof_+2) / std::fabs(q_dot_ik(dof_+2)) < 0 && twist.rot.z()/(std::fabs(twist.rot.z()) > 0)){
+				base_vel_msg.angular.z = q_dot_ik(dof_+2) * (-1);
+			}
+			else{
+				base_vel_msg.angular.z = q_dot_ik(dof_+2);
+			}
+			
+			//base_vel_msg.linear.x = q_dot_ik(dof_) * twist.vel.x()/(std::fabs(twist.vel.x()));
+			//base_vel_msg.linear.y = q_dot_ik(dof_+1) * twist.vel.y()/(std::fabs(twist.vel.y()));
+			//base_vel_msg.angular.z = q_dot_ik(dof_+2) * twist.rot.z()/(std::fabs(twist.rot.z()));
+			
+			
+			ROS_INFO("x: %f  y: %f  yaw: %f",base_vel_msg.linear.x,base_vel_msg.linear.y,base_vel_msg.angular.z);
 			base_vel_pub.publish(base_vel_msg);
 		}
 		vel_pub.publish(vel_msg);
@@ -374,33 +456,41 @@ void CobTwistController::jointstate_cb(const sensor_msgs::JointState::ConstPtr& 
 	}
 }
 
-
-///ToDo: Something is still not correct with the rotational Twist transformation!!!
 void CobTwistController::odometry_cb(const nav_msgs::Odometry::ConstPtr& msg)
 {
-	tf::StampedTransform transform_tf;
-	KDL::Frame frame;
-	KDL::Twist twist_odometry, twist_odometry_transformed;
+	tf::StampedTransform transform_tf,transform_footprint_tip,transform_chain,transform_base_tip;
+	KDL::Frame frame,frame_ft,frame_combined;
+	KDL::Twist twist_odometry, twist_odometry_transformed, tangential_twist;
+	KDL::Twist angular_twist;
+	geometry_msgs::Twist twister;
+	double roll,pitch,yaw;
 	
 	try{
-		//tf_listener_.lookupTransform(chain_base_, "odom_combined", ros::Time(0), transform_tf);
-		//frame.p = KDL::Vector(0.0, 0.0, 0.0);
-		tf_listener_.lookupTransform("base_footprint", chain_base_, ros::Time(0), transform_tf);
+		tf_listener_.waitForTransform(chain_base_,"base_footprint", ros::Time(0), ros::Duration(0.5));
+		tf_listener_.lookupTransform(chain_base_,"base_footprint", ros::Time(0), transform_tf);
+		
+		tf_listener_.waitForTransform("base_footprint",chain_tip_, ros::Time(0), ros::Duration(0.5));
+		tf_listener_.lookupTransform("base_footprint",chain_tip_, ros::Time(0), transform_footprint_tip);
+		
 		frame.p = KDL::Vector(transform_tf.getOrigin().x(), transform_tf.getOrigin().y(), transform_tf.getOrigin().z());
 		frame.M = KDL::Rotation::Quaternion(transform_tf.getRotation().x(), transform_tf.getRotation().y(), transform_tf.getRotation().z(), transform_tf.getRotation().w());
 	}
 	catch (tf::TransformException ex){
 		ROS_ERROR("%s",ex.what());
 		return;
-	}
+	}	
+	// Calculate tangential twist for angular base movements v = w x r
+	Eigen::Vector3d r(transform_footprint_tip.getOrigin().x(),transform_footprint_tip.getOrigin().y(),transform_footprint_tip.getOrigin().z());
+	Eigen::Vector3d w(0,0,msg->twist.twist.angular.z);
+	Eigen::Vector3d res = w.cross(r);
+	tangential_twist.vel = KDL::Vector(res(0),res(1),res(2));
+	tangential_twist.rot = KDL::Vector(0,0,0);
+	//ROS_INFO("Crossproduct : %f %f %f",res(0),res(1),res(2));
+	//ROS_INFO("TCP: %f %f %f",transform_footprint_tip.getOrigin().x(),transform_footprint_tip.getOrigin().y(),transform_footprint_tip.getOrigin().z());
 	
-	tf::twistMsgToKDL(msg->twist.twist, twist_odometry);
-	twist_odometry_transformed = frame*twist_odometry;
+	tf::twistMsgToKDL(msg->twist.twist, twist_odometry);	// Base Twist
 	
-	//ROS_INFO("TwistOdometry Vel (%f, %f, %f)", twist_odometry.vel.x(), twist_odometry.vel.y(), twist_odometry.vel.z());
-	//ROS_INFO("TwistOdometry Rot (%f, %f, %f)", twist_odometry.rot.x(), twist_odometry.rot.y(), twist_odometry.rot.z());
-	//ROS_INFO("TwistOdometryTransformed Vel (%f, %f, %f)", twist_odometry_transformed.vel.x(), twist_odometry_transformed.vel.y(), twist_odometry_transformed.vel.z());
-	//ROS_INFO("TwistOdometryTransformed Rot (%f, %f, %f)", twist_odometry_transformed.rot.x(), twist_odometry_transformed.rot.y(), twist_odometry_transformed.rot.z());
+	twist_odometry_transformed = frame * (twist_odometry+tangential_twist);
 	
 	twist_odometry_ = twist_odometry_transformed;
 }
@@ -412,6 +502,7 @@ void CobTwistController::odometry_cb(const nav_msgs::Odometry::ConstPtr& msg)
 KDL::JntArray CobTwistController::normalize_velocities(KDL::JntArray q_dot_ik)
 {
 	KDL::JntArray q_dot_norm = q_dot_ik;
+
 	double max_factor = 1;
 	for(unsigned int i=0; i<dof_; i++)
 	{
@@ -422,28 +513,28 @@ KDL::JntArray CobTwistController::normalize_velocities(KDL::JntArray q_dot_ik)
 		}
 	}
 	
-	///Do we need this?
-	//if(base_active_)
-	//{
-		////TEST: limit base_velocities
-		//double max_trans_velocity = 0.2;
-		//double max_rot_velocity = 0.2;
-		//if(max_factor < std::fabs((q_dot_ik(dof_)/max_trans_velocity)))
-		//{
-			//max_factor = std::fabs((q_dot_ik(dof_)/max_trans_velocity));
-			//ROS_WARN("BaseTransX exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_), max_trans_velocity, max_factor);
-		//}
-		//if(max_factor < std::fabs((q_dot_ik(dof_+1)/max_trans_velocity)))
-		//{
-			//max_factor = std::fabs((q_dot_ik(dof_+1)/max_trans_velocity));
-			//ROS_WARN("BaseTransY exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+1), max_trans_velocity, max_factor);
-		//}
-		//if(max_factor < std::fabs((q_dot_ik(dof_+2)/max_rot_velocity)))
-		//{
-			//max_factor = std::fabs((q_dot_ik(dof_+2)/max_rot_velocity));
-			//ROS_WARN("BaseRotZ exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+2), max_rot_velocity, max_factor);
-		//}
-	//}
+	///Do we need this? maybe
+	if(base_active_)
+	{
+		//TEST: limit base_velocities
+		double max_trans_velocity = 0.5;
+		double max_rot_velocity = 0.5;
+		if(max_factor < std::fabs((q_dot_ik(dof_)/max_trans_velocity)))
+		{
+			max_factor = std::fabs((q_dot_ik(dof_)/max_trans_velocity));
+			ROS_WARN("BaseTransX exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_), max_trans_velocity, max_factor);
+		}
+		if(max_factor < std::fabs((q_dot_ik(dof_+1)/max_trans_velocity)))
+		{
+			max_factor = std::fabs((q_dot_ik(dof_+1)/max_trans_velocity));
+			ROS_WARN("BaseTransY exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+1), max_trans_velocity, max_factor);
+		}
+		if(max_factor < std::fabs((q_dot_ik(dof_+2)/max_rot_velocity)))
+		{
+			max_factor = std::fabs((q_dot_ik(dof_+2)/max_rot_velocity));
+			ROS_WARN("BaseRotZ exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+2), max_rot_velocity, max_factor);
+		}
+	}
 	
 	if(max_factor > 1)
 	{
@@ -453,8 +544,13 @@ KDL::JntArray CobTwistController::normalize_velocities(KDL::JntArray q_dot_ik)
 			q_dot_norm(i) = q_dot_ik(i)/max_factor;
 			ROS_WARN("Joint %d Normalized %f", i, q_dot_norm(i));
 		}
+		
+		if(base_active_){
+			q_dot_norm(dof_) = q_dot_ik(dof_)/max_factor;
+			q_dot_norm(dof_+1) = q_dot_ik(dof_+1)/max_factor;
+			q_dot_norm(dof_+2) = q_dot_ik(dof_+2)/max_factor;
+		}
 	}
-	
 	return q_dot_norm;
 }
 
