@@ -87,12 +87,12 @@ class CobControlModeAdapter
       }
       
       //start position controllers
-      success = switch_controller(pos_controller_names_, current_controller_names_);
-      current_control_mode_=POSITION;
+      //success = switch_controller(pos_controller_names_, current_controller_names_);
+      //current_control_mode_=POSITION;
       
       //start velocity controllers
-      success = switch_controller(vel_controller_names_, current_controller_names_);
-      current_control_mode_=VELOCITY;
+      //success = switch_controller(vel_controller_names_, current_controller_names_);
+      //current_control_mode_=VELOCITY;
       
       //start trajectory controller by default
       success = switch_controller(traj_controller_names_, current_controller_names_);
