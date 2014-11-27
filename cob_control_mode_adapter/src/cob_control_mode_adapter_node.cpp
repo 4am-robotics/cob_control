@@ -54,8 +54,8 @@ class CobControlModeAdapter
       }
       else
       {
-        ROS_ERROR("Parameter %s not set, using default 0.5s...", param.c_str());
-        max_command_silence_=0.5;
+        ROS_ERROR("Parameter %s not set, using default 0.3s...", param.c_str());
+        max_command_silence_=0.3;
       }
       
       // List of controlled joints
