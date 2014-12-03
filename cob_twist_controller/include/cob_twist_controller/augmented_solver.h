@@ -62,7 +62,15 @@ public:
     
     /** CartToJnt for chain using SVD including base and various DampingMethods **/
     virtual int CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL::JntArray& qdot_out, KDL::Frame &base_position, KDL::Frame &chain_base);
-    virtual int CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL::JntArray& qdot_out);
+
+	inline virtual int CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL::JntArray& qdot_out)
+	{
+		KDL::Frame dummy;
+		dummy.p = KDL::Vector(0,0,0);
+		dummy.M = KDL::Rotation::Quaternion(0,0,0,0);
+		
+		return CartToJnt(q_in, v_in, qdot_out,dummy,dummy);
+	}
 
     /** not (yet) implemented. */
     virtual int CartToJnt(const KDL::JntArray& q_init, const KDL::FrameVel& v_in, KDL::JntArrayVel& q_out){return -1;};
