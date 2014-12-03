@@ -53,7 +53,11 @@
 #include <cob_twist_controller/TwistControllerConfig.h>
 #include <Eigen/Dense>
 
-
+struct TwistControllerParams {  
+    bool base_compensation;
+    bool base_active;
+    double base_ratio;
+};
 
 class CobTwistController
 {
@@ -62,6 +66,9 @@ private:
 	tf::TransformListener tf_listener_;
 	tf::Transformer twist_listener_;
 	
+	ros::Time last_update_time_,time_;
+	ros::Duration period_;
+	double yaw_old_;
 	
 	ros::Subscriber jointstate_sub;
 	ros::Subscriber odometry_sub;
@@ -96,7 +103,7 @@ private:
 	bool base_active_;
 	
 	KDL::Twist twist_odometry_;
-	
+	TwistControllerParams params_;
 	
 public:
 	CobTwistController():
@@ -120,7 +127,10 @@ public:
 	void solve_twist(KDL::Twist twist);
 	KDL::Twist getBaseCompensatedTwist(KDL::Twist,KDL::Twist);
 	
+	std::vector<double> normalize_velocities_test(KDL::JntArray q_dot_ik, double base_x, double base_y);
 	
+	void SetTwistControllerParamsParams(TwistControllerParams params){params_ = params;}
+
 	KDL::JntArray normalize_velocities(KDL::JntArray q_dot_ik);
 };
 #endif

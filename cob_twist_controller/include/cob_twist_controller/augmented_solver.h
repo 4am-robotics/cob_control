@@ -61,7 +61,7 @@ public:
     ~augmented_solver();
     
     /** CartToJnt for chain using SVD including base and various DampingMethods **/
-    virtual int CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL::JntArray& qdot_out, KDL::Frame &base_position);
+    virtual int CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL::JntArray& qdot_out, KDL::Frame &base_position, KDL::Frame &chain_base);
     virtual int CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL::JntArray& qdot_out);
 
     /** not (yet) implemented. */
@@ -71,12 +71,13 @@ public:
 
 private:
     const KDL::Chain chain;
-    KDL::Jacobian jac;
+    KDL::Jacobian jac,jac_base;
     KDL::ChainJntToJacSolver jnt2jac;
     int maxiter;
     Eigen::MatrixXd Jcm1;
     double wkm1;
     bool initial_iteration;
+    double x_,y_,r_,z_;
     
     AugmentedSolverParams params_;
 };

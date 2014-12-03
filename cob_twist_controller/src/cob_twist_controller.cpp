@@ -175,6 +175,11 @@ bool CobTwistController::initialize()
 	twist_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_normalized", 1);
 	twist_real_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_current", 1);
 	
+	yaw_old_ = 0;
+	ros::Time time_ = ros::Time::now();
+	ros::Time last_update_time_ = time_;
+	ros::Duration period_ = time_ - last_update_time_;
+	
 	ROS_INFO("...initialized!");
 	return true;
 }
@@ -254,16 +259,9 @@ KDL::Twist CobTwistController::getBaseCompensatedTwist(KDL::Twist twist,KDL::Twi
 void CobTwistController::solve_twist(KDL::Twist twist)
 {
 	int ret_ik;
-	KDL::Twist base_twist;
-	KDL::Frame frame;
-	tf::StampedTransform transform_footprint_tip;
-	geometry_msgs::Twist base_vel_msg;
-	tf::StampedTransform tf_foot_odom;
-	// calculate Cartesian velocity
-	 //last resort for rejection in case it's too high
-	//double vel_lin = std::sqrt(std::pow(twist.vel.x(), 2) + std::pow(twist.vel.y(), 2) + std::pow(twist.vel.z(), 2));
-	//double vel_rot = std::sqrt(std::pow(twist.rot.x(), 2) + std::pow(twist.rot.y(), 2) + std::pow(twist.rot.z(), 2));
-	//ROS_INFO_STREAM("INPUT: NormTwistLin: " << vel_lin << "; NormTwistRot: " << vel_rot);
+	KDL::Twist base_twist,twist_odom;
+	KDL::Frame frame,frame2;
+	tf::StampedTransform transform_tip_basefootprint,transform_base_basefootprint;
 	
 	KDL::JntArray q_dot_ik(chain_.getNrOfJoints());
 	
@@ -271,62 +269,29 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 	{
 		q_dot_ik.resize(chain_.getNrOfJoints()+3);
 
-		//try{
-			//tf_listener_.waitForTransform("base_footprint",chain_tip_, ros::Time(0), ros::Duration(0.5));
-			//tf_listener_.lookupTransform("base_footprint",chain_tip_, ros::Time(0), transform_footprint_tip);
-		//}catch (tf::TransformException ex){
-			//ROS_ERROR("%s",ex.what());
-			//return;
-		//}
-		//double base_ratio = 1;
-		//base_twist.vel = twist.vel * base_ratio;
-		//double base_twist_vel_x = twist.vel.x();
-		//double base_twist_vel_y = twist.vel.y();
-		//
-		//
-		//double max=0,max_x=0,max_y=0;
-		//
-		//if(std::fabs(base_twist_vel_x) > 1)
-			//max_x = base_twist_vel_x / 1;
-			//
-		//if(std::fabs(base_twist_vel_y) > 1)
-			//max_y = base_twist_vel_y / 1;
-			//
-		//if(std::fabs(max_x) > std::fabs(max_y)){
-			//max = max_x;
-		//}else{
-			//max = max_y;
-		//}
-		//if(max != 0){
-			//base_twist_vel_x/=std::fabs(max);
-			//base_twist_vel_y/=std::fabs(max);
-		//}
+		/// TODO: Endeffektorkoordinatensystem hat verdrehte Achsen ! Z und Y
+		try{
+			tf_listener_.waitForTransform("base_footprint",chain_tip_, ros::Time(0), ros::Duration(0.5));
+			tf_listener_.lookupTransform("base_footprint",chain_tip_,  ros::Time(0), transform_tip_basefootprint);
+		}catch (tf::TransformException ex){
+			ROS_ERROR("%s",ex.what());
+			return;
+		}
+		frame.p = KDL::Vector(transform_tip_basefootprint.getOrigin().x(), transform_tip_basefootprint.getOrigin().y(), transform_tip_basefootprint.getOrigin().z());
+		frame.M = KDL::Rotation::Quaternion(transform_tip_basefootprint.getRotation().x(), transform_tip_basefootprint.getRotation().y(), transform_tip_basefootprint.getRotation().z(), transform_tip_basefootprint.getRotation().w());
 		
-		//double angular_z = atan2(base_twist_vel_y,base_twist_vel_x);
-		//double angular_z = tan(base_twist_vel_y/base_twist_vel_x);
-		
-		
-		//base_vel_msg.angular.z = q_dot_ik(dof_+2);
-		//base_twist.vel = KDL::Vector(base_twist_vel_x,base_twist_vel_y,0);
-		//twist = twist-base_twist;
-		//base_vel_msg.linear.x = base_twist.vel.x();
-		//base_vel_msg.linear.y = base_twist.vel.y();
-		//ROS_INFO("x: %f  y: %f  yaw: %f",base_vel_msg.linear.x,base_vel_msg.linear.y,base_vel_msg.angular.z);
-		//base_vel_pub.publish(base_vel_msg);
 
-		//try{
-			//tf_listener_.waitForTransform("base_footprint","odom_combined", ros::Time(0), ros::Duration(0.5));
-			//tf_listener_.lookupTransform("base_footprint","odom_combined", ros::Time(0), tf_foot_odom);
-			//frame.p = KDL::Vector(tf_foot_odom.getOrigin().x(), tf_foot_odom.getOrigin().y(), tf_foot_odom.getOrigin().z());
-			//frame.M = KDL::Rotation::Quaternion(tf_foot_odom.getRotation().x(), tf_foot_odom.getRotation().y(), tf_foot_odom.getRotation().z(), tf_foot_odom.getRotation().w());
-		//}
-		//catch (tf::TransformException ex){
-			//ROS_ERROR("%s",ex.what());
-			//return;
-		//}
-		//
-		//ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik,frame);
+		try{
+			tf_listener_.waitForTransform(chain_base_,"base_link", ros::Time(0), ros::Duration(0.5));
+			tf_listener_.lookupTransform(chain_base_,"base_link", ros::Time(0), transform_base_basefootprint);
+		}catch (tf::TransformException ex){
+			ROS_ERROR("%s",ex.what());
+			return;
+		}
+		frame2.p = KDL::Vector(transform_base_basefootprint.getOrigin().x(), transform_base_basefootprint.getOrigin().y(), transform_base_basefootprint.getOrigin().z());
+		frame2.M = KDL::Rotation::Quaternion(transform_base_basefootprint.getRotation().x(), transform_base_basefootprint.getRotation().y(), transform_base_basefootprint.getRotation().z(), transform_base_basefootprint.getRotation().w());
 		
+		ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik,frame,frame2);
 	}
 	
 	if(base_compensation_)
@@ -338,7 +303,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 	if(!base_active_){
 		ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik);
 	}
-ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik);
+	
 	if(ret_ik < 0)
 	{
 		ROS_ERROR("No Vel-IK found!");
@@ -354,35 +319,15 @@ ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik);
 		for(unsigned int i=0; i<dof_; i++)
 		{
 			vel_msg.data.push_back(q_dot_ik(i));
-			//ROS_WARN("DesiredVel %d: %f", i, q_dot_ik(i));
+			ROS_WARN("DesiredVel %d: %f", i, q_dot_ik(i));
 		}
 		if(base_active_)
 		{
 			geometry_msgs::Twist base_vel_msg;
-			if(q_dot_ik(dof_) / std::fabs(q_dot_ik(dof_)) < 0 && twist.vel.x()/(std::fabs(twist.vel.x()) > 0)){
-				base_vel_msg.linear.x = q_dot_ik(dof_) * (-1);
-			}
-			else{
-				base_vel_msg.linear.x = q_dot_ik(dof_);
-			}
 			
-			if(q_dot_ik(dof_+1) / std::fabs(q_dot_ik(dof_+1)) < 0 && twist.vel.y()/(std::fabs(twist.vel.y()) > 0)){
-				base_vel_msg.linear.y = q_dot_ik(dof_+1) * (-1);
-			}
-			else{
-				base_vel_msg.linear.y = q_dot_ik(dof_+1);
-			}
-			if(q_dot_ik(dof_+2) / std::fabs(q_dot_ik(dof_+2)) < 0 && twist.rot.z()/(std::fabs(twist.rot.z()) > 0)){
-				base_vel_msg.angular.z = q_dot_ik(dof_+2) * (-1);
-			}
-			else{
-				base_vel_msg.angular.z = q_dot_ik(dof_+2);
-			}
-			
-			//base_vel_msg.linear.x = q_dot_ik(dof_) * twist.vel.x()/(std::fabs(twist.vel.x()));
-			//base_vel_msg.linear.y = q_dot_ik(dof_+1) * twist.vel.y()/(std::fabs(twist.vel.y()));
-			//base_vel_msg.angular.z = q_dot_ik(dof_+2) * twist.rot.z()/(std::fabs(twist.rot.z()));
-			
+			base_vel_msg.linear.x = q_dot_ik(dof_);
+			base_vel_msg.linear.y = q_dot_ik(dof_+1);
+			base_vel_msg.angular.z = q_dot_ik(dof_+2);
 			
 			ROS_INFO("x: %f  y: %f  yaw: %f",base_vel_msg.linear.x,base_vel_msg.linear.y,base_vel_msg.angular.z);
 			base_vel_pub.publish(base_vel_msg);
@@ -555,5 +500,44 @@ KDL::JntArray CobTwistController::normalize_velocities(KDL::JntArray q_dot_ik)
 }
 
 
+
+std::vector<double> CobTwistController::normalize_velocities_test(KDL::JntArray q_dot_ik, double base_x, double base_y)
+{
+	KDL::JntArray q_dot_norm = q_dot_ik;
+	std::vector<double> ret;
+	double max_factor = 1;
+	double vel_max = 0.5;
+	
+	
+	for(unsigned int i=0; i<dof_; i++)
+	{
+		if(max_factor < std::fabs((q_dot_ik(i)/limits_vel_[i])))
+		{
+			max_factor = std::fabs((q_dot_ik(i)/limits_vel_[i]));
+			ROS_WARN("Joint %d exceeds limit: Desired %f, Limit %f, Factor %f", i, q_dot_ik(i), limits_vel_[i], max_factor);
+		}
+	}
+	//if(max_factor < std::fabs(base_x/vel_max)){
+		//max_factor = std::fabs(base_x/vel_max);
+	//}
+	//
+	//if(max_factor < std::fabs(base_y/vel_max)){
+		//max_factor = std::fabs(base_y/vel_max);
+	//}
+	
+	if(max_factor > 1)
+	{
+		ROS_INFO("Normalizing velocities!");
+		for(unsigned int i=0; i<dof_; i++)
+		{
+			ret.push_back(q_dot_ik(i)/max_factor);
+		}
+		
+		//ret.push_back(base_x/max_factor);
+		//ret.push_back(base_y/max_factor);
+		//ret.push_back(q_dot_ik(dof_)/max_factor);
+	}
+	return ret;
+}
 
 
