@@ -11,7 +11,7 @@ augmented_solver::augmented_solver(const KDL::Chain& _chain, double _eps, int _m
     jac(chain.getNrOfJoints()),
     jnt2jac(chain),
     maxiter(_maxiter),
-    initial_iteration(true),
+    initial_iteration(true)
     last_dh(Eigen::VectorXd::Zero(jac.columns()))
 {}
 
@@ -19,36 +19,83 @@ augmented_solver::~augmented_solver()
 {}
 
 
-int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL::JntArray& qdot_out, std::vector<float> *limits_min, std::vector<float> *limits_max)
+int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL::JntArray& qdot_out, std::vector<float> *limits_min, std::vector<float> *limits_max, KDL::Frame &base_position, KDL::Frame &chain_base)
 {
     ///used only for debugging
     std::ofstream file("test_end_effect.txt", std::ofstream::app);
     
     ///Let the ChainJntToJacSolver calculate the jacobian "jac_chain" for the current joint positions "q_in"
     KDL::Jacobian jac_chain(chain.getNrOfJoints());
+    Eigen::Matrix<double,6,3> jac_b;
+
     jnt2jac.JntToJac(q_in, jac_chain);
     
     if(params_.base_active)
     {
         //Create standard platform jacobian
-        Eigen::Matrix<double,6,3> jac_base;
-        jac_base.setZero();
+        jac_b.setZero();
+        
+        // Get current x and y position from EE and chain_base with respect to base_footprint
+        x_ = base_position.p.x();
+        y_ = base_position.p.y();
 
-        jac_base(0,0) = params_.base_ratio;    //linear_x
-        jac_base(1,1) = params_.base_ratio;    //linear_y
-        jac_base(5,2) = params_.base_ratio;    //angular_z
+		Eigen::Matrix<double, 3, 3> chain_base_rot,base_rot;
+		
+		chain_base_rot << 	chain_base.M.data[0],chain_base.M.data[1],chain_base.M.data[2],
+							chain_base.M.data[3],chain_base.M.data[4],chain_base.M.data[5],
+							chain_base.M.data[6],chain_base.M.data[7],chain_base.M.data[8];
+							
+		std::cout <<"chain_base_rot: \n" << chain_base_rot << "\n";
+		
+		
+		// Transform Wz from base_link to chain_base
+		Eigen::Vector3d w_chain_base;
+		Eigen::Vector3d w_base(0,0,params_.base_ratio);
+		w_chain_base = chain_base_rot * w_base;
+		
+		// Calculate tangential velocity
+		Eigen::Vector3d x_tangential_vel,y_tangential_vel,z_tangential_vel;
+		Eigen::Vector3d x_chain_base(chain_base.M.data[0],chain_base.M.data[3],chain_base.M.data[6]);
+		Eigen::Vector3d y_chain_base(chain_base.M.data[1],chain_base.M.data[4],chain_base.M.data[7]);
+		/// Special case, If a base rotation causes a z linear velocity when the torso is bent.
+		Eigen::Vector3d z_chain_base(chain_base.M.data[2],chain_base.M.data[5],chain_base.M.data[8]);
+		
+		
+		x_tangential_vel = x_chain_base.cross(w_chain_base);
+		y_tangential_vel = y_chain_base.cross(w_chain_base);
+		z_tangential_vel = z_chain_base.cross(w_chain_base);
+		
+		 //Vx-Base <==> q8 effects a change in the following chain_base Vx velocities
+		jac_b(0,0) = params_.base_ratio*chain_base_rot(0,0);   
+		jac_b(0,1) = params_.base_ratio*chain_base_rot(0,1);
+		jac_b(0,2) = x_tangential_vel(0) + y_tangential_vel(0) + z_tangential_vel(0);
+
+		// Vy-Base <==> q9 effects a change in the following chain_base Vy velocities
+		jac_b(1,0) = params_.base_ratio*chain_base_rot(1,0);   
+		jac_b(1,1) = params_.base_ratio*chain_base_rot(1,1);
+		jac_b(1,2) = x_tangential_vel(1) + y_tangential_vel(1) + z_tangential_vel(1);
+        
+        // Vz-Base <==>  effects a change in the following chain_base Vz velocities
+		jac_b(2,0) = params_.base_ratio*chain_base_rot(2,0);   
+		jac_b(2,1) = params_.base_ratio*chain_base_rot(2,1);
+		jac_b(2,2) = x_tangential_vel(2) + y_tangential_vel(2) + z_tangential_vel(2);
+		
+		//Phi <==> Wz with respect to base_link
+		jac_b(3,2) = w_chain_base(0);
+		jac_b(4,2) = w_chain_base(1);
+		jac_b(5,2) = w_chain_base(2);
 
         //combine chain Jacobian and platform Jacobian
         Eigen::Matrix<double, 6, Eigen::Dynamic> jac_full;
-        jac_full.resize(6,chain.getNrOfJoints() + jac_base.cols());
-        jac_full << jac_chain.data, jac_base;
+        jac_full.resize(6,chain.getNrOfJoints() + jac_b.cols());
+        jac_full << jac_chain.data,jac_b;
         
-        //std::cout << "Combined jacobian:\n " << jac_full << "\n";
+        std::cout << "Combined jacobian:\n " << jac_full << "\n";
         //ROS_INFO_STREAM("JacBase: rows " <<jac_base.rows()<<"; cols "<<jac_base.cols());
         //ROS_INFO_STREAM("JacFull: rows " <<jac_full.rows()<<"; cols "<<jac_full.cols());
         
         //ROS_INFO_STREAM("JacANTE: rows " <<jac.rows()<<"; cols "<<jac.columns());
-        jac.resize(chain.getNrOfJoints() + jac_base.cols());
+        jac.resize(chain.getNrOfJoints() + jac_b.cols());
         //ROS_INFO_STREAM("JacPOST: rows " <<jac.rows()<<"; cols "<<jac.columns());
         
         jac.data << jac_full;
@@ -134,14 +181,16 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
     //Eigen::MatrixXd We = Eigen::MatrixXd::Identity(jac.rows(), jac.rows());
     
     //Weighting matrix for additional/task constraints Jc
-    //Eigen::MatrixXd Wc = 1e-3*Eigen::MatrixXd::Identity(task_size,task_size);    
-    //Eigen::MatrixXd Jc = Eigen::MatrixXd::Zero(jac.columns()-jac.rows(),jac.columns());
+    //Eigen::MatrixXd Wc = Eigen::MatrixXd::Identity(task_size,task_size);
+    //Eigen::MatrixXd Jc = Eigen::MatrixXd::Zero(task_size,jac.columns());
     
     //Weighting matrix for damping 
     Eigen::MatrixXd Wv = Eigen::MatrixXd::Identity(jac.columns(), jac.columns());
     
     Eigen::VectorXd v_in_vec = Eigen::VectorXd::Zero(jac.rows());
+    Eigen::VectorXd v_in_vec_base = Eigen::VectorXd::Zero(jac_base.rows());
     Eigen::MatrixXd qdot_out_vec;
+
 
     ///use calculated damping value lambda for SVD
     Wv = Wv*damping_factor*damping_factor; //why squared?
@@ -150,7 +199,7 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
     for (int i=0; i<jac.rows(); i++)
     {    v_in_vec(i)=v_in(i);    }
     
-    Eigen::MatrixXd W12 = augmented_solver::calculate_weighting(q_in, limits_min, limits_max).asDiagonal();
+	Eigen::MatrixXd W12 = augmented_solver::calculate_weighting(q_in, limits_min, limits_max).asDiagonal();
     Eigen::MatrixXd Jw = jac.data*W12.inverse();
     
     ///// formula from book (2.3.19)
@@ -182,39 +231,14 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
     
     ///convert output
     for(int i=0; i<jac.columns(); i++)
-    {    qdot_out(i)=qdot_out_vec(i,0);    }
-    
-    /////write debug info to file
-    //for(int i=0; i<jac.columns(); i++)
-    //{
-        //if(std::fabs(qdot_out_vec(i,0))>500)
-        //{
-            //if (file.is_open())
-            //{
-                //Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> prod = jac.data * jac.data.transpose();
-                //double d = prod.determinant();
-                //double kappa = std::sqrt(d);
-                //file << "Here is the Jacobian:\n" << jac.data << '\n';
-                //file << "Last Jacobian:\n" << Jcm1 << '\n';
-                //file << "Here is prod:\n" << prod << '\n';
-                //file << "And here is the other stuff:"<< std::endl << "damping_factor" <<damping_factor<<std::endl;
-                //file << "Singular values:\n" << svd.singularValues();
-                //file << "\nManipulability: " << kappa << "\n";
-                //file<<"El twist deberia ser:\n"<<jac.data*qdot_out_vec<<std::endl;
-                //file << "La entrada fue: \n" << v_in_vec<<std::endl;
-                //file << "La salida es: \n" << qdot_out_vec <<'\n';
-                //file << "inv(jac' jac):\n" << (jac.data.transpose()*jac.data).inverse();
-            //}
-            //break;
-        //}
-    //}
-    
-    if(DEBUG)
-    {
-        //compute manipulability
-        ///kappa = sqrt(norm(J*Jt))
-        ///see  T.Yoshikawa "Manipulability of robotic mechanisms"
-        ///     International Journal of Robotics Research, 4(2):3-9, 1985
+	{    qdot_out(i)=qdot_out_vec(i,0);    }
+	
+	if(DEBUG)
+	{
+		//compute manipulability
+		///kappa = sqrt(norm(J*Jt))
+		///see  T.Yoshikawa "Manipulability of robotic mechanisms"
+		///     International Journal of Robotics Research, 4(2):3-9, 1985
         //Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> prod = jac.data * jac.data.transpose();
         //double d = prod.determinant();
         //double kappa = std::sqrt(d);
@@ -225,9 +249,7 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
         //std::cout << "Current We:\n " << We << "\n";
         //std::cout << "Current Wc:\n " << Wc << "\n";
         //std::cout << "Current Wv:\n " << Wv << "\n";
-        //std::cout << "Current W:\n " << W << "\n";
         //std::cout << "Jc:\n " << Jc << "\n";
-        //std::cout << "tmp " << tmp << "\n";
         //std::cout<<"Singular values"<<svd.singularValues()<<std::endl;
         //std::cout << "Damping factor" << damping_factor << std::endl;
         //std::cout << "Reciprocal Condition number" << 1/(prod.norm()*prod.inverse().norm())<<'\n';
@@ -248,18 +270,24 @@ Eigen::VectorXd augmented_solver::calculate_weighting(const KDL::JntArray& q, st
     
     for(int i=0; i<jac.columns() ; i++) {
 
-        double dh = fabs(pow(limits_max_[i]/M_PI*180-limits_min_[i]/M_PI*180,2)*(2*q(i)/M_PI*180-limits_max_[i]/M_PI*180-limits_min_[i]/M_PI*180)/(4*pow(limits_max_[i]/M_PI*180-q(i)/M_PI*180,2)*pow(q(i)/M_PI*180-limits_min_[i]/M_PI*180,2)));
+		if(i<chain.getNrOfJoints()) {
 
-        if(initial_iteration)
-        {    output(i)=1+dh;    }
-        else {
-            if(dh-last_dh(i)>=0)
-            {    output(i) = sqrt(1+dh);    }
-            else
-            {    output(i) = 1;    }
-        }
-        last_dh(i)=dh;
-    }
+		    double dh = fabs(pow(limits_max_[i]/M_PI*180-limits_min_[i]/M_PI*180,2)*(2*q(i)/M_PI*180-limits_max_[i]/M_PI*180-limits_min_[i]/M_PI*180)/(4*pow(limits_max_[i]/M_PI*180-q(i)/M_PI*180,2)*pow(q(i)/M_PI*180-limits_min_[i]/M_PI*180,2)));
+
+		    if(initial_iteration)
+		    {    output(i)=1+dh;    }
+		    else {
+		        if(dh-last_dh(i)>=0)
+		        {    output(i) = sqrt(1+dh);    }
+		        else
+		        {    output(i) = 1;    }
+		    }
+		    last_dh(i)=dh;
+    	}
+
+		else
+		{    output(i) = 1;    }
+	}
 
     return output;
 }

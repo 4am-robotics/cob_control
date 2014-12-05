@@ -46,19 +46,29 @@
 #include <kdl/frames.hpp>
 
 #include <tf/transform_listener.h>
+#include <tf/tf.h>
 
 #include <boost/thread/mutex.hpp>
 #include <dynamic_reconfigure/server.h>
 #include <cob_twist_controller/TwistControllerConfig.h>
+#include <Eigen/Dense>
 
-
-
+struct TwistControllerParams {  
+    bool base_compensation;
+    bool base_active;
+    double base_ratio;
+};
 
 class CobTwistController
 {
 private:
 	ros::NodeHandle nh_;
 	tf::TransformListener tf_listener_;
+	tf::Transformer twist_listener_;
+	
+	ros::Time last_update_time_,time_;
+	ros::Duration period_;
+	double yaw_old_;
 	
 	ros::Subscriber jointstate_sub;
 	ros::Subscriber odometry_sub;
@@ -94,7 +104,7 @@ private:
 	
 	KDL::Twist twist_odometry_;
 	bool firstDone;
-	
+	TwistControllerParams params_;
 	
 public:
 	CobTwistController():
@@ -116,8 +126,12 @@ public:
 	void twist_cb(const geometry_msgs::Twist::ConstPtr& msg);
 	void twist_stamped_cb(const geometry_msgs::TwistStamped::ConstPtr& msg);
 	void solve_twist(KDL::Twist twist);
+	KDL::Twist getBaseCompensatedTwist(KDL::Twist,KDL::Twist);
 	
+	std::vector<double> normalize_velocities_test(KDL::JntArray q_dot_ik, double base_x, double base_y);
 	
+	void SetTwistControllerParamsParams(TwistControllerParams params){params_ = params;}
+
 	KDL::JntArray normalize_velocities(KDL::JntArray q_dot_ik);
 };
 #endif
