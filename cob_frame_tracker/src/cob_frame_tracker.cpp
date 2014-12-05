@@ -121,9 +121,8 @@ void CobFrameTracker::run()
 
 void CobFrameTracker::publish_twist(ros::Duration period)
 {
-	tf::StampedTransform transform_tf,transform_track_base;
+	tf::StampedTransform transform_tf;
 	geometry_msgs::TransformStamped transform_msg;
-	//geometry_msgs::Twist twist_msg;
 	geometry_msgs::TwistStamped twist_msg;
 	KDL::Frame frame;
 	try{

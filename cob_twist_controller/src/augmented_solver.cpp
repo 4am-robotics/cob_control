@@ -37,24 +37,7 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
         // Get current x and y position from EE and chain_base with respect to base_footprint
         x_ = base_position.p.x();
         y_ = base_position.p.y();
-        
-				// Works only for arm_left
-				//jac_b(0,0) = params_.base_ratio;   
-				//jac_b(0,2) = -y_;
-				//
-				//jac_b(2,1) = params_.base_ratio;  
-				//jac_b(2,2) = x_;
-				//
-				//jac_b(4,2) = -params_.base_ratio;
-				
-				
-				
-		//for(int i = 0;i<chain.getNrOfJoints();i++){
-			//for(int j=0; j<6;j++){
-				//jac_chain.data(j,i) = jac_chain.data(j,i) * (1-params_.base_ratio);
-			//}
-		//}
-				
+
 		Eigen::Matrix<double, 3, 3> chain_base_rot,base_rot;
 		
 		chain_base_rot << 	chain_base.M.data[0],chain_base.M.data[1],chain_base.M.data[2],
@@ -73,7 +56,7 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
 		Eigen::Vector3d x_tangential_vel,y_tangential_vel,z_tangential_vel;
 		Eigen::Vector3d x_chain_base(chain_base.M.data[0],chain_base.M.data[3],chain_base.M.data[6]);
 		Eigen::Vector3d y_chain_base(chain_base.M.data[1],chain_base.M.data[4],chain_base.M.data[7]);
-		/// Special case, If a base rotation causes a z linear velocity when the torso is bend.
+		/// Special case, If a base rotation causes a z linear velocity when the torso is bent.
 		Eigen::Vector3d z_chain_base(chain_base.M.data[2],chain_base.M.data[5],chain_base.M.data[8]);
 		
 		
