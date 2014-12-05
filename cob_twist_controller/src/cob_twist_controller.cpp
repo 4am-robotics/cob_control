@@ -291,7 +291,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 		frame2.p = KDL::Vector(transform_base_basefootprint.getOrigin().x(), transform_base_basefootprint.getOrigin().y(), transform_base_basefootprint.getOrigin().z());
 		frame2.M = KDL::Rotation::Quaternion(transform_base_basefootprint.getRotation().x(), transform_base_basefootprint.getRotation().y(), transform_base_basefootprint.getRotation().z(), transform_base_basefootprint.getRotation().w());
 		
-		ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik,frame,frame2);
+		ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik,&limits_min_,&limits_max_,frame,frame2);
 	}
 	
 	if(base_compensation_)
@@ -301,7 +301,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 	
 	
 	if(!base_active_){
-		ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik);
+		ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik,&limits_min_,&limits_max_);
 	}
 	
 	if(ret_ik < 0)

@@ -11,7 +11,7 @@ augmented_solver::augmented_solver(const KDL::Chain& _chain, double _eps, int _m
     jac(chain.getNrOfJoints()),
     jnt2jac(chain),
     maxiter(_maxiter),
-    initial_iteration(true)
+    initial_iteration(true),
     last_dh(Eigen::VectorXd::Zero(jac.columns()))
 {}
 
