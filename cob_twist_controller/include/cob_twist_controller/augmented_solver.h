@@ -61,7 +61,7 @@ public:
     ~augmented_solver();
     
     /** CartToJnt for chain using SVD including base and various DampingMethods **/
-    virtual int CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL::JntArray& qdot_out);
+    virtual int CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL::JntArray& qdot_out, std::vector<float> *limits_min, std::vector<float> *limits_max);
     
     /** not (yet) implemented. */
     virtual int CartToJnt(const KDL::JntArray& q_init, const KDL::FrameVel& v_in, KDL::JntArrayVel& q_out){return -1;};
@@ -76,7 +76,9 @@ private:
     Eigen::MatrixXd Jcm1;
     double wkm1;
     bool initial_iteration;
+    Eigen::VectorXd last_dh;
     
     AugmentedSolverParams params_;
+    Eigen::VectorXd calculate_weighting(const KDL::JntArray& q, std::vector<float> *limits_min, std::vector<float> *limits_max);
 };
 #endif

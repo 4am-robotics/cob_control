@@ -279,7 +279,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 	
 	
 	//int ret_ik = p_iksolver_vel_->CartToJnt(last_q_, twist, q_dot_ik);
-	int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik);
+	int ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik, &limits_min_, &limits_max_);
 	
 	if(ret_ik < 0)
 	{
@@ -332,6 +332,7 @@ void CobTwistController::jointstate_cb(const sensor_msgs::JointState::ConstPtr& 
 	KDL::JntArray q_temp = last_q_;
 	KDL::JntArray q_dot_temp = last_q_dot_;
 	int count = 0;
+	
 	
 	for(unsigned int j = 0; j < dof_; j++)
 	{
@@ -418,7 +419,7 @@ KDL::JntArray CobTwistController::normalize_velocities(KDL::JntArray q_dot_ik)
 		if(max_factor < std::fabs((q_dot_ik(i)/limits_vel_[i])))
 		{
 			max_factor = std::fabs((q_dot_ik(i)/limits_vel_[i]));
-			ROS_WARN("Joint %d exceeds limit: Desired %f, Limit %f, Factor %f", i, q_dot_ik(i), limits_vel_[i], max_factor);
+			ROS_WARN("Joint %d exceeds limit: Desired %f, Limit %f, Factor %f", i,q_dot_ik(i), limits_vel_[i], max_factor);
 		}
 	}
 	

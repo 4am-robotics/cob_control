@@ -11,14 +11,15 @@ augmented_solver::augmented_solver(const KDL::Chain& _chain, double _eps, int _m
     jac(chain.getNrOfJoints()),
     jnt2jac(chain),
     maxiter(_maxiter),
-    initial_iteration(true)
+    initial_iteration(true),
+    last_dh(Eigen::VectorXd::Zero(jac.columns()))
 {}
 
 augmented_solver::~augmented_solver()
 {}
 
 
-int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL::JntArray& qdot_out)
+int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL::JntArray& qdot_out, std::vector<float> *limits_min, std::vector<float> *limits_max)
 {
     ///used only for debugging
     std::ofstream file("test_end_effect.txt", std::ofstream::app);
@@ -79,7 +80,6 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
         if (initial_iteration)
         {
             damping_factor = params_.lambda0;
-            initial_iteration = false;
         }
         else
         {
@@ -131,18 +131,17 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
     int task_size = 1;
     
     //Weighting matrix for endeffector Jacobian Je (jac)
-    Eigen::MatrixXd We = Eigen::MatrixXd::Identity(jac.rows(), jac.rows());
+    //Eigen::MatrixXd We = Eigen::MatrixXd::Identity(jac.rows(), jac.rows());
     
     //Weighting matrix for additional/task constraints Jc
-    Eigen::MatrixXd Wc = Eigen::MatrixXd::Identity(task_size,task_size);
-    Eigen::MatrixXd Jc = Eigen::MatrixXd::Zero(task_size,jac.columns());
+    //Eigen::MatrixXd Wc = 1e-3*Eigen::MatrixXd::Identity(task_size,task_size);    
+    //Eigen::MatrixXd Jc = Eigen::MatrixXd::Zero(jac.columns()-jac.rows(),jac.columns());
     
     //Weighting matrix for damping 
     Eigen::MatrixXd Wv = Eigen::MatrixXd::Identity(jac.columns(), jac.columns());
     
     Eigen::VectorXd v_in_vec = Eigen::VectorXd::Zero(jac.rows());
     Eigen::MatrixXd qdot_out_vec;
-
 
     ///use calculated damping value lambda for SVD
     Wv = Wv*damping_factor*damping_factor; //why squared?
@@ -151,35 +150,39 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
     for (int i=0; i<jac.rows(); i++)
     {    v_in_vec(i)=v_in(i);    }
     
+    Eigen::MatrixXd W12 = augmented_solver::calculate_weighting(q_in, limits_min, limits_max).asDiagonal();
+    Eigen::MatrixXd Jw = jac.data*W12.inverse();
     
     ///// formula from book (2.3.19)
     ////reults in oscillation without task constraints and damping close to 0.0 (when far from singularity)?
     //Eigen::MatrixXd tmp = (jac.data.transpose()*We*jac.data+Jc.transpose()*Wc*Jc+Wv).inverse();
     //qdot_out_vec= tmp*(jac.data.transpose()*We*v_in_vec);
     
+    Eigen::MatrixXd tmp = (Jw.transpose()*Jw+Wv)*W12;
+    qdot_out_vec=tmp.fullPivHouseholderQr().solve(Jw.transpose()*v_in_vec);
+    //qdot_out_vec= tmp.inverse()*(jac.data.transpose()*We*v_in_vec);
     /// formula from book (2.3.14)
     //additional task constraints can not be considered
-    Eigen::MatrixXd jac_pinv = Eigen::MatrixXd::Zero(jac.columns(),jac.rows());
-    Eigen::MatrixXd temp = Eigen::MatrixXd::Zero(jac.columns(),jac.rows());
-    for (int i=0; i<S.rows(); i++)
-    {
-        for (int j=0; j<jac.rows(); j++)
-        {
-            for (int k=0; k<jac.columns(); k++)
-            {
-                double denominator = pow(S(i),2)+pow(damping_factor,2);
-                double factor = (denominator < params_.eps) ? 0.0 : S(i)/denominator;
-                jac_pinv(k,j)+=factor*svd.matrixV()(k,i)*svd.matrixU()(j,i);
-            }
-        }
-    }
-    qdot_out_vec = jac_pinv*v_in_vec;
+    //Eigen::MatrixXd jac_pinv = Eigen::MatrixXd::Zero(jac.columns(),jac.rows());
+    //Eigen::MatrixXd temp = Eigen::MatrixXd::Zero(jac.columns(),jac.rows());
+    //for (int i=0; i<S.rows(); i++)
+    //{
+        //for (int j=0; j<jac.rows(); j++)
+        //{
+            //for (int k=0; k<jac.columns(); k++)
+            //{
+                //double denominator = pow(S(i),2)+pow(damping_factor,2);
+                //double factor = (denominator < params_.eps) ? 0.0 : S(i)/denominator;
+                //jac_pinv(k,j)+=factor*svd.matrixV()(k,i)*svd.matrixU()(j,i);
+            //}
+        //}
+    //}
+    //qdot_out_vec = jac_pinv*v_in_vec;
     
     
     ///convert output
     for(int i=0; i<jac.columns(); i++)
     {    qdot_out(i)=qdot_out_vec(i,0);    }
-    
     
     /////write debug info to file
     //for(int i=0; i<jac.columns(); i++)
@@ -189,7 +192,6 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
             //if (file.is_open())
             //{
                 //Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> prod = jac.data * jac.data.transpose();
-                
                 //double d = prod.determinant();
                 //double kappa = std::sqrt(d);
                 //file << "Here is the Jacobian:\n" << jac.data << '\n';
@@ -223,14 +225,41 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
         //std::cout << "Current We:\n " << We << "\n";
         //std::cout << "Current Wc:\n " << Wc << "\n";
         //std::cout << "Current Wv:\n " << Wv << "\n";
+        //std::cout << "Current W:\n " << W << "\n";
         //std::cout << "Jc:\n " << Jc << "\n";
+        //std::cout << "tmp " << tmp << "\n";
         //std::cout<<"Singular values"<<svd.singularValues()<<std::endl;
         //std::cout << "Damping factor" << damping_factor << std::endl;
         //std::cout << "Reciprocal Condition number" << 1/(prod.norm()*prod.inverse().norm())<<'\n';
         //std::cout << "DEBUG END" << std::endl;
     }
     
+    if (initial_iteration)
+    {    initial_iteration=false;    }
+    
     return 1;
 }
 
+Eigen::VectorXd augmented_solver::calculate_weighting(const KDL::JntArray& q, std::vector<float> *limits_min, std::vector<float> *limits_max){
+    Eigen::VectorXd output = Eigen::VectorXd::Zero(jac.columns());
+    
+    std::vector<float>& limits_min_ = *limits_min;
+    std::vector<float>& limits_max_ = *limits_max;
+    
+    for(int i=0; i<jac.columns() ; i++) {
 
+        double dh = fabs(pow(limits_max_[i]/M_PI*180-limits_min_[i]/M_PI*180,2)*(2*q(i)/M_PI*180-limits_max_[i]/M_PI*180-limits_min_[i]/M_PI*180)/(4*pow(limits_max_[i]/M_PI*180-q(i)/M_PI*180,2)*pow(q(i)/M_PI*180-limits_min_[i]/M_PI*180,2)));
+
+        if(initial_iteration)
+        {    output(i)=1+dh;    }
+        else {
+            if(dh-last_dh(i)>=0)
+            {    output(i) = sqrt(1+dh);    }
+            else
+            {    output(i) = 1;    }
+        }
+        last_dh(i)=dh;
+    }
+
+    return output;
+}

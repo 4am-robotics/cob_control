@@ -93,6 +93,7 @@ private:
 	bool base_active_;
 	
 	KDL::Twist twist_odometry_;
+	bool firstDone;
 	
 	
 public:
