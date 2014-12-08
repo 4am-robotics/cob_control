@@ -66,7 +66,7 @@ void InputGenerator::initialize()
 		nh_identifier.getParam("rot_z",rot_z_);
 	}
 	
-	twist_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("command_twist", 1);
+	twist_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("/torso/twist_controller/command_twist", 1);
 	
 	ROS_INFO("...initialized input generator!");
 }
@@ -118,8 +118,6 @@ void InputGenerator::publish_twist(bool sendZero)
 		twist_msg.angular.x = rot_x_;
 		twist_msg.angular.y = rot_y_;
 		twist_msg.angular.z = rot_z_;
-		
-		pbrs_counter++;
 	}
 	twist_pub_.publish(twist_msg);
 }
