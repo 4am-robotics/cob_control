@@ -268,8 +268,6 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 	if(base_active_)
 	{
 		q_dot_ik.resize(chain_.getNrOfJoints()+3);
-
-		/// TODO: Endeffektorkoordinatensystem hat verdrehte Achsen ! Z und Y
 		try{
 			tf_listener_.waitForTransform("base_footprint",chain_tip_, ros::Time(0), ros::Duration(0.5));
 			tf_listener_.lookupTransform("base_footprint",chain_tip_,  ros::Time(0), transform_tip_basefootprint);
@@ -280,7 +278,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 		frame.p = KDL::Vector(transform_tip_basefootprint.getOrigin().x(), transform_tip_basefootprint.getOrigin().y(), transform_tip_basefootprint.getOrigin().z());
 		frame.M = KDL::Rotation::Quaternion(transform_tip_basefootprint.getRotation().x(), transform_tip_basefootprint.getRotation().y(), transform_tip_basefootprint.getRotation().z(), transform_tip_basefootprint.getRotation().w());
 		
-
+		
 		try{
 			tf_listener_.waitForTransform(chain_base_,"base_link", ros::Time(0), ros::Duration(0.5));
 			tf_listener_.lookupTransform(chain_base_,"base_link", ros::Time(0), transform_base_basefootprint);
