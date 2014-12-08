@@ -87,10 +87,10 @@ bool CobArticulation::initialize()
 	jerk_pub_ = nh_articulation.advertise<std_msgs::Float64> ("debug/linear_jerk", 1);
 	
 	ROS_WARN("Waiting for Services...");
-	success = ros::service::waitForService("start_tracking");
-	success = ros::service::waitForService("stop_tracking");
-	startTracking_ = nh_.serviceClient<cob_srvs::SetString>("start_tracking");
-	stopTracking_ = nh_.serviceClient<std_srvs::Empty>("stop_tracking");
+	success = ros::service::waitForService("/arm/start_tracking");
+	success = ros::service::waitForService("/arm/stop_tracking");
+	startTracking_ = nh_.serviceClient<cob_srvs::SetString>("/arm/start_tracking");
+	stopTracking_ = nh_.serviceClient<std_srvs::Empty>("/arm/stop_tracking");
 	ROS_INFO("...done!");
 	
 	if(success){
@@ -157,6 +157,7 @@ void CobArticulation::load()
 				else
 					justRotate=false;
 
+				actualTcpPose = getEndeffectorPose();
 				
 				// Transform RPY to Quaternion
 				q.setRPY(roll,pitch,yaw);

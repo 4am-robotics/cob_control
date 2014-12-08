@@ -16,7 +16,7 @@ def twistPub():
   
   global finished_timer
   
-  pub = rospy.Publisher("/arm_controller/command_twist", Twist, queue_size=1)
+  pub = rospy.Publisher("/arm/twist_controller/command_twist", Twist, queue_size=1)
   twist_msg =  Twist()
 
   twist_msg.linear.x = 0

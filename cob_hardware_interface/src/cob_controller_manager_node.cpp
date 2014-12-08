@@ -92,7 +92,8 @@ int main(int argc, char** argv)
   CobControllerManager* ccm = new CobControllerManager();
   ccm->initialize();
 
-  ros::waitForShutdown();  
+  ros::waitForShutdown();
+  delete ccm;
   return 0;
 }
 

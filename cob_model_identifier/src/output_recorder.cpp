@@ -888,7 +888,7 @@ void OutputRecorder::writeToMFile(std::string fileName,std::vector<double> *dot_
 	myfile << "figure; semilogy(e); grid;" << std::endl;
 
 
-	double step;
+	double step = 0.0;
 	for(int i = 0;i<dot_in->size()-1;i++){
 		step+=dot_in->at(i);
 	}

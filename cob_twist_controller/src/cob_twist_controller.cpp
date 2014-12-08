@@ -289,7 +289,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 		frame2.p = KDL::Vector(transform_base_basefootprint.getOrigin().x(), transform_base_basefootprint.getOrigin().y(), transform_base_basefootprint.getOrigin().z());
 		frame2.M = KDL::Rotation::Quaternion(transform_base_basefootprint.getRotation().x(), transform_base_basefootprint.getRotation().y(), transform_base_basefootprint.getRotation().z(), transform_base_basefootprint.getRotation().w());
 		
-		ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik,frame,frame2);
+		ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik,&limits_min_,&limits_max_,frame,frame2);
 	}
 	
 	if(base_compensation_)
@@ -299,7 +299,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 	
 	
 	if(!base_active_){
-		ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik);
+		ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik,&limits_min_,&limits_max_);
 	}
 	
 	if(ret_ik < 0)
@@ -317,17 +317,15 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 		for(unsigned int i=0; i<dof_; i++)
 		{
 			vel_msg.data.push_back(q_dot_ik(i));
-			ROS_WARN("DesiredVel %d: %f", i, q_dot_ik(i));
+			//ROS_WARN("DesiredVel %d: %f", i, q_dot_ik(i));
 		}
 		if(base_active_)
 		{
 			geometry_msgs::Twist base_vel_msg;
-			
 			base_vel_msg.linear.x = q_dot_ik(dof_);
 			base_vel_msg.linear.y = q_dot_ik(dof_+1);
 			base_vel_msg.angular.z = q_dot_ik(dof_+2);
 			
-			ROS_INFO("x: %f  y: %f  yaw: %f",base_vel_msg.linear.x,base_vel_msg.linear.y,base_vel_msg.angular.z);
 			base_vel_pub.publish(base_vel_msg);
 		}
 		vel_pub.publish(vel_msg);
@@ -399,6 +397,8 @@ void CobTwistController::jointstate_cb(const sensor_msgs::JointState::ConstPtr& 
 	}
 }
 
+
+///ToDo: Something is still not correct with the rotational Twist transformation!!!
 void CobTwistController::odometry_cb(const nav_msgs::Odometry::ConstPtr& msg)
 {
 	tf::StampedTransform transform_tf,transform_footprint_tip,transform_chain,transform_base_tip;
@@ -445,7 +445,6 @@ void CobTwistController::odometry_cb(const nav_msgs::Odometry::ConstPtr& msg)
 KDL::JntArray CobTwistController::normalize_velocities(KDL::JntArray q_dot_ik)
 {
 	KDL::JntArray q_dot_norm = q_dot_ik;
-
 	double max_factor = 1;
 	for(unsigned int i=0; i<dof_; i++)
 	{
@@ -494,6 +493,7 @@ KDL::JntArray CobTwistController::normalize_velocities(KDL::JntArray q_dot_ik)
 			q_dot_norm(dof_+2) = q_dot_ik(dof_+2)/max_factor;
 		}
 	}
+	
 	return q_dot_norm;
 }
 
