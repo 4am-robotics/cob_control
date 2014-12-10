@@ -278,6 +278,7 @@ int main(int argc, char** argv)
   ccma->initialize();
 
   ros::waitForShutdown();
+  delete ccma;
   return 0;
 }
 
