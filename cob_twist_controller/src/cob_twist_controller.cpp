@@ -269,8 +269,8 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 	{
 		q_dot_ik.resize(chain_.getNrOfJoints()+3);
 		try{
-			tf_listener_.waitForTransform("base_footprint",chain_tip_, ros::Time(0), ros::Duration(0.5));
-			tf_listener_.lookupTransform("base_footprint",chain_tip_,  ros::Time(0), transform_tip_basefootprint);
+			tf_listener_.waitForTransform("base_link",chain_tip_, ros::Time(0), ros::Duration(0.5));
+			tf_listener_.lookupTransform("base_link",chain_tip_,  ros::Time(0), transform_tip_basefootprint);
 		}catch (tf::TransformException ex){
 			ROS_ERROR("%s",ex.what());
 			return;

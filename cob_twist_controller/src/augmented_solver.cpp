@@ -32,59 +32,52 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
     
     if(params_.base_active)
     {
+		Eigen::Matrix<double, 3, 3> chain_base_rot,base_rot,tip_base_rot;
+		Eigen::Vector3d w_chain_base;
+		Eigen::Vector3d r_chain_base;
+		Eigen::Vector3d tangential_vel;
+		
         //Create standard platform jacobian
         jac_b.setZero();
         
-        // Get current x and y position from EE and chain_base with respect to base_footprint
+        // Get current x and y position from chain_tip to base_link
         x_ = base_position.p.x();
         y_ = base_position.p.y();
-
-		Eigen::Matrix<double, 3, 3> chain_base_rot,base_rot;
+		z_ = base_position.p.z();
+		Eigen::Vector3d r_base_link(x_,y_,z_);
 		
 		chain_base_rot << 	chain_base.M.data[0],chain_base.M.data[1],chain_base.M.data[2],
 							chain_base.M.data[3],chain_base.M.data[4],chain_base.M.data[5],
 							chain_base.M.data[6],chain_base.M.data[7],chain_base.M.data[8];
 							
-		std::cout <<"chain_base_rot: \n" << chain_base_rot << "\n";
+		// Transform from base_link to chain_base
+		Eigen::Vector3d w_base_link(0,0,params_.base_ratio);
+		w_chain_base = chain_base_rot*w_base_link;
+		r_chain_base = chain_base_rot*r_base_link;
 		
-		
-		// Transform Wz from base_link to chain_base
-		Eigen::Vector3d w_chain_base;
-		Eigen::Vector3d w_base(0,0,params_.base_ratio);
-		w_chain_base = chain_base_rot * w_base;
-		
-		// Calculate tangential velocity
-		Eigen::Vector3d x_tangential_vel,y_tangential_vel,z_tangential_vel;
-		Eigen::Vector3d x_chain_base(chain_base.M.data[0],chain_base.M.data[3],chain_base.M.data[6]);
-		Eigen::Vector3d y_chain_base(chain_base.M.data[1],chain_base.M.data[4],chain_base.M.data[7]);
-		/// Special case, If a base rotation causes a z linear velocity when the torso is bent.
-		Eigen::Vector3d z_chain_base(chain_base.M.data[2],chain_base.M.data[5],chain_base.M.data[8]);
-		
-		
-		x_tangential_vel = x_chain_base.cross(w_chain_base);
-		y_tangential_vel = y_chain_base.cross(w_chain_base);
-		z_tangential_vel = z_chain_base.cross(w_chain_base);
+		//Calculate tangential velocity
+		tangential_vel = w_chain_base.cross(r_chain_base);
 		
 		 //Vx-Base <==> q8 effects a change in the following chain_base Vx velocities
-		jac_b(0,0) = params_.base_ratio*chain_base_rot(0,0);   
+		jac_b(0,0) = params_.base_ratio*chain_base_rot(0,0);
 		jac_b(0,1) = params_.base_ratio*chain_base_rot(0,1);
-		jac_b(0,2) = x_tangential_vel(0) + y_tangential_vel(0) + z_tangential_vel(0);
-
+		jac_b(0,2) = tangential_vel(0);
+		
 		// Vy-Base <==> q9 effects a change in the following chain_base Vy velocities
-		jac_b(1,0) = params_.base_ratio*chain_base_rot(1,0);   
+		jac_b(1,0) = params_.base_ratio*chain_base_rot(1,0);
 		jac_b(1,1) = params_.base_ratio*chain_base_rot(1,1);
-		jac_b(1,2) = x_tangential_vel(1) + y_tangential_vel(1) + z_tangential_vel(1);
-        
-        // Vz-Base <==>  effects a change in the following chain_base Vz velocities
-		jac_b(2,0) = params_.base_ratio*chain_base_rot(2,0);   
+		jac_b(1,2) = tangential_vel(1);
+		
+		// Vz-Base <==>  effects a change in the following chain_base Vz velocities
+		jac_b(2,0) = params_.base_ratio*chain_base_rot(2,0);
 		jac_b(2,1) = params_.base_ratio*chain_base_rot(2,1);
-		jac_b(2,2) = x_tangential_vel(2) + y_tangential_vel(2) + z_tangential_vel(2);
+		jac_b(2,2) = tangential_vel(2);
 		
 		//Phi <==> Wz with respect to base_link
 		jac_b(3,2) = w_chain_base(0);
 		jac_b(4,2) = w_chain_base(1);
 		jac_b(5,2) = w_chain_base(2);
-
+		
         //combine chain Jacobian and platform Jacobian
         Eigen::Matrix<double, 6, Eigen::Dynamic> jac_full;
         jac_full.resize(6,chain.getNrOfJoints() + jac_b.cols());
@@ -108,7 +101,6 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
     
     Eigen::JacobiSVD<Eigen::MatrixXd> svd(jac.data,Eigen::ComputeFullU | Eigen::ComputeFullV);
     Eigen::VectorXd S = svd.singularValues();
-    
     double damping_factor = 0.0;
     if (params_.damping_method == MANIPULABILITY)
     {
@@ -202,13 +194,17 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
 	Eigen::MatrixXd W12 = augmented_solver::calculate_weighting(q_in, limits_min, limits_max).asDiagonal();
     Eigen::MatrixXd Jw = jac.data*W12.inverse();
     
+    //std::cout << "Weightening Vector: \n" << W12 << "\n";
     ///// formula from book (2.3.19)
     ////reults in oscillation without task constraints and damping close to 0.0 (when far from singularity)?
     //Eigen::MatrixXd tmp = (jac.data.transpose()*We*jac.data+Jc.transpose()*Wc*Jc+Wv).inverse();
     //qdot_out_vec= tmp*(jac.data.transpose()*We*v_in_vec);
     
     Eigen::MatrixXd tmp = (Jw.transpose()*Jw+Wv)*W12;
+
     qdot_out_vec=tmp.fullPivHouseholderQr().solve(Jw.transpose()*v_in_vec);
+    //std::cout << "qdot_out_vec: \n" << qdot_out_vec << "\n";
+    
     //qdot_out_vec= tmp.inverse()*(jac.data.transpose()*We*v_in_vec);
     /// formula from book (2.3.14)
     //additional task constraints can not be considered
