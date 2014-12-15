@@ -2,6 +2,11 @@
 Changelog for package cob_trajectory_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fixed preemtion state in run method - trajectory eecution should be stopped if the action is in preemption state
+* Contributors: Benjamin Maidel
+
 0.6.1 (2014-09-22)
 ------------------
 

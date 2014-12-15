@@ -2,6 +2,17 @@
 Changelog for package cob_path_broadcaster
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'indigo_dev' into indigo_release_candidate
+* few more changes after testing new structure
+* cleaning up
+* merge_cm
+* temporary commit
+* Cleaned up and fixed some functions
+* Cleaned up and fixed some functions
+* Contributors: Florian Weisshardt, ipa-fxm, ipa-fxm-cm
+
 0.6.1 (2014-09-22)
 ------------------
 

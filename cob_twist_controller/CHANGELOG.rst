@@ -2,6 +2,46 @@
 Changelog for package cob_twist_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'indigo_dev' into indigo_release_candidate
+* fix twist_control dimensions for any-DoF
+* merge with fxm-cm
+* merge with fxm-fm
+* cleaning up
+* branch with features for merging
+* topics according to new structure
+* remove brics_actuator
+* more topic renaming according to new structure
+* renaming debug topic
+* adapt namespaces for cartesian_controller to new structure
+* dynamic reconfigure
+* revision of cob_twist_controller
+* merge_cm
+* merge_fm
+* temporary commit
+* temporary commit
+* changes in initialization
+* restructure test_twist publisher scripts
+* fix twist_controller to be usable without base again
+* able to add base DoFs to Jacobian solver - first tests - needs more debugging
+* null-space syncMM
+* add test script for twist_stamped
+* able to apply twists wrt to various coordinate system orientations
+* cleanup, restructure and fix
+* missing include
+* merge with fxm-fm + clean up
+* add twist publisher script
+* add output publisher
+* cleaning up
+* beautify
+* Add fixes provided by @ipa-fxm-fm
+* fix controller and add damping
+* add twist publisher script
+* add output publisher
+* Add fixes provided by @ipa-fxm-fm
+* Contributors: Florian Weisshardt, ipa-fxm, ipa-fxm-cm, ipa-fxm-fm
+
 0.6.1 (2014-09-22)
 ------------------
 

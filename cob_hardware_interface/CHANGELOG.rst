@@ -2,6 +2,11 @@
 Changelog for package cob_hardware_interface
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fix cppcheck errors
+* Contributors: Florian Weisshardt
+
 0.6.1 (2014-09-22)
 ------------------
 

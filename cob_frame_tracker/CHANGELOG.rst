@@ -2,6 +2,18 @@
 Changelog for package cob_frame_tracker
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* adapt namespaces for cartesian_controller to new structure
+* merge_cm
+* temporary commit
+* changes in initialization
+* temporarily revert to non-feedforward pid_controllers
+* null-space syncMM
+* Add PID for each translatorial Axes
+* Add PID for each translatorial Axes
+* Contributors: ipa-fxm, ipa-fxm-cm
+
 0.6.1 (2014-09-22)
 ------------------
 
