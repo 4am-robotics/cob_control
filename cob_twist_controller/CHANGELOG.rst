@@ -2,8 +2,8 @@
 Changelog for package cob_twist_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.2 (2014-12-15)
+------------------
 * Merge branch 'indigo_dev' into indigo_release_candidate
 * fix twist_control dimensions for any-DoF
 * merge with fxm-cm

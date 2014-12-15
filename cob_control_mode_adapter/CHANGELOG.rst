@@ -2,8 +2,8 @@
 Changelog for package cob_control_mode_adapter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.2 (2014-12-15)
+------------------
 * Merge branch 'indigo_dev' into indigo_release_candidate
 * fix cppcheck errors
 * set default timeout for switching back to JTC to 0.3sec

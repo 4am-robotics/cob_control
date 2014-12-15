@@ -2,8 +2,8 @@
 Changelog for package cob_model_identifier
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.2 (2014-12-15)
+------------------
 * fix cppcheck errors
 * few more changes after testing new structure
 * merge with fxm-cm
