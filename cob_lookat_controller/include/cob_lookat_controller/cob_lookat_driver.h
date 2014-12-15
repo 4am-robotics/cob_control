@@ -30,7 +30,7 @@
 
 #include <ros/ros.h>
 
-#include <brics_actuator/JointVelocities.h>
+#include <std_msgs/Float64MultiArray.h>
 #include <sensor_msgs/JointState.h>
 
 class CobLookatDriver
@@ -39,12 +39,12 @@ public:
 	CobLookatDriver() {;}
 	~CobLookatDriver();
 	
-	void initialize();
+	bool initialize();
 	void run();
 	
 	void update_state();
 	void publish_state();
-	void command_vel_cb(const brics_actuator::JointVelocities::ConstPtr& msg);
+	void command_vel_cb(const std_msgs::Float64MultiArray::ConstPtr& msg);
 	
 	
 	ros::NodeHandle nh_;
@@ -61,7 +61,6 @@ public:
 	
 	ros::Subscriber command_vel_sub_;
 	ros::Publisher jointstate_pub_;
-	ros::Publisher debug_jointstate_pub_;
 };
 
 #endif

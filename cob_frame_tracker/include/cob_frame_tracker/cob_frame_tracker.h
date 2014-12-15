@@ -47,7 +47,7 @@ public:
 	CobFrameTracker() {;}
 	~CobFrameTracker();
 	
-	void initialize();
+	bool initialize();
 	void run();
 	
 	void publish_twist(ros::Duration period);
@@ -73,7 +73,10 @@ private:
 	bool movable_trans_;
 	bool movable_rot_;
 	
-	control_toolbox::Pid pid_controller_trans_;       /**< Internal PID controller. */
+	control_toolbox::Pid pid_controller_trans_x_;       /**< Internal PID controller. */
+	control_toolbox::Pid pid_controller_trans_y_;
+	control_toolbox::Pid pid_controller_trans_z_;
+	
 	control_toolbox::Pid pid_controller_rot_;         /**< Internal PID controller. */
 };
 

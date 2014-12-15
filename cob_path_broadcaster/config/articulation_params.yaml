@@ -1,4 +1,4 @@
-path: "/home/fxm-cm_local/catkin_ws/src/cob_control/cob_path_broadcaster/movement/move.prog"
+file_name: "move.prog"
 update_rate: 68
 reference_frame: "world" 
 target_frame: "br"

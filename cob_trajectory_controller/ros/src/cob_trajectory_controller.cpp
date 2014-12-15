@@ -412,6 +412,8 @@ public:
                 //as_follow_.setAborted()
                 failure_ = true;
                 preemted_ = true;
+                executing_ = false;
+                traj_generator_->isMoving = false;
                 ROS_INFO("Preempted trajectory action");
                 return;
             }

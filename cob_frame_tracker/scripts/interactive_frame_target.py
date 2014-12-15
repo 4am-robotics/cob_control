@@ -19,35 +19,39 @@ from interactive_markers.menu_handler import *
 
 class InteractiveFrameTarget:
 	def __init__(self):
+		self.br = tf.TransformBroadcaster()
+		self.listener = tf.TransformListener()
+		
 		#get this from the frame_tracker parameters
-		if rospy.has_param('active_frame'):
-			self.active_frame = rospy.get_param("active_frame")
+		if rospy.has_param('cartesian_controller/active_frame'):
+			self.active_frame = rospy.get_param("cartesian_controller/active_frame")
 		else:
 			rospy.logerr("No active_frame specified. Aborting!")
 			sys.exit()
-		if rospy.has_param('tracking_frame'):
-			self.tracking_frame = rospy.get_param("tracking_frame")
+		if rospy.has_param('cartesian_controller/tracking_frame'):
+			self.tracking_frame = rospy.get_param("cartesian_controller/tracking_frame")
 		else:
 			rospy.logerr("No tracking_frame specified. Aborting!")
 			sys.exit()
-		if rospy.has_param('root_frame'):
-			self.root_frame = rospy.get_param("root_frame")
+		if rospy.has_param('cartesian_controller/root_frame'):
+			self.root_frame = rospy.get_param("cartesian_controller/root_frame")
 		else:
 			rospy.logerr("No root_frame specified. Setting to 'base_link'!")
 			self.root_frame = "base_link"
 		
-		if rospy.has_param('movable_trans'):
-			self.movable_trans = rospy.get_param("movable_trans")
+		if rospy.has_param('cartesian_controller/movable_trans'):
+			self.movable_trans = rospy.get_param("cartesian_controller/movable_trans")
 		else:
 			rospy.logerr("No movable_trans specified. Setting True!")
 			self.movable_trans = True
-		if rospy.has_param('movable_rot'):
-			self.movable_rot = rospy.get_param("movable_rot")
+		if rospy.has_param('cartesian_controller/movable_rot'):
+			self.movable_rot = rospy.get_param("cartesian_controller/movable_rot")
 		else:
 			rospy.logerr("No movable_rot specified. Setting True!")
 			self.movable_rot = True
 		
 		
+		self.tracking = False
 		print "Waiting for StartTrackingServer..."
 		rospy.wait_for_service('start_tracking')
 		print "...done!"
@@ -58,21 +62,21 @@ class InteractiveFrameTarget:
 		print "...done!"
 		self.stop_tracking_client = rospy.ServiceProxy('stop_tracking', Empty)
 		
-		self.tracking = False
 		
 		self.target_pose = PoseStamped()
 		self.target_pose.header.stamp = rospy.Time.now()
 		self.target_pose.header.frame_id = self.root_frame
 		self.target_pose.pose.orientation.w = 1.0
-		self.br = tf.TransformBroadcaster()
-		self.listener = tf.TransformListener()
+		
+		##give tf_listener some time to fill cache
+		#rospy.sleep(1.0)	#1.0 sec
 		
 		transform_available = False
 		while not transform_available:
 			try:
 				(trans,rot) = self.listener.lookupTransform(self.root_frame, self.active_frame, rospy.Time(0))
 			except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-				rospy.logwarn("Waiting for transform...")
+				#rospy.logwarn("Waiting for transform...")
 				rospy.sleep(0.1)
 				continue
 			transform_available = True
