@@ -42,7 +42,7 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& 
 		double d = prod.determinant();
 		double kappa = std::sqrt(d);
 		
-
+		double base_ratio=params_.base_ratio;
 			//if(kappa < 0.2){
 				//base_ratio = (1-kappa*10);
 			//}else{
@@ -264,7 +264,7 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& 
     ///convert output
     for(int i=0; i<jac.columns(); i++)
     {    qdot_out(i)=qdot_out_vec_enforced(i);    }
-    }
+    
     
     if(DEBUG)
     {
@@ -343,7 +343,7 @@ Eigen::VectorXd augmented_solver::enforce_limits(const KDL::JntArray& q, Eigen::
         if(i<chain.getNrOfJoints()) {
             if((*limits_max)[i]-q(i)<tolerance) {        //Joint is nearer to the maximum limit
                 if((*qdot_out)(i)>0)                     //Joint moves towards the limit
-                    {    output(i)=(*qdot_out)(i)*pow((0.5+0.5*cos(M_PI*(q(i)+tolerance-(*limits_max)[i])/tolerance)),2);    ]
+                    {    output(i)=(*qdot_out)(i)*pow((0.5+0.5*cos(M_PI*(q(i)+tolerance-(*limits_max)[i])/tolerance)),2);    }
                 else
                     {    output(i)=(*qdot_out)(i);    }
             }
