@@ -32,59 +32,79 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& 
     
     if(params_.base_active)
     {
+		Eigen::Matrix<double, 3, 3> chain_base_rot,base_rot,tip_base_rot;
+		Eigen::Vector3d w_chain_base;
+		Eigen::Vector3d r_chain_base;
+		Eigen::Vector3d tangential_vel;
+		Eigen::MatrixXd W_base_ratio = Eigen::MatrixXd::Identity(jac.columns(), jac.columns());
+		
+		Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> prod = jac.data * jac.data.transpose();
+		double d = prod.determinant();
+		double kappa = std::sqrt(d);
+		
+
+			//if(kappa < 0.2){
+				//base_ratio = (1-kappa*10);
+			//}else{
+				//base_ratio = 0;
+			//}
+			//std::cout << "\n base_ratio: " << base_ratio << "\n";
+
+		
         //Create standard platform jacobian
         jac_b.setZero();
         
         // Get current x and y position from EE and chain_base with respect to base_footprint
         x_ = base_position.p.x();
         y_ = base_position.p.y();
-
-        Eigen::Matrix<double, 3, 3> chain_base_rot,base_rot;
-        
-        chain_base_rot <<     chain_base.M.data[0],chain_base.M.data[1],chain_base.M.data[2],
-                            chain_base.M.data[3],chain_base.M.data[4],chain_base.M.data[5],
-                            chain_base.M.data[6],chain_base.M.data[7],chain_base.M.data[8];
-                            
-        std::cout <<"chain_base_rot: \n" << chain_base_rot << "\n";
-        
-        
-        // Transform Wz from base_link to chain_base
-        Eigen::Vector3d w_chain_base;
-        Eigen::Vector3d w_base(0,0,params_.base_ratio);
-        w_chain_base = chain_base_rot * w_base;
-        
-        // Calculate tangential velocity
-        Eigen::Vector3d x_tangential_vel,y_tangential_vel,z_tangential_vel;
-        Eigen::Vector3d x_chain_base(chain_base.M.data[0],chain_base.M.data[3],chain_base.M.data[6]);
-        Eigen::Vector3d y_chain_base(chain_base.M.data[1],chain_base.M.data[4],chain_base.M.data[7]);
-        /// Special case, If a base rotation causes a z linear velocity when the torso is bent.
-        Eigen::Vector3d z_chain_base(chain_base.M.data[2],chain_base.M.data[5],chain_base.M.data[8]);
-        
-        
-        x_tangential_vel = x_chain_base.cross(w_chain_base);
-        y_tangential_vel = y_chain_base.cross(w_chain_base);
-        z_tangential_vel = z_chain_base.cross(w_chain_base);
-        
-         //Vx-Base <==> q8 effects a change in the following chain_base Vx velocities
-        jac_b(0,0) = params_.base_ratio*chain_base_rot(0,0);   
-        jac_b(0,1) = params_.base_ratio*chain_base_rot(0,1);
-        jac_b(0,2) = x_tangential_vel(0) + y_tangential_vel(0) + z_tangential_vel(0);
-
-        // Vy-Base <==> q9 effects a change in the following chain_base Vy velocities
-        jac_b(1,0) = params_.base_ratio*chain_base_rot(1,0);   
-        jac_b(1,1) = params_.base_ratio*chain_base_rot(1,1);
-        jac_b(1,2) = x_tangential_vel(1) + y_tangential_vel(1) + z_tangential_vel(1);
-        
-        // Vz-Base <==>  effects a change in the following chain_base Vz velocities
-        jac_b(2,0) = params_.base_ratio*chain_base_rot(2,0);   
-        jac_b(2,1) = params_.base_ratio*chain_base_rot(2,1);
-        jac_b(2,2) = x_tangential_vel(2) + y_tangential_vel(2) + z_tangential_vel(2);
-        
-        //Phi <==> Wz with respect to base_link
-        jac_b(3,2) = w_chain_base(0);
-        jac_b(4,2) = w_chain_base(1);
-        jac_b(5,2) = w_chain_base(2);
-
+		z_ = base_position.p.z();
+		Eigen::Vector3d r_base_link(x_,y_,z_);
+		
+		chain_base_rot << 	chain_base.M.data[0],chain_base.M.data[1],chain_base.M.data[2],
+							chain_base.M.data[3],chain_base.M.data[4],chain_base.M.data[5],
+							chain_base.M.data[6],chain_base.M.data[7],chain_base.M.data[8];
+							
+		//std::cout << "chain_base_rot:\n " << chain_base_rot << "\n";
+		//W_base_ratio(0,0) = (1-params_.base_ratio)*chain_base.M.data[0];
+		//W_base_ratio(0,1) = (1-params_.base_ratio)*chain_base.M.data[1];
+		//
+		//W_base_ratio(1,0) = (1-params_.base_ratio)*chain_base.M.data[3];
+		//W_base_ratio(1,1) = (1-params_.base_ratio)*chain_base.M.data[4];
+		//
+		//W_base_ratio(2,0) = (1-params_.base_ratio)*chain_base.M.data[6];
+		//W_base_ratio(2,1) = (1-params_.base_ratio)*chain_base.M.data[7];
+		//
+		//jac.data = jac.data * W_base_ratio.transpose();
+							
+		// Transform from base_link to chain_base
+		//Eigen::Vector3d w_base_link(0,0,base_ratio);
+		Eigen::Vector3d w_base_link(0,0,1);
+		w_chain_base = chain_base_rot*w_base_link;
+		r_chain_base = chain_base_rot*r_base_link;
+		
+		//Calculate tangential velocity
+		tangential_vel = w_chain_base.cross(r_chain_base);
+		
+		 //Vx-Base <==> q8 effects a change in the following chain_base Vx velocities
+		jac_b(0,0) = base_ratio*chain_base_rot(0,0);
+		jac_b(0,1) = base_ratio*chain_base_rot(0,1);
+		jac_b(0,2) = tangential_vel(0);
+		
+		// Vy-Base <==> q9 effects a change in the following chain_base Vy velocities
+		jac_b(1,0) = base_ratio*chain_base_rot(1,0);
+		jac_b(1,1) = base_ratio*chain_base_rot(1,1);
+		jac_b(1,2) = tangential_vel(1);
+		
+		// Vz-Base <==>  effects a change in the following chain_base Vz velocities
+		jac_b(2,0) = base_ratio*chain_base_rot(2,0);
+		jac_b(2,1) = base_ratio*chain_base_rot(2,1);
+		jac_b(2,2) = tangential_vel(2);
+		
+		//Phi <==> Wz with respect to base_link
+		jac_b(3,2) = w_chain_base(0);
+		jac_b(4,2) = w_chain_base(1);
+		jac_b(5,2) = w_chain_base(2);
+		
         //combine chain Jacobian and platform Jacobian
         Eigen::Matrix<double, 6, Eigen::Dynamic> jac_full;
         jac_full.resize(6,chain.getNrOfJoints() + jac_b.cols());

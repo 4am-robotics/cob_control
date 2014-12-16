@@ -272,11 +272,9 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 	if(base_active_)
 	{
 		q_dot_ik.resize(chain_.getNrOfJoints()+3);
-
-		/// TODO: Endeffektorkoordinatensystem hat verdrehte Achsen ! Z und Y
 		try{
-			tf_listener_.waitForTransform("base_footprint",chain_tip_, ros::Time(0), ros::Duration(0.5));
-			tf_listener_.lookupTransform("base_footprint",chain_tip_,  ros::Time(0), transform_tip_basefootprint);
+			tf_listener_.waitForTransform("base_link",chain_tip_, ros::Time(0), ros::Duration(0.5));
+			tf_listener_.lookupTransform("base_link",chain_tip_,  ros::Time(0), transform_tip_basefootprint);
 		}catch (tf::TransformException ex){
 			ROS_ERROR("%s",ex.what());
 			return;
@@ -284,7 +282,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 		frame.p = KDL::Vector(transform_tip_basefootprint.getOrigin().x(), transform_tip_basefootprint.getOrigin().y(), transform_tip_basefootprint.getOrigin().z());
 		frame.M = KDL::Rotation::Quaternion(transform_tip_basefootprint.getRotation().x(), transform_tip_basefootprint.getRotation().y(), transform_tip_basefootprint.getRotation().z(), transform_tip_basefootprint.getRotation().w());
 		
-
+		
 		try{
 			tf_listener_.waitForTransform(chain_base_,"base_link", ros::Time(0), ros::Duration(0.5));
 			tf_listener_.lookupTransform(chain_base_,"base_link", ros::Time(0), transform_base_basefootprint);
@@ -300,7 +298,27 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 	
 	if(base_compensation_)
 	{
+										// in chain base
 		twist = getBaseCompensatedTwist(twist,twist_odometry_);
+			/// DEBUUUUUUUUUUUUUUUUUG
+		KDL::Frame frame3;
+		tf::StampedTransform tf_debug;
+		try{
+			tf_listener_.waitForTransform("base_link",chain_base_, ros::Time(0), ros::Duration(0.5));
+			tf_listener_.lookupTransform("base_link",chain_base_, ros::Time(0), tf_debug);
+		}catch (tf::TransformException ex){
+			ROS_ERROR("%s",ex.what());
+			return;
+		}
+		frame3.p = KDL::Vector(tf_debug.getOrigin().x(), tf_debug.getOrigin().y(), tf_debug.getOrigin().z());
+		frame3.M = KDL::Rotation::Quaternion(tf_debug.getRotation().x(), tf_debug.getRotation().y(), tf_debug.getRotation().z(), tf_debug.getRotation().w());
+		
+		
+		
+		geometry_msgs::Twist twist_manipulator_in_base_link;
+		tf::twistKDLToMsg(frame3*twist,twist_manipulator_in_base_link);
+		twist_real_pub_.publish(twist_manipulator_in_base_link);	// Base_link
+		
 	}
 	
 	
@@ -335,7 +353,6 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 			base_vel_pub.publish(base_vel_msg);
 		}
 		vel_pub.publish(vel_msg);
-		
 		
 		/////---------------------------------------------------------------------
 		///// Normalized q_dot into Twist
@@ -415,11 +432,11 @@ void CobTwistController::odometry_cb(const nav_msgs::Odometry::ConstPtr& msg)
 	double roll,pitch,yaw;
 	
 	try{
-		tf_listener_.waitForTransform(chain_base_,"base_footprint", ros::Time(0), ros::Duration(0.5));
-		tf_listener_.lookupTransform(chain_base_,"base_footprint", ros::Time(0), transform_tf);
+		tf_listener_.waitForTransform(chain_base_,"base_link", ros::Time(0), ros::Duration(0.5));
+		tf_listener_.lookupTransform(chain_base_,"base_link", ros::Time(0), transform_tf);
 		
-		tf_listener_.waitForTransform("base_footprint",chain_tip_, ros::Time(0), ros::Duration(0.5));
-		tf_listener_.lookupTransform("base_footprint",chain_tip_, ros::Time(0), transform_footprint_tip);
+		tf_listener_.waitForTransform("base_link",chain_tip_, ros::Time(0), ros::Duration(0.5));
+		tf_listener_.lookupTransform("base_link",chain_tip_, ros::Time(0), transform_footprint_tip);
 		
 		frame.p = KDL::Vector(transform_tf.getOrigin().x(), transform_tf.getOrigin().y(), transform_tf.getOrigin().z());
 		frame.M = KDL::Rotation::Quaternion(transform_tf.getRotation().x(), transform_tf.getRotation().y(), transform_tf.getRotation().z(), transform_tf.getRotation().w());
@@ -439,6 +456,7 @@ void CobTwistController::odometry_cb(const nav_msgs::Odometry::ConstPtr& msg)
 	
 	tf::twistMsgToKDL(msg->twist.twist, twist_odometry);	// Base Twist
 	
+	// transform into chain_base
 	twist_odometry_transformed = frame * (twist_odometry+tangential_twist);
 	
 	twist_odometry_ = twist_odometry_transformed;
@@ -465,32 +483,32 @@ KDL::JntArray CobTwistController::normalize_velocities(KDL::JntArray q_dot_ik)
 	if(base_active_)
 	{
 		//TEST: limit base_velocities
-		double max_trans_velocity = 0.5;
+		double max_trans_velocity = 1;
 		double max_rot_velocity = 0.5;
 		if(max_factor < std::fabs((q_dot_ik(dof_)/max_trans_velocity)))
 		{
 			max_factor = std::fabs((q_dot_ik(dof_)/max_trans_velocity));
-			ROS_WARN("BaseTransX exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_), max_trans_velocity, max_factor);
+			//ROS_WARN("BaseTransX exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_), max_trans_velocity, max_factor);
 		}
 		if(max_factor < std::fabs((q_dot_ik(dof_+1)/max_trans_velocity)))
 		{
 			max_factor = std::fabs((q_dot_ik(dof_+1)/max_trans_velocity));
-			ROS_WARN("BaseTransY exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+1), max_trans_velocity, max_factor);
+			//ROS_WARN("BaseTransY exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+1), max_trans_velocity, max_factor);
 		}
 		if(max_factor < std::fabs((q_dot_ik(dof_+2)/max_rot_velocity)))
 		{
 			max_factor = std::fabs((q_dot_ik(dof_+2)/max_rot_velocity));
-			ROS_WARN("BaseRotZ exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+2), max_rot_velocity, max_factor);
+			//ROS_WARN("BaseRotZ exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+2), max_rot_velocity, max_factor);
 		}
 	}
 	
 	if(max_factor > 1)
 	{
-		ROS_INFO("Normalizing velocities!");
+		//ROS_INFO("Normalizing velocities!");
 		for(unsigned int i=0; i<dof_; i++)
 		{
 			q_dot_norm(i) = q_dot_ik(i)/max_factor;
-			ROS_WARN("Joint %d Normalized %f", i, q_dot_norm(i));
+			//ROS_WARN("Joint %d Normalized %f", i, q_dot_norm(i));
 		}
 		
 		if(base_active_){
