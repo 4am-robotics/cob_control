@@ -87,17 +87,11 @@ bool CobArticulation::initialize()
 	jerk_pub_ = nh_articulation.advertise<std_msgs::Float64> ("debug/linear_jerk", 1);
 	
 	ROS_WARN("Waiting for Services...");
-<<<<<<< Updated upstream
-	success = ros::service::waitForService("/arm/start_tracking");
-	success = ros::service::waitForService("/arm/stop_tracking");
-	startTracking_ = nh_.serviceClient<cob_srvs::SetString>("/arm/start_tracking");
-	stopTracking_ = nh_.serviceClient<std_srvs::Empty>("/arm/stop_tracking");
-=======
+
 	success = ros::service::waitForService("/arm_left/start_tracking");
 	success = ros::service::waitForService("/arm_left/stop_tracking");
 	startTracking_ = nh_.serviceClient<cob_srvs::SetString>("/arm_left/start_tracking");
 	stopTracking_ = nh_.serviceClient<std_srvs::Empty>("/arm_left/stop_tracking");
->>>>>>> Stashed changes
 	ROS_INFO("...done!");
 	
 	if(success){
@@ -503,7 +497,7 @@ void CobArticulation::circular_interpolation(	std::vector<geometry_msgs::Pose>* 
 		// Rotate T
 		T.setOrigin(tf::Vector3(cos(pathArray.at(i))*r,0,sin(pathArray.at(i))*r));
 		
-		if(endAngle<startAngle){
+		if(forward){
 				T.setOrigin(tf::Vector3(cos(pathArray.at(i))*r,0,sin(pathArray.at(i))*r));
 				q.setRPY(0,-pathArray.at(i),0);
 		}else{
