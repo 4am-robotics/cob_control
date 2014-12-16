@@ -1,0 +1,11 @@
+# Define the goal
+string tracking_frame
+int32 tracking_time
+bool reachable_goal
+---
+# Define the result
+bool success
+---
+# Define a feedback message
+geometry_msgs/Twist twist
+float64 distance

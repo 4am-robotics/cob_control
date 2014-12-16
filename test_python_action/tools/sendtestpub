@@ -1,0 +1,6 @@
+#!/bin/bash
+echo sourcing ...
+source ~/.bashrc
+echo send TestAction ...
+
+rostopic pub -r 10 /saft std_msgs/Int32 '{data: 34}'

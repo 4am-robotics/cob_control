@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ros:Package xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ros="http://ros/1.0" xmlns:smach="http://smach/1.0" name="cob_test_action_behaviour" author="ipa-fmw-ce" author_email="ipa-fmw-ce@todo.todo" description="The cob_test_action_behaviour package" license="TODO">
+  <node xsi:type="smach:SMACHStateMachine" name="cob_action_behaviour">
+    <actionclient xsi:type="smach:ActionState" name="TriggerTracker" ActionType="cob_test_action::Trigger" goal="TriggerTracker" goal_type="userdata_goal"/>
+    <transitions Source="//@node.0/@initialStates.0" Target="//@node.0/@actionclient.0"/>
+    <transitions Source="//@node.0/@actionclient.0" Target="//@node.0/@finalStates.0"/>
+    <finalStates goal="" goal_type="userdata_goal"/>
+    <initialStates goal="" goal_type="userdata_goal"/>
+  </node>
+  <depend>cob_test_action</depend>
+</ros:Package>

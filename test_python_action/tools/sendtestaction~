@@ -1,0 +1,6 @@
+#!/bin/bash
+echo sourcing ...
+source ~/.bashrc
+echo send TestAction ...
+
+rostopic pub -1 /test/goal test_python_action/TrackingActionGoal '{tracking: true}'

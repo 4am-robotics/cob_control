@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+<!-- protected region additional custom Launchfile statements in the beginning on begin -->
+<!-- protected region additional custom Launchfile statements in the beginning end -->
+
+	<rosparam command="load" ns="TriggerTracker" file="$(find cob_test_action_behaviour)/config/TriggerTracker_goal.yaml"/>
+
+</launch>

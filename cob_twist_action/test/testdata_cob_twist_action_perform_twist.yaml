@@ -1,0 +1,11 @@
+#Generated once for configuration of goals
+#Config testdata_cob_twist_action_perform_twist.yaml
+twist_goal:
+  linear:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+  angular:
+    x: 0.0
+    y: 0.0
+    z: 0.0

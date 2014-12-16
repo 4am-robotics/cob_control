@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+	
+	<param name="/use_sim_time" value="false"/>
+	<arg name="robot" default="$(optenv ROBOT !!NO_ROBOT_SET!!)"/>
+	<arg name="robot_env" default="$(optenv ROBOT_ENV !!NO_ROBOT_ENV_SET!!)"/>
+	<arg name="pkg_env_config" default="$(find cob_default_env_config)"/>
+
+	<!-- start cob_twist_action -->
+	
+	<node ns="/torso" pkg="cob_twist_action" type="cob_twist_action" name="twist_action_node" args="twist_command:=/torso/twist_controller/command_twist joint_state_reader:=/torso/joint_states" respawn="false" output="screen"/>
+	
+	<remap from="/torso/twist_controller/command_twist" to="/saft"/>
+</launch>

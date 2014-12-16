@@ -1,0 +1,7 @@
+#!/bin/bash
+echo sourcing ...
+source ~/.bashrc
+echo send TestAction ...
+
+rostopic pub -1 /torso/perform_twist/cancel actionlib_msgs/GoalID '{stamp: , id: NULL}'
+rostopic pub -1 /torso/perform_twist/cancel actionlib_msgs/GoalID "{}"

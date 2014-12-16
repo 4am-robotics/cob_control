@@ -1,0 +1,6 @@
+#!/bin/bash
+echo sourcing ...
+source ~/.bashrc
+echo send TestAction ...
+
+rostopic pub /torso/perform_twist/goal cob_twist_action/TwistActionGoal '{header: {stamp: now, frame_id: /test_twist_frame}, goal_id: {stamp: now, id: /goal_id_test}, goal: {tracking: true}}'
