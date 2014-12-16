@@ -109,6 +109,7 @@ void OutputPublisher::initialize()
 	manipulability_pub_ = nh_twist.advertise<std_msgs::Float64> ("debug/manipulability", 1);
 	//rcond_pub_ = nh_twist.advertise<std_msgs::Float64> ("debug/rcond", 1);
     last_sing_pub_ = nh_twist.advertise<std_msgs::Float64> ("debug/last_sing_value", 1);
+    pose_pub_ = nh_twist.advertise<geometry_msgs::Pose> ("debug/pose", 1);
 	
 	ROS_INFO("...initialized!");
 }
@@ -194,6 +195,7 @@ void OutputPublisher::run()
 		end_effector_pos_msg.angular.z = z_dot_rot_integrated.back();
 		
 		end_eff_pos_pub_.publish(end_effector_pos_msg);
+		pose_pub_.publish(OutputPublisher::getPose());
 		
 		if(iterations > 2){
 			dt_ += period.toSec();
@@ -333,7 +335,6 @@ geometry_msgs::Pose OutputPublisher::getEndeffectorPose()
 	tf::StampedTransform stampedTransform;
 	bool transformed=false;
 
-
 	// Get transformation
 	try{
 	listener_.waitForTransform(referenceFrame_,endeffectorFrame_, now, ros::Duration(0.5));
@@ -343,7 +344,6 @@ geometry_msgs::Pose OutputPublisher::getEndeffectorPose()
 	ROS_ERROR("%s",ex.what());
 	}
 	
-	
 	pos.position.x=stampedTransform.getOrigin().x();
 	pos.position.y=stampedTransform.getOrigin().y();
 	pos.position.z=stampedTransform.getOrigin().z();
@@ -352,5 +352,32 @@ geometry_msgs::Pose OutputPublisher::getEndeffectorPose()
 	pos.orientation.z = stampedTransform.getRotation()[2];
 	pos.orientation.w = stampedTransform.getRotation()[3];
 			
+	return pos;
+}
+
+geometry_msgs::Pose OutputPublisher::getPose()
+{	
+	ros::Time now = ros::Time::now();
+	geometry_msgs::Pose pos;	
+	tf::StampedTransform stampedTransform;
+	bool transformed=false;
+
+	// Get transformation
+	try{
+		listener_.waitForTransform("arm_7_link","arm_7_target", now, ros::Duration(0.5));
+		listener_.lookupTransform("arm_7_link","arm_7_target", now, stampedTransform);
+	}
+	catch (tf::TransformException &ex) {
+		ROS_ERROR("%s",ex.what());
+	}
+	
+	pos.position.x=stampedTransform.getOrigin().x();
+	pos.position.y=stampedTransform.getOrigin().y();
+	pos.position.z=stampedTransform.getOrigin().z();
+	pos.orientation.x = stampedTransform.getRotation()[0];
+	pos.orientation.y = stampedTransform.getRotation()[1];
+	pos.orientation.z = stampedTransform.getRotation()[2];
+	pos.orientation.w = stampedTransform.getRotation()[3];
+	
 	return pos;
 }

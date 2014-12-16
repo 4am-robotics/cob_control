@@ -40,6 +40,9 @@
 #include <tf/transform_datatypes.h>
 
 #include <control_toolbox/pid.h>
+#include <kdl_conversions/kdl_msg.h>
+#include <kdl/frames.hpp>
+#include <kdl_parser/kdl_parser.hpp>
 
 class CobFrameTracker
 {
@@ -63,6 +66,8 @@ private:
 	bool tracking_;
 	std::string tracking_frame_;	//goal frame
 	std::string active_frame_;		//twists with respect to this frame
+	std::string base_link_;
+	
 	double max_vel_lin_;
 	double max_vel_rot_;
 	

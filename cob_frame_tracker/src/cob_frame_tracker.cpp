@@ -61,6 +61,9 @@ bool CobFrameTracker::initialize()
 		return false;
 	}
 	
+	if (nh_cartesian.hasParam("base_link"))
+	{	nh_cartesian.getParam("base_link", base_link_);	}
+	
 	if (nh_cartesian.hasParam("movable_trans"))
 	{	nh_cartesian.getParam("movable_trans", movable_trans_);	}
 	else
@@ -85,7 +88,7 @@ bool CobFrameTracker::initialize()
 	
 	start_server_ = nh_.advertiseService("start_tracking", &CobFrameTracker::start_tracking_cb, this);
 	stop_server_ = nh_.advertiseService("stop_tracking", &CobFrameTracker::stop_tracking_cb, this);
-	twist_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("command_twist", 1);
+	twist_pub_ = nh_twist.advertise<geometry_msgs::TwistStamped> ("command_twist_stamped", 1);
 	
 	tracking_frame_ = active_frame_;
 	tracking_ = false;
@@ -120,7 +123,8 @@ void CobFrameTracker::publish_twist(ros::Duration period)
 {
 	tf::StampedTransform transform_tf;
 	geometry_msgs::TransformStamped transform_msg;
-	geometry_msgs::Twist twist_msg;
+	geometry_msgs::TwistStamped twist_msg;
+	KDL::Frame frame;
 	try{
 		tf_listener_.lookupTransform(active_frame_, tracking_frame_, ros::Time(0), transform_tf);
 	}
@@ -134,17 +138,19 @@ void CobFrameTracker::publish_twist(ros::Duration period)
 	if(movable_trans_)
 	{
 		/// Use pid_trans_x .. y .. z as controller parameters. Has to be changed in arm_controller_sim.yaml !
-		twist_msg.linear.x = pid_controller_trans_x_.computeCommand(transform_msg.transform.translation.x, period);
-		twist_msg.linear.y = pid_controller_trans_y_.computeCommand(transform_msg.transform.translation.y, period);
-		twist_msg.linear.z = pid_controller_trans_z_.computeCommand(transform_msg.transform.translation.z, period);
+		twist_msg.twist.linear.x = pid_controller_trans_x_.computeCommand(transform_msg.transform.translation.x, period);
+		twist_msg.twist.linear.y = pid_controller_trans_y_.computeCommand(transform_msg.transform.translation.y, period);
+		twist_msg.twist.linear.z = pid_controller_trans_z_.computeCommand(transform_msg.transform.translation.z, period);
 	}
 	
 	if(movable_rot_)
 	{
-		twist_msg.angular.x = pid_controller_rot_.computeCommand(transform_msg.transform.rotation.x, period);
-		twist_msg.angular.y = pid_controller_rot_.computeCommand(transform_msg.transform.rotation.y, period);
-		twist_msg.angular.z = pid_controller_rot_.computeCommand(transform_msg.transform.rotation.z, period);
+		twist_msg.twist.angular.x = pid_controller_rot_.computeCommand(transform_msg.transform.rotation.x, period);
+		twist_msg.twist.angular.y = pid_controller_rot_.computeCommand(transform_msg.transform.rotation.y, period);
+		twist_msg.twist.angular.z = pid_controller_rot_.computeCommand(transform_msg.transform.rotation.z, period);
 	}
+	
+	twist_msg.header.frame_id = active_frame_;
 	
 	/////debug only
 	//if(std::fabs(transform_msg.transform.translation.x) >= max_vel_lin_)
@@ -186,7 +192,8 @@ bool CobFrameTracker::stop_tracking_cb(std_srvs::Empty::Request& request, std_sr
 	tracking_ = false;
 	
 	//publish zero Twist for stopping
-	geometry_msgs::Twist twist_msg;
+	geometry_msgs::TwistStamped twist_msg;
+	twist_msg.header.frame_id = active_frame_;
 	twist_pub_.publish(twist_msg);
 	
 	return true;

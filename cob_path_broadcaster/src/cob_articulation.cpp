@@ -87,10 +87,17 @@ bool CobArticulation::initialize()
 	jerk_pub_ = nh_articulation.advertise<std_msgs::Float64> ("debug/linear_jerk", 1);
 	
 	ROS_WARN("Waiting for Services...");
-	success = ros::service::waitForService("start_tracking");
-	success = ros::service::waitForService("stop_tracking");
-	startTracking_ = nh_.serviceClient<cob_srvs::SetString>("start_tracking");
-	stopTracking_ = nh_.serviceClient<std_srvs::Empty>("stop_tracking");
+<<<<<<< Updated upstream
+	success = ros::service::waitForService("/arm/start_tracking");
+	success = ros::service::waitForService("/arm/stop_tracking");
+	startTracking_ = nh_.serviceClient<cob_srvs::SetString>("/arm/start_tracking");
+	stopTracking_ = nh_.serviceClient<std_srvs::Empty>("/arm/stop_tracking");
+=======
+	success = ros::service::waitForService("/arm_left/start_tracking");
+	success = ros::service::waitForService("/arm_left/stop_tracking");
+	startTracking_ = nh_.serviceClient<cob_srvs::SetString>("/arm_left/start_tracking");
+	stopTracking_ = nh_.serviceClient<std_srvs::Empty>("/arm_left/stop_tracking");
+>>>>>>> Stashed changes
 	ROS_INFO("...done!");
 	
 	if(success){
@@ -157,6 +164,7 @@ void CobArticulation::load()
 				else
 					justRotate=false;
 
+				actualTcpPose = getEndeffectorPose();
 				
 				// Transform RPY to Quaternion
 				q.setRPY(roll,pitch,yaw);
@@ -171,6 +179,7 @@ void CobArticulation::load()
 				end.orientation.z = trans.getRotation()[2];
 				end.orientation.w = trans.getRotation()[3];
 				
+				actualTcpPose = getEndeffectorPose();
 				PoseToRPY(actualTcpPose,roll,pitch,yaw);
 				ROS_INFO("..........................actualTcpPose roll: %f pitch: %f yaw: %f",roll,pitch,yaw);
 				// Interpolate the path
@@ -496,7 +505,7 @@ void CobArticulation::circular_interpolation(	std::vector<geometry_msgs::Pose>* 
 		
 		if(endAngle<startAngle){
 				T.setOrigin(tf::Vector3(cos(pathArray.at(i))*r,0,sin(pathArray.at(i))*r));
-				q.setRPY(0,-pathArray.at(i),0);			
+				q.setRPY(0,-pathArray.at(i),0);
 		}else{
 				T.setOrigin(tf::Vector3(cos(startAngle-pathArray.at(i))*r,0,sin(startAngle-pathArray.at(i))*r));
 				q.setRPY(0,pathArray.at(i),0);
@@ -935,7 +944,7 @@ void CobArticulation::generatePath(std::vector<double> *pathArray,double T_IPO, 
 	else{
 		tb = 2*VelMax/AcclMax;
 		te = (std::fabs(Se_max) / VelMax) + tb;
-		tv = te - tb;		
+		tv = te - tb;
 	}
 
 	// Interpolationsteps for every timesequence
@@ -984,7 +993,7 @@ void CobArticulation::generatePath(std::vector<double> *pathArray,double T_IPO, 
 void CobArticulation::generatePathWithTe(std::vector<double> *pathArray,double T_IPO, double te, double AcclMax,double Se_max, int steps_max,double start_angle,std::string profile){	
 	double tv,tb=0;
 	int steps_te,steps_tv,steps_tb=0;
-	double VelMax;								
+	double VelMax;
 
 	
 	// Calculate the Profile Timings

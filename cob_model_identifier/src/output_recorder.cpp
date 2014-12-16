@@ -47,7 +47,7 @@ void OutputRecorder::initialize()
 	XmlRpc::XmlRpcValue jn_param;
 	if (nh_identifier.hasParam("joint_names"))
 	{	
-		nh_identifier.getParam("joint_names", jn_param);	
+		nh_identifier.getParam("joint_names", jn_param);
 	}
 	else
 	{	ROS_ERROR("Parameter joint_names not set");	}
@@ -55,7 +55,7 @@ void OutputRecorder::initialize()
 	dof_ = jn_param.size();
 	for(unsigned int i=0; i<dof_; i++)
 	{	
-		joints_.push_back((std::string)jn_param[i]);	
+		joints_.push_back((std::string)jn_param[i]);
 	}
 	
 	
@@ -116,14 +116,14 @@ void OutputRecorder::initialize()
 	last_q_ = KDL::JntArray(chain_.getNrOfJoints());
 	last_q_dot_ = KDL::JntArray(chain_.getNrOfJoints());
 	
-	jointstate_sub_ = nh_.subscribe("/joint_states", 1, &OutputRecorder::jointstate_cb, this);
+	jointstate_sub_ = nh_.subscribe("/torso/joint_states", 1, &OutputRecorder::jointstate_cb, this);
 	
-	twist_sub_ = nh_twist.subscribe("command_twist", 1, &OutputRecorder::twist_cb, this);
+	twist_sub_ = nh_twist.subscribe("/torso/twist_controller/command_twist", 1, &OutputRecorder::twist_cb, this);
 	twist_sub_norm_ = nh_twist.subscribe("debug/twist_normalized", 1, &OutputRecorder::normalized_twist_cb, this);
 	//twist_pub_ = nh_identifier.advertise<geometry_msgs::Twist> ("command_twist", 1);
 	//model_pub_ = nh_identifier.advertise<geometry_msgs::Twist> ("model_twist", 1);
-	startTracking_ = nh_.serviceClient<cob_srvs::SetString>("start_tracking");
-	stopTracking_ = nh_.serviceClient<std_srvs::Empty>("stop_tracking");
+	startTracking_ = nh_.serviceClient<cob_srvs::SetString>("/torso/start_tracking");
+	stopTracking_ = nh_.serviceClient<std_srvs::Empty>("/torso/stop_tracking");
 	
 	ROS_INFO("...initialized!");
 }
@@ -888,7 +888,7 @@ void OutputRecorder::writeToMFile(std::string fileName,std::vector<double> *dot_
 	myfile << "figure; semilogy(e); grid;" << std::endl;
 
 
-	double step;
+	double step = 0.0;
 	for(int i = 0;i<dot_in->size()-1;i++){
 		step+=dot_in->at(i);
 	}
