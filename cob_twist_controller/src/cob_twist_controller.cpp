@@ -116,6 +116,8 @@ bool CobTwistController::initialize()
 	config.base_compensation = config.base_compensation;
 	config.base_active = config.base_active;
 	config.base_ratio = config.base_ratio;
+	config.JLA_active = config.JLA_active;
+	config.enforce_limits = config.enforce_limits;
 	
 	///parse robot_description and generate KDL chains
 	KDL::Tree my_tree;
@@ -143,8 +145,8 @@ bool CobTwistController::initialize()
 	for(unsigned int i=0; i<dof_; i++)
 	{
 		limits_vel_.push_back(model.getJoint(joints_[i])->limits->velocity);
-		limits_min_.push_back(model.getJoint(joints_[i])->limits->lower);
-		limits_max_.push_back(model.getJoint(joints_[i])->limits->upper);
+		limits_min_.push_back(model.getJoint(joints_[i])->limits->lower+0.2);
+		limits_max_.push_back(model.getJoint(joints_[i])->limits->upper-0.2);
 	}
 	
 	///initialize configuration control solver
@@ -197,6 +199,8 @@ void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControl
 	params.base_compensation = config.base_compensation;
 	params.base_active = config.base_active;
 	params.base_ratio = config.base_ratio;
+	params.JLA_active = config.JLA_active;
+	params.enforce_limits = config.enforce_limits;
 	
 	base_compensation_ = config.base_compensation;
 	base_active_ = config.base_active;
@@ -223,7 +227,7 @@ void CobTwistController::twist_stamped_cb(const geometry_msgs::TwistStamped::Con
 	try{
 		tf_listener_.lookupTransform(chain_base_, msg->header.frame_id, ros::Time(0), transform_tf);
 		//frame.p = KDL::Vector(0.0, 0.0, 0.0);
-		frame.p = KDL::Vector(transform_tf.getOrigin().x(), transform_tf.getOrigin().y(), transform_tf.getOrigin().z());
+		//frame.p = KDL::Vector(transform_tf.getOrigin().x(), transform_tf.getOrigin().y(), transform_tf.getOrigin().z());
 		frame.M = KDL::Rotation::Quaternion(transform_tf.getRotation().x(), transform_tf.getRotation().y(), transform_tf.getRotation().z(), transform_tf.getRotation().w());
 	}
 	catch (tf::TransformException ex){
@@ -291,7 +295,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 		frame2.p = KDL::Vector(transform_base_basefootprint.getOrigin().x(), transform_base_basefootprint.getOrigin().y(), transform_base_basefootprint.getOrigin().z());
 		frame2.M = KDL::Rotation::Quaternion(transform_base_basefootprint.getRotation().x(), transform_base_basefootprint.getRotation().y(), transform_base_basefootprint.getRotation().z(), transform_base_basefootprint.getRotation().w());
 		
-		ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik,&limits_min_,&limits_max_,frame,frame2);
+		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik,&limits_min_,&limits_max_,frame,frame2);
 	}
 	
 	if(base_compensation_)
@@ -301,7 +305,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 	
 	
 	if(!base_active_){
-		ret_ik = p_augmented_solver_->CartToJnt(last_q_, twist, q_dot_ik,&limits_min_,&limits_max_);
+		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik,&limits_min_,&limits_max_);
 	}
 	
 	if(ret_ik < 0)
