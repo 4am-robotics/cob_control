@@ -29,13 +29,27 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
     Eigen::Matrix<double,6,3> jac_b;
 
     jnt2jac.JntToJac(q_in, jac_chain);
-    
+    double base_ratio = params_.base_ratio;
     if(params_.base_active)
     {
 		Eigen::Matrix<double, 3, 3> chain_base_rot,base_rot,tip_base_rot;
 		Eigen::Vector3d w_chain_base;
 		Eigen::Vector3d r_chain_base;
 		Eigen::Vector3d tangential_vel;
+		Eigen::MatrixXd W_base_ratio = Eigen::MatrixXd::Identity(jac.columns(), jac.columns());
+		
+		Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> prod = jac.data * jac.data.transpose();
+		double d = prod.determinant();
+		double kappa = std::sqrt(d);
+		
+
+			//if(kappa < 0.2){
+				//base_ratio = (1-kappa*10);
+			//}else{
+				//base_ratio = 0;
+			//}
+			//std::cout << "\n base_ratio: " << base_ratio << "\n";
+
 		
         //Create standard platform jacobian
         jac_b.setZero();
@@ -50,8 +64,21 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
 							chain_base.M.data[3],chain_base.M.data[4],chain_base.M.data[5],
 							chain_base.M.data[6],chain_base.M.data[7],chain_base.M.data[8];
 							
+		//std::cout << "chain_base_rot:\n " << chain_base_rot << "\n";
+		//W_base_ratio(0,0) = (1-params_.base_ratio)*chain_base.M.data[0];
+		//W_base_ratio(0,1) = (1-params_.base_ratio)*chain_base.M.data[1];
+		//
+		//W_base_ratio(1,0) = (1-params_.base_ratio)*chain_base.M.data[3];
+		//W_base_ratio(1,1) = (1-params_.base_ratio)*chain_base.M.data[4];
+		//
+		//W_base_ratio(2,0) = (1-params_.base_ratio)*chain_base.M.data[6];
+		//W_base_ratio(2,1) = (1-params_.base_ratio)*chain_base.M.data[7];
+		//
+		//jac.data = jac.data * W_base_ratio.transpose();
+							
 		// Transform from base_link to chain_base
-		Eigen::Vector3d w_base_link(0,0,params_.base_ratio);
+		//Eigen::Vector3d w_base_link(0,0,base_ratio);
+		Eigen::Vector3d w_base_link(0,0,1);
 		w_chain_base = chain_base_rot*w_base_link;
 		r_chain_base = chain_base_rot*r_base_link;
 		
@@ -59,18 +86,18 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
 		tangential_vel = w_chain_base.cross(r_chain_base);
 		
 		 //Vx-Base <==> q8 effects a change in the following chain_base Vx velocities
-		jac_b(0,0) = params_.base_ratio*chain_base_rot(0,0);
-		jac_b(0,1) = params_.base_ratio*chain_base_rot(0,1);
+		jac_b(0,0) = base_ratio*chain_base_rot(0,0);
+		jac_b(0,1) = base_ratio*chain_base_rot(0,1);
 		jac_b(0,2) = tangential_vel(0);
 		
 		// Vy-Base <==> q9 effects a change in the following chain_base Vy velocities
-		jac_b(1,0) = params_.base_ratio*chain_base_rot(1,0);
-		jac_b(1,1) = params_.base_ratio*chain_base_rot(1,1);
+		jac_b(1,0) = base_ratio*chain_base_rot(1,0);
+		jac_b(1,1) = base_ratio*chain_base_rot(1,1);
 		jac_b(1,2) = tangential_vel(1);
 		
 		// Vz-Base <==>  effects a change in the following chain_base Vz velocities
-		jac_b(2,0) = params_.base_ratio*chain_base_rot(2,0);
-		jac_b(2,1) = params_.base_ratio*chain_base_rot(2,1);
+		jac_b(2,0) = base_ratio*chain_base_rot(2,0);
+		jac_b(2,1) = base_ratio*chain_base_rot(2,1);
 		jac_b(2,2) = tangential_vel(2);
 		
 		//Phi <==> Wz with respect to base_link
@@ -83,7 +110,8 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
         jac_full.resize(6,chain.getNrOfJoints() + jac_b.cols());
         jac_full << jac_chain.data,jac_b;
         
-        std::cout << "Combined jacobian:\n " << jac_full << "\n";
+        //std::cout << "Combined jacobian:\n " << jac_full << "\n";
+        //std::cout << "Weighting Matrix:\n " << W_base_ratio << "\n";
         //ROS_INFO_STREAM("JacBase: rows " <<jac_base.rows()<<"; cols "<<jac_base.cols());
         //ROS_INFO_STREAM("JacFull: rows " <<jac_full.rows()<<"; cols "<<jac_full.cols());
         
@@ -98,6 +126,8 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
         jac.resize(chain.getNrOfJoints());
         jac.data << jac_chain.data;
     }
+    
+
     
     Eigen::JacobiSVD<Eigen::MatrixXd> svd(jac.data,Eigen::ComputeFullU | Eigen::ComputeFullV);
     Eigen::VectorXd S = svd.singularValues();
@@ -192,6 +222,7 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
     {    v_in_vec(i)=v_in(i);    }
     
 	Eigen::MatrixXd W12 = augmented_solver::calculate_weighting(q_in, limits_min, limits_max).asDiagonal();
+	std::cout << "W12:\n " << W12 << "\n";
     Eigen::MatrixXd Jw = jac.data*W12.inverse();
     
     //std::cout << "Weightening Vector: \n" << W12 << "\n";
@@ -269,7 +300,6 @@ Eigen::VectorXd augmented_solver::calculate_weighting(const KDL::JntArray& q, st
 		if(i<chain.getNrOfJoints()) {
 
 		    double dh = fabs(pow(limits_max_[i]/M_PI*180-limits_min_[i]/M_PI*180,2)*(2*q(i)/M_PI*180-limits_max_[i]/M_PI*180-limits_min_[i]/M_PI*180)/(4*pow(limits_max_[i]/M_PI*180-q(i)/M_PI*180,2)*pow(q(i)/M_PI*180-limits_min_[i]/M_PI*180,2)));
-
 		    if(initial_iteration)
 		    {    output(i)=1+dh;    }
 		    else {

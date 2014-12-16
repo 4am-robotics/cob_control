@@ -459,32 +459,32 @@ KDL::JntArray CobTwistController::normalize_velocities(KDL::JntArray q_dot_ik)
 	if(base_active_)
 	{
 		//TEST: limit base_velocities
-		double max_trans_velocity = 0.5;
+		double max_trans_velocity = 1;
 		double max_rot_velocity = 0.5;
 		if(max_factor < std::fabs((q_dot_ik(dof_)/max_trans_velocity)))
 		{
 			max_factor = std::fabs((q_dot_ik(dof_)/max_trans_velocity));
-			ROS_WARN("BaseTransX exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_), max_trans_velocity, max_factor);
+			//ROS_WARN("BaseTransX exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_), max_trans_velocity, max_factor);
 		}
 		if(max_factor < std::fabs((q_dot_ik(dof_+1)/max_trans_velocity)))
 		{
 			max_factor = std::fabs((q_dot_ik(dof_+1)/max_trans_velocity));
-			ROS_WARN("BaseTransY exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+1), max_trans_velocity, max_factor);
+			//ROS_WARN("BaseTransY exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+1), max_trans_velocity, max_factor);
 		}
 		if(max_factor < std::fabs((q_dot_ik(dof_+2)/max_rot_velocity)))
 		{
 			max_factor = std::fabs((q_dot_ik(dof_+2)/max_rot_velocity));
-			ROS_WARN("BaseRotZ exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+2), max_rot_velocity, max_factor);
+			//ROS_WARN("BaseRotZ exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+2), max_rot_velocity, max_factor);
 		}
 	}
 	
 	if(max_factor > 1)
 	{
-		ROS_INFO("Normalizing velocities!");
+		//ROS_INFO("Normalizing velocities!");
 		for(unsigned int i=0; i<dof_; i++)
 		{
 			q_dot_norm(i) = q_dot_ik(i)/max_factor;
-			ROS_WARN("Joint %d Normalized %f", i, q_dot_norm(i));
+			//ROS_WARN("Joint %d Normalized %f", i, q_dot_norm(i));
 		}
 		
 		if(base_active_){
