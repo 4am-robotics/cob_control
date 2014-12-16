@@ -2,6 +2,9 @@
 Changelog for package cob_frame_tracker
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.6.2 (2014-12-15)
 ------------------
 * adapt namespaces for cartesian_controller to new structure
