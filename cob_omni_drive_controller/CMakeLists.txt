@@ -5,7 +5,7 @@ project(cob_omni_drive_controller)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  controller_interface angles hardware_interface sensor_msgs geometry_msgs
+  controller_interface angles hardware_interface sensor_msgs geometry_msgs tf
 )
 
 ## System dependencies are found with CMake's conventions
@@ -80,7 +80,7 @@ find_package(Boost REQUIRED) # COMPONENTS system)
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES cob_omni_drive_geom cob_omni_drive_controller
-  CATKIN_DEPENDS sensor_msgs
+  CATKIN_DEPENDS sensor_msgs tf geometry_msgs
 #  DEPENDS system_lib
 )
 
@@ -164,6 +164,13 @@ install(TARGETS cob_omni_drive_geom cob_omni_drive_controller
 
 install(FILES controller_plugins.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+
+## Mark cpp header files for installation
+install(DIRECTORY include/${PROJECT_NAME}/
+ DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+ FILES_MATCHING PATTERN "*.h"
+ PATTERN ".svn" EXCLUDE
+)
 
 
 #############
