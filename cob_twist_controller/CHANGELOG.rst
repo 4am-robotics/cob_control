@@ -2,8 +2,8 @@
 Changelog for package cob_twist_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.3 (2014-12-16)
+------------------
 * add dependency to nav_msgs
 * Contributors: Florian Weisshardt
 
