@@ -19,7 +19,7 @@ augmented_solver::~augmented_solver()
 {}
 
 
-int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL::JntArray& qdot_out, std::vector<float> *limits_min, std::vector<float> *limits_max, KDL::Frame &base_position, KDL::Frame &chain_base)
+int augmented_solver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& last_q_dot, KDL::Twist& v_in, KDL::JntArray& qdot_out, std::vector<float> *limits_min, std::vector<float> *limits_max, KDL::Frame &base_position, KDL::Frame &chain_base)
 {
     ///used only for debugging
     std::ofstream file("test_end_effect.txt", std::ofstream::app);
@@ -29,7 +29,7 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
     Eigen::Matrix<double,6,3> jac_b;
 
     jnt2jac.JntToJac(q_in, jac_chain);
-    double base_ratio = params_.base_ratio;
+    
     if(params_.base_active)
     {
 		Eigen::Matrix<double, 3, 3> chain_base_rot,base_rot,tip_base_rot;
@@ -42,7 +42,7 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
 		double d = prod.determinant();
 		double kappa = std::sqrt(d);
 		
-
+		double base_ratio=params_.base_ratio;
 			//if(kappa < 0.2){
 				//base_ratio = (1-kappa*10);
 			//}else{
@@ -54,7 +54,7 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
         //Create standard platform jacobian
         jac_b.setZero();
         
-        // Get current x and y position from chain_tip to base_link
+        // Get current x and y position from EE and chain_base with respect to base_footprint
         x_ = base_position.p.x();
         y_ = base_position.p.y();
 		z_ = base_position.p.z();
@@ -110,8 +110,7 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
         jac_full.resize(6,chain.getNrOfJoints() + jac_b.cols());
         jac_full << jac_chain.data,jac_b;
         
-        //std::cout << "Combined jacobian:\n " << jac_full << "\n";
-        //std::cout << "Weighting Matrix:\n " << W_base_ratio << "\n";
+        std::cout << "Combined jacobian:\n " << jac_full << "\n";
         //ROS_INFO_STREAM("JacBase: rows " <<jac_base.rows()<<"; cols "<<jac_base.cols());
         //ROS_INFO_STREAM("JacFull: rows " <<jac_full.rows()<<"; cols "<<jac_full.cols());
         
@@ -127,10 +126,9 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
         jac.data << jac_chain.data;
     }
     
-
-    
     Eigen::JacobiSVD<Eigen::MatrixXd> svd(jac.data,Eigen::ComputeFullU | Eigen::ComputeFullV);
     Eigen::VectorXd S = svd.singularValues();
+    
     double damping_factor = 0.0;
     if (params_.damping_method == MANIPULABILITY)
     {
@@ -207,11 +205,12 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
     //Eigen::MatrixXd Jc = Eigen::MatrixXd::Zero(task_size,jac.columns());
     
     //Weighting matrix for damping 
-    Eigen::MatrixXd Wv = Eigen::MatrixXd::Identity(jac.columns(), jac.columns());
+    Eigen::MatrixXd Wv = Eigen::MatrixXd::Identity(jac.rows(), jac.rows());
     
     Eigen::VectorXd v_in_vec = Eigen::VectorXd::Zero(jac.rows());
     Eigen::VectorXd v_in_vec_base = Eigen::VectorXd::Zero(jac_base.rows());
     Eigen::MatrixXd qdot_out_vec;
+    Eigen::MatrixXd qdot_out_vec_enforced;
 
 
     ///use calculated damping value lambda for SVD
@@ -221,20 +220,26 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
     for (int i=0; i<jac.rows(); i++)
     {    v_in_vec(i)=v_in(i);    }
     
-	Eigen::MatrixXd W12 = augmented_solver::calculate_weighting(q_in, limits_min, limits_max).asDiagonal();
-	std::cout << "W12:\n " << W12 << "\n";
-    Eigen::MatrixXd Jw = jac.data*W12.inverse();
     
-    //std::cout << "Weightening Vector: \n" << W12 << "\n";
+    if(params_.JLA_active) {
+        Eigen::MatrixXd W = augmented_solver::calculate_weighting(q_in, last_q_dot, limits_min, limits_max).asDiagonal();
+        Eigen::MatrixXd tmp = (jac.data*W.inverse()*jac.data.transpose()+Wv).inverse();        
+        qdot_out_vec=W.inverse()*jac.data.transpose()*tmp*v_in_vec;
+    }
+    else {
+        Eigen::MatrixXd tmp = (jac.data*jac.data.transpose()+Wv).inverse();
+        qdot_out_vec=jac.data.transpose()*tmp*v_in_vec;
+    }
+    
+    if(params_.enforce_limits)
+        {    qdot_out_vec_enforced=augmented_solver::enforce_limits(q_in,&qdot_out_vec,limits_min, limits_max);    }
+    else
+        {    qdot_out_vec_enforced=qdot_out_vec;    }
+    
     ///// formula from book (2.3.19)
     ////reults in oscillation without task constraints and damping close to 0.0 (when far from singularity)?
     //Eigen::MatrixXd tmp = (jac.data.transpose()*We*jac.data+Jc.transpose()*Wc*Jc+Wv).inverse();
     //qdot_out_vec= tmp*(jac.data.transpose()*We*v_in_vec);
-    
-    Eigen::MatrixXd tmp = (Jw.transpose()*Jw+Wv)*W12;
-
-    qdot_out_vec=tmp.fullPivHouseholderQr().solve(Jw.transpose()*v_in_vec);
-    //std::cout << "qdot_out_vec: \n" << qdot_out_vec << "\n";
     
     //qdot_out_vec= tmp.inverse()*(jac.data.transpose()*We*v_in_vec);
     /// formula from book (2.3.14)
@@ -258,14 +263,15 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
     
     ///convert output
     for(int i=0; i<jac.columns(); i++)
-	{    qdot_out(i)=qdot_out_vec(i,0);    }
-	
-	if(DEBUG)
-	{
-		//compute manipulability
-		///kappa = sqrt(norm(J*Jt))
-		///see  T.Yoshikawa "Manipulability of robotic mechanisms"
-		///     International Journal of Robotics Research, 4(2):3-9, 1985
+    {    qdot_out(i)=qdot_out_vec_enforced(i);    }
+    
+    
+    if(DEBUG)
+    {
+        //compute manipulability
+        ///kappa = sqrt(norm(J*Jt))
+        ///see  T.Yoshikawa "Manipulability of robotic mechanisms"
+        ///     International Journal of Robotics Research, 4(2):3-9, 1985
         //Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> prod = jac.data * jac.data.transpose();
         //double d = prod.determinant();
         //double kappa = std::sqrt(d);
@@ -281,6 +287,7 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
         //std::cout << "Damping factor" << damping_factor << std::endl;
         //std::cout << "Reciprocal Condition number" << 1/(prod.norm()*prod.inverse().norm())<<'\n';
         //std::cout << "DEBUG END" << std::endl;
+        //std::cout << "Output: '\n'" << qdot_out_vec << std::endl;
     }
     
     if (initial_iteration)
@@ -289,7 +296,11 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL
     return 1;
 }
 
-Eigen::VectorXd augmented_solver::calculate_weighting(const KDL::JntArray& q, std::vector<float> *limits_min, std::vector<float> *limits_max){
+Eigen::VectorXd augmented_solver::calculate_weighting(const KDL::JntArray& q, const KDL::JntArray& last_q_dot, std::vector<float> *limits_min, std::vector<float> *limits_max){
+    
+    //This function calculates the weighting matrix used to penalize a joint when it is near and moving towards a limit
+    //The last joint velocity is used to determine if it that happens or not
+    
     Eigen::VectorXd output = Eigen::VectorXd::Zero(jac.columns());
     
     std::vector<float>& limits_min_ = *limits_min;
@@ -297,23 +308,57 @@ Eigen::VectorXd augmented_solver::calculate_weighting(const KDL::JntArray& q, st
     
     for(int i=0; i<jac.columns() ; i++) {
 
-		if(i<chain.getNrOfJoints()) {
+        if(i<chain.getNrOfJoints()) {    //See Chan paper
+            double dh = fabs(pow(limits_max_[i]/M_PI*180-limits_min_[i]/M_PI*180,2)*(2*(round(q(i)*10000)/10000)/M_PI*180-limits_max_[i]/M_PI*180-limits_min_[i]/M_PI*180)/(4*pow(limits_max_[i]/M_PI*180-(round(q(i)*10000)/10000)/M_PI*180,2)*pow((round(q(i)*10000)/10000)/M_PI*180-limits_min_[i]/M_PI*180,2)));
+            std::cout<<"dh:"<<dh<<std::endl;
 
-		    double dh = fabs(pow(limits_max_[i]/M_PI*180-limits_min_[i]/M_PI*180,2)*(2*q(i)/M_PI*180-limits_max_[i]/M_PI*180-limits_min_[i]/M_PI*180)/(4*pow(limits_max_[i]/M_PI*180-q(i)/M_PI*180,2)*pow(q(i)/M_PI*180-limits_min_[i]/M_PI*180,2)));
-		    if(initial_iteration)
-		    {    output(i)=1+dh;    }
-		    else {
-		        if(dh-last_dh(i)>=0)
-		        {    output(i) = sqrt(1+dh);    }
-		        else
-		        {    output(i) = 1;    }
-		    }
-		    last_dh(i)=dh;
-    	}
+            if(initial_iteration)
+            {    output(i)=1+dh;    }
+            else {    //Penalize a joint only when its moving towards the limit
+                if(last_dh(i)==dh || last_q_dot(i)>0 && ((limits_max_[i]-q(i)) < (q(i)-limits_min_[i])) || last_q_dot(i)<0 && ((limits_max_[i]-q(i)) > (q(i)-limits_min_[i])))
+                {    output(i) = 1+dh;    }
+                else
+                {    output(i) = 1;    }
+            }
+            last_dh(i)=dh;
+        }
 
-		else
-		{    output(i) = 1;    }
-	}
+        else
+        {    output(i) = 1;    }
+    }
 
+    return output;
+}
+
+Eigen::VectorXd augmented_solver::enforce_limits(const KDL::JntArray& q, Eigen::MatrixXd *qdot_out, std::vector<float> *limits_min, std::vector<float> *limits_max) {
+    
+    //This function multiplies the velocities that result from the IK, in case they violate the specified tolerance
+    //This factor uses the cosine function to provide a smooth transition from 1 to zero
+    //The factor is not used if the output causes the joint to move far from its limits
+    
+    Eigen::VectorXd output = Eigen::VectorXd::Zero(jac.columns());
+    double tolerance=5.0/180*M_PI;    
+    
+    for(int i=0; i<jac.columns() ;i++) {
+        if(i<chain.getNrOfJoints()) {
+            if((*limits_max)[i]-q(i)<tolerance) {        //Joint is nearer to the maximum limit
+                if((*qdot_out)(i)>0)                     //Joint moves towards the limit
+                    {    output(i)=(*qdot_out)(i)*pow((0.5+0.5*cos(M_PI*(q(i)+tolerance-(*limits_max)[i])/tolerance)),2);    }
+                else
+                    {    output(i)=(*qdot_out)(i);    }
+            }
+            else 
+                if(q(i)-(*limits_min)[i]<tolerance) {    //Joint is nearer to the minimum limit
+                    if((*qdot_out)(i)<0)                 //Joint moves towards the limit
+                        {    output(i)=(*qdot_out)(i)*pow(0.5+0.5*cos(M_PI*(q(i)-tolerance-(*limits_min)[i])/tolerance),2);    }
+                    else
+                        {    output(i)=(*qdot_out)(i);    }
+                }
+                else
+                    {    output(i)=(*qdot_out)(i);    }
+        }
+        else
+            {    output(i)=(*qdot_out)(i);    }
+    }
     return output;
 }
