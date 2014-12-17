@@ -36,7 +36,7 @@
 #include <geometry_msgs/Twist.h>
 #include <actionlib/server/simple_action_server.h>
 
-#include <math.h>
+
 #include <algorithm>
 
 #include <tf/transform_listener.h>
@@ -49,7 +49,7 @@
 
 #include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
-
+#include <math.h>
 #include <control_toolbox/pid.h>
 
 class TrackingAction
@@ -75,6 +75,7 @@ class TrackingAction
 	void run();
 	void goalCB();
 	void preemptCB();
+	void succeed();
 	void abort();
 
 	void publish_twist(ros::Duration period);
@@ -119,6 +120,10 @@ protected:
 
 	control_toolbox::Pid pid_controller_rot_;
 	//EndOfFrameTrackerInsert:
+
+	//my calcs begin:
+	double eukl_dist_lin_;
+	//my cals end
 
 };
 #endif

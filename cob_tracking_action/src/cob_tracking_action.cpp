@@ -29,6 +29,7 @@
 
 #include <cob_tracking_action/cob_tracking_action.h>
 #include <cob_tracking_action/TrackingAction.h>
+#include <math.h>
 
 bool TrackingAction::initialize()
 {
@@ -134,18 +135,33 @@ void TrackingAction::run()
 //stamp_ - time_filter_threshold
 		if(tracking_) {
 			ROS_INFO("[TRACKING GOAL ...]");
+			// tracking time is over --> successful
 			if (tracking_time_ != 0) {
 				ROS_INFO("Server is waiting for trackingtime = %f to end.",maxdurationOftracking-time.toSec());
 				if (time.toSec() > maxdurationOftracking) {
 					tracking_ = false;
-					TrackingAction::abort();
+					TrackingAction::succeed();
 				}
 			}
+			// target reaches active frame --> successful
+			if (reachable_goal_) {
+				ROS_INFO("Goal was reached!");
+				result_.success = true;
+				TrackingAction::succeed();
+			}
+
+			// terms of abortion
+			/// do things ...
+
+
+
+
 			publish_twist(period);
 		}
 		else
 		{
 			ROS_INFO("[Server is waiting for a new goal!]");
+
 		}
 
 
@@ -217,6 +233,10 @@ void TrackingAction::publish_twist(ros::Duration period)
 
 	tf::transformStampedTFToMsg(transform_tf, transform_msg);
 
+	//my calculations begin
+
+	eukl_dist_lin_ = sqrt(transform_msg.transform.translation.x * transform_msg.transform.translation.x + transform_msg.transform.translation.y * transform_msg.transform.translation.y + transform_msg.transform.translation.z * transform_msg.transform.translation.z);
+	//my calculations end
 	if(movable_trans_)
 	{
 		/// Use pid_trans_x .. y .. z as controller parameters. Has to be changed in arm_controller_sim.yaml !
@@ -253,6 +273,15 @@ void TrackingAction::publish_twist(ros::Duration period)
 	//twist_msg.angular.y = copysign(std::min(max_vel_rot_, std::fabs(transform_msg.transform.rotation.y)),transform_msg.transform.rotation.y);
 	//twist_msg.angular.z = copysign(std::min(max_vel_rot_, std::fabs(transform_msg.transform.rotation.z)),transform_msg.transform.rotation.z);
 
+	twist_pub_.publish(twist_msg);
+}
+
+void TrackingAction::succeed()
+{
+	ROS_INFO("Goal succeeded!");
+	as_.setSucceeded(result_, "succeeded text");
+	tracking_ = false;
+	geometry_msgs::Twist twist_msg;
 	twist_pub_.publish(twist_msg);
 }
 

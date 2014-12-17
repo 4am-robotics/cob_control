@@ -37,7 +37,7 @@ bool CobTrackingActionClient::initialize()
 
 	goal_.reachable_goal = false;
 	goal_.tracking_frame = "active_frame";
-	goal_.tracking_time = 20;
+	goal_.tracking_time = 0;
 
 	ROS_INFO("Server started ... initialized!");
 	return true;

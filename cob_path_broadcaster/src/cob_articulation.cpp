@@ -87,17 +87,11 @@ bool CobArticulation::initialize()
 	jerk_pub_ = nh_articulation.advertise<std_msgs::Float64> ("debug/linear_jerk", 1);
 	
 	ROS_WARN("Waiting for Services...");
-<<<<<<< Updated upstream
 	success = ros::service::waitForService("/arm/start_tracking");
 	success = ros::service::waitForService("/arm/stop_tracking");
 	startTracking_ = nh_.serviceClient<cob_srvs::SetString>("/arm/start_tracking");
 	stopTracking_ = nh_.serviceClient<std_srvs::Empty>("/arm/stop_tracking");
-=======
-	success = ros::service::waitForService("/arm_left/start_tracking");
-	success = ros::service::waitForService("/arm_left/stop_tracking");
-	startTracking_ = nh_.serviceClient<cob_srvs::SetString>("/arm_left/start_tracking");
-	stopTracking_ = nh_.serviceClient<std_srvs::Empty>("/arm_left/stop_tracking");
->>>>>>> Stashed changes
+
 	ROS_INFO("...done!");
 	
 	if(success){
