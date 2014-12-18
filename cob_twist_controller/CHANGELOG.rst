@@ -2,8 +2,8 @@
 Changelog for package cob_twist_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.6 (2014-12-18)
+------------------
 * remove dep to cob_srvs and std_srvs
 * Contributors: Florian Weisshardt
 
