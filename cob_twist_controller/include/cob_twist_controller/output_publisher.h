@@ -48,9 +48,6 @@
 #include <sensor_msgs/JointState.h>
 #include <kdl/framevel.hpp>
 #include <geometry_msgs/Pose.h>
-#include <std_srvs/Empty.h>
-#include <cob_srvs/SetString.h>
-
 
 class OutputPublisher
 {
