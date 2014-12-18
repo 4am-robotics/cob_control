@@ -2,6 +2,20 @@
 Changelog for package cob_twist_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.5 (2014-12-18)
+------------------
+* Merge branch 'indigo_dev' into indigo_release_candidate
+* add dep
+* Contributors: Florian Weisshardt
+
+0.6.4 (2014-12-16)
+------------------
+
+0.6.3 (2014-12-16)
+------------------
+* add dependency to nav_msgs
+* Contributors: Florian Weisshardt
+
 0.6.2 (2014-12-15)
 ------------------
 * Merge branch 'indigo_dev' into indigo_release_candidate
