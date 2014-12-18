@@ -2,6 +2,9 @@
 Changelog for package cob_path_broadcaster
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.6.5 (2014-12-18)
 ------------------
 
