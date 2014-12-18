@@ -2,6 +2,11 @@
 Changelog for package cob_twist_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.6 (2014-12-18)
+------------------
+* remove dep to cob_srvs and std_srvs
+* Contributors: Florian Weisshardt
+
 0.6.5 (2014-12-18)
 ------------------
 * Merge branch 'indigo_dev' into indigo_release_candidate
