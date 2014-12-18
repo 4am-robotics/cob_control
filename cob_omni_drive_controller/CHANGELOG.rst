@@ -2,8 +2,8 @@
 Changelog for package cob_omni_drive_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.5 (2014-12-18)
+------------------
 * Merge branch 'indigo_dev' into indigo_release_candidate
 * add dep
 * Contributors: Florian Weisshardt

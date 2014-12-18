@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>cob_hardware_interface</name>
-  <version>0.6.4</version>
+  <version>0.6.5</version>
   <description>
     This package implements the cob_hardware_interface.
     The interface uses topic communication rather than direct pointer access to the drivers.
