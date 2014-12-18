@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(cob_twist_controller)
 
 # Load catkin and all dependencies required for this package
-find_package(catkin REQUIRED COMPONENTS cmake_modules roscpp sensor_msgs geometry_msgs nav_msgs kdl_parser kdl_conversions tf tf_conversions dynamic_reconfigure)
+find_package(catkin REQUIRED COMPONENTS cmake_modules roscpp sensor_msgs geometry_msgs nav_msgs cob_srvs kdl_parser kdl_conversions tf tf_conversions dynamic_reconfigure)
 
 find_package(Eigen REQUIRED)
 add_definitions(${EIGEN_DEFINITIONS})
@@ -17,7 +17,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
    INCLUDE_DIRS include
    LIBRARIES cob_twist_controller augmented_solver output_publisher
-   CATKIN_DEPENDS roscpp sensor_msgs geometry_msgs nav_msgs
+   CATKIN_DEPENDS roscpp sensor_msgs geometry_msgs nav_msgs cob_srvs
 #  DEPENDS system_lib
 )
 
