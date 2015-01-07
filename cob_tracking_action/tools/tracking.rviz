@@ -287,7 +287,7 @@ Visualization Manager:
       Show Axes: false
       Show Descriptions: true
       Show Visual Aids: false
-      Update Topic: /torso/marker_server/update
+      Update Topic: /arm_left/marker_server/update
       Value: true
   Enabled: true
   Global Options:
@@ -346,5 +346,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1200
-  X: 55
-  Y: 50
+  X: 76
+  Y: 141

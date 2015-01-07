@@ -13,9 +13,7 @@ add_definitions(${EIGEN_DEFINITIONS})
 
 find_package(orocos_kdl REQUIRED)
 
-generate_dynamic_reconfigure_options(
-  cfg/TrackingAction.cfg
-)
+generate_dynamic_reconfigure_options(cfg/TrackingAction.cfg)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -111,7 +109,8 @@ add_library(cob_tracking_action_client
   src/cob_tracking_action_client.cpp
 )
 
-add_dependencies(cob_tracking_action cob_tracking_action_gencfg ${cob_tracking_action_EXPORTED_TARGETS})
+add_dependencies(cob_tracking_action cob_tracking_action_gencfg)
+add_dependencies(cob_tracking_action ${cob_tracking_action_EXPORTED_TARGETS})
 add_dependencies(cob_tracking_action_client cob_srvs_gencpp)
 
 ## Declare a cpp executable
