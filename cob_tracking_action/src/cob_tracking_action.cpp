@@ -178,7 +178,6 @@ bool TrackingAction::initialize()
 
 	//convert to reconfigure type
 	cob_tracking_action::TrackingActionConfig config;
-
 	config.timer_value = 10;
 	config.base_active = false;
 	config.base_ratio = 0.0;
