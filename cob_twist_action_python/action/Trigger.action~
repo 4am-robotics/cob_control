@@ -1,8 +1,0 @@
-# Define the goal
-bool tracking
----
-# Define the result
-bool success
----
-# Define the feedback message
-geometry_msgs/Twist twist
