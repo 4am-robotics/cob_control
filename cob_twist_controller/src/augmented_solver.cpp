@@ -221,14 +221,54 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& 
     {    v_in_vec(i)=v_in(i);    }
     
     
-    if(params_.JLA_active) {
+    if(params_.JLA_active)
+    {
         Eigen::MatrixXd W = augmented_solver::calculate_weighting(q_in, last_q_dot, limits_min, limits_max).asDiagonal();
-        Eigen::MatrixXd tmp = (jac.data*W.inverse()*jac.data.transpose()+Wv).inverse();        
-        qdot_out_vec=W.inverse()*jac.data.transpose()*tmp*v_in_vec;
+        
+        if(params_.damping_method == TRUNCATION)
+        {
+            Eigen::JacobiSVD<Eigen::MatrixXd> svdWholeMatrix(jac.data*W.inverse()*jac.data.transpose()+Wv,Eigen::ComputeFullU | Eigen::ComputeFullV);
+            Eigen::VectorXd SWholeMatrix = svdWholeMatrix.singularValues();
+            Eigen::VectorXd S_inv = Eigen::VectorXd::Zero(SWholeMatrix.rows());
+            
+            for(int i=0;i<SWholeMatrix.rows();i++)
+            {    S_inv(i) = SWholeMatrix(i)<params_.eps?0:1/SWholeMatrix(i);    }
+            
+            Eigen::MatrixXd tmp=svdWholeMatrix.matrixV()*S_inv.asDiagonal()*svdWholeMatrix.matrixV().transpose();
+            qdot_out_vec=W.inverse()*jac.data.transpose()*tmp*v_in_vec;
+        }
+        
+        else
+        {
+            Eigen::MatrixXd tmp = (jac.data*W.inverse()*jac.data.transpose()+Wv).inverse();        
+            qdot_out_vec=W.inverse()*jac.data.transpose()*tmp*v_in_vec;
+        }
     }
-    else {
-        Eigen::MatrixXd tmp = (jac.data*jac.data.transpose()+Wv).inverse();
-        qdot_out_vec=jac.data.transpose()*tmp*v_in_vec;
+    else
+    {
+        if(params_.damping_method == TRUNCATION)
+        {
+            Eigen::MatrixXd jac_pinv = Eigen::MatrixXd::Zero(jac.columns(),jac.rows());
+            Eigen::MatrixXd temp = Eigen::MatrixXd::Zero(jac.columns(),jac.rows());
+            for (int i=0; i<S.rows(); i++)
+            {
+                for (int j=0; j<jac.rows(); j++)
+                {
+                    for (int k=0; k<jac.columns(); k++)
+                    {
+                        double denominator = pow(S(i),2)+pow(damping_factor,2);
+                        double factor = (denominator < params_.eps) ? 0.0 : S(i)/denominator;
+                        jac_pinv(k,j)+=factor*svd.matrixV()(k,i)*svd.matrixU()(j,i);
+                    }
+                }
+            }
+            qdot_out_vec = jac_pinv*v_in_vec;
+        }
+        else
+        {
+            Eigen::MatrixXd tmp = (jac.data*jac.data.transpose()+Wv).inverse();
+            qdot_out_vec=jac.data.transpose()*tmp*v_in_vec;
+        }
     }
     
     if(params_.enforce_limits)
@@ -309,8 +349,8 @@ Eigen::VectorXd augmented_solver::calculate_weighting(const KDL::JntArray& q, co
     for(int i=0; i<jac.columns() ; i++) {
 
         if(i<chain.getNrOfJoints()) {    //See Chan paper
-            double dh = fabs(pow(limits_max_[i]/M_PI*180-limits_min_[i]/M_PI*180,2)*(2*(round(q(i)*10000)/10000)/M_PI*180-limits_max_[i]/M_PI*180-limits_min_[i]/M_PI*180)/(4*pow(limits_max_[i]/M_PI*180-(round(q(i)*10000)/10000)/M_PI*180,2)*pow((round(q(i)*10000)/10000)/M_PI*180-limits_min_[i]/M_PI*180,2)));
-            std::cout<<"dh:"<<dh<<std::endl;
+            double dh = fabs(pow(limits_max_[i]/M_PI*180-limits_min_[i]/M_PI*180,2)*(2*q(i)/M_PI*180-limits_max_[i]/M_PI*180-limits_min_[i]/M_PI*180)/(4*pow(limits_max_[i]/M_PI*180-q(i)/M_PI*180,2)*pow(q(i)/M_PI*180-limits_min_[i]/M_PI*180,2)));
+            //std::cout<<"dh:"<<dh<<std::endl;
 
             if(initial_iteration)
             {    output(i)=1+dh;    }
@@ -337,7 +377,7 @@ Eigen::VectorXd augmented_solver::enforce_limits(const KDL::JntArray& q, Eigen::
     //The factor is not used if the output causes the joint to move far from its limits
     
     Eigen::VectorXd output = Eigen::VectorXd::Zero(jac.columns());
-    double tolerance=5.0/180*M_PI;    
+    double tolerance=1.0/180*M_PI;    
     
     for(int i=0; i<jac.columns() ;i++) {
         if(i<chain.getNrOfJoints()) {

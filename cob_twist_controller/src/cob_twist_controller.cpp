@@ -317,7 +317,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 		
 		geometry_msgs::Twist twist_manipulator_in_base_link;
 		tf::twistKDLToMsg(frame3*twist,twist_manipulator_in_base_link);
-		twist_real_pub_.publish(twist_manipulator_in_base_link);	// Base_link
+		//twist_real_pub_.publish(twist_manipulator_in_base_link);	// Base_link
 		
 	}
 	
@@ -402,7 +402,7 @@ void CobTwistController::jointstate_cb(const sensor_msgs::JointState::ConstPtr& 
 		///---------------------------------------------------------------------
 		/// current twist
 		KDL::FrameVel FrameVel;
-		//geometry_msgs::Twist twist_msg;
+		geometry_msgs::Twist twist_msg;
 		KDL::JntArrayVel jntArrayVel = KDL::JntArrayVel(last_q_, last_q_dot_);
 		
 		int ret = p_fksolver_vel_->JntToCart(jntArrayVel, FrameVel, -1);
@@ -410,8 +410,8 @@ void CobTwistController::jointstate_cb(const sensor_msgs::JointState::ConstPtr& 
 		if(ret>=0)
 		{
 			KDL::Twist twist = FrameVel.GetTwist();
-			//tf::twistKDLToMsg(twist,twist_msg);
-			//twist_real_pub_.publish(twist_msg);
+			tf::twistKDLToMsg(twist,twist_msg);
+			twist_real_pub_.publish(twist_msg);
 			
 			//ROS_INFO("TwistReal Vel (%f, %f, %f)", twist.vel.x(), twist.vel.y(), twist.vel.z());
 			//ROS_INFO("TwistReal Rot (%f, %f, %f)", twist.rot.x(), twist.rot.y(), twist.rot.z());
