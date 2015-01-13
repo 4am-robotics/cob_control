@@ -32,6 +32,7 @@ struct AugmentedSolverParams {
     bool JLA_active;
     bool enforce_limits;
     double base_ratio;
+    double base_min_vel;
 };
 
 enum DampingMethodTypes {
