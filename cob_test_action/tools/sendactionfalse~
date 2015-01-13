@@ -1,6 +1,0 @@
-#!/bin/bash
-echo sourcing ...
-source ~/.bashrc
-echo send TestAction ...
-
-rostopic pub -1 /TriggerTracker/goal cob_test_action/TriggerActionGoal '{header: {stamp: now, frame_id: /test_twist_frame}, goal_id: {stamp: now, id: /goal_id_test}, goal: {tracking: false}}'

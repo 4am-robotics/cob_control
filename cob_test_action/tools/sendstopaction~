@@ -1,6 +1,0 @@
-#!/bin/bash
-echo sourcing ...
-source ~/.bashrc
-echo send TestString ...
-
-rostopic pub /sub std_msgs/String '{data: stop}'
