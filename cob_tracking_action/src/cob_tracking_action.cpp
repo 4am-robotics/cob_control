@@ -93,7 +93,7 @@ bool TrackingAction::initialize()
 	//readXDotTarget insert on END:
 
 
-	//FrameTrackingInsert:float64’ is not a member of ‘std_msgs’
+	//FrameTrackingInsert:
 	ros::NodeHandle nh_twist("twist_controller");
 	//ros::NodeHandle nh_cartesian("cartesian_controller");
 

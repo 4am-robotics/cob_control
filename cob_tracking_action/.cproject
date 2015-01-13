@@ -27,9 +27,9 @@
 								<option id="org.eclipse.cdt.build.core.settings.holder.incpaths.1256334676" name="Include Paths" superClass="org.eclipse.cdt.build.core.settings.holder.incpaths" valueType="includePath">
 									<listOptionValue builtIn="false" value="/opt/ros/indigo/include"/>
 									<listOptionValue builtIn="false" value="/home/ipa-fmw-ce/git/catkin_ws/devel/include"/>
-									<listOptionValue builtIn="false" value="/usr/src/gtest/include"/>
 									<listOptionValue builtIn="false" value="/usr/include"/>
 									<listOptionValue builtIn="false" value="/usr/include/c++/4.8"/>
+									<listOptionValue builtIn="false" value="/usr/src/gtest/src"/>
 								</option>
 								<inputType id="org.eclipse.cdt.build.core.settings.holder.inType.911188608" languageId="org.eclipse.cdt.core.g++" languageName="GNU C++" sourceContentType="org.eclipse.cdt.core.cxxSource,org.eclipse.cdt.core.cxxHeader" superClass="org.eclipse.cdt.build.core.settings.holder.inType"/>
 							</tool>
