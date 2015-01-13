@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<launch>
+<!-- protected region additional custom Launchfile statements in the beginning on begin -->
+<!-- protected region additional custom Launchfile statements in the beginning end -->
+
+
+	<include file="$(find cob_test_action_behaviour)/launch/cob_action_behaviour_config.launch" />
+	<node pkg="cob_test_action_behaviour" type="cob_action_behaviour" name="cob_action_behaviour" output="screen"/>
+</launch>

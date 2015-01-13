@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ros:Architecture xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:ros="http://ros/1.0" name="cob_test_action_system" author="ipa-fmw-ce" author_email="ipa-fmw-ce@todo.todo" license="TODO" description="The cob_test_action_system system">
+  <packages href="platform:/resource//cob_test_action/model/cob_test_action.ros_package#/"/>
+  <packages href="platform:/resource//cob_test_action_behaviour/model/cob_test_action_behaviour.ros_coordinator#/"/>
+  <packages href="platform:/resource//cob_test_action_client/model/cob_test_action_client.ros_package#/"/>
+  <action name="TriggerTracker">
+    <actionserver href="platform:/resource//cob_test_action/model/cob_test_action.ros_package#//@node.0/@actionserver.0"/>
+    <actionclient href="platform:/resource//cob_test_action_behaviour/model/cob_test_action_behaviour.ros_coordinator#//@node.0/@actionclient.0"/>
+  </action>
+  <action name="TriggerAction">
+    <actionserver href="platform:/resource//cob_test_action/model/cob_test_action.ros_package#//@node.0/@actionserver.0"/>
+    <actionclient href="platform:/resource//cob_test_action_client/model/cob_test_action_client.ros_package#//@node.0/@actionclient.0"/>
+  </action>
+</ros:Architecture>

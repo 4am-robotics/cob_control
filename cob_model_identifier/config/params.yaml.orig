@@ -1,0 +1,27 @@
+joint_names: ["torso_1_link","torso_2_link","torso_3_link"]
+tip_link: 'torso_3_link'
+base_link: 'torso_base_link'
+output_file_path: "/home/fxm-cm_local/m-files/"
+
+tracking_frame: "br"
+<<<<<<< HEAD
+reference_frame: "odom_combined" 
+endeffector_frame: "torso_3_joint"
+trans_x : 0.1
+trans_y : 0.1
+trans_z : -0.1
+rot_x : 0
+rot_y : 0
+rot_z : 0
+=======
+reference_frame: "torso_base_link" 
+endeffector_frame: "torso_3_link"
+
+trans_x : 0
+trans_y : 0
+trans_z : 0
+rot_x : 0.05
+rot_y : 0.05
+rot_z : 0.05
+>>>>>>> origin-cm/cm_dev_merged_test
+samples : 100

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<notation:Diagram xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:notation="http://www.eclipse.org/gmf/runtime/1.0.2/notation" xmlns:ros="http://ros/1.0" xmi:id="_jwkMsHlaEeS7aLa8jKf6Xw" type="RosPackage" name="cob_test_action_client.ros_package_diagram" measurementUnit="Pixel">
+  <children xmi:type="notation:Shape" xmi:id="_p0hTMHlaEeS7aLa8jKf6Xw" type="2001" fontName="Ubuntu">
+    <children xmi:type="notation:DecorationNode" xmi:id="_p0hTMnlaEeS7aLa8jKf6Xw" type="5008"/>
+    <children xmi:type="notation:BasicCompartment" xmi:id="_p0hTM3laEeS7aLa8jKf6Xw" type="7001">
+      <styles xmi:type="notation:TitleStyle" xmi:id="_p0hTNHlaEeS7aLa8jKf6Xw" showTitle="true"/>
+      <styles xmi:type="notation:SortingStyle" xmi:id="_p0hTNXlaEeS7aLa8jKf6Xw"/>
+      <styles xmi:type="notation:FilteringStyle" xmi:id="_p0hTNnlaEeS7aLa8jKf6Xw"/>
+    </children>
+    <children xmi:type="notation:Node" xmi:id="_rXwAgHlaEeS7aLa8jKf6Xw" type="3006">
+      <children xmi:type="notation:DecorationNode" xmi:id="_rXwnkHlaEeS7aLa8jKf6Xw" type="5006"/>
+      <styles xmi:type="notation:DescriptionStyle" xmi:id="_rXwAgXlaEeS7aLa8jKf6Xw"/>
+      <styles xmi:type="notation:FontStyle" xmi:id="_rXwAgnlaEeS7aLa8jKf6Xw" fontName="Ubuntu"/>
+      <styles xmi:type="notation:LineStyle" xmi:id="_rXwAg3laEeS7aLa8jKf6Xw"/>
+      <element xmi:type="ros:ActionClient" href="cob_test_action_client.ros_package#//@node.0/@actionclient.0"/>
+      <layoutConstraint xmi:type="notation:Bounds" xmi:id="_rXwAhHlaEeS7aLa8jKf6Xw"/>
+    </children>
+    <children xmi:type="notation:Node" xmi:id="_UXlbEHlbEeS7aLa8jKf6Xw" type="3007">
+      <children xmi:type="notation:DecorationNode" xmi:id="_UXmCIHlbEeS7aLa8jKf6Xw" type="5007"/>
+      <styles xmi:type="notation:DescriptionStyle" xmi:id="_UXlbEXlbEeS7aLa8jKf6Xw"/>
+      <styles xmi:type="notation:FontStyle" xmi:id="_UXlbEnlbEeS7aLa8jKf6Xw" fontName="Ubuntu"/>
+      <element xmi:type="ros:Subscriber" href="cob_test_action_client.ros_package#//@node.0/@subscriber.0"/>
+      <layoutConstraint xmi:type="notation:Bounds" xmi:id="_UXlbE3lbEeS7aLa8jKf6Xw"/>
+    </children>
+    <element xmi:type="ros:Node" href="cob_test_action_client.ros_package#//@node.0"/>
+    <layoutConstraint xmi:type="notation:Bounds" xmi:id="_p0hTMXlaEeS7aLa8jKf6Xw" x="334" y="191"/>
+  </children>
+  <styles xmi:type="notation:DiagramStyle" xmi:id="_jwkMsXlaEeS7aLa8jKf6Xw"/>
+  <element xmi:type="ros:Package" href="cob_test_action_client.ros_package#/"/>
+</notation:Diagram>
