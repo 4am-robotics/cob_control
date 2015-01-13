@@ -78,7 +78,7 @@ private:
 	ros::Publisher vel_pub;
 	ros::Publisher base_vel_pub;
 	ros::Publisher twist_pub_;
-	ros::Publisher twist_real_pub_,twist_real_base_pub_;
+	ros::Publisher twist_current_pub_, twist_real_pub_, twist_real_base_pub_;
 
 	KDL::Chain chain_;
 	std::string chain_base_;

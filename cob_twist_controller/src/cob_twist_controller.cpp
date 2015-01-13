@@ -178,6 +178,7 @@ bool CobTwistController::initialize()
 	//base_vel_pub = nh_base.advertise<geometry_msgs::Twist>("controller/command", 1);
 	base_vel_pub = nh_base.advertise<geometry_msgs::Twist>("controller/command_direct", 1);
 	twist_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_normalized", 1);
+	twist_current_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_current", 1);
 	twist_real_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_mani", 1);
 	twist_real_base_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_base", 1);
 	soll_twist_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_ee", 1);
@@ -341,7 +342,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 	
 	
 	if(base_active_)
-	{	
+	{
 		if(reset_markers_){
 			point_ee_vec_.clear();
 			point_base_vec_.clear();
@@ -376,7 +377,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 	if(base_compensation_)
 	{
 		twist = getBaseCompensatedTwist(twist,twist_odometry_);
-	
+		
 		/// DEBUG
 		//KDL::Frame frame3;
 		//tf::StampedTransform tf_debug;
@@ -414,7 +415,6 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 		//
 		//tf::PoseKDLToMsg(frame_tip,pose_tip);
 		//tf::PoseKDLToMsg(frame_base,pose_base);
-		
 		
 		//geometry_msgs::Twist twist_manipulator_in_base_link;
 		
@@ -568,7 +568,7 @@ void CobTwistController::jointstate_cb(const sensor_msgs::JointState::ConstPtr& 
 		{
 			KDL::Twist twist = FrameVel.GetTwist();
 			//tf::twistKDLToMsg(twist,twist_msg);
-			//twist_real_pub_.publish(twist_msg);
+			//twist_current_pub_.publish(twist_msg);
 			
 			//ROS_INFO("TwistReal Vel (%f, %f, %f)", twist.vel.x(), twist.vel.y(), twist.vel.z());
 			//ROS_INFO("TwistReal Rot (%f, %f, %f)", twist.rot.x(), twist.rot.y(), twist.rot.z());
@@ -730,7 +730,7 @@ void CobTwistController::showMarker(int marker_id,double red, double green, doub
 	marker.action = visualization_msgs::Marker::ADD;
 	
 	marker.pose.orientation.w = 1.0;
-
+	
 	marker.scale.x = 0.01;
 	
 	marker.color.r = red;

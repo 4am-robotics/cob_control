@@ -66,9 +66,9 @@ private:
 	ros::Publisher manipulability_pub_;
 	//ros::Publisher rcond_pub_;
 	ros::Publisher last_sing_pub_;
-	ros::Publisher pose_pub_;
+	ros::Publisher transformation_pub_;
 	void euler(std::vector<double> *out, double in, double dt);	
-	geometry_msgs::Pose getPose();
+	geometry_msgs::Pose getTransformationBetween();
 	
 	/// KDL Conversion
 	KDL::Chain chain_;
@@ -95,7 +95,7 @@ private:
 	double roll_,pitch_,yaw_;
 	
 	std::vector <double> timeVect_;
-	std::string referenceFrame_,endeffectorFrame_,trackingFrame_;
+	std::string frame_1,frame_2,trackingFrame_;
 	ros::Timer timer_stop_;
 	
 	/// Euler Integration
