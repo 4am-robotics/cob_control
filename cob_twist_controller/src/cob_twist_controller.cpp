@@ -31,6 +31,7 @@
 
 #include <kdl_conversions/kdl_msg.h>
 #include <tf/transform_datatypes.h>
+#include <visualization_msgs/Marker.h>
 
 
 bool CobTwistController::initialize()
@@ -118,6 +119,8 @@ bool CobTwistController::initialize()
 	config.base_ratio = config.base_ratio;
 	config.JLA_active = config.JLA_active;
 	config.enforce_limits = config.enforce_limits;
+	config.reset_markers = config.reset_markers;
+	config.base_min_vel = config.base_min_vel;
 	
 	///parse robot_description and generate KDL chains
 	KDL::Tree my_tree;
@@ -175,9 +178,15 @@ bool CobTwistController::initialize()
 	//base_vel_pub = nh_base.advertise<geometry_msgs::Twist>("controller/command", 1);
 	base_vel_pub = nh_base.advertise<geometry_msgs::Twist>("controller/command_direct", 1);
 	twist_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_normalized", 1);
-	twist_real_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_current", 1);
-	
-	yaw_old_ = 0;
+	twist_current_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_current", 1);
+	twist_real_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_mani", 1);
+	twist_real_base_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_base", 1);
+	soll_twist_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_ee", 1);
+	pose_base_pub_ = nh_twist.advertise<geometry_msgs::Pose> ("debug/pose_base", 0);
+	pose_tip_pub_ = nh_twist.advertise<geometry_msgs::Pose> ("debug/pose_tip", 0);
+	vis_pub_ee_ = nh_twist.advertise<visualization_msgs::Marker>( "debug/vis_ee", 0 );
+	vis_pub_base_ = nh_twist.advertise<visualization_msgs::Marker>( "debug/vis_base", 0 );
+
 	ros::Time time_ = ros::Time::now();
 	ros::Time last_update_time_ = time_;
 	ros::Duration period_ = time_ - last_update_time_;
@@ -201,9 +210,10 @@ void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControl
 	params.base_ratio = config.base_ratio;
 	params.JLA_active = config.JLA_active;
 	params.enforce_limits = config.enforce_limits;
-	
+	reset_markers_ = config.reset_markers;
 	base_compensation_ = config.base_compensation;
 	base_active_ = config.base_active;
+	params.base_min_vel = config.base_min_vel;
 	
 	p_augmented_solver_->SetAugmentedSolverParams(params);
 }
@@ -262,15 +272,82 @@ KDL::Twist CobTwistController::getBaseCompensatedTwist(KDL::Twist twist,KDL::Twi
 /// Orientation of twist is with respect to chain_base coordinate system
 void CobTwistController::solve_twist(KDL::Twist twist)
 {
+	geometry_msgs::Twist tw;
+	KDL::Twist tw_debug;
+	KDL::Frame frame_tip,frame_base;
+	tf::StampedTransform tf_tip,tf_base;
+	geometry_msgs::Pose pose_tip,pose_base;
+	geometry_msgs::Point point_base,point_ee;
+
+	
 	int ret_ik;
 	KDL::Twist base_twist,twist_odom;
-	KDL::Frame frame,frame2;
-	tf::StampedTransform transform_tip_basefootprint,transform_base_basefootprint;
-	
+	KDL::Frame frame,frame2,frame3;
+	tf::StampedTransform transform_tip_basefootprint,transform_base_basefootprint,tf_d;
 	KDL::JntArray q_dot_ik(chain_.getNrOfJoints());
+	KDL::JntArray q_dot_ik_debug(chain_.getNrOfJoints());
+			///DEBUG
+		try{
+			tf_listener_.waitForTransform("odom_combined",chain_tip_, ros::Time(0), ros::Duration(0.5));
+			tf_listener_.lookupTransform("odom_combined",chain_tip_, ros::Time(0), tf_tip);
+		}catch (tf::TransformException ex){
+			ROS_ERROR("%s",ex.what());
+			return;
+		}
+		try{
+			tf_listener_.waitForTransform("odom_combined","base_link", ros::Time(0), ros::Duration(0.5));
+			tf_listener_.lookupTransform("odom_combined","base_link", ros::Time(0), tf_base);
+		}catch (tf::TransformException ex){
+			ROS_ERROR("%s",ex.what());
+			return;
+		}
+		
+		try{
+			tf_listener_.waitForTransform("base_link",chain_base_, ros::Time(0), ros::Duration(0.5));
+			tf_listener_.lookupTransform("base_link",chain_base_, ros::Time(0), tf_d);
+		}catch (tf::TransformException ex){
+			ROS_ERROR("%s",ex.what());
+			return;
+		}
+		
+		frame_tip.p = KDL::Vector(tf_tip.getOrigin().x(), tf_tip.getOrigin().y(), tf_tip.getOrigin().z());
+		frame_tip.M = KDL::Rotation::Quaternion(tf_tip.getRotation().x(), tf_tip.getRotation().y(), tf_tip.getRotation().z(), tf_tip.getRotation().w());
+		
+		frame_base.p = KDL::Vector(tf_base.getOrigin().x(), tf_base.getOrigin().y(), tf_base.getOrigin().z());
+		frame_base.M = KDL::Rotation::Quaternion(tf_base.getRotation().x(), tf_base.getRotation().y(), tf_base.getRotation().z(), tf_base.getRotation().w());
+		
+		frame3.p = KDL::Vector(tf_d.getOrigin().x(), tf_d.getOrigin().y(), tf_d.getOrigin().z());
+		frame3.M = KDL::Rotation::Quaternion(tf_d.getRotation().x(), tf_d.getRotation().y(), tf_d.getRotation().z(), tf_d.getRotation().w());
+		
+		
+		if(!reset_markers_){
+			point_ee.x = tf_tip.getOrigin().x();
+			point_ee.y = tf_tip.getOrigin().y();
+			point_ee.z = tf_tip.getOrigin().z();
+			
+			point_base.x = tf_base.getOrigin().x();
+			point_base.y = tf_base.getOrigin().y();
+			point_base.z = tf_base.getOrigin().z();
+			
+			point_ee_vec_.push_back(point_ee);
+			point_base_vec_.push_back(point_base);
+					
+			double id1 = 0;
+			double id2 = 1;
+			
+			showMarker(id1,1,0,0,"m",vis_pub_ee_,point_ee_vec_);
+			showMarker(id2,0,1,0,"m",vis_pub_base_,point_base_vec_);
+		}
+		///----------------------------------------------------------------------
+	
 	
 	if(base_active_)
 	{
+		if(reset_markers_){
+			point_ee_vec_.clear();
+			point_base_vec_.clear();
+		}
+		
 		q_dot_ik.resize(chain_.getNrOfJoints()+3);
 		try{
 			tf_listener_.waitForTransform("base_link",chain_tip_, ros::Time(0), ros::Duration(0.5));
@@ -294,31 +371,61 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 		frame2.M = KDL::Rotation::Quaternion(transform_base_basefootprint.getRotation().x(), transform_base_basefootprint.getRotation().y(), transform_base_basefootprint.getRotation().z(), transform_base_basefootprint.getRotation().w());
 		
 		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik,&limits_min_,&limits_max_,frame,frame2);
+		
 	}
 	
 	if(base_compensation_)
 	{
-										// in chain base
 		twist = getBaseCompensatedTwist(twist,twist_odometry_);
-			/// DEBUUUUUUUUUUUUUUUUUG
-		KDL::Frame frame3;
-		tf::StampedTransform tf_debug;
-		try{
-			tf_listener_.waitForTransform("base_link",chain_base_, ros::Time(0), ros::Duration(0.5));
-			tf_listener_.lookupTransform("base_link",chain_base_, ros::Time(0), tf_debug);
-		}catch (tf::TransformException ex){
-			ROS_ERROR("%s",ex.what());
-			return;
-		}
-		frame3.p = KDL::Vector(tf_debug.getOrigin().x(), tf_debug.getOrigin().y(), tf_debug.getOrigin().z());
-		frame3.M = KDL::Rotation::Quaternion(tf_debug.getRotation().x(), tf_debug.getRotation().y(), tf_debug.getRotation().z(), tf_debug.getRotation().w());
 		
+		/// DEBUG
+		//KDL::Frame frame3;
+		//tf::StampedTransform tf_debug;
+		//try{
+			//tf_listener_.waitForTransform("base_link",chain_base_, ros::Time(0), ros::Duration(0.5));
+			//tf_listener_.lookupTransform("base_link",chain_base_, ros::Time(0), tf_debug);
+		//}catch (tf::TransformException ex){
+			//ROS_ERROR("%s",ex.what());
+			//return;
+		//}
 		
+		//try{
+			//tf_listener_.waitForTransform("odom_combined",chain_tip_, ros::Time(0), ros::Duration(0.5));
+			//tf_listener_.lookupTransform("odom_combined",chain_tip_, ros::Time(0), tf_tip);
+		//}catch (tf::TransformException ex){
+			//ROS_ERROR("%s",ex.what());
+			//return;
+		//}
+		//try{
+			//tf_listener_.waitForTransform("odom_combined","base_link", ros::Time(0), ros::Duration(0.5));
+			//tf_listener_.lookupTransform("odom_combined","base_link", ros::Time(0), tf_base);
+		//}catch (tf::TransformException ex){
+			//ROS_ERROR("%s",ex.what());
+			//return;
+		//}
+		//frame_tip.p = KDL::Vector(tf_tip.getOrigin().x(), tf_tip.getOrigin().y(), tf_tip.getOrigin().z());
+		//frame_tip.M = KDL::Rotation::Quaternion(tf_tip.getRotation().x(), tf_tip.getRotation().y(), tf_tip.getRotation().z(), tf_tip.getRotation().w());
+		//
+		//frame_base.p = KDL::Vector(tf_base.getOrigin().x(), tf_base.getOrigin().y(), tf_base.getOrigin().z());
+		//frame_base.M = KDL::Rotation::Quaternion(tf_base.getRotation().x(), tf_base.getRotation().y(), tf_base.getRotation().z(), tf_base.getRotation().w());
+		//
+		//
+		//frame3.p = KDL::Vector(tf_debug.getOrigin().x(), tf_debug.getOrigin().y(), tf_debug.getOrigin().z());
+		//frame3.M = KDL::Rotation::Quaternion(tf_debug.getRotation().x(), tf_debug.getRotation().y(), tf_debug.getRotation().z(), tf_debug.getRotation().w());
+		//
+		//tf::PoseKDLToMsg(frame_tip,pose_tip);
+		//tf::PoseKDLToMsg(frame_base,pose_base);
 		
-		geometry_msgs::Twist twist_manipulator_in_base_link;
-		tf::twistKDLToMsg(frame3*twist,twist_manipulator_in_base_link);
+		//geometry_msgs::Twist twist_manipulator_in_base_link;
+		
+		//Twist Manipulator in base_link
+		//tf::twistKDLToMsg(frame3*twist,twist_manipulator_in_base_link);
+		
+		//pose_base_pub_.publish(pose_base);
+		//pose_tip_pub_.publish(pose_tip);
+		
 		//twist_real_pub_.publish(twist_manipulator_in_base_link);	// Base_link
-		
+		///----------------------------------------------------------------------
 	}
 	
 	
@@ -346,16 +453,66 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 		if(base_active_)
 		{
 			geometry_msgs::Twist base_vel_msg;
+			/// Base Velocities with respect to base_link
 			base_vel_msg.linear.x = q_dot_ik(dof_);
 			base_vel_msg.linear.y = q_dot_ik(dof_+1);
 			base_vel_msg.angular.z = q_dot_ik(dof_+2);
 			
-			base_vel_pub.publish(base_vel_msg);
-		}
+			//if(std::fabs(q_dot_ik(dof_)) > params_.base_min_vel){
+				//base_vel_msg.linear.x = q_dot_ik(dof_);
+			//}else{
+				//base_vel_msg.linear.x = 0;
+			//}
+			//
+			//if(std::fabs(q_dot_ik(dof_+1)) > params_.base_min_vel){
+				//base_vel_msg.linear.y = q_dot_ik(dof_+1);
+			//}else{
+				//base_vel_msg.linear.y = 0;
+			//}
+			//
+			//if(std::fabs(q_dot_ik(dof_+2)) > params_.base_min_vel){
+				//base_vel_msg.angular.z = q_dot_ik(dof_+2);
+			//}else{
+				//base_vel_msg.angular.z = 0;
+			//}
+			base_vel_pub.publish(base_vel_msg);	// base_link
+			
+			
+			KDL::Twist twist_mani,twist_base;
+			geometry_msgs::Twist twist_mani_msg,twist_base_msg,twist_combined_msg;
+			
+			tf::twistMsgToKDL(base_vel_msg, twist_base);
+			//twist_base = frame_base * twist_base; // odom_combined
+			tf::twistKDLToMsg(twist_base,twist_base_msg); 
+			twist_real_base_pub_.publish(twist_base_msg);// arm_left/debug/twist_base/linear
+			
+			KDL::Twist twist2;
+			KDL::FrameVel FrameVel;
+			KDL::JntArrayVel jntArrayVel = KDL::JntArrayVel(last_q_,last_q_dot_);
+
+			jntToCartSolver_vel_ = new KDL::ChainFkSolverVel_recursive(chain_);
+			int ret = jntToCartSolver_vel_->JntToCart(jntArrayVel,FrameVel,-1);
+
+			if(ret>=0){
+				twist2 = FrameVel.GetTwist();
+				twist2 = frame3 * twist2;	// base_link
+				tf::twistKDLToMsg(twist2,twist_mani_msg);	// Manipulator twist
+			}
+			else{
+				ROS_WARN("ChainFkSolverVel failed!");
+			}	
+				
+				//twist_mani= frame3 * twist;// - twist_base; // odom_combined
+				//tf::twistKDLToMsg(twist_mani,twist_mani_msg);
+				twist_real_pub_.publish(twist_mani_msg); // arm_left/debug/twist_mani/linear
+				
+				tf::twistKDLToMsg(twist_base+twist2,twist_combined_msg);
+				soll_twist_pub_.publish(twist_combined_msg);
+			}
 		vel_pub.publish(vel_msg);
 		
 		/////---------------------------------------------------------------------
-		///// Normalized q_dot into Twist
+		/// Normalized q_dot into Twist
 		//KDL::FrameVel FrameVel;
 		//geometry_msgs::Twist twist_msg;
 		//KDL::JntArrayVel jntArrayVel = KDL::JntArrayVel(last_q_,q_dot_ik);
@@ -367,7 +524,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 			//KDL::Twist twist = FrameVel.GetTwist();
 			//tf::twistKDLToMsg(twist,twist_msg);
 		//}
-		//twist_pub_.publish(twist_msg);
+		//twist_real_base_pub_.publish(twist_msg);
 		/////---------------------------------------------------------------------
 	}
 }
@@ -402,7 +559,7 @@ void CobTwistController::jointstate_cb(const sensor_msgs::JointState::ConstPtr& 
 		///---------------------------------------------------------------------
 		/// current twist
 		KDL::FrameVel FrameVel;
-		geometry_msgs::Twist twist_msg;
+		//geometry_msgs::Twist twist_msg;
 		KDL::JntArrayVel jntArrayVel = KDL::JntArrayVel(last_q_, last_q_dot_);
 		
 		int ret = p_fksolver_vel_->JntToCart(jntArrayVel, FrameVel, -1);
@@ -410,8 +567,8 @@ void CobTwistController::jointstate_cb(const sensor_msgs::JointState::ConstPtr& 
 		if(ret>=0)
 		{
 			KDL::Twist twist = FrameVel.GetTwist();
-			tf::twistKDLToMsg(twist,twist_msg);
-			twist_real_pub_.publish(twist_msg);
+			//tf::twistKDLToMsg(twist,twist_msg);
+			//twist_current_pub_.publish(twist_msg);
 			
 			//ROS_INFO("TwistReal Vel (%f, %f, %f)", twist.vel.x(), twist.vel.y(), twist.vel.z());
 			//ROS_INFO("TwistReal Rot (%f, %f, %f)", twist.rot.x(), twist.rot.y(), twist.rot.z());
@@ -420,8 +577,6 @@ void CobTwistController::jointstate_cb(const sensor_msgs::JointState::ConstPtr& 
 	}
 }
 
-
-///ToDo: Something is still not correct with the rotational Twist transformation!!!
 void CobTwistController::odometry_cb(const nav_msgs::Odometry::ConstPtr& msg)
 {
 	tf::StampedTransform transform_tf,transform_footprint_tip,transform_chain,transform_base_tip;
@@ -455,6 +610,7 @@ void CobTwistController::odometry_cb(const nav_msgs::Odometry::ConstPtr& msg)
 	//ROS_INFO("TCP: %f %f %f",transform_footprint_tip.getOrigin().x(),transform_footprint_tip.getOrigin().y(),transform_footprint_tip.getOrigin().z());
 	
 	tf::twistMsgToKDL(msg->twist.twist, twist_odometry);	// Base Twist
+	twist_odometry_raw_ = twist_odometry;
 	
 	// transform into chain_base
 	twist_odometry_transformed = frame * (twist_odometry+tangential_twist);
@@ -562,4 +718,27 @@ std::vector<double> CobTwistController::normalize_velocities_test(KDL::JntArray 
 	return ret;
 }
 
-
+void CobTwistController::showMarker(int marker_id,double red, double green, double blue, std::string ns, ros::Publisher pub, std::vector<geometry_msgs::Point> &pos_v)
+{
+	
+  	visualization_msgs::Marker marker;
+	marker.header.frame_id = "odom_combined";
+	marker.header.stamp = ros::Time();
+	marker.ns = ns;
+	marker.id = marker_id;
+	marker.type = visualization_msgs::Marker::LINE_STRIP;
+	marker.action = visualization_msgs::Marker::ADD;
+	
+	marker.pose.orientation.w = 1.0;
+	
+	marker.scale.x = 0.01;
+	
+	marker.color.r = red;
+	marker.color.g = green;
+	marker.color.b = blue;
+	
+	marker.points.insert(marker.points.begin(), pos_v.begin(), pos_v.end()); 
+	
+	marker.color.a = 1.0;
+	pub.publish( marker );
+}

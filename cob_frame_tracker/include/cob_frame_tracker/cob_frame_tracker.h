@@ -75,6 +75,9 @@ private:
 	ros::ServiceServer stop_server_;
 	ros::Publisher twist_pub_;
 	
+	/// Debug
+	ros::Publisher dif_pub_;
+	
 	bool movable_trans_;
 	bool movable_rot_;
 	

@@ -64,21 +64,9 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& 
 							chain_base.M.data[3],chain_base.M.data[4],chain_base.M.data[5],
 							chain_base.M.data[6],chain_base.M.data[7],chain_base.M.data[8];
 							
-		//std::cout << "chain_base_rot:\n " << chain_base_rot << "\n";
-		//W_base_ratio(0,0) = (1-params_.base_ratio)*chain_base.M.data[0];
-		//W_base_ratio(0,1) = (1-params_.base_ratio)*chain_base.M.data[1];
-		//
-		//W_base_ratio(1,0) = (1-params_.base_ratio)*chain_base.M.data[3];
-		//W_base_ratio(1,1) = (1-params_.base_ratio)*chain_base.M.data[4];
-		//
-		//W_base_ratio(2,0) = (1-params_.base_ratio)*chain_base.M.data[6];
-		//W_base_ratio(2,1) = (1-params_.base_ratio)*chain_base.M.data[7];
-		//
-		//jac.data = jac.data * W_base_ratio.transpose();
-							
 		// Transform from base_link to chain_base
-		//Eigen::Vector3d w_base_link(0,0,base_ratio);
-		Eigen::Vector3d w_base_link(0,0,1);
+		Eigen::Vector3d w_base_link(0,0,base_ratio);
+		//Eigen::Vector3d w_base_link(0,0,1);
 		w_chain_base = chain_base_rot*w_base_link;
 		r_chain_base = chain_base_rot*r_base_link;
 		
@@ -137,6 +125,7 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& 
         double w = std::sqrt(std::abs(d));
         damping_factor = ((w<params_.wt) ? (params_.lambda0 * pow((1 - w/params_.wt),2)) : 0);
         //std::cout << "w" << w << " wt" <<wt << " Condition" << (bool)(w<wt) << "\n";
+        std::cout << "w:" << w << "\n";
     }
     
     else if (params_.damping_method == MANIPULABILITY_RATE)
@@ -193,7 +182,7 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& 
         return -1;
     }
     
-    
+    std::cout << "Daming_factor:" << damping_factor << "\n";
 
     int task_size = 1;
     
