@@ -8,7 +8,18 @@
 
 	<!-- start cob_tracking_action_client -->
 	
-	<node ns="/arm_left" pkg="cob_tracking_action" type="cob_tracking_action_client_node" name="cob_tracking_action_client_node" respawn="false" output="screen"/>
-	<!--<node ns="/torso" pkg="cob_tracking_action" type="cob_tracking_action" name="cob_tracking_action_node" args="twist_command:=/torso/twist_controller/command_twist joint_state_reader:=/torso/joint_states" respawn="false" output="screen"/>-->
-	<!--<remap from="/torso/twist_controller/command_twist" to="/saft"/>-->
+	<node ns="/arm_left" pkg="cob_tracking_action" type="cob_tracking_action_client_node" name="cob_tracking_action_client" respawn="false" output="screen"/>
+	
+	<!--
+	<node ns="/arm_right" pkg="cob_tracking_action" type="cob_tracking_action_client_node" name="cob_tracking_action_client" respawn="false" output="screen"/>
+	-->
+	<!--
+	<node ns="/sensorring" pkg="cob_tracking_action" type="cob_tracking_action_client_node" name="cob_tracking_action_client_node" respawn="false" output="screen"/>
+	-->
+	<!--
+	<node ns="/head" pkg="cob_tracking_action" type="cob_tracking_action_client_node" name="cob_tracking_action_client_node" respawn="false" output="screen"/>
+	-->
+	<!--
+	<node ns="/torso" pkg="cob_tracking_action" type="cob_tracking_action_client_node" name="cob_tracking_action_client_node" respawn="false" output="screen"/>
+	-->
 </launch>

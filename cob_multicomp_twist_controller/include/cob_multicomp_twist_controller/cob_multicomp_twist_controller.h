@@ -30,19 +30,42 @@
 
 #include <ros/ros.h>
 
+#include <boost/thread/mutex.hpp>
+#include <dynamic_reconfigure/server.h>
+#include <cob_multicomp_twist_controller/MultiCompTwistControllerConfig.h>
+
+struct MultiCompTwistControllerParams {
+    bool base_compensation;
+    bool base_active;
+    double base_ratio;
+};
 
 class CobMultiCompTwistController
 {
 private:
 	ros::NodeHandle nh_;
 	
+	bool base_compensation_;
+	bool base_active_;
+
+	MultiCompTwistControllerParams params_;
 	
+
 public:
-	CobMultiCompTwistController(){;}
+	CobMultiCompTwistController():
+		base_compensation_(false),
+		base_active_(false)
+	{;}
 	~CobMultiCompTwistController();
 	
 	bool initialize();
 	void run();
 	
+	boost::recursive_mutex reconfig_mutex_;
+	boost::shared_ptr<dynamic_reconfigure::Server<cob_multicomp_twist_controller::MultiCompTwistControllerConfig> > reconfigure_server_;
+	void reconfigure_callback(cob_multicomp_twist_controller::MultiCompTwistControllerConfig &config, uint32_t level);
+
+	void SetTwistControllerParamsParams(MultiCompTwistControllerParams params){params_ = params;}
+
 };
 #endif

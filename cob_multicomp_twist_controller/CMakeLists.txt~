@@ -94,7 +94,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES cob_multicomp_twist_controller
-  CATKIN_DEPENDS roscpp rospy std_msgs sensor_msgs geometry_msgs 
+  CATKIN_DEPENDS roscpp rospy std_msgs
   DEPENDS system_lib
 )
 

@@ -8,16 +8,16 @@
 
 	<!-- start cob_tracking_action_servers -->
 	
-	<node ns="/arm_left" pkg="cob_tracking_action" type="cob_tracking_action_node" name="cob_tracking_action" respawn="false" output="screen"/>
-
-	<node ns="/arm_right" pkg="cob_tracking_action" type="cob_tracking_action_node" name="cob_tracking_action" respawn="false" output="screen"/>
-
+	<node ns="/arm_left" pkg="cob_tracking_action" type="cob_tracking_action_node" name="cob_tracking_action_node" respawn="false" output="screen"/>
 <!--
-	<node ns="/torso" pkg="cob_tracking_action" type="cob_tracking_action_node" name="cob_tracking_action" respawn="false" output="screen"/>
+	<node ns="/arm_right" pkg="cob_tracking_action" type="cob_tracking_action_node" name="cob_tracking_action_node" respawn="false" output="screen"/>
+-->
+<!--
+	<node ns="/sensorring" pkg="cob_tracking_action" type="cob_tracking_action_node" name="cob_tracking_action" respawn="false" output="screen"/>
 -->
 
 <!--
-	<node ns="/sensorring" pkg="cob_tracking_action" type="cob_tracking_action_node" name="cob_tracking_action" respawn="false" output="screen"/>
+	<node ns="/torso" pkg="cob_tracking_action" type="cob_tracking_action_node" name="cob_tracking_action" respawn="false" output="screen"/>
 -->
 
 <!--

@@ -219,7 +219,7 @@ void TrackingAction::run()
 			ROS_INFO("diff_twist [%f, %f, %f, %f, %f, %f]", diff_twist_.vel.x(), diff_twist_.vel.y(), diff_twist_.vel.z(), diff_twist_.rot.x(), diff_twist_.rot.y(), diff_twist_.rot.z());
 			// tracking time is over --> successful
 			if (tracking_time_ != 0) {
-				ROS_INFO("Server is waiting for trackingtime = %f to end.",maxdurationOftracking-time.toSec());
+				ROS_INFO("Server is waiting for trackingtime = %f to end.", maxdurationOftracking-time.toSec());
 				if (time.toSec() > maxdurationOftracking) {
 					tracking_ = false;
 					TrackingAction::succeed();
