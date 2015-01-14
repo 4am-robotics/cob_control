@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<launch>
+	
+	<param name="/use_sim_time" value="false"/>
+	<arg name="robot" default="$(optenv ROBOT !!NO_ROBOT_SET!!)"/>
+	<arg name="robot_env" default="$(optenv ROBOT_ENV !!NO_ROBOT_ENV_SET!!)"/>
+	<arg name="pkg_env_config" default="$(find cob_default_env_config)"/>
+
+	<!-- start cob_tracking_action_servers -->
+	
+	<node ns="/arm_left" pkg="cob_tracking_action" type="cob_tracking_action_node" name="cob_tracking_action_node" respawn="false" output="screen"/>
+<!--
+	<node ns="/arm_right" pkg="cob_tracking_action" type="cob_tracking_action_node" name="cob_tracking_action_node" respawn="false" output="screen"/>
+-->
+<!--
+	<node ns="/sensorring" pkg="cob_tracking_action" type="cob_tracking_action_node" name="cob_tracking_action" respawn="false" output="screen"/>
+-->
+
+<!--
+	<node ns="/torso" pkg="cob_tracking_action" type="cob_tracking_action_node" name="cob_tracking_action" respawn="false" output="screen"/>
+-->
+
+<!--
+	<node ns="/head" pkg="cob_tracking_action" type="cob_tracking_action_node" name="cob_tracking_action" respawn="false" output="screen"/>
+-->
+
+</launch>
