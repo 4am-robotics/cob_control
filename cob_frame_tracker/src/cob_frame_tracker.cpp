@@ -163,10 +163,10 @@ bool CobFrameTracker::initialize()
 	feedback_.twist.angular.y = 5.0;
 	feedback_.twist.angular.z = 6.0;
 	feedback_.distance = 10;
-	KDL::Vector vel(0.0,0.0,0.0);
-	KDL::Vector rot(0.0,0.0,0.0);
-	current_twist_.vel = vel;
-	current_twist_.rot = rot;
+//	KDL::Vector vel(0.0,0.0,0.0);
+//	KDL::Vector rot(0.0,0.0,0.0);
+//	current_twist_.vel = vel;
+//	current_twist_.rot = rot;
 
 	//convert to reconfigure type
 	cob_frame_tracker::FrameTrackerConfig config;
@@ -179,8 +179,20 @@ bool CobFrameTracker::initialize()
 	cart_distance_ = 0.0;
 	rot_distance_ = 0.0;
 	abortion_message_ = "";
-
+	tracking_goal_ = false;
 	
+	//ABORTION CRITERIA:
+	current_twist_.Zero();
+	target_twist_.Zero();
+	diff_norm_twist_lin_.Zero();
+	norm_current_twist_lin_ = 0;
+	norm_current_twist_rot_ = 0;
+	norm_target_twist_lin_ = 0;
+	norm_target_twist_rot_ = 0;
+
+
+
+
 	ROS_INFO("...initialized!");
 	return true;
 }
@@ -205,30 +217,36 @@ void CobFrameTracker::run()
 //			ROS_INFO("target_twist [%f, %f, %f, %f, %f, %f]", target_twist_.vel.x(), target_twist_.vel.y(), target_twist_.vel.z(), target_twist_.rot.x(), target_twist_.rot.y(), target_twist_.rot.z());
 //			ROS_INFO("diff_twist [%f, %f, %f, %f, %f, %f]", diff_twist_.vel.x(), diff_twist_.vel.y(), diff_twist_.vel.z(), diff_twist_.rot.x(), diff_twist_.rot.y(), diff_twist_.rot.z());
 			// tracking time is over --> successful
-			if (tracking_time_ != 0) {
-				ROS_INFO("Server is waiting for trackingtime = %f to end.", maxdurationOftracking-time.toSec());
-				if (time.toSec() > maxdurationOftracking) {
-					tracking_ = false;
+
+
+			// tracking on goal or tracking because of service call
+			if (tracking_goal_) {
+				if (tracking_time_ != 0) {
+					ROS_INFO("Server is waiting for trackingtime = %f to end.", maxdurationOftracking-time.toSec());
+					if (time.toSec() > maxdurationOftracking) {
+						tracking_ = false;
+						CobFrameTracker::succeed();
+					}
+				}
+				// target reaches active frame --> successful
+				if (stop_on_goal_) {
+					ROS_INFO("Goal was reached!");
+					result_.success = true;
 					CobFrameTracker::succeed();
 				}
-			}
-			// target reaches active frame --> successful
-			if (stop_on_goal_) {
-				ROS_INFO("Goal was reached!");
-				result_.success = true;
-				CobFrameTracker::succeed();
-			}
 
 
-			// terms of abortion
-			/// do things ...
-			//readXDotCurrent insert ON BEGIN:
+				// terms of abortion
+				/// do things ...
+				//readXDotCurrent insert ON BEGIN:
 
-//			ROS_INFO("X dot current output = [%f,%f,%f,%f,%f,%f]", vector_vel_.x, vector_vel_.y, vector_vel_.z, vector_rot_.x, vector_rot_.y, vector_rot_.z);
-			//readXDotCurrent insert ON END:
-			if (CobFrameTracker::searchForAbortionCriteria()) {
-				CobFrameTracker::abort();
+	//			ROS_INFO("X dot current output = [%f,%f,%f,%f,%f,%f]", vector_vel_.x, vector_vel_.y, vector_vel_.z, vector_rot_.x, vector_rot_.y, vector_rot_.z);
+				//readXDotCurrent insert ON END:
+				if (CobFrameTracker::searchForAbortionCriteria()) {
+					CobFrameTracker::abort();
+				}
 			}
+
 			publish_twist(period);
 		}
 //		else
@@ -242,7 +260,7 @@ void CobFrameTracker::run()
 		r.sleep();
 
 		if (as_.isActive()) {
-			ROS_INFO("Sending feedback:");
+//			ROS_INFO("Sending feedback:");
 			as_.publishFeedback(feedback_);
 		}
 	}
@@ -254,8 +272,8 @@ void CobFrameTracker::publish_twist(ros::Duration period)
 	geometry_msgs::TransformStamped transform_msg;
 	geometry_msgs::TwistStamped twist_msg;
 	KDL::Frame frame;
-	ROS_INFO("active_frame_ = %s", active_frame_.c_str());
-	ROS_INFO("target_tracking_frame_ = %s", target_tracking_frame_.c_str());
+//	ROS_INFO("active_frame_ = %s", active_frame_.c_str());
+//	ROS_INFO("target_tracking_frame_ = %s", target_tracking_frame_.c_str());
 
 
 	try{
@@ -310,6 +328,7 @@ void CobFrameTracker::publish_twist(ros::Duration period)
 	//twist_msg.angular.x = copysign(std::min(max_vel_rot_, std::fabs(transform_msg.transform.rotation.x)),transform_msg.transform.rotation.x);
 	//twist_msg.angular.y = copysign(std::min(max_vel_rot_, std::fabs(transform_msg.transform.rotation.y)),transform_msg.transform.rotation.y);
 	//twist_msg.angular.z = copysign(std::min(max_vel_rot_, std::fabs(transform_msg.transform.rotation.z)),transform_msg.transform.rotation.z);
+
 	//get target_twist
 	target_twist_.vel.x(twist_msg.twist.linear.x);
 	target_twist_.vel.y(twist_msg.twist.linear.y);
@@ -317,13 +336,32 @@ void CobFrameTracker::publish_twist(ros::Duration period)
 	target_twist_.rot.x(twist_msg.twist.angular.x);
 	target_twist_.rot.y(twist_msg.twist.angular.y);
 	target_twist_.rot.z(twist_msg.twist.angular.z);
-	
+	//calc norm:
+	target_norm_twist_lin_ = CobFrameTracker::normVec(target_twist_.vel);
+	target_norm_twist_rot_ = CobFrameTracker::normVec(target_twist_.rot);
+
+	current_norm_twist_lin_ = CobFrameTracker::normVec(current_twist_.vel);
+	current_norm_twist_rot_ = CobFrameTracker::normVec(current_twist_.rot);
+
+	diff_norm_twist_lin_ = KDL::Vector(current_norm_twist_lin_.x() - target_norm_twist_lin_.x(), current_norm_twist_lin_.y() - target_norm_twist_lin_.y(), current_norm_twist_lin_.z() - target_norm_twist_lin_.z());
+	ROS_INFO("target_twist [%f, %f, %f]", target_twist_.vel.x(), target_twist_.vel.y(), target_twist_.vel.z());
+	ROS_INFO("Normed target_twist: LIN [%f,%f,%f]", target_norm_twist_lin_.x(), target_norm_twist_lin_.y(), target_norm_twist_lin_.z() );
+	ROS_INFO("Normed current_twist: LIN [%f,%f,%f]", current_norm_twist_lin_.x(), current_norm_twist_lin_.y(), current_norm_twist_lin_.z() );
+	ROS_INFO("Normed diff_normed_twist: LIN [%f,%f,%f]", diff_norm_twist_lin_.x(),diff_norm_twist_lin_.y(), diff_norm_twist_lin_.z() );
+//	ROS_INFO("Normed target_twist: ROT [%f,%f,%f]", target_norm_twist_rot_.x(), target_norm_twist_rot_.y(), target_norm_twist_rot_.z() );
+//	ROS_INFO("Normed current_twist: ROT [%f,%f,%f]", current_norm_twist_rot_.x(), current_norm_twist_rot_.y(), current_norm_twist_rot_.z() );
+//	norm_target_twist_lin_ = target_twist_.vel.Norm();
+//	norm_target_twist_rot_ = target_twist_.rot.Norm();
+	//calc direction:
+//	target_norm_twist_lin_.Vector(target_twist_.vel.x() / )
+
 	twist_pub_.publish(twist_msg);
 }
 
+
+
 bool CobFrameTracker::start_tracking_cb(cob_srvs::SetString::Request& request, cob_srvs::SetString::Response& response)
 {
-	target_tracking_frame_ = request.data;
 	if (tracking_) {
 		ROS_INFO("CobFrameTracker start was denied! FrameTracker is already tracking a goal");
 		response.success = false;
@@ -333,7 +371,9 @@ bool CobFrameTracker::start_tracking_cb(cob_srvs::SetString::Request& request, c
 	else
 	{
 		ROS_INFO("CobFrameTracker started WITHOUT SECURITY MONITORING");
+		target_tracking_frame_ = request.data;
 		tracking_ = true;
+		tracking_goal_ = false;
 		response.success = true;
 		return true;
 	}
@@ -341,15 +381,25 @@ bool CobFrameTracker::start_tracking_cb(cob_srvs::SetString::Request& request, c
 
 bool CobFrameTracker::stop_tracking_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
 {
-	target_tracking_frame_ = active_frame_;
-	tracking_ = false;
-	
-	//publish zero Twist for stopping
-	geometry_msgs::TwistStamped twist_msg;
-	twist_msg.header.frame_id = active_frame_;
-	twist_pub_.publish(twist_msg);
-	
-	return true;
+	if (tracking_) {
+		if (tracking_goal_) {
+			ROS_INFO("CobFrameTracker stop was denied because TrackingAction is tracking a goal. You must send 'cancel goal' to the action server instead.");
+			return false;
+		}
+		ROS_INFO("CobFrameTracker stopped successfully");
+		target_tracking_frame_ = active_frame_;
+		tracking_ = false;
+		//publish zero Twist for stopping
+		geometry_msgs::TwistStamped twist_msg;
+		twist_msg.header.frame_id = active_frame_;
+		twist_pub_.publish(twist_msg);
+		return true;
+	}
+	else
+	{
+		ROS_INFO("CobFrameTracker stop denied because nothing was tracked.");
+		return false;
+	}
 }
 
 void CobFrameTracker::goalCB()
@@ -364,6 +414,7 @@ void CobFrameTracker::goalCB()
 		stop_on_goal_ = goal_->stop_on_goal;
 		tracking_time_ = goal_->tracking_time;
 		tracking_ = true;
+		tracking_goal_ = true;
 		start_of_tracking_ = ros::Time::now();
 		//target_tracking_frame_ = goal_.tracking_frame;
 		ROS_INFO("Output: Received target_tracking_frame_ = %s", target_tracking_frame_.c_str());
@@ -381,8 +432,9 @@ void CobFrameTracker::preemptCB()
 	ROS_INFO("this is the preempt callback");
 	as_.setPreempted(result_);
 	tracking_ = false;
+	tracking_goal_ = false;
 	target_tracking_frame_ = active_frame_;
-	geometry_msgs::Twist twist_msg;
+	geometry_msgs::TwistStamped twist_msg;
 	twist_pub_.publish(twist_msg);
 }
 
@@ -391,7 +443,8 @@ void CobFrameTracker::succeed()
 	ROS_INFO("Goal succeeded!");
 	as_.setSucceeded(result_, "succeeded text");
 	tracking_ = false;
-	geometry_msgs::Twist twist_msg;
+	tracking_goal_ = false;
+	geometry_msgs::TwistStamped twist_msg;
 	twist_pub_.publish(twist_msg);
 }
 
@@ -403,8 +456,9 @@ void CobFrameTracker::abort()
 	as_.setAborted(result_, abortion_message_);
 	ROS_WARN("Tracking has been aborted because of %s", abortion_message_.c_str());
 	tracking_ = false;
+	tracking_goal_ = false;
 	target_tracking_frame_ = active_frame_;
-	geometry_msgs::Twist twist_msg;
+	geometry_msgs::TwistStamped twist_msg;
 	twist_pub_.publish(twist_msg);
 }
 
@@ -421,7 +475,7 @@ bool CobFrameTracker::searchForAbortionCriteria()
 	bool no_twist;
 	double trans_twist_norm = diff_twist_.vel.Norm();
 	double rot_twist_norm = diff_twist_.rot.Norm();
-	ROS_INFO("trans_twist_norm, rot_twist_norm [%f, %f]", trans_twist_norm, rot_twist_norm);
+//	ROS_INFO("trans_twist_norm, rot_twist_norm [%f, %f]", trans_twist_norm, rot_twist_norm);
 
 	if (trans_twist_norm < distance_threshold_) {
 		trans_twist_norm = 0;
@@ -454,13 +508,13 @@ bool CobFrameTracker::searchForAbortionCriteria()
 	// x_current = x_target but diff_twist != 0;
 	if (deadlock && !no_twist) {
 		abortion_message_ = "ABORTION CRITERIA 1";
-//		return true;
+		return true;
 	}
 
 	// x_current != x_target but diff_twist = 0;
 	if (!deadlock && no_twist) {
 		abortion_message_ = "ABORTION CRITERIA 2";
-//		return true;
+		return true;
 	}
 
 
@@ -473,7 +527,7 @@ bool CobFrameTracker::searchForAbortionCriteria()
 //	}
 	updateList2(trans_twist_norm, 5);
 	double mean = meanNorm();
-	ROS_INFO("mean trans twist is = %f", mean);
+//	ROS_INFO("mean trans twist is = %f", mean);
 
 	std_msgs::Float64 msg;
 	msg.data = cart_distance_;
@@ -526,7 +580,7 @@ void CobFrameTracker::calcMean() {
 	for (int u = 0; u <6; u++) {
 		norm = norm + sqrt(mean_list.at(u) * mean_list.at(u));
 	}
-	ROS_INFO("NORM OF MEAN = %f", norm);
+//	ROS_INFO("NORM OF MEAN = %f", norm);
 }
 
 void CobFrameTracker::updateList2(double norm, double time_filter_threshold) {
@@ -633,4 +687,15 @@ void CobFrameTracker::reconfigure_callback(cob_frame_tracker::FrameTrackerConfig
 {
 	timer_value_ = config.timer_value;
 	distance_threshold_ = config.distance_threshold;
+}
+
+KDL::Vector CobFrameTracker::normVec(KDL::Vector vec)
+{
+	KDL::Vector solution_vec = vec;
+	double norm_of_vec = 0.0;
+	norm_of_vec = vec.Norm();
+	if (norm_of_vec != 0.0) {
+		solution_vec = KDL::Vector(vec.x() / norm_of_vec, vec.y() / norm_of_vec, vec.z() / norm_of_vec);
+	}
+	return solution_vec;
 }

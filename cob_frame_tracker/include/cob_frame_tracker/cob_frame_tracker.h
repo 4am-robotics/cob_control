@@ -100,6 +100,7 @@ public:
 	void updateList2(double norm, double time_filter_threshold);
 	void calcMean();
 	double meanNorm();
+	KDL::Vector normVec(KDL::Vector vec);
 
 	//reconfigure params
 	boost::recursive_mutex reconfig_mutex_;
@@ -156,9 +157,7 @@ protected:
 	/// Abortion Criteria
 	double cart_distance_;
 	double rot_distance_;
-	KDL::Twist current_twist_;
-	KDL::Twist target_twist_;
-	KDL::Twist diff_twist_;
+
 	/// Helping vars:
 	std::string abortion_message_;
 	std::vector<std::vector<double> > list_of_twists_stamped_;
@@ -173,6 +172,7 @@ private:
 	double update_rate_;
 	
 	bool tracking_;
+	bool tracking_goal_;
 //	std::string tracking_frame_;	//goal frame
 	std::string active_frame_;		//twists with respect to this frame
 	std::string base_link_;
@@ -194,6 +194,21 @@ private:
 	control_toolbox::Pid pid_controller_trans_y_;
 	control_toolbox::Pid pid_controller_trans_z_;
 	control_toolbox::Pid pid_controller_rot_;         /**< Internal PID controller. */
+
+	// ABORTION CRITERIA:
+	KDL::Twist current_twist_;
+	KDL::Twist target_twist_;
+	KDL::Twist diff_twist_; ///???
+	double norm_current_twist_lin_;
+	double norm_current_twist_rot_;
+	double norm_target_twist_lin_;
+	double norm_target_twist_rot_;
+	KDL::Vector current_norm_twist_lin_;
+	KDL::Vector current_norm_twist_rot_;
+	KDL::Vector target_norm_twist_lin_;
+	KDL::Vector target_norm_twist_rot_;
+	KDL::Vector diff_norm_twist_lin_;
+
 };
 
 #endif
