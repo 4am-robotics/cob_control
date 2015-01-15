@@ -34,15 +34,34 @@
 
 #include <std_srvs/Empty.h>
 #include <cob_srvs/SetString.h>
+#include <sensor_msgs/JointState.h>
 #include <geometry_msgs/Twist.h>
 
 #include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
 
+#include <cob_frame_tracker/FrameTrackerConfig.h>
+#include <cob_frame_tracker/FrameTrackingAction.h>
+
 #include <control_toolbox/pid.h>
 #include <kdl_conversions/kdl_msg.h>
 #include <kdl/frames.hpp>
 #include <kdl_parser/kdl_parser.hpp>
+
+#include <std_msgs/Float64.h>
+#include <std_msgs/String.h>
+
+#include <actionlib/server/simple_action_server.h>
+#include <kdl_parser/kdl_parser.hpp>
+#include <kdl/chainiksolvervel_pinv.hpp>
+#include <kdl/chainfksolvervel_recursive.hpp>
+#include <kdl/jntarray.hpp>
+#include <kdl/jntarrayvel.hpp>
+
+#include <boost/thread/mutex.hpp>
+#include <dynamic_reconfigure/server.h>
+
+#include <control_toolbox/pid.h>
 
 struct CobFrameTrackerParams {
 	int timer_value;
@@ -58,8 +77,8 @@ public:
 	timer_value_(10),
 	distance_threshold_(0.005)
 	{
-		as_.registerGoalCallback(boost::bind(&FrameTrackingAction::goalCB, this));
-		as_.registerPreemptCallback(boost::bind(&FrameTrackingAction::preemptCB, this));
+		as_.registerGoalCallback(boost::bind(&CobFrameTracker::goalCB, this));
+		as_.registerPreemptCallback(boost::bind(&CobFrameTracker::preemptCB, this));
 		as_.start();
 	}
 	~CobFrameTracker();
@@ -82,12 +101,11 @@ public:
 	void calcMean();
 	double meanNorm();
 
-	void publish_twist(ros::Duration period);
 	//reconfigure params
 	boost::recursive_mutex reconfig_mutex_;
-	boost::shared_ptr< dynamic_reconfigure::Server<cob_frame_tracker::FrameTrackingActionConfig> > reconfigure_server_;
-	void reconfigure_callback(cob_frame_tracker::FrameTrackingActionConfig &config, uint32_t level);
-	void SetFrameTrackingActionParams(FrameTrackingActionParams params){params_ = params;}
+	boost::shared_ptr< dynamic_reconfigure::Server<cob_frame_tracker::FrameTrackerConfig> > reconfigure_server_;
+	void reconfigure_callback(cob_frame_tracker::FrameTrackerConfig &config, uint32_t level);
+	void SetCobFrameTrackerParams(CobFrameTrackerParams params){params_ = params;}
 	tf::TransformListener tf_listener_;
 
 protected:
@@ -97,12 +115,13 @@ protected:
 	unsigned int dof_;
 	std::string action_name_;
 	actionlib::SimpleActionServer<cob_frame_tracker::FrameTrackingAction> as_;
-	cob_tracking_action::TrackingFeedback feedback_;
-	cob_tracking_action::TrackingResult result_;
+	cob_frame_tracker::FrameTrackingFeedback feedback_;
+	cob_frame_tracker::FrameTrackingResult result_;
+	ros::Subscriber jointstate_sub;
 	
 	//goal definition:
 	std::string target_tracking_frame_;
-	bool reachable_goal_;
+	bool stop_on_goal_;
 	int tracking_time_;
 	ros::Time start_of_tracking_;
 
@@ -128,7 +147,7 @@ protected:
 	KDL::Tree my_tree;
 	std::string robot_desc_string;
 
-	TrackingActionParams params_;
+	CobFrameTrackerParams params_;
 	int timer_value_;
 	double distance_threshold_;
 
@@ -144,6 +163,11 @@ protected:
 	std::string abortion_message_;
 	std::vector<std::vector<double> > list_of_twists_stamped_;
 	std::vector<std::vector<double> > list_of_norms_stamped_;
+
+	ros::Publisher debug_pub_1;
+	ros::Publisher debug_pub_2;
+	ros::Publisher debug_pub_3;
+	ros::Publisher debug_pub_4;
 
 private:
 	double update_rate_;
@@ -169,7 +193,6 @@ private:
 	control_toolbox::Pid pid_controller_trans_x_;       /**< Internal PID controller. */
 	control_toolbox::Pid pid_controller_trans_y_;
 	control_toolbox::Pid pid_controller_trans_z_;
-	
 	control_toolbox::Pid pid_controller_rot_;         /**< Internal PID controller. */
 };
 

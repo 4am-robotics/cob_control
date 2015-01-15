@@ -5,7 +5,7 @@
 	<arg name="pkg_hardware_config" default="$(find cob_hardware_config)"/>
 
 	<!-- start rviz with configuration -->
-	<node pkg="rviz" type="rviz" name="$(anon rviz)" args="-d $(find cob_tracking_action)/tools/tracking.rviz" respawn="false" output="screen" />
+	<node pkg="rviz" type="rviz" name="$(anon rviz)" args="-d $(find cob_frame_tracker)/tools/tracking.rviz" respawn="false" output="screen" />
 
 </launch>
 
