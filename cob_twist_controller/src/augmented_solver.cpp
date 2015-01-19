@@ -43,14 +43,7 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& 
 		double kappa = std::sqrt(d);
 		
 		double base_ratio=params_.base_ratio;
-			//if(kappa < 0.2){
-				//base_ratio = (1-kappa*10);
-			//}else{
-				//base_ratio = 0;
-			//}
-			//std::cout << "\n base_ratio: " << base_ratio << "\n";
 
-		
         //Create standard platform jacobian
         jac_b.setZero();
         
