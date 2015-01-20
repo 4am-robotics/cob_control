@@ -148,8 +148,8 @@ bool CobTwistController::initialize()
 	for(unsigned int i=0; i<dof_; i++)
 	{
 		limits_vel_.push_back(model.getJoint(joints_[i])->limits->velocity);
-		limits_min_.push_back(model.getJoint(joints_[i])->limits->lower+0.2);
-		limits_max_.push_back(model.getJoint(joints_[i])->limits->upper-0.2);
+		limits_min_.push_back(model.getJoint(joints_[i])->limits->lower);
+		limits_max_.push_back(model.getJoint(joints_[i])->limits->upper);
 	}
 	
 	///initialize configuration control solver
@@ -209,6 +209,7 @@ void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControl
 	params.base_active = config.base_active;
 	params.base_ratio = config.base_ratio;
 	params.JLA_active = config.JLA_active;
+	params.tolerance = config.tolerance;
 	params.enforce_limits = config.enforce_limits;
 	reset_markers_ = config.reset_markers;
 	base_compensation_ = config.base_compensation;
@@ -287,57 +288,57 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 	KDL::JntArray q_dot_ik(chain_.getNrOfJoints());
 	KDL::JntArray q_dot_ik_debug(chain_.getNrOfJoints());
 			///DEBUG
-		try{
-			tf_listener_.waitForTransform("odom_combined",chain_tip_, ros::Time(0), ros::Duration(0.5));
-			tf_listener_.lookupTransform("odom_combined",chain_tip_, ros::Time(0), tf_tip);
-		}catch (tf::TransformException ex){
-			ROS_ERROR("%s",ex.what());
-			return;
-		}
-		try{
-			tf_listener_.waitForTransform("odom_combined","base_link", ros::Time(0), ros::Duration(0.5));
-			tf_listener_.lookupTransform("odom_combined","base_link", ros::Time(0), tf_base);
-		}catch (tf::TransformException ex){
-			ROS_ERROR("%s",ex.what());
-			return;
-		}
-		
-		try{
-			tf_listener_.waitForTransform("base_link",chain_base_, ros::Time(0), ros::Duration(0.5));
-			tf_listener_.lookupTransform("base_link",chain_base_, ros::Time(0), tf_d);
-		}catch (tf::TransformException ex){
-			ROS_ERROR("%s",ex.what());
-			return;
-		}
-		
-		frame_tip.p = KDL::Vector(tf_tip.getOrigin().x(), tf_tip.getOrigin().y(), tf_tip.getOrigin().z());
-		frame_tip.M = KDL::Rotation::Quaternion(tf_tip.getRotation().x(), tf_tip.getRotation().y(), tf_tip.getRotation().z(), tf_tip.getRotation().w());
-		
-		frame_base.p = KDL::Vector(tf_base.getOrigin().x(), tf_base.getOrigin().y(), tf_base.getOrigin().z());
-		frame_base.M = KDL::Rotation::Quaternion(tf_base.getRotation().x(), tf_base.getRotation().y(), tf_base.getRotation().z(), tf_base.getRotation().w());
-		
-		frame3.p = KDL::Vector(tf_d.getOrigin().x(), tf_d.getOrigin().y(), tf_d.getOrigin().z());
-		frame3.M = KDL::Rotation::Quaternion(tf_d.getRotation().x(), tf_d.getRotation().y(), tf_d.getRotation().z(), tf_d.getRotation().w());
-		
-		
-		if(!reset_markers_){
-			point_ee.x = tf_tip.getOrigin().x();
-			point_ee.y = tf_tip.getOrigin().y();
-			point_ee.z = tf_tip.getOrigin().z();
-			
-			point_base.x = tf_base.getOrigin().x();
-			point_base.y = tf_base.getOrigin().y();
-			point_base.z = tf_base.getOrigin().z();
-			
-			point_ee_vec_.push_back(point_ee);
-			point_base_vec_.push_back(point_base);
-					
-			double id1 = 0;
-			double id2 = 1;
-			
-			showMarker(id1,1,0,0,"m",vis_pub_ee_,point_ee_vec_);
-			showMarker(id2,0,1,0,"m",vis_pub_base_,point_base_vec_);
-		}
+		//try{
+			//tf_listener_.waitForTransform("odom_combined",chain_tip_, ros::Time(0), ros::Duration(0.5));
+			//tf_listener_.lookupTransform("odom_combined",chain_tip_, ros::Time(0), tf_tip);
+		//}catch (tf::TransformException ex){
+			//ROS_ERROR("%s",ex.what());
+			//return;
+		//}
+		//try{
+			//tf_listener_.waitForTransform("odom_combined","base_link", ros::Time(0), ros::Duration(0.5));
+			//tf_listener_.lookupTransform("odom_combined","base_link", ros::Time(0), tf_base);
+		//}catch (tf::TransformException ex){
+			//ROS_ERROR("%s",ex.what());
+			//return;
+		//}
+		//
+		//try{
+			//tf_listener_.waitForTransform("base_link",chain_base_, ros::Time(0), ros::Duration(0.5));
+			//tf_listener_.lookupTransform("base_link",chain_base_, ros::Time(0), tf_d);
+		//}catch (tf::TransformException ex){
+			//ROS_ERROR("%s",ex.what());
+			//return;
+		//}
+		//
+		//frame_tip.p = KDL::Vector(tf_tip.getOrigin().x(), tf_tip.getOrigin().y(), tf_tip.getOrigin().z());
+		//frame_tip.M = KDL::Rotation::Quaternion(tf_tip.getRotation().x(), tf_tip.getRotation().y(), tf_tip.getRotation().z(), tf_tip.getRotation().w());
+		//
+		//frame_base.p = KDL::Vector(tf_base.getOrigin().x(), tf_base.getOrigin().y(), tf_base.getOrigin().z());
+		//frame_base.M = KDL::Rotation::Quaternion(tf_base.getRotation().x(), tf_base.getRotation().y(), tf_base.getRotation().z(), tf_base.getRotation().w());
+		//
+		//frame3.p = KDL::Vector(tf_d.getOrigin().x(), tf_d.getOrigin().y(), tf_d.getOrigin().z());
+		//frame3.M = KDL::Rotation::Quaternion(tf_d.getRotation().x(), tf_d.getRotation().y(), tf_d.getRotation().z(), tf_d.getRotation().w());
+		//
+		//
+		//if(!reset_markers_){
+			//point_ee.x = tf_tip.getOrigin().x();
+			//point_ee.y = tf_tip.getOrigin().y();
+			//point_ee.z = tf_tip.getOrigin().z();
+			//
+			//point_base.x = tf_base.getOrigin().x();
+			//point_base.y = tf_base.getOrigin().y();
+			//point_base.z = tf_base.getOrigin().z();
+			//
+			//point_ee_vec_.push_back(point_ee);
+			//point_base_vec_.push_back(point_base);
+					//
+			//double id1 = 0;
+			//double id2 = 1;
+			//
+			//showMarker(id1,1,0,0,"m",vis_pub_ee_,point_ee_vec_);
+			//showMarker(id2,0,1,0,"m",vis_pub_base_,point_base_vec_);
+		//}
 		///----------------------------------------------------------------------
 	
 	

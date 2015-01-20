@@ -209,7 +209,7 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& 
     for (int i=0; i<jac.rows(); i++)
     {    v_in_vec(i)=v_in(i);    }
     
-    
+    ///solution of the equation system    
     if(params_.JLA_active)
     {
         Eigen::MatrixXd W = augmented_solver::calculate_weighting(q_in, last_q_dot, limits_min, limits_max).asDiagonal();
@@ -229,11 +229,25 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& 
         
         else
         {
-            Eigen::MatrixXd tmp = (jac.data*W.inverse()*jac.data.transpose()+Wv).inverse();        
-            qdot_out_vec=W.inverse()*jac.data.transpose()*tmp*v_in_vec;
+            if (jac.columns()>=jac.rows())
+            {
+                Eigen::MatrixXd tmp = (jac.data*W.inverse()*jac.data.transpose()+Wv).inverse();        
+                qdot_out_vec=W.inverse()*jac.data.transpose()*tmp*v_in_vec;
+            }
+            else   //special case, the last formula is valid only for a full-row Jacobian
+            {
+                Eigen::MatrixXd Wv_specialcase = Eigen::MatrixXd::Identity(jac.columns(), jac.columns())*damping_factor;
+                Eigen::MatrixXd W_specialcase = Eigen::MatrixXd::Identity(jac.columns(), jac.columns());
+                for(int i=0;i<jac.columns();i++)
+                {
+                    W_specialcase(i,i)=sqrt(W(i,i));
+                }
+                Eigen::MatrixXd tmp = (W_specialcase.inverse()*jac.data.transpose()*jac.data*W_specialcase.inverse()).inverse();
+                qdot_out_vec=W_specialcase.inverse()*tmp*W_specialcase.inverse()*jac.data.transpose()*v_in_vec;
+            }
         }
     }
-    else
+    else //JLA is not active
     {
         if(params_.damping_method == TRUNCATION)
         {
@@ -255,8 +269,17 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& 
         }
         else
         {
-            Eigen::MatrixXd tmp = (jac.data*jac.data.transpose()+Wv).inverse();
-            qdot_out_vec=jac.data.transpose()*tmp*v_in_vec;
+            if(jac.columns()>=jac.rows())
+            {
+                Eigen::MatrixXd tmp = (jac.data*jac.data.transpose()+Wv).inverse();
+                qdot_out_vec=jac.data.transpose()*tmp*v_in_vec;
+            }
+            else  //special case, the last formula is valid only for a full-row Jacobian
+            {
+                Eigen::MatrixXd Wv_specialcase = Eigen::MatrixXd::Identity(jac.columns(), jac.columns())*damping_factor;
+                Eigen::MatrixXd tmp = (jac.data.transpose()*jac.data+Wv_specialcase).inverse();
+                qdot_out_vec=tmp*jac.data.transpose()*v_in_vec;
+            }
         }
     }
     
@@ -288,7 +311,6 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& 
         //}
     //}
     //qdot_out_vec = jac_pinv*v_in_vec;
-    
     
     ///convert output
     for(int i=0; i<jac.columns(); i++)
@@ -366,28 +388,44 @@ Eigen::VectorXd augmented_solver::enforce_limits(const KDL::JntArray& q, Eigen::
     //The factor is not used if the output causes the joint to move far from its limits
     
     Eigen::VectorXd output = Eigen::VectorXd::Zero(jac.columns());
-    double tolerance=1.0/180*M_PI;    
+    double tolerance=params_.tolerance/180*M_PI;
+    double factor=0;
+    bool tolerance_surpassed=false;
+    
     
     for(int i=0; i<jac.columns() ;i++) {
         if(i<chain.getNrOfJoints()) {
             if((*limits_max)[i]-q(i)<tolerance) {        //Joint is nearer to the maximum limit
                 if((*qdot_out)(i)>0)                     //Joint moves towards the limit
-                    {    output(i)=(*qdot_out)(i)*pow((0.5+0.5*cos(M_PI*(q(i)+tolerance-(*limits_max)[i])/tolerance)),2);    }
-                else
-                    {    output(i)=(*qdot_out)(i);    }
+                    {    
+                        double temp=1/pow((0.5+0.5*cos(M_PI*(q(i)+tolerance-(*limits_max)[i])/tolerance)),5);
+                        factor=temp>factor?temp:factor;
+                        tolerance_surpassed=true;
+                    }
+                //else
+                    //{    output(i)=(*qdot_out)(i);    }
             }
             else 
                 if(q(i)-(*limits_min)[i]<tolerance) {    //Joint is nearer to the minimum limit
                     if((*qdot_out)(i)<0)                 //Joint moves towards the limit
-                        {    output(i)=(*qdot_out)(i)*pow(0.5+0.5*cos(M_PI*(q(i)-tolerance-(*limits_min)[i])/tolerance),2);    }
-                    else
-                        {    output(i)=(*qdot_out)(i);    }
+                        {
+                            double temp=1/pow(0.5+0.5*cos(M_PI*(q(i)-tolerance-(*limits_min)[i])/tolerance),5);
+                            factor=temp>factor?temp:factor;
+                            tolerance_surpassed=true;
+                        }
+                    //else
+                        //{    output(i)=(*qdot_out)(i);    }
                 }
-                else
-                    {    output(i)=(*qdot_out)(i);    }
+                //else
+                    //{    output(i)=(*qdot_out)(i);    }
         }
-        else
-            {    output(i)=(*qdot_out)(i);    }
+        //else
+            //{    output(i)=(*qdot_out)(i);    }
     }
+    
+    for(int i=0; i<jac.columns() ;i++) {
+        output(i)=tolerance_surpassed?(*qdot_out)(i)/factor:(*qdot_out)(i);
+    }
+    
     return output;
 }
