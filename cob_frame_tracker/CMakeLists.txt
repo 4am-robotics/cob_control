@@ -2,11 +2,11 @@ cmake_minimum_required(VERSION 2.8.3)
 project(cob_frame_tracker)
 
 # Load catkin and all dependencies required for this package
-find_package(catkin REQUIRED COMPONENTS roscpp geometry_msgs std_srvs cob_srvs tf tf_conversions control_toolbox)
+find_package(catkin REQUIRED COMPONENTS roscpp geometry_msgs std_srvs cob_srvs tf tf_conversions interactive_markers control_toolbox )
 
 # Declare catkin package
 catkin_package(
-  CATKIN_DEPENDS roscpp geometry_msgs std_srvs cob_srvs control_toolbox
+  CATKIN_DEPENDS roscpp geometry_msgs std_srvs cob_srvs interactive_markers control_toolbox
   INCLUDE_DIRS include
   LIBRARIES cob_frame_tracker
 )
@@ -19,14 +19,20 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 add_library(cob_frame_tracker src/cob_frame_tracker.cpp )
 add_dependencies(cob_frame_tracker cob_srvs_gencpp)
 
+add_library(interactive_frame_target src/interactive_frame_target.cpp )
+add_dependencies(interactive_frame_target cob_srvs_gencpp)
+
 # Declare a cpp executable
 add_executable(cob_frame_tracker_node src/cob_frame_tracker_node.cpp)
 target_link_libraries(cob_frame_tracker_node cob_frame_tracker ${catkin_LIBRARIES})
 
+add_executable(interactive_frame_target_node src/interactive_frame_target_node.cpp)
+target_link_libraries(interactive_frame_target_node interactive_frame_target ${catkin_LIBRARIES})
+
 
 ## Install
 # Mark executables and/or libraries for installation
-install(TARGETS cob_frame_tracker cob_frame_tracker_node
+install(TARGETS cob_frame_tracker cob_frame_tracker_node interactive_frame_target interactive_frame_target_node
  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
