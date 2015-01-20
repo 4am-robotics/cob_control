@@ -183,16 +183,17 @@ bool CobTwistController::initialize()
 	/// Debug
 	twist_current_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_current", 1);
 	#if DEBUG_BASE_COMP == 1
-		vis_pub_ee_ = nh_twist.advertise<visualization_msgs::Marker>( "debug/vis_ee", 0 );
-		vis_pub_base_ = nh_twist.advertise<visualization_msgs::Marker>( "debug/vis_base", 0 );
-		pose_base_pub_ = nh_twist.advertise<geometry_msgs::Pose> ("debug/pose_base", 0);
-		pose_tip_pub_ = nh_twist.advertise<geometry_msgs::Pose> ("debug/pose_tip", 0);
+		debug_base_compensation_visual_tip_pub_ = nh_twist.advertise<visualization_msgs::Marker>( "debug/vis_tip", 0 );
+		debug_base_compensation_visual_base_pub_ = nh_twist.advertise<visualization_msgs::Marker>( "debug/vis_base", 0 );
+		debug_base_compensation_pose_base_pub_ = nh_twist.advertise<geometry_msgs::Pose> ("debug/pose_base", 0);
+		debug_base_compensation_pose_tip_pub_ = nh_twist.advertise<geometry_msgs::Pose> ("debug/pose_tip", 0);
+		debug_base_compensation_twist_manipulator_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_mani", 1);
 	#endif
-	
+
 	#if DEBUG_BASE_ACTIVE == 1
-		twist_real_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_mani", 1);
-		twist_real_base_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_base", 1);
-		soll_twist_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_ee", 1);
+		debug_base_active_twist_manipulator_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_mani", 1);
+		debug_base_active_twist_base_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_base", 1);
+		debug_base_active_twist_ee_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_ee", 1);
 	#endif
 	
 	ros::Time time_ = ros::Time::now();
@@ -245,8 +246,6 @@ void CobTwistController::twist_stamped_cb(const geometry_msgs::TwistStamped::Con
 	
 	try{
 		tf_listener_.lookupTransform(chain_base_, msg->header.frame_id, ros::Time(0), transform_tf);
-		//frame.p = KDL::Vector(0.0, 0.0, 0.0);
-		//frame.p = KDL::Vector(transform_tf.getOrigin().x(), transform_tf.getOrigin().y(), transform_tf.getOrigin().z());
 		frame.M = KDL::Rotation::Quaternion(transform_tf.getRotation().x(), transform_tf.getRotation().y(), transform_tf.getRotation().z(), transform_tf.getRotation().w());
 	}
 	catch (tf::TransformException ex){
@@ -281,30 +280,25 @@ KDL::Twist CobTwistController::getBaseCompensatedTwist(KDL::Twist twist,KDL::Twi
 /// Orientation of twist is with respect to chain_base coordinate system
 void CobTwistController::solve_twist(KDL::Twist twist)
 {
-	geometry_msgs::Twist tw;
-	KDL::Twist tw_debug;
 	geometry_msgs::Pose pose_tip,pose_base;
 	geometry_msgs::Point point_base,point_ee;
-
 	
 	int ret_ik;
-	KDL::Frame frame,frame2,frame3;
-	tf::StampedTransform transform_tip_basefootprint,transform_base_basefootprint;
 	KDL::JntArray q_dot_ik(chain_.getNrOfJoints());
 	
 	if(base_active_)
 	{
 		#if DEBUG == 1
 			KDL::JntArray q_dot_ik_debug(chain_.getNrOfJoints());
-			debugBaseActive();
+			debug();
 			if(!reset_markers_){
-				point_ee.x = tf_tip.getOrigin().x();
-				point_ee.y = tf_tip.getOrigin().y();
-				point_ee.z = tf_tip.getOrigin().z();
+				point_ee.x = odom_transform_ct.getOrigin().x();
+				point_ee.y = odom_transform_ct.getOrigin().y();
+				point_ee.z = odom_transform_ct.getOrigin().z();
 				
-				point_base.x = tf_base.getOrigin().x();
-				point_base.y = tf_base.getOrigin().y();
-				point_base.z = tf_base.getOrigin().z();
+				point_base.x = odom_transform_bl.getOrigin().x();
+				point_base.y = odom_transform_bl.getOrigin().y();
+				point_base.z = odom_transform_bl.getOrigin().z();
 				
 				point_ee_vec_.push_back(point_ee);
 				point_base_vec_.push_back(point_base);
@@ -312,8 +306,8 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 				double id1 = 0;
 				double id2 = 1;
 				
-				showMarker(id1,1,0,0,"m",vis_pub_ee_,point_ee_vec_);
-				showMarker(id2,0,1,0,"m",vis_pub_base_,point_base_vec_);
+				showMarker(id1,1,0,0,"m",debug_base_compensation_visual_tip_pub_,point_ee_vec_);
+				showMarker(id2,0,1,0,"m",debug_base_compensation_visual_base_pub_,point_base_vec_);
 			}
 			
 			if(reset_markers_){
@@ -324,46 +318,47 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 		q_dot_ik.resize(chain_.getNrOfJoints()+3);
 		try{
 			tf_listener_.waitForTransform("base_link",chain_tip_, ros::Time(0), ros::Duration(0.5));
-			tf_listener_.lookupTransform("base_link",chain_tip_,  ros::Time(0), transform_tip_basefootprint);
+			tf_listener_.lookupTransform("base_link",chain_tip_,  ros::Time(0), bl_transform_ct);
 		}catch (tf::TransformException ex){
 			ROS_ERROR("%s",ex.what());
 			return;
 		}
-		frame.p = KDL::Vector(transform_tip_basefootprint.getOrigin().x(), transform_tip_basefootprint.getOrigin().y(), transform_tip_basefootprint.getOrigin().z());
-		frame.M = KDL::Rotation::Quaternion(transform_tip_basefootprint.getRotation().x(), transform_tip_basefootprint.getRotation().y(), transform_tip_basefootprint.getRotation().z(), transform_tip_basefootprint.getRotation().w());
+		bl_frame_ct.p = KDL::Vector(bl_transform_ct.getOrigin().x(), bl_transform_ct.getOrigin().y(), bl_transform_ct.getOrigin().z());
+		bl_frame_ct.M = KDL::Rotation::Quaternion(bl_transform_ct.getRotation().x(), bl_transform_ct.getRotation().y(), bl_transform_ct.getRotation().z(), bl_transform_ct.getRotation().w());
 		
 		
 		try{
 			tf_listener_.waitForTransform(chain_base_,"base_link", ros::Time(0), ros::Duration(0.5));
-			tf_listener_.lookupTransform(chain_base_,"base_link", ros::Time(0), transform_base_basefootprint);
+			tf_listener_.lookupTransform(chain_base_,"base_link", ros::Time(0), cb_transform_bl);
 		}catch (tf::TransformException ex){
 			ROS_ERROR("%s",ex.what());
 			return;
 		}
-		frame2.p = KDL::Vector(transform_base_basefootprint.getOrigin().x(), transform_base_basefootprint.getOrigin().y(), transform_base_basefootprint.getOrigin().z());
-		frame2.M = KDL::Rotation::Quaternion(transform_base_basefootprint.getRotation().x(), transform_base_basefootprint.getRotation().y(), transform_base_basefootprint.getRotation().z(), transform_base_basefootprint.getRotation().w());
+		cb_frame_bl.p = KDL::Vector(cb_transform_bl.getOrigin().x(), cb_transform_bl.getOrigin().y(), cb_transform_bl.getOrigin().z());
+		cb_frame_bl.M = KDL::Rotation::Quaternion(cb_transform_bl.getRotation().x(), cb_transform_bl.getRotation().y(), cb_transform_bl.getRotation().z(), cb_transform_bl.getRotation().w());
 		
-		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik,&limits_min_,&limits_max_,frame,frame2);
+		//Solve twist
+		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik,&limits_min_,&limits_max_,bl_frame_ct,cb_frame_bl);
 		
 	}
 	
 	if(base_compensation_)
 	{
-		twist = getBaseCompensatedTwist(twist,twist_odometry_);
-
+		twist = getBaseCompensatedTwist(twist,twist_odometry_cb_);
+		
 		#if DEBUG_BASE_COMP == 1
-			debugBaseComp();
-			tf::PoseKDLToMsg(frame_tip,pose_tip);
-			tf::PoseKDLToMsg(frame_base,pose_base);
+			debug();
+			tf::PoseKDLToMsg(odom_frame_ct,pose_tip);
+			tf::PoseKDLToMsg(odom_frame_bl,pose_base);
 			geometry_msgs::Twist twist_manipulator_in_base_link;
 
 			////Twist Manipulator in base_link
-			tf::twistKDLToMsg(frame3*twist,twist_manipulator_in_base_link);
+			tf::twistKDLToMsg(bl_frame_cb*twist,twist_manipulator_bl);
 
-			pose_base_pub_.publish(pose_base);
-			pose_tip_pub_.publish(pose_tip);
-
-			twist_real_pub_.publish(twist_manipulator_in_base_link);	// Base_link
+			//Debug publisher
+			debug_base_compensation_pose_base_pub_.publish(pose_base);
+			debug_base_compensation_pose_tip_pub_.publish(pose_tip);
+			debug_base_compensation_twist_manipulator_pub_.publish(twist_manipulator_bl);	// Base_link
 		#endif
 	}
 	
@@ -400,35 +395,31 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 			base_vel_pub.publish(base_vel_msg);	// base_link
 			
 			#if DEBUG_BASE_ACTIVE == 1
-				KDL::Twist twist_mani,twist_base;
-				geometry_msgs::Twist twist_mani_msg,twist_base_msg,twist_combined_msg;
+				KDL::Twist twist_base_bl,twist_manipulator_cb,twist_manipulator_bl;
+				KDL::FrameVel FrameVel_cb;
 				
-				tf::twistMsgToKDL(base_vel_msg, twist_base);
-				tf::twistKDLToMsg(twist_base,twist_base_msg); 
-				twist_real_base_pub_.publish(twist_base_msg);// arm_left/debug/twist_base/linear
+				geometry_msgs::Twist twist_manipulator_msg,twist_base_msg,twist_combined_msg;
 				
-				KDL::Twist twist2;
-				KDL::FrameVel FrameVel;
-				
-				/////calculate actual Manipulator-Twists
-				KDL::JntArrayVel jntArrayVel = KDL::JntArrayVel(last_q_,last_q_dot_);
+				tf::twistMsgToKDL(base_vel_msg, twist_base_bl);
+				debug_base_active_twist_base_pub_.publish(base_vel_msg);	// Base twist in base_link
 
+				/////calculate current Manipulator-Twists
+				KDL::JntArrayVel jntArrayVel = KDL::JntArrayVel(last_q_,last_q_dot_);
 				jntToCartSolver_vel_ = new KDL::ChainFkSolverVel_recursive(chain_);
 				int ret = jntToCartSolver_vel_->JntToCart(jntArrayVel,FrameVel,-1);
 
 				if(ret>=0){
-					twist2 = FrameVel.GetTwist();
-					twist2 = frame3 * twist2;
-					tf::twistKDLToMsg(twist2,twist_mani_msg);	// Manipulator twist
+					twist_manipulator_cb = FrameVel.GetTwist();
+					twist_manipulator_bl = bl_frame_cb * twist_manipulator_cb;
+					tf::twistKDLToMsg(twist_manipulator_bl,twist_manipulator_msg);	// Manipulator twist in base_link
 				}
 				else{
 					ROS_WARN("ChainFkSolverVel failed!");
-				}	
+				}
 
-				twist_real_pub_.publish(twist_mani_msg); // arm_left/debug/twist_mani/linear
-				
-				tf::twistKDLToMsg(twist_base+twist2,twist_combined_msg);
-				soll_twist_pub_.publish(twist_combined_msg);
+				debug_base_active_twist_manipulator_pub_.publish(twist_mani_msg);
+				tf::twistKDLToMsg(twist_base_bl+twist_manipulator_bl,twist_combined_msg);	// Combined twist in base_link
+				debug_base_active_twist_ee_pub_.publish(twist_combined_msg);
 			#endif
 			
 			}
@@ -459,21 +450,21 @@ void CobTwistController::jointstate_cb(const sensor_msgs::JointState::ConstPtr& 
 	
 	if(count == joints_.size())
 	{
-		//ROS_DEBUG("Done Parsing");
+		ROS_DEBUG("Done Parsing");
 		last_q_ = q_temp;
 		last_q_dot_ = q_dot_temp;
 		
-		///---------------------------------------------------------------------
-		/// current twist
+		//---------------------------------------------------------------------
+		// current twist
 		KDL::FrameVel FrameVel;
-		//geometry_msgs::Twist twist_msg;
+		geometry_msgs::Twist twist_msg;
 		KDL::JntArrayVel jntArrayVel = KDL::JntArrayVel(last_q_, last_q_dot_);
 		
 		int ret = p_fksolver_vel_->JntToCart(jntArrayVel, FrameVel, -1);
 		
 		if(ret>=0)
 		{
-			KDL::Twist twist = FrameVel.GetTwist();
+			//KDL::Twist twist = FrameVel.GetTwist();
 			//tf::twistKDLToMsg(twist,twist_msg);
 			//twist_current_pub_.publish(twist_msg);
 			
@@ -486,43 +477,37 @@ void CobTwistController::jointstate_cb(const sensor_msgs::JointState::ConstPtr& 
 
 void CobTwistController::odometry_cb(const nav_msgs::Odometry::ConstPtr& msg)
 {
-	tf::StampedTransform transform_tf,transform_footprint_tip,transform_chain,transform_base_tip;
-	KDL::Frame frame,frame_ft,frame_combined;
-	KDL::Twist twist_odometry, twist_odometry_transformed, tangential_twist;
-	KDL::Twist angular_twist;
-	geometry_msgs::Twist twister;
-	double roll,pitch,yaw;
+	KDL::Twist twist_odometry_bl, twist_odometry_transformed_bl, tangential_twist_bl, twist_odometry_transformed_cb;
 	
 	try{
 		tf_listener_.waitForTransform(chain_base_,"base_link", ros::Time(0), ros::Duration(0.5));
-		tf_listener_.lookupTransform(chain_base_,"base_link", ros::Time(0), transform_tf);
+		tf_listener_.lookupTransform(chain_base_,"base_link", ros::Time(0), cb_transform_bl);
 		
 		tf_listener_.waitForTransform("base_link",chain_tip_, ros::Time(0), ros::Duration(0.5));
-		tf_listener_.lookupTransform("base_link",chain_tip_, ros::Time(0), transform_footprint_tip);
+		tf_listener_.lookupTransform("base_link",chain_tip_, ros::Time(0), bl_transform_ct);
 		
-		frame.p = KDL::Vector(transform_tf.getOrigin().x(), transform_tf.getOrigin().y(), transform_tf.getOrigin().z());
-		frame.M = KDL::Rotation::Quaternion(transform_tf.getRotation().x(), transform_tf.getRotation().y(), transform_tf.getRotation().z(), transform_tf.getRotation().w());
+		cb_frame_bl.p = KDL::Vector(cb_transform_bl.getOrigin().x(), cb_transform_bl.getOrigin().y(), cb_transform_bl.getOrigin().z());
+		cb_frame_bl.M = KDL::Rotation::Quaternion(cb_transform_bl.getRotation().x(), cb_transform_bl.getRotation().y(), cb_transform_bl.getRotation().z(), cb_transform_bl.getRotation().w());
 	}
 	catch (tf::TransformException ex){
 		ROS_ERROR("%s",ex.what());
 		return;
 	}	
 	// Calculate tangential twist for angular base movements v = w x r
-	Eigen::Vector3d r(transform_footprint_tip.getOrigin().x(),transform_footprint_tip.getOrigin().y(),transform_footprint_tip.getOrigin().z());
+	Eigen::Vector3d r(bl_transform_ct.getOrigin().x(),bl_transform_ct.getOrigin().y(),bl_transform_ct.getOrigin().z());
 	Eigen::Vector3d w(0,0,msg->twist.twist.angular.z);
 	Eigen::Vector3d res = w.cross(r);
-	tangential_twist.vel = KDL::Vector(res(0),res(1),res(2));
-	tangential_twist.rot = KDL::Vector(0,0,0);
+	tangential_twist_bl.vel = KDL::Vector(res(0),res(1),res(2));
+	tangential_twist_bl.rot = KDL::Vector(0,0,0);
 	//ROS_INFO("Crossproduct : %f %f %f",res(0),res(1),res(2));
-	//ROS_INFO("TCP: %f %f %f",transform_footprint_tip.getOrigin().x(),transform_footprint_tip.getOrigin().y(),transform_footprint_tip.getOrigin().z());
+	//ROS_INFO("TCP: %f %f %f",bl_transform_ct.getOrigin().x(),bl_transform_ct.getOrigin().y(),bl_transform_ct.getOrigin().z());
 	
-	tf::twistMsgToKDL(msg->twist.twist, twist_odometry);	// Base Twist
-	twist_odometry_raw_ = twist_odometry;
+	tf::twistMsgToKDL(msg->twist.twist, twist_odometry_bl);	// Base Twist
 	
 	// transform into chain_base
-	twist_odometry_transformed = frame * (twist_odometry+tangential_twist);
+	twist_odometry_transformed_cb = cb_frame_bl * (twist_odometry_bl+tangential_twist_bl);
 	
-	twist_odometry_ = twist_odometry_transformed;
+	twist_odometry_cb_ = twist_odometry_transformed_cb;
 }
 
 
@@ -608,34 +593,10 @@ void CobTwistController::showMarker(int marker_id,double red, double green, doub
 	pub.publish( marker );
 }
 
-void CobTwistController::debugBaseActive(){
-		///DEBUG
-		try{
-			tf_listener_.waitForTransform("odom_combined",chain_tip_, ros::Time(0), ros::Duration(0.5));
-			tf_listener_.lookupTransform("odom_combined",chain_tip_, ros::Time(0), tf_tip);
-		}catch (tf::TransformException ex){
-			ROS_ERROR("%s",ex.what());
-			return;
-		}
-		try{
-			tf_listener_.waitForTransform("odom_combined","base_link", ros::Time(0), ros::Duration(0.5));
-			tf_listener_.lookupTransform("odom_combined","base_link", ros::Time(0), tf_base);
-		}catch (tf::TransformException ex){
-			ROS_ERROR("%s",ex.what());
-			return;
-		}
-		
-		frame_tip.p = KDL::Vector(tf_tip.getOrigin().x(), tf_tip.getOrigin().y(), tf_tip.getOrigin().z());
-		frame_tip.M = KDL::Rotation::Quaternion(tf_tip.getRotation().x(), tf_tip.getRotation().y(), tf_tip.getRotation().z(), tf_tip.getRotation().w());
-		
-		frame_base.p = KDL::Vector(tf_base.getOrigin().x(), tf_base.getOrigin().y(), tf_base.getOrigin().z());
-		frame_base.M = KDL::Rotation::Quaternion(tf_base.getRotation().x(), tf_base.getRotation().y(), tf_base.getRotation().z(), tf_base.getRotation().w());
-}
-
-void CobTwistController::debugBaseComp(){
+void CobTwistController::debug(){
 		try{
 			tf_listener_.waitForTransform("base_link",chain_base_, ros::Time(0), ros::Duration(0.5));
-			tf_listener_.lookupTransform("base_link",chain_base_, ros::Time(0), tf_debug);
+			tf_listener_.lookupTransform("base_link",chain_base_, ros::Time(0), bl_transform_cb);
 		}catch (tf::TransformException ex){
 			ROS_ERROR("%s",ex.what());
 			return;
@@ -643,24 +604,30 @@ void CobTwistController::debugBaseComp(){
 		
 		try{
 			tf_listener_.waitForTransform("odom_combined",chain_tip_, ros::Time(0), ros::Duration(0.5));
-			tf_listener_.lookupTransform("odom_combined",chain_tip_, ros::Time(0), tf_tip);
+			tf_listener_.lookupTransform("odom_combined",chain_tip_, ros::Time(0), odom_transform_ct);
 		}catch (tf::TransformException ex){
 			ROS_ERROR("%s",ex.what());
 			return;
 		}
 		try{
 			tf_listener_.waitForTransform("odom_combined","base_link", ros::Time(0), ros::Duration(0.5));
-			tf_listener_.lookupTransform("odom_combined","base_link", ros::Time(0), tf_base);
+			tf_listener_.lookupTransform("odom_combined","base_link", ros::Time(0), odom_transform_bl);
 		}catch (tf::TransformException ex){
 			ROS_ERROR("%s",ex.what());
 			return;
 		}
-		frame_tip.p = KDL::Vector(tf_tip.getOrigin().x(), tf_tip.getOrigin().y(), tf_tip.getOrigin().z());
-		frame_tip.M = KDL::Rotation::Quaternion(tf_tip.getRotation().x(), tf_tip.getRotation().y(), tf_tip.getRotation().z(), tf_tip.getRotation().w());
+		odom_frame_ct.p = KDL::Vector(odom_transform_ct.getOrigin().x(), odom_transform_ct.getOrigin().y(), odom_transform_ct.getOrigin().z());
+		odom_frame_ct.M = KDL::Rotation::Quaternion(odom_transform_ct.getRotation().x(), odom_transform_ct.getRotation().y(), odom_transform_ct.getRotation().z(), odom_transform_ct.getRotation().w());
 		
-		frame_base.p = KDL::Vector(tf_base.getOrigin().x(), tf_base.getOrigin().y(), tf_base.getOrigin().z());
-		frame_base.M = KDL::Rotation::Quaternion(tf_base.getRotation().x(), tf_base.getRotation().y(), tf_base.getRotation().z(), tf_base.getRotation().w());
+		odom_frame_bl.p = KDL::Vector(odom_transform_bl.getOrigin().x(), odom_transform_bl.getOrigin().y(), odom_transform_bl.getOrigin().z());
+		odom_frame_bl.M = KDL::Rotation::Quaternion(odom_transform_bl.getRotation().x(), odom_transform_bl.getRotation().y(), odom_transform_bl.getRotation().z(), odom_transform_bl.getRotation().w());
 		
-		frame3.p = KDL::Vector(tf_debug.getOrigin().x(), tf_debug.getOrigin().y(), tf_debug.getOrigin().z());
-		frame3.M = KDL::Rotation::Quaternion(tf_debug.getRotation().x(), tf_debug.getRotation().y(), tf_debug.getRotation().z(), tf_debug.getRotation().w());
+		bl_frame_cb.p = KDL::Vector(bl_transform_cb.getOrigin().x(), bl_transform_cb.getOrigin().y(), bl_transform_cb.getOrigin().z());
+		bl_frame_cb.M = KDL::Rotation::Quaternion(bl_transform_cb.getRotation().x(), bl_transform_cb.getRotation().y(), bl_transform_cb.getRotation().z(), bl_transform_cb.getRotation().w());
 }
+
+
+// bl_transform_cb
+// twist_in_cb
+
+//twist_tcp_bl = bl_transform_cb * twist_tcp_cb

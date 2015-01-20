@@ -107,25 +107,41 @@ private:
 	bool base_active_;
 	bool reset_markers_;
 	
-	KDL::Twist twist_odometry_;
-	KDL::Twist twist_odometry_raw_;
-	bool firstDone;
+	KDL::Twist twist_odometry_cb_;
 	TwistControllerParams params_;
 	
 	///Debug
-	ros::Publisher soll_twist_pub_;
-	ros::Publisher pose_base_pub_;
-	ros::Publisher pose_tip_pub_;
-	ros::Publisher  vis_pub_ee_;
-	ros::Publisher  vis_pub_base_;
+	ros::Publisher 	debug_base_compensation_visual_tip_pub_,debug_base_compensation_visual_base_pub_,debug_base_compensation_pose_base_pub_,
+					debug_base_compensation_pose_tip_pub_,debug_base_compensation_twist_manipulator_pub_,debug_base_active_twist_manipulator_pub_,
+					debug_base_active_twist_base_pub_,debug_base_active_twist_ee_pub_;
 	std::vector<geometry_msgs::Point> point_base_vec_,point_ee_vec_;
 	KDL::ChainFkSolverVel_recursive* jntToCartSolver_vel_;
 
 	KDL::Twist twist_;
 	
 	////Debug
-	tf::StampedTransform tf_d,tf_tip,tf_base,tf_debug;
-	KDL::Frame frame_tip,frame_base,frame_cb_bl,frame3;
+	tf::StampedTransform 	odom_transform_ct,
+							odom_transform_bl,
+							bl_transform_cb,
+							bl_transform_ct,
+							cb_transform_bl;
+//odom_transform_ct
+//odom_transform_bl
+//bl_transform_cb
+//ct_transform_bl
+//cb_transform_bl
+
+	KDL::Frame 	odom_frame_ct,
+				odom_frame_bl,
+				bl_frame_cb,
+				bl_frame_ct,
+				cb_frame_bl;
+				
+//odom_frame_ct
+//odom_frame_bl
+//bl_frame_cb 
+//cb_frame_bl
+//bl_frame_ct
 
 public:
 	CobTwistController():
@@ -158,7 +174,7 @@ public:
 	
 	///Debug
 	void showMarker(int marker_id,double red, double green, double blue, std::string ns, ros::Publisher pub, std::vector<geometry_msgs::Point> &pos_v);
-	void debugBaseActive();
-	void debugBaseComp();
+	void debug();
+
 };
 #endif
