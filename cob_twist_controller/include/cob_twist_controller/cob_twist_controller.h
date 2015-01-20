@@ -122,6 +122,11 @@ private:
 	KDL::ChainFkSolverVel_recursive* jntToCartSolver_vel_;
 
 	KDL::Twist twist_;
+	
+	////Debug
+	tf::StampedTransform tf_d,tf_tip,tf_base,tf_debug;
+	KDL::Frame frame_tip,frame_base,frame_cb_bl,frame3;
+
 public:
 	CobTwistController():
 		base_compensation_(false),
@@ -147,13 +152,13 @@ public:
 	void solve_twist(KDL::Twist twist);
 	KDL::Twist getBaseCompensatedTwist(KDL::Twist,KDL::Twist);
 	
-	std::vector<double> normalize_velocities_test(KDL::JntArray q_dot_ik, double base_x, double base_y);
-	
 	void SetTwistControllerParamsParams(TwistControllerParams params){params_ = params;}
 
 	KDL::JntArray normalize_velocities(KDL::JntArray q_dot_ik);
 	
 	///Debug
 	void showMarker(int marker_id,double red, double green, double blue, std::string ns, ros::Publisher pub, std::vector<geometry_msgs::Point> &pos_v);
+	void debugBaseActive();
+	void debugBaseComp();
 };
 #endif
