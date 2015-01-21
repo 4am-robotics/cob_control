@@ -29,6 +29,8 @@
 #ifndef OUTPUT_RECORDER_H
 #define OUTPUT_RECORDER_H
 
+#include <termios.h>
+#include <signal.h>
 #include <ros/ros.h>
 #include <vector>
 #include <geometry_msgs/Twist.h>
@@ -82,6 +84,8 @@ public:
 	void stepResponsePlot(std::string fileName,std::vector<double> *in, std::vector<double> *x_lin_out,std::vector<double> *y_lin_out,std::vector<double> *z_lin_out,std::vector<double> *x_rot_out,std::vector<double> *y_rot_out,std::vector<double> *z_rot_out);
 	
 	void stop_recording();
+	void quit(int sig);
+
 	
 	
 private:
@@ -153,6 +157,11 @@ private:
 	
 	bool start_;
 	std::vector <double> timeVec;
+	
+	/// For Keyboard commands
+	char c;
+	int kfd;
+	struct termios cooked, raw;
 };
 
 #endif

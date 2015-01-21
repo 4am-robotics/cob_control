@@ -25,9 +25,6 @@
  *   ...
  *
  ****************************************************************/
-
-#include <termios.h>
-#include <signal.h>
 #include <ros/ros.h>
 #include <tinyxml.h>
 #include <vector>
@@ -163,6 +160,8 @@ void OutputRecorder::run()
 	
 	geometry_msgs:: Pose ptpPose;
 	
+	//signal(SIGINT,quit);
+		
 	ROS_INFO("Waiting for Twist callback");
 	while (!start_)
 	{
@@ -203,6 +202,8 @@ void OutputRecorder::run()
 
 	while(!finished_recording_)
 	{
+		//start_thread.join();
+		start_thread.interrupt();
 		time = ros::Time::now();
 		period = time - last_update_time;
 		//move_ptp(ptpPose);
@@ -261,6 +262,8 @@ void OutputRecorder::run()
 		ros::spinOnce();
 		r.sleep();
 	}
+	tcsetattr(kfd, TCSANOW, &cooked);
+	
 	ROS_INFO("Stopped recording... preparing output for octave plot ");
 	//stop_tracking();
 
@@ -708,10 +711,8 @@ void OutputRecorder::stop_tracking()
 
 void OutputRecorder::stop_recording()
 {
-	char c =0x0;
-	int kfd = 0;
-	struct termios cooked, raw;
-		// get the console in raw mode
+	c = 0x0;
+	// get the console in raw mode
 	tcgetattr(kfd, &cooked);
 	memcpy(&raw, &cooked, sizeof(struct termios));
 	raw.c_lflag &=~ (ICANON | ECHO);
@@ -727,7 +728,6 @@ void OutputRecorder::stop_recording()
 			exit(-1);
 		}
 		
-
 		if(c == 0x61)
 		{
 			finished_recording_ = true;
@@ -1049,3 +1049,10 @@ void OutputRecorder::writeToMFile(std::string fileName,std::vector<double> *dot_
 */
 	myfile.close();
 } 
+
+
+void OutputRecorder::quit(int sig)
+{
+  tcsetattr(kfd, TCSANOW, &cooked);
+  exit(0);
+}
