@@ -65,8 +65,7 @@ private:
 	
 	bool tracking_;
 	std::string tracking_frame_;	//goal frame
-	std::string active_frame_;		//twists with respect to this frame
-	std::string base_link_;
+	std::string chain_tip_link_;		//twists with respect to this frame
 	
 	double max_vel_lin_;
 	double max_vel_rot_;
@@ -85,7 +84,9 @@ private:
 	control_toolbox::Pid pid_controller_trans_y_;
 	control_toolbox::Pid pid_controller_trans_z_;
 	
-	control_toolbox::Pid pid_controller_rot_;         /**< Internal PID controller. */
+	control_toolbox::Pid pid_controller_rot_x_;         /**< Internal PID controller. */
+	control_toolbox::Pid pid_controller_rot_y_;
+	control_toolbox::Pid pid_controller_rot_z_;
 };
 
 #endif

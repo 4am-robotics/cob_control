@@ -21,7 +21,7 @@ def twistPub():
   twist_stamped_msg.twist.angular.y = 0
   twist_stamped_msg.twist.angular.z = 0
    
-  r = rospy.Rate(10)
+  r = rospy.Rate(50)
   
   while not rospy.is_shutdown():
     twist_stamped_msg.header.stamp = rospy.Time.now()

@@ -59,7 +59,7 @@ private:
 	ros::Timer timer_;
 	double update_rate_;
 	
-	std::string active_frame_;		//twists with respect to this frame
+	std::string chain_tip_link_;		//twists with respect to this frame
 	std::string tracking_frame_;	//goal frame
 	std::string root_frame_;
 	

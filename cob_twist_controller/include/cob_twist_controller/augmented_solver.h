@@ -26,14 +26,13 @@ struct AugmentedSolverParams {
     double lambda0;
     double wt;
     double deltaRMax;
-    
-    bool base_compensation;
-    bool base_active;
     bool JLA_active;
     bool enforce_limits;
-    double base_ratio;
-    double base_min_vel;
     double tolerance;
+    bool base_compensation;
+    bool base_active;
+    double base_ratio;
+
 };
 
 enum DampingMethodTypes {

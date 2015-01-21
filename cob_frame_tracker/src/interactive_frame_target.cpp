@@ -40,13 +40,13 @@ bool InteractiveFrameTarget::initialize()
 	else
 	{	update_rate_ = 68.0;	}	//hz
 	
-	if (nh_cartesian.hasParam("active_frame"))
+	if (nh_cartesian.hasParam("chain_tip_link"))
 	{
-		nh_cartesian.getParam("active_frame", active_frame_);
+		nh_cartesian.getParam("chain_tip_link", chain_tip_link_);
 	}
 	else
 	{
-		ROS_ERROR("No active_frame specified. Aborting!");
+		ROS_ERROR("No chain_tip_link specified. Aborting!");
 		return false;
 	}
 	if (nh_cartesian.hasParam("tracking_frame"))
@@ -94,7 +94,7 @@ bool InteractiveFrameTarget::initialize()
 	while(!transform_available)
 	{
 		try{
-			tf_listener_.lookupTransform(root_frame_, active_frame_, ros::Time(), target_pose_);
+			tf_listener_.lookupTransform(root_frame_, chain_tip_link_, ros::Time(), target_pose_);
 			transform_available = true;
 		}
 		catch (tf::TransformException ex){
@@ -102,7 +102,6 @@ bool InteractiveFrameTarget::initialize()
 			ros::Duration(0.1).sleep();
 		}
 	}
-	ROS_INFO("Found transform!");
 	
 	ia_server_ = new interactive_markers::InteractiveMarkerServer("marker_server", "", false);
 	
@@ -222,7 +221,7 @@ void InteractiveFrameTarget::update_marker()
 	while(!transform_available)
 	{
 		try{
-			tf_listener_.lookupTransform(root_frame_, active_frame_, ros::Time(), target_pose_);
+			tf_listener_.lookupTransform(root_frame_, chain_tip_link_, ros::Time(), target_pose_);
 			transform_available = true;
 		}
 		catch (tf::TransformException ex){

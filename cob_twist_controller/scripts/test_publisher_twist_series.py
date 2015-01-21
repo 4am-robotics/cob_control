@@ -26,7 +26,7 @@ def twistPub():
   twist_msg.angular.y = 0
   twist_msg.angular.z = 0  
    
-  r = rospy.Rate(100) 
+  r = rospy.Rate(50) 
   last_time=0
   
   while not rospy.is_shutdown():     
