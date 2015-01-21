@@ -47,6 +47,7 @@
 #include <geometry_msgs/Pose.h>
 #include <std_srvs/Empty.h>
 #include <cob_srvs/SetString.h>
+#include <boost/thread.hpp>
 
 
 class OutputRecorder
@@ -60,7 +61,7 @@ public:
 	double calculateLS(std::vector<double>* vec_out, std::vector<double>* vec_in,int modellorder,double &a1,double &a2,double &a3,double &b1,double &b2, double &b3);
 	void pseudoinverse(const Eigen::MatrixXd &M, Eigen::MatrixXd &Minv, double tolerance);	
 	void jointstate_cb(const sensor_msgs::JointState::ConstPtr& msg);
-	void twist_cb(const geometry_msgs::Twist::ConstPtr& msg);
+	void twist_cb(const geometry_msgs::TwistStamped::ConstPtr& msg);
 	void fillDataVectors(double x_dot_lin_in, double x_dot_lin_out, double y_dot_lin_in, double y_dot_lin_out, double z_dot_lin_in, double z_dot_lin_out,
 						 double x_lin_in_normalized, double y_lin_in_normalized, double z_lin_in_normalized,
 						 double x_dot_rot_in, double x_dot_rot_out, double y_dot_rot_in, double y_dot_rot_out, double z_dot_rot_in, double z_dot_rot_out,
@@ -79,7 +80,9 @@ public:
 	void writeToMFile(std::string fileName,std::vector<double> *dot_in,std::vector<double> *dot_out,std::vector<double> *pos_out,std::vector<double> *dot_integrated, std::vector<double> *dot_normalized_in);
 	Eigen::VectorXd getTheta(Eigen::MatrixXd &F, Eigen::VectorXd &y);
 	void stepResponsePlot(std::string fileName,std::vector<double> *in, std::vector<double> *x_lin_out,std::vector<double> *y_lin_out,std::vector<double> *z_lin_out,std::vector<double> *x_rot_out,std::vector<double> *y_rot_out,std::vector<double> *z_rot_out);
-
+	
+	void stop_recording();
+	
 	
 private:
 	ros::NodeHandle nh_;
@@ -131,7 +134,7 @@ private:
 	ros::ServiceClient startTracking_;
 	ros::ServiceClient stopTracking_;
 	
-	
+	bool finished_recording_;
 	
 	/// Transform Listener
 	tf::Transform transform_;
@@ -142,12 +145,13 @@ private:
 	double roll_,pitch_,yaw_;
 	
 	std::vector <double> trans_x_,trans_x_punkt_,timeVect_;
-	std::string referenceFrame_,endeffectorFrame_,trackingFrame_;
+	std::string referenceFrame_,endeffectorFrame_,trackingFrame_,twist_controller_name_;
 	ros::Timer timer_stop_;
 	
 	/// Euler Integration
 	double dt_;
 	
+	bool start_;
 	std::vector <double> timeVec;
 };
 

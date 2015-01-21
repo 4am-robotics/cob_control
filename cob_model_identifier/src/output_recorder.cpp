@@ -25,6 +25,9 @@
  *   ...
  *
  ****************************************************************/
+
+#include <termios.h>
+#include <signal.h>
 #include <ros/ros.h>
 #include <tinyxml.h>
 #include <vector>
@@ -33,6 +36,7 @@
 #include <vector>
 #include <iostream>
 #include <fstream>
+#include <boost/thread.hpp>
 
 using namespace Eigen;
 using namespace std;
@@ -44,22 +48,7 @@ void OutputRecorder::initialize()
 	ros::NodeHandle nh_identifier("model_identifier");
 	
 		///get params
-	XmlRpc::XmlRpcValue jn_param;
-	if (nh_identifier.hasParam("joint_names"))
-	{	
-		nh_identifier.getParam("joint_names", jn_param);
-	}
-	else
-	{	ROS_ERROR("Parameter joint_names not set");	}
-	
-	dof_ = jn_param.size();
-	for(unsigned int i=0; i<dof_; i++)
-	{	
-		joints_.push_back((std::string)jn_param[i]);
-	}
-	
-	
-		if (nh_identifier.hasParam("output_file_path"))
+	if (nh_identifier.hasParam("output_file_path"))
 	{
 		nh_identifier.getParam("output_file_path", output_file_path_);
 	}else{
@@ -97,6 +86,26 @@ void OutputRecorder::initialize()
 		nh_identifier.getParam("samples", samples_);
 	}
 	
+	if (nh_identifier.hasParam("twist_controller"))
+	{
+		nh_identifier.getParam("twist_controller", twist_controller_name_);
+	}
+	
+	
+	XmlRpc::XmlRpcValue jn_param;
+	if (nh_identifier.hasParam("/" + twist_controller_name_ +"/joint_names"))
+	{	
+		nh_identifier.getParam("/" + twist_controller_name_ +"/joint_names", jn_param);
+	}
+	else
+	{	ROS_ERROR("Parameter joint_names not set");	}
+	
+	dof_ = jn_param.size();
+	for(unsigned int i=0; i<dof_; i++)
+	{	
+		joints_.push_back((std::string)jn_param[i]);
+	}
+	
 	///parse robot_description and generate KDL chains
 	KDL::Tree my_tree;
 	std::string robot_desc_string;
@@ -116,15 +125,19 @@ void OutputRecorder::initialize()
 	last_q_ = KDL::JntArray(chain_.getNrOfJoints());
 	last_q_dot_ = KDL::JntArray(chain_.getNrOfJoints());
 	
-	jointstate_sub_ = nh_.subscribe("/torso/joint_states", 1, &OutputRecorder::jointstate_cb, this);
+	jointstate_sub_ = nh_.subscribe("/" + twist_controller_name_ + "/joint_states", 1, &OutputRecorder::jointstate_cb, this);
 	
-	twist_sub_ = nh_twist.subscribe("/torso/twist_controller/command_twist", 1, &OutputRecorder::twist_cb, this);
+	twist_sub_ = nh_twist.subscribe("/" + twist_controller_name_ +"/twist_controller/command_twist_stamped", 1, &OutputRecorder::twist_cb, this);
+	//twist_sub_ = nh_twist.subscribe("/arm_left/twist_controller/command_twist_stamped", 1, &OutputRecorder::twist_cb, this);
 	twist_sub_norm_ = nh_twist.subscribe("debug/twist_normalized", 1, &OutputRecorder::normalized_twist_cb, this);
 	//twist_pub_ = nh_identifier.advertise<geometry_msgs::Twist> ("command_twist", 1);
 	//model_pub_ = nh_identifier.advertise<geometry_msgs::Twist> ("model_twist", 1);
-	startTracking_ = nh_.serviceClient<cob_srvs::SetString>("/torso/start_tracking");
-	stopTracking_ = nh_.serviceClient<std_srvs::Empty>("/torso/stop_tracking");
+	startTracking_ = nh_.serviceClient<cob_srvs::SetString>("/" + twist_controller_name_ + "/start_tracking");
+	stopTracking_ = nh_.serviceClient<std_srvs::Empty>("/" + twist_controller_name_ + "stop_tracking");
 	
+	finished_recording_=false;
+	
+	start_=false;
 	ROS_INFO("...initialized!");
 }
 
@@ -149,6 +162,18 @@ void OutputRecorder::run()
 	geometry_msgs::Pose q_soll,q_ist;
 	
 	geometry_msgs:: Pose ptpPose;
+	
+	ROS_INFO("Waiting for Twist callback");
+	while (!start_)
+	{
+		ros::spinOnce();
+		r.sleep();
+	}
+	boost::thread start_thread;
+	start_thread = boost::thread(boost::bind(&OutputRecorder::stop_recording, this));
+	ros::AsyncSpinner spinner(0);
+	spinner.start();
+	ROS_INFO("Start recording \n Enter any key to stop it.");
 	
 	// Transform RPY to Quaternion
 	q_.setRPY(0,0,M_PI);
@@ -175,9 +200,8 @@ void OutputRecorder::run()
 	double roll,pitch,yaw;
 	tf::Quaternion q = tf::Quaternion(q_ist.orientation.x,q_ist.orientation.y,q_ist.orientation.z,q_ist.orientation.w);
 	tf::Matrix3x3(q).getRPY(roll,pitch,yaw);
-	
-	
-	while (ros::ok())
+
+	while(!finished_recording_)
 	{
 		time = ros::Time::now();
 		period = time - last_update_time;
@@ -201,7 +225,6 @@ void OutputRecorder::run()
 		z_dot_rot_in=z_dot_rot_in_;
 		
 		
-
 		fillDataVectors(x_dot_lin_in ,vector_vel_.x() ,y_dot_lin_in ,vector_vel_.y() ,z_dot_lin_in ,vector_vel_.z(),x_lin_in_normalized_,y_lin_in_normalized_,z_lin_in_normalized_,
 						x_dot_rot_in ,vector_rot_.x() ,y_dot_rot_in ,vector_rot_.y() ,z_dot_rot_in ,vector_rot_.z(),x_rot_in_normalized_,y_rot_in_normalized_,z_rot_in_normalized_,
 						q_x_lin_out,q_y_lin_out,q_z_lin_out,roll,pitch,yaw);
@@ -223,25 +246,24 @@ void OutputRecorder::run()
 		}
 		
 		
-		if(iterations > 2){
-			dt_ += period.toSec();
-			samples++;
-		}
-		
+
+		dt_ += period.toSec();
+		samples++;
 		iterations++;
 		
 		
-		if(x_dot_lin_vec_in_.size() >= samples_){
-			dt_ /=  samples;
-			std::cout << "dt_ = " << dt_ <<std::endl;
-			break;
-		}		
+		//if(x_dot_lin_vec_in_.size() >= 2){
+			//dt_ /=  samples;
+			//std::cout << "dt_ = " << dt_ <<std::endl;
+			//break;
+		//}		
 		last_update_time = time;
 		ros::spinOnce();
 		r.sleep();
 	}
+	ROS_INFO("Stopped recording... preparing output for octave plot ");
 	//stop_tracking();
-	
+
 	/// Generate Octave Files
 	writeToMFile("x_linear",&x_dot_lin_vec_in_,&x_dot_lin_vec_out_,&x_lin_vec_out_,&x_dot_lin_integrated,&trans_x_vect_in_normalized_);
 	writeToMFile("y_linear",&y_dot_lin_vec_in_,&y_dot_lin_vec_out_,&y_lin_vec_out_,&y_dot_lin_integrated,&trans_y_vect_in_normalized_);
@@ -303,10 +325,13 @@ void OutputRecorder::jointstate_cb(const sensor_msgs::JointState::ConstPtr& msg)
 			KDL::Twist twist = FrameVel.GetTwist();
 			vector_vel_ = twist.vel;
 			vector_rot_ = twist.rot;
+			ROS_INFO("ist_vel: %f %f %f",twist.vel.x(),twist.vel.y(),twist.vel.z());
 		}
 		else{
 			ROS_WARN("ChainFkSolverVel failed!");
 		}	
+	}else{
+		ROS_WARN("cout != joint_size()");
 	}
 }
 
@@ -511,15 +536,16 @@ void OutputRecorder::pseudoinverse(const Eigen::MatrixXd &M, Eigen::MatrixXd &Mi
 }
 
 
-void OutputRecorder::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
+void OutputRecorder::twist_cb(const geometry_msgs::TwistStamped::ConstPtr& msg)
 {
-	x_dot_lin_in_ = msg->linear.x;
-	y_dot_lin_in_ = msg->linear.y;
-	z_dot_lin_in_ = msg->linear.z;
+	start_ = true;
+	x_dot_lin_in_ = msg->twist.linear.x;
+	y_dot_lin_in_ = msg->twist.linear.y;
+	z_dot_lin_in_ = msg->twist.linear.z;
 
-	x_dot_rot_in_ = msg->angular.x;
-	y_dot_rot_in_ = msg->angular.y;
-	z_dot_rot_in_ = msg->angular.z;	
+	x_dot_rot_in_ = msg->twist.angular.x;
+	y_dot_rot_in_ = msg->twist.angular.y;
+	z_dot_rot_in_ = msg->twist.angular.z;
 }
 
 
@@ -680,6 +706,37 @@ void OutputRecorder::stop_tracking()
 	}
 }
 
+void OutputRecorder::stop_recording()
+{
+	char c =0x0;
+	int kfd = 0;
+	struct termios cooked, raw;
+		// get the console in raw mode
+	tcgetattr(kfd, &cooked);
+	memcpy(&raw, &cooked, sizeof(struct termios));
+	raw.c_lflag &=~ (ICANON | ECHO);
+	// Setting a new line, then end of file
+	raw.c_cc[VEOL] = 1;
+	raw.c_cc[VEOF] = 2;
+	tcsetattr(kfd, TCSANOW, &raw);
+	
+	while(ros::ok()){
+		if(read(kfd, &c, 1) < 0)
+		{
+			perror("read():");
+			exit(-1);
+		}
+		
+
+		if(c == 0x61)
+		{
+			finished_recording_ = true;
+			break;
+		}
+	}
+}
+
+
 void OutputRecorder::normalized_twist_cb(const geometry_msgs::Twist::ConstPtr& msg){
 	x_lin_in_normalized_ = msg->linear.x;
 	y_lin_in_normalized_ = msg->linear.y;
@@ -706,7 +763,7 @@ void OutputRecorder::stepResponsePlot(std::string fileName,std::vector<double> *
 	ROS_INFO("Writing results to: %s", name.c_str());
 	const char* charPath = name.c_str();
 
-	myfile.open (charPath);
+	myfile.open(charPath);
 	myfile << "clear all;close all;\n\n";
 	
 	/// Get the vectors and write them to .m file---------------------------------------------
