@@ -8,11 +8,11 @@ from geometry_msgs.msg import TwistStamped
 def twistPub():
   rospy.init_node("test_publisher_twist_stamped", anonymous=True)
   
-  pub = rospy.Publisher("/arm/twist_controller/command_twist_stamped", TwistStamped, queue_size=1)
+  pub = rospy.Publisher("twist_controller/command_twist_stamped", TwistStamped, queue_size=1)
   twist_stamped_msg =  TwistStamped()
 
-  twist_stamped_msg.header.frame_id = "base_link"
-  #twist_stamped_msg.header.frame_id = "arm_7_link"
+  #twist_stamped_msg.header.frame_id = "base_link"
+  twist_stamped_msg.header.frame_id = "arm_left_7_link"
   #twist_stamped_msg.header.frame_id = "odom_combined"
   twist_stamped_msg.twist.linear.x = 0
   twist_stamped_msg.twist.linear.y = 0
