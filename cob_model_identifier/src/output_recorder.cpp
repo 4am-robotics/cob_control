@@ -817,6 +817,7 @@ void OutputRecorder::stepResponsePlot(std::string fileName,std::vector<double> *
 	myfile << "c=legend('Input','x_lin_out','y_lin_out','z_lin_out','x_rot_out','y_rot_out','z_rot_out','Location','NorthEastOutside'); \n set(c,'Interpreter','none');" << std::endl;
 	myfile << "grid" << std::endl;
 	
+	myfile.close();
 }
 
 
