@@ -455,20 +455,20 @@ void CobTwistController::jointstate_cb(const sensor_msgs::JointState::ConstPtr& 
 		
 		///---------------------------------------------------------------------
 		/// DEBUG
-		KDL::FrameVel FrameVel;
-		geometry_msgs::Twist twist_msg;
-		KDL::JntArrayVel jntArrayVel = KDL::JntArrayVel(last_q_, last_q_dot_);
-		
-		int ret = p_fksolver_vel_->JntToCart(jntArrayVel, FrameVel, -1);
-		
-		if(ret>=0)
-		{
-			KDL::Twist twist = FrameVel.GetTwist();
-			//tf::twistKDLToMsg(twist,twist_msg);
-			//twist_current_pub_.publish(twist_msg);
-			
-			ROS_WARN_STREAM("TwistCurrent_cb: (" << twist.vel.x() << ", " << twist.vel.y() << ", " << twist.vel.z() << ")\t\tt(" << twist.rot.x() << ", " << twist.rot.y() << ", " << twist.rot.z() << ")");
-		}
+		//KDL::FrameVel FrameVel;
+		//geometry_msgs::Twist twist_msg;
+		//KDL::JntArrayVel jntArrayVel = KDL::JntArrayVel(last_q_, last_q_dot_);
+		//
+		//int ret = p_fksolver_vel_->JntToCart(jntArrayVel, FrameVel, -1);
+		//
+		//if(ret>=0)
+		//{
+		//	KDL::Twist twist = FrameVel.GetTwist();
+		//	//tf::twistKDLToMsg(twist,twist_msg);
+		//	//twist_current_pub_.publish(twist_msg);
+		//	
+		//	ROS_WARN_STREAM("TwistCurrent_cb: (" << twist.vel.x() << ", " << twist.vel.y() << ", " << twist.vel.z() << ")\t\tt(" << twist.rot.x() << ", " << twist.rot.y() << ", " << twist.rot.z() << ")");
+		//}
 		///---------------------------------------------------------------------
 	}
 }
