@@ -1,87 +1,82 @@
 #!/usr/bin/env python
 
 import rospy
-import math
-from geometry_msgs.msg import Twist
-
-finished_timer = 0
-initial_time=0
+from geometry_msgs.msg import TwistStamped
  
 def twistPub():
-  rospy.init_node("velPub", anonymous=True)
+  rospy.init_node("test_publisher_twist_series", anonymous=True)
   
-  print("Ejecutando")
+  pub = rospy.Publisher("twist_controller/command_twist_stamped", TwistStamped, queue_size=1)
   
-  first_cycle=True
+  rospy.sleep(1.0)
   
-  global finished_timer
+  twist_msg =  TwistStamped()
+  twist_msg.header.stamp = rospy.Time.now()
+  twist_msg.header.frame_id = "arm_left_base_link"
+  twist_msg.twist.linear.x = 0
+  twist_msg.twist.linear.y = 0
+  twist_msg.twist.linear.z = 0
+  twist_msg.twist.angular.x = 0
+  twist_msg.twist.angular.y = 0
+  twist_msg.twist.angular.z = 0  
   
-  pub = rospy.Publisher("/arm/twist_controller/command_twist", Twist, queue_size=1)
-  twist_msg =  Twist()
-
-  twist_msg.linear.x = 0
-  twist_msg.linear.y = 0
-  twist_msg.linear.z = 0
-  twist_msg.angular.x = 0
-  twist_msg.angular.y = 0
-  twist_msg.angular.z = 0  
-   
-  r = rospy.Rate(50) 
-  last_time=0
+  rate = 50
+  r = rospy.Rate(rate)
   
-  while not rospy.is_shutdown():     
-    #print vel	
-		
-    if first_cycle:
-      initial_time=rospy.get_time()
-      last_time=rospy.get_time()
-      first_cycle=False
-
-    if(rospy.get_time()-last_time>6):
-      last_time=rospy.get_time()
-      finished_timer+=1
-      print 'Finished timer:' + str(finished_timer) + 'Current_time' + str(rospy.get_time()-initial_time)
-
-    if finished_timer==1:
-      #print "First segment, time: %.3f" % (rospy.get_time()-initial_time)
-      #twist_msg.linear.x = -0.04*math.sqrt(2)*math.cos(math.pi/4)
-      #twist_msg.linear.y = 0.0
-      #twist_msg.linear.z = -0.04*math.sqrt(2)*math.sin(math.pi/4)
-      twist_msg.linear.x = -0.04
-      twist_msg.linear.y = 0.0
-      twist_msg.linear.z = -0.04
-      twist_msg.angular.x = 0
-      twist_msg.angular.y = 0
-      twist_msg.angular.z = 0      
-      
-    if finished_timer==2:
-      #print "Second segment, time: %.3f" % (rospy.get_time()-initial_time)
-      #twist_msg.linear.x = 0.04
-      #twist_msg.linear.z = 0
-      twist_msg.linear.x = 0
-      twist_msg.linear.z = 0
-      twist_msg.angular.x = 0.3
-    
-    if finished_timer==3:
-      #print "Third segment, time: %.3f" % (rospy.get_time()-initial_time)
-      #twist_msg.linear.x = 0
-      #twist_msg.linear.z = 0.04
-      twist_msg.angular.x = 0
-      twist_msg.angular.z = 0.1
-	  
-    if finished_timer==4:
-      #print("Done")
-      twist_msg.linear.x = 0
-      twist_msg.linear.z = 0
-      twist_msg.angular.z = 0.0
-	  
-      
+  for i in range(0, 5*rate, 1):
+    twist_msg.header.stamp = rospy.Time.now()
+    twist_msg.header.frame_id = "arm_left_base_link"
+    twist_msg.twist.linear.x = 0
+    twist_msg.twist.linear.y = 0
+    twist_msg.twist.linear.z = -0.02
+    twist_msg.twist.angular.x = 0
+    twist_msg.twist.angular.y = 0
+    twist_msg.twist.angular.z = 0
     pub.publish(twist_msg)
-    #print twist_ms
-
     r.sleep()
+  
+  #pause
+  for i in range(0, 1*rate, 1):
+    twist_msg.header.stamp = rospy.Time.now()
+    twist_msg.header.frame_id = "arm_left_base_link"
+    twist_msg.twist.linear.x = 0
+    twist_msg.twist.linear.y = 0
+    twist_msg.twist.linear.z = 0
+    twist_msg.twist.angular.x = 0
+    twist_msg.twist.angular.y = 0
+    twist_msg.twist.angular.z = 0
+    pub.publish(twist_msg)
+    r.sleep()
+
+  for i in range(0, 5*rate, 1):
+    twist_msg.header.stamp = rospy.Time.now()
+    twist_msg.header.frame_id = "arm_left_base_link"
+    twist_msg.twist.linear.x = 0
+    twist_msg.twist.linear.y = 0
+    twist_msg.twist.linear.z = 0.02
+    twist_msg.twist.angular.x = 0
+    twist_msg.twist.angular.y = 0
+    twist_msg.twist.angular.z = 0
+    pub.publish(twist_msg)
+    r.sleep()
+
+  #pause
+  for i in range(0, 1*rate, 1):
+    twist_msg.header.stamp = rospy.Time.now()
+    twist_msg.header.frame_id = "arm_left_base_link"
+    twist_msg.twist.linear.x = 0
+    twist_msg.twist.linear.y = 0
+    twist_msg.twist.linear.z = 0
+    twist_msg.twist.angular.x = 0
+    twist_msg.twist.angular.y = 0
+    twist_msg.twist.angular.z = 0
+    pub.publish(twist_msg)
+    r.sleep()
+  
+  print "done"
 
 if __name__ == '__main__':
   try:
       twistPub()
   except rospy.ROSInterruptException: pass
+
