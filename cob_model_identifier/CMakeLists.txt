@@ -21,21 +21,17 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${oroco
 
 ## Build
 # Declare a cpp library
-add_library(input_generator src/input_generator.cpp )
 add_library(output_recorder src/output_recorder.cpp )
 add_dependencies(output_recorder cob_srvs_gencpp)
 
 ## Declare a cpp executable
-add_executable(input_generator_node src/input_generator_node.cpp)
-target_link_libraries(input_generator_node input_generator ${catkin_LIBRARIES})
-
 add_executable(output_recorder_node src/output_recorder_node.cpp)
 target_link_libraries(output_recorder_node output_recorder ${catkin_LIBRARIES} ${orocos_kdl_INCLUDE_DIRS} )
 
 
 ## Install
 # Mark executables and/or libraries for installation
-install(TARGETS input_generator_node input_generator output_recorder_node output_recorder
+install(TARGETS output_recorder_node output_recorder
  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -48,6 +44,11 @@ install(DIRECTORY include/${PROJECT_NAME}/
  PATTERN ".svn" EXCLUDE
 )
 
-install(DIRECTORY launch config
+# Mark other files for installation (e.g. launch and bag files, etc.)
+install(PROGRAMS scripts/input_series_twist.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/scripts
+)
+
+install(DIRECTORY launch
  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

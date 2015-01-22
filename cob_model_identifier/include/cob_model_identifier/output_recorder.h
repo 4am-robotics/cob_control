@@ -55,7 +55,7 @@
 class OutputRecorder
 {
 public:
-	void initialize();
+	bool initialize();
 	void run();
 	void record(ros::Time);
 	void getVelocity();
@@ -74,10 +74,7 @@ public:
 	void printModel(double a1, double b1, std::string axis);
 	geometry_msgs::Pose getEndeffectorPose();
 	geometry_msgs::Pose getTrackingFramePosition();
-	void move_ptp(geometry_msgs::Pose targetPose);
-	void start_tracking();
-	void stop_tracking();
-	void normalized_twist_cb(const geometry_msgs::Twist::ConstPtr& msg);
+
 	void euler(std::vector<double> *out, double in, double dt);	
 	void writeToMFile(std::string fileName,std::vector<double> *dot_in,std::vector<double> *dot_out,std::vector<double> *pos_out,std::vector<double> *dot_integrated, std::vector<double> *dot_normalized_in);
 	Eigen::VectorXd getTheta(Eigen::MatrixXd &F, Eigen::VectorXd &y);
@@ -97,8 +94,8 @@ private:
 	/// KDL Conversion
 	KDL::Chain chain_;
 	std::string output_file_path_;
-	std::string chain_base_;
-	std::string chain_tip_;
+	std::string chain_base_link_;
+	std::string chain_tip_link_;
 	KDL::JntArray last_q_;
 	KDL::JntArray last_q_dot_;
 	std::vector<std::string> joints_;
@@ -106,7 +103,6 @@ private:
 	KDL::ChainFkSolverVel_recursive* jntToCartSolver_vel_;
 	unsigned int dof_;
 	KDL::Vector vector_vel_,vector_rot_;
-	double samples_;
 
 	
 	/// Outputs
@@ -134,10 +130,6 @@ private:
 	double x_lin_in_normalized_,y_lin_in_normalized_,z_lin_in_normalized_;
 	double x_rot_in_normalized_,y_rot_in_normalized_,z_rot_in_normalized_;
 	
-	/// Frametracker
-	ros::ServiceClient startTracking_;
-	ros::ServiceClient stopTracking_;
-	
 	bool finished_recording_;
 	
 	/// Transform Listener
@@ -149,7 +141,6 @@ private:
 	double roll_,pitch_,yaw_;
 	
 	std::vector <double> trans_x_,trans_x_punkt_,timeVect_;
-	std::string referenceFrame_,endeffectorFrame_,trackingFrame_,twist_controller_name_;
 	ros::Timer timer_stop_;
 	
 	/// Euler Integration
