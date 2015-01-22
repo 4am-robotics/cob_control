@@ -1024,35 +1024,5 @@ void OutputRecorder::writeToMFile(std::string fileName,std::vector<double> *dot_
 	myfile << "c=legend('Velocity Input','Position Systemresponse','PID2T3 Modelresponse','Location','NorthEastOutside'); \n set(c,'Interpreter','none');" << std::endl;
 	myfile << "title('" << fileName << " Position Stepresponse','interpreter','none')"  << std::endl;
 	myfile << "grid" << std::endl;
-
-
-
-	
-
-
-/*	
-	/// Plot everything
-	myfile << "figure" << std::endl;
-	myfile << "plot(t," << fileName << "_dot_in,t," << fileName << "_dot_out,t," << fileName << "_pos_out,t," << fileName << "_dot_integrated,t,Gs_" << fileName << "_out_integrated2)" << std::endl;
-	myfile << "c=legend('" << fileName << "-dot-in','" << fileName << "-dot-out','" << fileName << "-pos-out','" << fileName << "-dot-out-integrated','PT2 Velocitymodel','" << "IT1_Positionmodel'); \n set(c,'Interpreter','none');" << std::endl;
-	myfile << "title('" << fileName << " step response','interpreter','none')"  << std::endl;
-	myfile << "grid" << std::endl;
-
-
-	/// Plot step response 
-	myfile << "t1 = linspace(0,size(" << fileName << "_dot_in),1/68);" << std::endl;
-	myfile << "figure" << std::endl;
-	myfile << "plot(t," << fileName << "_dot_in,t," << fileName << "_dot_out,t," << fileName << "_pos_out,t," << fileName << "_dot_integrated)" << std::endl;
-	myfile << "c=legend('" << fileName << "_dot_in','" << fileName << "_dot_out','" << fileName << "_pos_out','"  << fileName << "_dot_integrated'); \n set(c,'Interpreter','none');" << std::endl;
-	myfile << "title('" << fileName << " step response','interpreter','none')"  << std::endl;
-	myfile << "grid" << std::endl;
-*/
 	myfile.close();
 } 
-
-
-void OutputRecorder::quit(int sig)
-{
-  tcsetattr(kfd, TCSANOW, &cooked);
-  exit(0);
-}
