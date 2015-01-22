@@ -175,8 +175,7 @@ bool CobTwistController::initialize()
 	ros::Duration(1.0).sleep();
 	
 	///initialize ROS interfaces
-	//jointstate_sub = nh_.subscribe("joint_states", 1, &CobTwistController::jointstate_cb, this);
-	jointstate_sub = nh_.subscribe("/joint_states", 1, &CobTwistController::jointstate_cb, this);
+	jointstate_sub = nh_.subscribe("joint_states", 1, &CobTwistController::jointstate_cb, this);
 	odometry_sub = nh_base.subscribe("controller/odometry", 1, &CobTwistController::odometry_cb, this);
 	twist_sub = nh_twist.subscribe("command_twist", 1, &CobTwistController::twist_cb, this);
 	twist_stamped_sub = nh_twist.subscribe("command_twist_stamped", 1, &CobTwistController::twist_stamped_cb, this);
