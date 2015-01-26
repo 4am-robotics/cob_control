@@ -17,6 +17,7 @@ find_package(catkin REQUIRED
 	std_srvs
 	cob_srvs
 	tf
+	interactive_markers
 	tf_conversions
 	control_toolbox)
 
@@ -58,38 +59,33 @@ catkin_package(
   control_toolbox
   std_srvs
   cob_srvs
+  interactive_markers 
 )
+
+include_directories(include ${catkin_INCLUDE_DIRS})
 
 
 ## Build
-
-## Specify additional locations of header files
-## Your package locations should be listed before other locations
-# include_directories(include)
-include_directories(include 
-  ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${orocos_kdl_INCLUDE_DIRS}
-)
-
-
 # Declare a cpp library
 add_library(cob_frame_tracker src/cob_frame_tracker.cpp )
 add_library(cob_frame_tracker_action_client src/cob_frame_tracker_action_client.cpp )
 add_dependencies(cob_frame_tracker cob_srvs_gencpp)
-add_dependencies(cob_frame_tracker ${cob_frame_tracker_EXPORTED_TARGETS})
-add_dependencies(cob_frame_tracker_action_client cob_srvs_gencpp)
-#add_dependencies(cob_frame_tracker_action_client ${cob_frame_tracker_action_client_EXPORTED_TARGETS})
-#add_dependencies(cob_frame_tracker cob_frame_tracker_gencpp)
+
+add_library(interactive_frame_target src/interactive_frame_target.cpp )
+add_dependencies(interactive_frame_target cob_srvs_gencpp)
 
 # Declare a cpp executable
 add_executable(cob_frame_tracker_node src/cob_frame_tracker_node.cpp)
 add_executable(cob_frame_tracker_action_client_node src/cob_frame_tracker_action_client_node.cpp)
 target_link_libraries(cob_frame_tracker_node cob_frame_tracker ${catkin_LIBRARIES})
-target_link_libraries(cob_frame_tracker_action_client_node cob_frame_tracker_action_client ${catkin_LIBRARIES})
+
+add_executable(interactive_frame_target_node src/interactive_frame_target_node.cpp)
+target_link_libraries(interactive_frame_target_node interactive_frame_target ${catkin_LIBRARIES})
 
 
 ## Install
 # Mark executables and/or libraries for installation
-install(TARGETS cob_frame_tracker cob_frame_tracker_node cob_frame_tracker_action_client cob_frame_tracker_action_client_node
+install(TARGETS cob_frame_tracker cob_frame_tracker_node interactive_frame_target interactive_frame_target_node cob_frame_tracker_action_client cob_frame_tracker_action_client_node
  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

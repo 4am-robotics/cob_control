@@ -33,6 +33,7 @@ struct AugmentedSolverParams {
     bool enforce_limits;
     double base_ratio;
     double base_min_vel;
+    double tolerance;
 };
 
 enum DampingMethodTypes {
