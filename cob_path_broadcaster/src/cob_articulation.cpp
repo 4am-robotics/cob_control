@@ -43,15 +43,10 @@
 bool CobArticulation::initialize()
 {
 	ros::NodeHandle nh_articulation("cob_articulation");
+	ros::NodeHandle nh_cartesian("cartesian_controller");
 	
 	bool success=true;
-	///get params
-	if (nh_articulation.hasParam("update_rate"))
-	{
-		nh_articulation.getParam("update_rate", update_rate_);
-	}
-	else{ update_rate_=68; }
-	
+	///get params articulation Nodehandle
 	if (nh_articulation.hasParam("file_name"))
 	{
 		nh_articulation.getParam("file_name", fileName_);
@@ -62,19 +57,26 @@ bool CobArticulation::initialize()
 		nh_articulation.getParam("reference_frame", referenceFrame_);
 	}else{ success = false; }
 	
-	if (nh_articulation.hasParam("target_frame"))
+	if (nh_articulation.hasParam("articulation_target_frame"))
 	{
-		nh_articulation.getParam("target_frame", targetFrame_);
+		nh_articulation.getParam("articulation_target_frame", targetFrame_);
 	}else{ success = false; }
 	
-	if (nh_articulation.hasParam("endeffector_frame"))
+	/// Cartesian Nodehandle
+	if (nh_cartesian.hasParam("chain_tip_link"))
 	{
-		nh_articulation.getParam("endeffector_frame", endeffectorFrame_);
+		nh_cartesian.getParam("chain_tip_link", endeffectorFrame_);
 	}else{ success = false; }
 	
+	if (nh_cartesian.hasParam("update_rate")){
+		nh_cartesian.getParam("update_rate", update_rate_);
+	}
+	else{
+	update_rate_ = 68.0;
+	}
 	
 	stringPath_ = ros::package::getPath("cob_path_broadcaster"); 
-	stringPath_ = stringPath_+"/movement/"+fileName_;	
+	stringPath_ = stringPath_+"/movement/"+fileName_;
 	charPath_ = stringPath_.c_str();
 	
 	marker1_=0;
@@ -87,10 +89,10 @@ bool CobArticulation::initialize()
 	
 	ROS_WARN("Waiting for Services...");
 	
-	success = ros::service::waitForService("/arm_left/start_tracking");
-	success = ros::service::waitForService("/arm_left/stop_tracking");
-	startTracking_ = nh_.serviceClient<cob_srvs::SetString>("/arm_left/start_tracking");
-	stopTracking_ = nh_.serviceClient<std_srvs::Empty>("/arm_left/stop_tracking");
+	success = ros::service::waitForService(nh_.getNamespace()+"/start_tracking");
+	success = ros::service::waitForService(nh_.getNamespace()+"/stop_tracking");
+	startTracking_ = nh_.serviceClient<cob_srvs::SetString>("start_tracking");
+	stopTracking_ = nh_.serviceClient<std_srvs::Empty>("stop_tracking");
 	ROS_INFO("...done!");
 	
 	if(success){
@@ -248,8 +250,10 @@ void CobArticulation::load()
 			}
 			
 			if("hold" == movement){
+				actualTcpPose = getEndeffectorPose();
 				ROS_INFO("Hold position");
 				holdTime = atof(child->Attribute( "time"));
+				ros::Timer timer = nh_.createTimer(ros::Duration(holdTime), &CobArticulation::timerCallback, this);
 				hold_=true;
 				PoseToRPY(actualTcpPose,roll,pitch,yaw);
 				ROS_INFO("Hold Orientation: %f %f %f",roll,pitch,yaw);
@@ -351,7 +355,7 @@ void CobArticulation::pose_path_broadcaster(std::vector <geometry_msgs::Pose> *p
 }
 
 void CobArticulation::hold_position(geometry_msgs::Pose holdPose)
-{	
+{
 	ros::Rate rate(update_rate_);
 	ros::Time now;
 	tf::Quaternion q;

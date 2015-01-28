@@ -43,7 +43,7 @@ bool OutputRecorder::initialize()
 {
 	ros::NodeHandle nh_twist("twist_controller");
 	ros::NodeHandle nh_cartesian("cartesian_controller");
-	ros::NodeHandle nh_identifier("model_itentifier");
+	ros::NodeHandle nh_identifier("model_identifier");
 
 	// JointNames
 	if(!nh_.getParam("joint_names", joints_))
@@ -52,7 +52,6 @@ bool OutputRecorder::initialize()
 		return false;
 	}
 	dof_ = joints_.size();
-
 	
 	if(!nh_cartesian.getParam("chain_base_link", chain_base_link_))
 	{

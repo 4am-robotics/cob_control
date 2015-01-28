@@ -1,8 +1,6 @@
 <?xml version="1.0"?>
 
 <launch>
-	<group ns="arm">
 		<rosparam ns="cob_articulation" command="load" file="$(find cob_path_broadcaster)/config/articulation_params.yaml"/>
 		<node name="cob_articulation" pkg="cob_path_broadcaster" type="cob_articulation_node" output="screen"/>
-	</group>
 </launch>
