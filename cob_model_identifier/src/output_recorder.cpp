@@ -17,7 +17,7 @@
  *   ROS package name: cob_model_identifier
  *
  * \author
- *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de
+ *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de / christoph.mark@gmail.com
  *
  * \date Date of creation: September, 2014
  *
@@ -38,16 +38,6 @@
 using namespace Eigen;
 using namespace std;
 
-//ToDo: remove unused class members
-//ToDo: remove unused variables
-//ToDo: remove unused functions
-//ToDo: use ros::Time(0) in lookupTransform calls
-//ToDo: remove waitForTransform() calls
-//ToDo: tabs vs. spaces
-//ToDo: add instructions to README
-
-
-//ToDo: Do the same for cob_path_broadcaster!!!
 
 bool OutputRecorder::initialize()
 {
@@ -110,7 +100,7 @@ bool OutputRecorder::initialize()
 	jointstate_sub_ = nh_.subscribe("joint_states", 1, &OutputRecorder::jointstate_cb, this);
 	twist_sub_ = nh_twist.subscribe("command_twist_stamped", 1, &OutputRecorder::twist_cb, this);
 	
-	start_=false;	
+	start_=false;
 	finished_recording_=false;
 	
 	ROS_INFO("...initialized!");
@@ -118,7 +108,7 @@ bool OutputRecorder::initialize()
 }
 
 void OutputRecorder::run()
-{	
+{
 	tf::Transform trans;
 	double x_dot_lin_in,	y_dot_lin_in,	z_dot_lin_in;
 	double x_dot_rot_in,	y_dot_rot_in,	z_dot_rot_in;
@@ -127,7 +117,6 @@ void OutputRecorder::run()
 	double x_lin_start,	y_lin_start,	z_lin_start;
 	double x_rot_start,	y_rot_start,	z_rot_start;
 	
-	double x_lin_in_normalized, y_lin_in_normalized, z_lin_in_normalized;
 	std::vector<double> x_dot_lin_integrated, y_dot_lin_integrated, z_dot_lin_integrated;
 	std::vector<double> x_dot_rot_integrated, y_dot_rot_integrated, z_dot_rot_integrated;
 	geometry_msgs::Pose q_soll, q_ist;
@@ -136,8 +125,7 @@ void OutputRecorder::run()
 		
 	ROS_INFO("Waiting for Twist callback");
 	
-	//ToDo: Shutdown behavior if programm is cancled before data is recorded
-	while (!start_)
+	while (!start_&&ros::ok())
 	{
 		ros::spinOnce();
 		r.sleep();
@@ -181,14 +169,19 @@ void OutputRecorder::run()
 		x_dot_lin_in=x_dot_lin_in_;	
 		y_dot_lin_in=y_dot_lin_in_;
 		z_dot_lin_in=z_dot_lin_in_;
-
 		x_dot_rot_in=x_dot_rot_in_;
 		y_dot_rot_in=y_dot_rot_in_;
 		z_dot_rot_in=z_dot_rot_in_;
 		
-		//ToDo: Cleanup function!
-		fillDataVectors(x_dot_lin_in, vector_vel_.x(), y_dot_lin_in, vector_vel_.y(), z_dot_lin_in ,vector_vel_.z(), x_lin_in_normalized_, y_lin_in_normalized_, z_lin_in_normalized_, x_dot_rot_in, vector_rot_.x(), y_dot_rot_in, vector_rot_.y(), z_dot_rot_in, vector_rot_.z(), x_rot_in_normalized_, y_rot_in_normalized_, z_rot_in_normalized_, q_x_lin_out, q_y_lin_out, q_z_lin_out, roll, pitch, yaw);
-		
+
+		fillDataVectors(x_dot_lin_in, vector_vel_.x(), 
+						y_dot_lin_in, vector_vel_.y(),
+						z_dot_lin_in, vector_vel_.z(),
+						x_dot_rot_in, vector_rot_.x(),
+						y_dot_rot_in, vector_rot_.y(),
+						z_dot_rot_in, vector_rot_.z(),
+						q_x_lin_out	, q_y_lin_out, q_z_lin_out, roll, pitch, yaw);
+
 		euler(&x_dot_lin_integrated, vector_vel_.x(), period.toSec());
 		euler(&y_dot_lin_integrated, vector_vel_.y(), period.toSec());
 		euler(&z_dot_lin_integrated, vector_vel_.z(), period.toSec());
@@ -197,15 +190,13 @@ void OutputRecorder::run()
 		euler(&y_dot_rot_integrated, vector_rot_.y(), period.toSec());
 		euler(&z_dot_rot_integrated, vector_rot_.z(), period.toSec());
 		
-		//ToDo: Do we still need this? If not, remove!
-		if(iterations<4)
+		if(iterations<1)
 		{
-			timeVec.push_back(double(iterations+1)/100.0);
+			timeVec.push_back(period.toSec());
 		}else
 		{
-			timeVec.push_back(timeVec.at(iterations-1)+period.toSec());
+			timeVec.push_back(timeVec.at(iterations)+period.toSec());
 		}
-		
 		dt_ += period.toSec();
 		iterations++;
 	
@@ -218,13 +209,13 @@ void OutputRecorder::run()
 	ROS_INFO("Stopped recording... preparing output for octave plot ");
 
 	/// Generate Octave Files
-	writeToMFile("x_linear", &x_dot_lin_vec_in_, &x_dot_lin_vec_out_, &x_lin_vec_out_, &x_dot_lin_integrated, &trans_x_vect_in_normalized_);
-	writeToMFile("y_linear", &y_dot_lin_vec_in_, &y_dot_lin_vec_out_, &y_lin_vec_out_, &y_dot_lin_integrated, &trans_y_vect_in_normalized_);
-	writeToMFile("z_linear", &z_dot_lin_vec_in_, &z_dot_lin_vec_out_, &z_lin_vec_out_, &z_dot_lin_integrated, &trans_z_vect_in_normalized_);
+	writeToMFile("x_linear", &x_dot_lin_vec_in_, &x_dot_lin_vec_out_, &x_lin_vec_out_, &x_dot_lin_integrated);
+	writeToMFile("y_linear", &y_dot_lin_vec_in_, &y_dot_lin_vec_out_, &y_lin_vec_out_, &y_dot_lin_integrated);
+	writeToMFile("z_linear", &z_dot_lin_vec_in_, &z_dot_lin_vec_out_, &z_lin_vec_out_, &z_dot_lin_integrated);
 
-	writeToMFile("x_angular", &x_dot_rot_vec_in_, &x_dot_rot_vec_out_, &x_rot_vec_out_, &x_dot_rot_integrated, &trans_x_vect_in_normalized_);
-	writeToMFile("y_angular", &y_dot_rot_vec_in_, &y_dot_rot_vec_out_, &y_rot_vec_out_, &y_dot_rot_integrated, &trans_y_vect_in_normalized_);
-	writeToMFile("z_angular", &z_dot_rot_vec_in_, &z_dot_rot_vec_out_, &z_rot_vec_out_, &z_dot_rot_integrated, &trans_z_vect_in_normalized_);
+	writeToMFile("x_angular", &x_dot_rot_vec_in_, &x_dot_rot_vec_out_, &x_rot_vec_out_, &x_dot_rot_integrated);
+	writeToMFile("y_angular", &y_dot_rot_vec_in_, &y_dot_rot_vec_out_, &y_rot_vec_out_, &y_dot_rot_integrated);
+	writeToMFile("z_angular", &z_dot_rot_vec_in_, &z_dot_rot_vec_out_, &z_rot_vec_out_, &z_dot_rot_integrated);
 	
 	/// Velocity Stepresponse
 	stepResponsePlot("x_linear_dot_step", &x_dot_lin_vec_in_, &x_dot_lin_vec_out_, &y_dot_lin_vec_out_, &z_dot_lin_vec_out_, &x_dot_rot_vec_out_, &y_dot_rot_vec_out_, &z_dot_rot_vec_out_);
@@ -270,10 +261,10 @@ void OutputRecorder::jointstate_cb(const sensor_msgs::JointState::ConstPtr& msg)
 		last_q_ = q_temp;
 		last_q_dot_ = q_dot_temp;
 		KDL::JntArrayVel jntArrayVel = KDL::JntArrayVel(last_q_, last_q_dot_);
-
+		
 		jntToCartSolver_vel_ = new KDL::ChainFkSolverVel_recursive(chain_);
 		int ret = jntToCartSolver_vel_->JntToCart(jntArrayVel, FrameVel, -1);
-
+		
 		if(ret>=0){
 			KDL::Twist twist = FrameVel.GetTwist();
 			vector_vel_ = twist.vel;
@@ -282,7 +273,7 @@ void OutputRecorder::jointstate_cb(const sensor_msgs::JointState::ConstPtr& msg)
 		}
 		else{
 			ROS_WARN("ChainFkSolverVel failed!");
-		}	
+		}
 	}else{
 		ROS_WARN("cout != joint_size()");
 	}
@@ -293,14 +284,12 @@ void OutputRecorder::jointstate_cb(const sensor_msgs::JointState::ConstPtr& msg)
 double OutputRecorder::calculateLS(std::vector<double>* vec_out, std::vector<double>* vec_in, int modellorder, double &a1, double &a2, double &a3, double &b1, double &b2, double &b3)
 {
 	double err=0;
-	double err_old;
-	int k=0;
 	Eigen::MatrixXd F(vec_out->size()-modellorder, modellorder*2);
 	Eigen::VectorXd y(vec_out->size()-modellorder);
 	Eigen::MatrixXd F_pinv;
 	Eigen::MatrixXd theta;
 	std::vector<double> errorVector;
-	int d = 0; // delay
+	int d = 0;
 
 	/// System 1. Ordnung
 	if(modellorder==1)
@@ -327,12 +316,12 @@ double OutputRecorder::calculateLS(std::vector<double>* vec_out, std::vector<dou
 		{
 			if(i<d)
 			{
-				F(i,0) = 0;	
-				F(i,1) = 0;	
+				F(i,0) = 0;
+				F(i,1) = 0;
 				y(i) = 0;
 			}else
 			{
-				F(i,0) = -1 * vec_out->at(i+1);	
+				F(i,0) = -1 * vec_out->at(i+1);
 				F(i,1) = -1 * vec_out->at(i);
 				y(i) = vec_out->at(i+2);
 			}
@@ -365,10 +354,8 @@ double OutputRecorder::calculateLS(std::vector<double>* vec_out, std::vector<dou
 		}
 	}
 	
-	//ToDo: What's this magic number?? Make it a parameter! Add documentation!
+	/// 'double' machine precision http://freemat.sourceforge.net/help/constants_eps.html
 	pseudoinverse(F,F_pinv,(2.2204*pow(10,-16)));
-	//ToDo: Do we need this call? If not, remove function as well!
-	//Eigen::VectorXd theta = getTheta(F,y);
 	theta = F_pinv * y;
 	Eigen::MatrixXd e = y - F * theta;
 	Eigen::MatrixXd e_squared = e.transpose() * e;
@@ -402,73 +389,10 @@ double OutputRecorder::calculateLS(std::vector<double>* vec_out, std::vector<dou
 	}
 
 	std::cout << "\n\nTheta: \n" << theta << std::endl;
-	std::cout << "\n Delay: " << d << std::endl;
 	std::cout << "\n Squared Error: \n" << err << std::endl;
 
-	return err;//errorVector.at(d);
+	return err;
 }
-
-
-/// Get theta, octave style.
-Eigen::VectorXd OutputRecorder::getTheta(Eigen::MatrixXd &F, Eigen::VectorXd &y)
-{
-	int r=0;		
-	Eigen::MatrixXd Q, R0, R1, R2;
-
-	Eigen::MatrixXd A(F.rows(),F.cols()+1);
-	A << F,y;
-	
-	Eigen::HouseholderQR<MatrixXd> qr(A);
-	Q = qr.householderQ();
-	R0 = Q.transpose()*A;
-	
-	for(int i =0;i<R0.rows();i++)
-	{
-		for(int j=0;j<R0.cols();j++)
-		{
-			if(fabs(R0(i,j)) < 2.2204*pow(10,-16))
-			{
-				R0(i,j)=0;
-			}
-		}
-	}
-
-	R1 = R0.block(0,0,R0.rows()-1,R0.cols()-1);
-	R2 = R0.block(0,R0.cols()-1,R0.rows()-1,1);
-
-	Eigen::JacobiSVD<Eigen::MatrixXd> svdOfF(R1, Eigen::ComputeThinU  | Eigen::ComputeThinV);
-	const Eigen::MatrixXd U = svdOfF.matrixU();
-	const Eigen::MatrixXd V = svdOfF.matrixV();
-	const Eigen::VectorXd S = svdOfF.singularValues();
-	
-	Eigen::MatrixXd U_,V_;
-	Eigen::VectorXd S_;
-	
-	double maxsv = 0 ;
-	for (std::size_t i = 0; i < S.size(); ++i)
-	{
-		if (fabs(S(i)) > maxsv)
-		{
-			maxsv = fabs(S(i));
-		}
-	}
-		
-	for(int i=0;i<S.size();i++)
-	{	
-		if(S(i) > (2.2204*pow(10,-16) * maxsv))
-		{
-			r++;
-		}
-	}
-	
-	V_ = V.leftCols(r);
-	U_ = U.leftCols(r);
-	Eigen::VectorXd temp = U_.transpose()*R2;
-	Eigen::VectorXd temp2 = temp.cwiseQuotient(S);
-	
-	return  V_*temp2;
-}
-
 
 void OutputRecorder::pseudoinverse(const Eigen::MatrixXd &M, Eigen::MatrixXd &Minv, double tolerance)
 {
@@ -502,19 +426,20 @@ void OutputRecorder::twist_cb(const geometry_msgs::TwistStamped::ConstPtr& msg)
 	x_dot_lin_in_ = msg->twist.linear.x;
 	y_dot_lin_in_ = msg->twist.linear.y;
 	z_dot_lin_in_ = msg->twist.linear.z;
-
+	
 	x_dot_rot_in_ = msg->twist.angular.x;
 	y_dot_rot_in_ = msg->twist.angular.y;
 	z_dot_rot_in_ = msg->twist.angular.z;
 }
 
 
-//ToDo: remove function parameters which are no longer needed!
-void OutputRecorder::fillDataVectors(double x_dot_lin_in, double x_dot_lin_out, double y_dot_lin_in, double y_dot_lin_out, double z_dot_lin_in, double z_dot_lin_out,
-									 double x_lin_in_normalized, double y_lin_in_normalized, double z_lin_in_normalized,
-									 double x_dot_rot_in, double x_dot_rot_out, double y_dot_rot_in, double y_dot_rot_out, double z_dot_rot_in, double z_dot_rot_out,
-									 double x_rot_in_normalized, double y_rot_in_normalized, double z_rot_in_normalized,
-									 double x_lin_out, double y_lin_out, double z_lin_out,double x_rot_out,double y_rot_out,double z_rot_out)
+void OutputRecorder::fillDataVectors(	double x_dot_lin_in, double x_dot_lin_out,
+										double y_dot_lin_in, double y_dot_lin_out,
+										double z_dot_lin_in, double z_dot_lin_out,
+										double x_dot_rot_in, double x_dot_rot_out,
+										double y_dot_rot_in, double y_dot_rot_out,
+										double z_dot_rot_in, double z_dot_rot_out,
+										double x_lin_out, double y_lin_out, double z_lin_out,double x_rot_out,double y_rot_out,double z_rot_out)
 {
 	/// lin velocity
 	x_dot_lin_vec_in_.push_back(x_dot_lin_in);
@@ -523,11 +448,7 @@ void OutputRecorder::fillDataVectors(double x_dot_lin_in, double x_dot_lin_out, 
 	y_dot_lin_vec_out_.push_back(y_dot_lin_out);
 	z_dot_lin_vec_in_.push_back(z_dot_lin_in);
 	z_dot_lin_vec_out_.push_back(z_dot_lin_out);
-
-	trans_x_vect_in_normalized_.push_back(x_lin_in_normalized);
-	trans_y_vect_in_normalized_.push_back(y_lin_in_normalized);
-	trans_z_vect_in_normalized_.push_back(z_lin_in_normalized);
-
+	
 	/// rot velocity
 	x_dot_rot_vec_in_.push_back(x_dot_rot_in);
 	x_dot_rot_vec_out_.push_back(x_dot_rot_out);
@@ -535,16 +456,12 @@ void OutputRecorder::fillDataVectors(double x_dot_lin_in, double x_dot_lin_out, 
 	y_dot_rot_vec_out_.push_back(y_dot_rot_out);
 	z_dot_rot_vec_in_.push_back(z_dot_rot_in);
 	z_dot_rot_vec_out_.push_back(z_dot_rot_out);
-
-	rot_x_vect_in_normalized_.push_back(x_rot_in_normalized);	
-	rot_y_vect_in_normalized_.push_back(y_rot_in_normalized);
-	rot_z_vect_in_normalized_.push_back(z_rot_in_normalized);
-
+	
 	/// lin position
 	x_lin_vec_out_.push_back(x_lin_out);
 	y_lin_vec_out_.push_back(y_lin_out);
 	z_lin_vec_out_.push_back(z_lin_out);
-
+	
 	/// rot position
 	x_rot_vec_out_.push_back(x_rot_out);
 	y_rot_vec_out_.push_back(y_rot_out);
@@ -552,30 +469,16 @@ void OutputRecorder::fillDataVectors(double x_dot_lin_in, double x_dot_lin_out, 
 }
 
 
-//ToDo: This function is never used. Remove?
-void OutputRecorder::printModel(double a1, double b1, std::string axis)
-{
-	if(a1<0)
-	{
-		std::cout << "Gz_" << axis << "=" << b1 << "*z^-1/(1" << a1 << "*z^-1)" << std::endl;
-	}else
-	{
-		std::cout << "Gz_" << axis << "=" << b1 << "*z^-1/(1+" << a1 << "*z^-1)" << std::endl;		
-	}
-	std::cout << "Gs_" << axis << "=d2c(Gz_" << axis << ",'zoh')" << std::endl;	
-}
 
 geometry_msgs::Pose OutputRecorder::getEndeffectorPose()
 {	
 	ros::Time::now();
 	geometry_msgs::Pose pos;
 	tf::StampedTransform stampedTransform;
-
+	
 	// Get transformation
 	try
 	{
-		//listener_.waitForTransform(chain_base_link_, chain_tip_link_, ros::Time::now(), ros::Duration(0.5));
-		//listener_.lookupTransform(chain_base_link_, chain_tip_link_, ros::Time::now(), stampedTransform);
 		listener_.lookupTransform(chain_base_link_, chain_tip_link_, ros::Time(0), stampedTransform);
 	}
 	catch (tf::TransformException &ex)
@@ -590,7 +493,7 @@ geometry_msgs::Pose OutputRecorder::getEndeffectorPose()
 	pos.orientation.y = stampedTransform.getRotation()[1];
 	pos.orientation.z = stampedTransform.getRotation()[2];
 	pos.orientation.w = stampedTransform.getRotation()[3];
-			
+	
 	return pos;
 }
 
@@ -646,7 +549,7 @@ void OutputRecorder::stepResponsePlot(std::string fileName, std::vector<double> 
 	myfile.open(charPath);
 	myfile << "clear all;close all;\n\n";
 	
-	/// Get the vectors and write them to .m file---------------------------------------------
+	/// Get the vectors and write them to .m file-----------------------
 	myfile << fileName << "_in = [" << std::endl;
 	for (int i=0;i<in->size()-1;i++)
 	{
@@ -708,7 +611,7 @@ void OutputRecorder::stepResponsePlot(std::string fileName, std::vector<double> 
 }
 
 
-void OutputRecorder::writeToMFile(std::string fileName,std::vector<double> *dot_in, std::vector<double> *dot_out, std::vector<double> *pos_out, std::vector<double> *dot_integrated, std::vector<double> *dot_normalized_in)
+void OutputRecorder::writeToMFile(std::string fileName,std::vector<double> *dot_in, std::vector<double> *dot_out, std::vector<double> *pos_out, std::vector<double> *dot_integrated)
 {
 	std::ofstream myfile;
 	std::string name;
@@ -724,21 +627,14 @@ void OutputRecorder::writeToMFile(std::string fileName,std::vector<double> *dot_
 
 	myfile << "clear all;close all;\n\n";
 
-	/// Get the vectors and write them to .m file---------------------------------------------
+	/// Get the vectors and write them to .m file
 	myfile << fileName << "_dot_in = [" << std::endl;
 	for (int i=0;i<dot_in->size()-1;i++)
 	{
 		myfile << dot_in->at(i) <<std::endl;
 	}
 	myfile << "]; \n" << std::endl;
-
-	myfile << fileName << "_dot_normalized_in = [" << std::endl;
-	for (int i=0;i<dot_normalized_in->size()-1;i++)
-	{
-		myfile << dot_normalized_in->at(i) <<std::endl;
-	}
-	myfile << "]; \n" << std::endl;
-
+	
 	myfile << fileName << "_dot_out = [" << std::endl;
 	for (int i=0;i<dot_out->size()-1;i++)
 	{
@@ -766,15 +662,15 @@ void OutputRecorder::writeToMFile(std::string fileName,std::vector<double> *dot_
 		myfile << timeVec.at(i) <<std::endl;
 	}
 	myfile << "]; \n" << std::endl;
-	///---------------------------------------------------------------------------------------
+	///-----------------------------------------------------------------
 	
 	///Generate the time vector based on average sample time
 	myfile << "k = size(" <<fileName << "_dot_in);" << std::endl;
 	myfile << "t = linspace(0,k(1)*" << fabs(dt_) << ",size(" <<fileName << "_dot_in));" << std::endl;
-	///---------------------------------------------------------------------------------------
+	///-----------------------------------------------------------------
 	
 	
-	/// Generate Velocity Models--------------------------------------------------------------
+	/// Generate Velocity Models----------------------------------------
 	myfile << "s = tf('s'); z=tf('z',1/50);" << std::endl;
 
 	errVec.clear();
@@ -834,14 +730,14 @@ void OutputRecorder::writeToMFile(std::string fileName,std::vector<double> *dot_
 	std::string Gz3 = "Gz_" + fileName + "3=(" + b1_str.str() + "*z^-1 +" + b2_str.str() + "*z^-2 +" + b3_str.str() + "*z^-3)/(1 +" + a1_str.str() + "*z^-1 +" + a2_str.str() + "*z^-2 +" + a3_str.str() + "*z^-3);";
 	while (Gz3.find("+-") != std::string::npos)
 		Gz3.replace(Gz3.find("+-"), 2, "-");
-
+	
 	myfile << Gz3;
 
 
-	/// Errorplot to identify model order----------------------------------------------------------------------------
+	/// Errorplot to identify model order-------------------------------
 	myfile << "e =[" << errVec.at(0) << "," << errVec.at(1) << ","  << errVec.at(2) << "];" << std::endl;
 	myfile << "figure; semilogy(e); grid;" << std::endl;
-
+	
 	double step = 0.0;
 	for(int i = 0;i<dot_in->size()-1;i++)
 	{
@@ -849,12 +745,12 @@ void OutputRecorder::writeToMFile(std::string fileName,std::vector<double> *dot_
 	}
 	step/=(dot_in->size()-1);
 	std::cout << "step = " << step <<std::endl;
-
+	
 	int length = (int)pos_out->size()*2/3 - (int)pos_out->size()/3;
 	double Ki = (pos_out->at((int)pos_out->size()*2/3) - pos_out->at((int)pos_out->size()/3))/(length * dt_) / step;
-
+	
 	ROS_INFO("length: %i	dY: %f   Ki: %f",length, (pos_out->at((int)pos_out->size()*2/3) - pos_out->at((int)pos_out->size()/3)), Ki);
-
+	
 	/// First order
 	myfile << "Gz_" << fileName << "1 = minreal(Gz_" << fileName << "1);" << std::endl;
 	myfile << "Gs_" << fileName << "1=d2c(Gz_" << fileName << "1,'matched');" << std::endl;
@@ -883,7 +779,7 @@ void OutputRecorder::writeToMFile(std::string fileName,std::vector<double> *dot_
 	myfile << "Gs_" << fileName << "_integrated2 = Gs_" << fileName << "2*(1/s);" << std::endl;
 	myfile << "Gs_" << fileName << "_out2 = lsim(Gs_" << fileName << "2," << fileName << "_dot_in,t);" << std::endl;
 	myfile << "Gs_" << fileName << "_out_integrated2 = lsim(Gs_" << fileName << "_integrated2," << fileName << "_dot_in,t);" << std::endl;
-
+	
 	//Plot
 	myfile << "figure" << std::endl;
 	myfile << "subplot(2,1,1);" << std::endl;
@@ -897,7 +793,6 @@ void OutputRecorder::writeToMFile(std::string fileName,std::vector<double> *dot_
 	myfile << "title('" << fileName << " Position Stepresponse','interpreter','none')"  << std::endl;
 	myfile << "grid" << std::endl;
 	
-	
 	/// Third order
 	myfile << "Gz_" << fileName << "3 = minreal(Gz_" << fileName << "3);" << std::endl;
 	myfile << "Gs_" << fileName << "3=d2c(Gz_" << fileName << "3,'matched');" << std::endl;
@@ -905,7 +800,7 @@ void OutputRecorder::writeToMFile(std::string fileName,std::vector<double> *dot_
 	myfile << "Gs_" << fileName << "_integrated3 = Gs_" << fileName << "3*(1/s);" << std::endl;
 	myfile << "Gs_" << fileName << "_out3 = lsim(Gs_" << fileName << "3," << fileName << "_dot_in,t);" << std::endl;
 	myfile << "Gs_" << fileName << "_out_integrated3 = lsim(Gs_" << fileName << "_integrated3," << fileName << "_dot_in,t);" << std::endl;
-
+	
 	//Plot
 	myfile << "figure" << std::endl;
 	myfile << "subplot(2,1,1);" << std::endl;
@@ -918,25 +813,7 @@ void OutputRecorder::writeToMFile(std::string fileName,std::vector<double> *dot_
 	myfile << "c=legend('Velocity Input','Position Systemresponse','PID2T3 Modelresponse','Location','NorthEastOutside'); \n set(c,'Interpreter','none');" << std::endl;
 	myfile << "title('" << fileName << " Position Stepresponse','interpreter','none')"  << std::endl;
 	myfile << "grid" << std::endl;
-
-	//ToDo: Decide whether this is still needed! If it helps newbies or simpliefies plotting: keep it!
-/*	
-	/// Plot everything
-	myfile << "figure" << std::endl;
-	myfile << "plot(t," << fileName << "_dot_in,t," << fileName << "_dot_out,t," << fileName << "_pos_out,t," << fileName << "_dot_integrated,t,Gs_" << fileName << "_out_integrated2)" << std::endl;
-	myfile << "c=legend('" << fileName << "-dot-in','" << fileName << "-dot-out','" << fileName << "-pos-out','" << fileName << "-dot-out-integrated','PT2 Velocitymodel','" << "IT1_Positionmodel'); \n set(c,'Interpreter','none');" << std::endl;
-	myfile << "title('" << fileName << " step response','interpreter','none')"  << std::endl;
-	myfile << "grid" << std::endl;
-
-
-	/// Plot step response 
-	myfile << "t1 = linspace(0,size(" << fileName << "_dot_in),1/68);" << std::endl;
-	myfile << "figure" << std::endl;
-	myfile << "plot(t," << fileName << "_dot_in,t," << fileName << "_dot_out,t," << fileName << "_pos_out,t," << fileName << "_dot_integrated)" << std::endl;
-	myfile << "c=legend('" << fileName << "_dot_in','" << fileName << "_dot_out','" << fileName << "_pos_out','"  << fileName << "_dot_integrated'); \n set(c,'Interpreter','none');" << std::endl;
-	myfile << "title('" << fileName << " step response','interpreter','none')"  << std::endl;
-	myfile << "grid" << std::endl;
-*/
+	
 	myfile.close();
 } 
 
