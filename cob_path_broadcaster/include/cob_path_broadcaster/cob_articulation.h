@@ -66,7 +66,6 @@ public:
 	void stop_tracking();
 	void PoseToRPY(geometry_msgs::Pose pose,double &roll, double &pitch, double &yaw);
 
-	
 private:
 	ros::NodeHandle nh_;
 	
@@ -96,7 +95,7 @@ private:
 	const char* charPath_;
 	
 	
-	int marker1_,marker2_;
+	int marker1_;
 };
 
 #endif
