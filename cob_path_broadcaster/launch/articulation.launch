@@ -4,7 +4,10 @@
 <!--
 		<param name="articulation/file_name" type="str" value="move_relative.prog"/>
 -->
+<!--
 		<param name="articulation/file_name" type="str" value="move_santa.prog"/>
+-->
+		<param name="articulation/file_name" type="str" value="move_circ.prog"/>
 		<param name="articulation/reference_frame" type="str" value="odom_combined"/>
 		<param name="articulation/articulation_target_frame" type="str" value="articulation_target"/>
 		
