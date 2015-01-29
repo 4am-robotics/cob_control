@@ -104,8 +104,8 @@ void CobArticulation::load()
 	ROS_INFO("Stopping current tracking");
 	std::vector <geometry_msgs::Pose> posVec;
 	geometry_msgs::Pose pose,actualTcpPose,start,end;
-	tf::Quaternion q;
-	tf::Transform trans;
+	tf::Quaternion q,q_start,q_end;
+	tf::Transform trans,relative_diff;
 	double roll_actual,pitch_actual,yaw_actual,roll,pitch,yaw,quat_x,quat_y,quat_z,quat_w;
 	double x,y,z,x_new,y_new,z_new,x_center,y_center,z_center;
 	double r,holdTime,vel,accl,startAngle,endAngle;
@@ -158,18 +158,26 @@ void CobArticulation::load()
 				q.setRPY(roll,pitch,yaw);
 				trans.setRotation(q);
 				
+				q_start = q;
+				q_end = tf::Quaternion(actualTcpPose.orientation.x,actualTcpPose.orientation.y,actualTcpPose.orientation.z,actualTcpPose.orientation.w);
+				q = q_start*q_end.inverse();
+				
+				relative_diff.setRotation(q);
+				
+				
 				// Define End Pose
 				end.position.x = actualTcpPose.position.x + x_new;
 				end.position.y = actualTcpPose.position.y + y_new;
 				end.position.z = actualTcpPose.position.z + z_new;
-				end.orientation.x = trans.getRotation()[0];
-				end.orientation.y = trans.getRotation()[1];
-				end.orientation.z = trans.getRotation()[2];
-				end.orientation.w = trans.getRotation()[3];
+				end.orientation.x = relative_diff.getRotation()[0];
+				end.orientation.y = relative_diff.getRotation()[1];
+				end.orientation.z = relative_diff.getRotation()[2];
+				end.orientation.w = relative_diff.getRotation()[3];
+				
 				
 				actualTcpPose = getEndeffectorPose();
 				PoseToRPY(actualTcpPose,roll,pitch,yaw);
-				ROS_INFO("..........................actualTcpPose roll: %f pitch: %f yaw: %f",roll,pitch,yaw);
+				ROS_INFO("actualTcpPose roll: %f pitch: %f yaw: %f",roll,pitch,yaw);
 				// Interpolate the path
 				linear_interpolation(&posVec,actualTcpPose,end,vel,accl,profile,justRotate);
 				
