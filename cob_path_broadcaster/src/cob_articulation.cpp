@@ -42,38 +42,39 @@
 
 bool CobArticulation::initialize()
 {
-	ros::NodeHandle nh_articulation("cob_articulation");
+	ros::NodeHandle nh_articulation("articulation");
 	ros::NodeHandle nh_cartesian("cartesian_controller");
 	
-	bool success=true;
 	///get params articulation Nodehandle
-	if (nh_articulation.hasParam("file_name"))
+	if(!nh_articulation.getParam("file_name", fileName_))
 	{
-		nh_articulation.getParam("file_name", fileName_);
-	}else{ success = false; }
+		ROS_ERROR("Parameter 'file_name' not set");
+		return false;
+	}
 	
-	if (nh_articulation.hasParam("reference_frame"))
+	if(!nh_articulation.getParam("reference_frame", referenceFrame_))
 	{
-		nh_articulation.getParam("reference_frame", referenceFrame_);
-	}else{ success = false; }
+		ROS_ERROR("Parameter 'reference_frame' not set");
+		return false;
+	}
 	
-	if (nh_articulation.hasParam("articulation_target_frame"))
+	if(!nh_articulation.getParam("articulation_target_frame", targetFrame_))
 	{
-		nh_articulation.getParam("articulation_target_frame", targetFrame_);
-	}else{ success = false; }
+		ROS_ERROR("Parameter 'articulation_target_frame' not set");
+		return false;
+	}
 	
 	/// Cartesian Nodehandle
-	if (nh_cartesian.hasParam("chain_tip_link"))
+	if (!nh_cartesian.getParam("chain_tip_link", chain_tip_link_))
 	{
-		nh_cartesian.getParam("chain_tip_link", endeffectorFrame_);
-	}else{ success = false; }
+		ROS_ERROR("Parameter 'chain_tip_link' not set");
+		return false;
+	}
 	
-	if (nh_cartesian.hasParam("update_rate")){
-		nh_cartesian.getParam("update_rate", update_rate_);
-	}
-	else{
-	update_rate_ = 68.0;
-	}
+	if (nh_cartesian.hasParam("update_rate"))
+	{	nh_cartesian.getParam("update_rate", update_rate_);	}
+	else
+	{	update_rate_ = 68.0;	}	//hz
 	
 	stringPath_ = ros::package::getPath("cob_path_broadcaster"); 
 	stringPath_ = stringPath_+"/movement/"+fileName_;
@@ -88,18 +89,13 @@ bool CobArticulation::initialize()
 	jerk_pub_ = nh_articulation.advertise<std_msgs::Float64> ("debug/linear_jerk", 1);
 	
 	ROS_WARN("Waiting for Services...");
-	
-	success = ros::service::waitForService(nh_.getNamespace()+"/start_tracking");
-	success = ros::service::waitForService(nh_.getNamespace()+"/stop_tracking");
+	ros::service::waitForService(nh_.getNamespace()+"/start_tracking");
+	ros::service::waitForService(nh_.getNamespace()+"/stop_tracking");
 	startTracking_ = nh_.serviceClient<cob_srvs::SetString>("start_tracking");
 	stopTracking_ = nh_.serviceClient<std_srvs::Empty>("stop_tracking");
 	ROS_INFO("...done!");
 	
-	if(success){
-		return true;
-	}else{
-		return false;
-	}
+	return true;
 }
 
 void CobArticulation::load()
@@ -277,14 +273,11 @@ void CobArticulation::move_ptp(geometry_msgs::Pose targetPose, double epsilon){
 	int reached_pos_counter=0;
 	double ro,pi,ya;
 	ros::Rate rate(update_rate_);
-	ros::Time now;
 	tf::StampedTransform stampedTransform;
 	tf::Quaternion q;
 	bool transformed=false;
 	
 	while(ros::ok()){
-		now = ros::Time::now();
-
 		// Linearkoordinaten
 		transform_.setOrigin( tf::Vector3(targetPose.position.x,targetPose.position.y,targetPose.position.z) );
 	
@@ -292,12 +285,11 @@ void CobArticulation::move_ptp(geometry_msgs::Pose targetPose, double epsilon){
 		transform_.setRotation(q);
 
 		// Send br Frame
-		br_.sendTransform(tf::StampedTransform(transform_, now, referenceFrame_, targetFrame_));
+		br_.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), referenceFrame_, targetFrame_));
 		
 		// Get transformation
 		try{
-		listener_.waitForTransform(targetFrame_,endeffectorFrame_, now, ros::Duration(0.5));
-		listener_.lookupTransform(targetFrame_,endeffectorFrame_, now, stampedTransform);
+		listener_.lookupTransform(targetFrame_,chain_tip_link_, ros::Time(0), stampedTransform);
 		}
 		catch (tf::TransformException &ex) {
 		ROS_ERROR("%s",ex.what());
@@ -327,14 +319,11 @@ void CobArticulation::move_ptp(geometry_msgs::Pose targetPose, double epsilon){
 
 void CobArticulation::pose_path_broadcaster(std::vector <geometry_msgs::Pose> *poseVector){
 	ros::Rate rate(update_rate_);
-	ros::Time now;
 	tf::Quaternion q;
 	double T_IPO=pow(update_rate_,-1);
 	
-	for(int i=0; i<poseVector->size()-1; i++){
-		now = ros::Time::now();
-		
-	
+	for(int i=0; i<poseVector->size()-1; i++)
+	{
 		// Linearkoordinaten
 		transform_.setOrigin(tf::Vector3(poseVector->at(i).position.x, poseVector->at(i).position.y, poseVector->at(i).position.z));
 		
@@ -357,12 +346,10 @@ void CobArticulation::pose_path_broadcaster(std::vector <geometry_msgs::Pose> *p
 void CobArticulation::hold_position(geometry_msgs::Pose holdPose)
 {
 	ros::Rate rate(update_rate_);
-	ros::Time now;
 	tf::Quaternion q;
 	
-	while(hold_){
-		now = ros::Time::now();
-		
+	while(hold_)
+	{
 		// Linearcoordinates
 		transform_.setOrigin( tf::Vector3(holdPose.position.x,holdPose.position.y,holdPose.position.z) );
 	
@@ -706,7 +693,7 @@ geometry_msgs::Pose CobArticulation::getEndeffectorPose()
 	do{
 		// Get transformation
 		try{
-			listener_.lookupTransform(referenceFrame_,endeffectorFrame_, ros::Time(0), stampedTransform);
+			listener_.lookupTransform(referenceFrame_,chain_tip_link_, ros::Time(0), stampedTransform);
 			transformed=true;
 		}
 		catch (tf::TransformException &ex) {

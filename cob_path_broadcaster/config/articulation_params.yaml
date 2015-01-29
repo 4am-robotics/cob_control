@@ -1,3 +1,0 @@
-file_name: "move.prog"
-reference_frame: "odom_combined" 
-articulation_target_frame: "br"
