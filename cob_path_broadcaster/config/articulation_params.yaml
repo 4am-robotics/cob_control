@@ -1,5 +1,0 @@
-file_name: "move.prog"
-update_rate: 68
-reference_frame: "world" 
-target_frame: "br"
-endeffector_frame: "arm_7_link"

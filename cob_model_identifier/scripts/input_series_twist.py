@@ -4,7 +4,7 @@ import rospy
 from geometry_msgs.msg import TwistStamped
  
 def twistPub():
-  rospy.init_node("test_publisher_twist_series", anonymous=True)
+  rospy.init_node("input_series_twist", anonymous=True)
   
   pub = rospy.Publisher("twist_controller/command_twist_stamped", TwistStamped, queue_size=1)
   
@@ -27,8 +27,8 @@ def twistPub():
     twist_msg.header.stamp = rospy.Time.now()
     twist_msg.header.frame_id = "arm_left_base_link"
     twist_msg.twist.linear.x = 0
-    twist_msg.twist.linear.y = 0
-    twist_msg.twist.linear.z = -0.02
+    twist_msg.twist.linear.y = -0.02
+    twist_msg.twist.linear.z = 0
     twist_msg.twist.angular.x = 0
     twist_msg.twist.angular.y = 0
     twist_msg.twist.angular.z = 0
@@ -52,8 +52,8 @@ def twistPub():
     twist_msg.header.stamp = rospy.Time.now()
     twist_msg.header.frame_id = "arm_left_base_link"
     twist_msg.twist.linear.x = 0
-    twist_msg.twist.linear.y = 0
-    twist_msg.twist.linear.z = 0.02
+    twist_msg.twist.linear.y = 0.02
+    twist_msg.twist.linear.z = 0
     twist_msg.twist.angular.x = 0
     twist_msg.twist.angular.y = 0
     twist_msg.twist.angular.z = 0

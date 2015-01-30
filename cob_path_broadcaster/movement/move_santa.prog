@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+<Movement>
+	<Move move="move_lin" x="-1" y="0" z="0" roll="0" pitch="0" yaw="0" vel="0.1" accl="0.2" profile="sinoide" RotateOnly="No" />
+	<Move move="hold" time="2"/>
+	<Move move="move_lin" x="-0.5" y="0.5" z="0" roll="0" pitch="0" yaw="0" vel="0.1" accl="0.2" profile="sinoide" RotateOnly="No" />
+	<Move move="hold" time="2"/>
+	<Move move="move_lin" x="0.5" y="0.5" z="0" roll="0" pitch="0" yaw="0" vel="0.1" accl="0.2" profile="sinoide" RotateOnly="No" />
+	<Move move="hold" time="2"/>
+	<Move move="move_lin" x="1" y="0" z="0" roll="0" pitch="0" yaw="0" vel="0.1" accl="0.2" profile="sinoide" RotateOnly="No" />
+	<Move move="hold" time="2"/>
+	<Move move="move_lin" x="0" y="-1" z="0" roll="0" pitch="0" yaw="0" vel="0.1" accl="0.2" profile="sinoide" RotateOnly="No" />
+	<Move move="hold" time="2"/>
+	<Move move="move_lin" x="-1" y="1" z="0" roll="0" pitch="0" yaw="0" vel="0.1" accl="0.2" profile="sinoide" RotateOnly="No" />
+	<Move move="hold" time="2"/>
+	<Move move="move_lin" x="0" y="-1" z="0" roll="0" pitch="0" yaw="0" vel="0.1" accl="0.2" profile="sinoide" RotateOnly="No" />
+	<Move move="hold" time="2"/>
+	<Move move="move_lin" x="1" y="1" z="0" roll="0" pitch="0" yaw="0" vel="0.1" accl="0.2" profile="sinoide" RotateOnly="No" />
+</Movement>

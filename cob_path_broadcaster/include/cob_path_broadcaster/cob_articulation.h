@@ -45,9 +45,9 @@ public:
 	void load();
 	
 	// Main functions
-	void pose_path_broadcaster(std::vector <geometry_msgs::Pose> *);
+	void pose_path_broadcaster(std::vector <geometry_msgs::Pose> *poseVector);
 	void linear_interpolation(std::vector <geometry_msgs::Pose> *poseVector,geometry_msgs::Pose, geometry_msgs::Pose,double,double,std::string,bool); 
-	void circular_interpolation(std::vector<geometry_msgs::Pose>*,double,double,double,double,double,double,double,double,double,double,double,std::string);
+	void circular_interpolation(std::vector<geometry_msgs::Pose> *poseVector,double,double,double,double,double,double,double,double,double,double,double,std::string);
 	void move_ptp(geometry_msgs::Pose targetPose, double epsilon);
 	void hold_position(geometry_msgs::Pose);
 	
@@ -66,37 +66,36 @@ public:
 	void stop_tracking();
 	void PoseToRPY(geometry_msgs::Pose pose,double &roll, double &pitch, double &yaw);
 
-	
 private:
 	ros::NodeHandle nh_;
 	
 	// Publisher
-	ros::Publisher  vis_pub_;
-	ros::Publisher	path_pub_;
-	ros::Publisher	speed_pub_;
-	ros::Publisher	accl_pub_;
-	ros::Publisher	jerk_pub_;
+	ros::Publisher vis_pub_;
+	ros::Publisher path_pub_;
+	ros::Publisher speed_pub_;
+	ros::Publisher accl_pub_;
+	ros::Publisher jerk_pub_;
 	ros::ServiceClient startTracking_;
 	ros::ServiceClient stopTracking_;
 	
 	//TF Broadcaster-Var
 	tf::TransformBroadcaster br_;
-   	tf::Transform transform_;
-   	tf::Quaternion q_;
-   	tf::TransformListener listener_;
-   	tf::StampedTransform currentEndeffectorStampedTransform_;
-
+	tf::Transform transform_;
+	tf::Quaternion q_;
+	tf::TransformListener listener_;
+	tf::StampedTransform currentEndeffectorStampedTransform_;
+	
 	// Var for PTP Movement and hold Position
 	bool reached_pos_,hold_;
 	
-	
 	// yaml params
 	double update_rate_;
-	std::string stringPath_,fileName_,referenceFrame_,targetFrame_,endeffectorFrame_;
+	std::string stringPath_, fileName_;
+	std::string referenceFrame_,targetFrame_;
+	std::string chain_tip_link_;
 	const char* charPath_;
 	
-	
-	int marker1_,marker2_;
+	int marker1_;
 };
 
 #endif

@@ -17,7 +17,7 @@
  *   ROS package name: cob_articulation
  *
  * \author
- *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de
+ *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de / christoph.mark@gmail.com
  *
  * \date Date of creation: August, 2014
  *
@@ -42,43 +42,45 @@
 
 bool CobArticulation::initialize()
 {
-	ros::NodeHandle nh_articulation("cob_articulation");
+	ros::NodeHandle nh_articulation("articulation");
+	ros::NodeHandle nh_cartesian("cartesian_controller");
 	
-	bool success=true;
-	///get params
-	if (nh_articulation.hasParam("update_rate"))
+	///get params articulation Nodehandle
+	if(!nh_articulation.getParam("file_name", fileName_))
 	{
-		nh_articulation.getParam("update_rate", update_rate_);
+		ROS_ERROR("Parameter 'file_name' not set");
+		return false;
 	}
-	else{ update_rate_=68; }
 	
-	if (nh_articulation.hasParam("file_name"))
+	if(!nh_articulation.getParam("reference_frame", referenceFrame_))
 	{
-		nh_articulation.getParam("file_name", fileName_);
-	}else{ success = false; }
+		ROS_ERROR("Parameter 'reference_frame' not set");
+		return false;
+	}
 	
-	if (nh_articulation.hasParam("reference_frame"))
+	if(!nh_articulation.getParam("articulation_target_frame", targetFrame_))
 	{
-		nh_articulation.getParam("reference_frame", referenceFrame_);
-	}else{ success = false; }
+		ROS_ERROR("Parameter 'articulation_target_frame' not set");
+		return false;
+	}
 	
-	if (nh_articulation.hasParam("target_frame"))
+	/// Cartesian Nodehandle
+	if (!nh_cartesian.getParam("chain_tip_link", chain_tip_link_))
 	{
-		nh_articulation.getParam("target_frame", targetFrame_);
-	}else{ success = false; }
+		ROS_ERROR("Parameter 'chain_tip_link' not set");
+		return false;
+	}
 	
-	if (nh_articulation.hasParam("endeffector_frame"))
-	{
-		nh_articulation.getParam("endeffector_frame", endeffectorFrame_);
-	}else{ success = false; }
-	
+	if (nh_cartesian.hasParam("update_rate"))
+	{	nh_cartesian.getParam("update_rate", update_rate_);	}
+	else
+	{	update_rate_ = 68.0;	}	//hz
 	
 	stringPath_ = ros::package::getPath("cob_path_broadcaster"); 
-	stringPath_ = stringPath_+"/movement/"+fileName_;	
+	stringPath_ = stringPath_+"/movement/"+fileName_;
 	charPath_ = stringPath_.c_str();
 	
 	marker1_=0;
-	marker2_=0;
 	
 	vis_pub_ = nh_articulation.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
 	speed_pub_ = nh_articulation.advertise<std_msgs::Float64> ("debug/linear_vel", 1);
@@ -87,30 +89,23 @@ bool CobArticulation::initialize()
 	jerk_pub_ = nh_articulation.advertise<std_msgs::Float64> ("debug/linear_jerk", 1);
 	
 	ROS_WARN("Waiting for Services...");
-	success = ros::service::waitForService("start_tracking");
-	success = ros::service::waitForService("stop_tracking");
+	ros::service::waitForService(nh_.getNamespace()+"/start_tracking");
+	ros::service::waitForService(nh_.getNamespace()+"/stop_tracking");
 	startTracking_ = nh_.serviceClient<cob_srvs::SetString>("start_tracking");
 	stopTracking_ = nh_.serviceClient<std_srvs::Empty>("stop_tracking");
 	ROS_INFO("...done!");
 	
-	if(success){
-		return true;
-	}else{
-		return false;
-	}
+	return true;
 }
-
-
 
 void CobArticulation::load()
 {	
 	stop_tracking();
 	ROS_INFO("Stopping current tracking");
-	
 	std::vector <geometry_msgs::Pose> posVec;
 	geometry_msgs::Pose pose,actualTcpPose,start,end;
-	tf::Quaternion q;
-	tf::Transform trans;
+	tf::Quaternion q,q_start,q_end;
+	tf::Transform trans,relative_diff;
 	double roll_actual,pitch_actual,yaw_actual,roll,pitch,yaw,quat_x,quat_y,quat_z,quat_w;
 	double x,y,z,x_new,y_new,z_new,x_center,y_center,z_center;
 	double r,holdTime,vel,accl,startAngle,endAngle;
@@ -123,17 +118,17 @@ void CobArticulation::load()
 	{
 		ROS_INFO("load okay");
 		start_tracking();
-
+		
 		TiXmlHandle docHandle( &doc );
 		TiXmlElement* child = docHandle.FirstChild( "Movement" ).FirstChild( "Move" ).ToElement();
 			
 		std::string movement;
 		
-		for( child; child; child=child->NextSiblingElement() )
-		{		
+		for( child; child; child=child->NextSiblingElement())
+		{
 			movement = child->Attribute( "move");
-
-			if ("move_lin" == movement){
+			
+			if ("move_lin" == movement){	// Relative position to endeffector ! 
 				ROS_INFO("move_linear");
 				
 				// Read Attributes
@@ -156,23 +151,33 @@ void CobArticulation::load()
 					justRotate=true;
 				else
 					justRotate=false;
-
+				
+				actualTcpPose = getEndeffectorPose();
 				
 				// Transform RPY to Quaternion
 				q.setRPY(roll,pitch,yaw);
 				trans.setRotation(q);
 				
-				// Define End Pose
-				end.position.x = x_new;
-				end.position.y = y_new;
-				end.position.z = z_new;
-				end.orientation.x = trans.getRotation()[0];
-				end.orientation.y = trans.getRotation()[1];
-				end.orientation.z = trans.getRotation()[2];
-				end.orientation.w = trans.getRotation()[3];
+				q_start = q;
+				q_end = tf::Quaternion(actualTcpPose.orientation.x,actualTcpPose.orientation.y,actualTcpPose.orientation.z,actualTcpPose.orientation.w);
+				q = q_start*q_end.inverse();
 				
+				relative_diff.setRotation(q);
+				
+				
+				// Define End Pose
+				end.position.x = actualTcpPose.position.x + x_new;
+				end.position.y = actualTcpPose.position.y + y_new;
+				end.position.z = actualTcpPose.position.z + z_new;
+				end.orientation.x = relative_diff.getRotation()[0];
+				end.orientation.y = relative_diff.getRotation()[1];
+				end.orientation.z = relative_diff.getRotation()[2];
+				end.orientation.w = relative_diff.getRotation()[3];
+				
+				
+				actualTcpPose = getEndeffectorPose();
 				PoseToRPY(actualTcpPose,roll,pitch,yaw);
-				ROS_INFO("..........................actualTcpPose roll: %f pitch: %f yaw: %f",roll,pitch,yaw);
+				ROS_INFO("actualTcpPose roll: %f pitch: %f yaw: %f",roll,pitch,yaw);
 				// Interpolate the path
 				linear_interpolation(&posVec,actualTcpPose,end,vel,accl,profile,justRotate);
 				
@@ -181,8 +186,8 @@ void CobArticulation::load()
 				
 				actualTcpPose=end;
 				PoseToRPY(end,roll,pitch,yaw);
-				ROS_INFO("..........................endpose roll: %f pitch: %f yaw: %f",roll,pitch,yaw);
-
+				ROS_INFO("Endpose roll: %f pitch: %f yaw: %f",roll,pitch,yaw);
+				
 			}
 			
 			if("move_ptp" == movement){
@@ -231,14 +236,13 @@ void CobArticulation::load()
 				vel	  		= atof(child->Attribute( "vel"));
 				accl 		= atof(child->Attribute( "accl"));
 				profile 	= child->Attribute( "profile");
-
-
+				
 				pose = getEndeffectorPose();
 				quat_x = pose.orientation.x;
 				quat_y = pose.orientation.y;
 				quat_z = pose.orientation.z;
 				quat_w = pose.orientation.w;
-
+				
 				int marker3=0;
 				
 				showDot(x_center,y_center,z_center,marker3,1.0,0,0,"Center_point");
@@ -248,9 +252,9 @@ void CobArticulation::load()
 				pose_path_broadcaster(&posVec);	
 				actualTcpPose=posVec.at(posVec.size()-1);
 			}
-		
 			
-			if("hold" == movement){		
+			if("hold" == movement){
+				actualTcpPose = getEndeffectorPose();
 				ROS_INFO("Hold position");
 				holdTime = atof(child->Attribute( "time"));
 				ros::Timer timer = nh_.createTimer(ros::Duration(holdTime), &CobArticulation::timerCallback, this);
@@ -267,20 +271,21 @@ void CobArticulation::load()
 	stop_tracking();
 }
 
+void CobArticulation::timerCallback(const ros::TimerEvent& event){
+	hold_=false;
+}
+
 // Pseudo PTP
 void CobArticulation::move_ptp(geometry_msgs::Pose targetPose, double epsilon){
 	reached_pos_=false;
 	int reached_pos_counter=0;
 	double ro,pi,ya;
 	ros::Rate rate(update_rate_);
-	ros::Time now;
 	tf::StampedTransform stampedTransform;
 	tf::Quaternion q;
 	bool transformed=false;
 	
 	while(ros::ok()){
-		now = ros::Time::now();
-
 		// Linearkoordinaten
 		transform_.setOrigin( tf::Vector3(targetPose.position.x,targetPose.position.y,targetPose.position.z) );
 	
@@ -288,12 +293,11 @@ void CobArticulation::move_ptp(geometry_msgs::Pose targetPose, double epsilon){
 		transform_.setRotation(q);
 
 		// Send br Frame
-		br_.sendTransform(tf::StampedTransform(transform_, now, referenceFrame_, targetFrame_));
+		br_.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), referenceFrame_, targetFrame_));
 		
 		// Get transformation
 		try{
-		listener_.waitForTransform(targetFrame_,endeffectorFrame_, now, ros::Duration(0.5));
-		listener_.lookupTransform(targetFrame_,endeffectorFrame_, now, stampedTransform);
+		listener_.lookupTransform(targetFrame_,chain_tip_link_, ros::Time(0), stampedTransform);
 		}
 		catch (tf::TransformException &ex) {
 		ROS_ERROR("%s",ex.what());
@@ -321,20 +325,13 @@ void CobArticulation::move_ptp(geometry_msgs::Pose targetPose, double epsilon){
 	}
 }
 
-
-
 void CobArticulation::pose_path_broadcaster(std::vector <geometry_msgs::Pose> *poseVector){
 	ros::Rate rate(update_rate_);
-	ros::Time now;
 	tf::Quaternion q;
-	
 	double T_IPO=pow(update_rate_,-1);
-
 	
-	for(int i=0; i<poseVector->size()-1; i++){
-		now = ros::Time::now();
-		
-	
+	for(int i=0; i<poseVector->size()-1; i++)
+	{
 		// Linearkoordinaten
 		transform_.setOrigin(tf::Vector3(poseVector->at(i).position.x, poseVector->at(i).position.y, poseVector->at(i).position.z));
 		
@@ -343,13 +340,10 @@ void CobArticulation::pose_path_broadcaster(std::vector <geometry_msgs::Pose> *p
 		transform_.setRotation(q);   
 		
 		showMarker(tf::StampedTransform(transform_, ros::Time::now(), referenceFrame_, targetFrame_),marker1_, 0 , 1.0 , 0 ,"goalFrame");
-		//showMarker(stampedTransform_,marker2_, 1.0 , 0 , 0 , "TCP");				
 		
 		br_.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), referenceFrame_, targetFrame_));
 		
-
 		marker1_++;
-		//marker2_++;
 		
 		ros::spinOnce();
 		rate.sleep();
@@ -357,36 +351,32 @@ void CobArticulation::pose_path_broadcaster(std::vector <geometry_msgs::Pose> *p
 	
 }
 
-
 void CobArticulation::hold_position(geometry_msgs::Pose holdPose)
-{	
+{
 	ros::Rate rate(update_rate_);
-	ros::Time now;
 	tf::Quaternion q;
 	
-	while(hold_){
-		now = ros::Time::now();
-		
+	while(hold_)
+	{
 		// Linearcoordinates
 		transform_.setOrigin( tf::Vector3(holdPose.position.x,holdPose.position.y,holdPose.position.z) );
 	
 		// RPY Angles
 		q = tf::Quaternion(holdPose.orientation.x,holdPose.orientation.y,holdPose.orientation.z,holdPose.orientation.w);
 		transform_.setRotation(q);
-	
+		
 		br_.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), referenceFrame_, targetFrame_));
 		ros::spinOnce();
 		rate.sleep();
 	}
 }
 
-
 // Helper Functions 
 //--------------------------------------------------------------------------------------------------------------
 void CobArticulation::linear_interpolation(	std::vector <geometry_msgs::Pose> *poseVector,
 											geometry_msgs::Pose start, geometry_msgs::Pose end,
 											double VelMax, double AcclMax, std::string profile,bool justRotate) 
-{     
+{
 	geometry_msgs::Pose pose;
 	tf::Quaternion q;
 	tf::Transform transform;
@@ -398,9 +388,9 @@ void CobArticulation::linear_interpolation(	std::vector <geometry_msgs::Pose> *p
 	
 	// Convert Quaternions into RPY Angles for start and end pose
 	q = tf::Quaternion(start.orientation.x, start.orientation.y, start.orientation.z, start.orientation.w);
-	tf::Matrix3x3(q).getRPY(start_roll,start_pitch,start_yaw);	
+	tf::Matrix3x3(q).getRPY(start_roll,start_pitch,start_yaw);
 	q = tf::Quaternion(end.orientation.x, end.orientation.y, end.orientation.z, end.orientation.w);
-	tf::Matrix3x3(q).getRPY(end_roll,end_pitch,end_yaw);	
+	tf::Matrix3x3(q).getRPY(end_roll,end_pitch,end_yaw);
 	
 	// Calculate path length for the angular movement
 	double Se_roll,Se_pitch,Se_yaw;
@@ -415,12 +405,6 @@ void CobArticulation::linear_interpolation(	std::vector <geometry_msgs::Pose> *p
 	rollPath=pathMatrix[1];
 	pitchPath=pathMatrix[2];
 	yawPath=pathMatrix[3];
-	
-	/*
-	for(int i=0;i<linearPath.size();i++){
-		ROS_INFO("linearPath[%i] = %f rollPath[%i] = %f  pitchPath[%i] = %f  yawPath[%i] = %f",i,linearPath.at(i),i,rollPath.at(i),i,pitchPath.at(i),i,yawPath.at(i));
-	}
-	*/
 	
 	// Interpolate the linear path
 	for(int i=0;i<pathMatrix[0].size();i++){
@@ -438,7 +422,7 @@ void CobArticulation::linear_interpolation(	std::vector <geometry_msgs::Pose> *p
 		// Transform RPY to Quaternion
 		q.setRPY(rollPath.at(i),pitchPath.at(i),yawPath.at(i));
 		transform.setRotation(q);
-	
+		
 		// Get Quaternion Values
 		pose.orientation.x = transform.getRotation()[0];
 		pose.orientation.y = transform.getRotation()[1];
@@ -447,9 +431,6 @@ void CobArticulation::linear_interpolation(	std::vector <geometry_msgs::Pose> *p
 		poseVector->push_back(pose);
 	}
 }
-
-
-
 
 void CobArticulation::circular_interpolation(	std::vector<geometry_msgs::Pose>* poseVector,
 												double M_x,double M_y,double M_z,
@@ -461,7 +442,6 @@ void CobArticulation::circular_interpolation(	std::vector<geometry_msgs::Pose>* 
 	tf::Quaternion q;
 	geometry_msgs::Pose pose,pos;
 	std::vector<double> pathArray;
-	
 	
 	// Convert RPY angles into [RAD]
 	startAngle=startAngle*M_PI/180;
@@ -477,33 +457,32 @@ void CobArticulation::circular_interpolation(	std::vector<geometry_msgs::Pose>* 
 		forward=false;
 	else
 		forward=true;
-		
-	Se = std::fabs(Se);
 	
+	Se = std::fabs(Se);
 	
 	// Calculates the Path with Ramp - or Sinoidprofile
 	calculateProfile(&pathArray,Se,VelMax,AcclMax,profile);
-		
+	
 	// Define Center Pose
 	C.setOrigin( tf::Vector3(M_x,M_y,M_z) );
 	q.setRPY(M_roll,M_pitch,M_yaw);
-    C.setRotation(q);
+	C.setRotation(q);
 
 	// Interpolate the circular path
 	for(int i=0;i<pathArray.size();i++){
 		// Rotate T
 		T.setOrigin(tf::Vector3(cos(pathArray.at(i))*r,0,sin(pathArray.at(i))*r));
 		
-		if(endAngle<startAngle){
+		if(forward){
 				T.setOrigin(tf::Vector3(cos(pathArray.at(i))*r,0,sin(pathArray.at(i))*r));
-				q.setRPY(0,-pathArray.at(i),0);			
+				q.setRPY(0,-pathArray.at(i),0);
 		}else{
 				T.setOrigin(tf::Vector3(cos(startAngle-pathArray.at(i))*r,0,sin(startAngle-pathArray.at(i))*r));
 				q.setRPY(0,pathArray.at(i),0);
 		}	
 		
-		T.setRotation(q);	
-			
+		T.setRotation(q);
+		
 		// Calculate TCP Position
 		P = C * T;
 		
@@ -521,14 +500,12 @@ void CobArticulation::circular_interpolation(	std::vector<geometry_msgs::Pose>* 
 		poseVector->push_back(pose);
 		
 	}
-	
 	// Visualize center point 
 	int marker4=0;
 	q.setRPY(M_roll+(M_PI/2),M_pitch,M_yaw);
     C.setRotation(q);
 	showLevel(C,marker4,1.0,0,0,"level");
 }
-
 
 void CobArticulation::calculateProfile(std::vector<double> *pathArray,double Se, double VelMax, double AcclMax, std::string profile)
 {	
@@ -552,21 +529,19 @@ void CobArticulation::calculateProfile(std::vector<double> *pathArray,double Se,
 		}
 		tb = 2*VelMax/AcclMax;
 		te = (Se / VelMax) + tb;
-		tv = te - tb;		
+		tv = te - tb;
 	}
-
+	
 	// Interpolationsteps for every timesequence
 	steps_tb = (double)tb / T_IPO;
 	steps_tv = (double)(tv-tb) / T_IPO;
 	steps_te = (double)(te-tv) / T_IPO;
-
-
+	
 	// Reconfigure timings wtih T_IPO
 	tb=steps_tb*T_IPO;
 	tv=(steps_tb+steps_tv)*T_IPO;
 	te=(steps_tb+steps_tv+steps_te)*T_IPO;
 	
-			
 	ROS_INFO("Vm: %f m/s",VelMax);
 	ROS_INFO("Bm: %f m/s²",AcclMax);
 	ROS_INFO("Se: %f ",Se);
@@ -574,21 +549,19 @@ void CobArticulation::calculateProfile(std::vector<double> *pathArray,double Se,
 	ROS_INFO("tv: %f s",tv);
 	ROS_INFO("te: %f s",te);
 	
-
 	if(profile == "ramp"){
 		ROS_INFO("Ramp Profile");
 		// Calculate the ramp profile path
 		// 0 <= t <= tb
-		for(int i=0;i<=steps_tb-1;i++){	
+		for(int i=0;i<=steps_tb-1;i++){
 			pathArray->push_back(0.5*AcclMax*pow((T_IPO*i),2));
 		}
 		// tb <= t <= tv
-		for(int i=steps_tb;i<=(steps_tb+steps_tv-1);i++){	
+		for(int i=steps_tb;i<=(steps_tb+steps_tv-1);i++){
 			pathArray->push_back(VelMax*(T_IPO*i)-0.5*pow(VelMax,2)/AcclMax);
 		}
 		// tv <= t <= te
-		for(int i=(steps_tb+steps_tv);i<(steps_tv+steps_tb+steps_te-1);i++){	
-			//pathArray[i] = Se - 0.5*AcclMax* pow(((steps_tb+steps_tv+steps_te-i)*T_IPO),2);
+		for(int i=(steps_tb+steps_tv);i<(steps_tv+steps_tb+steps_te-1);i++){
 			pathArray->push_back(VelMax * (te-tb) - 0.5*AcclMax* pow(te-(i*T_IPO),2));
 		}
 	}
@@ -596,8 +569,8 @@ void CobArticulation::calculateProfile(std::vector<double> *pathArray,double Se,
 		ROS_INFO("Sinoide Profile");
 		// Calculate the sinoide profile path
 		// 0 <= t <= tb
-		for(int i=0;i<=steps_tb-1;i++){	
-			pathArray->push_back(  AcclMax*(0.25*pow(i*T_IPO,2) + pow(tb,2)/(8*pow(M_PI,2)) *(cos(2*M_PI/tb * (i*T_IPO))-1))  );
+		for(int i=0;i<=steps_tb-1;i++){
+			pathArray->push_back(  AcclMax*(0.25*pow(i*T_IPO,2) + pow(tb,2)/(8*pow(M_PI,2)) *(cos(2*M_PI/tb * (i*T_IPO))-1)));
 		}
 		// tb <= t <= tv
 		for(int i=steps_tb;i<=(steps_tb+steps_tv-1);i++){
@@ -607,15 +580,14 @@ void CobArticulation::calculateProfile(std::vector<double> *pathArray,double Se,
 		for(int i=(steps_tb+steps_tv);i<(steps_tv+steps_tb+steps_te-1);i++){
 			pathArray->push_back(0.5*AcclMax*( te*(i*T_IPO + tb)  -  0.5*(pow(i*T_IPO,2)+pow(te,2)+2*pow(tb,2))  + (pow(tb,2)/(4*pow(M_PI,2))) * (1-cos( ((2*M_PI)/tb) * (i*T_IPO-tv)))));
 		}
-	}	
+	}
 }
-
 
 void CobArticulation::calculateProfileForAngularMovements(std::vector<double> *pathMatrix,
 										 				 double Se, double Se_roll, double Se_pitch, double Se_yaw,
 										 				 double start_angle_roll, double start_angle_pitch, double start_angle_yaw,
 														 double VelMax, double AcclMax,std::string profile, bool justRotate)
-{	
+{
 	std::vector<double> linearPath,rollPath,pitchPath,yawPath;
 	int steps_te,steps_tv,steps_tb=0;
 	double tv,tb,te=0;
@@ -638,7 +610,6 @@ void CobArticulation::calculateProfileForAngularMovements(std::vector<double> *p
 		Se_max = Se;
 	}
 	
-	
 	// Calculate the Profile Timings for the linear-path
 	if(profile == "ramp"){
 		// Calculate the Ramp Profile Parameters
@@ -656,15 +627,13 @@ void CobArticulation::calculateProfileForAngularMovements(std::vector<double> *p
 		}
 		tb = 2*VelMax/AcclMax;
 		te = (std::fabs(Se_max) / VelMax) + tb;
-		tv = te - tb;		
+		tv = te - tb;
 	}
-	
 	// Interpolationsteps for every timesequence
 	steps_tb = (double)tb / T_IPO;
 	steps_tv = (double)(tv-tb) / T_IPO;
 	steps_te = (double)(te-tv) / T_IPO;
-
-
+	
 	// Reconfigure timings wtih T_IPO
 	tb=steps_tb*T_IPO;
 	tv=(steps_tb+steps_tv)*T_IPO;
@@ -676,7 +645,6 @@ void CobArticulation::calculateProfileForAngularMovements(std::vector<double> *p
 	generatePathWithTe(&pitchPath, T_IPO, te, AcclMax, Se_pitch, (steps_tb+steps_tv+steps_te),start_angle_pitch,profile);
 	generatePathWithTe(&yawPath, T_IPO, te, AcclMax, Se_yaw, (steps_tb+steps_tv+steps_te),start_angle_yaw,profile);
 	
-
 	// Get the Vecotr sizes of each path-vector
 	int MaxStepArray[4],maxSteps;
 	MaxStepArray[0] = linearPath.size();
@@ -697,7 +665,7 @@ void CobArticulation::calculateProfileForAngularMovements(std::vector<double> *p
 	// Check if every vector has the same length than the largest one.
 	while(true){
 		if(linearPath.size() < maxSteps){
-		linearPath.push_back(linearPath.at(linearPath.size()-1));	
+		linearPath.push_back(linearPath.at(linearPath.size()-1));
  		}else{linearOkay=true;}
 		
 		if(rollPath.size() < maxSteps){
@@ -714,9 +682,8 @@ void CobArticulation::calculateProfileForAngularMovements(std::vector<double> *p
 		
 		if(linearOkay && rollOkay && pitchOkay && yawOkay){
 			break;
-		}	
+		}
 	}
-
 	
 	// Put the interpolated paths into the pathMatrix
 	pathMatrix[0]=linearPath;
@@ -725,26 +692,23 @@ void CobArticulation::calculateProfileForAngularMovements(std::vector<double> *p
 	pathMatrix[3]=yawPath;
 }
 
-
-
-
-
 geometry_msgs::Pose CobArticulation::getEndeffectorPose()
-{	
-	geometry_msgs::Pose pos;	
+{
+	geometry_msgs::Pose pos;
 	tf::StampedTransform stampedTransform;
 	bool transformed=false;
+	
 	do{
 		// Get transformation
 		try{
-			listener_.lookupTransform(referenceFrame_,endeffectorFrame_, ros::Time(0), stampedTransform);
+			listener_.lookupTransform(referenceFrame_,chain_tip_link_, ros::Time(0), stampedTransform);
 			transformed=true;
 		}
 		catch (tf::TransformException &ex) {
 			ROS_ERROR("%s",ex.what());
 			transformed = false;
 			ros::Duration(0.1).sleep();
-		}	
+		}
 	}while(!transformed);
 	
 	currentEndeffectorStampedTransform_ = stampedTransform;
@@ -756,11 +720,9 @@ geometry_msgs::Pose CobArticulation::getEndeffectorPose()
 	pos.orientation.y = stampedTransform.getRotation()[1];
 	pos.orientation.z = stampedTransform.getRotation()[2];
 	pos.orientation.w = stampedTransform.getRotation()[3];
-			
+	
 	return pos;
 }
-
-
 
 // Checks if the endeffector is in the area of the 'br' frame
 bool CobArticulation::epsilon_area(double x,double y, double z, double roll, double pitch, double yaw,double epsilon)
@@ -789,8 +751,6 @@ bool CobArticulation::epsilon_area(double x,double y, double z, double roll, dou
 	}
 }
 
-
-
 void CobArticulation::showMarker(tf::StampedTransform tf,int marker_id,double red, double green, double blue,std::string ns)
 {
   	visualization_msgs::Marker marker;
@@ -800,7 +760,6 @@ void CobArticulation::showMarker(tf::StampedTransform tf,int marker_id,double re
 	marker.id = marker_id;
 	marker.type = visualization_msgs::Marker::SPHERE;
 	marker.action = visualization_msgs::Marker::ADD;
-		
 	marker.pose.position.x = tf.getOrigin().x();
 	marker.pose.position.y = tf.getOrigin().y();
 	marker.pose.position.z = tf.getOrigin().z();
@@ -817,7 +776,6 @@ void CobArticulation::showMarker(tf::StampedTransform tf,int marker_id,double re
 	marker.color.b = blue;
 	
 	marker.color.a = 1.0;
-
 	vis_pub_.publish( marker );
 	
 }
@@ -831,7 +789,7 @@ void CobArticulation::showDot(double x,double y,double z,int marker_id,double re
 	marker.id = marker_id;
 	marker.type = visualization_msgs::Marker::SPHERE;
 	marker.action = visualization_msgs::Marker::ADD;
-		
+	
 	marker.pose.position.x = x;
 	marker.pose.position.y = y;
 	marker.pose.position.z = z;
@@ -848,8 +806,8 @@ void CobArticulation::showDot(double x,double y,double z,int marker_id,double re
 	marker.color.b = blue;
 	
 	marker.color.a = 1.0;
-
-	vis_pub_.publish( marker );	
+	
+	vis_pub_.publish( marker );
 }
 
 void CobArticulation::showLevel(tf::Transform pos,int marker_id,double red, double green, double blue,std::string ns)
@@ -861,7 +819,6 @@ void CobArticulation::showLevel(tf::Transform pos,int marker_id,double red, doub
 	marker.id = marker_id;
 	marker.type = visualization_msgs::Marker::CUBE;
 	marker.action = visualization_msgs::Marker::ADD;
-		
 	marker.pose.position.x = pos.getOrigin().x();
 	marker.pose.position.y = pos.getOrigin().y();
 	marker.pose.position.z = pos.getOrigin().z();
@@ -869,7 +826,6 @@ void CobArticulation::showLevel(tf::Transform pos,int marker_id,double red, doub
 	marker.pose.orientation.y = pos.getRotation()[1];
 	marker.pose.orientation.z = pos.getRotation()[2];
 	marker.pose.orientation.w = pos.getRotation()[3];
-	
 	marker.scale.x = 1;
 	marker.scale.y = 1;
 	marker.scale.z = 0.01;
@@ -878,23 +834,17 @@ void CobArticulation::showLevel(tf::Transform pos,int marker_id,double red, doub
 	marker.color.b = blue;
 	
 	marker.color.a = 0.2;
-
-	vis_pub_.publish( marker );	
+	
+	vis_pub_.publish( marker );
 }
-
-
-void CobArticulation::timerCallback(const ros::TimerEvent& event){
-	hold_=false;
-}
-
 
 void CobArticulation::start_tracking()
-{	
-    cob_srvs::SetString start;
-    start.request.data = targetFrame_;
-    startTracking_.call(start);
-    
-    if(start.response.success==true){
+{
+	cob_srvs::SetString start;
+	start.request.data = targetFrame_;
+	startTracking_.call(start);
+	
+	if(start.response.success==true){
 		ROS_INFO("...service called!");
 	}
 	else{
@@ -902,15 +852,14 @@ void CobArticulation::start_tracking()
 	}
 }
 
-
 void CobArticulation::stop_tracking()
 {
-    std_srvs::Empty srv_save_stop;
-    srv_save_stop.request;
-    if (stopTracking_.call(srv_save_stop)) {
+	std_srvs::Empty srv_save_stop;
+	srv_save_stop.request;
+	if(stopTracking_.call(srv_save_stop)){
 		ROS_INFO("... service stopped!");
 		}
-    	else {
+		else {
 			ROS_ERROR("... service stop failed! FATAL!");
 		}
 }
@@ -935,9 +884,9 @@ void CobArticulation::generatePath(std::vector<double> *pathArray,double T_IPO, 
 	else{
 		tb = 2*VelMax/AcclMax;
 		te = (std::fabs(Se_max) / VelMax) + tb;
-		tv = te - tb;		
+		tv = te - tb;
 	}
-
+	
 	// Interpolationsteps for every timesequence
 	steps_tb = (double)tb / T_IPO;
 	steps_tv = (double)(tv-tb) / T_IPO;
@@ -951,15 +900,15 @@ void CobArticulation::generatePath(std::vector<double> *pathArray,double T_IPO, 
 	if(profile == "ramp"){
 		// Calculate the ramp profile path
 		// 0 <= t <= tb
-		for(int i=0;i<=steps_tb-1;i++){	
+		for(int i=0;i<=steps_tb-1;i++){
 			pathArray->push_back( Se_max/std::fabs(Se_max)*(0.5*AcclMax*pow((T_IPO*i),2)));
 		}
 		// tb <= t <= tv
-		for(int i=steps_tb;i<=(steps_tb+steps_tv-1);i++){	
+		for(int i=steps_tb;i<=(steps_tb+steps_tv-1);i++){
 			pathArray->push_back(Se_max/std::fabs(Se_max)*(VelMax*(T_IPO*i)-0.5*pow(VelMax,2)/AcclMax));
 		}
 		// tv <= t <= te
-		for(int i=(steps_tb+steps_tv);i<(steps_tv+steps_tb+steps_te-1);i++){	
+		for(int i=(steps_tb+steps_tv);i<(steps_tv+steps_tb+steps_te-1);i++){
 			pathArray->push_back(Se_max/std::fabs(Se_max)*(VelMax * (te-tb) - 0.5*AcclMax* pow(te-(i*T_IPO),2)));
 		}
 	}
@@ -967,24 +916,23 @@ void CobArticulation::generatePath(std::vector<double> *pathArray,double T_IPO, 
 		// Calculate the sinoide profile path
 		// 0 <= t <= tb
 		for(int i=0;i<=steps_tb-1;i++){	
-			pathArray->push_back( Se_max/std::fabs(Se_max)*( AcclMax*(0.25*pow(i*T_IPO,2) + pow(tb,2)/(8*pow(M_PI,2)) *(cos(2*M_PI/tb * (i*T_IPO))-1))  ));
+			pathArray->push_back( Se_max/std::fabs(Se_max)*( AcclMax*(0.25*pow(i*T_IPO,2) + pow(tb,2)/(8*pow(M_PI,2)) *(cos(2*M_PI/tb * (i*T_IPO))-1))));
 		}
 		// tb <= t <= tv
-		for(int i=steps_tb;i<=(steps_tb+steps_tv-1);i++){	
+		for(int i=steps_tb;i<=(steps_tb+steps_tv-1);i++){
 			pathArray->push_back(Se_max/std::fabs(Se_max)*(VelMax*(i*T_IPO-0.5*tb)));
 		}
 		// tv <= t <= te
-		for(int i=(steps_tb+steps_tv);i<(steps_tv+steps_tb+steps_te-1);i++){	
-			pathArray->push_back(Se_max/std::fabs(Se_max)*(0.5*AcclMax*( te*(i*T_IPO + tb)  -  0.5*(pow(i*T_IPO,2)+pow(te,2)+2*pow(tb,2))  + (pow(tb,2)/(4*pow(M_PI,2))) * (1-cos( ((2*M_PI)/tb) * (i*T_IPO-tv))))));
+		for(int i=(steps_tb+steps_tv);i<(steps_tv+steps_tb+steps_te-1);i++){
+			pathArray->push_back(Se_max/std::fabs(Se_max)*(0.5*AcclMax*( te*(i*T_IPO + tb) - 0.5*(pow(i*T_IPO,2)+pow(te,2)+2*pow(tb,2)) + (pow(tb,2)/(4*pow(M_PI,2))) * (1-cos( ((2*M_PI)/tb) * (i*T_IPO-tv))))));
 		}
 	}
 }
 
-
 void CobArticulation::generatePathWithTe(std::vector<double> *pathArray,double T_IPO, double te, double AcclMax,double Se_max, int steps_max,double start_angle,std::string profile){	
 	double tv,tb=0;
 	int steps_te,steps_tv,steps_tb=0;
-	double VelMax;								
+	double VelMax;
 
 	
 	// Calculate the Profile Timings
@@ -1008,7 +956,7 @@ void CobArticulation::generatePathWithTe(std::vector<double> *pathArray,double T
 		
 		// Calculate profile timings, te is known
 		tb = 2*VelMax/AcclMax;
-		tv = te - tb;		
+		tv = te - tb;
 	}
 
 	// Interpolationsteps for every timesequence
@@ -1016,13 +964,11 @@ void CobArticulation::generatePathWithTe(std::vector<double> *pathArray,double T
 	steps_tv = (double)(tv-tb) / T_IPO;
 	steps_te = (double)(te-tv) / T_IPO;
 	
-	
 	// Reconfigure timings wtih T_IPO
 	tb=steps_tb*T_IPO;
 	tv=(steps_tb+steps_tv)*T_IPO;
 	te=(steps_tb+steps_tv+steps_te)*T_IPO;
 	
-
 	if(profile == "ramp"){
 		// Calculate the ramp profile path
 		// 0 <= t <= tb
@@ -1030,11 +976,11 @@ void CobArticulation::generatePathWithTe(std::vector<double> *pathArray,double T
 			pathArray->push_back( start_angle + Se_max/std::fabs(Se_max)*(0.5*AcclMax*pow((T_IPO*i),2)));
 		}
 		// tb <= t <= tv
-		for(int i=steps_tb;i<=(steps_tb+steps_tv-1);i++){	
+		for(int i=steps_tb;i<=(steps_tb+steps_tv-1);i++){
 			pathArray->push_back(start_angle + Se_max/std::fabs(Se_max)*(VelMax*(T_IPO*i)-0.5*pow(VelMax,2)/AcclMax));
 		}
 		// tv <= t <= te
-		for(int i=(steps_tb+steps_tv);i<(steps_tv+steps_tb+steps_te-1);i++){	
+		for(int i=(steps_tb+steps_tv);i<(steps_tv+steps_tb+steps_te-1);i++){
 			pathArray->push_back(start_angle + Se_max/std::fabs(Se_max)*(VelMax * (te-tb) - 0.5*AcclMax* pow(te-(i*T_IPO),2)));
 		}
 	}
@@ -1042,24 +988,20 @@ void CobArticulation::generatePathWithTe(std::vector<double> *pathArray,double T
 		// Calculate the sinoide profile path
 		// 0 <= t <= tb
 		for(int i=0;i<=steps_tb-1;i++){	
-			pathArray->push_back(start_angle + Se_max/std::fabs(Se_max)*( AcclMax*(0.25*pow(i*T_IPO,2) + pow(tb,2)/(8*pow(M_PI,2)) *(cos(2*M_PI/tb * (i*T_IPO))-1))  ));
+			pathArray->push_back(start_angle + Se_max/std::fabs(Se_max)*( AcclMax*(0.25*pow(i*T_IPO,2) + pow(tb,2)/(8*pow(M_PI,2)) *(cos(2*M_PI/tb * (i*T_IPO))-1))));
 		}
 		// tb <= t <= tv
-		for(int i=steps_tb;i<=(steps_tb+steps_tv-1);i++){	
+		for(int i=steps_tb;i<=(steps_tb+steps_tv-1);i++){
 			pathArray->push_back(start_angle + Se_max/std::fabs(Se_max)*(VelMax*(i*T_IPO-0.5*tb)));
 		}
 		// tv <= t <= te
-		for(int i=(steps_tb+steps_tv);i<(steps_tv+steps_tb+steps_te-1);i++){	
-			pathArray->push_back(start_angle + Se_max/std::fabs(Se_max)*(0.5*AcclMax*( te*(i*T_IPO + tb)  -  0.5*(pow(i*T_IPO,2)+pow(te,2)+2*pow(tb,2))  + (pow(tb,2)/(4*pow(M_PI,2))) * (1-cos( ((2*M_PI)/tb) * (i*T_IPO-tv))))));
+		for(int i=(steps_tb+steps_tv);i<(steps_tv+steps_tb+steps_te-1);i++){
+			pathArray->push_back(start_angle + Se_max/std::fabs(Se_max)*(0.5*AcclMax*( te*(i*T_IPO + tb) - 0.5*(pow(i*T_IPO,2)+pow(te,2)+2*pow(tb,2))  + (pow(tb,2)/(4*pow(M_PI,2))) * (1-cos( ((2*M_PI)/tb) * (i*T_IPO-tv))))));
 		}
 	}
 }
-
 
 void CobArticulation::PoseToRPY(geometry_msgs::Pose pose,double &roll, double &pitch, double &yaw){
 	tf::Quaternion q = tf::Quaternion(pose.orientation.x,pose.orientation.y,pose.orientation.z,pose.orientation.w);
 	tf::Matrix3x3(q).getRPY(roll,pitch,yaw);
 }
-
-
-

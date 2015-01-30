@@ -46,12 +46,12 @@
 #include <kdl/frames.hpp>
 
 #include <tf/transform_listener.h>
+#include <tf/tf.h>
 
 #include <boost/thread/mutex.hpp>
 #include <dynamic_reconfigure/server.h>
 #include <cob_twist_controller/TwistControllerConfig.h>
-
-
+#include <Eigen/Dense>
 
 
 class CobTwistController
@@ -60,18 +60,22 @@ private:
 	ros::NodeHandle nh_;
 	tf::TransformListener tf_listener_;
 	
+	ros::Time last_update_time_,time_;
+	ros::Duration period_;
+	
 	ros::Subscriber jointstate_sub;
 	ros::Subscriber odometry_sub;
 	ros::Subscriber twist_sub;
 	ros::Subscriber twist_stamped_sub;
+	ros::Subscriber base_sub;
 	ros::Publisher vel_pub;
 	ros::Publisher base_vel_pub;
 	ros::Publisher twist_pub_;
-	ros::Publisher twist_real_pub_;
+	ros::Publisher twist_current_pub_;
 	
 	KDL::Chain chain_;
-	std::string chain_base_;
-	std::string chain_tip_;
+	std::string chain_base_link_;
+	std::string chain_tip_link_;
 	
 	KDL::ChainFkSolverVel_recursive* p_fksolver_vel_;
 	KDL::ChainIkSolverVel_pinv* p_iksolver_vel_;
@@ -91,14 +95,36 @@ private:
 	
 	bool base_compensation_;
 	bool base_active_;
+	bool reset_markers_;
 	
-	KDL::Twist twist_odometry_;
+	KDL::Twist twist_odometry_cb_;
+	
+	///Debug
+	ros::Publisher 	debug_base_compensation_visual_tip_pub_,debug_base_compensation_visual_base_pub_,debug_base_compensation_pose_base_pub_,
+					debug_base_compensation_pose_tip_pub_,debug_base_compensation_twist_manipulator_pub_,debug_base_active_twist_manipulator_pub_,
+					debug_base_active_twist_base_pub_,debug_base_active_twist_ee_pub_;
+	std::vector<geometry_msgs::Point> point_base_vec_,point_ee_vec_;
+	KDL::ChainFkSolverVel_recursive* jntToCartSolver_vel_;
+	
+	////Debug
+	tf::StampedTransform 	odom_transform_ct,
+							odom_transform_bl,
+							bl_transform_cb,
+							bl_transform_ct,
+							cb_transform_bl;
+	
+	KDL::Frame 	odom_frame_ct,
+				odom_frame_bl,
+				bl_frame_cb,
+				bl_frame_ct,
+				cb_frame_bl;
 	
 	
 public:
 	CobTwistController():
 		base_compensation_(false),
-		base_active_(false)
+		base_active_(false),
+		reset_markers_(false)
 	{;}
 	~CobTwistController();
 	
@@ -113,10 +139,16 @@ public:
 	void jointstate_cb(const sensor_msgs::JointState::ConstPtr& msg);
 	void odometry_cb(const nav_msgs::Odometry::ConstPtr& msg);
 	void twist_cb(const geometry_msgs::Twist::ConstPtr& msg);
+	void base_twist_cb(const geometry_msgs::Twist::ConstPtr& msg);
+	
 	void twist_stamped_cb(const geometry_msgs::TwistStamped::ConstPtr& msg);
 	void solve_twist(KDL::Twist twist);
 	
-	
 	KDL::JntArray normalize_velocities(KDL::JntArray q_dot_ik);
+	
+	///Debug
+	void showMarker(int marker_id,double red, double green, double blue, std::string ns, ros::Publisher pub, std::vector<geometry_msgs::Point> &pos_v);
+	void debug();
+
 };
 #endif

@@ -45,6 +45,6 @@ install(DIRECTORY include/${PROJECT_NAME}/
  PATTERN ".svn" EXCLUDE
 )
 
-install(DIRECTORY launch config movement
+install(DIRECTORY launch movement
  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

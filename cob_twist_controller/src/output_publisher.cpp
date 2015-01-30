@@ -14,15 +14,16 @@
  * \note
  *   ROS stack name: cob_control
  * \note
- *   ROS package name: cob_model_identifier
+ *   ROS package name: cob_twist_controller
  *
  * \author
- *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de
+ *   Author: Francisco Moreno, email: fxm-fm@ipa.fraunhofer.de
  *
- * \date Date of creation: September, 2014
+ * \date Date of creation: November, 2014
  *
  * \brief
- *   ...
+ * This node publishes different variables that can be useful when debugging
+ * code with the Twist Controller
  *
  ****************************************************************/
 #include <ros/ros.h>
@@ -62,27 +63,39 @@ void OutputPublisher::initialize()
 	if (nh_cartesian.hasParam("base_link"))
 	{
 		nh_cartesian.getParam("base_link", chain_base_);
-	}else{
-			ROS_ERROR("no base link");
 	}
+	else{
+			ROS_ERROR("no base link set");
+	}
+	
 	if (nh_cartesian.hasParam("tip_link"))
 	{
 		nh_cartesian.getParam("tip_link", chain_tip_);
 	}
-	if (nh_cartesian.hasParam("reference_frame"))
-	{
-		nh_cartesian.getParam("reference_frame", referenceFrame_);
+	else{
+			ROS_ERROR("no tip link set");
 	}
 	
-	if (nh_cartesian.hasParam("endeffector_frame"))
+	if (nh_cartesian.hasParam("frame_1"))
 	{
-		nh_cartesian.getParam("endeffector_frame", endeffectorFrame_);
+		nh_cartesian.getParam("frame_1", frame_1);
+	}
+	else{
+			ROS_ERROR("no frame 1 set");
 	}
 	
-	if (nh_cartesian.hasParam("tracking_frame"))
+	if (nh_cartesian.hasParam("frame_2"))
 	{
-		nh_cartesian.getParam("tracking_frame", trackingFrame_);
+		nh_cartesian.getParam("frame_2", frame_2);
 	}
+	else{
+			ROS_ERROR("no frame 2 set");
+	}
+	
+	//if (nh_cartesian.hasParam("tracking_frame"))
+	//{
+		//nh_cartesian.getParam("tracking_frame", trackingFrame_);
+	//}
 	
 	///parse robot_description and generate KDL chains
 	KDL::Tree my_tree;
@@ -107,8 +120,8 @@ void OutputPublisher::initialize()
 	end_eff_vel_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/end_effector_vel", 1);
 	end_eff_pos_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/end_effector_pos", 1);
 	manipulability_pub_ = nh_twist.advertise<std_msgs::Float64> ("debug/manipulability", 1);
-	//rcond_pub_ = nh_twist.advertise<std_msgs::Float64> ("debug/rcond", 1);
-    last_sing_pub_ = nh_twist.advertise<std_msgs::Float64> ("debug/last_sing_value", 1);
+	last_sing_pub_ = nh_twist.advertise<std_msgs::Float64> ("debug/last_sing_value", 1);
+	transformation_pub_ = nh_twist.advertise<geometry_msgs::Pose> ("debug/transformation", 1);
 	
 	ROS_INFO("...initialized!");
 }
@@ -195,19 +208,15 @@ void OutputPublisher::run()
 		
 		end_eff_pos_pub_.publish(end_effector_pos_msg);
 		
+		if(nh_.hasParam("cartesian_controller/frame_1") || nh_.hasParam("cartesian_controller/frame_2"))
+		{    transformation_pub_.publish(OutputPublisher::getTransformationBetween());    }
+		
 		if(iterations > 2){
 			dt_ += period.toSec();
 			samples++;
 		}
 		
 		iterations++;
-		
-		//if(samples >= 500){
-			//dt_ /=  samples;
-			//std::cout << "dt_ = " << dt_ <<std::endl;
-			//break;
-		//}
-		
 		
 		last_update_time = time;
 		ros::spinOnce();
@@ -282,40 +291,21 @@ void OutputPublisher::jointstate_cb(const sensor_msgs::JointState::ConstPtr& msg
 		jnt2jac.JntToJac(last_q_,jac);
 		
 		//compute manipulability
-        ///kappa = sqrt(norm(J*Jt))
-        ///see  T.Yoshikawa "Manipulability of robotic mechanisms"
-        ///     International Journal of Robotics Research, 4(2):3-9, 1985
-        Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> prod = jac.data * jac.data.transpose();
-        Eigen::JacobiSVD<Eigen::MatrixXd> svd(jac.data,Eigen::ComputeFullU | Eigen::ComputeFullV);
-        double d = prod.determinant();
-        double kappa = std::sqrt(std::abs(d));
-        //std_msgs::Float64 manipulability_msg;
-        //manipulability_msg.data=kappa;
-        std_msgs::Float64 last_sing_val_msg;
-        last_sing_val_msg.data=svd.singularValues()(svd.singularValues().size()-1);
-        //
-        //prod = jac.data.transpose() *jac.data;
-        //std::cout<<"prod.norm() "<<prod.norm()<<std::endl;
-        //std::cout<<"prod.inverse().norm() "<<prod.inverse().norm()<<std::endl;        
-        //double rcond = 1/(prod.norm()*prod.inverse().norm());
-        //
-        //std_msgs::Float64 rcond_msg;
-        //rcond_msg.data=rcond;
-        
-        //if (initial_iteration)
-        //{
-            //wkm1=kappa;
-            //initial_iteration = false;
-        //}
-        //
-        //manipulability_msg.data=(wkm1==0?0:kappa/wkm1);
-        //
-        //wkm1=kappa;
-        
-        //manipulability_pub_.publish(manipulability_msg);
-        last_sing_pub_.publish(last_sing_val_msg);
-        //rcond_pub_.publish(rcond_msg);        
-        
+		///kappa = sqrt(norm(J*Jt))
+		///see  T.Yoshikawa "Manipulability of robotic mechanisms"
+		///	 International Journal of Robotics Research, 4(2):3-9, 1985
+		Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> prod = jac.data * jac.data.transpose();
+		Eigen::JacobiSVD<Eigen::MatrixXd> svd(jac.data,Eigen::ComputeFullU | Eigen::ComputeFullV);
+		double d = prod.determinant();
+		double kappa = std::sqrt(std::abs(d));
+		std_msgs::Float64 manipulability_msg;
+		manipulability_msg.data=kappa;
+		std_msgs::Float64 last_sing_val_msg;
+		last_sing_val_msg.data=svd.singularValues()(svd.singularValues().size()-1);
+		
+		manipulability_pub_.publish(manipulability_msg);
+		last_sing_pub_.publish(last_sing_val_msg);
+		
 }
 
 void OutputPublisher::euler(std::vector<double> *out, double in, double dt){
@@ -333,16 +323,14 @@ geometry_msgs::Pose OutputPublisher::getEndeffectorPose()
 	tf::StampedTransform stampedTransform;
 	bool transformed=false;
 
-
 	// Get transformation
 	try{
-	listener_.waitForTransform(referenceFrame_,endeffectorFrame_, now, ros::Duration(0.5));
-	listener_.lookupTransform(referenceFrame_,endeffectorFrame_, now, stampedTransform);
+	listener_.waitForTransform(chain_base_,chain_tip_, now, ros::Duration(0.5));
+	listener_.lookupTransform(chain_base_,chain_tip_, now, stampedTransform);
 	}
 	catch (tf::TransformException &ex) {
 	ROS_ERROR("%s",ex.what());
 	}
-	
 	
 	pos.position.x=stampedTransform.getOrigin().x();
 	pos.position.y=stampedTransform.getOrigin().y();
@@ -352,5 +340,32 @@ geometry_msgs::Pose OutputPublisher::getEndeffectorPose()
 	pos.orientation.z = stampedTransform.getRotation()[2];
 	pos.orientation.w = stampedTransform.getRotation()[3];
 			
+	return pos;
+}
+
+geometry_msgs::Pose OutputPublisher::getTransformationBetween() 
+{	
+	ros::Time now = ros::Time::now();
+	geometry_msgs::Pose pos;	
+	tf::StampedTransform stampedTransform;
+	bool transformed=false;
+
+	// Get transformation
+	try{
+		listener_.waitForTransform(frame_1,frame_2, now, ros::Duration(0.5));
+		listener_.lookupTransform(frame_1,frame_2, now, stampedTransform);
+	}
+	catch (tf::TransformException &ex) {
+		ROS_ERROR("%s",ex.what());
+	}
+	
+	pos.position.x=stampedTransform.getOrigin().x();
+	pos.position.y=stampedTransform.getOrigin().y();
+	pos.position.z=stampedTransform.getOrigin().z();
+	pos.orientation.x = stampedTransform.getRotation()[0];
+	pos.orientation.y = stampedTransform.getRotation()[1];
+	pos.orientation.z = stampedTransform.getRotation()[2];
+	pos.orientation.w = stampedTransform.getRotation()[3];
+	
 	return pos;
 }
