@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>cob_frame_tracker</name>
-  <version>0.5.0</version>
+  <version>0.6.6</version>
   <description>The cob_frame_tracker package</description>
 
   <author email="fxm@ipa.fhg.de">Felix Messmer</author>
@@ -16,8 +16,9 @@
   <build_depend>cob_srvs</build_depend>
   <build_depend>tf</build_depend>
   <build_depend>tf_conversions</build_depend>
+  <build_depend>interactive_markers</build_depend>
   <build_depend>control_toolbox</build_depend>
-  
+
   <run_depend>rospy</run_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>geometry_msgs</run_depend>

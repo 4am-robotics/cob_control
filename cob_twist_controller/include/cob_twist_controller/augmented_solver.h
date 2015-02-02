@@ -1,12 +1,13 @@
 #ifndef AUGMENTED_SOLVER_HPP
 #define AUGMENTED_SOLVER_HPP
 
+#include <math.h>
 #include <kdl/chainiksolver.hpp>
 #include <kdl/chainjnttojacsolver.hpp>
-#include <kdl/utilities/svd_HH.hpp>
+#include <Eigen/Core>
 #include <Eigen/LU>
+#include <Eigen/SVD>
 #include <iostream>
-
 
 /**
 * Implementation of a inverse velocity kinematics algorithm based
@@ -17,6 +18,34 @@
 *
 * @ingroup KinematicFamily
 */
+
+struct AugmentedSolverParams {
+    int damping_method;
+    double eps;
+    double damping_factor;
+    double lambda0;
+    double wt;
+    double deltaRMax;
+    bool JLA_active;
+    bool enforce_limits;
+    double tolerance;
+    bool base_compensation;
+    bool base_active;
+    double base_ratio;
+
+};
+
+enum DampingMethodTypes {
+    MANIPULABILITY = 0,
+    MANIPULABILITY_RATE = 1,
+    TRACKING_ERROR = 2,
+    SINGULAR_REGION = 3,
+    CONSTANT = 4,
+    TRUNCATION = 5
+};
+
+
+
 class augmented_solver
 {
 public:
@@ -31,45 +60,39 @@ public:
      * default: 150
      *
      */
-    augmented_solver(const KDL::Chain& chain, double eps=0.00001, int maxiter=150);
+    augmented_solver(const KDL::Chain& chain, double eps=0.001, int maxiter=5);
     ~augmented_solver();
-
-    /** CartToJnt for chain NOT including base **/
-    virtual int CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL::JntArray& qdot_out);
-
-    /** CartToJnt for chain including base **/
-    //virtual int CartToJnt(const KDL::JntArray& q_in, KDL::Twist& v_in, KDL::JntArray& qdot_out, KDL::JntArray& qdot_base_out);
     
+    /** CartToJnt for chain using SVD including base and various DampingMethods **/
+    virtual int CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& last_q_dot, KDL::Twist& v_in, KDL::JntArray& qdot_out, std::vector<float> *limits_min, std::vector<float> *limits_max, KDL::Frame &base_position, KDL::Frame &chain_base);
+
+	inline virtual int CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& last_q_dot, KDL::Twist& v_in, KDL::JntArray& qdot_out, std::vector<float> *limits_min, std::vector<float> *limits_max)
+	{
+		KDL::Frame dummy;
+		dummy.p = KDL::Vector(0,0,0);
+		dummy.M = KDL::Rotation::Quaternion(0,0,0,0);
+		
+		return CartToJnt(q_in, last_q_dot, v_in, qdot_out,limits_min,limits_max,dummy,dummy);
+	}
+
     /** not (yet) implemented. */
-    virtual int CartToJnt(const KDL::JntArray& q_init, const KDL::FrameVel& v_in, KDL::JntArrayVel& q_out){return -1;};
-
-    //void setAugmentedJacobian(Eigen::Matrix<double,6,Eigen::Dynamic> _jac_augmented);
-
-    //void JLATask(const KDL::JntArray q_in, Eigen::Matrix<double, 10, 1> &z_in, Eigen::Matrix<double, 10 , 10> &jac_c,  Eigen::Matrix<double, 10, 10> &W_c);
-    //void ManipulabilityTask(const KDL::JntArray q_in, Eigen::Matrix<double, 10, 1> &z_in, Eigen::Matrix<double, 10 , 10> &jac_c,  Eigen::Matrix<double, 10, 10> &W_c);
-    //void BaseObstacleTask(const KDL::JntArray q_in, Eigen::Matrix<double, 10, 1> &z_in, Eigen::Matrix<double, 10 , 10> &jac_c,  Eigen::Matrix<double, 10, 10> &W_c);
-    //void setBaseVel(double vel_x, double vel_y, double vel_theta);
-
-    //void setBaseToArmFactor(double base_to_arm_factor){ base_to_arm_factor_ = base_to_arm_factor; }
+    virtual int CartToJnt(const KDL::JntArray& q_init, const KDL::JntArray& last_q_dot, const KDL::FrameVel& v_in, KDL::JntArrayVel& q_out){return -1;};
+    
+    void SetAugmentedSolverParams(AugmentedSolverParams params){params_ = params;}
 
 private:
     const KDL::Chain chain;
+    KDL::Jacobian jac,jac_base;
     KDL::ChainJntToJacSolver jnt2jac;
-    KDL::Jacobian jac;
-    KDL::SVD_HH svd;
-    std::vector<KDL::JntArray> U;
-    KDL::JntArray S;
-    std::vector<KDL::JntArray> V;
-    KDL::JntArray tmp;
-    double eps;
     int maxiter;
-    //bool base_is_actived_;
-    //double base_to_arm_factor_;
-
-    //double vel_x_;
-    //double vel_y_;
-    //double vel_theta_;
-
+    Eigen::MatrixXd Jcm1;
+    double wkm1;
+    bool initial_iteration;
+    Eigen::VectorXd last_dh;
+    double x_,y_,r_,z_;
+    
+    AugmentedSolverParams params_;
+    Eigen::VectorXd calculate_weighting(const KDL::JntArray& q, const KDL::JntArray& last_q_dout,  std::vector<float> *limits_min, std::vector<float> *limits_max);
+    Eigen::VectorXd enforce_limits(const KDL::JntArray& q, Eigen::MatrixXd *qdout_out, std::vector<float> *limits_min, std::vector<float> *limits_max);
 };
 #endif
-

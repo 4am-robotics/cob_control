@@ -6,8 +6,12 @@ int main(int argc, char **argv)
 	ros::init (argc, argv, "cob_articulation");
 	CobArticulation *pb = new CobArticulation();
 	
-	pb->initialize();
-	pb->load();
-	
+	bool success = pb->initialize();
+	if(success){
+		ROS_INFO("...initialized!");
+		pb->load();
+	}else{
+		ROS_ERROR("Initialization failed");
+	}
 	return 0;
 }
