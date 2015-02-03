@@ -197,7 +197,7 @@ void CobFrameTracker::run()
 
 				//--> ABORTION CRITERIA ONLY HERE
 				if (CobFrameTracker::searchForAbortionCriteria()) {
-					CobFrameTracker::abort();
+//					CobFrameTracker::abort();
 				}
 			}
 			ROS_INFO("show abortion message [%s]", abortion_message_.c_str());
@@ -363,8 +363,10 @@ void CobFrameTracker::preemptCB()
 	as_.setPreempted(result_);
 	tracking_ = false;
 	tracking_goal_ = false;
+	ROS_INFO("active_frame = %s", active_frame_.c_str());
 	target_tracking_frame_ = active_frame_;
 	geometry_msgs::TwistStamped twist_msg;
+	twist_msg.header.frame_id = active_frame_;
 	twist_pub_.publish(twist_msg);
 }
 
@@ -375,6 +377,7 @@ void CobFrameTracker::succeed()
 	tracking_ = false;
 	tracking_goal_ = false;
 	geometry_msgs::TwistStamped twist_msg;
+	twist_msg.header.frame_id = active_frame_;
 	twist_pub_.publish(twist_msg);
 }
 
@@ -386,8 +389,11 @@ void CobFrameTracker::abort()
 	ROS_WARN("Tracking has been aborted because of %s", abortion_message_.c_str());
 	tracking_ = false;
 	tracking_goal_ = false;
+	ROS_INFO("target_tracking_frame bevor = %s", target_tracking_frame_.c_str());
+	ROS_INFO("active frame = %s", active_frame_.c_str());
 	target_tracking_frame_ = active_frame_;
 	geometry_msgs::TwistStamped twist_msg;
+	twist_msg.header.frame_id = active_frame_;
 	twist_pub_.publish(twist_msg);
 }
 
@@ -417,7 +423,7 @@ bool CobFrameTracker::searchForAbortionCriteria()
 
 	bool value = CobFrameTracker::checkDeviationErrors(current_twist_local_, target_twist_local_);
 
-	ROS_INFO("value is %s", value ? "true" : "false");
+//	ROS_INFO("value is %s", value ? "true" : "false");
 
 	if (numberOfFailedValues_ < 50) {
 		numberOfFailedValues_++;
@@ -430,7 +436,7 @@ bool CobFrameTracker::searchForAbortionCriteria()
 	{
 		numberOfFailedValues_ = 0;
 		if (value_failed_) {
-			abortion_message_ = "50 times true. Twist vector failed target 50 times in a row.";
+			abortion_message_ = "Devitation between target and current twist!";
 			return true;
 		}
 		if (value){

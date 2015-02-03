@@ -63,17 +63,26 @@ bool CobFrameTrackerActionClient::start_tracking_cb(cob_srvs::SetString::Request
 
 bool CobFrameTrackerActionClient::stop_tracking_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
 {
-	tracking_frame_ = active_frame_;
-	tracking_ = false;
+	if (tracking_)
+	{
+		tracking_frame_ = active_frame_;
+		tracking_ = false;
 
-	ac_.cancelAllGoals();
-	ROS_INFO("All goals canceled");
+		ac_.cancelAllGoals();
+		ROS_INFO("All goals canceled");
 
-	ROS_INFO("printing goal state:");
-	actionlib::SimpleClientGoalState state = ac_.getState();
-	ROS_INFO("Action finished: %s",state.toString().c_str());
+		ROS_INFO("printing goal state:");
+		actionlib::SimpleClientGoalState state = ac_.getState();
+		ROS_INFO("Action finished: %s",state.toString().c_str());
 
-	return true;
+		return true;
+	}
+	else
+	{
+		ROS_INFO("Invalid call: There is no goal running. Stop tracking denied.");
+		return false;
+	}
+
 }
 
 

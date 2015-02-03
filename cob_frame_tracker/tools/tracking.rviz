@@ -7,6 +7,7 @@ Panels:
         - /Global Options1
         - /Status1
         - /InteractiveMarkers1
+        - /Axes1
       Splitter Ratio: 0.5
     Tree Height: 565
   - Class: rviz/Selection
@@ -303,6 +304,13 @@ Visualization Manager:
         {}
       Update Interval: 0
       Value: false
+    - Class: rviz/Axes
+      Enabled: true
+      Length: 1
+      Name: Axes
+      Radius: 0.1
+      Reference Frame: monitor_odometry_target_frame
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -327,7 +335,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 10
+      Distance: 4.25697
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
@@ -339,10 +347,10 @@ Visualization Manager:
         Z: 0
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.785398
+      Pitch: 0.665398
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.785398
+      Yaw: 0.230398
     Saved: ~
 Window Geometry:
   Displays:
@@ -360,5 +368,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1200
-  X: 56
-  Y: 121
+  X: 55
+  Y: 111
