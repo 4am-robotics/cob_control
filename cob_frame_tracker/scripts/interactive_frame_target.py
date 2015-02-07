@@ -115,10 +115,12 @@ class InteractiveFrameTarget:
 		box_marker.color.g = 0.5
 		box_marker.color.b = 0.5
 		box_marker.color.a = 1.0
-		box_control = InteractiveMarkerControl()
-		box_control.always_visible = True
-		box_control.markers.append( box_marker )
-		self.int_marker.controls.append(box_control)
+		control_3d = InteractiveMarkerControl()
+		control_3d.always_visible = True
+		control_3d.name = "move_rotate_3D"
+		control_3d.interaction_mode = InteractiveMarkerControl.MOVE_ROTATE_3D
+		control_3d.markers.append( box_marker )
+		self.int_marker.controls.append(control_3d)
 		
 		control = InteractiveMarkerControl()
 		control.always_visible = True
@@ -126,9 +128,6 @@ class InteractiveFrameTarget:
 		control.orientation.x = 1
 		control.orientation.y = 0
 		control.orientation.z = 0
-		#control.name = "move_3D"
-		#control.interaction_mode = InteractiveMarkerControl.MOVE_3D
-		#self.int_marker.controls.append(deepcopy(control))
 		if(self.movable_trans):
 			control.name = "move_x"
 			control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS

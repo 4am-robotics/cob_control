@@ -127,10 +127,12 @@ bool InteractiveFrameTarget::initialize()
 	box_marker.color.g = 0.5;
 	box_marker.color.b = 0.5;
 	box_marker.color.a = 1.0;
-	visualization_msgs::InteractiveMarkerControl box_control;
-	box_control.always_visible = true;
-	box_control.markers.push_back( box_marker );
-	int_marker_.controls.push_back( box_control );
+	visualization_msgs::InteractiveMarkerControl control_3d;
+	control_3d.always_visible = true;
+	control_3d.name = "move_rotate_3D";
+	control_3d.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_ROTATE_3D;
+	control_3d.markers.push_back( box_marker );
+	int_marker_.controls.push_back(control_3d);
 	
 	visualization_msgs::InteractiveMarkerControl control;
 	control.always_visible = true;
@@ -138,9 +140,6 @@ bool InteractiveFrameTarget::initialize()
 	control.orientation.x = 1;
 	control.orientation.y = 0;
 	control.orientation.z = 0;
-	//control.name = "move_3D";
-	//control.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_3D;
-	//int_marker_.controls.push_back(control);
 	if(movable_trans_)
 	{
 		control.name = "move_x";
