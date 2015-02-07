@@ -114,25 +114,8 @@ bool InteractiveFrameTarget::initialize()
 	int_marker_.pose.orientation.z = target_pose_.getRotation().getZ();
 	int_marker_.pose.orientation.w = target_pose_.getRotation().getW();
 	int_marker_.name = "interactive_target";
-	int_marker_.description = tracking_frame_;
-	int_marker_.scale = 0.8;
-		
-	// create a grey box marker
-	visualization_msgs::Marker box_marker;
-	box_marker.type = visualization_msgs::Marker::CUBE;
-	box_marker.scale.x = 0.1;
-	box_marker.scale.y = 0.1;
-	box_marker.scale.z = 0.1;
-	box_marker.color.r = 0.0;
-	box_marker.color.g = 0.5;
-	box_marker.color.b = 0.5;
-	box_marker.color.a = 1.0;
-	visualization_msgs::InteractiveMarkerControl control_3d;
-	control_3d.always_visible = true;
-	control_3d.name = "move_rotate_3D";
-	control_3d.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_ROTATE_3D;
-	control_3d.markers.push_back( box_marker );
-	int_marker_.controls.push_back(control_3d);
+	//int_marker_.description = tracking_frame_;
+	int_marker_.scale = 0.5;
 	
 	visualization_msgs::InteractiveMarkerControl control;
 	control.always_visible = true;
@@ -176,25 +159,55 @@ bool InteractiveFrameTarget::initialize()
 		control.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
 		int_marker_.controls.push_back(control);
 	}
+	if(movable_trans_ && movable_rot_)
+	{
+		visualization_msgs::Marker box_marker;
+		box_marker.type = visualization_msgs::Marker::CUBE;
+		box_marker.scale.x = 0.1;
+		box_marker.scale.y = 0.1;
+		box_marker.scale.z = 0.1;
+		box_marker.color.r = 0.0;
+		box_marker.color.g = 0.5;
+		box_marker.color.b = 0.5;
+		box_marker.color.a = 1.0;
+		visualization_msgs::InteractiveMarkerControl control_3d;
+		control_3d.always_visible = true;
+		control_3d.name = "move_rotate_3D";
+		control_3d.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_ROTATE_3D;
+		control_3d.markers.push_back( box_marker );
+		int_marker_.controls.push_back(control_3d);
+	}
 	ia_server_->insert(int_marker_, boost::bind(&InteractiveFrameTarget::marker_fb,   this, _1));
 	
 	// create menu
 	menu_handler_.insert( "StartTracking", boost::bind(&InteractiveFrameTarget::start_tracking,   this, _1) );
 	menu_handler_.insert( "StopTracking", boost::bind(&InteractiveFrameTarget::stop_tracking,   this, _1) );
 	menu_handler_.insert( "ResetTracking", boost::bind(&InteractiveFrameTarget::reset_tracking,   this, _1) );
-	visualization_msgs::InteractiveMarker int_marker_menu;
-	int_marker_menu.header.frame_id = root_frame_;
-	int_marker_menu.name = "marker_menu";
-	int_marker_menu.description = nh_.getNamespace();
-	int_marker_menu.scale = 1.0;
-	int_marker_menu.pose.position.z = 1.2;
-	control = visualization_msgs::InteractiveMarkerControl();
-	control.interaction_mode = visualization_msgs::InteractiveMarkerControl::MENU;
-	control.name = "menu_control";
-	control.description= "InteractiveTargetMenu";
-	int_marker_menu.controls.push_back(control);
-	ia_server_->insert(int_marker_menu, boost::bind(&InteractiveFrameTarget::menu_fb,   this, _1) );
-	menu_handler_.apply( *ia_server_, int_marker_menu.name );
+	
+	int_marker_menu_.header.frame_id = tracking_frame_;
+	int_marker_menu_.name = "marker_menu";
+	int_marker_menu_.pose.position.y = 0.5;
+	visualization_msgs::Marker menu_marker;
+	menu_marker.scale.x = 0.15;
+	menu_marker.scale.y = 0.15;
+	menu_marker.scale.z = 0.15;
+	//menu_marker.type = visualization_msgs::Marker::SPHERE;
+	menu_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+	menu_marker.text = nh_.getNamespace() + "_menu";
+	menu_marker.color.r = 1.0;
+	menu_marker.color.g = 1.0;
+	menu_marker.color.b = 0.0;
+	menu_marker.color.a = 1.0;
+	
+	visualization_msgs::InteractiveMarkerControl control_menu;
+	control_menu.always_visible = true;
+	control_menu.interaction_mode = visualization_msgs::InteractiveMarkerControl::MENU;
+	control_menu.name = "menu_control";
+	//control_menu.description = "InteractiveMenu";
+	control_menu.markers.push_back(menu_marker);
+	int_marker_menu_.controls.push_back(control_menu);
+	ia_server_->insert(int_marker_menu_, boost::bind(&InteractiveFrameTarget::menu_fb,   this, _1) );
+	menu_handler_.apply( *ia_server_, int_marker_menu_.name );
 	ia_server_->applyChanges();
 	
 	timer_ = nh_.createTimer(ros::Duration(1/update_rate_), &InteractiveFrameTarget::send_transform,   this );

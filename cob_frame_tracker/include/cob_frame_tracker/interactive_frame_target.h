@@ -68,6 +68,7 @@ private:
 	
 	interactive_markers::InteractiveMarkerServer* ia_server_;
 	visualization_msgs::InteractiveMarker int_marker_;
+	visualization_msgs::InteractiveMarker int_marker_menu_;
 	interactive_markers::MenuHandler menu_handler_;
 	
 	bool tracking_;
