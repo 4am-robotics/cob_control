@@ -269,7 +269,7 @@ void UndercarriageCtrlGeom::calcDirect(PlatformState &state)
     }
 
     // assign rotational velocities for output
-    state.dRotRobRadS = dtempVelXRobMMS/wheels_.size();
+    state.dRotRobRadS = dtempRotRobRADPS/wheels_.size();
 
     // assign linear velocity of robot for output
     state.dVelLongMMS = dtempVelXRobMMS/wheels_.size();
