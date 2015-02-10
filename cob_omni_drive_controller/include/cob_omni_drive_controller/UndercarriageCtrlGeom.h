@@ -150,6 +150,8 @@ private:
         static double mergeRotRobRadS(const WheelData &wheel1, const WheelData &wheel2);
         
         WheelData(const WheelParams &params) : params_(params), /*m_dCtrlDeltaPhi(0),*/  m_dCtrlVelCmdInt(0){
+            state_.dAngGearSteerRad = params_.dWheelNeutralPos;
+            m_dAngGearSteerTargetRad = params_.dWheelNeutralPos;
             updateState(WheelState());
             setTarget(PlatformState());
         }
