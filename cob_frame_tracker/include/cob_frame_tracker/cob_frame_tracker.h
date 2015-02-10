@@ -40,6 +40,9 @@
 #include <tf/transform_datatypes.h>
 
 #include <control_toolbox/pid.h>
+#include <kdl_conversions/kdl_msg.h>
+#include <kdl/frames.hpp>
+#include <kdl_parser/kdl_parser.hpp>
 
 class CobFrameTracker
 {
@@ -47,7 +50,7 @@ public:
 	CobFrameTracker() {;}
 	~CobFrameTracker();
 	
-	void initialize();
+	bool initialize();
 	void run();
 	
 	void publish_twist(ros::Duration period);
@@ -62,7 +65,8 @@ private:
 	
 	bool tracking_;
 	std::string tracking_frame_;	//goal frame
-	std::string active_frame_;		//twists with respect to this frame
+	std::string chain_tip_link_;		//twists with respect to this frame
+	
 	double max_vel_lin_;
 	double max_vel_rot_;
 	
@@ -70,11 +74,19 @@ private:
 	ros::ServiceServer stop_server_;
 	ros::Publisher twist_pub_;
 	
+	/// Debug
+	ros::Publisher dif_pub_;
+	
 	bool movable_trans_;
 	bool movable_rot_;
 	
-	control_toolbox::Pid pid_controller_trans_;       /**< Internal PID controller. */
-	control_toolbox::Pid pid_controller_rot_;         /**< Internal PID controller. */
+	control_toolbox::Pid pid_controller_trans_x_;       /**< Internal PID controller. */
+	control_toolbox::Pid pid_controller_trans_y_;
+	control_toolbox::Pid pid_controller_trans_z_;
+	
+	control_toolbox::Pid pid_controller_rot_x_;         /**< Internal PID controller. */
+	control_toolbox::Pid pid_controller_rot_y_;
+	control_toolbox::Pid pid_controller_rot_z_;
 };
 
 #endif

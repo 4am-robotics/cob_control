@@ -30,21 +30,19 @@
 #include <cob_lookat_controller/cob_lookat_driver.h>
 
 
-void CobLookatDriver::initialize()
+bool CobLookatDriver::initialize()
 {
-	///get params
-	XmlRpc::XmlRpcValue jn_param;
-	if (nh_.hasParam("lookat_joint_names"))
-	{	nh_.getParam("lookat_joint_names", jn_param);	}
-	else
-	{	ROS_ERROR("Parameter lookat_joint_names not set");	}
+	// JointNames
+	if(!nh_.getParam("joint_names", joints_))
+	{
+		ROS_ERROR("Parameter 'joint_names' not set");
+		return false;
+	}
+	dof_ = joints_.size();
 	
-	dof_ = jn_param.size();
-	for(unsigned int i=0; i<dof_; i++)
-	{	joints_.push_back((std::string)jn_param[i]);	}
 	
 	current_pos_.resize(dof_, 0.0);
-	current_pos_[0] = 1.0;
+	current_pos_[0] = 1.0;	//this is in order to see the frame
 	current_vel_.resize(dof_, 0.0);
 	
 	if (nh_.hasParam("update_rate"))
@@ -54,9 +52,9 @@ void CobLookatDriver::initialize()
 	
 	command_vel_sub_ = nh_.subscribe("command_vel", 1, &CobLookatDriver::command_vel_cb, this);
 	jointstate_pub_ = nh_.advertise<sensor_msgs::JointState> ("joint_states", 1);
-	debug_jointstate_pub_ = nh_.advertise<sensor_msgs::JointState> ("debug_joint_states", 1);
 	
 	ROS_INFO("...initialized!");
+	return true;
 }
 
 void CobLookatDriver::run()
@@ -95,13 +93,12 @@ void CobLookatDriver::publish_state()
 	}
 	
 	jointstate_pub_.publish(msg);
-	debug_jointstate_pub_.publish(msg);
 }
 
-void CobLookatDriver::command_vel_cb(const brics_actuator::JointVelocities::ConstPtr& msg)
+void CobLookatDriver::command_vel_cb(const std_msgs::Float64MultiArray::ConstPtr& msg)
 {
 	///ToDo: Do some checks!
-	if(msg->velocities.size() != dof_)
+	if(msg->data.size() != dof_)
 	{
 		ROS_ERROR("DoF do not match! Stopping!");
 		current_vel_.assign(dof_, 0.0);
@@ -110,7 +107,7 @@ void CobLookatDriver::command_vel_cb(const brics_actuator::JointVelocities::Cons
 	
 	for(unsigned int i=0; i<dof_; i++)
 	{
-		current_vel_[i]=msg->velocities[i].value;
+		current_vel_[i]=msg->data[i];
 	}
 	
 	last_update_ = ros::Time::now();

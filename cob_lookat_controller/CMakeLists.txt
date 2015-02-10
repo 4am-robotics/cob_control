@@ -19,7 +19,6 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${orocos_kdl_INCLUDE_DIRS})
 ## Build
 # Declare a cpp library
 add_library(cob_lookat_driver src/cob_lookat_driver.cpp )
-add_dependencies(cob_lookat_driver brics_actuator_gencpp)
 
 add_library(cob_lookat_controller src/cob_lookat_controller.cpp )
 add_dependencies(cob_lookat_controller brics_actuator_gencpp)

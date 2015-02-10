@@ -1,0 +1,40 @@
+******************************************************************************************
+******************************************************************************************
+This readme gives you instructions how to get the frame_tracker PID parameters.***********
+******************************************************************************************
+******************************************************************************************
+
+1. Start every component (twist_controller,frame_tracker) which is necessary for twist controlling.
+
+2. Use rqt trajectory controller / dashboard to find a start configuration for the endeffector.
+
+3. Configure the python script in the cob_model_indentifier/scripts folder to command different twists for the manipulator. For better results use only one direction.  (JUST CONFIGURE! DO NOT RUN THE SCRIPT YET)
+
+4. Create a directory on the robots harddrive where the recorded date can be stored.
+
+5. Configure cob_model_identifier yaml file and type in the previous created directory.
+
+6. Launch the cob_model_identifier: roslaunch cob_model_identifier model_identification.launch ns:__"twistcontroller_namespace" (replace twistcontroller_namespace)
+
+7. Run the python script: scriptname.py ns:__"twistcontroller_namespace" (replace twistcontroller_namespace)
+
+8. After finishing the script, click into the cob_model_identifier terminal and press "a" to finish recording. Several .m files will be created into the folder (Step 4).
+
+9. Compress the files in the robots directory with: "tar -cvf filename directory"
+
+10. Send the compressed files to the local computer: "scp filename user@comp:."
+
+11. Locate the .tar folder and decompress it. A new folder will be created.
+
+12. Open "Octave" and use the "cd"-command to get to the directory where the .m files were saved into.
+
+13. Open the .m file which represents the direction of the configured twist (Step 3). (example: z_linear or x_angular)
+
+14. 4 plots will be opened. Ignore every plot except the PT1 Model.
+
+15. Print the bode-plot of the model with (example: bode(Gs_z_linear_integrated1) or bode(Gs_x_angular_integrated1))
+
+16. Follow the instructions in Christoph Mark's BPP2 report (Ask Felix Meßmer)
+
+
+
