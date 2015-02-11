@@ -79,6 +79,7 @@ public:
     virtual int CartToJnt(const KDL::JntArray& q_init, const KDL::JntArray& last_q_dot, const KDL::FrameVel& v_in, KDL::JntArrayVel& q_out){return -1;};
     
     void SetAugmentedSolverParams(AugmentedSolverParams params){params_ = params;}
+    AugmentedSolverParams GetAugmentedSolverParams(){return params_;}
 
 private:
     const KDL::Chain chain;
