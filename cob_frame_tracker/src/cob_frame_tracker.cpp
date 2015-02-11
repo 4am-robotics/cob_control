@@ -200,7 +200,7 @@ void CobFrameTracker::run()
 //					CobFrameTracker::abort();
 				}
 			}
-			ROS_INFO("show abortion message [%s]", abortion_message_.c_str());
+//			ROS_INFO("show abortion message [%s]", abortion_message_.c_str());
 			//--> ABORTION CRITERIA ONLY HERE FOR DEBUGGING! DELETE AFTERWARDS!
 			if (CobFrameTracker::searchForAbortionCriteria()) {
 //				CobFrameTracker::abort();
@@ -389,7 +389,7 @@ void CobFrameTracker::abort()
 	ROS_WARN("Tracking has been aborted because of %s", abortion_message_.c_str());
 	tracking_ = false;
 	tracking_goal_ = false;
-	ROS_INFO("target_tracking_frame bevor = %s", target_tracking_frame_.c_str());
+	ROS_INFO("target_tracking_frame before = %s", target_tracking_frame_.c_str());
 	ROS_INFO("active frame = %s", active_frame_.c_str());
 	target_tracking_frame_ = active_frame_;
 	geometry_msgs::TwistStamped twist_msg;
