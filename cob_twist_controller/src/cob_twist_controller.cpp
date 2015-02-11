@@ -175,14 +175,14 @@ bool CobTwistController::initialize()
 	ros::Duration(1.0).sleep();
 	
 	///initialize ROS interfaces
-	//jointstate_sub = nh_.subscribe("joint_states", 1, &CobTwistController::jointstate_cb, this);
-	jointstate_sub = nh_.subscribe("/joint_states", 1, &CobTwistController::jointstate_cb, this);
-	odometry_sub = nh_base.subscribe("controller/odometry", 1, &CobTwistController::odometry_cb, this);
+	jointstate_sub = nh_.subscribe("joint_states", 1, &CobTwistController::jointstate_cb, this);
+	//odometry_sub = nh_base.subscribe("controller/odometry", 1, &CobTwistController::odometry_cb, this);
+	odometry_sub = nh_.subscribe("/base_controller/odometry", 1, &CobTwistController::odometry_cb, this);
 	twist_sub = nh_twist.subscribe("command_twist", 1, &CobTwistController::twist_cb, this);
 	twist_stamped_sub = nh_twist.subscribe("command_twist_stamped", 1, &CobTwistController::twist_stamped_cb, this);
 	vel_pub = nh_.advertise<std_msgs::Float64MultiArray>("joint_group_velocity_controller/command", 1);
-	//base_vel_pub = nh_base.advertise<geometry_msgs::Twist>("controller/command", 1);
-	base_vel_pub = nh_base.advertise<geometry_msgs::Twist>("controller/command_direct", 1);
+	//base_vel_pub = nh_base.advertise<geometry_msgs::Twist>("controller/command_direct", 1);
+	base_vel_pub = nh_base.advertise<geometry_msgs::Twist>("/base_controller/command_direct", 1);
 	
 	/// Debug
 	twist_current_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_current", 1);
@@ -455,20 +455,20 @@ void CobTwistController::jointstate_cb(const sensor_msgs::JointState::ConstPtr& 
 		
 		///---------------------------------------------------------------------
 		/// DEBUG
-		KDL::FrameVel FrameVel;
-		geometry_msgs::Twist twist_msg;
-		KDL::JntArrayVel jntArrayVel = KDL::JntArrayVel(last_q_, last_q_dot_);
-		
-		int ret = p_fksolver_vel_->JntToCart(jntArrayVel, FrameVel, -1);
-		
-		if(ret>=0)
-		{
-			KDL::Twist twist = FrameVel.GetTwist();
-			//tf::twistKDLToMsg(twist,twist_msg);
-			//twist_current_pub_.publish(twist_msg);
-			
-			ROS_WARN_STREAM("TwistCurrent_cb: (" << twist.vel.x() << ", " << twist.vel.y() << ", " << twist.vel.z() << ")\t\tt(" << twist.rot.x() << ", " << twist.rot.y() << ", " << twist.rot.z() << ")");
-		}
+		//KDL::FrameVel FrameVel;
+		//geometry_msgs::Twist twist_msg;
+		//KDL::JntArrayVel jntArrayVel = KDL::JntArrayVel(last_q_, last_q_dot_);
+		//
+		//int ret = p_fksolver_vel_->JntToCart(jntArrayVel, FrameVel, -1);
+		//
+		//if(ret>=0)
+		//{
+		//	KDL::Twist twist = FrameVel.GetTwist();
+		//	//tf::twistKDLToMsg(twist,twist_msg);
+		//	//twist_current_pub_.publish(twist_msg);
+		//	
+		//	ROS_WARN_STREAM("TwistCurrent_cb: (" << twist.vel.x() << ", " << twist.vel.y() << ", " << twist.vel.z() << ")\t\tt(" << twist.rot.x() << ", " << twist.rot.y() << ", " << twist.rot.z() << ")");
+		//}
 		///---------------------------------------------------------------------
 	}
 }

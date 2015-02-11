@@ -87,7 +87,7 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& 
 		jac_full.resize(6,chain.getNrOfJoints() + jac_b.cols());
 		jac_full << jac_chain.data,jac_b;
 		
-		std::cout << "Combined jacobian:\n " << jac_full << "\n";
+		//std::cout << "Combined jacobian:\n " << jac_full << "\n";
 		//ROS_INFO_STREAM("JacBase: rows " <<jac_base.rows()<<"; cols "<<jac_base.cols());
 		//ROS_INFO_STREAM("JacFull: rows " <<jac_full.rows()<<"; cols "<<jac_full.cols());
 		
