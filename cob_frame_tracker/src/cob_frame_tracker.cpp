@@ -44,49 +44,6 @@ bool CobFrameTracker::initialize()
 
 	ros::NodeHandle nh_twist("twist_controller");
 	ros::NodeHandle nh_cartesian("cartesian_controller");
-	
-	///parse robot_description and generate KDL chains
-	nh_.param("/robot_description", robot_desc_string, std::string());
-	if (!kdl_parser::treeFromString(robot_desc_string, my_tree)){
-		ROS_ERROR("Failed to construct kdl tree");
-		return false;
-	}
-
-	if(!nh_.getParam("joint_names", joints_))
-	{
-		ROS_ERROR("Parameter 'joint_names' not set");
-		return false;
-	}
-	dof_ = joints_.size();
-
-	// Chain
-	if(!nh_cartesian.getParam("base_link", chain_base_))
-	{
-		ROS_ERROR("Parameter 'base_link' not set");
-		return false;
-	}
-	if (!nh_cartesian.getParam("tip_link", chain_tip_))
-	{
-		ROS_ERROR("Parameter 'tip_link' not set");
-		return false;
-	}
-
-	my_tree.getChain(chain_base_, chain_tip_, chain_);
-	if(chain_.getNrOfJoints() == 0)
-	{
-		ROS_ERROR("Failed to initialize kinematic chain");
-		return false;
-	}
-
-	///initialize ROS interfaces
-	jointstate_sub = nh_.subscribe("/joint_states", 1, &CobFrameTracker::jointstate_cb, this);
-
-	//initialize variables and current joint values and velocities
-	ROS_INFO("chain_.getNrOfJoints() = %u", chain_.getNrOfJoints());
-	last_q_ = KDL::JntArray(chain_.getNrOfJoints());
-	last_q_dot_ = KDL::JntArray(chain_.getNrOfJoints());
-	q_temp = last_q_;
-	q_dot_temp = last_q_dot_;
 
 	///get params
 	if (nh_cartesian.hasParam("update_rate"))
@@ -104,6 +61,16 @@ bool CobFrameTracker::initialize()
 	else
 	{	max_vel_rot_ = 6.28;	}	//rad/sec
 	
+	if (nh_cartesian.hasParam("chain_base_link"))
+	{
+		nh_cartesian.getParam("chain_base_link", chain_base_);
+	}
+	else
+	{
+		ROS_ERROR("No chain_base_link specified. Aborting!");
+		return false;
+	}
+
 	if (nh_cartesian.hasParam("chain_tip_link"))
 	{
 		nh_cartesian.getParam("chain_tip_link", chain_tip_link_);
@@ -113,6 +80,43 @@ bool CobFrameTracker::initialize()
 		ROS_ERROR("No chain_tip_link specified. Aborting!");
 		return false;
 	}
+	
+	
+	
+	///parse robot_description and generate KDL chains
+	nh_.param("/robot_description", robot_desc_string, std::string());
+	if (!kdl_parser::treeFromString(robot_desc_string, my_tree)){
+		ROS_ERROR("Failed to construct kdl tree");
+		return false;
+	}
+
+	if(!nh_.getParam("joint_names", joints_))
+	{
+		ROS_ERROR("Parameter 'joint_names' not set");
+		return false;
+	}
+	dof_ = joints_.size();
+
+	my_tree.getChain(chain_base_, chain_tip_link_, chain_);
+	if(chain_.getNrOfJoints() == 0)
+	{
+		ROS_ERROR("Failed to initialize kinematic chain");
+		return false;
+	}
+
+	///initialize ROS interfaces
+	jointstate_sub = nh_.subscribe("/joint_states", 1, &CobFrameTracker::jointstate_cb, this);
+
+	//initialize variables and current joint values and velocities
+	ROS_INFO("chain_.getNrOfJoints() = %u", chain_.getNrOfJoints());
+	last_q_ = KDL::JntArray(chain_.getNrOfJoints());
+	last_q_dot_ = KDL::JntArray(chain_.getNrOfJoints());
+	q_temp = last_q_;
+	q_dot_temp = last_q_dot_;
+	
+	
+	
+	
 	
 	if (nh_cartesian.hasParam("movable_trans"))
 	{	nh_cartesian.getParam("movable_trans", movable_trans_);	}
@@ -196,7 +200,7 @@ void CobFrameTracker::run()
 
 				//--> ABORTION CRITERIA ONLY HERE
 				if (CobFrameTracker::searchForAbortionCriteria()) {
-//					CobFrameTracker::abort();
+					CobFrameTracker::abort();
 				}
 			}
 //			ROS_INFO("show abortion message [%s]", abortion_message_.c_str());
@@ -284,9 +288,10 @@ void CobFrameTracker::publish_twist(ros::Duration period)
 	//twist_msg.twist.angular.z = copysign(std::min(max_vel_rot_, std::fabs(transform_tf.getRotation().z())),transform_tf.getRotation().z());
 
 	//eukl distance:
-	cart_distance_ = sqrt(transform_msg.transform.translation.x * transform_msg.transform.translation.x + transform_msg.transform.translation.y * transform_msg.transform.translation.y + transform_msg.transform.translation.z * transform_msg.transform.translation.z);
+	cart_distance_ = sqrt(pow(transform_tf.getOrigin().x(),2) + pow(transform_tf.getOrigin().y(),2) + pow(transform_tf.getOrigin().z(),2));
 	//rot distance:
-	rot_distance_ = 2* acos(transform_msg.transform.rotation.w);
+	// TODO: change to cartesian rot
+//	rot_distance_ = 2* acos(transform_msg.transform.rotation.w);
 	//get target_twist
 	target_twist_.vel.x(twist_msg.twist.linear.x);
 	target_twist_.vel.y(twist_msg.twist.linear.y);
@@ -309,7 +314,7 @@ bool CobFrameTracker::start_tracking_cb(cob_srvs::SetString::Request& request, c
 	else
 	{
 		ROS_INFO("CobFrameTracker started WITHOUT SECURITY MONITORING");
-		target_tracking_frame_ = request.data;
+		tracking_frame_ = request.data;
 		tracking_ = true;
 		tracking_goal_ = false;
 		response.success = true;
@@ -325,11 +330,11 @@ bool CobFrameTracker::stop_tracking_cb(std_srvs::Empty::Request& request, std_sr
 			return false;
 		}
 		ROS_INFO("CobFrameTracker stopped successfully");
-		target_tracking_frame_ = active_frame_;
+		tracking_frame_ = chain_tip_link_;
 		tracking_ = false;
 		//publish zero Twist for stopping
 		geometry_msgs::TwistStamped twist_msg;
-		twist_msg.header.frame_id = active_frame_;
+		twist_msg.header.frame_id = chain_tip_link_;
 		twist_pub_.publish(twist_msg);
 		return true;
 	}
@@ -346,15 +351,14 @@ void CobFrameTracker::goalCB()
 	ROS_INFO("Waiting for a new goal");
 	if (as_.isNewGoalAvailable()) {
 		boost::shared_ptr<const cob_frame_tracker::FrameTrackingGoal> goal_= as_.acceptNewGoal();
-		target_tracking_frame_ = goal_->tracking_frame;
+		tracking_frame_ = goal_->tracking_frame;
 		stop_on_goal_ = goal_->stop_on_goal;
 		tracking_time_ = goal_->tracking_time;
 		tracking_ = true;
 		tracking_goal_ = true;
 		start_of_tracking_ = ros::Time::now();
-		ROS_INFO("Output: Received target_tracking_frame_ = %s", target_tracking_frame_.c_str());
-		ROS_INFO("Output: Received stop_on_goal_ = %s", stop_on_goal_ ? "true" : "false" );
-		ROS_INFO("Output: Received tracking_time_ = %u", tracking_time_);
+//		ROS_INFO("Output: Received stop_on_goal_ = %s", stop_on_goal_ ? "true" : "false" );
+//		ROS_INFO("Output: Received tracking_time_ = %u", tracking_time_);
 	}
 }
 
@@ -364,10 +368,10 @@ void CobFrameTracker::preemptCB()
 	as_.setPreempted(result_);
 	tracking_ = false;
 	tracking_goal_ = false;
-	ROS_INFO("active_frame = %s", active_frame_.c_str());
-	target_tracking_frame_ = active_frame_;
+//	ROS_INFO("active_frame = %s", tracking_frame_.c_str());
+	tracking_frame_ = chain_tip_link_;
 	geometry_msgs::TwistStamped twist_msg;
-	twist_msg.header.frame_id = active_frame_;
+	twist_msg.header.frame_id = chain_tip_link_;
 	twist_pub_.publish(twist_msg);
 }
 
@@ -378,7 +382,7 @@ void CobFrameTracker::succeed()
 	tracking_ = false;
 	tracking_goal_ = false;
 	geometry_msgs::TwistStamped twist_msg;
-	twist_msg.header.frame_id = active_frame_;
+	twist_msg.header.frame_id = chain_tip_link_;
 	twist_pub_.publish(twist_msg);
 }
 
@@ -390,11 +394,9 @@ void CobFrameTracker::abort()
 	ROS_WARN("Tracking has been aborted because of %s", abortion_message_.c_str());
 	tracking_ = false;
 	tracking_goal_ = false;
-	ROS_INFO("target_tracking_frame before = %s", target_tracking_frame_.c_str());
-	ROS_INFO("active frame = %s", active_frame_.c_str());
-	target_tracking_frame_ = active_frame_;
+	tracking_frame_ = chain_tip_link_;
 	geometry_msgs::TwistStamped twist_msg;
-	twist_msg.header.frame_id = active_frame_;
+	twist_msg.header.frame_id = chain_tip_link_;
 	twist_pub_.publish(twist_msg);
 }
 
@@ -404,7 +406,7 @@ bool CobFrameTracker::searchForAbortionCriteria()
 	KDL::Twist target_twist_local_(target_twist_);
 
 	bool noTwist = CobFrameTracker::checkNoTwistErrors(current_twist_local_);
-	bool distance = CobFrameTracker::checkDistance(cart_distance_, rot_distance_);
+	bool distance = CobFrameTracker::checkDistance(cart_distance_, 0.0);
 	bool deadlock = false;
 
 //	ROS_INFO("distance value %f", cart_distance_);
@@ -504,10 +506,10 @@ bool CobFrameTracker::checkDistance(const double dist, const double rot)
 	{
 		return true;
 	}
-	if (rot > cart_min_dist_threshold_rot_)
-	{
-		return true;
-	}
+//	if (rot > cart_min_dist_threshold_rot_)
+//	{
+//		return true;
+//	}
 	return false;
 }
 

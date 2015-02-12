@@ -115,7 +115,6 @@ public:
 	ros::Subscriber jointstate_sub;
 	
 	//goal definition:
-	std::string target_tracking_frame_;
 	bool stop_on_goal_;
 	int tracking_time_;
 	ros::Time start_of_tracking_;
