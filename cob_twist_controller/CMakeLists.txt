@@ -56,3 +56,9 @@ install(DIRECTORY include/${PROJECT_NAME}/
  FILES_MATCHING PATTERN "*.h"
  PATTERN ".svn" EXCLUDE
 )
+
+# Mark other files for installation (e.g. launch and bag files, etc.)
+install(PROGRAMS scripts/test_publisher_twist.py scripts/test_publisher_twist_stamped.py scripts/test_publisher_twist_series.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/scripts
+)
+

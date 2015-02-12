@@ -23,10 +23,10 @@ class InteractiveFrameTarget:
 		self.listener = tf.TransformListener()
 		
 		#get this from the frame_tracker parameters
-		if rospy.has_param('cartesian_controller/active_frame'):
-			self.active_frame = rospy.get_param("cartesian_controller/active_frame")
+		if rospy.has_param('cartesian_controller/chain_tip_link'):
+			self.active_frame = rospy.get_param("cartesian_controller/chain_tip_link")
 		else:
-			rospy.logerr("No active_frame specified. Aborting!")
+			rospy.logerr("No chain_tip_link specified. Aborting!")
 			sys.exit()
 		if rospy.has_param('cartesian_controller/tracking_frame'):
 			self.tracking_frame = rospy.get_param("cartesian_controller/tracking_frame")
@@ -69,7 +69,11 @@ class InteractiveFrameTarget:
 		self.target_pose.pose.orientation.w = 1.0
 		
 		##give tf_listener some time to fill cache
-		#rospy.sleep(1.0)	#1.0 sec
+		#try:
+			#rospy.sleep(1.0)
+		#except rospy.ROSInterruptException as e:
+			##print "ROSInterruptException"
+			#pass
 		
 		transform_available = False
 		while not transform_available:
@@ -77,7 +81,11 @@ class InteractiveFrameTarget:
 				(trans,rot) = self.listener.lookupTransform(self.root_frame, self.active_frame, rospy.Time(0))
 			except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
 				#rospy.logwarn("Waiting for transform...")
-				rospy.sleep(0.1)
+				try:
+					rospy.sleep(0.1)
+				except rospy.ROSInterruptException as e:
+					#print "ROSInterruptException"
+					pass
 				continue
 			transform_available = True
 		
@@ -107,10 +115,12 @@ class InteractiveFrameTarget:
 		box_marker.color.g = 0.5
 		box_marker.color.b = 0.5
 		box_marker.color.a = 1.0
-		box_control = InteractiveMarkerControl()
-		box_control.always_visible = True
-		box_control.markers.append( box_marker )
-		self.int_marker.controls.append(box_control)
+		control_3d = InteractiveMarkerControl()
+		control_3d.always_visible = True
+		control_3d.name = "move_rotate_3D"
+		control_3d.interaction_mode = InteractiveMarkerControl.MOVE_ROTATE_3D
+		control_3d.markers.append( box_marker )
+		self.int_marker.controls.append(control_3d)
 		
 		control = InteractiveMarkerControl()
 		control.always_visible = True
@@ -118,9 +128,6 @@ class InteractiveFrameTarget:
 		control.orientation.x = 1
 		control.orientation.y = 0
 		control.orientation.z = 0
-		#control.name = "move_3D"
-		#control.interaction_mode = InteractiveMarkerControl.MOVE_3D
-		#self.int_marker.controls.append(deepcopy(control))
 		if(self.movable_trans):
 			control.name = "move_x"
 			control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
@@ -209,7 +216,11 @@ class InteractiveFrameTarget:
 				(trans,rot) = self.listener.lookupTransform(self.root_frame, self.active_frame, rospy.Time(0))
 			except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
 				rospy.logwarn("Waiting for transform...")
-				rospy.sleep(0.1)
+				try:
+					rospy.sleep(0.1)
+				except rospy.ROSInterruptException as e:
+					#print "ROSInterruptException"
+					pass
 				continue
 			transform_available = True
 		
@@ -253,7 +264,11 @@ if __name__ == "__main__":
 	
 	ilt = InteractiveFrameTarget()
 
- 	r = rospy.Rate(68)
- 	while not rospy.is_shutdown():
-   		ilt.run()
-		r.sleep()
+	r = rospy.Rate(50)
+	while not rospy.is_shutdown():
+		ilt.run()
+		try:
+			r.sleep()
+		except rospy.ROSInterruptException as e:
+			#print "ROSInterruptException"
+			pass

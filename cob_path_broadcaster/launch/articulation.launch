@@ -1,8 +1,12 @@
 <?xml version="1.0"?>
 
 <launch>
-	<group ns="arm">
-		<rosparam ns="cob_articulation" command="load" file="$(find cob_path_broadcaster)/config/articulation_params.yaml"/>
+		<param name="articulation/file_name" type="str" value="move_relative.prog"/>
+		<!--param name="articulation/file_name" type="str" value="move_circ.prog"/-->
+		<!--param name="articulation/file_name" type="str" value="move_santa.prog"/-->
+		
+		<param name="articulation/reference_frame" type="str" value="odom_combined"/>
+		<param name="articulation/articulation_target_frame" type="str" value="articulation_target"/>
+		
 		<node name="cob_articulation" pkg="cob_path_broadcaster" type="cob_articulation_node" output="screen"/>
-	</group>
 </launch>

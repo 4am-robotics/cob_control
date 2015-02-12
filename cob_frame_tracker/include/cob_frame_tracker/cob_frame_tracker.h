@@ -102,11 +102,10 @@ public:
 	boost::recursive_mutex reconfig_mutex_;
 	boost::shared_ptr< dynamic_reconfigure::Server<cob_frame_tracker::FrameTrackerConfig> > reconfigure_server_;
 	void reconfigure_callback(cob_frame_tracker::FrameTrackerConfig &config, uint32_t level);
-	tf::TransformListener tf_listener_;
-
-protected:
 
 	ros::NodeHandle nh_;
+	tf::TransformListener tf_listener_;
+
 	std::vector<std::string> joints_;
 	unsigned int dof_;
 	std::string action_name_;
@@ -156,8 +155,8 @@ private:
 	
 	bool tracking_;
 	bool tracking_goal_;
-	std::string active_frame_;		//twists with respect to this frame
-	std::string base_link_;
+	std::string tracking_frame_;	//goal frame
+	std::string chain_tip_link_;		//twists with respect to this frame
 	
 	double max_vel_lin_;
 	double max_vel_rot_;
@@ -166,13 +165,19 @@ private:
 	ros::ServiceServer stop_server_;
 	ros::Publisher twist_pub_;
 	
+	/// Debug
+	ros::Publisher dif_pub_;
+	
 	bool movable_trans_;
 	bool movable_rot_;
-
+	
 	control_toolbox::Pid pid_controller_trans_x_;       /**< Internal PID controller. */
 	control_toolbox::Pid pid_controller_trans_y_;
 	control_toolbox::Pid pid_controller_trans_z_;
-	control_toolbox::Pid pid_controller_rot_;         /**< Internal PID controller. */
+	
+	control_toolbox::Pid pid_controller_rot_x_;         /**< Internal PID controller. */
+	control_toolbox::Pid pid_controller_rot_y_;
+	control_toolbox::Pid pid_controller_rot_z_;
 
 	// ABORTION CRITERIA:
 	KDL::Twist current_twist_;

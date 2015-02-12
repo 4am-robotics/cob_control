@@ -59,7 +59,7 @@ private:
 	ros::Timer timer_;
 	double update_rate_;
 	
-	std::string active_frame_;		//twists with respect to this frame
+	std::string chain_tip_link_;		//twists with respect to this frame
 	std::string tracking_frame_;	//goal frame
 	std::string root_frame_;
 	
@@ -68,6 +68,7 @@ private:
 	
 	interactive_markers::InteractiveMarkerServer* ia_server_;
 	visualization_msgs::InteractiveMarker int_marker_;
+	visualization_msgs::InteractiveMarker int_marker_menu_;
 	interactive_markers::MenuHandler menu_handler_;
 	
 	bool tracking_;
