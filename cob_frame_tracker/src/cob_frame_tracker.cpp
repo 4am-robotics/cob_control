@@ -203,11 +203,11 @@ void CobFrameTracker::run()
 					CobFrameTracker::abort();
 				}
 			}
-//			ROS_INFO("show abortion message [%s]", abortion_message_.c_str());
-			//--> ABORTION CRITERIA ONLY HERE FOR DEBUGGING! DELETE AFTERWARDS!
-			if (CobFrameTracker::searchForAbortionCriteria()) {
-//				CobFrameTracker::abort();
-			}
+////			ROS_INFO("show abortion message [%s]", abortion_message_.c_str());
+//			//--> ABORTION CRITERIA ONLY HERE FOR DEBUGGING! DELETE AFTERWARDS!
+//			if (CobFrameTracker::searchForAbortionCriteria()) {
+////				CobFrameTracker::abort();
+//			}
 
 			publish_twist(period);
 		}
