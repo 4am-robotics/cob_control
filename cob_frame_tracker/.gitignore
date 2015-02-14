@@ -1,0 +1,9 @@
+# tilde files
+/*~
+
+# merge conflict files
+
+/*.orig
+
+/.cproject
+/.project
