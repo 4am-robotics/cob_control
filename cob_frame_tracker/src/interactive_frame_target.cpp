@@ -123,6 +123,17 @@ bool InteractiveFrameTarget::initialize()
 	control.orientation.x = 1;
 	control.orientation.y = 0;
 	control.orientation.z = 0;
+	visualization_msgs::Marker box_marker;
+	box_marker.type = visualization_msgs::Marker::CUBE;
+	box_marker.scale.x = 0.1;
+	box_marker.scale.y = 0.1;
+	box_marker.scale.z = 0.1;
+	box_marker.color.r = 0.0;
+	box_marker.color.g = 0.5;
+	box_marker.color.b = 0.5;
+	box_marker.color.a = 1.0;
+	visualization_msgs::InteractiveMarkerControl control_3d;
+	control_3d.always_visible = true;
 	if(movable_trans_)
 	{
 		control.name = "move_x";
@@ -138,6 +149,8 @@ bool InteractiveFrameTarget::initialize()
 		control.orientation.z = 1;
 		control.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_AXIS;
 		int_marker_.controls.push_back(control);
+		control_3d.name = "move_3D";
+		control_3d.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_3D;
 	}
 	if(movable_rot_)
 	{
@@ -158,25 +171,16 @@ bool InteractiveFrameTarget::initialize()
 		control.orientation.z = 1;
 		control.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_AXIS;
 		int_marker_.controls.push_back(control);
+		control_3d.name = "rotate_3D";
+		control_3d.interaction_mode = visualization_msgs::InteractiveMarkerControl::ROTATE_3D;
 	}
 	if(movable_trans_ && movable_rot_)
 	{
-		visualization_msgs::Marker box_marker;
-		box_marker.type = visualization_msgs::Marker::CUBE;
-		box_marker.scale.x = 0.1;
-		box_marker.scale.y = 0.1;
-		box_marker.scale.z = 0.1;
-		box_marker.color.r = 0.0;
-		box_marker.color.g = 0.5;
-		box_marker.color.b = 0.5;
-		box_marker.color.a = 1.0;
-		visualization_msgs::InteractiveMarkerControl control_3d;
-		control_3d.always_visible = true;
 		control_3d.name = "move_rotate_3D";
 		control_3d.interaction_mode = visualization_msgs::InteractiveMarkerControl::MOVE_ROTATE_3D;
-		control_3d.markers.push_back( box_marker );
-		int_marker_.controls.push_back(control_3d);
 	}
+	control_3d.markers.push_back( box_marker );
+	int_marker_.controls.push_back(control_3d);
 	ia_server_->insert(int_marker_, boost::bind(&InteractiveFrameTarget::marker_fb,   this, _1));
 	
 	// create menu
