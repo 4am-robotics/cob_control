@@ -1,2 +1,0 @@
-echo send service call
-rosservice call /arm_left/cob_frame_tracker_action_client_node/stop_tracking

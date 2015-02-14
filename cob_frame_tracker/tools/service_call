@@ -1,2 +1,0 @@
-echo send service call
-rosservice call /arm_left/cob_frame_tracker_action_client_node/start_tracking "{data: arm_left_7_target}"
