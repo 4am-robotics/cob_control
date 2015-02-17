@@ -25,7 +25,6 @@ struct AugmentedSolverParams {
     double damping_factor;
     double lambda0;
     double wt;
-    double deltaRMax;
     bool JLA_active;
     bool enforce_limits;
     double tolerance;
@@ -37,11 +36,8 @@ struct AugmentedSolverParams {
 
 enum DampingMethodTypes {
     MANIPULABILITY = 0,
-    MANIPULABILITY_RATE = 1,
-    TRACKING_ERROR = 2,
-    SINGULAR_REGION = 3,
-    CONSTANT = 4,
-    TRUNCATION = 5
+    CONSTANT = 1,
+    TRUNCATION = 2
 };
 
 
@@ -64,16 +60,16 @@ public:
     ~augmented_solver();
     
     /** CartToJnt for chain using SVD including base and various DampingMethods **/
-    virtual int CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& last_q_dot, KDL::Twist& v_in, KDL::JntArray& qdot_out, std::vector<float> *limits_min, std::vector<float> *limits_max, KDL::Frame &base_position, KDL::Frame &chain_base);
+    virtual int CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& last_q_dot, KDL::Twist& v_in, KDL::JntArray& qdot_out, std::vector<float> limits_min, std::vector<float> limits_max, KDL::Frame &base_position, KDL::Frame &chain_base);
 
-	inline virtual int CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& last_q_dot, KDL::Twist& v_in, KDL::JntArray& qdot_out, std::vector<float> *limits_min, std::vector<float> *limits_max)
-	{
-		KDL::Frame dummy;
-		dummy.p = KDL::Vector(0,0,0);
-		dummy.M = KDL::Rotation::Quaternion(0,0,0,0);
-		
-		return CartToJnt(q_in, last_q_dot, v_in, qdot_out,limits_min,limits_max,dummy,dummy);
-	}
+    inline virtual int CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& last_q_dot, KDL::Twist& v_in, KDL::JntArray& qdot_out, std::vector<float> limits_min, std::vector<float> limits_max)
+    {
+        KDL::Frame dummy;
+        dummy.p = KDL::Vector(0,0,0);
+        dummy.M = KDL::Rotation::Quaternion(0,0,0,0);
+        
+        return CartToJnt(q_in, last_q_dot, v_in, qdot_out, limits_min, limits_max, dummy, dummy);
+    }
 
     /** not (yet) implemented. */
     virtual int CartToJnt(const KDL::JntArray& q_init, const KDL::JntArray& last_q_dot, const KDL::FrameVel& v_in, KDL::JntArrayVel& q_out){return -1;};
@@ -82,18 +78,14 @@ public:
     AugmentedSolverParams GetAugmentedSolverParams(){return params_;}
 
 private:
-    const KDL::Chain chain;
-    KDL::Jacobian jac,jac_base;
-    KDL::ChainJntToJacSolver jnt2jac;
-    int maxiter;
-    Eigen::MatrixXd Jcm1;
-    double wkm1;
-    bool initial_iteration;
-    Eigen::VectorXd last_dh;
+    const KDL::Chain chain_;
+    KDL::Jacobian jac_, jac_base_;
+    KDL::ChainJntToJacSolver jnt2jac_;
+    int maxiter_;
     double x_,y_,r_,z_;
     
     AugmentedSolverParams params_;
-    Eigen::VectorXd calculate_weighting(const KDL::JntArray& q, const KDL::JntArray& last_q_dout,  std::vector<float> *limits_min, std::vector<float> *limits_max);
-    Eigen::VectorXd enforce_limits(const KDL::JntArray& q, Eigen::MatrixXd *qdout_out, std::vector<float> *limits_min, std::vector<float> *limits_max);
+    Eigen::VectorXd calculate_weighting(const KDL::JntArray& q, const KDL::JntArray& last_q_dout,  std::vector<float> limits_min, std::vector<float> limits_max);
+    Eigen::VectorXd enforce_limits(const KDL::JntArray& q, Eigen::MatrixXd qdout_out, std::vector<float> limits_min, std::vector<float> limits_max);
 };
 #endif

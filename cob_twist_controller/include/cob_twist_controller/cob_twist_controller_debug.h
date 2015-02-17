@@ -70,7 +70,7 @@ private:
 	ros::Subscriber twist_sub;
 	ros::Subscriber twist_stamped_sub;
 	ros::Subscriber base_sub;
-	ros::Publisher vel_pub;	
+	ros::Publisher vel_pub;
 	ros::Publisher base_vel_pub;
 	ros::Publisher twist_pub_;
 	ros::Publisher twist_current_pub_;
@@ -89,9 +89,6 @@ private:
 	ros::Publisher twist_constant_JLA_pub;
 	ros::Publisher manipulability_pub;
 	
-	KDL::Jacobian *jac;
-    KDL::ChainJntToJacSolver *jnt2jac;
-	
 	KDL::Chain chain_;
 	std::string chain_base_link_;
 	std::string chain_tip_link_;
@@ -99,6 +96,7 @@ private:
 	KDL::ChainFkSolverVel_recursive* p_fksolver_vel_;
 	KDL::ChainIkSolverVel_pinv* p_iksolver_vel_;
 	augmented_solver* p_augmented_solver_;
+	KDL::ChainJntToJacSolver* p_jnt2jac_;
 	
 	std::vector<std::string> joints_;
 	unsigned int dof_;
@@ -108,6 +106,8 @@ private:
 	
 	double max_vel_lin_;
 	double max_vel_rot_;
+	double max_vel_lin_base_;
+	double max_vel_rot_base_;
 	
 	KDL::JntArray last_q_;
 	KDL::JntArray last_q_dot_;
