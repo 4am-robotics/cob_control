@@ -86,55 +86,6 @@ bool CobTwistController::initialize()
 		ROS_WARN_STREAM("Parameter 'max_vel_rot_base' not set. Using default: " << max_vel_rot_base_);
 	}
 	
-	// SyncMM
-	if (!nh_cartesian.getParam("base_compensation", base_compensation_))
-	{
-		base_compensation_ = false;
-		ROS_WARN_STREAM("Base compensation disabled!");
-	}
-	
-	if (!nh_cartesian.getParam("base_active", base_active_))
-	{
-		base_active_ = false;
-		ROS_WARN_STREAM("Parameter 'base_active' not set. Base disabled!");
-	}
-	
-	if (base_active_ && base_compensation_)
-	{
-		ROS_WARN("base_active and base_compensation cannot be enabled at the same time");
-		return false;
-	}
-	
-	// AugmentedSolverParams
-	///ToDo: Read from ParameterServer
-	AugmentedSolverParams params;
-	params.damping_method = 5; //TRUNCATION
-	params.eps = 0.001;
-	params.damping_factor = 0.01;
-	params.lambda0 = 0.05;
-	params.wt = 0.0005;
-	params.JLA_active = true;
-	params.enforce_limits = true;
-	params.tolerance = 1.0;	//°
-	params.base_compensation = base_compensation_;
-	params.base_active = base_active_;
-	params.base_ratio = 0.0;
-	
-	//convert to reconfigure type
-	cob_twist_controller::TwistControllerConfig config;
-	config.damping_method = params.damping_method;
-	config.eps = params.eps;
-	config.damping_factor = params.damping_factor;
-	config.lambda0 = params.lambda0;
-	config.wt = params.wt;
-	config.JLA_active = params.JLA_active;
-	config.enforce_limits = params.enforce_limits;
-	config.tolerance = params.tolerance;
-	config.base_compensation = params.base_compensation;
-	config.base_active = params.base_active;
-	config.base_ratio = params.base_ratio;
-	config.reset_markers = false;
-	
 	///parse robot_description and generate KDL chains
 	KDL::Tree my_tree;
 	std::string robot_desc_string;
@@ -169,7 +120,6 @@ bool CobTwistController::initialize()
 	p_fksolver_vel_ = new KDL::ChainFkSolverVel_recursive(chain_);	//used for debugging
 	//p_iksolver_vel_ = new KDL::ChainIkSolverVel_pinv(chain_, 0.001, 5);
 	p_augmented_solver_ = new augmented_solver(chain_, 0.001, 5);
-	p_augmented_solver_->SetAugmentedSolverParams(params);
 	
 	p_jnt2jac_ = new KDL::ChainJntToJacSolver(chain_);
 	
@@ -252,9 +202,15 @@ void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControl
 	params.base_active = config.base_active;
 	params.base_ratio = config.base_ratio;
 	
+	enforce_limits_ = config.enforce_limits;
 	base_compensation_ = config.base_compensation;
 	base_active_ = config.base_active;
 	reset_markers_ = config.reset_markers;
+	
+	if(base_active_ && base_compensation_)
+	{
+		ROS_ERROR("base_active and base_compensation cannot be enabled at the same time");
+	}
 	
 	p_augmented_solver_->SetAugmentedSolverParams(params);
 }
@@ -441,7 +397,9 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 	}
 	else
 	{
-		if(base_active_){
+		//if(base_active_)
+		if(enforce_limits_)
+		{
 			///Needed for limiting the base velocities
 			q_dot_ik = normalize_velocities(q_dot_ik);
 		}
