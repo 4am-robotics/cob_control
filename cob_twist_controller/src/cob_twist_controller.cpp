@@ -474,7 +474,7 @@ KDL::JntArray CobTwistController::normalize_velocities(KDL::JntArray q_dot_ik)
 		if(max_factor < std::fabs((q_dot_ik(i)/limits_vel_[i])))
 		{
 			max_factor = std::fabs((q_dot_ik(i)/limits_vel_[i]));
-			ROS_WARN("Joint %d exceeds limit: Desired %f, Limit %f, Factor %f", i, q_dot_ik(i), limits_vel_[i], max_factor);
+			//ROS_WARN("Joint %d exceeds limit: Desired %f, Limit %f, Factor %f", i, q_dot_ik(i), limits_vel_[i], max_factor);
 		}
 	}
 	
@@ -499,14 +499,15 @@ KDL::JntArray CobTwistController::normalize_velocities(KDL::JntArray q_dot_ik)
 	
 	if(max_factor > 1)
 	{
-		//ROS_INFO("Normalizing velocities!");
+		ROS_WARN("Normalizing velocities (Factor: %f!", max_factor);
 		for(unsigned int i=0; i<dof_; i++)
 		{
 			q_dot_norm(i) = q_dot_ik(i)/max_factor;
 			//ROS_WARN("Joint %d Normalized %f", i, q_dot_norm(i));
 		}
 		
-		if(base_active_){
+		if(base_active_)
+		{
 			q_dot_norm(dof_) = q_dot_ik(dof_)/max_factor;
 			q_dot_norm(dof_+1) = q_dot_ik(dof_+1)/max_factor;
 			q_dot_norm(dof_+2) = q_dot_ik(dof_+2)/max_factor;
