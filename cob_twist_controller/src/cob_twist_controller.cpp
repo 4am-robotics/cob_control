@@ -62,6 +62,12 @@ bool CobTwistController::initialize()
 		return false;
 	}
 	
+	
+	// Multi-Chain Support
+	
+	
+	
+	
 	// Cartesian VelLimits
 	///Currently not used...
 	///Shall we use these parameters here to reject Twists that are too high???
@@ -75,57 +81,16 @@ bool CobTwistController::initialize()
 		max_vel_rot_ = 6.28;	//rad/sec
 		ROS_WARN_STREAM("Parameter 'max_vel_rot' not set. Using default: " << max_vel_rot_);
 	}
-	
-	// SyncMM
-	if (!nh_cartesian.getParam("base_compensation", base_compensation_))
+	if (!nh_cartesian.getParam("max_vel_lin_base", max_vel_lin_base_))
 	{
-		base_compensation_ = false;
-		ROS_WARN_STREAM("Base compensation disabled!");
+		max_vel_lin_base_ = 0.5;	//m/sec
+		ROS_WARN_STREAM("Parameter 'max_vel_lin_base' not set. Using default: " << max_vel_lin_base_);
 	}
-	
-	if (!nh_cartesian.getParam("base_active", base_active_))
+	if (!nh_cartesian.getParam("max_vel_rot_base", max_vel_rot_base_))
 	{
-		base_active_ = false;
-		ROS_WARN_STREAM("Parameter 'base_active' not set. Base disabled!");
+		max_vel_rot_base_ = 0.5;	//rad/sec
+		ROS_WARN_STREAM("Parameter 'max_vel_rot_base' not set. Using default: " << max_vel_rot_base_);
 	}
-	
-	if (base_active_ && base_compensation_)
-	{
-		ROS_WARN("base_active and base_compensation cannot be enabled at the same time");
-		return false;
-	}
-	
-	// AugmentedSolverParams
-	///ToDo: Read from ParameterServer
-	AugmentedSolverParams params;
-	params.damping_method = 5; //TRUNCATION
-	params.eps = 0.001;
-	params.damping_factor = 0.01;
-	params.lambda0 = 0.05;
-	params.wt = 0.0005;
-	params.deltaRMax = 0.05;
-	params.JLA_active = true;
-	params.enforce_limits = true;
-	params.tolerance = 1.0;	//°
-	params.base_compensation = base_compensation_;
-	params.base_active = base_active_;
-	params.base_ratio = 0.0;
-	
-	//convert to reconfigure type
-	cob_twist_controller::TwistControllerConfig config;
-	config.damping_method = params.damping_method;
-	config.eps = params.eps;
-	config.damping_factor = params.damping_factor;
-	config.lambda0 = params.lambda0;
-	config.wt = params.wt;
-	config.deltaRMax = params.deltaRMax;
-	config.JLA_active = params.JLA_active;
-	config.enforce_limits = params.enforce_limits;
-	config.tolerance = params.tolerance;
-	config.base_compensation = params.base_compensation;
-	config.base_active = params.base_active;
-	config.base_ratio = params.base_ratio;
-	config.reset_markers = false;
 	
 	///parse robot_description and generate KDL chains
 	KDL::Tree my_tree;
@@ -161,7 +126,6 @@ bool CobTwistController::initialize()
 	p_fksolver_vel_ = new KDL::ChainFkSolverVel_recursive(chain_);	//used for debugging
 	//p_iksolver_vel_ = new KDL::ChainIkSolverVel_pinv(chain_, 0.001, 5);
 	p_augmented_solver_ = new augmented_solver(chain_, 0.001, 5);
-	p_augmented_solver_->SetAugmentedSolverParams(params);
 	
 	///Setting up dynamic_reconfigure server for the AugmentedSolverParams
 	reconfigure_server_.reset(new dynamic_reconfigure::Server<cob_twist_controller::TwistControllerConfig>(reconfig_mutex_, nh_cartesian));
@@ -177,12 +141,12 @@ bool CobTwistController::initialize()
 	///initialize ROS interfaces
 	jointstate_sub = nh_.subscribe("joint_states", 1, &CobTwistController::jointstate_cb, this);
 	//odometry_sub = nh_base.subscribe("controller/odometry", 1, &CobTwistController::odometry_cb, this);
-	odometry_sub = nh_.subscribe("/base_controller/odometry", 1, &CobTwistController::odometry_cb, this);
+	odometry_sub = nh_.subscribe("base_controller/odometry", 1, &CobTwistController::odometry_cb, this);
 	twist_sub = nh_twist.subscribe("command_twist", 1, &CobTwistController::twist_cb, this);
 	twist_stamped_sub = nh_twist.subscribe("command_twist_stamped", 1, &CobTwistController::twist_stamped_cb, this);
 	vel_pub = nh_.advertise<std_msgs::Float64MultiArray>("joint_group_velocity_controller/command", 1);
 	//base_vel_pub = nh_base.advertise<geometry_msgs::Twist>("controller/command_direct", 1);
-	base_vel_pub = nh_base.advertise<geometry_msgs::Twist>("/base_controller/command_direct", 1);
+	base_vel_pub = nh_base.advertise<geometry_msgs::Twist>("base_controller/command_direct", 1);
 	
 	/// Debug
 	twist_current_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_current", 1);
@@ -216,7 +180,6 @@ void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControl
 	params.damping_factor = config.damping_factor;
 	params.lambda0 = config.lambda0;
 	params.wt = config.wt;
-	params.deltaRMax = config.deltaRMax;
 	
 	params.JLA_active = config.JLA_active;
 	params.enforce_limits = config.enforce_limits;
@@ -226,9 +189,15 @@ void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControl
 	params.base_active = config.base_active;
 	params.base_ratio = config.base_ratio;
 	
+	enforce_limits_ = config.enforce_limits;
 	base_compensation_ = config.base_compensation;
 	base_active_ = config.base_active;
 	reset_markers_ = config.reset_markers;
+	
+	if(base_active_ && base_compensation_)
+	{
+		ROS_ERROR("base_active and base_compensation cannot be enabled at the same time");
+	}
 	
 	p_augmented_solver_->SetAugmentedSolverParams(params);
 }
@@ -339,7 +308,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 		cb_frame_bl.M = KDL::Rotation::Quaternion(cb_transform_bl.getRotation().x(), cb_transform_bl.getRotation().y(), cb_transform_bl.getRotation().z(), cb_transform_bl.getRotation().w());
 		
 		//Solve twist
-		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik, &limits_min_, &limits_max_, bl_frame_ct, cb_frame_bl);
+		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik, limits_min_, limits_max_, bl_frame_ct, cb_frame_bl);
 	}
 	
 	if(base_compensation_)
@@ -364,7 +333,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 	
 	
 	if(!base_active_){
-		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik, &limits_min_, &limits_max_);
+		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik, limits_min_, limits_max_);
 	}
 	
 	if(ret_ik < 0)
@@ -373,7 +342,9 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 	}
 	else
 	{
-		if(base_active_){
+		//if(base_active_)
+		if(enforce_limits_)
+		{
 			///Needed for limiting the base velocities
 			q_dot_ik = normalize_velocities(q_dot_ik);
 		}
@@ -452,24 +423,6 @@ void CobTwistController::jointstate_cb(const sensor_msgs::JointState::ConstPtr& 
 	{
 		last_q_ = q_temp;
 		last_q_dot_ = q_dot_temp;
-		
-		///---------------------------------------------------------------------
-		/// DEBUG
-		//KDL::FrameVel FrameVel;
-		//geometry_msgs::Twist twist_msg;
-		//KDL::JntArrayVel jntArrayVel = KDL::JntArrayVel(last_q_, last_q_dot_);
-		//
-		//int ret = p_fksolver_vel_->JntToCart(jntArrayVel, FrameVel, -1);
-		//
-		//if(ret>=0)
-		//{
-		//	KDL::Twist twist = FrameVel.GetTwist();
-		//	//tf::twistKDLToMsg(twist,twist_msg);
-		//	//twist_current_pub_.publish(twist_msg);
-		//	
-		//	ROS_WARN_STREAM("TwistCurrent_cb: (" << twist.vel.x() << ", " << twist.vel.y() << ", " << twist.vel.z() << ")\t\tt(" << twist.rot.x() << ", " << twist.rot.y() << ", " << twist.rot.z() << ")");
-		//}
-		///---------------------------------------------------------------------
 	}
 }
 
@@ -521,42 +474,40 @@ KDL::JntArray CobTwistController::normalize_velocities(KDL::JntArray q_dot_ik)
 		if(max_factor < std::fabs((q_dot_ik(i)/limits_vel_[i])))
 		{
 			max_factor = std::fabs((q_dot_ik(i)/limits_vel_[i]));
-			ROS_WARN("Joint %d exceeds limit: Desired %f, Limit %f, Factor %f", i, q_dot_ik(i), limits_vel_[i], max_factor);
+			//ROS_WARN("Joint %d exceeds limit: Desired %f, Limit %f, Factor %f", i, q_dot_ik(i), limits_vel_[i], max_factor);
 		}
 	}
 	
 	if(base_active_)
 	{
-		//TEST: limit base_velocities
-		double max_trans_velocity = 0.5;
-		double max_rot_velocity = 0.5;
-		if(max_factor < std::fabs((q_dot_ik(dof_)/max_trans_velocity)))
+		if(max_factor < std::fabs((q_dot_ik(dof_)/max_vel_lin_base_)))
 		{
-			max_factor = std::fabs((q_dot_ik(dof_)/max_trans_velocity));
-			//ROS_WARN("BaseTransX exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_), max_trans_velocity, max_factor);
+			max_factor = std::fabs((q_dot_ik(dof_)/max_vel_lin_base_));
+			//ROS_WARN("BaseTransX exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_), max_vel_lin_base_, max_factor);
 		}
-		if(max_factor < std::fabs((q_dot_ik(dof_+1)/max_trans_velocity)))
+		if(max_factor < std::fabs((q_dot_ik(dof_+1)/max_vel_lin_base_)))
 		{
-			max_factor = std::fabs((q_dot_ik(dof_+1)/max_trans_velocity));
-			//ROS_WARN("BaseTransY exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+1), max_trans_velocity, max_factor);
+			max_factor = std::fabs((q_dot_ik(dof_+1)/max_vel_lin_base_));
+			//ROS_WARN("BaseTransY exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+1), max_vel_lin_base_, max_factor);
 		}
-		if(max_factor < std::fabs((q_dot_ik(dof_+2)/max_rot_velocity)))
+		if(max_factor < std::fabs((q_dot_ik(dof_+2)/max_vel_rot_base_)))
 		{
-			max_factor = std::fabs((q_dot_ik(dof_+2)/max_rot_velocity));
-			//ROS_WARN("BaseRotZ exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+2), max_rot_velocity, max_factor);
+			max_factor = std::fabs((q_dot_ik(dof_+2)/max_vel_rot_base_));
+			//ROS_WARN("BaseRotZ exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+2), max_vel_rot_base_, max_factor);
 		}
 	}
 	
 	if(max_factor > 1)
 	{
-		//ROS_INFO("Normalizing velocities!");
+		ROS_WARN("Normalizing velocities (Factor: %f!", max_factor);
 		for(unsigned int i=0; i<dof_; i++)
 		{
 			q_dot_norm(i) = q_dot_ik(i)/max_factor;
 			//ROS_WARN("Joint %d Normalized %f", i, q_dot_norm(i));
 		}
 		
-		if(base_active_){
+		if(base_active_)
+		{
 			q_dot_norm(dof_) = q_dot_ik(dof_)/max_factor;
 			q_dot_norm(dof_+1) = q_dot_ik(dof_+1)/max_factor;
 			q_dot_norm(dof_+2) = q_dot_ik(dof_+2)/max_factor;

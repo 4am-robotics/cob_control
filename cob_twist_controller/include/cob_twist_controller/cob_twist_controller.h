@@ -89,10 +89,13 @@ private:
 	
 	double max_vel_lin_;
 	double max_vel_rot_;
+	double max_vel_lin_base_;
+	double max_vel_rot_base_;
 	
 	KDL::JntArray last_q_;
 	KDL::JntArray last_q_dot_;
 	
+	bool enforce_limits_;
 	bool base_compensation_;
 	bool base_active_;
 	bool reset_markers_;
