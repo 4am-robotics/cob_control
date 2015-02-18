@@ -44,7 +44,7 @@ generate_messages(
 # Declare catkin package
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES cob_frame_tracker cob_frame_tracker_action_client
+  LIBRARIES cob_frame_tracker
   CATKIN_DEPENDS
   roscpp
   sensor_msgs
@@ -68,11 +68,8 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 ## Build
 # Declare a cpp library
 add_library(cob_frame_tracker src/cob_frame_tracker.cpp )
-add_library(cob_frame_tracker_action_client src/cob_frame_tracker_action_client.cpp )
 add_dependencies(cob_frame_tracker cob_srvs_gencpp)
 add_dependencies(cob_frame_tracker ${cob_frame_tracker_EXPORTED_TARGETS})
-add_dependencies(cob_frame_tracker_action_client cob_srvs_gencpp)
-#add_dependencies(cob_frame_tracker_action_client ${cob_frame_tracker_action_client_EXPORTED_TARGETS})
 #add_dependencies(cob_frame_tracker cob_frame_tracker_gencpp)
 
 add_library(interactive_frame_target src/interactive_frame_target.cpp )
@@ -80,9 +77,7 @@ add_dependencies(interactive_frame_target cob_srvs_gencpp)
 
 # Declare a cpp executable
 add_executable(cob_frame_tracker_node src/cob_frame_tracker_node.cpp)
-add_executable(cob_frame_tracker_action_client_node src/cob_frame_tracker_action_client_node.cpp)
 target_link_libraries(cob_frame_tracker_node cob_frame_tracker ${catkin_LIBRARIES})
-target_link_libraries(cob_frame_tracker_action_client_node cob_frame_tracker_action_client ${catkin_LIBRARIES})
 
 add_executable(interactive_frame_target_node src/interactive_frame_target_node.cpp)
 target_link_libraries(interactive_frame_target_node interactive_frame_target ${catkin_LIBRARIES})
@@ -90,7 +85,7 @@ target_link_libraries(interactive_frame_target_node interactive_frame_target ${c
 
 ## Install
 # Mark executables and/or libraries for installation
-install(TARGETS cob_frame_tracker cob_frame_tracker_node interactive_frame_target interactive_frame_target_node cob_frame_tracker_action_client cob_frame_tracker_action_client_node
+install(TARGETS cob_frame_tracker cob_frame_tracker_node interactive_frame_target interactive_frame_target_node
  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -98,11 +93,6 @@ install(TARGETS cob_frame_tracker cob_frame_tracker_node interactive_frame_targe
 
 # Mark cpp header files for installation
 install(DIRECTORY include/${PROJECT_NAME}/
- DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
- FILES_MATCHING PATTERN "*.h"
- PATTERN ".svn" EXCLUDE
-)
-install(DIRECTORY include/cob_frame_tracker_action_client/
  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
  FILES_MATCHING PATTERN "*.h"
  PATTERN ".svn" EXCLUDE
