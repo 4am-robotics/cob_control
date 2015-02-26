@@ -56,7 +56,6 @@
 #include <math.h>
 #include <angles/angles.h>
 #include <stdexcept>
-#include <iostream>
 
 namespace MathSup {
     const double PI = 3.14159265358979323846;
@@ -89,14 +88,8 @@ void UndercarriageCtrlGeom::WheelData::setTarget(const PlatformState &plt_state)
     // check if zero movement commanded -> keep orientation of wheels, set wheel velocity to zero
     if((plt_state.dVelLongMMS == 0) && (plt_state.dVelLatMMS == 0) && (plt_state.dRotRobRadS == 0))
     {
-        //std::cout << "ZERO MOVEMENT_VEL_FIRST: " << m_dVelGearDriveTargetRadS << std::endl;
         m_dVelGearDriveTargetRadS = 0.0;
-        //std::cout << "ZERO MOVEMENT_VEL_SEC: " << m_dVelGearDriveTargetRadS << std::endl;
-
-        //std::cout << "ZERO MOVEMENT_ANG_FIRST: " << m_dAngGearSteerTargetRad << std::endl;
-        //std::cout << "state_.dAngGearSteerRad: " << state_.dAngGearSteerRad << std::endl;
         m_dAngGearSteerTargetRad = state_.dAngGearSteerRad;
-        //std::cout << "ZERO MOVEMENT_ANG_SEC " << m_dAngGearSteerTargetRad << std::endl;
         return;
     }
 
