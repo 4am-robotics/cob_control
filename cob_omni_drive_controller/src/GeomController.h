@@ -2,7 +2,7 @@
 #define H_GEOM_CONTROLLER_IMPL
 
 #include <controller_interface/controller.h>
-#include <cob_omni_drive_controller/UndercarriageCtrlGeom.h>
+#include <cob_omni_drive_controller/UndercarriageCtrlGeomROS.h>
 
 namespace cob_omni_drive_controller
 {
@@ -15,49 +15,26 @@ protected:
 public:    
     bool init(Interface* hw, ros::NodeHandle& controller_nh){
 
-        std::vector<std::string> steer_names, drive_names;
+        std::vector<UndercarriageCtrlGeom::WheelParams> wheel_params;
+        if(!parseWheelParams(wheel_params, controller_nh)) return false;
 
-        if (!controller_nh.getParam("steer_joints", steer_names)){
-            ROS_ERROR("Parameter 'steer_joints' not set");
-            return false;
-        }
-        if (!controller_nh.getParam("drives_joints", drive_names)){
-            ROS_ERROR("Parameter 'drives_joints' not set");
-            return false;
-        }
-
-        if (steer_names.size()!=drive_names.size()){
-            ROS_ERROR("Number of steer joints does not match number of drive joints");
-            return false;
-        }
-
-        if (drive_names.size() < 3){
+        if (wheel_params.size() < 3){
             ROS_ERROR("At least three wheel are needed.");
             return false;
         }
-
-        for (unsigned i=0; i<steer_names.size(); i++){
-            steer_joints_.push_back(hw->getHandle(steer_names[i]));
-            drive_joints_.push_back(hw->getHandle(drive_names[i]));
-        }
-        wheel_states_.resize(steer_names.size());
-
-        std::vector<UndercarriageCtrlGeom::WheelParams> params;
-
-        std::string ini_directory;
-        if (!controller_nh.getParam("ini_directory", ini_directory)){
-            ROS_ERROR("Parameter 'ini_directory' not set");
-            return false;
-        }
-
         try{
-            UndercarriageCtrlGeom::parseIniFiles(params, ini_directory);
+            for (unsigned i=0; i<wheel_params.size(); i++){
+                steer_joints_.push_back(hw->getHandle(wheel_params[i].steer_name));
+                drive_joints_.push_back(hw->getHandle(wheel_params[i].drive_name));
+            }
         }
         catch(const std::exception &e){
-            ROS_ERROR_STREAM("INI file parsing failed " << e.what());
+            ROS_ERROR_STREAM("Error while attaching handles: " << e.what());
             return false;
         }
-        geom_.reset(new UndercarriageCtrlGeom(params));
+
+        wheel_states_.resize(wheel_params.size());
+        geom_.reset(new UndercarriageCtrlGeom(wheel_params));
         return true;
     }
 

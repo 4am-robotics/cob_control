@@ -54,7 +54,6 @@
 #ifndef UndercarriageCtrlGeom_INCLUDEDEF_H
 #define UndercarriageCtrlGeom_INCLUDEDEF_H
 
-
 #include <vector>
 #include <string>
 
@@ -81,6 +80,8 @@ public:
         WheelState() : dVelGearDriveRadS(0), dVelGearSteerRadS(0), dAngGearSteerRad(0) {}
     };
     struct WheelParams{
+        std::string steer_name, drive_name;
+
         /** Position of the Wheels' Steering Axis'
         *  in cartesian (X/Y) coordinates
         *  relative to robot coordinate System
