@@ -144,7 +144,7 @@ void UndercarriageCtrlGeom::WheelData::updateState(const WheelState &state){
     // calculate direction of rotational vector
     m_dExWheelAngRad = MathSup::atan4quad( m_dExWheelYPosMM, m_dExWheelXPosMM);
 
-    m_dVelWheelMMS = params_.dRadiusWheelMM * (state_.dVelGearDriveRadS - params_.dFactorVel* state_.dVelGearSteerRadS);
+    m_dVelWheelMMS = params_.dRadiusWheelMM * (state_.dVelGearDriveRadS - dFactorVel* state_.dVelGearSteerRadS);
 }
 
 double UndercarriageCtrlGeom::WheelData::mergeRotRobRadS(const WheelData &wheel1, const WheelData &wheel2){
@@ -205,7 +205,7 @@ void UndercarriageCtrlGeom::WheelData::calcControlStep(WheelState &command, doub
     // set outputs
     command.dVelGearSteerRadS = limit_value(dVelCmdInt, params_.dMaxSteerRateRadpS);
 
-    command.dVelGearDriveRadS = m_dVelGearDriveTargetRadS + m_dAngGearSteerTargetRad * params_.dFactorVel;
+    command.dVelGearDriveRadS = m_dVelGearDriveTargetRadS + m_dAngGearSteerTargetRad * dFactorVel;
 
     // provisorial --> skip interpolation and always take Target
     command.dAngGearSteerRad = m_dAngGearSteerTargetRad;
@@ -329,9 +329,7 @@ void UndercarriageCtrlGeom::parseIniFiles(std::vector<WheelParams> &params, cons
         double deg = pt.get<double>("DrivePrms.Wheel"+num+"NeutralPosition", 0.0);
         param.dWheelNeutralPos = angles::from_degrees(deg);
 
-        double coupling = pt.get<double>("DrivePrms.Wheel"+num+"SteerDriveCoupling", 0.0);
-
-        param.dFactorVel = - coupling + param.dDistSteerAxisToDriveWheelMM / param.dRadiusWheelMM;
+        param.dSteerDriveCoupling = pt.get<double>("DrivePrms.Wheel"+num+"SteerDriveCoupling", 0.0);
 
         params.push_back(param);
     }

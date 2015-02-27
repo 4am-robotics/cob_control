@@ -90,11 +90,7 @@ public:
         
         double dWheelNeutralPos;
         
-        /** Factor between steering motion and steering induced motion of drive wheels
-            *  subtract from Drive-Wheel Vel to get effective Drive Velocity (Direct Kinematics)
-            *  add to Drive-Wheel Vel (Inverse Kinematics) to account for coupling when commanding velos
-            */
-        double dFactorVel;
+        double dSteerDriveCoupling;
 
         double dRadiusWheelMM;
         double dDistSteerAxisToDriveWheelMM;
@@ -119,6 +115,12 @@ private:
     struct WheelData{
         WheelParams params_;
         
+        /** Factor between steering motion and steering induced motion of drive wheels
+            *  subtract from Drive-Wheel Vel to get effective Drive Velocity (Direct Kinematics)
+            *  add to Drive-Wheel Vel (Inverse Kinematics) to account for coupling when commanding velos
+            */
+        double dFactorVel;
+
         WheelState state_;
 
         double m_dAngGearSteerTargetRad; // choosen alternativ for steering angle
@@ -149,7 +151,9 @@ private:
 
         static double mergeRotRobRadS(const WheelData &wheel1, const WheelData &wheel2);
         
-        WheelData(const WheelParams &params) : params_(params), /*m_dCtrlDeltaPhi(0),*/  m_dCtrlVelCmdInt(0){
+        WheelData(const WheelParams &params)
+        : params_(params), /*m_dCtrlDeltaPhi(0),*/  m_dCtrlVelCmdInt(0),
+          dFactorVel(-params.dSteerDriveCoupling + params.dDistSteerAxisToDriveWheelMM / params.dRadiusWheelMM) {
             state_.dAngGearSteerRad = params_.dWheelNeutralPos;
             m_dAngGearSteerTargetRad = params_.dWheelNeutralPos;
             updateState(WheelState());
