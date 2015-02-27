@@ -1,0 +1,17 @@
+defaults: # default settings for all wheels, can per overwritten per wheel
+  steer_ctrl: # Parameters for tuning Impedance-Controller
+    spring: 15.0 #10.0
+    damp: 2.75 #2.5
+    virt_mass: 0.1 #0.1
+    d_phi_max: 12.0 #100.0
+    dd_phi_max: 40.0 #100.0
+
+wheels: # start front left, counter-clockwise for base_drive_chain compatibility
+  - steer: fl_caster_rotation_joint
+    drive: fl_caster_r_wheel_joint
+  - steer: bl_caster_rotation_joint
+    drive: bl_caster_r_wheel_joint
+  - steer: br_caster_rotation_joint
+    drive: br_caster_r_wheel_joint
+  - steer: fr_caster_rotation_joint
+    drive: fr_caster_r_wheel_joint
