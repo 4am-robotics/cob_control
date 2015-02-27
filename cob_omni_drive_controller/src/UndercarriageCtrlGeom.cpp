@@ -203,9 +203,13 @@ void UndercarriageCtrlGeom::WheelData::calcControlStep(WheelState &command, doub
     m_dCtrlVelCmdInt = dVelCmdInt;
 
     // set outputs
-    command.dVelGearSteerRadS = limit_value(dVelCmdInt, params_.dMaxSteerRateRadpS);
+    command.dVelGearSteerRadS  = dVelCmdInt;
+    if(params_.dMaxSteerRateRadpS > 0)
+        command.dVelGearSteerRadS = limit_value(command.dVelGearSteerRadS, params_.dMaxSteerRateRadpS);
 
     command.dVelGearDriveRadS = m_dVelGearDriveTargetRadS + m_dAngGearSteerTargetRad * dFactorVel;
+    if(params_.dMaxDriveRateRadpS > 0)
+        command.dVelGearSteerRadS = limit_value(command.dVelGearSteerRadS, params_.dMaxDriveRateRadpS);
 
     // provisorial --> skip interpolation and always take Target
     command.dAngGearSteerRad = m_dAngGearSteerTargetRad;
