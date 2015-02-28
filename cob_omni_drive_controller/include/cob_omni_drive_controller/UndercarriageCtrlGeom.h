@@ -237,6 +237,9 @@ public:
     void calcControlStep(std::vector<WheelState> &states, double dCmdRateS, bool reset);
 
     void reset();
+
+    static double limitValue(double value, double limit);
+
 private:
     struct CtrlData : public WheelData {
         CtrlParams params_;

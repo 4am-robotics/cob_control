@@ -84,15 +84,6 @@ double getWeightedDelta(double current_position, double old_target, double new_t
     return 0.6*fabs(dtempDeltaPhi1RAD) + 0.4*fabs(dtempDeltaPhiCmd1RAD);
 }
 
-double limit_value(double value, double limit){
-    if (value > limit){
-            value = limit;
-    } else if (value < -limit) {
-            value = -limit;
-    }
-    return value;
-}
-
 void UndercarriageGeomBase::WheelData::updateState(const WheelState &state){
     state_ = state;
 
@@ -191,6 +182,17 @@ void UndercarriageCtrl::CtrlData::setTarget(const PlatformState &plt_state){
 
 }
 
+double UndercarriageCtrl::limitValue(double value, double limit){
+    if(limit != 0){
+        if (value > limit){
+                value = limit;
+        } else if (value < -limit) {
+                value = -limit;
+        }
+    }
+    return value;
+}
+
 void UndercarriageCtrl::CtrlData::calcControlStep(WheelState &command, double dCmdRateS, bool reset){
     if(reset){
         this->reset();
@@ -211,22 +213,17 @@ void UndercarriageCtrl::CtrlData::calcControlStep(WheelState &command, double dC
     double dForceProp = params_.dSpring * dDeltaPhi;
 
     double dAccCmd = (dForceDamp + dForceProp) /  params_.dVirtM;
-    dAccCmd = limit_value(dAccCmd, params_.dDDPhiMax);
+    dAccCmd = limitValue(dAccCmd, params_.dDDPhiMax);
 
     double dVelCmdInt =m_dCtrlVelCmdInt + dCmdRateS * dAccCmd;
-    dVelCmdInt = limit_value(dVelCmdInt, params_.dDPhiMax);
+    dVelCmdInt = limitValue(dVelCmdInt, params_.dDPhiMax);
 
     // Store internal ctrlr-states
     m_dCtrlVelCmdInt = dVelCmdInt;
 
     // set outputs
-    command.dVelGearSteerRadS  = dVelCmdInt;
-    if(params_.dMaxSteerRateRadpS > 0)
-        command.dVelGearSteerRadS = limit_value(command.dVelGearSteerRadS, params_.dMaxSteerRateRadpS);
-
-    command.dVelGearDriveRadS = m_dVelGearDriveTargetRadS + m_dAngGearSteerTargetRad * dFactorVel;
-    if(params_.dMaxDriveRateRadpS > 0)
-        command.dVelGearSteerRadS = limit_value(command.dVelGearSteerRadS, params_.dMaxDriveRateRadpS);
+    command.dVelGearSteerRadS = limitValue(dVelCmdInt, params_.dMaxSteerRateRadpS);
+    command.dVelGearSteerRadS = limitValue(m_dVelGearDriveTargetRadS + m_dAngGearSteerTargetRad * dFactorVel, params_.dMaxDriveRateRadpS);
 
     // provisorial --> skip interpolation and always take Target
     command.dAngGearSteerRad = m_dAngGearSteerTargetRad;
