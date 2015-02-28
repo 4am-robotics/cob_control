@@ -45,8 +45,8 @@ public:
         }
         if(target){
             target_.reset();
-            platform_state_.dVelLongMMS = target->linear.x * 1000.0;
-            platform_state_.dVelLatMMS = target->linear.y * 1000.0;
+            platform_state_.setVelX(target->linear.x);
+            platform_state_.setVelY(target->linear.y);
             platform_state_.dRotRobRadS = target->angular.z;
             geom_->setTarget(platform_state_);
         }

@@ -53,7 +53,7 @@ public:
 
         geom_->calcDirect(platform_state_);
 
-        odom_tracker_->track(time, period.toSec(), platform_state_.get_vel_x(), platform_state_.get_vel_y(), platform_state_.dRotRobRadS);
+        odom_tracker_->track(time, period.toSec(), platform_state_.getVelX(), platform_state_.getVelY(), platform_state_.dRotRobRadS);
     }
     virtual void stopping(const ros::Time& time) {}
 
