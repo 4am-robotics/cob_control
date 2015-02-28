@@ -66,8 +66,8 @@ namespace MathSup {
         if((x==0.0) && (y==0.0)) return 0; // special case (?)
         return atan2(y,x);
     }
-
 }
+
 double getWeightedDelta(double current_position, double old_target, double new_target){
     // current_position =  angles::normalize_angle(current_position); not needed if current Pos is alread normalized
 
@@ -84,7 +84,67 @@ double getWeightedDelta(double current_position, double old_target, double new_t
     return 0.6*fabs(dtempDeltaPhi1RAD) + 0.4*fabs(dtempDeltaPhiCmd1RAD);
 }
 
-void UndercarriageCtrlGeom::WheelData::setTarget(const PlatformState &plt_state){
+double limit_value(double value, double limit){
+    if (value > limit){
+            value = limit;
+    } else if (value < -limit) {
+            value = -limit;
+    }
+    return value;
+}
+
+void UndercarriageGeomBase::WheelData::updateState(const WheelState &state){
+    state_ = state;
+
+    // calculate current geometry of robot (exact wheel position, taking into account steering offset of wheels)
+    m_dExWheelXPosMM = geom_.dWheelXPosMM + geom_.dDistSteerAxisToDriveWheelMM * sin(state_.dAngGearSteerRad);
+    m_dExWheelYPosMM = geom_.dWheelYPosMM - geom_.dDistSteerAxisToDriveWheelMM * cos(state_.dAngGearSteerRad);
+
+    // calculate distance from platform center to wheel center
+    m_dExWheelDistMM = sqrt( (m_dExWheelXPosMM * m_dExWheelXPosMM) + (m_dExWheelYPosMM * m_dExWheelYPosMM) );
+
+    // calculate direction of rotational vector
+    m_dExWheelAngRad = MathSup::atan4quad( m_dExWheelYPosMM, m_dExWheelXPosMM);
+
+    m_dVelWheelMMS = geom_.dRadiusWheelMM * (state_.dVelGearDriveRadS - dFactorVel* state_.dVelGearSteerRadS);
+}
+
+double UndercarriageGeomBase::WheelData::mergeRotRobRadS(const WheelData &wheel1, const WheelData &wheel2){
+    // calc Parameters (Dist,Phi) of virtual linking axis of the two considered wheels
+    double dtempDiffXMM = wheel2.m_dExWheelXPosMM - wheel1.m_dExWheelXPosMM;
+    double dtempDiffYMM = wheel2.m_dExWheelYPosMM - wheel1.m_dExWheelYPosMM;
+
+    double dtempRelDistWheelsMM = sqrt( dtempDiffXMM*dtempDiffXMM + dtempDiffYMM*dtempDiffYMM );
+    double dtempRelPhiWheelsRAD = MathSup::atan4quad( dtempDiffYMM, dtempDiffXMM );
+
+    // transform velocity of wheels into relative coordinate frame of linking axes -> subtract angles
+    double dtempRelPhiWheel1RAD = wheel1.state_.dAngGearSteerRad - dtempRelPhiWheelsRAD;
+    double dtempRelPhiWheel2RAD = wheel2.state_.dAngGearSteerRad - dtempRelPhiWheelsRAD;
+
+    return (wheel2.m_dVelWheelMMS * sin(dtempRelPhiWheel2RAD) - wheel1.m_dVelWheelMMS * sin(dtempRelPhiWheel1RAD))/dtempRelDistWheelsMM;
+}
+
+double UndercarriageGeomBase::WheelData::getVelX() const {
+    return m_dVelWheelMMS*cos(state_.dAngGearSteerRad);
+}
+double UndercarriageGeomBase::WheelData::getVelY() const {
+    return m_dVelWheelMMS*sin(state_.dAngGearSteerRad);
+}
+UndercarriageGeom::UndercarriageGeom(const std::vector<WheelParams> &params){
+    for(std::vector<WheelParams>::const_iterator it = params.begin(); it != params.end(); ++it){
+        wheels_.push_back(WheelData(it->geom));
+    }
+}
+
+void UndercarriageGeom::calcDirect(PlatformState &state) const{
+    UndercarriageGeomBase::calcDirect(state, wheels_);
+}
+
+void UndercarriageGeom::updateWheelStates(const std::vector<WheelState> &states){
+    UndercarriageGeomBase::updateWheelStates(wheels_, states);
+}
+
+void UndercarriageCtrl::CtrlData::setTarget(const PlatformState &plt_state){
     // check if zero movement commanded -> keep orientation of wheels, set wheel velocity to zero
     if((plt_state.dVelLongMMS == 0) && (plt_state.dVelLatMMS == 0) && (plt_state.dRotRobRadS == 0))
     {
@@ -110,7 +170,7 @@ void UndercarriageCtrlGeom::WheelData::setTarget(const PlatformState &plt_state)
 
     // calculate absolute value of rotational rate of driving wheels in rad/s
     double dVelGearDriveTarget1RadS = sqrt( (dtempAxVelXRobMMS * dtempAxVelXRobMMS) +
-                                        (dtempAxVelYRobMMS * dtempAxVelYRobMMS) ) / params_.dRadiusWheelMM;
+                                        (dtempAxVelYRobMMS * dtempAxVelYRobMMS) ) / geom_.dRadiusWheelMM;
     // now adapt to direction (forward/backward) of wheel
     double dVelGearDriveTarget2RadS = -dVelGearDriveTarget1RadS;
 
@@ -131,50 +191,7 @@ void UndercarriageCtrlGeom::WheelData::setTarget(const PlatformState &plt_state)
 
 }
 
-void UndercarriageCtrlGeom::WheelData::updateState(const WheelState &state){
-    state_ = state;
-
-    // calculate current geometry of robot (exact wheel position, taking into account steering offset of wheels)
-    m_dExWheelXPosMM = params_.dWheelXPosMM + params_.dDistSteerAxisToDriveWheelMM * sin(state_.dAngGearSteerRad);
-    m_dExWheelYPosMM = params_.dWheelYPosMM - params_.dDistSteerAxisToDriveWheelMM * cos(state_.dAngGearSteerRad);
-
-    // calculate distance from platform center to wheel center
-    m_dExWheelDistMM = sqrt( (m_dExWheelXPosMM * m_dExWheelXPosMM) + (m_dExWheelYPosMM * m_dExWheelYPosMM) );
-
-    // calculate direction of rotational vector
-    m_dExWheelAngRad = MathSup::atan4quad( m_dExWheelYPosMM, m_dExWheelXPosMM);
-
-    m_dVelWheelMMS = params_.dRadiusWheelMM * (state_.dVelGearDriveRadS - dFactorVel* state_.dVelGearSteerRadS);
-}
-
-double UndercarriageCtrlGeom::WheelData::mergeRotRobRadS(const WheelData &wheel1, const WheelData &wheel2){
-    // calc Parameters (Dist,Phi) of virtual linking axis of the two considered wheels
-    double dtempDiffXMM = wheel2.m_dExWheelXPosMM - wheel1.m_dExWheelXPosMM;
-    double dtempDiffYMM = wheel2.m_dExWheelYPosMM - wheel1.m_dExWheelYPosMM;
-
-    double dtempRelDistWheelsMM = sqrt( dtempDiffXMM*dtempDiffXMM + dtempDiffYMM*dtempDiffYMM );
-    double dtempRelPhiWheelsRAD = MathSup::atan4quad( dtempDiffYMM, dtempDiffXMM );
-
-    // transform velocity of wheels into relative coordinate frame of linking axes -> subtract angles
-    double dtempRelPhiWheel1RAD = wheel1.state_.dAngGearSteerRad - dtempRelPhiWheelsRAD;
-    double dtempRelPhiWheel2RAD = wheel2.state_.dAngGearSteerRad - dtempRelPhiWheelsRAD;
-
-    return (wheel2.m_dVelWheelMMS * sin(dtempRelPhiWheel2RAD) - wheel1.m_dVelWheelMMS * sin(dtempRelPhiWheel1RAD))/dtempRelDistWheelsMM;
-}
-double limit_value(double value, double limit){
-    if (value > limit){
-            value = limit;
-    } else if (value < -limit) {
-            value = -limit;
-    }
-    return value;
-}
-void UndercarriageCtrlGeom::WheelData::reset(){
-    //m_dCtrlDeltaPhi = 0.0;
-    m_dCtrlVelCmdInt = 0.0;
-
-}
-void UndercarriageCtrlGeom::WheelData::calcControlStep(WheelState &command, double dCmdRateS, bool reset){
+void UndercarriageCtrl::CtrlData::calcControlStep(WheelState &command, double dCmdRateS, bool reset){
     if(reset){
         this->reset();
         command.dVelGearDriveRadS = 0.0;
@@ -215,81 +232,39 @@ void UndercarriageCtrlGeom::WheelData::calcControlStep(WheelState &command, doub
     command.dAngGearSteerRad = m_dAngGearSteerTargetRad;
 }
 
-// Constructor
-UndercarriageCtrlGeom::UndercarriageCtrlGeom(const std::vector<WheelParams> &params){
-    for(std::vector<WheelParams>::const_iterator it = params.begin(); it != params.end(); ++it){
-        wheels_.push_back(WheelData(*it));
-    }
+void UndercarriageCtrl::CtrlData::reset(){
+    //m_dCtrlDeltaPhi = 0.0;
+    m_dCtrlVelCmdInt = 0.0;
 
-//  // init Prms of Impedance-Ctrlr
-//  m_dSpring = 10.0;
-//  m_dDamp = 2.5;
-//  m_dVirtM = 0.1;
-//  m_dDPhiMax = 12.0;
-//  m_dDDPhiMax = 100.0;
 }
 
-// Set desired value for Plattfrom Velocity to UndercarriageCtrl (Sollwertvorgabe)
-void UndercarriageCtrlGeom::setTarget(const PlatformState &state)
+UndercarriageCtrl::UndercarriageCtrl(const std::vector<WheelParams> &params){
+    for(std::vector<WheelParams>::const_iterator it = params.begin(); it != params.end(); ++it){
+        wheels_.push_back(CtrlData(*it));
+    }
+}
+
+void UndercarriageCtrl::calcDirect(PlatformState &state) const{
+    UndercarriageGeomBase::calcDirect(state, wheels_);
+}
+
+void UndercarriageCtrl::updateWheelStates(const std::vector<WheelState> &states){
+    UndercarriageGeomBase::updateWheelStates(wheels_, states);
+}
+
+void UndercarriageCtrl::setTarget(const PlatformState &state)
 {
-    for(std::vector<WheelData>::iterator it = wheels_.begin(); it != wheels_.end(); ++it){
+    for(std::vector<CtrlData>::iterator it = wheels_.begin(); it != wheels_.end(); ++it){
         it->setTarget(state);
     }
 }
 
-// Set actual values of wheels (steer/drive velocity/position) (Istwerte)
-void UndercarriageCtrlGeom::updateWheelStates(const std::vector<WheelState> &states)
+void UndercarriageCtrl::calcControlStep(std::vector<WheelState> &states, double dCmdRateS, bool reset)
 {
-    if(wheels_.size() != states.size()) throw std::length_error("number of states does not match number of wheels");
-
-    for(size_t i = 0; i < wheels_.size(); ++i){
-        wheels_[i].updateState(states[i]);
-    }
-}
-
-// calculate direct kinematics
-void UndercarriageCtrlGeom::calcDirect(PlatformState &state)
-{
-    double dtempRotRobRADPS = 0;    // Robot-Rotation-Rate in rad/s (in Robot-Coordinateframe)
-    double dtempVelXRobMMS = 0;     // Robot-Velocity in x-Direction (longitudinal) in mm/s (in Robot-Coordinateframe)
-    double dtempVelYRobMMS = 0;     // Robot-Velocity in y-Direction (lateral) in mm/s (in Robot-Coordinateframe)
-
-    // calculate rotational rate of robot and current "virtual" axis between all wheels
-    for(int i = 0; i < wheels_.size() ; i++)
-    {
-        WheelData &wheel = wheels_[i];
-        WheelData &other_wheel = wheels_[(i+1) % wheels_.size()];
-
-        dtempRotRobRADPS += WheelData::mergeRotRobRadS(wheel, other_wheel);
-        dtempVelXRobMMS += wheel.m_dVelWheelMMS*cos(wheel.state_.dAngGearSteerRad);
-        dtempVelYRobMMS += wheel.m_dVelWheelMMS*sin(wheel.state_.dAngGearSteerRad);
-    }
-
-    // assign rotational velocities for output
-    state.dRotRobRadS = dtempRotRobRADPS/wheels_.size();
-
-    // assign linear velocity of robot for output
-    state.dVelLongMMS = dtempVelXRobMMS/wheels_.size();
-    state.dVelLatMMS = dtempVelYRobMMS/wheels_.size();
-
-}
-
-// perform one discrete Control Step (controls steering angle)
-void UndercarriageCtrlGeom::calcControlStep(std::vector<WheelState> &states, double dCmdRateS, bool reset)
-{
-    // if the initial wheel count variies from current wheelState count thorw an exception
-    if(wheels_.size() != states.size()) throw std::length_error("number of states does not match number of wheels");
+    states.resize(wheels_.size());
 
     for(size_t i = 0; i < wheels_.size(); ++i){
         wheels_[i].calcControlStep(states[i], dCmdRateS, reset);
-    }
-
-}
-
-void UndercarriageCtrlGeom::reset()
-{
-    for(size_t i = 0; i < wheels_.size(); ++i){
-        wheels_[i].reset();
     }
 
 }

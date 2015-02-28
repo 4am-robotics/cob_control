@@ -56,8 +56,9 @@
 
 #include <vector>
 #include <string>
+#include <stdexcept>
 
-class UndercarriageCtrlGeom
+class UndercarriageGeomBase
 {
 public:
     struct PlatformState{
@@ -79,7 +80,7 @@ public:
         double dAngGearSteerRad;
         WheelState() : dVelGearDriveRadS(0), dVelGearSteerRadS(0), dAngGearSteerRad(0) {}
     };
-    struct WheelParams{
+    struct WheelGeom{
         std::string steer_name, drive_name;
 
         /** Position of the Wheels' Steering Axis'
@@ -88,17 +89,120 @@ public:
         */
         double dWheelXPosMM;
         double dWheelYPosMM;
-        
-        double dWheelNeutralPos;
-        
+
         double dSteerDriveCoupling;
 
         double dRadiusWheelMM;
         double dDistSteerAxisToDriveWheelMM;
 
+    };
+    // Get result of direct kinematics
+    virtual void calcDirect(PlatformState &state) const = 0;
+
+    // Set actual values of wheels (steer/drive velocity/position) (Istwerte)
+    virtual void updateWheelStates(const std::vector<WheelState> &states) = 0;
+
+    virtual ~UndercarriageGeomBase() {}
+
+protected:
+    struct WheelData {
+        WheelGeom geom_;
+
+        /** Factor between steering motion and steering induced motion of drive wheels
+            *  subtract from Drive-Wheel Vel to get effective Drive Velocity (Direct Kinematics)
+            *  add to Drive-Wheel Vel (Inverse Kinematics) to account for coupling when commanding velos
+            */
+        double dFactorVel;
+
+        WheelState state_;
+
+        /** Exact Position of the Wheels' itself
+            *  in cartesian (X/Y) and polar (Dist/Ang) coordinates
+            *  relative to robot coordinate System
+            */
+        double m_dExWheelXPosMM;
+        double m_dExWheelYPosMM;
+        double m_dExWheelDistMM;
+        double m_dExWheelAngRad;
+
+        double m_dVelWheelMMS;
+
+        void updateState(const WheelState &state);
+        double getVelX() const;
+        double getVelY() const;
+
+        static double mergeRotRobRadS(const WheelData &wheel1, const WheelData &wheel2);
+
+        WheelData(const WheelGeom &geom)
+        : geom_(geom),
+          dFactorVel(-geom_.dSteerDriveCoupling + geom_.dDistSteerAxisToDriveWheelMM / geom_.dRadiusWheelMM) {
+            updateState(WheelState());
+        }
+    };
+    template<typename V> static void updateWheelStates(V& wheels, const std::vector<WheelState> &states)
+    {
+        if(wheels.size() != states.size()) throw std::length_error("number of states does not match number of wheels");
+
+        for(size_t i = 0; i < wheels.size(); ++i){
+            wheels[i].updateState(states[i]);
+        }
+    }
+
+    template<typename V> static void calcDirect(PlatformState &state, const V& wheels)
+    {
+        double dtempRotRobRADPS = 0;    // Robot-Rotation-Rate in rad/s (in Robot-Coordinateframe)
+        double dtempVelXRobMMS = 0;     // Robot-Velocity in x-Direction (longitudinal) in mm/s (in Robot-Coordinateframe)
+        double dtempVelYRobMMS = 0;     // Robot-Velocity in y-Direction (lateral) in mm/s (in Robot-Coordinateframe)
+
+        // calculate rotational rate of robot and current "virtual" axis between all wheels
+        for(int i = 0; i < wheels.size() ; i++)
+        {
+            const WheelData &wheel = wheels[i];
+            const WheelData &other_wheel = wheels[(i+1) % wheels.size()];
+
+            dtempRotRobRADPS += WheelData::mergeRotRobRadS(wheel, other_wheel);
+            dtempVelXRobMMS += wheel.getVelX();
+            dtempVelYRobMMS += wheel.getVelY();
+        }
+
+        // assign rotational velocities for output
+        state.dRotRobRadS = dtempRotRobRADPS/wheels.size();
+
+        // assign linear velocity of robot for output
+        state.dVelLongMMS = dtempVelXRobMMS/wheels.size();
+        state.dVelLatMMS = dtempVelYRobMMS/wheels.size();
+
+    }
+
+};
+
+class UndercarriageGeom : public UndercarriageGeomBase {
+public:
+    struct WheelParams {
+        WheelGeom geom;
+    };
+
+    // Constructor
+    UndercarriageGeom(const std::vector<WheelParams> &params);
+
+    // Get result of direct kinematics
+    virtual void calcDirect(PlatformState &state) const;
+
+    // Set actual values of wheels (steer/drive velocity/position) (Istwerte)
+    virtual void updateWheelStates(const std::vector<WheelState> &states);
+
+private:
+    std::vector<WheelData> wheels_;
+};
+
+class UndercarriageCtrl : public UndercarriageGeomBase {
+public:
+    struct CtrlParams{
+        double dWheelNeutralPos;
+
         double dMaxDriveRateRadpS;
         double dMaxSteerRateRadpS;
-        
+
         /** ------- Position Controller Steer Wheels -------
         * Impedance-Ctrlr Prms
         *  -> model Stiffness via Spring-Damper-Modell
@@ -111,33 +215,35 @@ public:
         */
         double dSpring, dDamp, dVirtM, dDPhiMax, dDDPhiMax;
     };
+
+    struct WheelParams {
+        WheelGeom geom;
+        CtrlParams ctrl;
+    };
+
+    // Constructor
+    UndercarriageCtrl(const std::vector<WheelParams> &params);
+
+    // Get result of direct kinematics
+    virtual void calcDirect(PlatformState &state) const;
+
+    // Set actual values of wheels (steer/drive velocity/position) (Istwerte)
+    virtual void updateWheelStates(const std::vector<WheelState> &states);
+
+    // Set desired value for Plattform Velocity to UndercarriageCtrl (Sollwertvorgabe)
+    void setTarget(const PlatformState &state);
+
+    // Get set point values for the Wheels (including controller) from UndercarriangeCtrl
+    void calcControlStep(std::vector<WheelState> &states, double dCmdRateS, bool reset);
+
+    void reset();
 private:
-
-    struct WheelData{
-        WheelParams params_;
-        
-        /** Factor between steering motion and steering induced motion of drive wheels
-            *  subtract from Drive-Wheel Vel to get effective Drive Velocity (Direct Kinematics)
-            *  add to Drive-Wheel Vel (Inverse Kinematics) to account for coupling when commanding velos
-            */
-        double dFactorVel;
-
-        WheelState state_;
+    struct CtrlData : public WheelData {
+        CtrlParams params_;
 
         double m_dAngGearSteerTargetRad; // choosen alternativ for steering angle
         double m_dVelGearDriveTargetRadS;
 
-        /** Exact Position of the Wheels' itself
-            *  in cartesian (X/Y) and polar (Dist/Ang) coordinates
-            *  relative to robot coordinate System
-            */
-        double m_dExWheelXPosMM;
-        double m_dExWheelYPosMM;
-        double m_dExWheelDistMM;
-        double m_dExWheelAngRad;
-
-        double m_dVelWheelMMS;
-        
         // previous Commanded deltaPhi e(k-1)
         // double m_dCtrlDeltaPhi; not used
         // previous Commanded Velocity u(k-1)
@@ -146,45 +252,20 @@ private:
         // calculate inverse kinematics
         void setTarget(const PlatformState &state);
 
-        void updateState(const WheelState &state);
-
         void calcControlStep(WheelState &command, double dCmdRateS, bool reset);
 
-        static double mergeRotRobRadS(const WheelData &wheel1, const WheelData &wheel2);
-        
-        WheelData(const WheelParams &params)
-        : params_(params), /*m_dCtrlDeltaPhi(0),*/  m_dCtrlVelCmdInt(0),
-          dFactorVel(-params.dSteerDriveCoupling + params.dDistSteerAxisToDriveWheelMM / params.dRadiusWheelMM) {
+        void reset();
+
+        CtrlData(const WheelParams &params)
+        : WheelData(params.geom), params_(params.ctrl), /*m_dCtrlDeltaPhi(0),*/  m_dCtrlVelCmdInt(0) {
             state_.dAngGearSteerRad = params_.dWheelNeutralPos;
             m_dAngGearSteerTargetRad = params_.dWheelNeutralPos;
             updateState(WheelState());
             setTarget(PlatformState());
         }
-
-        void reset();
-
     };
 
-    std::vector<WheelData> wheels_;
-        
-public:
-    // Constructor
-    UndercarriageCtrlGeom(const std::vector<WheelParams> &params);
-
-    // Set desired value for Plattform Velocity to UndercarriageCtrl (Sollwertvorgabe)
-    void setTarget(const PlatformState &state);
-
-    // Get result of direct kinematics
-    void calcDirect(PlatformState &state);
-
-    // Set actual values of wheels (steer/drive velocity/position) (Istwerte)
-    void updateWheelStates(const std::vector<WheelState> &states);
-
-    // Get set point values for the Wheels (including controller) from UndercarriangeCtrl
-    void calcControlStep(std::vector<WheelState> &states, double dCmdRateS, bool reset);
-
-    void reset();
-
-
+    std::vector<CtrlData> wheels_;
 };
+
 #endif

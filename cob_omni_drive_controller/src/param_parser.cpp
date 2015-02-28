@@ -41,12 +41,11 @@ template<typename T> bool read(T& val, const std::string &name, XmlRpc::XmlRpcVa
     }
 }
 
-bool parseWheelConfig(UndercarriageCtrlGeom::WheelParams & params, XmlRpc::XmlRpcValue &wheel){
+bool parseCtrlParams(UndercarriageCtrl::CtrlParams & params, XmlRpc::XmlRpcValue &wheel){
     double deg;
     try_read(deg, "steer_neutral_position", wheel);
     params.dWheelNeutralPos = angles::from_degrees(deg);
-    
-    try_read(params.dSteerDriveCoupling, "steer_drive_coupling", wheel);
+
     try_read(params.dMaxSteerRateRadpS, "max_steer_rate", wheel);
     try_read(params.dMaxDriveRateRadpS, "max_drive_rate", wheel);
 
@@ -55,7 +54,7 @@ bool parseWheelConfig(UndercarriageCtrlGeom::WheelParams & params, XmlRpc::XmlRp
         return false;
     }
     XmlRpc::XmlRpcValue &steer = wheel["steer_ctrl"];
-    
+
     return read(params.dSpring, "spring", steer)
         && read(params.dDamp, "damp", steer)
         && read(params.dVirtM, "virt_mass", steer)
@@ -63,18 +62,80 @@ bool parseWheelConfig(UndercarriageCtrlGeom::WheelParams & params, XmlRpc::XmlRp
         && read(params.dDDPhiMax, "dd_phi_max", steer);
 }
 
-namespace cob_omni_drive_controller{
+bool parseWheelGeom(UndercarriageGeom::WheelGeom & geom, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcStruct &merged, urdf::Model* model){
 
-bool parseWheelParams(std::vector<UndercarriageCtrlGeom::WheelParams> &wheel_params, const ros::NodeHandle &nh, bool read_urdf /* = true */){
-    
+    try_read(geom.steer_name, "steer_name", wheel);
+    try_read(geom.drive_name, "drive_name", wheel);
+    try_read(geom.dSteerDriveCoupling, "steer_drive_coupling", wheel);
+
+    boost::shared_ptr<const urdf::Joint> steer_joint;
+    urdf::Vector3 steer_pos;
+
+    if(model && !geom.steer_name.empty()){
+        steer_joint = model->getJoint(geom.steer_name);
+        if(steer_joint){
+            steer_pos = steer_joint->parent_to_joint_origin_transform.position;
+        }
+    }
+
+    if(!try_read(steer_pos.x, "x_pos", wheel) && !steer_joint){
+        ROS_ERROR_STREAM("Could not parse x_pos");
+        return false;
+    }
+
+    if(!try_read(steer_pos.y, "y_pos", wheel) && !steer_joint){
+        ROS_ERROR_STREAM("Could not parse y_pos");
+        return false;
+    }
+
+    if(!try_read(steer_pos.z, "wheel_radius", merged) && !steer_joint){
+        ROS_ERROR_STREAM("Could not parse wheel_radius");
+        return false;
+    }
+
+    geom.dWheelXPosMM = steer_pos.x * 1000;
+    geom.dWheelYPosMM = steer_pos.y * 1000;
+    geom.dRadiusWheelMM = steer_pos.z * 1000;
+
+    double offset;
+
+    if(!try_read(offset, "wheel_offset", merged)){
+        boost::shared_ptr<const urdf::Joint> drive_joint;
+        if(model && !geom.drive_name.empty()){
+            drive_joint = model->getJoint(geom.drive_name);
+        }
+        if(drive_joint){
+            const urdf::Vector3& pos = drive_joint->parent_to_joint_origin_transform.position;
+            offset = sqrt(pos.x*pos.x + pos.y * pos.y);
+        }else{
+            ROS_ERROR_STREAM("Could not parse wheel_offset");
+            return false;
+        }
+    }
+    geom.dDistSteerAxisToDriveWheelMM = offset * 1000;
+    return true;
+}
+
+template<typename W> bool parseWheel(W & params, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcStruct &merged, urdf::Model* model);
+
+template<> bool parseWheel(UndercarriageGeom::WheelParams & params, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcStruct &merged, urdf::Model* model){
+    return parseWheelGeom(params.geom, wheel, merged, model);
+}
+
+template<> bool parseWheel(UndercarriageCtrl::WheelParams & params, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcStruct &merged, urdf::Model* model){
+    return parseWheelGeom(params.geom, wheel, merged, model) && parseCtrlParams(params.ctrl, merged);
+}
+
+template<typename W> bool parseWheels(std::vector<W> &wheel_params, const ros::NodeHandle &nh, bool read_urdf){
+
     urdf::Model model;
-    
+
     std::string description_name;
     bool has_model = read_urdf && nh.searchParam("robot_description", description_name) &&  model.initParam(description_name);
-    
+
     MergedXmlRpcStruct defaults;
     nh.getParam("defaults", defaults);
-    
+
     // clear vector in case of reinititialization
     wheel_params.clear();
 
@@ -86,67 +147,27 @@ bool parseWheelParams(std::vector<UndercarriageCtrlGeom::WheelParams> &wheel_par
 
     for(int i = 0; i < wheel_list.size(); ++i){
 
-        UndercarriageCtrlGeom::WheelParams params;
+        W params;
         XmlRpc::XmlRpcValue & wheel = wheel_list[i];
-        
         MergedXmlRpcStruct merged(wheel, defaults);
-        
-        if(!parseWheelConfig(params, merged)){
-            return false;
-        }
-        
-        try_read(params.steer_name, "steer_name", wheel);
-        try_read(params.drive_name, "drive_name", wheel);
-        
-        boost::shared_ptr<const urdf::Joint> steer_joint;
-        urdf::Vector3 steer_pos;
-        
-        if(has_model && !params.steer_name.empty()){
-            steer_joint = model.getJoint(params.steer_name);
-            if(steer_joint){
-                steer_pos = steer_joint->parent_to_joint_origin_transform.position;
-            }
-        }
 
-        if(!try_read(steer_pos.x, "x_pos", wheel) && !steer_joint){
-            ROS_ERROR_STREAM("Could not parse x_pos");
+        if(parseWheel(params, wheel, merged, has_model?&model:0)){
             return false;
         }
 
-        if(!try_read(steer_pos.y, "y_pos", wheel) && !steer_joint){
-            ROS_ERROR_STREAM("Could not parse y_pos");
-            return false;
-        }
-
-        if(!try_read(steer_pos.z, "wheel_radius", merged) && !steer_joint){
-            ROS_ERROR_STREAM("Could not parse wheel_radius");
-            return false;
-        }
-
-        params.dWheelXPosMM = steer_pos.x * 1000;
-        params.dWheelYPosMM = steer_pos.y * 1000;
-        params.dRadiusWheelMM = steer_pos.z * 1000;
-
-        double offset;
-        
-        if(!try_read(offset, "wheel_offset", merged)){
-            boost::shared_ptr<const urdf::Joint> drive_joint;
-            if(has_model && !params.drive_name.empty()){
-                drive_joint = model.getJoint(params.drive_name);
-            }
-            if(drive_joint){
-                const urdf::Vector3& pos = drive_joint->parent_to_joint_origin_transform.position;
-                offset = sqrt(pos.x*pos.x + pos.y * pos.y);
-            }else{
-                ROS_ERROR_STREAM("Could not parse wheel_offset");
-                return false;
-            }
-        }
-        params.dDistSteerAxisToDriveWheelMM = offset * 1000;
-        
         wheel_params.push_back(params);
     }
     return !wheel_params.empty();
-} 
+}
+
+namespace cob_omni_drive_controller{
+
+bool parseWheelParams(std::vector<UndercarriageGeom::WheelParams> &params, const ros::NodeHandle &nh, bool read_urdf /* = true*/){
+    return parseWheels(params, nh, read_urdf);
+}
+bool parseWheelParams(std::vector<UndercarriageCtrl::WheelParams> &params, const ros::NodeHandle &nh, bool read_urdf /* = true*/){
+    return parseWheels(params, nh, read_urdf);
+}
+
     
 }

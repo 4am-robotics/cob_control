@@ -7,15 +7,15 @@
 namespace cob_omni_drive_controller
 {
 
-template<typename Interface> class GeomController: public controller_interface::Controller<Interface> {
+template<typename Interface, typename Controller> class GeomController: public controller_interface::Controller<Interface> {
 protected:
     std::vector<typename Interface::ResourceHandleType> steer_joints_, drive_joints_;
-    std::vector<UndercarriageCtrlGeom::WheelState> wheel_states_;
-    boost::scoped_ptr<UndercarriageCtrlGeom> geom_;
+    std::vector<typename Controller::WheelState> wheel_states_;
+    boost::scoped_ptr<Controller> geom_;
 public:    
     bool init(Interface* hw, ros::NodeHandle& controller_nh){
 
-        std::vector<UndercarriageCtrlGeom::WheelParams> wheel_params;
+        std::vector<typename Controller::WheelParams> wheel_params;
         if(!parseWheelParams(wheel_params, controller_nh)) return false;
 
         if (wheel_params.size() < 3){
@@ -24,8 +24,8 @@ public:
         }
         try{
             for (unsigned i=0; i<wheel_params.size(); i++){
-                steer_joints_.push_back(hw->getHandle(wheel_params[i].steer_name));
-                drive_joints_.push_back(hw->getHandle(wheel_params[i].drive_name));
+                steer_joints_.push_back(hw->getHandle(wheel_params[i].geom.steer_name));
+                drive_joints_.push_back(hw->getHandle(wheel_params[i].geom.drive_name));
             }
         }
         catch(const std::exception &e){
@@ -34,7 +34,7 @@ public:
         }
 
         wheel_states_.resize(wheel_params.size());
-        geom_.reset(new UndercarriageCtrlGeom(wheel_params));
+        geom_.reset(new Controller(wheel_params));
         return true;
     }
 

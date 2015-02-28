@@ -16,7 +16,7 @@
 namespace cob_omni_drive_controller
 {
 
-class WheelController: public GeomController<hardware_interface::VelocityJointInterface>
+class WheelController: public GeomController<hardware_interface::VelocityJointInterface, UndercarriageCtrl>
 {
 public:
     WheelController() {}
@@ -62,8 +62,8 @@ public:
     virtual void stopping(const ros::Time& time) {}
 
 private:
-    std::vector<UndercarriageCtrlGeom::WheelState> wheel_commands_;
-    UndercarriageCtrlGeom::PlatformState platform_state_;
+    std::vector<UndercarriageCtrl::WheelState> wheel_commands_;
+    UndercarriageCtrl::PlatformState platform_state_;
 
     ros::Subscriber twist_subscriber_;
     geometry_msgs::Twist::ConstPtr target_;

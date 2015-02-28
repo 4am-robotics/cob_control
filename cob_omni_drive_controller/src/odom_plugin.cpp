@@ -14,7 +14,7 @@ namespace cob_omni_drive_controller
 {
 
 // this controller gets access to the JointStateInterface
-class OdometryController: public GeomController<hardware_interface::JointStateInterface>
+class OdometryController: public GeomController<hardware_interface::JointStateInterface, UndercarriageGeom>
 {
 public:
     OdometryController() {}
@@ -44,7 +44,6 @@ public:
         return true;
   }
     virtual void starting(const ros::Time& time){
-        geom_->reset();
         odom_tracker_->init(time);
     }
     virtual void update(const ros::Time& time, const ros::Duration& period){
@@ -58,7 +57,7 @@ public:
     virtual void stopping(const ros::Time& time) {}
 
 private:
-    UndercarriageCtrlGeom::PlatformState platform_state_;
+    UndercarriageGeom::PlatformState platform_state_;
 
     ros::Publisher topic_pub_odometry_;                 // calculated (measured) velocity, rotation and pose (odometry-based) for the robot
 
