@@ -1,3 +1,5 @@
+type: cob_omni_drive_controller::OdometryController
+
 publish_rate: 50
 # broadcast_tf: true
 
