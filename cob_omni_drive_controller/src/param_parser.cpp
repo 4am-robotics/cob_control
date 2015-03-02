@@ -151,7 +151,7 @@ template<typename W> bool parseWheels(std::vector<W> &wheel_params, const ros::N
         XmlRpc::XmlRpcValue & wheel = wheel_list[i];
         MergedXmlRpcStruct merged(wheel, defaults);
 
-        if(parseWheel(params, wheel, merged, has_model?&model:0)){
+        if(!parseWheel(params, wheel, merged, has_model?&model:0)){
             return false;
         }
 
