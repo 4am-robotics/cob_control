@@ -265,3 +265,11 @@ void UndercarriageCtrl::calcControlStep(std::vector<WheelState> &states, double 
     }
 
 }
+
+void UndercarriageCtrl::reset()
+{
+    for(size_t i = 0; i < wheels_.size(); ++i){
+        wheels_[i].reset();
+    }
+
+}
