@@ -28,6 +28,11 @@ public:
             ROS_ERROR("Parameter 'publish_rate' not set");
             return false;
         }
+        if(publish_rate <= 0){
+            ROS_ERROR_STREAM("publish_rate must be positive.");
+            return false;
+        }
+
         odom_tracker_.reset(new OdometryTracker);
 
         topic_pub_odometry_ = controller_nh.advertise<nav_msgs::Odometry>("odom", 1);
@@ -41,7 +46,7 @@ public:
             tf_broadcast_odometry_.reset(new tf::TransformBroadcaster);
         }
 
-        publish_timer_ = controller_nh.createTimer(ros::Duration(publish_rate), &OdometryController::publish, this);
+        publish_timer_ = controller_nh.createTimer(ros::Duration(1/publish_rate), &OdometryController::publish, this);
 
         return true;
   }
