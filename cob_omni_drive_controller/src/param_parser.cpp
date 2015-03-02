@@ -21,25 +21,6 @@ public:
     }
 };
 
-template<typename T> bool try_read(T& val, const std::string &name, XmlRpc::XmlRpcValue &wheel, const T& def=T()){
-    if(wheel.hasMember(name)){
-        val = (T)wheel[name];
-        return true;
-    }else{
-        val = def;
-        return false;
-    }
-}
-
-template<typename T> bool read(T& val, const std::string &name, XmlRpc::XmlRpcValue &wheel){
-    if(wheel.hasMember(name)){
-        val = wheel[name];
-        return true;
-    }else{
-        ROS_ERROR_STREAM("Parameter not found: " << name);
-        return false;
-    }
-}
 template<typename T> bool read_optional(T& val, const std::string &name, XmlRpc::XmlRpcValue &wheel){
     if(wheel.hasMember(name)){
         val = (T)wheel[name];
@@ -48,15 +29,29 @@ template<typename T> bool read_optional(T& val, const std::string &name, XmlRpc:
     return true;
 }
 
+template<typename T> bool read_with_default(T& val, const std::string &name, XmlRpc::XmlRpcValue &wheel, const T& def){
+    if(!read_optional(val, name, wheel)){
+        val = def;
+        return false;
+    }
+    return true;
+}
 
+template<typename T> bool read(T& val, const std::string &name, XmlRpc::XmlRpcValue &wheel){
+    if(!read_optional(val, name, wheel)){
+        ROS_ERROR_STREAM("Parameter not found: " << name);
+        return false;
+    }
+    return true;
+}
 
 bool parseCtrlParams(UndercarriageCtrl::CtrlParams & params, XmlRpc::XmlRpcValue &wheel){
     double deg;
-    try_read(deg, "steer_neutral_position", wheel);
+    read_with_default(deg, "steer_neutral_position", wheel, 0.0);
     params.dWheelNeutralPos = angles::from_degrees(deg);
 
-    try_read(params.dMaxSteerRateRadpS, "max_steer_rate", wheel);
-    try_read(params.dMaxDriveRateRadpS, "max_drive_rate", wheel);
+    read_with_default(params.dMaxSteerRateRadpS, "max_steer_rate", wheel, 0.0);
+    read_with_default(params.dMaxDriveRateRadpS, "max_drive_rate", wheel, 0.0);
 
     if(!wheel.hasMember("steer_ctrl")){
         ROS_ERROR_STREAM("steer_ctrl not found");
@@ -73,9 +68,9 @@ bool parseCtrlParams(UndercarriageCtrl::CtrlParams & params, XmlRpc::XmlRpcValue
 
 bool parseWheelGeom(UndercarriageGeom::WheelGeom & geom, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcStruct &merged, urdf::Model* model){
 
-    try_read(geom.steer_name, "steer", wheel);
-    try_read(geom.drive_name, "drive", wheel);
-    try_read(geom.dSteerDriveCoupling, "steer_drive_coupling", wheel);
+    read_with_default(geom.steer_name, "steer", wheel, std::string());
+    read_with_default(geom.drive_name, "drive", wheel, std::string());
+    read_with_default(geom.dSteerDriveCoupling, "steer_drive_coupling", wheel, 0.0);
 
     boost::shared_ptr<const urdf::Joint> steer_joint;
     urdf::Vector3 steer_pos;
