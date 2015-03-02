@@ -102,9 +102,14 @@ bool parseWheelGeom(UndercarriageGeom::WheelGeom & geom, XmlRpc::XmlRpcValue &wh
         return false;
     }
 
+    if(steer_pos.z == 0){
+        ROS_ERROR_STREAM("wheel_radius must be non-zero");
+        return false;
+    }
+
     geom.dWheelXPosMM = steer_pos.x * 1000;
     geom.dWheelYPosMM = steer_pos.y * 1000;
-    geom.dRadiusWheelMM = steer_pos.z * 1000;
+    geom.dRadiusWheelMM = fabs(steer_pos.z * 1000);
 
     double offset = 0;
 
