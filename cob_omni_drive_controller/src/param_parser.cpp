@@ -40,6 +40,15 @@ template<typename T> bool read(T& val, const std::string &name, XmlRpc::XmlRpcVa
         return false;
     }
 }
+template<typename T> bool read_optional(T& val, const std::string &name, XmlRpc::XmlRpcValue &wheel){
+    if(wheel.hasMember(name)){
+        val = (T)wheel[name];
+        return true;
+    }
+    return true;
+}
+
+
 
 bool parseCtrlParams(UndercarriageCtrl::CtrlParams & params, XmlRpc::XmlRpcValue &wheel){
     double deg;
@@ -78,17 +87,17 @@ bool parseWheelGeom(UndercarriageGeom::WheelGeom & geom, XmlRpc::XmlRpcValue &wh
         }
     }
 
-    if(!try_read(steer_pos.x, "x_pos", wheel) && !steer_joint){
+    if(!read_optional(steer_pos.x, "x_pos", wheel) && !steer_joint){
         ROS_ERROR_STREAM("Could not parse x_pos");
         return false;
     }
 
-    if(!try_read(steer_pos.y, "y_pos", wheel) && !steer_joint){
+    if(!read_optional(steer_pos.y, "y_pos", wheel) && !steer_joint){
         ROS_ERROR_STREAM("Could not parse y_pos");
         return false;
     }
 
-    if(!try_read(steer_pos.z, "wheel_radius", merged) && !steer_joint){
+    if(!read_optional(steer_pos.z, "wheel_radius", merged) && !steer_joint){
         ROS_ERROR_STREAM("Could not parse wheel_radius");
         return false;
     }
@@ -97,9 +106,9 @@ bool parseWheelGeom(UndercarriageGeom::WheelGeom & geom, XmlRpc::XmlRpcValue &wh
     geom.dWheelYPosMM = steer_pos.y * 1000;
     geom.dRadiusWheelMM = steer_pos.z * 1000;
 
-    double offset;
+    double offset = 0;
 
-    if(!try_read(offset, "wheel_offset", merged)){
+    if(!read_optional(offset, "wheel_offset", merged)){
         boost::shared_ptr<const urdf::Joint> drive_joint;
         if(model && !geom.drive_name.empty()){
             drive_joint = model->getJoint(geom.drive_name);
