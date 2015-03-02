@@ -30,6 +30,8 @@ public:
         }
         odom_tracker_.reset(new OdometryTracker);
 
+        topic_pub_odometry_ = controller_nh.advertise<nav_msgs::Odometry>("odom", 1);
+
         bool broadcast_tf = true;
         controller_nh.getParam("broadcast_tf", broadcast_tf);
 
