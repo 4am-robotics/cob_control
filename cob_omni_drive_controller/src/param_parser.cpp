@@ -64,8 +64,8 @@ bool parseCtrlParams(UndercarriageCtrl::CtrlParams & params, XmlRpc::XmlRpcValue
 
 bool parseWheelGeom(UndercarriageGeom::WheelGeom & geom, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcStruct &merged, urdf::Model* model){
 
-    try_read(geom.steer_name, "steer_name", wheel);
-    try_read(geom.drive_name, "drive_name", wheel);
+    try_read(geom.steer_name, "steer", wheel);
+    try_read(geom.drive_name, "drive", wheel);
     try_read(geom.dSteerDriveCoupling, "steer_drive_coupling", wheel);
 
     boost::shared_ptr<const urdf::Joint> steer_joint;
