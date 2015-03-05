@@ -1,6 +1,7 @@
 #include <cob_omni_drive_controller/UndercarriageCtrlGeomROS.h>
 #include <urdf/model.h>
 #include <angles/angles.h>
+#include <XmlRpcException.h>
 
 class MergedXmlRpcStruct : public XmlRpc::XmlRpcValue{
     MergedXmlRpcStruct(const XmlRpc::XmlRpcValue& a) :XmlRpc::XmlRpcValue(a){ assertStruct(); }
@@ -21,10 +22,22 @@ public:
     }
 };
 
+template<typename T> T read_typed(XmlRpc::XmlRpcValue &val){
+    return val;
+}
+template<> double read_typed(XmlRpc::XmlRpcValue &val){
+    if(val.getType() ==  XmlRpc::XmlRpcValue::TypeInt) return read_typed<int>(val);
+    return val;
+}
+
 template<typename T> bool read_optional(T& val, const std::string &name, XmlRpc::XmlRpcValue &wheel){
-    if(wheel.hasMember(name)){
-        val = (T)wheel[name];
-        return true;
+    try{
+        if(wheel.hasMember(name)){
+           val = read_typed<T>(wheel[name]);
+           return true;
+        }
+    }catch(XmlRpc::XmlRpcException &e){
+        ROS_ERROR_STREAM("Could not access '" << name << "', reason: " << e.getMessage());
     }
     return false;
 }
