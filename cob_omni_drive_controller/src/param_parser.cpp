@@ -148,6 +148,20 @@ template<> bool parseWheel(UndercarriageCtrl::WheelParams & params, XmlRpc::XmlR
     return parseWheelGeom(params.geom, wheel, merged, model) && parseCtrlParams(params.ctrl, merged);
 }
 
+bool make_wheel_struct(XmlRpc::XmlRpcValue &wheel_list){
+    if(wheel_list.getType() ==  XmlRpc::XmlRpcValue::TypeArray){
+        XmlRpc::XmlRpcValue new_stuct;
+        for(size_t i = 0; i < wheel_list.size(); ++i){
+            new_stuct[boost::lexical_cast<std::string>(i)] = wheel_list[i];
+        }
+        wheel_list = new_stuct;
+    }else if(wheel_list.getType() !=  XmlRpc::XmlRpcValue::TypeStruct){
+        return false;
+    }
+    
+    return wheel_list.size() > 0;
+}
+
 template<typename W> bool parseWheels(std::vector<W> &wheel_params, const ros::NodeHandle &nh, bool read_urdf){
 
     urdf::Model model;
@@ -167,13 +181,17 @@ template<typename W> bool parseWheels(std::vector<W> &wheel_params, const ros::N
         return false;
     }
 
-    for(int i = 0; i < wheel_list.size(); ++i){
+    if (!make_wheel_struct(wheel_list)){
+        ROS_ERROR("List of wheels is invalid");
+        return false;
+    }
+
+    for(XmlRpc::XmlRpcValue::iterator it = wheel_list.begin(); it != wheel_list.end(); ++it){
 
         W params;
-        XmlRpc::XmlRpcValue & wheel = wheel_list[i];
-        MergedXmlRpcStruct merged(wheel, defaults);
+        MergedXmlRpcStruct merged(it->second, defaults);
 
-        if(!parseWheel(params, wheel, merged, has_model?&model:0)){
+        if(!parseWheel(params, it->second, merged, has_model?&model:0)){
             return false;
         }
 
