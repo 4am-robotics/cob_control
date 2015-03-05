@@ -26,7 +26,7 @@ template<typename T> bool read_optional(T& val, const std::string &name, XmlRpc:
         val = (T)wheel[name];
         return true;
     }
-    return true;
+    return false;
 }
 
 template<typename T> bool read_with_default(T& val, const std::string &name, XmlRpc::XmlRpcValue &wheel, const T& def){
