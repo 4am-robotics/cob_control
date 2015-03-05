@@ -262,9 +262,9 @@ private:
         CtrlData(const WheelParams &params)
         : WheelData(params.geom), params_(params.ctrl), /*m_dCtrlDeltaPhi(0),*/  m_dCtrlVelCmdInt(0) {
             state_.dAngGearSteerRad = params_.dWheelNeutralPos;
-            m_dAngGearSteerTargetRad = params_.dWheelNeutralPos;
             updateState(WheelState());
             setTarget(PlatformState());
+            m_dAngGearSteerTargetRad = params_.dWheelNeutralPos;
         }
     };
 
