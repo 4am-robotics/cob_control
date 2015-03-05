@@ -23,7 +23,7 @@ public:
 
     virtual bool init(hardware_interface::VelocityJointInterface* hw, ros::NodeHandle &root_nh, ros::NodeHandle& controller_nh){
 
-        if(!GeomController::init(hw, controller_nh)) return true;
+        if(!GeomController::init(hw, controller_nh)) return false;
 
         controller_nh.param("max_rot_velocity", max_vel_rot_, 0.0);
         if(max_vel_rot_ < 0){
