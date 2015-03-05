@@ -232,7 +232,6 @@ void UndercarriageCtrl::CtrlData::calcControlStep(WheelState &command, double dC
 void UndercarriageCtrl::CtrlData::reset(){
     //m_dCtrlDeltaPhi = 0.0;
     m_dCtrlVelCmdInt = 0.0;
-    setTarget(PlatformState());
 }
 
 UndercarriageCtrl::UndercarriageCtrl(const std::vector<WheelParams> &params){
