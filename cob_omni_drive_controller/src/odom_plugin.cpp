@@ -14,7 +14,7 @@ namespace cob_omni_drive_controller
 {
 
 // this controller gets access to the JointStateInterface
-class OdometryController: public GeomController<hardware_interface::JointStateInterface>
+class OdometryController: public GeomController<hardware_interface::JointStateInterface, UndercarriageGeom>
 {
 public:
     OdometryController() {}
@@ -28,7 +28,14 @@ public:
             ROS_ERROR("Parameter 'publish_rate' not set");
             return false;
         }
+        if(publish_rate <= 0){
+            ROS_ERROR_STREAM("publish_rate must be positive.");
+            return false;
+        }
+
         odom_tracker_.reset(new OdometryTracker);
+
+        topic_pub_odometry_ = controller_nh.advertise<nav_msgs::Odometry>("odom", 1);
 
         bool broadcast_tf = true;
         controller_nh.getParam("broadcast_tf", broadcast_tf);
@@ -39,12 +46,11 @@ public:
             tf_broadcast_odometry_.reset(new tf::TransformBroadcaster);
         }
 
-        publish_timer_ = controller_nh.createTimer(ros::Duration(publish_rate), &OdometryController::publish, this);
+        publish_timer_ = controller_nh.createTimer(ros::Duration(1/publish_rate), &OdometryController::publish, this);
 
         return true;
   }
     virtual void starting(const ros::Time& time){
-        geom_->reset();
         odom_tracker_->init(time);
     }
     virtual void update(const ros::Time& time, const ros::Duration& period){
@@ -53,12 +59,12 @@ public:
 
         geom_->calcDirect(platform_state_);
 
-        odom_tracker_->track(time, period.toSec(), platform_state_.get_vel_x(), platform_state_.get_vel_y(), platform_state_.dRotRobRadS);
+        odom_tracker_->track(time, period.toSec(), platform_state_.getVelX(), platform_state_.getVelY(), platform_state_.dRotRobRadS);
     }
     virtual void stopping(const ros::Time& time) {}
 
 private:
-    UndercarriageCtrlGeom::PlatformState platform_state_;
+    UndercarriageGeom::PlatformState platform_state_;
 
     ros::Publisher topic_pub_odometry_;                 // calculated (measured) velocity, rotation and pose (odometry-based) for the robot
 

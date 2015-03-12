@@ -11,108 +11,68 @@
 #include <boost/weak_ptr.hpp>
 #include <boost/thread/mutex.hpp>
 
+#include "GeomController.h"
+
 namespace cob_omni_drive_controller
 {
 
-template<typename T> class GeomController: public controller_interface::Controller<T> {
-protected:
-    std::vector<hardware_interface::JointHandle> steer_joints_, drive_joints_;
-    std::vector<UndercarriageCtrlGeom::WheelState> wheel_states_;
-    boost::scoped_ptr<UndercarriageCtrlGeom> geom_;
-public:    
-    virtual bool init(hardware_interface::VelocityJointInterface* hw, ros::NodeHandle &root_nh, ros::NodeHandle& controller_nh){
-
-        std::vector<std::string> steer_names, drive_names;
-
-        if (!controller_nh.getParam("steer_joints", steer_names)){
-            ROS_ERROR("Parameter 'steer_joints' not set");
-            return false;
-        }
-        if (!controller_nh.getParam("drives_joints", drive_names)){
-            ROS_ERROR("Parameter 'drives_joints' not set");
-            return false;
-        }
-
-        if (steer_names.size()!=drive_names.size()){
-            ROS_ERROR("Number of steer joints does not match number of drive joints");
-            return false;
-        }
-
-        if (drive_names.size() < 3){
-            ROS_ERROR("At least three wheel are needed.");
-            return false;
-        }
-
-        for (unsigned i=0; i<steer_names.size(); i++){
-            steer_joints_.push_back(hw->getHandle(steer_names[i]));
-            drive_joints_.push_back(hw->getHandle(drive_names[i]));
-        }
-        wheel_states_.resize(steer_names.size());
-
-        std::vector<UndercarriageCtrlGeom::WheelParams> params;
-
-        std::string ini_directory;
-        if (!controller_nh.getParam("ini_directory", ini_directory)){
-            ROS_ERROR("Parameter 'ini_directory' not set");
-            return false;
-        }
-
-        try{
-            UndercarriageCtrlGeom::parseIniFiles(params, ini_directory);
-        }
-        catch(...){
-            ROS_ERROR("INI file parsing failed");
-            return false;
-        }
-        geom_.reset(new UndercarriageCtrlGeom(params));
-        return true;
-    }
-
-    virtual void update(const ros::Time& time, const ros::Duration& period){
-
-        for (unsigned i=0; i<wheel_states_.size(); i++){
-            wheel_states_[i].dAngGearSteerRad = steer_joints_[i].getPosition();
-            wheel_states_[i].dVelGearSteerRadS = steer_joints_[i].getVelocity();
-            wheel_states_[i].dVelGearDriveRadS = drive_joints_[i].getVelocity();
-        }
-        geom_->updateWheelStates(wheel_states_);
-    }    
-};
-
-// this controller gets access to the JointStateInterface
-class WheelController: public GeomController<hardware_interface::VelocityJointInterface>
+class WheelController: public GeomController<hardware_interface::VelocityJointInterface, UndercarriageCtrl>
 {
 public:
     WheelController() {}
 
     virtual bool init(hardware_interface::VelocityJointInterface* hw, ros::NodeHandle &root_nh, ros::NodeHandle& controller_nh){
 
-        if(!GeomController::init(hw,root_nh, controller_nh)) return true;
+        if(!GeomController::init(hw, controller_nh)) return false;
+
+        controller_nh.param("max_rot_velocity", max_vel_rot_, 0.0);
+        if(max_vel_rot_ < 0){
+            ROS_ERROR_STREAM("max_rot_velocity must be non-negative.");
+            return false;
+        }
+        controller_nh.param("max_trans_velocity", max_vel_trans_, 0.0);
+        if(max_vel_trans_ < 0){
+            ROS_ERROR_STREAM("max_trans_velocity must be non-negative.");
+            return false;
+        }
+        double timeout;
+        controller_nh.param("timeout", timeout, 1.0);
+        if(timeout < 0){
+            ROS_ERROR_STREAM("timeout must be non-negative.");
+            return false;
+        }
+        timeout_.fromSec(timeout);
 
         wheel_commands_.resize(wheel_states_.size());
         twist_subscriber_ = controller_nh.subscribe("command", 1, &WheelController::topicCallbackTwistCmd, this);
-        
 
         return true;
   }
     virtual void starting(const ros::Time& time){
         geom_->reset();
+        target_.updated = false;
     }
     virtual void update(const ros::Time& time, const ros::Duration& period){
 
-        GeomController::update(time, period);
+        GeomController::update();
 
-        boost::shared_ptr<const geometry_msgs::Twist> target;
         {
             boost::mutex::scoped_try_lock lock(mutex_);
-            if(lock) target = target_;
-        }
-        if(target){
-            target_.reset();
-            platform_state_.dVelLongMMS = target->linear.x * 1000.0;
-            platform_state_.dVelLatMMS = target->linear.y * 1000.0;
-            platform_state_.dRotRobRadS = target->angular.z;
-            geom_->setTarget(platform_state_);
+            if(lock){
+                Target target = target_;
+                target_.updated = false;
+
+                if(!target.stamp.isZero() && !timeout_.isZero() && (time - target.stamp) > timeout_){
+                    target_.stamp = ros::Time(); // only reset once
+                    target.state  = UndercarriageCtrl::PlatformState();
+                    target.updated = true;
+                }
+                lock.unlock();
+
+                if(target.updated){
+                   geom_->setTarget(target.state);
+                }
+            }
         }
 
         geom_->calcControlStep(wheel_commands_, period.toSec(), false);
@@ -121,22 +81,37 @@ public:
             steer_joints_[i].setCommand(wheel_commands_[i].dVelGearSteerRadS);
             drive_joints_[i].setCommand(wheel_commands_[i].dVelGearDriveRadS);
         }
-        
     }
     virtual void stopping(const ros::Time& time) {}
 
 private:
-    std::vector<UndercarriageCtrlGeom::WheelState> wheel_commands_;
-    UndercarriageCtrlGeom::PlatformState platform_state_;
+    struct Target {
+        UndercarriageCtrl::PlatformState state;
+        bool updated;
+        ros::Time stamp;
+    } target_;
 
-    ros::Subscriber twist_subscriber_;
-    geometry_msgs::Twist::ConstPtr target_;
+    std::vector<UndercarriageCtrl::WheelState> wheel_commands_;
+
     boost::mutex mutex_;
-  
+    ros::Subscriber twist_subscriber_;
+
+    ros::Duration timeout_;
+    double max_vel_trans_, max_vel_rot_;
+
     void topicCallbackTwistCmd(const geometry_msgs::Twist::ConstPtr& msg){
         if(isRunning()){
             boost::mutex::scoped_lock lock(mutex_);
-            target_ = msg;
+            if(isnan(msg->linear.x) || isnan(msg->linear.y) || isnan(msg->angular.z)) {
+                ROS_FATAL("Received NaN-value in Twist message. Reset target to zero.");
+                target_.state = UndercarriageCtrl::PlatformState();
+            }else{
+                target_.state.setVelX(UndercarriageCtrl::limitValue(msg->linear.x, max_vel_trans_));
+                target_.state.setVelY(UndercarriageCtrl::limitValue(msg->linear.y, max_vel_trans_));
+                target_.state.dRotRobRadS = UndercarriageCtrl::limitValue(msg->angular.z, max_vel_rot_);
+            }
+            target_.updated = true;
+            target_.stamp = ros::Time::now();
         }
     }
 
