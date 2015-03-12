@@ -74,28 +74,21 @@ class CobControlModeAdapter
       {
         has_traj_controller_ = true;
         traj_controller_names_.push_back("joint_trajectory_controller");
+        ROS_DEBUG_STREAM(nh_.getNamespace() << " supports 'joint_trajectory_controller'");
       }
-      else
-      {
-        ROS_WARN_STREAM(nh_.getNamespace() << " does not support 'joint_trajectory_controller'");
-      }
+      
       if(nh_.hasParam("joint_group_position_controller"))
       {   
         has_pos_controller_ = true;
         pos_controller_names_.push_back("joint_group_position_controller");
+        ROS_DEBUG_STREAM(nh_.getNamespace() << " supports 'joint_group_position_controller'");
       }
-      else
-      {
-        ROS_WARN_STREAM(nh_.getNamespace() << " does not support 'joint_group_position_controller'");
-      }
+      
       if(nh_.hasParam("joint_group_velocity_controller"))
       {   
         has_vel_controller_ = true;
         vel_controller_names_.push_back("joint_group_velocity_controller");
-      }
-      else
-      {
-        ROS_WARN_STREAM(nh_.getNamespace() << " does not support 'joint_group_velocity_controller'");
+        ROS_DEBUG_STREAM(nh_.getNamespace() << " supports 'joint_group_velocity_controller'");
       }
       
       //load all required controllers
