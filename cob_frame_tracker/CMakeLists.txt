@@ -5,24 +5,20 @@ project(cob_frame_tracker)
 find_package(catkin REQUIRED
 	COMPONENTS
 	roscpp
-	cmake_modules
 	std_msgs
-	geometry_msgs
-	dynamic_reconfigure
-	actionlib_msgs
-	kdl_parser
-	kdl_conversions
 	sensor_msgs
-	actionlib
+	geometry_msgs
+	actionlib_msgs
 	std_srvs
 	cob_srvs
+	message_generation
+	kdl_parser
+	kdl_conversions
 	tf
-	interactive_markers
 	tf_conversions
+	dynamic_reconfigure
+	interactive_markers
 	control_toolbox)
-
-find_package(Eigen REQUIRED)
-add_definitions(${EIGEN_DEFINITIONS})
 
 find_package(orocos_kdl REQUIRED)
 
@@ -46,20 +42,21 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES cob_frame_tracker
   CATKIN_DEPENDS
-  roscpp
-  sensor_msgs
-  geometry_msgs
-  dynamic_reconfigure
-  cob_srvs
-  std_srvs
-  tf
-  cmake_modules
-  kdl_parser
-  kdl_conversions
-  control_toolbox
-  std_srvs
-  cob_srvs
-  interactive_markers 
+	roscpp
+	std_msgs
+	sensor_msgs
+	geometry_msgs
+	actionlib_msgs
+	std_srvs
+	cob_srvs
+	message_runtime
+	kdl_parser
+	kdl_conversions
+	tf
+	tf_conversions
+	dynamic_reconfigure
+	interactive_markers
+	control_toolbox
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS})

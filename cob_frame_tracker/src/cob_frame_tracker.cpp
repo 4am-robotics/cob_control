@@ -26,17 +26,18 @@
  *
  ****************************************************************/
 #include <ros/ros.h>
+#include <math.h>
 
-#include <cob_frame_tracker/cob_frame_tracker.h>
 #include <geometry_msgs/Twist.h>
 #include <sensor_msgs/JointState.h>
+#include <cob_frame_tracker/cob_frame_tracker.h>
 #include <cob_frame_tracker/FrameTrackingAction.h>
+
 #include <kdl_parser/kdl_parser.hpp>
 #include <kdl/chainiksolvervel_pinv.hpp>
 #include <kdl/chainfksolvervel_recursive.hpp>
 #include <kdl/jntarray.hpp>
 #include <kdl/jntarrayvel.hpp>
-#include <math.h>
 
 bool CobFrameTracker::initialize()
 {
