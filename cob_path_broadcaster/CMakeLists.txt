@@ -13,7 +13,6 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES cob_path_broadcaster cob_articulation cob_articulation_py std_srvs cob_srvs
   CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs visualization_msgs std_srvs cob_srvs tf kdl_conversions
-#  DEPENDS system_lib
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${TinyXML_INCLUDE_DIRS} ${orocos_kdl_INCLUDE_DIRS})
@@ -21,13 +20,11 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${TinyXML_INCLUDE_DIRS} ${oro
 ## Build
 # Declare a cpp library
 add_library(cob_articulation src/cob_articulation.cpp )
-#add_library(cob_articulation_py src/modules.cpp )
 
 add_dependencies(cob_articulation cob_srvs_gencpp)
 
 ## Declare a cpp executable
 add_executable(cob_articulation_node src/cob_articulation_node.cpp)
-#target_link_libraries(cob_articulation_node cob_articulation cob_articulation_py ${catkin_LIBRARIES} ${TinyXML_LIBRARIES} ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} ${orocos_kdl_LIBRARIES})
 target_link_libraries(cob_articulation_node cob_articulation  ${catkin_LIBRARIES} ${TinyXML_LIBRARIES} ${Boost_LIBRARIES} ${PYTHON_LIBRARIES} ${orocos_kdl_LIBRARIES})
 
 ## Install

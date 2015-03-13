@@ -18,7 +18,6 @@ catkin_package(
    INCLUDE_DIRS include
    LIBRARIES cob_twist_controller cob_twist_controller_debug augmented_solver
    CATKIN_DEPENDS roscpp sensor_msgs geometry_msgs nav_msgs
-#  DEPENDS system_lib
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${orocos_kdl_INCLUDE_DIRS} )

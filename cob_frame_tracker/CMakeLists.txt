@@ -34,7 +34,7 @@ add_action_files(
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
-  std_msgs geometry_msgs actionlib_msgs # Or other packages containing msgs
+  std_msgs geometry_msgs actionlib_msgs
 )
 
 # Declare catkin package
@@ -67,7 +67,6 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 add_library(cob_frame_tracker src/cob_frame_tracker.cpp )
 add_dependencies(cob_frame_tracker cob_srvs_gencpp)
 add_dependencies(cob_frame_tracker ${cob_frame_tracker_EXPORTED_TARGETS})
-#add_dependencies(cob_frame_tracker cob_frame_tracker_gencpp)
 
 add_library(interactive_frame_target src/interactive_frame_target.cpp )
 add_dependencies(interactive_frame_target cob_srvs_gencpp)
