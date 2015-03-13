@@ -128,18 +128,18 @@ bool CobFrameTracker::initialize()
 	{	movable_rot_ = true;	}
 	
 	// Load PID Controller using gains set on parameter server
-	pid_controller_trans_x_.init(ros::NodeHandle(nh_cartesian, "pid_trans"));
+	pid_controller_trans_x_.init(ros::NodeHandle(nh_cartesian, "pid_trans_x"));
 	pid_controller_trans_x_.reset();
-	pid_controller_trans_y_.init(ros::NodeHandle(nh_cartesian, "pid_trans"));
+	pid_controller_trans_y_.init(ros::NodeHandle(nh_cartesian, "pid_trans_y"));
 	pid_controller_trans_y_.reset();
-	pid_controller_trans_z_.init(ros::NodeHandle(nh_cartesian, "pid_trans"));
+	pid_controller_trans_z_.init(ros::NodeHandle(nh_cartesian, "pid_trans_z"));
 	pid_controller_trans_z_.reset();
 	
-	pid_controller_rot_x_.init(ros::NodeHandle(nh_cartesian, "pid_rot"));
+	pid_controller_rot_x_.init(ros::NodeHandle(nh_cartesian, "pid_rot_x"));
 	pid_controller_rot_x_.reset();
-	pid_controller_rot_y_.init(ros::NodeHandle(nh_cartesian, "pid_rot"));
+	pid_controller_rot_y_.init(ros::NodeHandle(nh_cartesian, "pid_rot_y"));
 	pid_controller_rot_y_.reset();
-	pid_controller_rot_z_.init(ros::NodeHandle(nh_cartesian, "pid_rot"));
+	pid_controller_rot_z_.init(ros::NodeHandle(nh_cartesian, "pid_rot_z"));
 	pid_controller_rot_z_.reset();
 	
 	
