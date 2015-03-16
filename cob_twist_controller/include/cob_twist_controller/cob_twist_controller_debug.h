@@ -25,8 +25,8 @@
  *   This package provides a generic Twist controller for the Care-O-bot
  *
  ****************************************************************/
-#ifndef COB_TWIST_CONTROLLER_H
-#define COB_TWIST_CONTROLLER_H
+#ifndef COB_TWIST_CONTROLLER_DEBUG_H
+#define COB_TWIST_CONTROLLER_DEBUG_H
 
 #include <ros/ros.h>
 
@@ -40,6 +40,8 @@
 #include <kdl_parser/kdl_parser.hpp>
 #include <kdl/chainfksolvervel_recursive.hpp>
 #include <kdl/chainiksolvervel_pinv.hpp>
+#include <kdl/chainiksolver.hpp>
+#include <kdl/chainjnttojacsolver.hpp>
 #include <cob_twist_controller/augmented_solver.h>
 #include <kdl/jntarray.hpp>
 #include <kdl/jntarrayvel.hpp>
@@ -73,6 +75,20 @@ private:
 	ros::Publisher twist_pub_;
 	ros::Publisher twist_current_pub_;
 	
+	ros::Publisher qdot_manipulability_pub;
+	ros::Publisher qdot_truncation_pub;
+	ros::Publisher qdot_constant_pub;
+	ros::Publisher twist_manipulability_pub;
+	ros::Publisher twist_truncation_pub;
+	ros::Publisher twist_constant_pub;
+	ros::Publisher qdot_manipulability_JLA_pub;
+	ros::Publisher qdot_truncation_JLA_pub;
+	ros::Publisher qdot_constant_JLA_pub;
+	ros::Publisher twist_manipulability_JLA_pub;
+	ros::Publisher twist_truncation_JLA_pub;
+	ros::Publisher twist_constant_JLA_pub;
+	ros::Publisher manipulability_pub;
+	
 	KDL::Chain chain_;
 	std::string chain_base_link_;
 	std::string chain_tip_link_;
@@ -80,6 +96,7 @@ private:
 	KDL::ChainFkSolverVel_recursive* p_fksolver_vel_;
 	KDL::ChainIkSolverVel_pinv* p_iksolver_vel_;
 	augmented_solver* p_augmented_solver_;
+	KDL::ChainJntToJacSolver* p_jnt2jac_;
 	
 	std::vector<std::string> joints_;
 	unsigned int dof_;
@@ -122,6 +139,8 @@ private:
 				bl_frame_ct,
 				cb_frame_bl;
 	
+	std_msgs::Float64MultiArray JntArrayToMsg(KDL::JntArray q_dot_ik);
+	geometry_msgs::Twist GetTwistFromQDot(KDL::JntArray q_dot_ik);
 	
 public:
 	CobTwistController():

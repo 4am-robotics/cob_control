@@ -11,10 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Boost REQUIRED COMPONENTS thread )
 
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES cob_control_mode_adapter
-  CATKIN_DEPENDS roscpp std_msgs control_msgs controller_manager_msgs 
-#  DEPENDS system_lib
+  CATKIN_DEPENDS roscpp std_msgs control_msgs controller_manager_msgs
 )
 
 ###########

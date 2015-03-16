@@ -20,6 +20,10 @@ class CobControlModeAdapter
       last_pos_command_=ros::Time();
       last_vel_command_=ros::Time();
       
+      has_traj_controller_ = false;
+      has_pos_controller_ = false;
+      has_vel_controller_ = false;
+      
       current_control_mode_=NONE;
       
       //wait for services from controller manager
@@ -66,40 +70,72 @@ class CobControlModeAdapter
         nh_.shutdown();
       }
       
-      traj_controller_names_.push_back("joint_trajectory_controller");
-      pos_controller_names_.push_back("joint_group_position_controller");
-      vel_controller_names_.push_back("joint_group_velocity_controller");
+      if(nh_.hasParam("joint_trajectory_controller"))
+      {
+        has_traj_controller_ = true;
+        traj_controller_names_.push_back("joint_trajectory_controller");
+        ROS_DEBUG_STREAM(nh_.getNamespace() << " supports 'joint_trajectory_controller'");
+      }
+      
+      if(nh_.hasParam("joint_group_position_controller"))
+      {   
+        has_pos_controller_ = true;
+        pos_controller_names_.push_back("joint_group_position_controller");
+        ROS_DEBUG_STREAM(nh_.getNamespace() << " supports 'joint_group_position_controller'");
+      }
+      
+      if(nh_.hasParam("joint_group_velocity_controller"))
+      {   
+        has_vel_controller_ = true;
+        vel_controller_names_.push_back("joint_group_velocity_controller");
+        ROS_DEBUG_STREAM(nh_.getNamespace() << " supports 'joint_group_velocity_controller'");
+      }
       
       //load all required controllers
-      for (unsigned int i=0; i<traj_controller_names_.size(); i++)
+      if(has_traj_controller_)
       {
-        success = load_controller(traj_controller_names_[i]);
+        for (unsigned int i=0; i<traj_controller_names_.size(); i++)
+        {
+          success = load_controller(traj_controller_names_[i]);
+        }
       }
-      
-      for (unsigned int i=0; i<pos_controller_names_.size(); i++)
+      if(has_pos_controller_)
       {
-        success = load_controller(pos_controller_names_[i]);
+        for (unsigned int i=0; i<pos_controller_names_.size(); i++)
+        {
+          success = load_controller(pos_controller_names_[i]);
+        }
+        cmd_pos_sub_ = nh_.subscribe("joint_group_position_controller/command", 1, &CobControlModeAdapter::cmd_pos_cb, this);
       }
-      
-      for (unsigned int i=0; i<vel_controller_names_.size(); i++)
+      if(has_vel_controller_)
       {
-        success = load_controller(vel_controller_names_[i]);
+        for (unsigned int i=0; i<vel_controller_names_.size(); i++)
+        {
+          success = load_controller(vel_controller_names_[i]);
+        }
+        cmd_vel_sub_ = nh_.subscribe("joint_group_velocity_controller/command", 1, &CobControlModeAdapter::cmd_vel_cb, this);
       }
       
       //start position controllers
-      //success = switch_controller(pos_controller_names_, current_controller_names_);
-      //current_control_mode_=POSITION;
+      //if(has_pos_controller_)
+      //{
+        //success = switch_controller(pos_controller_names_, current_controller_names_);
+        //current_control_mode_=POSITION;
+      //}
       
       //start velocity controllers
-      //success = switch_controller(vel_controller_names_, current_controller_names_);
-      //current_control_mode_=VELOCITY;
+      //if(has_vel_controller_)
+      //{
+        //success = switch_controller(vel_controller_names_, current_controller_names_);
+        //current_control_mode_=VELOCITY;
+      //}
       
       //start trajectory controller by default
-      success = switch_controller(traj_controller_names_, current_controller_names_);
-      current_control_mode_=TRAJECTORY;
-      
-      cmd_pos_sub_ = nh_.subscribe("joint_group_position_controller/command", 1, &CobControlModeAdapter::cmd_pos_cb, this);
-      cmd_vel_sub_ = nh_.subscribe("joint_group_velocity_controller/command", 1, &CobControlModeAdapter::cmd_vel_cb, this);
+      if(has_traj_controller_)
+      {
+        success = switch_controller(traj_controller_names_, current_controller_names_);
+        current_control_mode_=TRAJECTORY;
+      }
       
       update_rate = 100;  //[hz]
       timer = nh_.createTimer(ros::Duration(1/update_rate), &CobControlModeAdapter::update, this);
@@ -187,7 +223,7 @@ class CobControlModeAdapter
 
       lock.unlock();
 
-      if(period_vel.toSec() < max_command_silence_){
+      if(has_vel_controller_ && (period_vel.toSec() < max_command_silence_)){
         if(current_control_mode_!=VELOCITY)
         {
             bool success = switch_controller(vel_controller_names_, current_controller_names_);
@@ -201,7 +237,7 @@ class CobControlModeAdapter
                 current_control_mode_=VELOCITY;
             }
         }
-      }else if(period_pos.toSec() < max_command_silence_){
+      }else if(has_pos_controller_ && (period_pos.toSec() < max_command_silence_)){
         if(current_control_mode_!=POSITION)
         {
             bool success = switch_controller(pos_controller_names_, current_controller_names_);
@@ -215,8 +251,7 @@ class CobControlModeAdapter
                 current_control_mode_=POSITION;
             }
       }
-        
-      }else{
+      }else if(has_traj_controller_){
         if(current_control_mode_!=TRAJECTORY)
         {
             if(current_control_mode_==POSITION)
@@ -237,6 +272,8 @@ class CobControlModeAdapter
             }
         }
       }
+      else
+      { ROS_ERROR_STREAM(nh_.getNamespace() << " does not support 'joint_trajectory_controller' and no other controller was started yet"); }
     }
 
   private:
@@ -254,6 +291,10 @@ class CobControlModeAdapter
     std::vector< std::string > traj_controller_names_;
     std::vector< std::string > pos_controller_names_;
     std::vector< std::string > vel_controller_names_;
+    
+    bool has_traj_controller_;
+    bool has_pos_controller_;
+    bool has_vel_controller_;
 
     ros::Subscriber cmd_pos_sub_;
     ros::Subscriber cmd_vel_sub_;
