@@ -73,6 +73,7 @@
 
 // external includes
 #include <cob_omni_drive_controller/UndercarriageCtrlGeomROS.h>
+#include <cob_omni_drive_controller/OdometryTracker.h>
 #include <vector>
 #include <angles/angles.h>
 
@@ -115,10 +116,10 @@ class NodeClass
     ros::Time last_time_;				// time Stamp for last odometry measurement
     ros::Time joint_state_odom_stamp_;	// time stamp of joint states used for current odometry calc
     double sample_time_, timeout_;
-    double x_rob_m_, y_rob_m_, theta_rob_rad_; // accumulated motion of robot since startup
     int iwatchdog_;
-    double 	vel_x_rob_last_, vel_y_rob_last_, vel_theta_rob_last_; //save velocities for better odom calculation
     double max_vel_trans_, max_vel_rot_;
+
+    OdometryTracker* odom_tracker_;
 
     int m_iNumJoints;
     int m_iNumWheels;
@@ -130,6 +131,7 @@ class NodeClass
 
     // Constructor
     NodeClass()
+    : ucar_ctrl_(0), odom_tracker_(new OdometryTracker)
     {
       // initialization of variables
       is_initialized_bool_ = false;
@@ -138,12 +140,6 @@ class NodeClass
       iwatchdog_ = 0;
       last_time_ = ros::Time::now();
       sample_time_ = 0.020; // TODO: read from parameter server
-      x_rob_m_ = 0.0;
-      y_rob_m_ = 0.0;
-      theta_rob_rad_ = 0.0;
-      vel_x_rob_last_ = 0.0;
-      vel_y_rob_last_ = 0.0;
-      vel_theta_rob_last_ = 0.0;
       // set status of drive chain to WARN by default
       drive_chain_diagnostic_ = diagnostic_status_lookup_.OK; //WARN; <- THATS FOR DEBUGGING ONLY!
       has_target = false;     
@@ -236,6 +232,14 @@ class NodeClass
     // Destructor
     ~NodeClass() 
     {
+      topic_sub_CMD_pltf_twist_.shutdown();
+      topic_sub_EM_stop_state_.shutdown();
+      topic_sub_drive_diagnostic_.shutdown();
+      topic_sub_joint_controller_states_.shutdown();
+
+      timer_ctrl_step_.stop();
+      delete ucar_ctrl_;
+      delete odom_tracker_;
     }
 
     void diag_init(diagnostic_updater::DiagnosticStatusWrapper &stat)
@@ -599,108 +603,38 @@ void NodeClass::CalcCtrlStep()
 // and publishes it via an odometry topic and the tf broadcaster
 void NodeClass::UpdateOdometry()
 {
-  double vel_x_rob_ms, vel_y_rob_ms, rot_rob_rads, delta_x_rob_m, delta_y_rob_m;
-  double dt;
-  ros::Time current_time;
-
-  // TODO: migrate to cob_omni_drive_controller/OdometryTracker  
-
   // if drive chain already initialized process joint data
   //if (drive_chain_diagnostic_ != diagnostic_status_lookup_.OK)
+  UndercarriageCtrl::PlatformState pltState;
   if (is_initialized_bool_)
   {
-    UndercarriageCtrl::PlatformState pltState;
 
     // Get resulting Pltf Velocities from Ctrl-Class (result of forward kinematics)
     // !Careful! Controller internally calculates with mm instead of m
     // ToDo: change internal calculation to SI-Units
     ucar_ctrl_->calcDirect(pltState);
-
-    // convert variables to SI-Units
-    vel_x_rob_ms = pltState.getVelX();
-    vel_y_rob_ms = pltState.getVelY();
-    delta_x_rob_m = pltState.getVelX() * sample_time_;
-    delta_y_rob_m = pltState.getVelY() * sample_time_;
-    rot_rob_rads = pltState.dRotRobRadS;
-
-
-//    std::cout << "ODOMETRY variables: " << vel_x_rob_ms << " , " << vel_y_rob_ms <<
-//                 " , " << delta_x_rob_m << " , " << delta_y_rob_m << " , " << rot_rob_rads << std::endl;
-
-    ROS_DEBUG("Odmonetry delta is: x=%f, y=%f, th=%f", delta_x_rob_m, delta_y_rob_m, rot_rob_rads);
   }
-  else
-  {
-    // otherwise set data (velocity and pose-delta) to zero
-    vel_x_rob_ms = 0.0;
-    vel_y_rob_ms = 0.0;
-    delta_x_rob_m = 0.0;
-    delta_y_rob_m = 0.0;
-    rot_rob_rads = 0.0;
-  }
+  odom_tracker_->track(joint_state_odom_stamp_, (joint_state_odom_stamp_-last_time_).toSec(), pltState.getVelX(), pltState.getVelY(), pltState.dRotRobRadS);
+  last_time_ = joint_state_odom_stamp_;
 
-  // calc odometry (from startup)
-  // get time since last odometry-measurement
-  current_time = ros::Time::now();
-  dt = current_time.toSec() - last_time_.toSec();
-  last_time_ = current_time;
-
-  // calculation from ROS odom publisher tutorial http://www.ros.org/wiki/navigation/Tutorials/RobotSetup/Odom, using now midpoint integration
-  x_rob_m_ = x_rob_m_ + ((vel_x_rob_ms+vel_x_rob_last_)/2.0 * cos(theta_rob_rad_) - (vel_y_rob_ms+vel_y_rob_last_)/2.0 * sin(theta_rob_rad_)) * dt;
-  y_rob_m_ = y_rob_m_ + ((vel_x_rob_ms+vel_x_rob_last_)/2.0 * sin(theta_rob_rad_) + (vel_y_rob_ms+vel_y_rob_last_)/2.0 * cos(theta_rob_rad_)) * dt;
-  theta_rob_rad_ = theta_rob_rad_ + rot_rob_rads * dt;
-  //theta_rob_rad_ = theta_rob_rad_ + (rot_rob_rads+vel_theta_rob_last_)/2.0 * dt;
-
-  vel_x_rob_last_ = vel_x_rob_ms;
-  vel_y_rob_last_ = vel_y_rob_ms;
-  vel_theta_rob_last_ = rot_rob_rads;
-
-
-  // format data for compatibility with tf-package and standard odometry msg
-  // generate quaternion for rotation
-  geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(theta_rob_rad_);
+  nav_msgs::Odometry odom_top = odom_tracker_->getOdometry();
 
   if (broadcast_tf_ == true)
   {
     // compose and publish transform for tf package
     geometry_msgs::TransformStamped odom_tf;
     // compose header
-    odom_tf.header.stamp = joint_state_odom_stamp_;
+    odom_tf.header.stamp = odom_top.header.stamp;
     odom_tf.header.frame_id = "/odom_combined";
     odom_tf.child_frame_id = "/base_footprint";
     // compose data container
-    odom_tf.transform.translation.x = x_rob_m_;
-    odom_tf.transform.translation.y = y_rob_m_;
-    odom_tf.transform.translation.z = 0.0;
-    odom_tf.transform.rotation = odom_quat;
+    odom_tf.transform.translation.x = odom_top.pose.pose.position.x;
+    odom_tf.transform.translation.y = odom_top.pose.pose.position.y;
+    odom_tf.transform.rotation = odom_top.pose.pose.orientation;
 
     // publish the transform (for debugging, conflicts with robot-pose-ekf)
     tf_broadcast_odometry_.sendTransform(odom_tf);
   }
-
-  // compose and publish odometry message as topic
-  nav_msgs::Odometry odom_top;
-  // compose header
-  odom_top.header.stamp = joint_state_odom_stamp_;
-  odom_top.header.frame_id = "/wheelodom";
-  odom_top.child_frame_id = "/base_footprint";
-  // compose pose of robot
-  odom_top.pose.pose.position.x = x_rob_m_;
-  odom_top.pose.pose.position.y = y_rob_m_;
-  odom_top.pose.pose.position.z = 0.0;
-  odom_top.pose.pose.orientation = odom_quat;
-  for(int i = 0; i < 6; i++)
-    odom_top.pose.covariance[i*6+i] = 0.1;
-
-  // compose twist of robot
-  odom_top.twist.twist.linear.x = vel_x_rob_ms;
-  odom_top.twist.twist.linear.y = vel_y_rob_ms;
-  odom_top.twist.twist.linear.z = 0.0;
-  odom_top.twist.twist.angular.x = 0.0;
-  odom_top.twist.twist.angular.y = 0.0;
-  odom_top.twist.twist.angular.z = rot_rob_rads;
-  for(int i = 0; i < 6; i++)
-    odom_top.twist.covariance[6*i+i] = 0.1;
 
   // publish odometry msg
   topic_pub_odometry_.publish(odom_top);
