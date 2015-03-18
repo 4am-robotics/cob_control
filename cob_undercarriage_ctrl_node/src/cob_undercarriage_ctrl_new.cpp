@@ -72,7 +72,7 @@
 #include <control_msgs/JointTrajectoryControllerState.h>
 
 // external includes
-#include <cob_omni_drive_controller/UndercarriageCtrlGeom.h>
+#include <cob_omni_drive_controller/UndercarriageCtrlGeomROS.h>
 #include <vector>
 #include <angles/angles.h>
 
@@ -107,7 +107,7 @@ class NodeClass
     ros::Timer timer_ctrl_step_;
 
     // member variables
-    UndercarriageCtrlGeom * ucar_ctrl_;	// instantiate undercarriage controller
+    UndercarriageCtrl * ucar_ctrl_;	// instantiate undercarriage controller
     bool is_initialized_bool_;			// flag wether node is already up and running
     bool is_ucarr_geom_initialized_bool_;
     bool broadcast_tf_;			// flag wether to broadcast the tf from odom to base_link
@@ -192,11 +192,15 @@ class NodeClass
       }
 
      // vector of wheels
-     std::vector<UndercarriageCtrlGeom::WheelParams> wps;
+     std::vector<UndercarriageCtrl::WheelParams> wps;
 
      // configuration of ucar_ctrl by yaml-files
-     if(parseYamlConfig(wps)){
-         ucar_ctrl_ = new UndercarriageCtrlGeom(wps);
+     if(cob_omni_drive_controller::parseWheelParams(wps,n)){
+
+        m_iNumWheels = wps.size();
+        m_iNumJoints = m_iNumWheels * 2;
+
+         ucar_ctrl_ = new UndercarriageCtrl(wps);
          is_ucarr_geom_initialized_bool_ = true;
      }
 
@@ -228,137 +232,6 @@ class NodeClass
             is_initialized_bool_ = true;
     }
 
-    bool parseYamlConfig(std::vector<UndercarriageCtrlGeom::WheelParams>& wps){
-        ros::NodeHandle nh_priv("~");
-        bool parsing_done = false;
-        std::string exception_detailed_param_info = "";
-        // clear vector in case of reinititialization
-        wps.clear();
-
-        // config parameters per wheel
-        XmlRpc::XmlRpcValue wheel_list;
-
-        double deg, coupling;
-
-        // general config
-        if (nh_priv.getParam("Geom/Wheels", wheel_list)){
-            m_iNumWheels = wheel_list.size();
-        }else{
-            ROS_ERROR("Error while parsing YAML-Parameter: Geom/Wheels");
-            return false;
-        }
-
-        // calc numebr of Joints
-        m_iNumJoints = m_iNumWheels * 2;
-
-        for(int i=0; i < m_iNumWheels; i++){
-
-          UndercarriageCtrlGeom::WheelParams param;
-
-          // Prms of Impedance-Ctrlr with default values
-          // --------------------
-          // SteerCtrl-Parameters
-          // --------------------
-
-          if (nh_priv.getParam("SteerCtrl/Spring", param.dSpring)){
-          }else{
-              ROS_ERROR("Error while parsing YAML-Parameter: SteerCtrl/Spring");
-              return false;
-          }
-
-          if (nh_priv.getParam("SteerCtrl/Damp", param.dDamp)){
-          }else{
-              ROS_ERROR("Error while parsing YAML-Parameter: SteerCtrl/Damp");
-              return false;
-          }
-
-          if (nh_priv.getParam("SteerCtrl/VirtMass", param.dVirtM)){
-          }else{
-              ROS_ERROR("Error while parsing YAML-Parameter: SteerCtrl/VirtMass");
-              return false;
-          }
-
-          if (nh_priv.getParam("SteerCtrl/DPhiMax", param.dDPhiMax)){
-          }else{
-              ROS_ERROR("Error while parsing YAML-Parameter: SteerCtrl/DPhiMax");
-              return false;
-          }
-
-          if (nh_priv.getParam("SteerCtrl/DDPhiMax", param.dDDPhiMax)){
-          }else{
-              ROS_ERROR("Error while parsing YAML-Parameter: SteerCtrl/DDPhiMax");
-              return false;
-          }
-
-          // ---------------
-          // Geom-Parameters
-          // ---------------
-
-          if (nh_priv.getParam("Geom/RadiusWheeL", param.dRadiusWheelMM)){
-          }else{
-              ROS_ERROR("Error while parsing YAML-Parameter: Geom/RadiusWheeL");
-              return false;
-          }
-
-          if (nh_priv.getParam("Geom/DistSteerAxisToDriveWheelCenter", param.dDistSteerAxisToDriveWheelMM)){
-          }else{
-              ROS_ERROR("Error while parsing YAML-Parameter: Geom/DistSteerAxisToDriveWheelCenter");
-              return false;
-          }
-
-          // ------------------------------
-          // Wheel specific Geom-Parameters
-          // ------------------------------
-          if (wheel_list[i].hasMember("MaxDriveRate")){
-              param.dMaxDriveRateRadpS = wheel_list[i]["MaxDriveRate"];
-          }else{
-              ROS_ERROR_STREAM("Error while parsing YAML-Parameter: wheel " << i << " Geom/Wheels/MaxDriveRate");
-              return false;
-          }
-          if (wheel_list[i].hasMember("MaxSteerRate")){
-              param.dMaxSteerRateRadpS = wheel_list[i]["MaxSteerRate"];
-          }else{
-              ROS_ERROR_STREAM("Error while parsing YAML-Parameter: wheel " << i << " Geom/Wheels/MaxSteerRate");
-              return false;
-          }
-          if (wheel_list[i].hasMember("xPos")){
-              param.dWheelXPosMM = wheel_list[i]["xPos"];
-          }else{
-              ROS_ERROR_STREAM("Error while parsing YAML-Parameter: wheel " << i << " Geom/Wheels/xPos");
-              return false;
-          }
-          if (wheel_list[i].hasMember("yPos")){
-              param.dWheelYPosMM = wheel_list[i]["yPos"];
-          }else{
-              ROS_ERROR_STREAM("Error while parsing YAML-Parameter: wheel " << i << " Geom/Wheels/yPos");
-              return false;
-          }
-
-          if (wheel_list[i].hasMember("NeutralPosition")){
-              deg = wheel_list[i]["NeutralPosition"];
-          }else{
-              ROS_ERROR_STREAM("Error while parsing YAML-Parameter: wheel " << i << " Geom/Wheels/NeutralPosition");
-              return false;
-          }
-          if (wheel_list[i].hasMember("SteerDriveCoupling")){
-              coupling = wheel_list[i]["SteerDriveCoupling"];
-          }else{
-              ROS_ERROR_STREAM("Error while parsing YAML-Parameter: wheel " << i << " Geom/Wheels/SteerDriveCoupling");
-              return false;
-          }
-
-          // calculate specific parameters
-          param.dWheelNeutralPos = angles::from_degrees(deg);
-          param.dFactorVel = - coupling + param.dDistSteerAxisToDriveWheelMM / param.dRadiusWheelMM;
-
-          // add wheel to vecor of wheels
-          wps.push_back(param);
-        }
-        // set correct parsing flag
-        parsing_done = true;
-
-        return parsing_done;
-    }
 
     // Destructor
     ~NodeClass() 
@@ -378,7 +251,7 @@ class NodeClass
     void topicCallbackTwistCmd(const geometry_msgs::Twist::ConstPtr& msg)
     {
       // create instance of pltState which is initialized with zero values
-      UndercarriageCtrlGeom::PlatformState pltState;
+      UndercarriageCtrl::PlatformState pltState;
 
       if( (fabs(msg->linear.x) > max_vel_trans_) || (fabs(msg->linear.y) > max_vel_trans_) || (fabs(msg->angular.z) > max_vel_rot_)){
         if(fabs(msg->linear.x) > max_vel_trans_){
@@ -399,8 +272,8 @@ class NodeClass
       }
       else{
         // setter-methods convert SI-Units (m/s) to mm/s because controller works with those
-        pltState.set_vel_x(msg->linear.x);
-        pltState.set_vel_y(msg->linear.y);
+        pltState.setVelX(msg->linear.x);
+        pltState.setVelY(msg->linear.y);
         pltState.dRotRobRadS = msg->angular.z;
       }
 
@@ -420,7 +293,7 @@ class NodeClass
         //std::cout << "PLT_VELO_NEW: " << pltState.dVelLongMMS << " , " << pltState.dVelLatMMS << " , " << pltState.dRotRobRadS << std::endl;
         // Set desired values for Plattform State to zero (setpoint setting)
         // pltState will be initialized with zero values
-        pltState = UndercarriageCtrlGeom::PlatformState();
+        pltState = UndercarriageCtrl::PlatformState();
         ucar_ctrl_->setTarget(pltState);
 
         ROS_DEBUG("Forced platform-velocity cmds to zero");
@@ -444,7 +317,7 @@ class NodeClass
 
         // Set desired values for Plattform State to zero (setpoint setting)
         // pltState will be initialized with zero values
-        UndercarriageCtrlGeom::PlatformState pltState;
+        UndercarriageCtrl::PlatformState pltState;
         ucar_ctrl_->setTarget(pltState);
 
         ROS_DEBUG("Forced platform-velocity cmds to zero");
@@ -504,7 +377,7 @@ class NodeClass
 
             // Set desired values for Plattform State to zero (setpoint setting)
             // pltState will be initialized with zero values
-            UndercarriageCtrlGeom::PlatformState pltState;
+            UndercarriageCtrl::PlatformState pltState;
             ucar_ctrl_->setTarget(pltState);
 
             ROS_DEBUG("Forced platform-velocity cmds to zero");
@@ -526,8 +399,8 @@ class NodeClass
       int num_joints = msg->joint_names.size();
 
       // replaces the vectors per parameter with a vector of wheelStates which combines the wheel specfic params
-      std::vector<UndercarriageCtrlGeom::WheelState> wStates;
-      wStates.assign(m_iNumWheels, UndercarriageCtrlGeom::WheelState());
+      std::vector<UndercarriageCtrl::WheelState> wStates;
+      wStates.assign(m_iNumWheels, UndercarriageCtrl::WheelState());
 
       joint_state_odom_stamp_ = msg->header.stamp;
 
@@ -636,8 +509,8 @@ int main(int argc, char** argv)
 void NodeClass::CalcCtrlStep()
 {
   // WheelStates will be initialized with zero-values
-  std::vector<UndercarriageCtrlGeom::WheelState> wStates;
-  wStates.assign(m_iNumWheels, UndercarriageCtrlGeom::WheelState());
+  std::vector<UndercarriageCtrl::WheelState> wStates;
+  wStates.assign(m_iNumWheels, UndercarriageCtrl::WheelState());
 
   // create control_msg
   control_msgs::JointTrajectoryControllerState joint_state_cmd;
@@ -736,7 +609,7 @@ void NodeClass::UpdateOdometry()
   //if (drive_chain_diagnostic_ != diagnostic_status_lookup_.OK)
   if (is_initialized_bool_)
   {
-    UndercarriageCtrlGeom::PlatformState pltState;
+    UndercarriageCtrl::PlatformState pltState;
 
     // Get resulting Pltf Velocities from Ctrl-Class (result of forward kinematics)
     // !Careful! Controller internally calculates with mm instead of m
@@ -744,10 +617,10 @@ void NodeClass::UpdateOdometry()
     ucar_ctrl_->calcDirect(pltState);
 
     // convert variables to SI-Units
-    vel_x_rob_ms = pltState.get_vel_x();
-    vel_y_rob_ms = pltState.get_vel_y();
-    delta_x_rob_m = pltState.get_vel_x() * sample_time_;
-    delta_y_rob_m = pltState.get_vel_y() * sample_time_;
+    vel_x_rob_ms = pltState.getVelX();
+    vel_y_rob_ms = pltState.getVelY();
+    delta_x_rob_m = pltState.getVelX() * sample_time_;
+    delta_y_rob_m = pltState.getVelY() * sample_time_;
     rot_rob_rads = pltState.dRotRobRadS;
 
 
@@ -838,8 +711,8 @@ void NodeClass::setEMStopActive(bool bEMStopActive)
 {
     m_bEMStopActive = bEMStopActive;
 
-    std::vector<UndercarriageCtrlGeom::WheelState> wStates;
-    wStates.assign(m_iNumWheels, UndercarriageCtrlGeom::WheelState());
+    std::vector<UndercarriageCtrl::WheelState> wStates;
+    wStates.assign(m_iNumWheels, UndercarriageCtrl::WheelState());
 
     // if emergency stop reset ctrlr to zero
     if(m_bEMStopActive)
