@@ -93,7 +93,6 @@ private:
   
     std::string action_name_;
     std::string current_operation_mode_;
-    XmlRpc::XmlRpcValue JointNames_param_;
     std::vector<std::string> JointNames_;
     bool executing_;
     bool failure_;
@@ -111,7 +110,7 @@ private:
 public:
 
     cob_trajectory_controller_node():
-    as_(n_, "joint_trajectory_controller/follow_joint_trajectory", boost::bind(&cob_trajectory_controller_node::executeFollowTrajectory, this, _1), true),
+    as_(n_, "joint_trajectory_controller/follow_joint_trajectory", boost::bind(&cob_trajectory_controller_node::executeFollowTrajectory, this, _1), false),
     action_name_("follow_joint_trajectory")
     {
         joint_vel_pub_ = n_.advertise<brics_actuator::JointVelocities>("command_vel", 1);
@@ -139,21 +138,16 @@ public:
         velocity_timeout_ = 2.0;
         DOF = 7;
         // get JointNames from parameter server
-        ROS_INFO("getting JointNames from parameter server");
+        ROS_INFO("getting JointNames from parameter server: %s", n_private_.getNamespace().c_str());
         if (n_private_.hasParam("joint_names"))
         {
-            n_private_.getParam("joint_names", JointNames_param_);
+            n_private_.getParam("joint_names", JointNames_);
         }
         else
         {
             ROS_ERROR("Parameter 'joint_names' not set");
         }
-        JointNames_.resize(JointNames_param_.size());
-        for (int i = 0; i<JointNames_param_.size(); i++ )
-        {
-            JointNames_[i] = (std::string)JointNames_param_[i];
-        }
-        DOF = JointNames_param_.size();
+        DOF = JointNames_.size();
         
         if (n_private_.hasParam("ptp_vel"))
         {
@@ -179,6 +173,8 @@ public:
         ROS_INFO("starting controller with DOF: %d PTPvel: %f PTPAcc: %f maxError %f", DOF, PTPvel, PTPacc, maxError);
         traj_generator_ = new genericArmCtrl(DOF, PTPvel, PTPacc, maxError);
         traj_generator_->overlap_time = overlap_time;
+        
+        as_.start();
     }
 
     double getFrequency()
