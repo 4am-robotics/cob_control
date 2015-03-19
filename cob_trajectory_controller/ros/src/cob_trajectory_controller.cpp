@@ -79,6 +79,7 @@ class cob_trajectory_controller_node
 {
 private:
     ros::NodeHandle n_;
+    ros::NodeHandle n_private_;
     
     ros::Publisher joint_vel_pub_;
     ros::Subscriber controller_state_;
@@ -88,12 +89,10 @@ private:
     ros::ServiceServer srvServer_SetAcc_;
     ros::ServiceClient srvClient_SetOperationMode;
 
-    actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction> as_follow_;
+    actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction> as_;
   
-    //std::string action_name_;
-    std::string action_name_follow_;
+    std::string action_name_;
     std::string current_operation_mode_;
-    XmlRpc::XmlRpcValue JointNames_param_;
     std::vector<std::string> JointNames_;
     bool executing_;
     bool failure_;
@@ -111,18 +110,16 @@ private:
 public:
 
     cob_trajectory_controller_node():
-    //as_(n_, "joint_trajectory_action", boost::bind(&cob_trajectory_controller_node::executeTrajectory, this, _1), true),
-    as_follow_(n_, "follow_joint_trajectory", boost::bind(&cob_trajectory_controller_node::executeFollowTrajectory, this, _1), true),
-    //action_name_("joint_trajectory_action"),
-    action_name_follow_("follow_joint_trajectory")
+    as_(n_, "joint_trajectory_controller/follow_joint_trajectory", boost::bind(&cob_trajectory_controller_node::executeFollowTrajectory, this, _1), false),
+    action_name_("follow_joint_trajectory")
     {
         joint_vel_pub_ = n_.advertise<brics_actuator::JointVelocities>("command_vel", 1);
         controller_state_ = n_.subscribe("state", 1, &cob_trajectory_controller_node::state_callback, this);
-        operation_mode_ = n_.subscribe("current_operationmode", 1, &cob_trajectory_controller_node::operationmode_callback, this);
-        srvServer_Stop_ = n_.advertiseService("stop", &cob_trajectory_controller_node::srvCallback_Stop, this);
-        srvServer_SetVel_ = n_.advertiseService("set_joint_velocity", &cob_trajectory_controller_node::srvCallback_setVel, this);
-        srvServer_SetAcc_ = n_.advertiseService("set_joint_acceleration", &cob_trajectory_controller_node::srvCallback_setAcc, this);
-        srvClient_SetOperationMode = n_.serviceClient<cob_srvs::SetOperationMode>("set_operation_mode");
+        operation_mode_ = n_.subscribe("driver/current_operationmode", 1, &cob_trajectory_controller_node::operationmode_callback, this);
+        srvServer_Stop_ = n_.advertiseService("driver/stop", &cob_trajectory_controller_node::srvCallback_Stop, this);
+        srvServer_SetVel_ = n_.advertiseService("driver/set_joint_velocity", &cob_trajectory_controller_node::srvCallback_setVel, this);
+        srvServer_SetAcc_ = n_.advertiseService("driver/set_joint_acceleration", &cob_trajectory_controller_node::srvCallback_setAcc, this);
+        srvClient_SetOperationMode = n_.serviceClient<cob_srvs::SetOperationMode>("driver/set_operation_mode");
         while(!srvClient_SetOperationMode.exists())
         {
             ROS_INFO("Waiting for operationmode service to become available");
@@ -141,60 +138,57 @@ public:
         velocity_timeout_ = 2.0;
         DOF = 7;
         // get JointNames from parameter server
-        ROS_INFO("getting JointNames from parameter server");
-        if (n_.hasParam("joint_names"))
+        ROS_INFO("getting JointNames from parameter server: %s", n_private_.getNamespace().c_str());
+        if (n_private_.hasParam("joint_names"))
         {
-            n_.getParam("joint_names", JointNames_param_);
+            n_private_.getParam("joint_names", JointNames_);
         }
         else
         {
-            ROS_ERROR("Parameter joint_names not set");
+            ROS_ERROR("Parameter 'joint_names' not set");
         }
-        JointNames_.resize(JointNames_param_.size());
-        for (int i = 0; i<JointNames_param_.size(); i++ )
-        {
-            JointNames_[i] = (std::string)JointNames_param_[i];
-        }
-        DOF = JointNames_param_.size();
+        DOF = JointNames_.size();
         
-        if (n_.hasParam("ptp_vel"))
+        if (n_private_.hasParam("ptp_vel"))
         {
-            n_.getParam("ptp_vel", PTPvel);
+            n_private_.getParam("ptp_vel", PTPvel);
         }
-        if (n_.hasParam("ptp_acc"))
+        if (n_private_.hasParam("ptp_acc"))
         {
-            n_.getParam("ptp_acc", PTPacc);
+            n_private_.getParam("ptp_acc", PTPacc);
         }
-        if (n_.hasParam("max_error"))
+        if (n_private_.hasParam("max_error"))
         {
-            n_.getParam("max_error", maxError);
+            n_private_.getParam("max_error", maxError);
         }
-        if (n_.hasParam("overlap_time"))
+        if (n_private_.hasParam("overlap_time"))
         {
-            n_.getParam("overlap_time", overlap_time);
+            n_private_.getParam("overlap_time", overlap_time);
         }
-        if (n_.hasParam("operation_mode"))
+        if (n_private_.hasParam("operation_mode"))
         {
-            n_.getParam("operation_mode", current_operation_mode_);
+            n_private_.getParam("operation_mode", current_operation_mode_);
         }
         q_current.resize(DOF);
         ROS_INFO("starting controller with DOF: %d PTPvel: %f PTPAcc: %f maxError %f", DOF, PTPvel, PTPacc, maxError);
         traj_generator_ = new genericArmCtrl(DOF, PTPvel, PTPacc, maxError);
         traj_generator_->overlap_time = overlap_time;
+        
+        as_.start();
     }
 
     double getFrequency()
     {
         double frequency;
-        if (n_.hasParam("frequency"))                                                                   
+        if (n_private_.hasParam("frequency"))                                                                   
         {                                                                                                     
-            n_.getParam("frequency", frequency);                                                              
+            n_private_.getParam("frequency", frequency);                                                              
             ROS_INFO("Setting controller frequency to %f HZ", frequency);                                       
         }                                                                                                     
         else                                                                                                    
         {                                                                                                     
             frequency = 100; //Hz                                                                               
-            ROS_WARN("Parameter frequency not available, setting to default value: %f Hz", frequency);          
+            ROS_WARN("Parameter 'frequency' not available, setting to default value: %f Hz", frequency);          
         }
         return frequency;
     }
@@ -207,7 +201,6 @@ public:
         executing_ = false;
         res.success.data = true;
         traj_generator_->isMoving = false;
-        //as_.setPreemted();
         failure_ = true;
         return true;
     }
@@ -379,13 +372,13 @@ public:
         spawnTrajector(goal->trajectory);
         // only set to succeeded if component could reach position. this is currently not the care for e.g. by emergency stop, hardware error or exceeds limit.
         if(rejected_)
-            as_follow_.setAborted(); //setRejected not implemented in simpleactionserver ?
+            as_.setAborted(); //setRejected not implemented in simpleactionserver ?
         else
         {
             if(failure_)
-                as_follow_.setAborted();
+                as_.setAborted();
             else
-                as_follow_.setSucceeded();
+                as_.setSucceeded();
         }
         rejected_ = false;
         failure_ = false;
@@ -397,19 +390,16 @@ public:
         {
             failure_ = false;
             watchdog_counter = 0;
-            //if (as_follow_.isPreemptRequested() || !ros::ok() || current_operation_mode_ != "velocity")
             if (!ros::ok() || current_operation_mode_ != "velocity")
             {
                 // set the action state to preempted
                 executing_ = false;
                 traj_generator_->isMoving = false;
-                //as_.setPreempted();
                 failure_ = true;
                 return;
             }
-            if (as_follow_.isPreemptRequested())
+            if (as_.isPreemptRequested())
             {
-                //as_follow_.setAborted()
                 failure_ = true;
                 preemted_ = true;
                 executing_ = false;

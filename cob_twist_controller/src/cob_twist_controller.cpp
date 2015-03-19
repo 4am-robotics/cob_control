@@ -40,7 +40,6 @@ bool CobTwistController::initialize()
 {
 	ros::NodeHandle nh_twist("twist_controller");
 	ros::NodeHandle nh_cartesian("cartesian_controller");
-	ros::NodeHandle nh_base("base");
 	
 	// JointNames
 	if(!nh_.getParam("joint_names", joints_))
@@ -145,7 +144,7 @@ bool CobTwistController::initialize()
 	vel_pub = nh_.advertise<std_msgs::Float64MultiArray>("joint_group_velocity_controller/command", 1);
 	
 	odometry_sub = nh_.subscribe("/base/odometry_controller/odometry", 1, &CobTwistController::odometry_cb, this);
-	base_vel_pub = nh_base.advertise<geometry_msgs::Twist>("/base/twist_controller/command", 1);
+	base_vel_pub = nh_.advertise<geometry_msgs::Twist>("/base/twist_controller/command", 1);
 	
 	
 	/// Debug
