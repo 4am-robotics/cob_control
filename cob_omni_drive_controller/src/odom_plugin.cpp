@@ -51,15 +51,17 @@ public:
         return true;
   }
     virtual void starting(const ros::Time& time){
+        GeomController::reset();
         odom_tracker_->init(time);
     }
-    virtual void update(const ros::Time& time, const ros::Duration& period){
+    virtual void update(const ros::Time& time, const ros::Duration& duration){
+        double period = duration.toSec();
 
-        GeomController::update();
+        GeomController::update(period);
 
         geom_->calcDirect(platform_state_);
 
-        odom_tracker_->track(time, period.toSec(), platform_state_.getVelX(), platform_state_.getVelY(), platform_state_.dRotRobRadS);
+        odom_tracker_->track(time, period, platform_state_.getVelX(), platform_state_.getVelY(), platform_state_.dRotRobRadS);
     }
     virtual void stopping(const ros::Time& time) {}
 

@@ -49,12 +49,14 @@ public:
         return true;
   }
     virtual void starting(const ros::Time& time){
+        GeomController::reset();
         geom_->reset();
         target_.updated = false;
     }
-    virtual void update(const ros::Time& time, const ros::Duration& period){
+    virtual void update(const ros::Time& time, const ros::Duration& duration){
+        double period = duration.toSec();
 
-        GeomController::update();
+        GeomController::update(period);
 
         {
             boost::mutex::scoped_try_lock lock(mutex_);
@@ -75,7 +77,7 @@ public:
             }
         }
 
-        geom_->calcControlStep(wheel_commands_, period.toSec(), false);
+        geom_->calcControlStep(wheel_commands_, period, false);
 
         for (unsigned i=0; i<wheel_commands_.size(); i++){
             steer_joints_[i].setCommand(wheel_commands_[i].dVelGearSteerRadS);

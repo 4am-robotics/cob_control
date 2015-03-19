@@ -9,7 +9,8 @@ namespace cob_omni_drive_controller
 
 template<typename Interface, typename Controller> class GeomController: public controller_interface::Controller<Interface> {
 protected:
-    std::vector<typename Interface::ResourceHandleType> steer_joints_, drive_joints_;
+    std::vector< typename Interface::ResourceHandleType > steer_joints_, drive_joints_;
+    std::vector< VelocityEstimator > steer_estimators_, drive_estimators_;
     std::vector<typename Controller::WheelState> wheel_states_;
     boost::scoped_ptr<Controller> geom_;
 public:    
@@ -25,7 +26,10 @@ public:
         try{
             for (unsigned i=0; i<wheel_params.size(); i++){
                 steer_joints_.push_back(hw->getHandle(wheel_params[i].geom.steer_name));
+                steer_estimators_.push_back(parseVelocityEstimator(controller_nh, wheel_params[i].geom.steer_name));
+
                 drive_joints_.push_back(hw->getHandle(wheel_params[i].geom.drive_name));
+                drive_estimators_.push_back(parseVelocityEstimator(controller_nh, wheel_params[i].geom.drive_name));
             }
         }
         catch(const std::exception &e){
@@ -38,15 +42,21 @@ public:
         return true;
     }
 
-    void update(){
+    void update(double period){
 
         for (unsigned i=0; i<wheel_states_.size(); i++){
             wheel_states_[i].dAngGearSteerRad = steer_joints_[i].getPosition();
-            wheel_states_[i].dVelGearSteerRadS = steer_joints_[i].getVelocity();
-            wheel_states_[i].dVelGearDriveRadS = drive_joints_[i].getVelocity();
+            wheel_states_[i].dVelGearSteerRadS = steer_estimators_[i].estimateVelocity(steer_joints_[i].getPosition(),steer_joints_[i].getVelocity(), period);
+            wheel_states_[i].dVelGearDriveRadS = drive_estimators_[i].estimateVelocity(drive_joints_[i].getPosition(),drive_joints_[i].getVelocity(), period);
         }
         geom_->updateWheelStates(wheel_states_);
-    }    
+    }
+    void reset(){
+        for (unsigned i=0; i<wheel_states_.size(); i++){
+            steer_estimators_[i].reset();
+            drive_estimators_[i].reset();
+        }
+    }
 };
 
 
