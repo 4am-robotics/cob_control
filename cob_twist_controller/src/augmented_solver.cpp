@@ -142,7 +142,7 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& 
 	Eigen::MatrixXd qdot_out_vec_enforced;
 	
 	///use calculated damping value lambda for SVD
-	Wv = Wv*damping_factor*damping_factor; //why squared?
+	Wv = Wv*damping_factor*damping_factor; //why squared? -> based on Control of Redundant Manipulators Page 13-14 -> Approximate Solution: solving the least-squares criterion
 	
 	///convert input
 	for (int i=0; i<jac_.rows(); i++)
@@ -155,12 +155,14 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& 
 		
 		if(params_.damping_method == TRUNCATION)
 		{
+		  // SVD von (J_T * J + lambda*lambda * I)
 			Eigen::JacobiSVD<Eigen::MatrixXd> svdWholeMatrix(jac_.data*W_jla.inverse()*jac_.data.transpose()+Wv,Eigen::ComputeFullU | Eigen::ComputeFullV);
 			Eigen::VectorXd SWholeMatrix = svdWholeMatrix.singularValues();
 			Eigen::VectorXd S_inv = Eigen::VectorXd::Zero(SWholeMatrix.rows());
 			
 			for(int i=0;i<SWholeMatrix.rows();i++)
-			{	S_inv(i) = (SWholeMatrix(i)<params_.eps) ? 0 : 1/SWholeMatrix(i);	}
+			{	S_inv(i) = (SWholeMatrix(i)<params_.eps) ? 0 : 1/SWholeMatrix(i);	} // Damping wird in Zeile 158 verwendet, daher sollte wie in "Control of Redundant Robot Manipulators" S. 14 der Nenner ausgewertet werden (so wie ohne JLA) oder hat sich das somit erledigt?
+			// Besser gleich machen wie unten oder unten wie hier!!!
 			
 			Eigen::MatrixXd tmp = svdWholeMatrix.matrixV()*S_inv.asDiagonal()*svdWholeMatrix.matrixV().transpose();
 			qdot_out_vec = W_jla.inverse()*jac_.data.transpose()*tmp*v_in_vec;
@@ -189,7 +191,10 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& 
 	else //JLA is not active
 	{
 		if(params_.damping_method == TRUNCATION)
+		// Warum if - else? Auf Seite 14 im Buch Control of Redundant Manipulators stellt sich doch heraus, dass die Formel 2.3.13 gleich der SVD in 2.3.14
+		// Wegen dem denominator < eps?
 		{
+		  // Basiert zunächst nur auf SVD von J!!!
 			Eigen::MatrixXd jac_pinv = Eigen::MatrixXd::Zero(jac_.columns(),jac_.rows());
 			Eigen::MatrixXd temp = Eigen::MatrixXd::Zero(jac_.columns(),jac_.rows());
 			for (int i=0; i<S.rows(); i++)
@@ -198,7 +203,7 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& 
 				{
 					for (int k=0; k<jac_.columns(); k++)
 					{
-						double denominator = pow(S(i),2)+pow(damping_factor,2);
+						double denominator = pow(S(i),2)+pow(damping_factor,2); // Muss nciht jedesmal berechnet werden, da nur Abhängigkeit von i
 						double factor = (denominator < params_.eps) ? 0.0 : S(i)/denominator;
 						jac_pinv(k,j)+=factor*svd.matrixV()(k,i)*svd.matrixU()(j,i);
 					}
@@ -207,15 +212,20 @@ int augmented_solver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& 
 			qdot_out_vec = jac_pinv*v_in_vec;
 		}
 		else
-		{
-			if(jac_.columns()>=jac_.rows())
+		{ // Formeln siehe Modelling and Control of Robot Manipulators. S. 100
+			if(jac_.columns()>=jac_.rows()) // FXM-MB: right pseudo-inverse
 			{
 				Eigen::MatrixXd tmp = (jac_.data*jac_.data.transpose()+Wv).inverse();
 				qdot_out_vec=jac_.data.transpose()*tmp*v_in_vec;
 			}
-			else  //special case, the last formula is valid only for a full-row Jacobian
+			else // FXM-MB: left pseudo-inverse
+			  //  Control of redundant manipulators S. 14
+			  //special case, the last formula is valid only for a full-row Jacobian
+			  // ---> WHY ? Sollte ebenso funktionieren?
+			  // Tut auch genau gleich siehe ~/Scripts/jacobian_damped_solvers.m
+			  // ---> Wichtig ist dennoch eine Unterscheidung, um
 			{
-				Eigen::MatrixXd Wv_specialcase = Eigen::MatrixXd::Identity(jac_.columns(), jac_.columns())*damping_factor;
+				Eigen::MatrixXd Wv_specialcase = Eigen::MatrixXd::Identity(jac_.columns(), jac_.columns())*damping_factor; // entspricht nicht Zeile 145! Dort wird damping_factor quadriert!!!
 				Eigen::MatrixXd tmp = (jac_.data.transpose()*jac_.data+Wv_specialcase).inverse();
 				qdot_out_vec = tmp*jac_.data.transpose()*v_in_vec;
 			}
