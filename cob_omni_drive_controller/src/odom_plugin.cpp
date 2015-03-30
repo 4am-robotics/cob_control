@@ -8,6 +8,8 @@
 #include <cob_omni_drive_controller/UndercarriageCtrlGeom.h>
 #include <cob_omni_drive_controller/OdometryTracker.h>
 
+#include <cob_srvs/Trigger.h>
+
 #include "GeomController.h"
 
 namespace cob_omni_drive_controller
@@ -47,12 +49,24 @@ public:
         }
 
         publish_timer_ = controller_nh.createTimer(ros::Duration(1/publish_rate), &OdometryController::publish, this);
+	service_reset_ = controller_nh.advertiseService("reset_odometry", &OdometryController::srv_reset, this);
 
         return true;
   }
     virtual void starting(const ros::Time& time){
         odom_tracker_->init(time);
     }
+
+    virtual bool srv_reset(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &res)
+    {
+        ROS_INFO("Resetting odometry to zero.");
+        
+        GeomController::reset();
+        res.success.data = init_;
+
+        return true;
+    }
+
     virtual void update(const ros::Time& time, const ros::Duration& period){
 
         GeomController::update();
@@ -67,6 +81,7 @@ private:
     UndercarriageGeom::PlatformState platform_state_;
 
     ros::Publisher topic_pub_odometry_;                 // calculated (measured) velocity, rotation and pose (odometry-based) for the robot
+    ros::ServiceServer service_reset_;			// service to reset odometry to zero
 
     boost::scoped_ptr<tf::TransformBroadcaster> tf_broadcast_odometry_;    // according transformation for the tf broadcaster
     boost::scoped_ptr<OdometryTracker> odom_tracker_;
