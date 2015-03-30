@@ -1,5 +1,5 @@
-#ifndef AUGMENTED_SOLVER_HPP
-#define AUGMENTED_SOLVER_HPP
+#ifndef AUGMENTED_SOLVER_H
+#define AUGMENTED_SOLVER_H
 
 #include <math.h>
 #include <kdl/chainiksolver.hpp>
@@ -8,6 +8,8 @@
 #include <Eigen/LU>
 #include <Eigen/SVD>
 #include <iostream>
+
+#include "cob_twist_controller/augmented_solver_data_types.h"
 
 /**
 * Implementation of a inverse velocity kinematics algorithm based
@@ -19,30 +21,11 @@
 * @ingroup KinematicFamily
 */
 
-struct AugmentedSolverParams {
-    int damping_method;
-    double eps;
-    double damping_factor;
-    double lambda0;
-    double wt;
-    bool JLA_active;
-    bool enforce_limits;
-    double tolerance;
-    bool base_compensation;
-    bool base_active;
-    double base_ratio;
-
-};
-
-enum DampingMethodTypes {
-    MANIPULABILITY = 0,
-    CONSTANT = 1,
-    TRUNCATION = 2
-};
 
 
 
-class augmented_solver
+
+class AugmentedSolver
 {
 public:
     /**
@@ -56,8 +39,8 @@ public:
      * default: 150
      *
      */
-    augmented_solver(const KDL::Chain& chain, double eps=0.001, int maxiter=5);
-    ~augmented_solver();
+    AugmentedSolver(const KDL::Chain& chain, double eps=0.001, int maxiter=5);
+    ~AugmentedSolver();
     
     /** CartToJnt for chain using SVD including base and various DampingMethods **/
     virtual int CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& last_q_dot, KDL::Twist& v_in, KDL::JntArray& qdot_out, std::vector<float> limits_min, std::vector<float> limits_max, KDL::Frame &base_position, KDL::Frame &chain_base);
@@ -74,8 +57,15 @@ public:
     /** not (yet) implemented. */
     virtual int CartToJnt(const KDL::JntArray& q_init, const KDL::JntArray& last_q_dot, const KDL::FrameVel& v_in, KDL::JntArrayVel& q_out){return -1;};
     
-    void SetAugmentedSolverParams(AugmentedSolverParams params){params_ = params;}
-    AugmentedSolverParams GetAugmentedSolverParams(){return params_;}
+    void SetAugmentedSolverParams(AugmentedSolverParams params)
+    {
+        params_ = params;
+    }
+
+    AugmentedSolverParams GetAugmentedSolverParams()
+    {
+        return params_;
+    }
 
 private:
     const KDL::Chain chain_;

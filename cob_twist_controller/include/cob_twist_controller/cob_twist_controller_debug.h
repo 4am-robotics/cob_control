@@ -95,7 +95,7 @@ private:
 	
 	KDL::ChainFkSolverVel_recursive* p_fksolver_vel_;
 	KDL::ChainIkSolverVel_pinv* p_iksolver_vel_;
-	augmented_solver* p_augmented_solver_;
+	AugmentedSolver* p_augmented_solver_;
 	KDL::ChainJntToJacSolver* p_jnt2jac_;
 	
 	std::vector<std::string> joints_;

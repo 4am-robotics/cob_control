@@ -124,7 +124,7 @@ bool CobTwistController::initialize()
 	///initialize configuration control solver
 	p_fksolver_vel_ = new KDL::ChainFkSolverVel_recursive(chain_);	//used for debugging
 	//p_iksolver_vel_ = new KDL::ChainIkSolverVel_pinv(chain_, 0.001, 5);
-	p_augmented_solver_ = new augmented_solver(chain_, 0.001, 5);
+	p_augmented_solver_ = new AugmentedSolver(chain_, 0.001, 5);
 	
 	///Setting up dynamic_reconfigure server for the AugmentedSolverParams
 	reconfigure_server_.reset(new dynamic_reconfigure::Server<cob_twist_controller::TwistControllerConfig>(reconfig_mutex_, nh_cartesian));

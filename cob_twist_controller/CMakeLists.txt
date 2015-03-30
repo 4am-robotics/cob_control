@@ -16,7 +16,7 @@ generate_dynamic_reconfigure_options(
 # Declare catkin package
 catkin_package(
    INCLUDE_DIRS include
-   LIBRARIES cob_twist_controller cob_twist_controller_debug augmented_solver
+   LIBRARIES cob_twist_controller cob_twist_controller_debug augmented_solver damping_methods
    CATKIN_DEPENDS roscpp sensor_msgs geometry_msgs nav_msgs
 )
 
@@ -25,8 +25,14 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${oroco
 
 ## Build
 # Declare a cpp library
+add_library(damping_methods src/damping_methods/damping_base.cpp src/damping_methods/damping_manipulability.cpp src/damping_methods/damping_constant.cpp src/damping_methods/damping_builder.cpp)
+
+#add_library(damping_manipulability src/damping_methods/damping_manipulability.cpp)
+# add_dependencies(damping_manipulability damping_method_base) -> nur zu andern Paketen
+#target_link_libraries(damping_manipulability damping_base)
+
 add_library(augmented_solver src/augmented_solver.cpp)
-target_link_libraries(augmented_solver ${orocos_kdl_LIBRARIES})
+target_link_libraries(augmented_solver damping_methods ${orocos_kdl_LIBRARIES})
 
 add_library(${PROJECT_NAME} src/cob_twist_controller.cpp )
 add_dependencies(augmented_solver ${PROJECT_NAME}_gencfg)

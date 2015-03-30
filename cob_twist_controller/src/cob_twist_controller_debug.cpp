@@ -120,7 +120,7 @@ bool CobTwistController::initialize()
 	p_fksolver_vel_ = new KDL::ChainFkSolverVel_recursive(chain_);	//used for debugging
 	p_jnt2jac_ = new KDL::ChainJntToJacSolver(chain_);
 	//p_iksolver_vel_ = new KDL::ChainIkSolverVel_pinv(chain_, 0.001, 5);
-	p_augmented_solver_ = new augmented_solver(chain_, 0.001, 5);
+	p_augmented_solver_ = new AugmentedSolver(chain_, 0.001, 5);
 	
 	//only for debug as it does not use the dynamic reconfigure server
 	AugmentedSolverParams params;
