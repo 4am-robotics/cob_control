@@ -100,9 +100,9 @@ private:
 	
 	std::vector<std::string> joints_;
 	unsigned int dof_;
-	std::vector<float> limits_min_;
-	std::vector<float> limits_max_;
-	std::vector<float> limits_vel_;
+	std::vector<double> limits_min_;
+	std::vector<double> limits_max_;
+	std::vector<double> limits_vel_;
 	
 	double max_vel_lin_;
 	double max_vel_rot_;

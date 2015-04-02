@@ -126,6 +126,9 @@ bool CobTwistController::initialize()
 	//p_iksolver_vel_ = new KDL::ChainIkSolverVel_pinv(chain_, 0.001, 5);
 	p_augmented_solver_ = new AugmentedSolver(chain_, 0.001, 5);
 	
+	// Before setting up dynamic_reconfigure server: init AugmentedSolverParams with default values
+	this->initAugmentedSolverParams();
+
 	///Setting up dynamic_reconfigure server for the AugmentedSolverParams
 	reconfigure_server_.reset(new dynamic_reconfigure::Server<cob_twist_controller::TwistControllerConfig>(reconfig_mutex_, nh_cartesian));
 	reconfigure_server_->setCallback(boost::bind(&CobTwistController::reconfigure_callback,   this, _1, _2));
@@ -188,6 +191,10 @@ void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControl
 	params.base_active = config.base_active;
 	params.base_ratio = config.base_ratio;
 	
+    params.limits_min = this->limits_min_; // from cob_twist_controller init
+    params.limits_max = this->limits_max_; // from cob_twist_controller init
+    params.limits_vel = this->limits_vel_; // from cob_twist_controller init
+
 	enforce_limits_ = config.enforce_limits;
 	base_compensation_ = config.base_compensation;
 	base_active_ = config.base_active;
@@ -199,6 +206,33 @@ void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControl
 	}
 	
 	p_augmented_solver_->SetAugmentedSolverParams(params);
+}
+
+void CobTwistController::initAugmentedSolverParams()
+{
+    if(NULL == this->p_augmented_solver_)
+    {
+        ROS_ERROR("p_augmented_solver_ not yet initialized.");
+        return;
+    }
+
+    AugmentedSolverParams params;
+    params.damping_method = MANIPULABILITY;
+    params.eps = 0.001;
+    params.damping_factor = 0.2;
+    params.lambda0 = 0.1;
+    params.wt = 0.005;
+    params.JLA_active = true;
+    params.enforce_limits = true;
+    params.tolerance = 5.0;
+    params.base_compensation = false;
+    params.base_active = false;
+    params.base_ratio = 0.0;
+    params.limits_min = this->limits_min_;
+    params.limits_max = this->limits_max_;
+    params.limits_vel = this->limits_vel_;
+
+    p_augmented_solver_->SetAugmentedSolverParams(params);
 }
 
 

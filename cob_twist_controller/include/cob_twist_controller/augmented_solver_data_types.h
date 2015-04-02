@@ -31,6 +31,8 @@
 
 #include <Eigen/Core>
 #include <Eigen/LU> // necessary to use several methods on EIGEN Matrices.
+#include <vector>
+#include <stdint.h>
 
 struct AugmentedSolverParams {
     int damping_method;
@@ -44,7 +46,10 @@ struct AugmentedSolverParams {
     bool base_compensation;
     bool base_active;
     double base_ratio;
-
+    // added limits from URDF file
+    std::vector<double> limits_max;
+    std::vector<double> limits_min;
+    std::vector<double> limits_vel;
 };
 
 enum DampingMethodTypes {

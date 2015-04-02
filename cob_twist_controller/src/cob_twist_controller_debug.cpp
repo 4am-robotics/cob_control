@@ -124,7 +124,7 @@ bool CobTwistController::initialize()
 	
 	//only for debug as it does not use the dynamic reconfigure server
 	AugmentedSolverParams params;
-	params.damping_method = 0;
+	params.damping_method = MANIPULABILITY; // avoid magical numbers. Use names where possible
 	params.eps = 0.001;
 	params.damping_factor = 0.2;
 	params.lambda0 = 0.1;
@@ -135,6 +135,9 @@ bool CobTwistController::initialize()
 	params.base_compensation = false;
 	params.base_active = false;
 	params.base_ratio = 0.0;
+	params.limits_min = limits_min_;
+	params.limits_max = limits_max_;
+	params.limits_vel = limits_vel_;
 	
 	p_augmented_solver_->SetAugmentedSolverParams(params);
 	enforce_limits_ = params.enforce_limits;

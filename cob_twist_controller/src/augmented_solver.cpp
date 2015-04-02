@@ -2,9 +2,17 @@
 #include "cob_twist_controller/augmented_solver.h"
 #include "cob_twist_controller/damping_methods/damping_base.h"
 #include "cob_twist_controller/damping_methods/damping_builder.h"
-
 #include "cob_twist_controller/damping_methods/damping_constant.h"
 
+#include "cob_twist_controller/constraint_solvers/solvers/constraint_solver_base.h"
+#include "cob_twist_controller/constraint_solvers/solvers/unconstraint_solver.h"
+#include "cob_twist_controller/constraint_solvers/solvers/joint_limit_avoidance_solver.h"
+
+
+#include "cob_twist_controller/constraint_solvers/constraint_solver_factory_builder.h"
+
+
+#include <ostream>
 
 AugmentedSolver::AugmentedSolver(const KDL::Chain& chain, double eps, int maxiter):
 	chain_(chain),
@@ -17,7 +25,7 @@ AugmentedSolver::~AugmentedSolver()
 {}
 
 
-int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& last_q_dot, KDL::Twist& v_in, KDL::JntArray& qdot_out, std::vector<float> limits_min, std::vector<float> limits_max, KDL::Frame &base_position, KDL::Frame &chain_base)
+int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& last_q_dot, KDL::Twist& v_in, KDL::JntArray& qdot_out, std::vector<double> limits_min, std::vector<double> limits_max, KDL::Frame &base_position, KDL::Frame &chain_base)
 {
 	///Let the ChainJntToJacSolver calculate the jacobian "jac_chain" for the current joint positions "q_in"
 	KDL::Jacobian jac_chain(chain_.getNrOfJoints());
@@ -98,7 +106,29 @@ int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& l
 		jac_.data << jac_chain.data;
 	}
 	
-	Eigen::JacobiSVD<Eigen::MatrixXd> svd(jac_.data,Eigen::ComputeFullU | Eigen::ComputeFullV);
+	Eigen::VectorXd v_in_vec = Eigen::VectorXd::Zero(jac_.rows());
+    Eigen::Transpose<Matrix6Xd> jac_T = jac_.data.transpose();
+
+    ///convert input
+    for (int i=0; i<jac_.rows(); i++)
+    {
+        v_in_vec(i)=v_in(i);
+    }
+
+    /* xxxxxxxxxxxxxxxxxxxxxxx START new variant xxxxxxxxxxxxxxxxxxxxxxx */
+    Eigen::MatrixXd new_qdot_out_vec = ConstraintSolverFactoryBuilder::calculateJointVelocities(this->params_, this->jac_.data, jac_T, v_in_vec, q_in, last_q_dot);
+    std::ostringstream teststream;
+    teststream << new_qdot_out_vec << std::endl;
+
+    ROS_DEBUG("ConstraintSolverFactoryBuilder calculated: new_qdot_out_vec");
+    ROS_DEBUG_STREAM(teststream);
+    teststream.clear();
+    /* xxxxxxxxxxxxxxxxxxxxxxx END new variant xxxxxxxxxxxxxxxxxxxxxxx */
+
+
+
+	// Eigen::JacobiSVD<Eigen::MatrixXd> svd(jac_.data,Eigen::ComputeFullU | Eigen::ComputeFullV);
+	Eigen::JacobiSVD<Eigen::MatrixXd> svd(jac_.data,Eigen::ComputeThinU | Eigen::ComputeThinV); // TODO: Always necessary ? Only in src path where calculation is really necessary!
 	Eigen::VectorXd S = svd.singularValues();
 	
 	DampingBase *dampingMethod = DampingBuilder::create_damping(params_, jac_.data);
@@ -121,7 +151,6 @@ int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& l
 	//Weighting matrix for damping 
 	Eigen::MatrixXd Wv = Eigen::MatrixXd::Identity(jac_.rows(), jac_.rows());
 	
-	Eigen::VectorXd v_in_vec = Eigen::VectorXd::Zero(jac_.rows());
 	Eigen::VectorXd v_in_vec_base = Eigen::VectorXd::Zero(jac_base_.rows());
 	Eigen::MatrixXd qdot_out_vec;
 	Eigen::MatrixXd qdot_out_vec_enforced;
@@ -129,13 +158,27 @@ int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& l
 	///use calculated damping value lambda for SVD
 	Wv = Wv*damping_factor*damping_factor; //why squared? -> based on Control of Redundant Manipulators Page 13-14 -> Approximate Solution: solving the least-squares criterion
 	
-	///convert input
-	for (int i=0; i<jac_.rows(); i++)
-	{	v_in_vec(i)=v_in(i);	}
-	
 	///solution of the equation system	
 	if(params_.JLA_active)
 	{
+	    ROS_DEBUG("Joint Limit Avoidance is active");
+
+        // Without IF-ELSE
+        ConstraintSolver *cs = new JointLimitAvoidanceSolver(this->params_, jac_.data, jac_T);
+        cs->setDampingFactor(damping_factor);
+        qdot_out_vec = cs->solve(v_in_vec, q_in, last_q_dot);
+
+        std::ostringstream oss;
+        oss << qdot_out_vec << std::endl;
+
+        ROS_DEBUG("JLASolver calculated: qdout_out_vec");
+        ROS_DEBUG_STREAM(oss);
+        oss.clear();
+
+
+
+
+        // With IF-ELSE : Conventional method
 		Eigen::MatrixXd W_jla = calculate_weighting(q_in, last_q_dot, limits_min, limits_max).asDiagonal();
 		
 		if(params_.damping_method == TRUNCATION)
@@ -175,6 +218,23 @@ int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& l
 	}
 	else //JLA is not active
 	{
+	    ROS_DEBUG("Joint Limit Avoidance is NOT active");
+
+	    // Without IF-ELSE
+	    ConstraintSolver *cs = new UnconstraintSolver(this->params_, jac_.data, jac_T);
+	    cs->setDampingFactor(damping_factor);
+	    qdot_out_vec = cs->solve(v_in_vec, q_in, last_q_dot);
+
+	    std::ostringstream oss;
+	    oss << qdot_out_vec << std::endl;
+
+	    ROS_DEBUG("UnconstraintSolver calculated: qdout_out_vec");
+	    ROS_DEBUG_STREAM(oss);
+	    oss.clear();
+
+	    // //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	    // Same with IF-ELSE
 		if(params_.damping_method == TRUNCATION)
 		// Warum if - else? Auf Seite 14 im Buch Control of Redundant Manipulators stellt sich doch heraus, dass die Formel 2.3.13 gleich der SVD in 2.3.14
 		// Wegen dem denominator < eps?
@@ -212,13 +272,19 @@ int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& l
 			  //special case, the last formula is valid only for a full-row Jacobian
 			  // ---> WHY ? Sollte ebenso funktionieren?
 			  // Tut auch genau gleich siehe ~/Scripts/jacobian_damped_solvers.m
-			  // ---> Wichtig ist dennoch eine Unterscheidung, um
+			  // ---> Wichtig ist dennoch eine Unterscheidung, um vorzubeugen, dass überhaupt invertierbar ist, was nicht der Fall sein muss, falls damping == 0
 			{
 				Eigen::MatrixXd Wv_specialcase = Eigen::MatrixXd::Identity(jac_.columns(), jac_.columns())*damping_factor; // entspricht nicht Zeile 145! Dort wird damping_factor quadriert!!!
 				Eigen::MatrixXd tmp = (jac_.data.transpose()*jac_.data+Wv_specialcase).inverse();
 				qdot_out_vec = tmp*jac_.data.transpose()*v_in_vec;
 			}
 		}
+
+        oss << qdot_out_vec << std::endl;
+        ROS_DEBUG("Old calculation of qdot_out_vec:");
+        ROS_DEBUG_STREAM(oss);
+        oss.clear();
+
 	}
 	
 	if(params_.enforce_limits)
@@ -234,7 +300,7 @@ int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& l
 	return 1;
 }
 
-Eigen::VectorXd AugmentedSolver::calculate_weighting(const KDL::JntArray& q, const KDL::JntArray& last_q_dot, std::vector<float> limits_min, std::vector<float> limits_max)
+Eigen::VectorXd AugmentedSolver::calculate_weighting(const KDL::JntArray& q, const KDL::JntArray& last_q_dot, std::vector<double> limits_min, std::vector<double> limits_max)
 {
 	//This function calculates the weighting matrix used to penalize a joint when it is near and moving towards a limit
 	//The last joint velocity is used to determine if it that happens or not
@@ -260,7 +326,7 @@ Eigen::VectorXd AugmentedSolver::calculate_weighting(const KDL::JntArray& q, con
 	return output;
 }
 
-Eigen::VectorXd AugmentedSolver::enforce_limits(const KDL::JntArray& q, Eigen::MatrixXd qdot_out, std::vector<float> limits_min, std::vector<float> limits_max)
+Eigen::VectorXd AugmentedSolver::enforce_limits(const KDL::JntArray& q, Eigen::MatrixXd qdot_out, std::vector<double> limits_min, std::vector<double> limits_max)
 {
 	//This function multiplies the velocities that result from the IK, in case they violate the specified tolerance
 	//This factor uses the cosine function to provide a smooth transition from 1 to zero
