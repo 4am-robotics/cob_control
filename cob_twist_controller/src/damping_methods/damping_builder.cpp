@@ -40,6 +40,7 @@ DampingBase* DampingBuilder::create_damping(AugmentedSolverParams &augmentedSolv
             db = new DampingManipulability(augmentedSolverParams, jacobianData);
             break;
         case CONSTANT:
+        case TRUNCATION: // Always active TODO: Remove from RQT_RECONFIGURE
             db = new DampingConstant(augmentedSolverParams, jacobianData);
             break;
         default:

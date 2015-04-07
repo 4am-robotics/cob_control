@@ -342,6 +342,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 		
 		//Solve twist
 		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik, limits_min_, limits_max_, bl_frame_ct, cb_frame_bl);
+		ret_ik = p_augmented_solver_->NewCartToJnt(last_q_, last_q_dot_, twist, q_dot_ik, limits_min_, limits_max_, bl_frame_ct, cb_frame_bl);
 	}
 	
 	if(base_compensation_)

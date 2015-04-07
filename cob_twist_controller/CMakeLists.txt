@@ -27,13 +27,14 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${oroco
 # Declare a cpp library
 add_library(damping_methods src/damping_methods/damping_base.cpp src/damping_methods/damping_manipulability.cpp src/damping_methods/damping_constant.cpp src/damping_methods/damping_builder.cpp)
 add_library(constraint_solvers src/constraint_solvers/solvers/constraint_solver_base.cpp src/constraint_solvers/solvers/unconstraint_solver.cpp src/constraint_solvers/solvers/joint_limit_avoidance_solver.cpp src/constraint_solvers/factories/joint_limit_avoidance_solver_factory.cpp src/constraint_solvers/factories/solver_factory.cpp src/constraint_solvers/factories/unconstraint_solver_factory.cpp src/constraint_solvers/constraint_solver_factory_builder.cpp)
+target_link_libraries(constraint_solvers damping_methods)
 
 #add_library(damping_manipulability src/damping_methods/damping_manipulability.cpp)
 # add_dependencies(damping_manipulability damping_method_base) -> nur zu andern Paketen
 #target_link_libraries(damping_manipulability damping_base)
 
 add_library(augmented_solver src/augmented_solver.cpp)
-target_link_libraries(augmented_solver damping_methods constraint_solvers ${orocos_kdl_LIBRARIES})
+target_link_libraries(augmented_solver constraint_solvers ${orocos_kdl_LIBRARIES})
 
 add_library(${PROJECT_NAME} src/cob_twist_controller.cpp )
 add_dependencies(augmented_solver ${PROJECT_NAME}_gencfg)

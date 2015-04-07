@@ -39,6 +39,8 @@ Eigen::MatrixXd SolverFactory::calculateJointVelocities(AugmentedSolverParams &a
     ConstraintSolver* cs = this->createSolver(asSolverParams, jacobianData, jacobianDataTransposed);
     cs->setDampingFactor(dampingFactor);
     Eigen::MatrixXd new_q_dot = cs->solve(inCartVelocities, q, q_dot);
+    delete cs;
+    cs = NULL;
     return new_q_dot;
 }
 

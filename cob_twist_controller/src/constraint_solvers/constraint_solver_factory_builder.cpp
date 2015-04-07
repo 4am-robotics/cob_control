@@ -66,5 +66,12 @@ Eigen::MatrixXd ConstraintSolverFactoryBuilder::calculateJointVelocities(Augment
         sf = new UnconstraintSolverFactory();
     }
     Eigen::MatrixXd jntVel = sf->calculateJointVelocities(asSolverParams, jacobianData, jacobianDataTransposed, inCartVelocities, q, q_dot, dampingFactor);
+
+    delete db;
+    db = NULL;
+
+    delete sf;
+    sf = NULL;
+
     return jntVel;
 }

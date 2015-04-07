@@ -21,14 +21,14 @@ double DampingManipulability::get_damping_factor() const
     double d = prod.determinant();
     double w = std::sqrt(std::abs(d));
     double damping_factor;
-    if (w < wt || 0.0 == wt) // added safety to avoid DIV/0
-    {
-        damping_factor = 0.0;
-    }
-    else
+    if (w < wt)
     {
         double tmp_w = (1 - w / wt);
         damping_factor = lambda0 * tmp_w * tmp_w;
+    }
+    else
+    {
+        damping_factor = 0.0;
     }
 
     return damping_factor;

@@ -47,16 +47,30 @@ JointLimitAvoidanceSolver::~JointLimitAvoidanceSolver()
 
 Eigen::MatrixXd JointLimitAvoidanceSolver::solve(const Eigen::VectorXd &inCartVelocities, const KDL::JntArray& q, const KDL::JntArray& q_dot) const
 {
+//    uint32_t cols = this->jacobianData_.cols(); // in original implementation KDL::jacobian.columns has been taken!
+//    uint32_t rows = this->jacobianData_.rows(); // in original implementation KDL::jacobian.rows has been taken!
+//    Eigen::MatrixXd W_JLA = this->calculateWeighting(q, q_dot);
+//    // SVD of JLA weighted Jacobian: Damping will be done later in calculatePinvJacobianBySVD for pseudo-inverse Jacobian with additional truncation etc.
+//
+//
+//
+//    // TODO: Drüberschauen, weil hier einfach Damping Matrix aus SVD rausgenommen wurde und in calculatePinvJacobianBySVD hinzugefügt.
+//    Eigen::JacobiSVD<Eigen::MatrixXd> svd(this->jacobianData_ * W_JLA * this->jacobianDataTransposed_,
+//                                          Eigen::ComputeThinU | Eigen::ComputeThinV);
+//    Eigen::MatrixXd jacobianPseudoInverse = this->calculatePinvJacobianBySVD(svd);
+//    Eigen::MatrixXd qdots_out = W_JLA.inverse() * this->jacobianDataTransposed_ * jacobianPseudoInverse * inCartVelocities;
+//    return qdots_out;
     uint32_t cols = this->jacobianData_.cols(); // in original implementation KDL::jacobian.columns has been taken!
     uint32_t rows = this->jacobianData_.rows(); // in original implementation KDL::jacobian.rows has been taken!
     Eigen::MatrixXd W_JLA = this->calculateWeighting(q, q_dot);
-    // SVD of JLA weighted Jacobian: Damping will be done later in calculatePinvJacobianBySVD for pseudo-inverse Jacobian with additional truncation etc.
+    Eigen::MatrixXd root_W_JLA =  W_JLA.cwiseSqrt(); // element-wise sqrt -> ok because diag matrix W^(1/2)
+    Eigen::MatrixXd inv_root_W_JLA =  root_W_JLA.inverse(); // -> W^(-1/2)
 
-    // TODO: Drüberschauen, weil hier einfach Damping Matrix aus SVD rausgenommen wurde und in calculatePinvJacobianBySVD hinzugefügt.
-    Eigen::JacobiSVD<Eigen::MatrixXd> svd(this->jacobianData_ * W_JLA * this->jacobianDataTransposed_,
+    // SVD of JLA weighted Jacobian: Damping will be done later in calculatePinvJacobianBySVD for pseudo-inverse Jacobian with additional truncation etc.
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd(this->jacobianData_ * inv_root_W_JLA,
                                           Eigen::ComputeThinU | Eigen::ComputeThinV);
-    Eigen::MatrixXd jacobianPseudoInverse = this->calculatePinvJacobianBySVD(svd);
-    Eigen::MatrixXd qdots_out = W_JLA.inverse() * this->jacobianDataTransposed_ * jacobianPseudoInverse * inCartVelocities;
+    Eigen::MatrixXd weightedJacobianPseudoInverse = this->calculatePinvJacobianBySVD(svd);
+    Eigen::MatrixXd qdots_out = weightedJacobianPseudoInverse * inCartVelocities;
     return qdots_out;
 }
 
