@@ -28,17 +28,22 @@
 #include "ros/ros.h"
 #include "cob_twist_controller/constraint_solvers/factories/solver_factory.h"
 
+/**
+ * The base calculation method to calculate joint velocities out of input velocities (cartesian space).
+ * Creates a solver according to implemented createSolver-method (in subclass).
+ * Use the specialized solve-method to calculate new joint velocities.
+ */
 Eigen::MatrixXd SolverFactory::calculateJointVelocities(AugmentedSolverParams &asSolverParams,
                                                         Matrix6Xd &jacobianData,
                                                         Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed,
                                                         const Eigen::VectorXd &inCartVelocities,
                                                         const KDL::JntArray& q,
-                                                        const KDL::JntArray& q_dot,
+                                                        const KDL::JntArray& last_q_dot,
                                                         double dampingFactor)
 {
     ConstraintSolver* cs = this->createSolver(asSolverParams, jacobianData, jacobianDataTransposed);
     cs->setDampingFactor(dampingFactor);
-    Eigen::MatrixXd new_q_dot = cs->solve(inCartVelocities, q, q_dot);
+    Eigen::MatrixXd new_q_dot = cs->solve(inCartVelocities, q, last_q_dot);
     delete cs;
     cs = NULL;
     return new_q_dot;

@@ -28,19 +28,6 @@
 #include "ros/ros.h"
 #include "cob_twist_controller/constraint_solvers/solvers/constraint_solver_base.h"
 
-// TODO: Make this inline later ?
-
-ConstraintSolver::ConstraintSolver(AugmentedSolverParams &asSolverParams,
-                                   Matrix6Xd &jacobianData,
-                                   Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed)
-    : asSolverParams_(asSolverParams),
-      jacobianData_(jacobianData),
-      jacobianDataTransposed_(jacobianDataTransposed),
-      dampingFactor_(0.0)
-{
-
-}
-
 ConstraintSolver::~ConstraintSolver()
 {
 
@@ -48,12 +35,13 @@ ConstraintSolver::~ConstraintSolver()
 
 /**
  * Calculates the pseudoinverse of a Jacobian by using SVD.
- * Truncation is active always. Means if calculated (damped) singular value is < than EPS than truncate the singular value to 0.0.
- * Damping is active in case of > than static const DAMPING_LIMT.
+ * Truncation is active always.
+ * Means if calculated (damped) singular value is < than EPS than truncate the singular value to 0.0.
+ * Damping is active in case of > than static const DAMPING_LIMT, else it is assumed that no damping is active.
  */
 Eigen::MatrixXd ConstraintSolver::calculatePinvJacobianBySVD(Eigen::JacobiSVD<Eigen::MatrixXd> svd) const
 {
-    double eps = this->asSolverParams_.eps; // Truncation always active!!!
+    double eps = this->asSolverParams_.eps;
     Eigen::VectorXd singularValues = svd.singularValues();
     Eigen::VectorXd singularValuesInv = Eigen::VectorXd::Zero(singularValues.rows());
 
@@ -66,19 +54,22 @@ Eigen::MatrixXd ConstraintSolver::calculatePinvJacobianBySVD(Eigen::JacobiSVD<Ei
             double denominator = (singularValues(i) * singularValues(i) + this->dampingFactor_ * this->dampingFactor_);
             singularValuesInv(i) = (denominator < eps) ? 0.0 : singularValues(i) / denominator;
         }
-        else // damping seems to be disabled due to damping factor lower than a const. limit
+        else
         {
+            // damping is disabled due to damping factor lower than a const. limit
             singularValuesInv(i) = (singularValues(i) < eps) ? 0.0 : 1.0 / singularValues(i);
         }
     }
 
     Eigen::MatrixXd pseudoInverseJacobian = svd.matrixV() * singularValuesInv.asDiagonal() * svd.matrixU().transpose();
-
+/*
+    ROS_INFO_STREAM("ConstraintSolver: singularValues = " << singularValues << std::endl);
+    ROS_INFO_STREAM("ConstraintSolver: inverse singularValues = " << singularValuesInv << std::endl);
 //    ROS_INFO_STREAM("this->asSolverParams_.eps " << eps << std::endl);
 //    ROS_INFO_STREAM("this->dampingFactor_ " << this->dampingFactor_ << std::endl);
 //    ROS_INFO_STREAM("svd.matrixV " << svd.matrixV() << std::endl);
 //    ROS_INFO_STREAM("svd.matrixU " << svd.matrixU().transpose() << std::endl);
-    ROS_INFO_STREAM("pseudoInverseJacobian " << pseudoInverseJacobian << std::endl);
-
+//    ROS_INFO_STREAM("pseudoInverseJacobian " << pseudoInverseJacobian << std::endl);
+*/
     return pseudoInverseJacobian;
 }

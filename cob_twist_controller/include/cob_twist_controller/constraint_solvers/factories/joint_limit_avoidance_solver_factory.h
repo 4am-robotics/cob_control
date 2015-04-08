@@ -32,6 +32,7 @@
 #include "cob_twist_controller/constraint_solvers/solvers/constraint_solver_base.h"
 #include "cob_twist_controller/constraint_solvers/factories/solver_factory.h"
 
+/// JointLimitAvoidanceSolverFactory class implementing SolverFactory
 class JointLimitAvoidanceSolverFactory : public SolverFactory
 {
     public:
@@ -40,6 +41,12 @@ class JointLimitAvoidanceSolverFactory : public SolverFactory
         }
 
     protected:
+
+        /**
+         * Specific implementation of createSolver to create an JointLimitAvoidanceSolver.
+         * See base class ConstraintSolver for more details on params and returns.
+         * @returns JointLimitAvoidanceSolver reference
+         */
         virtual ConstraintSolver* createSolver(AugmentedSolverParams &asSolverParams,
                                                Matrix6Xd &jacobianData,
                                                Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed) const;

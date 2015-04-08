@@ -44,7 +44,7 @@ public:
     
     /** CartToJnt for chain using SVD including base and various DampingMethods **/
     virtual int CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& last_q_dot, KDL::Twist& v_in, KDL::JntArray& qdot_out, std::vector<double> limits_min, std::vector<double> limits_max, KDL::Frame &base_position, KDL::Frame &chain_base);
-    virtual int NewCartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& last_q_dot, KDL::Twist& v_in, KDL::JntArray& qdot_out, std::vector<double> limits_min, std::vector<double> limits_max, KDL::Frame &base_position, KDL::Frame &chain_base);
+    virtual int AlternativeCartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& last_q_dot, KDL::Twist& v_in, KDL::JntArray& qdot_out, std::vector<double> limits_min, std::vector<double> limits_max, KDL::Frame &base_position, KDL::Frame &chain_base);
 
     inline virtual int CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& last_q_dot, KDL::Twist& v_in, KDL::JntArray& qdot_out, std::vector<double> limits_min, std::vector<double> limits_max)
     {
@@ -52,7 +52,7 @@ public:
         dummy.p = KDL::Vector(0,0,0);
         dummy.M = KDL::Rotation::Quaternion(0,0,0,0);
         int retVal = CartToJnt(q_in, last_q_dot, v_in, qdot_out, limits_min, limits_max, dummy, dummy);
-        NewCartToJnt(q_in, last_q_dot, v_in, qdot_out, limits_min, limits_max, dummy, dummy);
+        AlternativeCartToJnt(q_in, last_q_dot, v_in, qdot_out, limits_min, limits_max, dummy, dummy);
         return retVal;
     }
 

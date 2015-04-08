@@ -148,7 +148,7 @@ int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& l
 	return 1;
 }
 
-int AugmentedSolver::NewCartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& last_q_dot, KDL::Twist& v_in, KDL::JntArray& qdot_out, std::vector<double> limits_min, std::vector<double> limits_max, KDL::Frame &base_position, KDL::Frame &chain_base)
+int AugmentedSolver::AlternativeCartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& last_q_dot, KDL::Twist& v_in, KDL::JntArray& qdot_out, std::vector<double> limits_min, std::vector<double> limits_max, KDL::Frame &base_position, KDL::Frame &chain_base)
 {
     ROS_INFO("============== START AugmentedSolver::CartToJnt ==============");
     ///Let the ChainJntToJacSolver calculate the jacobian "jac_chain" for the current joint positions "q_in"
@@ -331,6 +331,9 @@ int AugmentedSolver::NewCartToJnt(const KDL::JntArray& q_in, const KDL::JntArray
         // Warum if - else? Auf Seite 14 im Buch Control of Redundant Manipulators stellt sich doch heraus, dass die Formel 2.3.13 gleich der SVD in 2.3.14
         // Wegen dem denominator < eps?
         {
+
+            ROS_INFO_STREAM("TRUNCATION: Singular values: " << S << std::endl);
+
           // Basiert zunächst nur auf SVD von J!!!
             Eigen::MatrixXd jac_pinv = Eigen::MatrixXd::Zero(jac_.columns(),jac_.rows());
             // Eigen::MatrixXd temp = Eigen::MatrixXd::Zero(jac_.columns(),jac_.rows());
@@ -343,7 +346,7 @@ int AugmentedSolver::NewCartToJnt(const KDL::JntArray& q_in, const KDL::JntArray
                     {
                         double denominator = pow(double(S(i)),2.0)+pow(damping_factor,2.0); // Muss nciht jedesmal berechnet werden, da nur Abhängigkeit von i
                         double factor = (denominator < params_.eps) ? 0.0 : S(i)/denominator;
-                        jac_pinv(k,j)+=factor*svd.matrixV()(k,i)*svd.matrixU()(j,i);
+                        jac_pinv(k, j) += factor * svd.matrixV()(k, i) * svd.matrixU()(j, i);
                         singularValuesInv(i, i) = factor;
                     }
                 }
@@ -351,8 +354,9 @@ int AugmentedSolver::NewCartToJnt(const KDL::JntArray& q_in, const KDL::JntArray
 
             Eigen::MatrixXd temp = svd.matrixV() * singularValuesInv * svd.matrixU().transpose();
 
-            ROS_INFO_STREAM("TRUNCATION: PINV by SVD directly: " << temp << std::endl );
-            ROS_INFO_STREAM("TRUNCATION: PINV by SVD for-loop: " << jac_pinv << std::endl );
+            ROS_INFO_STREAM("TRUNCATION: inverse Singular values: " << singularValuesInv << std::endl);
+//            ROS_INFO_STREAM("TRUNCATION: PINV by SVD directly: " << temp << std::endl );
+//            ROS_INFO_STREAM("TRUNCATION: PINV by SVD for-loop: " << jac_pinv << std::endl );
 
 
             qdot_out_vec = jac_pinv*v_in_vec;

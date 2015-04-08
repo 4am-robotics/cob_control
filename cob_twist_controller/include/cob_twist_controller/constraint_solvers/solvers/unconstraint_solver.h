@@ -35,12 +35,27 @@
 class UnconstraintSolver : public ConstraintSolver
 {
     public:
-        virtual Eigen::MatrixXd solve(const Eigen::VectorXd &inCartVelocities, const KDL::JntArray& q, const KDL::JntArray& q_dot) const;
+
+        /**
+         * Specific implementation of solve-method to solve IK problem without any constraints.
+         * See base class ConstraintSolver for more details on params and returns.
+         */
+        virtual Eigen::MatrixXd solve(const Eigen::VectorXd &inCartVelocities, const KDL::JntArray& q, const KDL::JntArray& last_q_dot) const;
 
         UnconstraintSolver(AugmentedSolverParams &asSolverParams,
                            Matrix6Xd &jacobianData,
-                           Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed);
-        virtual ~UnconstraintSolver();
+                           Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed)
+                           : ConstraintSolver(asSolverParams,
+                                              jacobianData,
+                                              jacobianDataTransposed)
+        {
+
+        }
+
+        virtual ~UnconstraintSolver()
+        {
+
+        }
 };
 
 #endif /* UNCONSTRAINT_SOLVER_H_ */

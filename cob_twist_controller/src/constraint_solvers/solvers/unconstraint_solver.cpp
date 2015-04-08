@@ -27,28 +27,13 @@
  ****************************************************************/
 #include "cob_twist_controller/constraint_solvers/solvers/unconstraint_solver.h"
 
-UnconstraintSolver::UnconstraintSolver(AugmentedSolverParams &asSolverParams,
-                                       Matrix6Xd &jacobianData,
-                                       Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed)
-    : ConstraintSolver(asSolverParams,
-                       jacobianData,
-                       jacobianDataTransposed)
+/**
+ * Implementation of a default solve-method for the inverse kinematics problem.
+ * It calculates the pseudo-inverse of the Jacobian via the base implementation of calculatePinvJacobianBySVD.
+ * With the pseudo-inverse the joint velocity vector is calculated.
+ */
+Eigen::MatrixXd UnconstraintSolver::solve(const Eigen::VectorXd& inCartVelocities, const KDL::JntArray& q, const KDL::JntArray& last_q_dot) const
 {
-
-}
-
-
-UnconstraintSolver::~UnconstraintSolver()
-{
-
-}
-
-
-Eigen::MatrixXd UnconstraintSolver::solve(const Eigen::VectorXd& inCartVelocities, const KDL::JntArray& q, const KDL::JntArray& q_dot) const
-{
-    double eps = this->asSolverParams_.eps; // Truncation always active!!!
-    uint32_t cols = this->jacobianData_.cols(); // in original implementation KDL::jacobian.columns has been taken!
-    uint32_t rows = this->jacobianData_.rows(); // in original implementation KDL::jacobian.rows has been taken!
     Eigen::JacobiSVD<Eigen::MatrixXd> svd(this->jacobianData_, Eigen::ComputeThinU | Eigen::ComputeThinV);
     Eigen::MatrixXd jacobianPseudoInverse = this->calculatePinvJacobianBySVD(svd);
     Eigen::MatrixXd qdots_out = jacobianPseudoInverse * inCartVelocities;

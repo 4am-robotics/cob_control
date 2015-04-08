@@ -38,17 +38,17 @@
 class ConstraintSolver
 {
     public:
-        static const double DAMPING_LIMIT = 1.0e-9; /// const. value for zero comparison with damping factor
+        static const double DAMPING_LIMIT = 1.0e-9; ///< const. value for zero comparison with damping factor
 
-        // TODO: Check VectorXd for q_dot?
         /**
+         * TODO: Check VectorXd for q_dot?
          * The interface method to solve the inverse kinematics problem. Has to be implemented in inherited classes.
          * @param inCartVelocities The input velocities vector (in cartesian space).
          * @param q The current joint positions.
-         * @param q_dot The current joint velocities.
+         * @param last_q_dot The last joint velocities.
          * @return The calculated new joint velocities.
          */
-        virtual Eigen::MatrixXd solve(const Eigen::VectorXd &inCartVelocities, const KDL::JntArray& q, const KDL::JntArray& q_dot) const = 0;
+        virtual Eigen::MatrixXd solve(const Eigen::VectorXd &inCartVelocities, const KDL::JntArray& q, const KDL::JntArray& last_q_dot) const = 0;
 
         /**
          * Inline method to set the damping factor
@@ -65,7 +65,14 @@ class ConstraintSolver
 
         ConstraintSolver(AugmentedSolverParams &asSolverParams,
                          Matrix6Xd &jacobianData,
-                         Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed);
+                         Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed)
+                         : asSolverParams_(asSolverParams),
+                           jacobianData_(jacobianData),
+                           jacobianDataTransposed_(jacobianDataTransposed),
+                           dampingFactor_(0.0)
+        {
+
+        }
 
         /**
          * Base method for calculation of the pseudoinverse Jacobian by using SVD.
@@ -74,10 +81,11 @@ class ConstraintSolver
          */
         Eigen::MatrixXd calculatePinvJacobianBySVD(Eigen::JacobiSVD<Eigen::MatrixXd> svd) const;
 
-        const AugmentedSolverParams &asSolverParams_; /// References the augmented solver parameters
-        const Matrix6Xd &jacobianData_; /// References the current Jacobian (matrix data only)
-        const Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed_; /// References the current Jacobian transpose (matrix data only)
-        double dampingFactor_; /// The currently set damping factor
+
+        const AugmentedSolverParams &asSolverParams_; ///< References the augmented solver parameters.
+        const Matrix6Xd &jacobianData_; ///< References the current Jacobian (matrix data only).
+        const Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed_; ///< References the current Jacobian transpose (matrix data only).
+        double dampingFactor_; ///< The currently set damping factor.
 };
 
 #endif /* CONSTRAINT_SOLVER_BASE_H_ */

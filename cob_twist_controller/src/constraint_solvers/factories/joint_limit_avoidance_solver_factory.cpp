@@ -32,5 +32,5 @@ ConstraintSolver* JointLimitAvoidanceSolverFactory::createSolver(AugmentedSolver
                                                Matrix6Xd &jacobianData,
                                                Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed) const
 {
-        return new JointLimitAvoidanceSolver(asSolverParams, jacobianData, jacobianDataTransposed);
+    return new JointLimitAvoidanceSolver(asSolverParams, jacobianData, jacobianDataTransposed);
 }

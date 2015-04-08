@@ -37,12 +37,17 @@
 #include "cob_twist_controller/constraint_solvers/factories/joint_limit_avoidance_solver_factory.h"
 #include "cob_twist_controller/constraint_solvers/factories/unconstraint_solver_factory.h"
 
+/**
+ * Out of the parameters generates a damping method (e.g. constant or manipulability) and calculates the damping factor.
+ * Dependent on JLA active flag a JointLimitAvoidanceSolver or a UnconstraintSolver is generated to solve the IK problem.
+ * The objects are generated for each solve-request. After calculation the objects are deleted.
+ */
 Eigen::MatrixXd ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverParams &asSolverParams,
                                                                         Matrix6Xd &jacobianData,
                                                                         Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed,
                                                                         const Eigen::VectorXd &inCartVelocities,
                                                                         const KDL::JntArray& q,
-                                                                        const KDL::JntArray& q_dot)
+                                                                        const KDL::JntArray& last_q_dot)
 {
     DampingBase* db = DampingBuilder::create_damping(asSolverParams, jacobianData);
     double dampingFactor;
@@ -65,7 +70,7 @@ Eigen::MatrixXd ConstraintSolverFactoryBuilder::calculateJointVelocities(Augment
     {
         sf = new UnconstraintSolverFactory();
     }
-    Eigen::MatrixXd jntVel = sf->calculateJointVelocities(asSolverParams, jacobianData, jacobianDataTransposed, inCartVelocities, q, q_dot, dampingFactor);
+    Eigen::MatrixXd jntVel = sf->calculateJointVelocities(asSolverParams, jacobianData, jacobianDataTransposed, inCartVelocities, q, last_q_dot, dampingFactor);
 
     delete db;
     db = NULL;

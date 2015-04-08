@@ -34,6 +34,7 @@
 #include "cob_twist_controller/constraint_solvers/solvers/constraint_solver_base.h"
 #include "cob_twist_controller/constraint_solvers/factories/solver_factory.h"
 
+/// UnconstraintSolverFactory class implementing SolverFactory
 class UnconstraintSolverFactory : public SolverFactory
 {
     public:
@@ -42,6 +43,12 @@ class UnconstraintSolverFactory : public SolverFactory
         }
 
     protected:
+
+        /**
+         * Specific implementation of createSolver to create an UnconstraintSolver.
+         * See base class ConstraintSolver for more details on params and returns.
+         * @returns UnconstraintSolver reference
+         */
         virtual ConstraintSolver* createSolver(AugmentedSolverParams &asSolverParams,
                                                Matrix6Xd &jacobianData,
                                                Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed) const;
