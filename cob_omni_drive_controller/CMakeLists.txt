@@ -5,7 +5,7 @@ project(cob_omni_drive_controller)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  controller_interface angles hardware_interface sensor_msgs geometry_msgs nav_msgs tf urdf
+  controller_interface cob_srvs angles hardware_interface sensor_msgs geometry_msgs nav_msgs tf urdf
 )
 
 ## System dependencies are found with CMake's conventions
