@@ -59,10 +59,14 @@ public:
 
     virtual bool srv_reset(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &res)
     {
-        ROS_INFO("Resetting odometry to zero.");
-        
-        GeomController::reset();
-        res.success.data = init_;
+        if(!isRunning()){
+            res.error_message.data = "not running";
+            res.success.data = false;
+        }else{
+            odom_tracker_->reset(ros::Time::now());
+            res.success.data = true;
+            ROS_INFO("Resetting odometry to zero.");
+        }
 
         return true;
     }
