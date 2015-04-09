@@ -34,21 +34,24 @@
 #include "cob_twist_controller/constraint_solvers/constraint_solver_factory_builder.h"
 #include "cob_twist_controller/damping_methods/damping_builder.h"
 #include "cob_twist_controller/constraint_solvers/factories/solver_factory.h"
-#include "cob_twist_controller/constraint_solvers/factories/joint_limit_avoidance_solver_factory.h"
+#include "cob_twist_controller/constraint_solvers/factories/wln_joint_limit_avoidance_solver_factory.h"
 #include "cob_twist_controller/constraint_solvers/factories/unconstraint_solver_factory.h"
+#include "cob_twist_controller/constraint_solvers/factories/weighted_least_norm_solver_factory.h"
 
 /**
  * Out of the parameters generates a damping method (e.g. constant or manipulability) and calculates the damping factor.
  * Dependent on JLA active flag a JointLimitAvoidanceSolver or a UnconstraintSolver is generated to solve the IK problem.
  * The objects are generated for each solve-request. After calculation the objects are deleted.
  */
-Eigen::MatrixXd ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverParams &asSolverParams,
+int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverParams &asSolverParams,
                                                                         Matrix6Xd &jacobianData,
                                                                         Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed,
                                                                         const Eigen::VectorXd &inCartVelocities,
                                                                         const KDL::JntArray& q,
-                                                                        const KDL::JntArray& last_q_dot)
+                                                                        const KDL::JntArray& last_q_dot,
+                                                                        Eigen::MatrixXd &outJntVelocities)
 {
+    outJntVelocities = Eigen::MatrixXd();
     DampingBase* db = DampingBuilder::create_damping(asSolverParams, jacobianData);
     double dampingFactor;
     if(NULL != db)
@@ -58,19 +61,34 @@ Eigen::MatrixXd ConstraintSolverFactoryBuilder::calculateJointVelocities(Augment
     else
     {
         ROS_ERROR("Returning NULL factory due to damping creation error.");
-        return Eigen::MatrixXd();
+        return -1; // error
     }
 
     SolverFactory* sf = NULL;
-    if (asSolverParams.JLA_active)
+    switch(asSolverParams.constraint)
     {
-        sf = new JointLimitAvoidanceSolverFactory();
+        case None:
+            sf = new UnconstraintSolverFactory();
+            break;
+        case WLN:
+            sf = new WeightedLeastNormSolverFactory();
+            break;
+        case WLN_JLA:
+            sf = new WLN_JointLimitAvoidanceSolverFactory();
+            break;
+        default:
+            ROS_ERROR("Returning NULL factory due to constraint solver creation error.");
+            break;
+    }
+
+    if (NULL != sf)
+    {
+        outJntVelocities = sf->calculateJointVelocities(asSolverParams, jacobianData, jacobianDataTransposed, inCartVelocities, q, last_q_dot, dampingFactor);
     }
     else
     {
-        sf = new UnconstraintSolverFactory();
+        return -2; // error: no valid selection for constraint
     }
-    Eigen::MatrixXd jntVel = sf->calculateJointVelocities(asSolverParams, jacobianData, jacobianDataTransposed, inCartVelocities, q, last_q_dot, dampingFactor);
 
     delete db;
     db = NULL;
@@ -78,5 +96,5 @@ Eigen::MatrixXd ConstraintSolverFactoryBuilder::calculateJointVelocities(Augment
     delete sf;
     sf = NULL;
 
-    return jntVel;
+    return 0; // success
 }

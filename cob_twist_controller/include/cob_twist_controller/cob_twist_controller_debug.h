@@ -116,6 +116,7 @@ private:
 	bool base_compensation_;
 	bool base_active_;
 	bool reset_markers_;
+	double tolerance_;
 	
 	KDL::Twist twist_odometry_cb_;
 	

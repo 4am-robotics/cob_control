@@ -46,14 +46,16 @@ class ConstraintSolverFactoryBuilder
          * @param inCartVelocities The input velocities vector (in cartesian space).
          * @param q The current joint positions.
          * @param last_q_dot The last joint velocities.
+         * @param outJntVelocities The calculated joint velocities as output reference.
          * @return The calculated new joint velocities in (m x 1)-Matrix.
          */
-        static Eigen::MatrixXd calculateJointVelocities(AugmentedSolverParams &asSolverParams,
+        static int8_t calculateJointVelocities(AugmentedSolverParams &asSolverParams,
                                                        Matrix6Xd &jacobianData,
                                                        Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed,
                                                        const Eigen::VectorXd &inCartVelocities,
                                                        const KDL::JntArray& q,
-                                                       const KDL::JntArray& last_q_dot);
+                                                       const KDL::JntArray& last_q_dot,
+                                                       Eigen::MatrixXd &outJntVelocities);
 
     private:
         ConstraintSolverFactoryBuilder() {}

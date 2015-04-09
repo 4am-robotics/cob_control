@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(cob_twist_controller)
 
+set(SRC_C_DIR "src/constraint_solvers")
+set(SRC_CS_DIR "${SRC_C_DIR}/solvers")
+set(SRC_CS_FACT_DIR "${SRC_C_DIR}/factories")
+
 # Load catkin and all dependencies required for this package
 find_package(catkin REQUIRED COMPONENTS cmake_modules roscpp sensor_msgs geometry_msgs nav_msgs kdl_parser kdl_conversions tf tf_conversions dynamic_reconfigure)
 
@@ -26,7 +30,7 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${oroco
 ## Build
 # Declare a cpp library
 add_library(damping_methods src/damping_methods/damping_base.cpp src/damping_methods/damping_manipulability.cpp src/damping_methods/damping_constant.cpp src/damping_methods/damping_builder.cpp)
-add_library(constraint_solvers src/constraint_solvers/solvers/constraint_solver_base.cpp src/constraint_solvers/solvers/unconstraint_solver.cpp src/constraint_solvers/solvers/joint_limit_avoidance_solver.cpp src/constraint_solvers/factories/joint_limit_avoidance_solver_factory.cpp src/constraint_solvers/factories/solver_factory.cpp src/constraint_solvers/factories/unconstraint_solver_factory.cpp src/constraint_solvers/constraint_solver_factory_builder.cpp)
+add_library(constraint_solvers ${SRC_CS_DIR}/constraint_solver_base.cpp ${SRC_CS_DIR}/unconstraint_solver.cpp ${SRC_CS_DIR}/wln_joint_limit_avoidance_solver.cpp ${SRC_CS_DIR}/weighted_least_norm_solver.cpp ${SRC_CS_FACT_DIR}/wln_joint_limit_avoidance_solver_factory.cpp ${SRC_CS_FACT_DIR}/solver_factory.cpp ${SRC_CS_FACT_DIR}/unconstraint_solver_factory.cpp ${SRC_CS_FACT_DIR}/weighted_least_norm_solver_factory.cpp ${SRC_C_DIR}/constraint_solver_factory_builder.cpp)
 target_link_libraries(constraint_solvers damping_methods)
 
 #add_library(damping_manipulability src/damping_methods/damping_manipulability.cpp)

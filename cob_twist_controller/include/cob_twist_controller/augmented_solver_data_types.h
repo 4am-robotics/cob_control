@@ -34,28 +34,33 @@
 #include <vector>
 #include <stdint.h>
 
+enum DampingMethodTypes {
+    MANIPULABILITY = 0,
+    CONSTANT = 1,
+    TRUNCATION = 2,
+};
+
+enum ContraintTypes {
+    None = 0,
+    WLN = 1,
+    WLN_JLA = 2,
+};
+
 struct AugmentedSolverParams {
-    int damping_method;
+    DampingMethodTypes damping_method;
+    ContraintTypes constraint;
     double eps;
     double damping_factor;
     double lambda0;
     double wt;
     bool JLA_active;
     bool enforce_limits;
-    double tolerance;
     bool base_compensation;
     bool base_active;
     double base_ratio;
     // added limits from URDF file
     std::vector<double> limits_max;
     std::vector<double> limits_min;
-    std::vector<double> limits_vel;
-};
-
-enum DampingMethodTypes {
-    MANIPULABILITY = 0,
-    CONSTANT = 1,
-    TRUNCATION = 2
 };
 
 typedef Eigen::Matrix<double,6,Eigen::Dynamic> Matrix6Xd;

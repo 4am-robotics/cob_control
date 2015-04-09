@@ -177,15 +177,14 @@ bool CobTwistController::initialize()
 void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControllerConfig &config, uint32_t level)
 {
 	AugmentedSolverParams params;
-	params.damping_method = config.damping_method;
+    params.damping_method = static_cast<DampingMethodTypes>(config.damping_method);
+    params.constraint = static_cast<ContraintTypes>(config.constraint);
 	params.eps = config.eps;
 	params.damping_factor = config.damping_factor;
 	params.lambda0 = config.lambda0;
 	params.wt = config.wt;
 	
-	params.JLA_active = config.JLA_active;
 	params.enforce_limits = config.enforce_limits;
-	params.tolerance = config.tolerance;
 	
 	params.base_compensation = config.base_compensation;
 	params.base_active = config.base_active;
@@ -193,8 +192,8 @@ void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControl
 	
     params.limits_min = this->limits_min_; // from cob_twist_controller init
     params.limits_max = this->limits_max_; // from cob_twist_controller init
-    params.limits_vel = this->limits_vel_; // from cob_twist_controller init
 
+    tolerance_ = config.tolerance;
 	enforce_limits_ = config.enforce_limits;
 	base_compensation_ = config.base_compensation;
 	base_active_ = config.base_active;
@@ -218,19 +217,17 @@ void CobTwistController::initAugmentedSolverParams()
 
     AugmentedSolverParams params;
     params.damping_method = MANIPULABILITY;
+    params.constraint = WLN_JLA;
     params.eps = 0.001;
     params.damping_factor = 0.2;
     params.lambda0 = 0.1;
     params.wt = 0.005;
-    params.JLA_active = true;
     params.enforce_limits = true;
-    params.tolerance = 5.0;
     params.base_compensation = false;
     params.base_active = false;
     params.base_ratio = 0.0;
     params.limits_min = this->limits_min_;
     params.limits_max = this->limits_max_;
-    params.limits_vel = this->limits_vel_;
 
     p_augmented_solver_->SetAugmentedSolverParams(params);
 }
@@ -341,8 +338,11 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 		cb_frame_bl.M = KDL::Rotation::Quaternion(cb_transform_bl.getRotation().x(), cb_transform_bl.getRotation().y(), cb_transform_bl.getRotation().z(), cb_transform_bl.getRotation().w());
 		
 		//Solve twist
-		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik, limits_min_, limits_max_, bl_frame_ct, cb_frame_bl);
-		ret_ik = p_augmented_solver_->AlternativeCartToJnt(last_q_, last_q_dot_, twist, q_dot_ik, limits_min_, limits_max_, bl_frame_ct, cb_frame_bl);
+		// p_augmented_solver_->AlternativeCartToJnt(last_q_, last_q_dot_, twist, q_dot_ik, bl_frame_ct, cb_frame_bl);
+		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik, bl_frame_ct, cb_frame_bl);
+
+		ROS_INFO_STREAM("AugmentedSolver returned: " << ret_ik << std::endl);
+		//ROS_INFO_STREAM("New qdot_ik = " << q_dot_ik << std::endl);
 	}
 	
 	if(base_compensation_)
@@ -367,7 +367,9 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 	
 	
 	if(!base_active_){
-		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik, limits_min_, limits_max_);
+		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik);
+        ROS_INFO_STREAM("AugmentedSolver returned: " << ret_ik << std::endl);
+        // ROS_INFO_STREAM("New qdot_ik = " << q_dot_ik << std::endl);
 	}
 	
 	if(ret_ik < 0)
@@ -376,9 +378,10 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 	}
 	else
 	{
-		//if(base_active_)
 		if(enforce_limits_)
 		{
+		    q_dot_ik = enforce_limits(last_q_, q_dot_ik);
+
 			///Needed for limiting the base velocities
 			q_dot_ik = normalize_velocities(q_dot_ik);
 		}
@@ -389,6 +392,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 			vel_msg.data.push_back(q_dot_ik(i));
 			//ROS_DEBUG("DesiredVel %d: %f", i, q_dot_ik(i));
 		}
+
 		if(base_active_)
 		{
 			geometry_msgs::Twist base_vel_msg;
@@ -549,6 +553,70 @@ KDL::JntArray CobTwistController::normalize_velocities(KDL::JntArray q_dot_ik)
 	}
 	
 	return q_dot_norm;
+}
+
+
+/**
+ * This function multiplies the velocities that result from the IK with a limits-dependent factor in case the joint positions violate the specified tolerance.
+ * The factor is calculated by using the cosine function to provide a smooth transition from 1 to zero.
+ * Factor is applied on all joint velocities (although only one joint has exceeded its limits), so that the direction of the desired twist is not changed.
+ * -> Important for the Use-Case to follow a trajectory exactly!
+ */
+KDL::JntArray CobTwistController::enforce_limits(const KDL::JntArray& q, const KDL::JntArray& q_dot_ik)
+{
+
+
+    KDL::JntArray output(q.rows()); // according to KDL: all elements in data have 0 value
+    double tolerance = this->tolerance_ / 180.0 * M_PI;
+    double factor = 0.0;
+    bool tolerance_surpassed = false;
+
+    //for(int i = 0; i < jac_.columns() ; i++)
+    for(int i = 0; i < q.rows() ; i++)
+    {
+        if(i < chain_.getNrOfJoints())
+        {
+            if((this->limits_max_[i] - q(i)) < tolerance)    //Joint is nearer to the MAXIMUM limit
+            {
+                if(q_dot_ik(i) > 0)   //Joint moves towards the MAX limit
+                {
+                    double temp = 1.0 / pow((0.5+0.5*cos(M_PI * (q(i) + tolerance - this->limits_max_[i]) / tolerance)), 5.0);
+                    factor = (temp > factor) ? temp : factor;
+                    tolerance_surpassed = true;
+                }
+            }
+            else
+            {
+                if((q(i) - this->limits_min_[i]) < tolerance)    //Joint is nearer to the MINIMUM limit
+                {
+                    if(q_dot_ik(i) < 0)   //Joint moves towards the MIN limit
+                    {
+                        double temp = 1.0 / pow(0.5 + 0.5 * cos(M_PI * (q(i) - tolerance - this->limits_min_[i]) / tolerance), 5.0);
+                        factor = (temp > factor) ? temp : factor;
+                        tolerance_surpassed = true;
+                    }
+                }
+            }
+        }
+    }
+
+    if (tolerance_surpassed)
+    {
+        ROS_WARN("Tolerance surpassed: Enforcing limits FOR ALL JOINT VELOCITIES with factor = %f", factor);
+        for(int i = 0; i < q.rows() ; i++)
+        {
+            output(i) = q_dot_ik(i) / factor;
+        }
+    }
+    else
+    {
+        for(int i = 0; i < q.rows() ; i++)
+        {
+            output(i) = q_dot_ik(i);
+        }
+    }
+
+    return output;
 }
 
 

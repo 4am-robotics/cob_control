@@ -125,25 +125,24 @@ bool CobTwistController::initialize()
 	//only for debug as it does not use the dynamic reconfigure server
 	AugmentedSolverParams params;
 	params.damping_method = MANIPULABILITY; // avoid magical numbers. Use names where possible
+	params.constraint = WLN_JLA; // avoid magical numbers. Use names where possible
 	params.eps = 0.001;
 	params.damping_factor = 0.2;
 	params.lambda0 = 0.1;
 	params.wt = 0.005;
-	params.JLA_active = true;
 	params.enforce_limits = true;
-	params.tolerance = 5.0;
 	params.base_compensation = false;
 	params.base_active = false;
 	params.base_ratio = 0.0;
 	params.limits_min = limits_min_;
 	params.limits_max = limits_max_;
-	params.limits_vel = limits_vel_;
 	
 	p_augmented_solver_->SetAugmentedSolverParams(params);
 	enforce_limits_ = params.enforce_limits;
 	base_compensation_ = params.base_compensation;
 	base_active_ = params.base_active;
 	reset_markers_ = false;
+	tolerance_ = 5.0;
 	
 	///Setting up dynamic_reconfigure server for the AugmentedSolverParams
 	//reconfigure_server_.reset(new dynamic_reconfigure::Server<cob_twist_controller::TwistControllerConfig>(reconfig_mutex_, nh_cartesian));
@@ -210,24 +209,27 @@ bool CobTwistController::initialize()
 void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControllerConfig &config, uint32_t level)
 {
 	AugmentedSolverParams params;
-	params.damping_method = config.damping_method;
+	params.damping_method = static_cast<DampingMethodTypes>(config.damping_method);
+	params.constraint = static_cast<ContraintTypes>(config.constraint);
 	params.eps = config.eps;
 	params.damping_factor = config.damping_factor;
 	params.lambda0 = config.lambda0;
 	params.wt = config.wt;
 	
-	params.JLA_active = config.JLA_active;
 	params.enforce_limits = config.enforce_limits;
-	params.tolerance = config.tolerance;
 	
 	params.base_compensation = config.base_compensation;
 	params.base_active = config.base_active;
 	params.base_ratio = config.base_ratio;
 	
+	params.limits_max = limits_max_;
+	params.limits_min = limits_min_;
+
 	enforce_limits_ = config.enforce_limits;
 	base_compensation_ = config.base_compensation;
 	base_active_ = config.base_active;
 	reset_markers_ = config.reset_markers;
+	tolerance_ = config.tolerance;
 	
 	if(base_active_ && base_compensation_)
 	{
@@ -343,7 +345,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 		cb_frame_bl.M = KDL::Rotation::Quaternion(cb_transform_bl.getRotation().x(), cb_transform_bl.getRotation().y(), cb_transform_bl.getRotation().z(), cb_transform_bl.getRotation().w());
 		
 		//Solve twist
-		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik, limits_min_, limits_max_, bl_frame_ct, cb_frame_bl);
+		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik, bl_frame_ct, cb_frame_bl);
 	}
 	
 	if(base_compensation_)
@@ -373,42 +375,42 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 		AugmentedSolverParams params_;
 		params_=p_augmented_solver_->GetAugmentedSolverParams();
 		params_.damping_method=MANIPULABILITY;
-		params_.JLA_active=false;
+		params_.constraint = None;
 		params_.enforce_limits=false;
 		p_augmented_solver_->SetAugmentedSolverParams(params_);
-		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik, limits_min_, limits_max_);
+		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik);
 		qdot_manipulability_pub.publish(JntArrayToMsg(q_dot_ik));
 		twist_manipulability_pub.publish(GetTwistFromQDot(q_dot_ik));
 		
 		params_.damping_method=TRUNCATION;
 		p_augmented_solver_->SetAugmentedSolverParams(params_);
-		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik, limits_min_, limits_max_);
+		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik);
 		qdot_truncation_pub.publish(JntArrayToMsg(q_dot_ik));
 		twist_truncation_pub.publish(GetTwistFromQDot(q_dot_ik));
 		
 		params_.damping_method=CONSTANT;
 		p_augmented_solver_->SetAugmentedSolverParams(params_);
-		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik, limits_min_, limits_max_);
+		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik);
 		qdot_constant_pub.publish(JntArrayToMsg(q_dot_ik));
 		twist_constant_pub.publish(GetTwistFromQDot(q_dot_ik));
 				
 		//JLA active		
 		params_.damping_method=MANIPULABILITY;
-		params_.JLA_active=true;
+		params_.constraint = WLN_JLA;
 		p_augmented_solver_->SetAugmentedSolverParams(params_);
-		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik, limits_min_, limits_max_);
+		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik);
 		qdot_manipulability_JLA_pub.publish(JntArrayToMsg(q_dot_ik));
 		twist_manipulability_JLA_pub.publish(GetTwistFromQDot(q_dot_ik));
 		
 		params_.damping_method=TRUNCATION;
 		p_augmented_solver_->SetAugmentedSolverParams(params_);
-		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik, limits_min_, limits_max_);
+		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik);
 		qdot_truncation_JLA_pub.publish(JntArrayToMsg(q_dot_ik));
 		twist_truncation_JLA_pub.publish(GetTwistFromQDot(q_dot_ik));
 		
 		params_.damping_method=CONSTANT;
 		p_augmented_solver_->SetAugmentedSolverParams(params_);
-		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik, limits_min_, limits_max_);
+		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik);
 		qdot_constant_JLA_pub.publish(JntArrayToMsg(q_dot_ik));
 		twist_constant_JLA_pub.publish(GetTwistFromQDot(q_dot_ik));
 	}

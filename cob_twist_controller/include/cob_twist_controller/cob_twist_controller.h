@@ -99,6 +99,7 @@ private:
 	bool base_compensation_;
 	bool base_active_;
 	bool reset_markers_;
+    double tolerance_;
 	
 	KDL::Twist twist_odometry_cb_;
 	
@@ -130,7 +131,10 @@ public:
 		base_compensation_(false),
 		base_active_(false),
 		reset_markers_(false)
-	{;}
+	{
+
+	}
+
 	~CobTwistController();
 	
 	bool initialize();
@@ -151,6 +155,8 @@ public:
 	
 	KDL::JntArray normalize_velocities(KDL::JntArray q_dot_ik);
 	
+	KDL::JntArray enforce_limits(const KDL::JntArray& q, const KDL::JntArray& q_dot_ik);
+
 	///Debug
 	void showMarker(int marker_id,double red, double green, double blue, std::string ns, ros::Publisher pub, std::vector<geometry_msgs::Point> &pos_v);
 	void debug();
