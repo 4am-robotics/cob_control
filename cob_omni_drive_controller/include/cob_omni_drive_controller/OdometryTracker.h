@@ -75,7 +75,11 @@ public:
         odom_.pose.pose.position.x = 0;
         odom_.pose.pose.position.y = 0;
         odom_.pose.pose.orientation = tf::createQuaternionMsgFromYaw(theta_rob_rad_);
-        
+
+    }
+    void reset(const ros::Time &now){
+        boost::mutex::scoped_lock lock(mutex_);
+        init(now);
     }
     const nav_msgs::Odometry getOdometry(){
         boost::mutex::scoped_lock lock(mutex_);
