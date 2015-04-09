@@ -52,9 +52,9 @@ public:
 	service_reset_ = controller_nh.advertiseService("reset_odometry", &OdometryController::srv_reset, this);
 
         return true;
-  }
+    }
     virtual void starting(const ros::Time& time){
-        odom_tracker_->init(time);
+        if(time != stop_time_) odom_tracker_->init(time); // do not init odometry on restart
     }
 
     virtual bool srv_reset(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &res)
@@ -79,7 +79,7 @@ public:
 
         odom_tracker_->track(time, period.toSec(), platform_state_.getVelX(), platform_state_.getVelY(), platform_state_.dRotRobRadS);
     }
-    virtual void stopping(const ros::Time& time) {}
+    virtual void stopping(const ros::Time& time) { stop_time_ = time; }
 
 private:
     UndercarriageGeom::PlatformState platform_state_;
@@ -91,6 +91,7 @@ private:
     boost::scoped_ptr<OdometryTracker> odom_tracker_;
     ros::Timer publish_timer_;
     geometry_msgs::TransformStamped odom_tf_;
+    ros::Time stop_time_;
   
   
     void publish(const ros::TimerEvent&){
