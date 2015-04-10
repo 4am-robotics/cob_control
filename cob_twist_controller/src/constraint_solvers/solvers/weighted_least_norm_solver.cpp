@@ -44,7 +44,8 @@ Eigen::MatrixXd WeightedLeastNormSolver::solve(const Eigen::VectorXd &inCartVelo
     Eigen::JacobiSVD<Eigen::MatrixXd> svd(this->jacobianData_ * inv_root_W_WLN,
                                           Eigen::ComputeThinU | Eigen::ComputeThinV);
     Eigen::MatrixXd weightedJacobianPseudoInverse = this->calculatePinvJacobianBySVD(svd);
-    Eigen::MatrixXd qdots_out = weightedJacobianPseudoInverse * inCartVelocities;
+    // Take care: W^(1/2) * q_dot = weighted_pinv_J * x_dot -> One must consider the weighting!!!
+    Eigen::MatrixXd qdots_out = inv_root_W_WLN * weightedJacobianPseudoInverse * inCartVelocities;
     return qdots_out;
 }
 

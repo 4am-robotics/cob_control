@@ -1,10 +1,12 @@
-function [] = svd_pseudoinverse()
-    clear all; 
-    close all; 
+function [] = svd_pseudoinverse(n, m, dampingFactor)
     clc; 
 
     global EPS;
     EPS = 1.0e-12 
+    
+    if nargin < 3
+        dampingFactor = 0.0
+    endif 
 
     % J = [1 -1 0; 0 1 1];
     J = [2 3 5; 1 7 4];
@@ -66,9 +68,6 @@ function [] = svd_pseudoinverse()
 
 
     % ---------- SR-Inverse with damping -------------------------------------
-    
-    
-    clear all; close all; 
     disp('---------- SR-Inverse with damping ------------------------')    
     k = 55.0; % damping factor 
     % J = [1 2 3 4; 5 6 7 8]; 
@@ -90,7 +89,6 @@ function [] = svd_pseudoinverse()
 
     % ---------- SR-Inverse with Weighting / JLA -------------------------------------
 
-    clear all; close all; 
     disp('---------- SR-Inverse with Weighting / JLA ------------------------')    
     k = 55.0; % damping factor 
     % J = [1 2 3 4; 5 6 7 8]; 
@@ -127,7 +125,8 @@ function [] = svd_pseudoinverse()
     J_svd_pinv = V * singularValuesInv * U'; 
     disp('Initially correct damped Result by SVD (with adapted J -> new_J): ');
     J_svd_pinv % recognized W_JLA and J_T
-
+        
+    half_inv_W_JLA * J_svd_pinv
 end
 
 % tempSinv = 1 ./ S; does not work for all matrices 
