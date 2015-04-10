@@ -567,9 +567,9 @@ void CobTwistController::odometry_cb(const nav_msgs::Odometry::ConstPtr& msg)
 
 
 
-KDL::JntArray CobTwistController::normalize_velocities(KDL::JntArray q_dot_ik)
+KDL::JntArray CobTwistController::normalize_velocities(const KDL::JntArray &q_dot_ik) const
 {
-	KDL::JntArray q_dot_norm = q_dot_ik;
+	KDL::JntArray q_dot_norm(q_dot_ik); // copy ctor
 	double max_factor = 1;
 	for(unsigned int i=0; i<dof_; i++)
 	{

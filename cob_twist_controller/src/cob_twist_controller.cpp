@@ -286,6 +286,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 	
 	int ret_ik;
 	KDL::JntArray q_dot_ik(chain_.getNrOfJoints());
+	KDL::JntArray tmp_q_dot_ik(chain_.getNrOfJoints());
 	
 	if(base_active_)
 	{
@@ -338,7 +339,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 		cb_frame_bl.M = KDL::Rotation::Quaternion(cb_transform_bl.getRotation().x(), cb_transform_bl.getRotation().y(), cb_transform_bl.getRotation().z(), cb_transform_bl.getRotation().w());
 		
 		//Solve twist
-		// p_augmented_solver_->AlternativeCartToJnt(last_q_, last_q_dot_, twist, q_dot_ik, bl_frame_ct, cb_frame_bl);
+		p_augmented_solver_->OldCartToJnt(last_q_, last_q_dot_, twist, tmp_q_dot_ik, bl_frame_ct, cb_frame_bl); // just for temporary calculation for comparison with new implementation
 		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik, bl_frame_ct, cb_frame_bl);
 
 		ROS_INFO_STREAM("AugmentedSolver returned: " << ret_ik << std::endl);
@@ -367,6 +368,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 	
 	
 	if(!base_active_){
+	     p_augmented_solver_->OldCartToJnt(last_q_, last_q_dot_, twist, tmp_q_dot_ik); // just for temporary calculation for comparison with new implementation
 		ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik);
         ROS_INFO_STREAM("AugmentedSolver returned: " << ret_ik << std::endl);
         // ROS_INFO_STREAM("New qdot_ik = " << q_dot_ik << std::endl);
@@ -381,8 +383,6 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 		if(enforce_limits_)
 		{
 		    q_dot_ik = enforce_limits(last_q_, q_dot_ik);
-
-			///Needed for limiting the base velocities
 			q_dot_ik = normalize_velocities(q_dot_ik);
 		}
 		
@@ -502,12 +502,14 @@ void CobTwistController::odometry_cb(const nav_msgs::Odometry::ConstPtr& msg)
 
 
 
-
-KDL::JntArray CobTwistController::normalize_velocities(KDL::JntArray q_dot_ik)
+/**
+ * Limits all velocities according to the limits_vel vector if necessary.
+ */
+KDL::JntArray CobTwistController::normalize_velocities(const KDL::JntArray &q_dot_ik) const
 {
-	KDL::JntArray q_dot_norm = q_dot_ik;
-	double max_factor = 1;
-	for(unsigned int i=0; i<dof_; i++)
+	KDL::JntArray q_dot_norm(q_dot_ik);
+	double max_factor = 1.0;
+	for(unsigned int i=0; i < dof_; i++)
 	{
 		if(max_factor < std::fabs((q_dot_ik(i)/limits_vel_[i])))
 		{
@@ -562,36 +564,35 @@ KDL::JntArray CobTwistController::normalize_velocities(KDL::JntArray q_dot_ik)
  * Factor is applied on all joint velocities (although only one joint has exceeded its limits), so that the direction of the desired twist is not changed.
  * -> Important for the Use-Case to follow a trajectory exactly!
  */
-KDL::JntArray CobTwistController::enforce_limits(const KDL::JntArray& q, const KDL::JntArray& q_dot_ik)
+KDL::JntArray CobTwistController::enforce_limits(const KDL::JntArray& last_q, const KDL::JntArray& new_q_dot_ik) const
 {
 
 
-    KDL::JntArray output(q.rows()); // according to KDL: all elements in data have 0 value
+    KDL::JntArray output(last_q.rows()); // according to KDL: all elements in data have 0 value
     double tolerance = this->tolerance_ / 180.0 * M_PI;
     double factor = 0.0;
     bool tolerance_surpassed = false;
 
-    //for(int i = 0; i < jac_.columns() ; i++)
-    for(int i = 0; i < q.rows() ; i++)
+    for(int i = 0; i < last_q.rows() ; i++)
     {
         if(i < chain_.getNrOfJoints())
         {
-            if((this->limits_max_[i] - q(i)) < tolerance)    //Joint is nearer to the MAXIMUM limit
+            if((this->limits_max_[i] - last_q(i)) < tolerance)    //Joint is nearer to the MAXIMUM limit
             {
-                if(q_dot_ik(i) > 0)   //Joint moves towards the MAX limit
+                if(new_q_dot_ik(i) > 0)   //Joint moves towards the MAX limit
                 {
-                    double temp = 1.0 / pow((0.5+0.5*cos(M_PI * (q(i) + tolerance - this->limits_max_[i]) / tolerance)), 5.0);
+                    double temp = 1.0 / pow((0.5+0.5*cos(M_PI * (last_q(i) + tolerance - this->limits_max_[i]) / tolerance)), 5.0);
                     factor = (temp > factor) ? temp : factor;
                     tolerance_surpassed = true;
                 }
             }
             else
             {
-                if((q(i) - this->limits_min_[i]) < tolerance)    //Joint is nearer to the MINIMUM limit
+                if((last_q(i) - this->limits_min_[i]) < tolerance)    //Joint is nearer to the MINIMUM limit
                 {
-                    if(q_dot_ik(i) < 0)   //Joint moves towards the MIN limit
+                    if(new_q_dot_ik(i) < 0)   //Joint moves towards the MIN limit
                     {
-                        double temp = 1.0 / pow(0.5 + 0.5 * cos(M_PI * (q(i) - tolerance - this->limits_min_[i]) / tolerance), 5.0);
+                        double temp = 1.0 / pow(0.5 + 0.5 * cos(M_PI * (last_q(i) - tolerance - this->limits_min_[i]) / tolerance), 5.0);
                         factor = (temp > factor) ? temp : factor;
                         tolerance_surpassed = true;
                     }
@@ -603,16 +604,16 @@ KDL::JntArray CobTwistController::enforce_limits(const KDL::JntArray& q, const K
     if (tolerance_surpassed)
     {
         ROS_WARN("Tolerance surpassed: Enforcing limits FOR ALL JOINT VELOCITIES with factor = %f", factor);
-        for(int i = 0; i < q.rows() ; i++)
+        for(int i = 0; i < last_q.rows() ; i++)
         {
-            output(i) = q_dot_ik(i) / factor;
+            output(i) = new_q_dot_ik(i) / factor;
         }
     }
     else
     {
-        for(int i = 0; i < q.rows() ; i++)
+        for(int i = 0; i < last_q.rows() ; i++)
         {
-            output(i) = q_dot_ik(i);
+            output(i) = new_q_dot_ik(i);
         }
     }
 

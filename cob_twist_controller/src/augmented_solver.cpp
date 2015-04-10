@@ -131,7 +131,7 @@ int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& l
 	return retStat;
 }
 
-int AugmentedSolver::AlternativeCartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& last_q_dot, KDL::Twist& v_in, KDL::JntArray& qdot_out, KDL::Frame &base_position, KDL::Frame &chain_base)
+int AugmentedSolver::OldCartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& last_q_dot, KDL::Twist& v_in, KDL::JntArray& qdot_out, KDL::Frame &base_position, KDL::Frame &chain_base)
 {
     ROS_INFO("============== START AugmentedSolver::CartToJnt ==============");
     ///Let the ChainJntToJacSolver calculate the jacobian "jac_chain" for the current joint positions "q_in"
@@ -337,7 +337,7 @@ int AugmentedSolver::AlternativeCartToJnt(const KDL::JntArray& q_in, const KDL::
 
             Eigen::MatrixXd temp = svd.matrixV() * singularValuesInv * svd.matrixU().transpose();
 
-            ROS_INFO_STREAM("TRUNCATION: inverse Singular values: " << singularValuesInv << std::endl);
+//            ROS_INFO_STREAM("TRUNCATION: inverse Singular values: " << singularValuesInv << std::endl);
 //            ROS_INFO_STREAM("TRUNCATION: PINV by SVD directly: " << temp << std::endl );
 //            ROS_INFO_STREAM("TRUNCATION: PINV by SVD for-loop: " << jac_pinv << std::endl );
 

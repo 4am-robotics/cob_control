@@ -153,9 +153,20 @@ public:
 	void twist_stamped_cb(const geometry_msgs::TwistStamped::ConstPtr& msg);
 	void solve_twist(KDL::Twist twist);
 	
-	KDL::JntArray normalize_velocities(KDL::JntArray q_dot_ik);
+	/**
+	 * Needed for limiting the base velocities
+	 * @param The inverse kinematics solution for the joint velocity vector
+	 * @return The normalized joint velocity vector
+	 */
+	KDL::JntArray normalize_velocities(const KDL::JntArray &q_dot_ik) const;
 	
-	KDL::JntArray enforce_limits(const KDL::JntArray& q, const KDL::JntArray& q_dot_ik);
+	/**
+     * Check whether joint velocities exceed limits or not.
+	 * @param last_q The latest given joint positions.
+	 * @param new_q_dot_ik The new calculated joint velocities.
+	 * @return Joint velocities adapted to limits if exceeded.
+	 */
+	KDL::JntArray enforce_limits(const KDL::JntArray& q, const KDL::JntArray& q_dot_ik) const;
 
 	///Debug
 	void showMarker(int marker_id,double red, double green, double blue, std::string ns, ros::Publisher pub, std::vector<geometry_msgs::Point> &pos_v);

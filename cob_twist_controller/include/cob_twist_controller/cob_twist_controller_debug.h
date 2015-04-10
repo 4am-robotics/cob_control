@@ -167,7 +167,7 @@ public:
 	void twist_stamped_cb(const geometry_msgs::TwistStamped::ConstPtr& msg);
 	void solve_twist(KDL::Twist twist);
 	
-	KDL::JntArray normalize_velocities(KDL::JntArray q_dot_ik);
+	KDL::JntArray normalize_velocities(const KDL::JntArray &q_dot_ik) const;
 	
 	///Debug
 	void showMarker(int marker_id,double red, double green, double blue, std::string ns, ros::Publisher pub, std::vector<geometry_msgs::Point> &pos_v);
