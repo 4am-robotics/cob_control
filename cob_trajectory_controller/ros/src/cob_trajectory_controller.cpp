@@ -60,6 +60,7 @@
 
 
 #include "ros/ros.h"
+#include <std_msgs/String.h>
 #include <sensor_msgs/JointState.h>
 #include <control_msgs/JointTrajectoryControllerState.h>
 #include <actionlib/server/simple_action_server.h>
@@ -68,7 +69,7 @@
 #include <brics_actuator/JointVelocities.h>
 #include <cob_trajectory_controller/genericArmCtrl.h>
 // ROS service includes
-#include <cob_srvs/Trigger.h>
+#include <std_srvs/Trigger.h>
 #include <cob_srvs/SetString.h>
 #include <cob_srvs/SetFloat.h>
 
@@ -193,13 +194,13 @@ public:
         return frequency;
     }
 
-    bool srvCallback_Stop(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &res)
+    bool srvCallback_Stop(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
     {
         ROS_INFO("Stopping trajectory controller.");
         
         // stop trajectory controller
         executing_ = false;
-        res.success.data = true;
+        res.success = true;
         traj_generator_->isMoving = false;
         failure_ = true;
         return true;
