@@ -41,7 +41,6 @@ class ConstraintSolver
         static const double DAMPING_LIMIT = 1.0e-9; ///< const. value for zero comparison with damping factor
 
         /**
-         * TODO: Check VectorXd for q_dot?
          * The interface method to solve the inverse kinematics problem. Has to be implemented in inherited classes.
          * @param inCartVelocities The input velocities vector (in cartesian space).
          * @param q The current joint positions.

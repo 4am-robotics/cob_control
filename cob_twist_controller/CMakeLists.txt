@@ -20,7 +20,7 @@ generate_dynamic_reconfigure_options(
 # Declare catkin package
 catkin_package(
    INCLUDE_DIRS include
-   LIBRARIES cob_twist_controller cob_twist_controller_debug augmented_solver damping_methods constraint_solvers
+   LIBRARIES cob_twist_controller augmented_solver damping_methods constraint_solvers
    CATKIN_DEPENDS roscpp sensor_msgs geometry_msgs nav_msgs
 )
 
@@ -31,34 +31,23 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${oroco
 # Declare a cpp library
 add_library(damping_methods src/damping_methods/damping_base.cpp src/damping_methods/damping_manipulability.cpp src/damping_methods/damping_constant.cpp src/damping_methods/damping_builder.cpp)
 add_library(constraint_solvers ${SRC_CS_DIR}/constraint_solver_base.cpp ${SRC_CS_DIR}/unconstraint_solver.cpp ${SRC_CS_DIR}/wln_joint_limit_avoidance_solver.cpp ${SRC_CS_DIR}/weighted_least_norm_solver.cpp ${SRC_CS_FACT_DIR}/wln_joint_limit_avoidance_solver_factory.cpp ${SRC_CS_FACT_DIR}/solver_factory.cpp ${SRC_CS_FACT_DIR}/unconstraint_solver_factory.cpp ${SRC_CS_FACT_DIR}/weighted_least_norm_solver_factory.cpp ${SRC_C_DIR}/constraint_solver_factory_builder.cpp)
+add_library(limiters src/limiters/limiter_base.cpp src/limiters/limiter_all_joint_positions.cpp src/limiters/limiter_all_joint_velocities.cpp src/limiters/limiter_container.cpp src/limiters/limiter_individual_joint_positions.cpp src/limiters/limiter_individual_joint_velocities.cpp)
 target_link_libraries(constraint_solvers damping_methods)
-
-#add_library(damping_manipulability src/damping_methods/damping_manipulability.cpp)
-# add_dependencies(damping_manipulability damping_method_base) -> nur zu andern Paketen
-#target_link_libraries(damping_manipulability damping_base)
 
 add_library(augmented_solver src/augmented_solver.cpp)
 target_link_libraries(augmented_solver constraint_solvers ${orocos_kdl_LIBRARIES})
 
 add_library(${PROJECT_NAME} src/cob_twist_controller.cpp )
 add_dependencies(augmented_solver ${PROJECT_NAME}_gencfg)
-target_link_libraries(${PROJECT_NAME} augmented_solver ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
-
-add_library(${PROJECT_NAME}_debug src/cob_twist_controller_debug.cpp )
-add_dependencies(augmented_solver ${PROJECT_NAME}_gencfg)
-target_link_libraries(${PROJECT_NAME}_debug augmented_solver ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} augmented_solver limiters ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 
 ## Declare a cpp executable
 add_executable(${PROJECT_NAME}_node src/cob_twist_controller_node.cpp)
 target_link_libraries(${PROJECT_NAME}_node ${PROJECT_NAME} ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 
-add_executable(${PROJECT_NAME}_debug_node src/cob_twist_controller_debug_node.cpp)
-target_link_libraries(${PROJECT_NAME}_debug_node ${PROJECT_NAME}_debug ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
-
-
 ## Install
 # Mark executables and/or libraries for installation
-install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node ${PROJECT_NAME}_debug ${PROJECT_NAME}_debug_node augmented_solver
+install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node augmented_solver
  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

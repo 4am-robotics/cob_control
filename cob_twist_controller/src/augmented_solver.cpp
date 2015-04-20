@@ -6,10 +6,10 @@
 #include <ctime>
 
 AugmentedSolver::AugmentedSolver(const KDL::Chain& chain, double eps, int maxiter):
-	chain_(chain),
-	jac_(chain_.getNrOfJoints()),
-	jnt2jac_(chain_),
-	maxiter_(maxiter)
+    chain_(chain),
+    jac_(chain_.getNrOfJoints()),
+    jnt2jac_(chain_),
+    maxiter_(maxiter)
 {
 
 }
@@ -22,88 +22,86 @@ AugmentedSolver::~AugmentedSolver()
 int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& last_q_dot, KDL::Twist& v_in, KDL::JntArray& qdot_out, KDL::Frame &base_position, KDL::Frame &chain_base)
 {
     ROS_INFO("============== START AugmentedSolver::NewCartToJnt ==============");
-	///Let the ChainJntToJacSolver calculate the jacobian "jac_chain" for the current joint positions "q_in"
-	KDL::Jacobian jac_chain(chain_.getNrOfJoints());
-	Eigen::Matrix<double,6,3> jac_b;
-	
-	jnt2jac_.JntToJac(q_in, jac_chain);
-	int8_t retStat = -1;
+    ///Let the ChainJntToJacSolver calculate the jacobian "jac_chain" for the current joint positions "q_in"
+    KDL::Jacobian jac_chain(chain_.getNrOfJoints());
+    Eigen::Matrix<double,6,3> jac_b;
 
-	
-	if(params_.base_active)
-	{
-		Eigen::Matrix<double, 3, 3> chain_base_rot, base_rot, tip_base_rot;
-		Eigen::Vector3d w_chain_base;
-		Eigen::Vector3d r_chain_base;
-		Eigen::Vector3d tangential_vel;
-		Eigen::MatrixXd W_base_ratio = Eigen::MatrixXd::Identity(jac_.columns(), jac_.columns());
-		
-		double base_ratio = params_.base_ratio;
-		
-		//Create standard platform jacobian
-		jac_b.setZero();
-		
-		// Get current x and y position from EE and chain_base with respect to base_footprint
-		x_ = base_position.p.x();
-		y_ = base_position.p.y();
-		z_ = base_position.p.z();
-		Eigen::Vector3d r_base_link(x_,y_,z_);
-		
-		chain_base_rot << 	chain_base.M.data[0],chain_base.M.data[1],chain_base.M.data[2],
+    jnt2jac_.JntToJac(q_in, jac_chain);
+    int8_t retStat = -1;
+
+
+    if(params_.base_active)
+    {
+        Eigen::Matrix<double, 3, 3> chain_base_rot, base_rot, tip_base_rot;
+        Eigen::Vector3d w_chain_base;
+        Eigen::Vector3d r_chain_base;
+        Eigen::Vector3d tangential_vel;
+        Eigen::MatrixXd W_base_ratio = Eigen::MatrixXd::Identity(jac_.columns(), jac_.columns());
+
+        double base_ratio = params_.base_ratio;
+
+        //Create standard platform jacobian
+        jac_b.setZero();
+
+        // Get current x and y position from EE and chain_base with respect to base_footprint
+        x_ = base_position.p.x();
+        y_ = base_position.p.y();
+        z_ = base_position.p.z();
+        Eigen::Vector3d r_base_link(x_,y_,z_);
+
+        chain_base_rot <<     chain_base.M.data[0],chain_base.M.data[1],chain_base.M.data[2],
                         chain_base.M.data[3],chain_base.M.data[4],chain_base.M.data[5],
                         chain_base.M.data[6],chain_base.M.data[7],chain_base.M.data[8];
-		
-		// Transform from base_link to chain_base
-		Eigen::Vector3d w_base_link(0,0,base_ratio);
-		//Eigen::Vector3d w_base_link(0,0,1);
-		w_chain_base = chain_base_rot*w_base_link;
-		r_chain_base = chain_base_rot*r_base_link;
-		
-		//Calculate tangential velocity
-		tangential_vel = w_chain_base.cross(r_chain_base);
-		
-		 //Vx-Base <==> q8 effects a change in the following chain_base Vx velocities
-		jac_b(0,0) = base_ratio*chain_base_rot(0,0);
-		jac_b(0,1) = base_ratio*chain_base_rot(0,1);
-		jac_b(0,2) = tangential_vel(0);
-		
-		// Vy-Base <==> q9 effects a change in the following chain_base Vy velocities
-		jac_b(1,0) = base_ratio*chain_base_rot(1,0);
-		jac_b(1,1) = base_ratio*chain_base_rot(1,1);
-		jac_b(1,2) = tangential_vel(1);
-		
-		// Vz-Base <==>  effects a change in the following chain_base Vz velocities
-		jac_b(2,0) = base_ratio*chain_base_rot(2,0);
-		jac_b(2,1) = base_ratio*chain_base_rot(2,1);
-		jac_b(2,2) = tangential_vel(2);
-		
-		//Phi <==> Wz with respect to base_link
-		jac_b(3,2) = w_chain_base(0);
-		jac_b(4,2) = w_chain_base(1);
-		jac_b(5,2) = w_chain_base(2);
-		
-		//combine chain Jacobian and platform Jacobian
-		Eigen::Matrix<double, 6, Eigen::Dynamic> jac_full;
-		jac_full.resize(6,chain_.getNrOfJoints() + jac_b.cols());
-		jac_full << jac_chain.data,jac_b;
-		
-		//std::cout << "Combined jacobian:\n " << jac_full << "\n";
-		//ROS_INFO_STREAM("JacBase: rows " <<jac_base_.rows()<<"; cols "<<jac_base_.cols());
-		//ROS_INFO_STREAM("JacFull: rows " <<jac_full.rows()<<"; cols "<<jac_full.cols());
-		
-		//ROS_INFO_STREAM("JacANTE: rows " <<jac_.rows()<<"; cols "<<jac_.columns());
-		jac_.resize(chain_.getNrOfJoints() + jac_b.cols());
-		//ROS_INFO_STREAM("JacPOST: rows " <<jac_.rows()<<"; cols "<<jac_.columns());
-		
-		jac_.data << jac_full;
-	}
-	else
-	{
-		jac_.resize(chain_.getNrOfJoints());
-		jac_.data << jac_chain.data;
-	}
-	
-	Eigen::VectorXd v_in_vec = Eigen::VectorXd::Zero(jac_.rows());
+
+        // Transform from base_link to chain_base
+        Eigen::Vector3d w_base_link(0,0,base_ratio);
+        //Eigen::Vector3d w_base_link(0,0,1);
+        w_chain_base = chain_base_rot*w_base_link;
+        r_chain_base = chain_base_rot*r_base_link;
+
+        //Calculate tangential velocity
+        tangential_vel = w_chain_base.cross(r_chain_base);
+
+         //Vx-Base <==> q8 effects a change in the following chain_base Vx velocities
+        jac_b(0,0) = base_ratio*chain_base_rot(0,0);
+        jac_b(0,1) = base_ratio*chain_base_rot(0,1);
+        jac_b(0,2) = tangential_vel(0);
+
+        // Vy-Base <==> q9 effects a change in the following chain_base Vy velocities
+        jac_b(1,0) = base_ratio*chain_base_rot(1,0);
+        jac_b(1,1) = base_ratio*chain_base_rot(1,1);
+        jac_b(1,2) = tangential_vel(1);
+
+        // Vz-Base <==>  effects a change in the following chain_base Vz velocities
+        jac_b(2,0) = base_ratio*chain_base_rot(2,0);
+        jac_b(2,1) = base_ratio*chain_base_rot(2,1);
+        jac_b(2,2) = tangential_vel(2);
+
+        //Phi <==> Wz with respect to base_link
+        jac_b(3,2) = w_chain_base(0);
+        jac_b(4,2) = w_chain_base(1);
+        jac_b(5,2) = w_chain_base(2);
+
+        //combine chain Jacobian and platform Jacobian
+        Eigen::Matrix<double, 6, Eigen::Dynamic> jac_full;
+        jac_full.resize(6,chain_.getNrOfJoints() + jac_b.cols());
+        jac_full << jac_chain.data,jac_b;
+        jac_.resize(chain_.getNrOfJoints() + jac_b.cols());
+        jac_.data << jac_full;
+    }
+    else
+    {
+        jac_.resize(chain_.getNrOfJoints());
+        jac_.data << jac_chain.data;
+    }
+
+
+    ROS_INFO_STREAM("Rows of the jacobian: " << jac_chain.rows());
+    ROS_INFO_STREAM("Columns of the jacobian: " << jac_chain.columns());
+
+
+
+    Eigen::VectorXd v_in_vec = Eigen::VectorXd::Zero(jac_.rows());
     Eigen::Transpose<Matrix6Xd> jac_T = jac_.data.transpose();
 
     ///convert input
@@ -120,15 +118,15 @@ int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& l
     double new_method_duration = double(new_method_stop - new_method_begin) / CLOCKS_PER_SEC;
     ROS_INFO_STREAM("ConstraintSolverFactoryBuilder needed time = " << new_method_duration << std::endl);
 
-	///convert output
-	for(int i = 0; i < jac_.columns(); i++)
-	{
-	    qdot_out(i) = new_qdot_out_vec(i);
-	}
-	
-	ROS_INFO("============== END AugmentedSolver::NewCartToJnt ==============");
+    ///convert output
+    for(int i = 0; i < jac_.columns(); i++)
+    {
+        qdot_out(i) = new_qdot_out_vec(i);
+    }
 
-	return retStat;
+    ROS_INFO("============== END AugmentedSolver::NewCartToJnt ==============");
+
+    return retStat;
 }
 
 int AugmentedSolver::OldCartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& last_q_dot, KDL::Twist& v_in, KDL::JntArray& qdot_out, KDL::Frame &base_position, KDL::Frame &chain_base)
@@ -371,8 +369,8 @@ int AugmentedSolver::OldCartToJnt(const KDL::JntArray& q_in, const KDL::JntArray
 
     clock_t old_method_stop = clock();
     double old_method_duration = double(old_method_stop - old_method_begin) / CLOCKS_PER_SEC;
-    ROS_INFO_STREAM("Old calculation of qdot_out_vec = " << qdot_out_vec << std::endl);
-    ROS_INFO_STREAM("Old calculation needed time = " << old_method_duration << std::endl);
+//    ROS_INFO_STREAM("Old calculation of qdot_out_vec = " << qdot_out_vec << std::endl);
+//    ROS_INFO_STREAM("Old calculation needed time = " << old_method_duration << std::endl);
 
     ///convert output
     for(int i = 0; i < jac_.columns(); ++i)
@@ -386,28 +384,28 @@ int AugmentedSolver::OldCartToJnt(const KDL::JntArray& q_in, const KDL::JntArray
 
 Eigen::VectorXd AugmentedSolver::calculate_weighting(const KDL::JntArray& q, const KDL::JntArray& last_q_dot)
 {
-	//This function calculates the weighting matrix used to penalize a joint when it is near and moving towards a limit
-	//The last joint velocity is used to determine if it that happens or not
+    //This function calculates the weighting matrix used to penalize a joint when it is near and moving towards a limit
+    //The last joint velocity is used to determine if it that happens or not
     std::vector<double> limits_min = params_.limits_min;
     std::vector<double> limits_max = params_.limits_max;
 
-	Eigen::VectorXd output = Eigen::VectorXd::Zero(jac_.columns());
+    Eigen::VectorXd output = Eigen::VectorXd::Zero(jac_.columns());
   
-	for(int i=0; i<jac_.columns() ; i++)
-	{
-		if(i<chain_.getNrOfJoints())	//See Chan paper
-		{
-			double dh = M_PI/180*fabs(pow(limits_max[i]-limits_min[i],2)*(2*q(i)-limits_max[i]-limits_min[i])/(4*pow(limits_max[i]-q(i),2)*pow(q(i)-limits_min[i],2)));
-			//std::cout<<"dh:"<<dh<<std::endl;
-			
-			if((last_q_dot(i)>0 && ((limits_max[i]-q(i)) < (q(i)-limits_min[i]))) || (last_q_dot(i)<0 && ((limits_max[i]-q(i)) > (q(i)-limits_min[i]))))
-			{	output(i) = 1+dh;	}
-			else
-			{	output(i) = 1;	}
-		}
-		else
-		{	output(i) = 1;	}
-	}
-	
-	return output;
+    for(int i=0; i<jac_.columns() ; i++)
+    {
+        if(i<chain_.getNrOfJoints())    //See Chan paper
+        {
+            double dh = M_PI/180*fabs(pow(limits_max[i]-limits_min[i],2)*(2*q(i)-limits_max[i]-limits_min[i])/(4*pow(limits_max[i]-q(i),2)*pow(q(i)-limits_min[i],2)));
+            //std::cout<<"dh:"<<dh<<std::endl;
+
+            if((last_q_dot(i)>0 && ((limits_max[i]-q(i)) < (q(i)-limits_min[i]))) || (last_q_dot(i)<0 && ((limits_max[i]-q(i)) > (q(i)-limits_min[i]))))
+            {    output(i) = 1+dh;    }
+            else
+            {    output(i) = 1;    }
+        }
+        else
+        {    output(i) = 1;    }
+    }
+
+    return output;
 }
