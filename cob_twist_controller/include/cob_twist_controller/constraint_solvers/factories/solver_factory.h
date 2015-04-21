@@ -31,15 +31,33 @@
 #include <Eigen/Core>
 #include <Eigen/SVD>
 #include <kdl/jntarray.hpp>
-#include "cob_twist_controller/constraint_solvers/solvers/constraint_solver_base.h"
+// #include "cob_twist_controller/constraint_solvers/solvers/constraint_solver_base.h"
+
+class ISolverFactory
+{
+    public:
+        virtual Eigen::MatrixXd calculateJointVelocities(AugmentedSolverParams &asParams,
+                                                         Matrix6Xd &jacobianData,
+                                                         Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed,
+                                                         const Eigen::VectorXd &inCartVelocities,
+                                                         const KDL::JntArray& q,
+                                                         const KDL::JntArray& last_q_dot,
+                                                         double dampingFactor) const = 0;
+
+        virtual ~ISolverFactory() {}
+};
 
 /// Abstract base class defining interfaces for the creation of a specific solver.
-class SolverFactory
+template <typename T>
+class SolverFactory : public ISolverFactory
 {
     public:
 
         /**
-         * @param asSolverParams References the augmented solver parameters.
+         * The base calculation method to calculate joint velocities out of input velocities (cartesian space).
+         * Creates a solver according to implemented createSolver-method (in subclass).
+         * Use the specialized solve-method to calculate new joint velocities.
+         * @param asParams References the augmented solver parameters.
          * @param jacobianData References the current Jacobian (matrix data only).
          * @param jacobianDataTransposed References the current Jacobian transpose (matrix data only).
          * @param inCartVelocities The input velocities vector (in cartesian space).
@@ -48,28 +66,37 @@ class SolverFactory
          * @param dampingFactor The damping factor corresponding to damping method.
          * @return Joint velocities in a (m x 1)-Matrix.
          */
-        Eigen::MatrixXd calculateJointVelocities(AugmentedSolverParams &asSolverParams,
+        Eigen::MatrixXd calculateJointVelocities(AugmentedSolverParams &asParams,
                                                  Matrix6Xd &jacobianData,
                                                  Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed,
                                                  const Eigen::VectorXd &inCartVelocities,
                                                  const KDL::JntArray& q,
                                                  const KDL::JntArray& last_q_dot,
-                                                 double dampingFactor);
-
-        virtual ~SolverFactory() = 0;
+                                                 double dampingFactor) const
+        {
+            T* cs = this->createSolver(asParams, jacobianData, jacobianDataTransposed);
+            cs->setDampingFactor(dampingFactor);
+            Eigen::MatrixXd new_q_dot = cs->solve(inCartVelocities, q, last_q_dot);
+            delete cs;
+            cs = NULL;
+            return new_q_dot;
+        }
 
     protected:
 
         /**
          * The interface method to create a specific solver to solve the inverse kinematics problem.
-         * @param asSolverParams References the augmented solver parameters.
+         * @param asParams References the augmented solver parameters.
          * @param jacobianData References the current Jacobian (matrix data only).
          * @param jacobianDataTransposed References the current Jacobian transpose (matrix data only).
          * @return A specific solver.
          */
-        virtual ConstraintSolver* createSolver(AugmentedSolverParams &asSolverParams,
+        T* createSolver(AugmentedSolverParams &asParams,
                                                Matrix6Xd &jacobianData,
-                                               Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed) const = 0;
+                                               Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed) const
+        {
+            return new T(asParams, jacobianData, jacobianDataTransposed);
+        }
 
 };
 

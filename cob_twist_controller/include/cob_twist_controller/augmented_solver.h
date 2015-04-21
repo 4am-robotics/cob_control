@@ -39,8 +39,18 @@ public:
      * default: 150
      *
      */
-    AugmentedSolver(const KDL::Chain& chain, double eps=0.001, int maxiter=5);
-    virtual ~AugmentedSolver();
+    AugmentedSolver(const KDL::Chain& chain, double eps=0.001, int maxiter=5) :
+        chain_(chain),
+        jac_(chain_.getNrOfJoints()),
+        jnt2jac_(chain_),
+        maxiter_(maxiter),
+        x_(0.0),
+        y_(0.0),
+        r_(0.0),
+        z_(0.0)
+    {}
+
+    virtual ~AugmentedSolver() {};
     
     /** CartToJnt for chain using SVD including base and various DampingMethods **/
     virtual int CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& last_q_dot, KDL::Twist& v_in, KDL::JntArray& qdot_out, KDL::Frame &base_position, KDL::Frame &chain_base);
@@ -65,12 +75,12 @@ public:
     /** not (yet) implemented. */
     virtual int CartToJnt(const KDL::JntArray& q_init, const KDL::JntArray& last_q_dot, const KDL::FrameVel& v_in, KDL::JntArrayVel& q_out){return -1;};
     
-    void SetAugmentedSolverParams(AugmentedSolverParams params)
+    inline void SetAugmentedSolverParams(AugmentedSolverParams params)
     {
         params_ = params;
     }
 
-    AugmentedSolverParams GetAugmentedSolverParams()
+    inline AugmentedSolverParams GetAugmentedSolverParams()
     {
         return params_;
     }
@@ -81,9 +91,7 @@ private:
     KDL::ChainJntToJacSolver jnt2jac_;
     int maxiter_;
     double x_,y_,r_,z_;
-    
     AugmentedSolverParams params_;
     Eigen::VectorXd calculate_weighting(const KDL::JntArray& q, const KDL::JntArray& last_q_dout);
-    // Eigen::VectorXd enforce_limits(const KDL::JntArray& q, Eigen::MatrixXd qdout_out, std::vector<double> limits_min, std::vector<double> limits_max);
 };
 #endif

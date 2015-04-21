@@ -38,9 +38,9 @@ class DampingBase
         virtual ~DampingBase() = 0;
 
     protected:
-        DampingBase(AugmentedSolverParams &asSolverParams, Matrix6Xd &jacobianData);
+        DampingBase(AugmentedSolverParams &asParams, Matrix6Xd &jacobianData);
 
-        const AugmentedSolverParams &asSolverParams_;
+        const AugmentedSolverParams &asParams_;
         const Matrix6Xd &jacobianData_;
 };
 

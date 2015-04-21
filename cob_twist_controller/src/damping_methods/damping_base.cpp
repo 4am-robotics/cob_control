@@ -27,8 +27,8 @@
  ****************************************************************/
 #include "cob_twist_controller/damping_methods/damping_base.h"
 
-DampingBase::DampingBase(AugmentedSolverParams &asSolverParams, Matrix6Xd &jacobianData)
-    : asSolverParams_(asSolverParams), jacobianData_(jacobianData)
+DampingBase::DampingBase(AugmentedSolverParams &asParams, Matrix6Xd &jacobianData)
+    : asParams_(asParams), jacobianData_(jacobianData)
 {}
 
 DampingBase::~DampingBase()

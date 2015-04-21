@@ -41,7 +41,7 @@ ConstraintSolver::~ConstraintSolver()
  */
 Eigen::MatrixXd ConstraintSolver::calculatePinvJacobianBySVD(Eigen::JacobiSVD<Eigen::MatrixXd> svd) const
 {
-    double eps = this->asSolverParams_.eps;
+    double eps = this->asParams_.eps;
     Eigen::VectorXd singularValues = svd.singularValues();
     Eigen::VectorXd singularValuesInv = Eigen::VectorXd::Zero(singularValues.rows());
 
@@ -62,14 +62,5 @@ Eigen::MatrixXd ConstraintSolver::calculatePinvJacobianBySVD(Eigen::JacobiSVD<Ei
     }
 
     Eigen::MatrixXd pseudoInverseJacobian = svd.matrixV() * singularValuesInv.asDiagonal() * svd.matrixU().transpose();
-/*
-    ROS_INFO_STREAM("ConstraintSolver: singularValues = " << singularValues << std::endl);
-    ROS_INFO_STREAM("ConstraintSolver: inverse singularValues = " << singularValuesInv << std::endl);
-//    ROS_INFO_STREAM("this->asSolverParams_.eps " << eps << std::endl);
-//    ROS_INFO_STREAM("this->dampingFactor_ " << this->dampingFactor_ << std::endl);
-//    ROS_INFO_STREAM("svd.matrixV " << svd.matrixV() << std::endl);
-//    ROS_INFO_STREAM("svd.matrixU " << svd.matrixU().transpose() << std::endl);
-//    ROS_INFO_STREAM("pseudoInverseJacobian " << pseudoInverseJacobian << std::endl);
-*/
     return pseudoInverseJacobian;
 }

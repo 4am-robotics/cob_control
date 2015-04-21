@@ -30,20 +30,25 @@
 #include <Eigen/Core>
 #include <Eigen/SVD>
 #include <kdl/jntarray.hpp>
+#include <boost/shared_ptr.hpp>
 #include "cob_twist_controller/augmented_solver_data_types.h"
+#include "cob_twist_controller/constraint_solvers/solvers/constraint_solver_base.h"
+#include "cob_twist_controller/constraint_solvers/solvers/unconstraint_solver.h"
+#include "cob_twist_controller/constraint_solvers/solvers/wln_joint_limit_avoidance_solver.h"
+#include "cob_twist_controller/constraint_solvers/solvers/weighted_least_norm_solver.h"
 #include "cob_twist_controller/constraint_solvers/constraint_solver_factory_builder.h"
-#include "cob_twist_controller/damping_methods/damping_builder.h"
+#include "cob_twist_controller/damping_methods/damping.h"
 #include "cob_twist_controller/constraint_solvers/factories/solver_factory.h"
-#include "cob_twist_controller/constraint_solvers/factories/wln_joint_limit_avoidance_solver_factory.h"
-#include "cob_twist_controller/constraint_solvers/factories/unconstraint_solver_factory.h"
-#include "cob_twist_controller/constraint_solvers/factories/weighted_least_norm_solver_factory.h"
+//#include "cob_twist_controller/constraint_solvers/factories/wln_joint_limit_avoidance_solver_factory.h"
+//#include "cob_twist_controller/constraint_solvers/factories/unconstraint_solver_factory.h"
+//#include "cob_twist_controller/constraint_solvers/factories/weighted_least_norm_solver_factory.h"
 
 /**
  * Out of the parameters generates a damping method (e.g. constant or manipulability) and calculates the damping factor.
  * Dependent on JLA active flag a JointLimitAvoidanceSolver or a UnconstraintSolver is generated to solve the IK problem.
  * The objects are generated for each solve-request. After calculation the objects are deleted.
  */
-int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverParams &asSolverParams,
+int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverParams &asParams,
                                                                         Matrix6Xd &jacobianData,
                                                                         Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed,
                                                                         const Eigen::VectorXd &inCartVelocities,
@@ -52,7 +57,7 @@ int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverP
                                                                         Eigen::MatrixXd &outJntVelocities)
 {
     outJntVelocities = Eigen::MatrixXd();
-    DampingBase* db = DampingBuilder::create_damping(asSolverParams, jacobianData);
+    boost::shared_ptr<DampingBase> db (DampingBuilder::create_damping(asParams, jacobianData));
     double dampingFactor;
     if(NULL != db)
     {
@@ -64,17 +69,18 @@ int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverP
         return -1; // error
     }
 
-    SolverFactory* sf = NULL;
-    switch(asSolverParams.constraint)
+    // ISolverFactory* sf = NULL;
+    boost::shared_ptr<ISolverFactory> sf;
+    switch(asParams.constraint)
     {
         case None:
-            sf = new UnconstraintSolverFactory();
+            sf.reset(new SolverFactory<UnconstraintSolver>());
             break;
         case WLN:
-            sf = new WeightedLeastNormSolverFactory();
+            sf.reset(new SolverFactory<WeightedLeastNormSolver>());
             break;
         case WLN_JLA:
-            sf = new WLN_JointLimitAvoidanceSolverFactory();
+            sf.reset(new SolverFactory<WLN_JointLimitAvoidanceSolver>());
             break;
         default:
             ROS_ERROR("Returning NULL factory due to constraint solver creation error.");
@@ -83,18 +89,15 @@ int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverP
 
     if (NULL != sf)
     {
-        outJntVelocities = sf->calculateJointVelocities(asSolverParams, jacobianData, jacobianDataTransposed, inCartVelocities, q, last_q_dot, dampingFactor);
+        outJntVelocities = sf->calculateJointVelocities(asParams, jacobianData, jacobianDataTransposed, inCartVelocities, q, last_q_dot, dampingFactor);
     }
     else
     {
         return -2; // error: no valid selection for constraint
     }
 
-    delete db;
-    db = NULL;
-
-    delete sf;
-    sf = NULL;
+    sf.reset();
+    db.reset();
 
     return 0; // success
 }

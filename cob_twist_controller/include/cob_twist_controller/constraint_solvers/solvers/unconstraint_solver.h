@@ -42,10 +42,10 @@ class UnconstraintSolver : public ConstraintSolver
          */
         virtual Eigen::MatrixXd solve(const Eigen::VectorXd &inCartVelocities, const KDL::JntArray& q, const KDL::JntArray& last_q_dot) const;
 
-        UnconstraintSolver(AugmentedSolverParams &asSolverParams,
+        UnconstraintSolver(AugmentedSolverParams &asParams,
                            Matrix6Xd &jacobianData,
                            Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed)
-                           : ConstraintSolver(asSolverParams,
+                           : ConstraintSolver(asParams,
                                               jacobianData,
                                               jacobianDataTransposed)
         {

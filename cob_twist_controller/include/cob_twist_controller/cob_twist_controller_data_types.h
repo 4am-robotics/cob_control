@@ -43,7 +43,8 @@ struct TwistControllerParams {
     double tolerance;
 
     bool keep_direction;
-    bool enforce_limits;
+    bool enforce_pos_limits;
+    bool enforce_vel_limits;
 
 
     // added limits from URDF file

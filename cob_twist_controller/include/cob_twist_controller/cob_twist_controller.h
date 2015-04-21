@@ -55,7 +55,7 @@
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 
-#include "cob_twist_controller/limiters/limiter_container.h"
+#include "cob_twist_controller/limiters/limiter.h"
 
 class CobTwistController
 {

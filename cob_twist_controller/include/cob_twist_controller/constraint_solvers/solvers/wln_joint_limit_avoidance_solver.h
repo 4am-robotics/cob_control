@@ -39,10 +39,10 @@ class WLN_JointLimitAvoidanceSolver : public WeightedLeastNormSolver
 {
     public:
 
-        WLN_JointLimitAvoidanceSolver(AugmentedSolverParams &asSolverParams,
+        WLN_JointLimitAvoidanceSolver(AugmentedSolverParams &asParams,
                                   Matrix6Xd &jacobianData,
                                   Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed)
-                                  : WeightedLeastNormSolver(asSolverParams,
+                                  : WeightedLeastNormSolver(asParams,
                                                             jacobianData,
                                                             jacobianDataTransposed)
         {

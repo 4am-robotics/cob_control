@@ -53,8 +53,6 @@ struct AugmentedSolverParams {
     double damping_factor;
     double lambda0;
     double wt;
-    bool JLA_active;
-    bool enforce_limits;
     bool base_compensation;
     bool base_active;
     double base_ratio;

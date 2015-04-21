@@ -184,9 +184,6 @@ void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControl
     params.damping_factor = config.damping_factor;
     params.lambda0 = config.lambda0;
     params.wt = config.wt;
-
-    params.enforce_limits = config.enforce_limits;
-
     params.base_compensation = config.base_compensation;
     params.base_active = config.base_active;
     params.base_ratio = config.base_ratio;
@@ -197,7 +194,8 @@ void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControl
     reset_markers_ = config.reset_markers;
 
 
-    twistControllerParams_.enforce_limits = config.enforce_limits;
+    twistControllerParams_.enforce_pos_limits = config.enforce_pos_limits;
+    twistControllerParams_.enforce_vel_limits = config.enforce_vel_limits;
     twistControllerParams_.base_active = config.base_active;
     twistControllerParams_.base_compensation = config.base_compensation;
     twistControllerParams_.tolerance = config.tolerance;
@@ -230,7 +228,6 @@ void CobTwistController::initAugmentedSolverParams()
     params.damping_factor = 0.2;
     params.lambda0 = 0.1;
     params.wt = 0.005;
-    params.enforce_limits = true;
     params.base_compensation = false;
     params.base_active = false;
     params.base_ratio = 0.0;

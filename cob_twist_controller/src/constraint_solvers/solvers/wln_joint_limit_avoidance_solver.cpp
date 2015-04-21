@@ -34,8 +34,8 @@
  */
 Eigen::MatrixXd WLN_JointLimitAvoidanceSolver::calculateWeighting(const KDL::JntArray& q, const KDL::JntArray& last_q_dot) const
 {
-    std::vector<double> limits_min = this->asSolverParams_.limits_min;
-    std::vector<double> limits_max = this->asSolverParams_.limits_max;
+    std::vector<double> limits_min = this->asParams_.limits_min;
+    std::vector<double> limits_max = this->asParams_.limits_max;
     uint32_t cols = this->jacobianData_.cols();
     Eigen::VectorXd output = Eigen::VectorXd::Zero(cols);
     double rad = M_PI / 180.0;

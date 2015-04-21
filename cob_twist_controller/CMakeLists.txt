@@ -1,10 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(cob_twist_controller)
 
-set(SRC_C_DIR "src/constraint_solvers")
-set(SRC_CS_DIR "${SRC_C_DIR}/solvers")
-set(SRC_CS_FACT_DIR "${SRC_C_DIR}/factories")
-
 # Load catkin and all dependencies required for this package
 find_package(catkin REQUIRED COMPONENTS cmake_modules roscpp sensor_msgs geometry_msgs nav_msgs kdl_parser kdl_conversions tf tf_conversions dynamic_reconfigure)
 
@@ -28,10 +24,13 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${oroco
 
 
 ## Build
+set(SRC_C_DIR "src/constraint_solvers")
+set(SRC_CS_DIR "${SRC_C_DIR}/solvers")
+
 # Declare a cpp library
-add_library(damping_methods src/damping_methods/damping_base.cpp src/damping_methods/damping_manipulability.cpp src/damping_methods/damping_constant.cpp src/damping_methods/damping_builder.cpp)
-add_library(constraint_solvers ${SRC_CS_DIR}/constraint_solver_base.cpp ${SRC_CS_DIR}/unconstraint_solver.cpp ${SRC_CS_DIR}/wln_joint_limit_avoidance_solver.cpp ${SRC_CS_DIR}/weighted_least_norm_solver.cpp ${SRC_CS_FACT_DIR}/wln_joint_limit_avoidance_solver_factory.cpp ${SRC_CS_FACT_DIR}/solver_factory.cpp ${SRC_CS_FACT_DIR}/unconstraint_solver_factory.cpp ${SRC_CS_FACT_DIR}/weighted_least_norm_solver_factory.cpp ${SRC_C_DIR}/constraint_solver_factory_builder.cpp)
-add_library(limiters src/limiters/limiter_base.cpp src/limiters/limiter_all_joint_positions.cpp src/limiters/limiter_all_joint_velocities.cpp src/limiters/limiter_container.cpp src/limiters/limiter_individual_joint_positions.cpp src/limiters/limiter_individual_joint_velocities.cpp)
+add_library(damping_methods src/damping_methods/damping_base.cpp src/damping_methods/damping.cpp)
+add_library(constraint_solvers ${SRC_CS_DIR}/constraint_solver_base.cpp ${SRC_CS_DIR}/unconstraint_solver.cpp ${SRC_CS_DIR}/wln_joint_limit_avoidance_solver.cpp ${SRC_CS_DIR}/weighted_least_norm_solver.cpp ${SRC_C_DIR}/constraint_solver_factory_builder.cpp)
+add_library(limiters src/limiters/limiter_base.cpp src/limiters/limiter.cpp)
 target_link_libraries(constraint_solvers damping_methods)
 
 add_library(augmented_solver src/augmented_solver.cpp)

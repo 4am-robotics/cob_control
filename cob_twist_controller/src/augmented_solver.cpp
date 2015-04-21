@@ -5,30 +5,14 @@
 #include <ostream>
 #include <ctime>
 
-AugmentedSolver::AugmentedSolver(const KDL::Chain& chain, double eps, int maxiter):
-    chain_(chain),
-    jac_(chain_.getNrOfJoints()),
-    jnt2jac_(chain_),
-    maxiter_(maxiter)
-{
-
-}
-
-AugmentedSolver::~AugmentedSolver()
-{
-
-}
-
 int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& last_q_dot, KDL::Twist& v_in, KDL::JntArray& qdot_out, KDL::Frame &base_position, KDL::Frame &chain_base)
 {
     ROS_INFO("============== START AugmentedSolver::NewCartToJnt ==============");
     ///Let the ChainJntToJacSolver calculate the jacobian "jac_chain" for the current joint positions "q_in"
     KDL::Jacobian jac_chain(chain_.getNrOfJoints());
     Eigen::Matrix<double,6,3> jac_b;
-
     jnt2jac_.JntToJac(q_in, jac_chain);
     int8_t retStat = -1;
-
 
     if(params_.base_active)
     {
@@ -95,12 +79,6 @@ int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& l
         jac_.data << jac_chain.data;
     }
 
-
-    ROS_INFO_STREAM("Rows of the jacobian: " << jac_chain.rows());
-    ROS_INFO_STREAM("Columns of the jacobian: " << jac_chain.columns());
-
-
-
     Eigen::VectorXd v_in_vec = Eigen::VectorXd::Zero(jac_.rows());
     Eigen::Transpose<Matrix6Xd> jac_T = jac_.data.transpose();
 
@@ -114,8 +92,8 @@ int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& l
     Eigen::MatrixXd new_qdot_out_vec;
     retStat = ConstraintSolverFactoryBuilder::calculateJointVelocities(this->params_, this->jac_.data, jac_T, v_in_vec, q_in, last_q_dot, new_qdot_out_vec);
     clock_t new_method_stop = clock();
-    ROS_INFO_STREAM("ConstraintSolverFactoryBuilder calculated: new_qdot_out_vec = " << new_qdot_out_vec << std::endl);
     double new_method_duration = double(new_method_stop - new_method_begin) / CLOCKS_PER_SEC;
+    ROS_INFO_STREAM("ConstraintSolverFactoryBuilder calculated: new_qdot_out_vec = " << std::endl << new_qdot_out_vec << std::endl);
     ROS_INFO_STREAM("ConstraintSolverFactoryBuilder needed time = " << new_method_duration << std::endl);
 
     ///convert output
@@ -131,7 +109,7 @@ int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& l
 
 int AugmentedSolver::OldCartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& last_q_dot, KDL::Twist& v_in, KDL::JntArray& qdot_out, KDL::Frame &base_position, KDL::Frame &chain_base)
 {
-    ROS_INFO("============== START AugmentedSolver::CartToJnt ==============");
+    ROS_INFO("============== START AugmentedSolver::OldCartToJnt ==============");
     ///Let the ChainJntToJacSolver calculate the jacobian "jac_chain" for the current joint positions "q_in"
     KDL::Jacobian jac_chain(chain_.getNrOfJoints());
     Eigen::Matrix<double,6,3> jac_b;
@@ -369,8 +347,8 @@ int AugmentedSolver::OldCartToJnt(const KDL::JntArray& q_in, const KDL::JntArray
 
     clock_t old_method_stop = clock();
     double old_method_duration = double(old_method_stop - old_method_begin) / CLOCKS_PER_SEC;
-//    ROS_INFO_STREAM("Old calculation of qdot_out_vec = " << qdot_out_vec << std::endl);
-//    ROS_INFO_STREAM("Old calculation needed time = " << old_method_duration << std::endl);
+    ROS_INFO_STREAM("Old calculation of qdot_out_vec = " << std::endl << qdot_out_vec << std::endl);
+    ROS_INFO_STREAM("Old calculation needed time = " << old_method_duration << std::endl);
 
     ///convert output
     for(int i = 0; i < jac_.columns(); ++i)
@@ -378,7 +356,7 @@ int AugmentedSolver::OldCartToJnt(const KDL::JntArray& q_in, const KDL::JntArray
         qdot_out(i) = qdot_out_vec(i);
     }
 
-    ROS_INFO("============== END AugmentedSolver::CartToJnt ==============");
+    ROS_INFO("============== END AugmentedSolver::OldCartToJnt ==============");
     return 1;
 }
 
