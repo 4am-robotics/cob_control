@@ -1,6 +1,7 @@
 #include "ros/ros.h"
 
 #include "cob_twist_controller/augmented_solver.h"
+#include <Eigen/Geometry>
 
 
 augmented_solver::augmented_solver(const KDL::Chain& chain, double eps, int maxiter):

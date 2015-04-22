@@ -5,7 +5,7 @@ project(cob_omni_drive_controller)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  controller_interface angles hardware_interface sensor_msgs geometry_msgs nav_msgs tf urdf
+  controller_interface cob_srvs angles hardware_interface sensor_msgs geometry_msgs nav_msgs tf urdf
 )
 
 ## System dependencies are found with CMake's conventions
@@ -178,11 +178,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 ## Testing ##
 #############
 
-## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_cob_omni_drive_controller.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
-# endif()
-
-## Add folders to be run by python nosetests
-# catkin_add_nosetests(test)
+if(CATKIN_ENABLE_TESTING)
+  catkin_add_gtest(${PROJECT_NAME}_velocity_estimator_test  test/velocity_estimator_test.cpp)
+  target_link_libraries(${PROJECT_NAME}_velocity_estimator_test ${catkin_LIBRARIES})
+endif()

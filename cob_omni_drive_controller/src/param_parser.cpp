@@ -209,5 +209,13 @@ bool parseWheelParams(std::vector<UndercarriageCtrl::WheelParams> &params, const
     return parseWheels(params, nh, read_urdf);
 }
 
+VelocityEstimator parseVelocityEstimator(const ros::NodeHandle &nh, const std::string &name){
+    double overflow_period = 0.0;
+    nh.getParam("defaults/estimate_velocity_with_overflow", overflow_period);
+    nh.getParam("estimate_velocity_with_overflow/"+name, overflow_period);
+    if(overflow_period < 0) overflow_period = -1.0;
+    return VelocityEstimator(overflow_period);
+}
     
 }
+
