@@ -309,7 +309,7 @@ bool CobFrameTracker::start_tracking_cb(cob_srvs::SetString::Request& request, c
 	if (tracking_) {
 		ROS_INFO("CobFrameTracker start was denied! FrameTracker is already tracking a goal");
 		response.success = false;
-		response.errorMessage.data = "FrameTracker is already tracking goal!";
+		response.message = "FrameTracker is already tracking goal!";
 		return false;
 	}
 	else

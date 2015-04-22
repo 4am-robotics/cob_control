@@ -69,7 +69,7 @@
 #include <cob_trajectory_controller/genericArmCtrl.h>
 // ROS service includes
 #include <cob_srvs/Trigger.h>
-#include <cob_srvs/SetOperationMode.h>
+#include <cob_srvs/SetString.h>
 #include <cob_srvs/SetFloat.h>
 
 
@@ -119,7 +119,7 @@ public:
         srvServer_Stop_ = n_.advertiseService("driver/stop", &cob_trajectory_controller_node::srvCallback_Stop, this);
         srvServer_SetVel_ = n_.advertiseService("driver/set_joint_velocity", &cob_trajectory_controller_node::srvCallback_setVel, this);
         srvServer_SetAcc_ = n_.advertiseService("driver/set_joint_acceleration", &cob_trajectory_controller_node::srvCallback_setAcc, this);
-        srvClient_SetOperationMode = n_.serviceClient<cob_srvs::SetOperationMode>("driver/set_operation_mode");
+        srvClient_SetOperationMode = n_.serviceClient<cob_srvs::SetString>("driver/set_operation_mode");
         while(!srvClient_SetOperationMode.exists())
         {
             ROS_INFO("Waiting for operationmode service to become available");
@@ -240,8 +240,8 @@ public:
         if(!executing_ || preemted_)
         {
             //set component to velocity mode
-            cob_srvs::SetOperationMode opmode;
-            opmode.request.operation_mode.data = "velocity";
+            cob_srvs::SetString opmode;
+            opmode.request.data = "velocity";
             srvClient_SetOperationMode.call(opmode);
             ros::Time begin = ros::Time::now();
             while(current_operation_mode_ != "velocity")
