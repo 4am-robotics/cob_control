@@ -26,7 +26,9 @@
  *   Special constraint: Avoid joint limits.
  *
  ****************************************************************/
+#include "ros/ros.h"
 #include "cob_twist_controller/constraint_solvers/solvers/weighted_least_norm_solver.h"
+
 
 /**
  * Specific implementation of the solve method using a weighted least norm.
@@ -46,6 +48,9 @@ Eigen::MatrixXd WeightedLeastNormSolver::solve(const Eigen::VectorXd &inCartVelo
     Eigen::MatrixXd weightedJacobianPseudoInverse = this->calculatePinvJacobianBySVD(svd);
     // Take care: W^(1/2) * q_dot = weighted_pinv_J * x_dot -> One must consider the weighting!!!
     Eigen::MatrixXd qdots_out = inv_root_W_WLN * weightedJacobianPseudoInverse * inCartVelocities;
+
+    ROS_INFO_STREAM("WeightedLeastNormSolver calculated: qdots_out = " << std::endl << qdots_out << std::endl);
+
     return qdots_out;
 }
 

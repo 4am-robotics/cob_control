@@ -1,3 +1,30 @@
+/*!
+ *****************************************************************
+ * \file
+ *
+ * \note
+ *   Copyright (c) 2014 \n
+ *   Fraunhofer Institute for Manufacturing Engineering
+ *   and Automation (IPA) \n\n
+ *
+ *****************************************************************
+ *
+ * \note
+ *   Project name: care-o-bot
+ * \note
+ *   ROS stack name: cob_control
+ * \note
+ *   ROS package name: cob_twist_controller
+ *
+ * \author
+ *   Author: Felix Messmer, email: Felix.Messmer@ipa.fraunhofer.de
+ *
+ * \date Date of creation: April, 2014
+ *
+ * \brief
+ *   This package provides the definitions of an inverse kinematics solver.
+ *
+ ****************************************************************/
 #ifndef AUGMENTED_SOLVER_H
 #define AUGMENTED_SOLVER_H
 
@@ -8,8 +35,16 @@
 #include <Eigen/LU>
 #include <Eigen/SVD>
 #include <iostream>
+#include <std_msgs/Float64MultiArray.h>
+#include "ros/ros.h"
 
 #include "cob_twist_controller/augmented_solver_data_types.h"
+
+#define DEBUG_AS
+
+#ifdef DEBUG_AS
+#define COLLECT 5;
+#endif
 
 /**
 * Implementation of a inverse velocity kinematics algorithm based
@@ -20,10 +55,6 @@
 *
 * @ingroup KinematicFamily
 */
-
-
-
-
 
 class AugmentedSolver
 {
@@ -39,42 +70,41 @@ public:
      * default: 150
      *
      */
-    AugmentedSolver(const KDL::Chain& chain, double eps=0.001, int maxiter=5) :
+    AugmentedSolver(const KDL::Chain& chain, double eps=0.001) :
         chain_(chain),
         jac_(chain_.getNrOfJoints()),
         jnt2jac_(chain_),
-        maxiter_(maxiter),
-        x_(0.0),
-        y_(0.0),
-        r_(0.0),
-        z_(0.0)
-    {}
+        nh_as_("augmented_solver")
+    {
+         q_dot_pub_ = this->nh_as_.advertise<std_msgs::Float64MultiArray>("dbg_jnt_velocity/new", 5);
+         old_q_dot_pub_ = this->nh_as_.advertise<std_msgs::Float64MultiArray>("dbg_jnt_velocity/old", 5);
+#ifdef DEBUG_AS
+         procCnt_ = COLLECT;
+         procCntOld_ = COLLECT;
+#endif
+    }
 
     virtual ~AugmentedSolver() {};
     
     /** CartToJnt for chain using SVD including base and various DampingMethods **/
-    virtual int CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& last_q_dot, KDL::Twist& v_in, KDL::JntArray& qdot_out, KDL::Frame &base_position, KDL::Frame &chain_base);
-    virtual int OldCartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& last_q_dot, KDL::Twist& v_in, KDL::JntArray& qdot_out, KDL::Frame &base_position, KDL::Frame &chain_base);
+    virtual int CartToJnt(const KDL::JntArray& q_in,
+                          const KDL::JntArray& last_q_dot,
+                          const KDL::Twist& v_in,
+                          const KDL::Frame &base_position,
+                          const KDL::Frame &chain_base,
+                          KDL::JntArray& qdot_out);
 
-    inline virtual int CartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& last_q_dot, KDL::Twist& v_in, KDL::JntArray& qdot_out)
+    inline virtual int CartToJnt(const KDL::JntArray& q_in,
+                                 const KDL::JntArray& last_q_dot,
+                                 const KDL::Twist& v_in,
+                                 KDL::JntArray& qdot_out)
     {
         KDL::Frame dummy;
         dummy.p = KDL::Vector(0,0,0);
         dummy.M = KDL::Rotation::Quaternion(0,0,0,0);
-        return CartToJnt(q_in, last_q_dot, v_in, qdot_out, dummy, dummy);
+        return CartToJnt(q_in, last_q_dot, v_in, dummy, dummy, qdot_out);
     }
 
-    inline virtual int OldCartToJnt(const KDL::JntArray& q_in, const KDL::JntArray& last_q_dot, KDL::Twist& v_in, KDL::JntArray& qdot_out)
-    {
-        KDL::Frame dummy;
-        dummy.p = KDL::Vector(0,0,0);
-        dummy.M = KDL::Rotation::Quaternion(0,0,0,0);
-        return OldCartToJnt(q_in, last_q_dot, v_in, qdot_out, dummy, dummy);
-    }
-
-    /** not (yet) implemented. */
-    virtual int CartToJnt(const KDL::JntArray& q_init, const KDL::JntArray& last_q_dot, const KDL::FrameVel& v_in, KDL::JntArrayVel& q_out){return -1;};
-    
     inline void SetAugmentedSolverParams(AugmentedSolverParams params)
     {
         params_ = params;
@@ -89,9 +119,23 @@ private:
     const KDL::Chain chain_;
     KDL::Jacobian jac_, jac_base_;
     KDL::ChainJntToJacSolver jnt2jac_;
-    int maxiter_;
-    double x_,y_,r_,z_;
     AugmentedSolverParams params_;
-    Eigen::VectorXd calculate_weighting(const KDL::JntArray& q, const KDL::JntArray& last_q_dout);
+    ros::NodeHandle nh_as_;
+    ros::Publisher q_dot_pub_;
+    ros::Publisher old_q_dot_pub_;
+
+    /**
+     * Adjustment of the member Jacobian
+     * @param q_in Input joint positions.
+     * @param base_position Current base position.
+     * @param chain_base Current frame of the chain base.
+     */
+    void adjustJac(const KDL::JntArray& q_in, const KDL::Frame &base_position, const KDL::Frame &chain_base);
+
+#ifdef DEBUG_AS
+    int procCnt_;
+    int procCntOld_;
+#endif
+
 };
 #endif

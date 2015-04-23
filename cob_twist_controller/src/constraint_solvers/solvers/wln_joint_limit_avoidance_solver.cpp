@@ -47,7 +47,7 @@ Eigen::MatrixXd WLN_JointLimitAvoidanceSolver::calculateWeighting(const KDL::Jnt
         {
             //See Chan paper ISSN 1042-296X [Page 288]
             if( (last_q_dot(i) > 0.0 && ((limits_max[i] - q(i)) < (q(i) - limits_min[i])))
-                    || (last_q_dot(i) < 0.0 && ((limits_max[i] - q(i)) > (q(i) - limits_min[i]))) ) // TODO: Condition: check with Felix ???
+                    || (last_q_dot(i) < 0.0 && ((limits_max[i] - q(i)) > (q(i) - limits_min[i]))) )
             {
                 // calculation is only necessary in case of condition is true!
                 double nominator = pow(limits_max[i]-limits_min[i], 2.0) * (2.0 * q(i) - limits_max[i] - limits_min[i]);

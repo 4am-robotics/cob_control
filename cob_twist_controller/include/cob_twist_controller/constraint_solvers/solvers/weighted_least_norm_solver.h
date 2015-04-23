@@ -45,11 +45,9 @@ class WeightedLeastNormSolver : public ConstraintSolver
         virtual Eigen::MatrixXd solve(const Eigen::VectorXd &inCartVelocities, const KDL::JntArray& q, const KDL::JntArray& last_q_dot) const;
 
         WeightedLeastNormSolver(AugmentedSolverParams &asParams,
-                                  Matrix6Xd &jacobianData,
-                                  Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed)
+                                  Matrix6Xd &jacobianData)
                                   : ConstraintSolver(asParams,
-                                                     jacobianData,
-                                                     jacobianDataTransposed)
+                                                     jacobianData)
         {
 
         }

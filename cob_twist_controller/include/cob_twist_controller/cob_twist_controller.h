@@ -51,7 +51,6 @@
 #include <boost/thread/mutex.hpp>
 #include <dynamic_reconfigure/server.h>
 #include <cob_twist_controller/TwistControllerConfig.h>
-#include <Eigen/Dense>
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 
@@ -83,6 +82,8 @@ private:
     KDL::ChainFkSolverVel_recursive* p_fksolver_vel_;
     KDL::ChainIkSolverVel_pinv* p_iksolver_vel_;
     AugmentedSolver* p_augmented_solver_;
+
+    AugmentedSolver* p_old_augmented_solver_;
 
     std::vector<std::string> joints_;
 

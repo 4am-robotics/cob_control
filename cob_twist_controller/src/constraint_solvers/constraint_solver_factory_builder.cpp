@@ -39,9 +39,6 @@
 #include "cob_twist_controller/constraint_solvers/constraint_solver_factory_builder.h"
 #include "cob_twist_controller/damping_methods/damping.h"
 #include "cob_twist_controller/constraint_solvers/factories/solver_factory.h"
-//#include "cob_twist_controller/constraint_solvers/factories/wln_joint_limit_avoidance_solver_factory.h"
-//#include "cob_twist_controller/constraint_solvers/factories/unconstraint_solver_factory.h"
-//#include "cob_twist_controller/constraint_solvers/factories/weighted_least_norm_solver_factory.h"
 
 /**
  * Out of the parameters generates a damping method (e.g. constant or manipulability) and calculates the damping factor.
@@ -50,7 +47,6 @@
  */
 int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverParams &asParams,
                                                                         Matrix6Xd &jacobianData,
-                                                                        Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed,
                                                                         const Eigen::VectorXd &inCartVelocities,
                                                                         const KDL::JntArray& q,
                                                                         const KDL::JntArray& last_q_dot,
@@ -89,7 +85,7 @@ int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverP
 
     if (NULL != sf)
     {
-        outJntVelocities = sf->calculateJointVelocities(asParams, jacobianData, jacobianDataTransposed, inCartVelocities, q, last_q_dot, dampingFactor);
+        outJntVelocities = sf->calculateJointVelocities(asParams, jacobianData, inCartVelocities, q, last_q_dot, dampingFactor);
     }
     else
     {

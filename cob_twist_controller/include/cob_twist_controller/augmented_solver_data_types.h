@@ -37,7 +37,6 @@
 enum DampingMethodTypes {
     MANIPULABILITY = 0,
     CONSTANT = 1,
-    TRUNCATION = 2,
 };
 
 enum ContraintTypes {

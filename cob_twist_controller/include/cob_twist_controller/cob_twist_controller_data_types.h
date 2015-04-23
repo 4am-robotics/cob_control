@@ -31,6 +31,7 @@
 
 #include <vector>
 #include <stdint.h>
+#include <std_msgs/Float64MultiArray.h>
 
 struct TwistControllerParams {
     uint8_t dof;

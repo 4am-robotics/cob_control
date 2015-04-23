@@ -31,14 +31,13 @@
 #include <Eigen/Core>
 #include <Eigen/SVD>
 #include <kdl/jntarray.hpp>
-// #include "cob_twist_controller/constraint_solvers/solvers/constraint_solver_base.h"
 
+/// Interface definition to support generic usage of the solver factory without specifying a typename in prior.
 class ISolverFactory
 {
     public:
         virtual Eigen::MatrixXd calculateJointVelocities(AugmentedSolverParams &asParams,
                                                          Matrix6Xd &jacobianData,
-                                                         Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed,
                                                          const Eigen::VectorXd &inCartVelocities,
                                                          const KDL::JntArray& q,
                                                          const KDL::JntArray& last_q_dot,
@@ -68,13 +67,12 @@ class SolverFactory : public ISolverFactory
          */
         Eigen::MatrixXd calculateJointVelocities(AugmentedSolverParams &asParams,
                                                  Matrix6Xd &jacobianData,
-                                                 Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed,
                                                  const Eigen::VectorXd &inCartVelocities,
                                                  const KDL::JntArray& q,
                                                  const KDL::JntArray& last_q_dot,
                                                  double dampingFactor) const
         {
-            T* cs = this->createSolver(asParams, jacobianData, jacobianDataTransposed);
+            T* cs = this->createSolver(asParams, jacobianData);
             cs->setDampingFactor(dampingFactor);
             Eigen::MatrixXd new_q_dot = cs->solve(inCartVelocities, q, last_q_dot);
             delete cs;
@@ -92,10 +90,9 @@ class SolverFactory : public ISolverFactory
          * @return A specific solver.
          */
         T* createSolver(AugmentedSolverParams &asParams,
-                                               Matrix6Xd &jacobianData,
-                                               Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed) const
+                                               Matrix6Xd &jacobianData) const
         {
-            return new T(asParams, jacobianData, jacobianDataTransposed);
+            return new T(asParams, jacobianData);
         }
 
 };

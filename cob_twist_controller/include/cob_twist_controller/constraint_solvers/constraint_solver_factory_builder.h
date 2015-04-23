@@ -42,7 +42,6 @@ class ConstraintSolverFactoryBuilder
          * Calculation of new joint velocities according to current joint positions and cartesian velocities.
          * @param asParams References the augmented solver parameters.
          * @param jacobianData References the current Jacobian (matrix data only).
-         * @param jacobianDataTransposed References the current Jacobian transpose (matrix data only).
          * @param inCartVelocities The input velocities vector (in cartesian space).
          * @param q The current joint positions.
          * @param last_q_dot The last joint velocities.
@@ -50,12 +49,11 @@ class ConstraintSolverFactoryBuilder
          * @return The calculated new joint velocities in (m x 1)-Matrix.
          */
         static int8_t calculateJointVelocities(AugmentedSolverParams &asParams,
-                                                       Matrix6Xd &jacobianData,
-                                                       Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed,
-                                                       const Eigen::VectorXd &inCartVelocities,
-                                                       const KDL::JntArray& q,
-                                                       const KDL::JntArray& last_q_dot,
-                                                       Eigen::MatrixXd &outJntVelocities);
+                                               Matrix6Xd &jacobianData,
+                                               const Eigen::VectorXd &inCartVelocities,
+                                               const KDL::JntArray& q,
+                                               const KDL::JntArray& last_q_dot,
+                                               Eigen::MatrixXd &outJntVelocities);
 
     private:
         ConstraintSolverFactoryBuilder() {}

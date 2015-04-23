@@ -63,11 +63,9 @@ class ConstraintSolver
     protected:
 
         ConstraintSolver(AugmentedSolverParams &asParams,
-                         Matrix6Xd &jacobianData,
-                         Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed)
+                         Matrix6Xd &jacobianData)
                          : asParams_(asParams),
                            jacobianData_(jacobianData),
-                           jacobianDataTransposed_(jacobianDataTransposed),
                            dampingFactor_(0.0)
         {
 
@@ -83,7 +81,6 @@ class ConstraintSolver
 
         const AugmentedSolverParams &asParams_; ///< References the augmented solver parameters.
         const Matrix6Xd &jacobianData_; ///< References the current Jacobian (matrix data only).
-        const Eigen::Transpose<Matrix6Xd> &jacobianDataTransposed_; ///< References the current Jacobian transpose (matrix data only).
         double dampingFactor_; ///< The currently set damping factor.
 };
 

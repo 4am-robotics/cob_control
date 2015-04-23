@@ -33,6 +33,8 @@
 #include <tf/transform_datatypes.h>
 #include <visualization_msgs/Marker.h>
 
+#include <Eigen/Dense>
+
 #define DEBUG_BASE_ACTIVE    0
 #define DEBUG_BASE_COMP     0
 
@@ -63,9 +65,6 @@ bool CobTwistController::initialize()
 
 
     // Multi-Chain Support
-
-
-
 
     // Cartesian VelLimits
     if (!nh_cartesian.getParam("max_vel_lin", twistControllerParams_.max_vel_lin))
@@ -121,8 +120,8 @@ bool CobTwistController::initialize()
 
     ///initialize configuration control solver
     p_fksolver_vel_ = new KDL::ChainFkSolverVel_recursive(chain_);    //used for debugging
-    //p_iksolver_vel_ = new KDL::ChainIkSolverVel_pinv(chain_, 0.001, 5);
-    p_augmented_solver_ = new AugmentedSolver(chain_, 0.001, 5);
+    p_augmented_solver_ = new AugmentedSolver(chain_, 0.001);
+    p_old_augmented_solver_ = new AugmentedSolver(chain_, 0.001); // only for debugging
 
     // Before setting up dynamic_reconfigure server: init AugmentedSolverParams with default values
     this->initAugmentedSolverParams();
@@ -210,7 +209,12 @@ void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControl
         ROS_ERROR("base_active and base_compensation cannot be enabled at the same time");
     }
 
+    ROS_INFO("Changed damping_method to: %d", config.damping_method);
+    ROS_INFO("Changed constraint to: %d", config.constraint);
+    ROS_INFO("Changed base active to: %d", config.base_active);
+
     p_augmented_solver_->SetAugmentedSolverParams(params);
+    p_old_augmented_solver_->SetAugmentedSolverParams(params);
 }
 
 void CobTwistController::initAugmentedSolverParams()
@@ -235,6 +239,7 @@ void CobTwistController::initAugmentedSolverParams()
     params.limits_max = twistControllerParams_.limits_max;
 
     p_augmented_solver_->SetAugmentedSolverParams(params);
+    p_old_augmented_solver_->SetAugmentedSolverParams(params);
 }
 
 
@@ -257,7 +262,7 @@ void CobTwistController::twist_stamped_cb(const geometry_msgs::TwistStamped::Con
         tf_listener_.lookupTransform(chain_base_link_, msg->header.frame_id, ros::Time(0), transform_tf);
         frame.M = KDL::Rotation::Quaternion(transform_tf.getRotation().x(), transform_tf.getRotation().y(), transform_tf.getRotation().z(), transform_tf.getRotation().w());
     }
-    catch (tf::TransformException ex){
+    catch (tf::TransformException &ex){
         ROS_ERROR("%s",ex.what());
         return;
     }
@@ -322,32 +327,38 @@ void CobTwistController::solve_twist(KDL::Twist twist)
             }
         #endif
         q_dot_ik.resize(chain_.getNrOfJoints() + 3); // + 3 for base
-        try{
+        tmp_q_dot_ik.resize(chain_.getNrOfJoints() + 3); // + 3 for base
+        try
+        {
             tf_listener_.waitForTransform("base_link",chain_tip_link_, ros::Time(0), ros::Duration(0.5));
             tf_listener_.lookupTransform("base_link",chain_tip_link_,  ros::Time(0), bl_transform_ct);
-        }catch (tf::TransformException ex){
+        }
+        catch (tf::TransformException &ex)
+        {
             ROS_ERROR("%s",ex.what());
             return;
         }
+
         bl_frame_ct.p = KDL::Vector(bl_transform_ct.getOrigin().x(), bl_transform_ct.getOrigin().y(), bl_transform_ct.getOrigin().z());
         bl_frame_ct.M = KDL::Rotation::Quaternion(bl_transform_ct.getRotation().x(), bl_transform_ct.getRotation().y(), bl_transform_ct.getRotation().z(), bl_transform_ct.getRotation().w());
 
 
-        try{
+        try
+        {
             tf_listener_.waitForTransform(chain_base_link_,"base_link", ros::Time(0), ros::Duration(0.5));
             tf_listener_.lookupTransform(chain_base_link_,"base_link", ros::Time(0), cb_transform_bl);
-        }catch (tf::TransformException ex){
+        }
+        catch (tf::TransformException &ex)
+        {
             ROS_ERROR("%s",ex.what());
             return;
         }
+
         cb_frame_bl.p = KDL::Vector(cb_transform_bl.getOrigin().x(), cb_transform_bl.getOrigin().y(), cb_transform_bl.getOrigin().z());
         cb_frame_bl.M = KDL::Rotation::Quaternion(cb_transform_bl.getRotation().x(), cb_transform_bl.getRotation().y(), cb_transform_bl.getRotation().z(), cb_transform_bl.getRotation().w());
 
         //Solve twist
-        //p_augmented_solver_->OldCartToJnt(last_q_, last_q_dot_, twist, tmp_q_dot_ik, bl_frame_ct, cb_frame_bl); // just for temporary calculation for comparison with new implementation
-        ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik, bl_frame_ct, cb_frame_bl);
-
-        ROS_INFO_STREAM("<BASE_ACTIVE> AugmentedSolver returned: " << ret_ik << std::endl);
+        ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, bl_frame_ct, cb_frame_bl, q_dot_ik);
     }
 
     if(twistControllerParams_.base_compensation)
@@ -373,9 +384,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 
     if(!twistControllerParams_.base_active)
     {
-         p_augmented_solver_->OldCartToJnt(last_q_, last_q_dot_, twist, tmp_q_dot_ik); // just for temporary calculation for comparison with new implementation
         ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik);
-        ROS_INFO_STREAM("AugmentedSolver returned: " << ret_ik << std::endl);
     }
 
     if(0 != ret_ik)
@@ -384,24 +393,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
     }
     else
     {
-//        if(twistControllerParams_.enforce_limits)
-//        {
-//            KDL::JntArray tmp = enforce_limits(last_q_, q_dot_ik);
-//            tmp = normalize_velocities(tmp);
-//
-//            for(int i = 0; i < tmp.rows(); ++i)
-//            {
-//                ROS_INFO("OLD normalize_velocities[%d] returned: %f", i, tmp(i));
-//            }
-//
-//
-//        }
-
         q_dot_ik = this->limiters_->enforceLimits(q_dot_ik, last_q_);
-//        for(int i = 0; i < q_dot_ik.rows(); ++i)
-//        {
-//            ROS_INFO("NEW enforceLimits[%d] returned: %f", i, q_dot_ik(i));
-//        }
 
         std_msgs::Float64MultiArray vel_msg;
         for(unsigned int i=0; i < twistControllerParams_.dof; i++)
@@ -449,6 +441,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
             #endif
 
         }
+
         vel_pub.publish(vel_msg);
     }
 }
@@ -495,16 +488,25 @@ void CobTwistController::odometry_cb(const nav_msgs::Odometry::ConstPtr& msg)
         cb_frame_bl.p = KDL::Vector(cb_transform_bl.getOrigin().x(), cb_transform_bl.getOrigin().y(), cb_transform_bl.getOrigin().z());
         cb_frame_bl.M = KDL::Rotation::Quaternion(cb_transform_bl.getRotation().x(), cb_transform_bl.getRotation().y(), cb_transform_bl.getRotation().z(), cb_transform_bl.getRotation().w());
     }
-    catch (tf::TransformException ex){
+    catch (tf::TransformException &ex){
         ROS_ERROR("%s",ex.what());
         return;
     }
-    // Calculate tangential twist for angular base movements v = w x r
-    Eigen::Vector3d r(bl_transform_ct.getOrigin().x(),bl_transform_ct.getOrigin().y(),bl_transform_ct.getOrigin().z());
-    Eigen::Vector3d w(0,0,msg->twist.twist.angular.z);
-    Eigen::Vector3d res = w.cross(r);
-    tangential_twist_bl.vel = KDL::Vector(res(0),res(1),res(2));
-    tangential_twist_bl.rot = KDL::Vector(0,0,0);
+    try
+    {
+        // Calculate tangential twist for angular base movements v = w x r
+        Eigen::Vector3d r(bl_transform_ct.getOrigin().x(),bl_transform_ct.getOrigin().y(),bl_transform_ct.getOrigin().z());
+        Eigen::Vector3d w(0,0,msg->twist.twist.angular.z);
+        Eigen::Vector3d res = w.cross(r);
+        tangential_twist_bl.vel = KDL::Vector(res(0),res(1),res(2));
+        tangential_twist_bl.rot = KDL::Vector(0,0,0);
+    }
+    catch(...)
+    {
+        ROS_ERROR("Error occurred while calculating tangential twist for angular base movements.");
+        return;
+    }
+
     //ROS_INFO("Crossproduct : %f %f %f",res(0),res(1),res(2));
     //ROS_INFO("TCP: %f %f %f",bl_transform_ct.getOrigin().x(),bl_transform_ct.getOrigin().y(),bl_transform_ct.getOrigin().z());
 
@@ -546,7 +548,7 @@ void CobTwistController::debug()
     try{
         tf_listener_.waitForTransform("base_link",chain_base_link_, ros::Time(0), ros::Duration(0.5));
         tf_listener_.lookupTransform("base_link",chain_base_link_, ros::Time(0), bl_transform_cb);
-    }catch (tf::TransformException ex){
+    }catch (tf::TransformException &ex){
         ROS_ERROR("%s",ex.what());
         return;
     }
@@ -554,14 +556,14 @@ void CobTwistController::debug()
     try{
         tf_listener_.waitForTransform("odom_combined",chain_tip_link_, ros::Time(0), ros::Duration(0.5));
         tf_listener_.lookupTransform("odom_combined",chain_tip_link_, ros::Time(0), odom_transform_ct);
-    }catch (tf::TransformException ex){
+    }catch (tf::TransformException &ex){
         ROS_ERROR("%s",ex.what());
         return;
     }
     try{
         tf_listener_.waitForTransform("odom_combined","base_link", ros::Time(0), ros::Duration(0.5));
         tf_listener_.lookupTransform("odom_combined","base_link", ros::Time(0), odom_transform_bl);
-    }catch (tf::TransformException ex){
+    }catch (tf::TransformException &ex){
         ROS_ERROR("%s",ex.what());
         return;
     }
