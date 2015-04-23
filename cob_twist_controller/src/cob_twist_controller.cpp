@@ -209,10 +209,6 @@ void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControl
         ROS_ERROR("base_active and base_compensation cannot be enabled at the same time");
     }
 
-    ROS_INFO("Changed damping_method to: %d", config.damping_method);
-    ROS_INFO("Changed constraint to: %d", config.constraint);
-    ROS_INFO("Changed base active to: %d", config.base_active);
-
     p_augmented_solver_->SetAugmentedSolverParams(params);
     p_old_augmented_solver_->SetAugmentedSolverParams(params);
 }
@@ -296,7 +292,6 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 
     int ret_ik;
     KDL::JntArray q_dot_ik(chain_.getNrOfJoints());
-    KDL::JntArray tmp_q_dot_ik(chain_.getNrOfJoints());
 
     if(twistControllerParams_.base_active)
     {
@@ -327,7 +322,6 @@ void CobTwistController::solve_twist(KDL::Twist twist)
             }
         #endif
         q_dot_ik.resize(chain_.getNrOfJoints() + 3); // + 3 for base
-        tmp_q_dot_ik.resize(chain_.getNrOfJoints() + 3); // + 3 for base
         try
         {
             tf_listener_.waitForTransform("base_link",chain_tip_link_, ros::Time(0), ros::Duration(0.5));

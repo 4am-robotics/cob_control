@@ -45,33 +45,19 @@ int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in,
         v_in_vec(i) = v_in(i);
     }
 
-    clock_t new_method_begin = clock();
     Eigen::MatrixXd new_qdot_out_vec;
-    retStat = ConstraintSolverFactoryBuilder::calculateJointVelocities(this->params_, this->jac_.data, v_in_vec, q_in, last_q_dot, new_qdot_out_vec);
+    retStat = ConstraintSolverFactoryBuilder::calculateJointVelocities(this->params_,
+                                                                       this->jac_.data,
+                                                                       v_in_vec,
+                                                                       q_in,
+                                                                       last_q_dot,
+                                                                       new_qdot_out_vec);
 
     ///convert output
     for(int i = 0; i < jac_.columns(); i++)
     {
         qdot_out(i) = new_qdot_out_vec(i);
     }
-
-#ifdef DEBUG_AS
-    if (this->procCnt_ <= 0)
-    {
-        std_msgs::Float64MultiArray qdotout;
-        for(int i = 0; i < jac_.columns(); i++)
-        {
-            qdotout.data.push_back(static_cast<double>(new_qdot_out_vec(i)));
-        }
-
-        this->q_dot_pub_.publish(qdotout);
-        this->procCnt_ = COLLECT;
-    }
-    else
-    {
-        this->procCnt_--;
-    }
-#endif
 
     return retStat;
 }

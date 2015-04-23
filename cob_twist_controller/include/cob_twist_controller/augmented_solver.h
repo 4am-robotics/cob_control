@@ -28,23 +28,11 @@
 #ifndef AUGMENTED_SOLVER_H
 #define AUGMENTED_SOLVER_H
 
-#include <math.h>
 #include <kdl/chainiksolver.hpp>
 #include <kdl/chainjnttojacsolver.hpp>
 #include <Eigen/Core>
-#include <Eigen/LU>
-#include <Eigen/SVD>
-#include <iostream>
-#include <std_msgs/Float64MultiArray.h>
-#include "ros/ros.h"
 
 #include "cob_twist_controller/augmented_solver_data_types.h"
-
-#define DEBUG_AS
-
-#ifdef DEBUG_AS
-#define COLLECT 5;
-#endif
 
 /**
 * Implementation of a inverse velocity kinematics algorithm based
@@ -55,7 +43,6 @@
 *
 * @ingroup KinematicFamily
 */
-
 class AugmentedSolver
 {
 public:
@@ -73,15 +60,8 @@ public:
     AugmentedSolver(const KDL::Chain& chain, double eps=0.001) :
         chain_(chain),
         jac_(chain_.getNrOfJoints()),
-        jnt2jac_(chain_),
-        nh_as_("augmented_solver")
+        jnt2jac_(chain_)
     {
-         q_dot_pub_ = this->nh_as_.advertise<std_msgs::Float64MultiArray>("dbg_jnt_velocity/new", 5);
-         old_q_dot_pub_ = this->nh_as_.advertise<std_msgs::Float64MultiArray>("dbg_jnt_velocity/old", 5);
-#ifdef DEBUG_AS
-         procCnt_ = COLLECT;
-         procCntOld_ = COLLECT;
-#endif
     }
 
     virtual ~AugmentedSolver() {};
@@ -120,9 +100,6 @@ private:
     KDL::Jacobian jac_, jac_base_;
     KDL::ChainJntToJacSolver jnt2jac_;
     AugmentedSolverParams params_;
-    ros::NodeHandle nh_as_;
-    ros::Publisher q_dot_pub_;
-    ros::Publisher old_q_dot_pub_;
 
     /**
      * Adjustment of the member Jacobian
@@ -131,11 +108,5 @@ private:
      * @param chain_base Current frame of the chain base.
      */
     void adjustJac(const KDL::JntArray& q_in, const KDL::Frame &base_position, const KDL::Frame &chain_base);
-
-#ifdef DEBUG_AS
-    int procCnt_;
-    int procCntOld_;
-#endif
-
 };
 #endif
