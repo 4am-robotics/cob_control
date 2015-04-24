@@ -38,11 +38,14 @@ DampingBase* DampingBuilder::create_damping(AugmentedSolverParams &augmentedSolv
     DampingBase *db = NULL;
     switch(augmentedSolverParams.damping_method)
     {
-        case MANIPULABILITY:
-            db = new DampingManipulability(augmentedSolverParams, jacobianData);
+        case NONE:
+            db = new DampingNone(augmentedSolverParams, jacobianData);
             break;
         case CONSTANT:
             db = new DampingConstant(augmentedSolverParams, jacobianData);
+            break;
+        case MANIPULABILITY:
+            db = new DampingManipulability(augmentedSolverParams, jacobianData);
             break;
         default:
             ROS_ERROR("DampingMethod %d not defined! Aborting!", augmentedSolverParams.damping_method);
@@ -52,6 +55,16 @@ DampingBase* DampingBuilder::create_damping(AugmentedSolverParams &augmentedSolv
     return db;
 }
 /* END DampingBuilder *******************************************************************************************/
+
+/* BEGIN DampingNone ********************************************************************************************/
+/**
+ * Method just returns the damping factor from ros parameter server.
+ */
+inline double DampingNone::get_damping_factor() const
+{
+    return 0.0;
+}
+/* END DampingNone **********************************************************************************************/
 
 /* BEGIN DampingConstant ****************************************************************************************/
 /**

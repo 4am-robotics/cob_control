@@ -37,10 +37,10 @@
 #include <nav_msgs/Odometry.h>
 
 #include <urdf/model.h>
+
 #include <kdl_parser/kdl_parser.hpp>
 #include <kdl/chainfksolvervel_recursive.hpp>
 #include <kdl/chainiksolvervel_pinv.hpp>
-#include <cob_twist_controller/augmented_solver.h>
 #include <kdl/jntarray.hpp>
 #include <kdl/jntarrayvel.hpp>
 #include <kdl/frames.hpp>
@@ -49,22 +49,21 @@
 #include <tf/tf.h>
 
 #include <boost/thread/mutex.hpp>
+#include <boost/shared_ptr.hpp>
+
 #include <dynamic_reconfigure/server.h>
+
+#include <cob_twist_controller/augmented_solver.h>
 #include <cob_twist_controller/TwistControllerConfig.h>
-
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
-
 #include "cob_twist_controller/limiters/limiter.h"
 
 class CobTwistController
 {
 private:
     ros::NodeHandle nh_;
-    tf::TransformListener tf_listener_;
-
     ros::Time last_update_time_,time_;
     ros::Duration period_;
-
     ros::Subscriber jointstate_sub;
     ros::Subscriber odometry_sub;
     ros::Subscriber twist_sub;
@@ -76,36 +75,30 @@ private:
     ros::Publisher twist_current_pub_;
 
     KDL::Chain chain_;
-    std::string chain_base_link_;
-    std::string chain_tip_link_;
-
-    KDL::ChainFkSolverVel_recursive* p_fksolver_vel_;
-    KDL::ChainIkSolverVel_pinv* p_iksolver_vel_;
-    AugmentedSolver* p_augmented_solver_;
-
-    AugmentedSolver* p_old_augmented_solver_;
-
-    std::vector<std::string> joints_;
-
+    KDL::Twist twist_odometry_cb_;
     KDL::JntArray last_q_;
     KDL::JntArray last_q_dot_;
+
+    std::string chain_base_link_;
+    std::string chain_tip_link_;
+    std::vector<std::string> joints_;
 
     bool reset_markers_;
 
     TwistControllerParams twistControllerParams_;
 
-    LimiterContainer *limiters_;
+    boost::shared_ptr<AugmentedSolver> p_augmented_solver_;
+    boost::shared_ptr<LimiterContainer> limiters_;
+    boost::shared_ptr<KDL::ChainFkSolverVel_recursive> jntToCartSolver_vel_;
 
-    KDL::Twist twist_odometry_cb_;
+    tf::TransformListener tf_listener_;
 
     ///Debug
     ros::Publisher     debug_base_compensation_visual_tip_pub_,debug_base_compensation_visual_base_pub_,debug_base_compensation_pose_base_pub_,
                     debug_base_compensation_pose_tip_pub_,debug_base_compensation_twist_manipulator_pub_,debug_base_active_twist_manipulator_pub_,
                     debug_base_active_twist_base_pub_,debug_base_active_twist_ee_pub_;
     std::vector<geometry_msgs::Point> point_base_vec_,point_ee_vec_;
-    KDL::ChainFkSolverVel_recursive* jntToCartSolver_vel_;
 
-    ////Debug
     tf::StampedTransform     odom_transform_ct,
                             odom_transform_bl,
                             bl_transform_cb,
@@ -129,7 +122,12 @@ public:
         twistControllerParams_.base_compensation = false;
     }
 
-    ~CobTwistController();
+    ~CobTwistController()
+    {
+        this->p_augmented_solver_.reset();
+        this->jntToCartSolver_vel_.reset();
+        this->limiters_.reset();
+    }
 
     bool initialize();
     void run();

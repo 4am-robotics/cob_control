@@ -44,6 +44,21 @@ class DampingBuilder
 };
 /* END DampingBuilder *******************************************************************************************/
 
+/* BEGIN DampingNone ****************************************************************************************/
+/// Class implementing a method to return the constant factor.
+class DampingNone : public DampingBase
+{
+    public:
+        DampingNone(AugmentedSolverParams &asParams, Matrix6Xd &jacobianData)
+        : DampingBase(asParams, jacobianData)
+        {}
+
+        ~DampingNone() {}
+
+        virtual double get_damping_factor() const;
+};
+/* END DampingNone **********************************************************************************************/
+
 /* BEGIN DampingConstant ****************************************************************************************/
 /// Class implementing a method to return the constant factor.
 class DampingConstant : public DampingBase

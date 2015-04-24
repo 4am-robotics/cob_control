@@ -35,8 +35,9 @@
 #include <stdint.h>
 
 enum DampingMethodTypes {
-    MANIPULABILITY = 0,
+    NONE = 0,
     CONSTANT = 1,
+    MANIPULABILITY = 2,
 };
 
 enum ContraintTypes {

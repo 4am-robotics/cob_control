@@ -119,9 +119,7 @@ bool CobTwistController::initialize()
     }
 
     ///initialize configuration control solver
-    p_fksolver_vel_ = new KDL::ChainFkSolverVel_recursive(chain_);    //used for debugging
-    p_augmented_solver_ = new AugmentedSolver(chain_, 0.001);
-    p_old_augmented_solver_ = new AugmentedSolver(chain_, 0.001); // only for debugging
+    p_augmented_solver_.reset(new AugmentedSolver(chain_, 0.001));
 
     // Before setting up dynamic_reconfigure server: init AugmentedSolverParams with default values
     this->initAugmentedSolverParams();
@@ -167,7 +165,7 @@ bool CobTwistController::initialize()
     ros::Time last_update_time_ = time_;
     ros::Duration period_ = time_ - last_update_time_;
 
-    this->limiters_ = new LimiterContainer(this->twistControllerParams_, this->chain_);
+    this->limiters_.reset(new LimiterContainer(this->twistControllerParams_, this->chain_));
     this->limiters_->init();
 
     ROS_INFO("...initialized!");
@@ -200,8 +198,7 @@ void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControl
     twistControllerParams_.tolerance = config.tolerance;
     twistControllerParams_.keep_direction = config.keep_direction;
 
-    delete(this->limiters_);
-    this->limiters_ = new LimiterContainer(this->twistControllerParams_, this->chain_);
+    this->limiters_.reset(new LimiterContainer(this->twistControllerParams_, this->chain_));
     this->limiters_->init();
 
     if(twistControllerParams_.base_active && twistControllerParams_.base_compensation)
@@ -210,7 +207,6 @@ void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControl
     }
 
     p_augmented_solver_->SetAugmentedSolverParams(params);
-    p_old_augmented_solver_->SetAugmentedSolverParams(params);
 }
 
 void CobTwistController::initAugmentedSolverParams()
@@ -235,7 +231,6 @@ void CobTwistController::initAugmentedSolverParams()
     params.limits_max = twistControllerParams_.limits_max;
 
     p_augmented_solver_->SetAugmentedSolverParams(params);
-    p_old_augmented_solver_->SetAugmentedSolverParams(params);
 }
 
 
@@ -417,7 +412,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 
                 /////calculate current Manipulator-Twists
                 KDL::JntArrayVel jntArrayVel = KDL::JntArrayVel(last_q_,last_q_dot_);
-                jntToCartSolver_vel_ = new KDL::ChainFkSolverVel_recursive(chain_);
+                jntToCartSolver_vel_.reset(new KDL::ChainFkSolverVel_recursive(chain_));
                 int ret = jntToCartSolver_vel_->JntToCart(jntArrayVel,FrameVel_cb,-1);
 
                 if(ret>=0){

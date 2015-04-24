@@ -45,18 +45,18 @@ int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in,
         v_in_vec(i) = v_in(i);
     }
 
-    Eigen::MatrixXd new_qdot_out_vec;
+    Eigen::MatrixXd qdot_out_vec;
     retStat = ConstraintSolverFactoryBuilder::calculateJointVelocities(this->params_,
                                                                        this->jac_.data,
                                                                        v_in_vec,
                                                                        q_in,
                                                                        last_q_dot,
-                                                                       new_qdot_out_vec);
+                                                                       qdot_out_vec);
 
     ///convert output
     for(int i = 0; i < jac_.columns(); i++)
     {
-        qdot_out(i) = new_qdot_out_vec(i);
+        qdot_out(i) = qdot_out_vec(i);
     }
 
     return retStat;
