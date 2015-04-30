@@ -8,7 +8,7 @@ EPS = 0.001
 DO_REVERSE = True # reverse because stop time is equal for both data - start time could be different
 
 global SAVE_DIR
-SAVE_DIR = '/home/fxm-mb/Scripts/Tests/Results'
+SAVE_DIR = '/home/fxm-mb/Scripts/Tests/ResultsFmt'
 
 colors = ('b', 'r', 'y', 'g', 'm', 'c', 'k', )
 
@@ -69,7 +69,7 @@ def plotErrors(errorData, strTitle):
     fig.subplots_adjust(wspace = 0.2, hspace = 0.5)
     fig.tight_layout()
     if SAVE_DIR is not None: 
-        fig.savefig(os.path.join(SAVE_DIR, strTitle + '.png'))
+        fig.savefig(os.path.join(SAVE_DIR, strTitle.replace('.txt', '') + '.eps'))
     # show()
 
 def doEvaluation(filenameNew, filenameOld, titleText):
@@ -109,6 +109,6 @@ if __name__ == '__main__':
     baseDir = "/home/fxm-mb/Scripts/Tests/"
     for root, dirs, files in os.walk(baseDir): 
         for testDir in dirs: 
-            if 'manip_none' in testDir: 
+            if True: # 'manip_none' in testDir: 
                 print('Evaluating files in dir %s' % testDir)
                 evaluateFiles(baseDir, testDir)
