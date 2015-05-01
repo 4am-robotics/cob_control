@@ -42,7 +42,6 @@ using namespace std;
 bool OutputRecorder::initialize()
 {
 	ros::NodeHandle nh_twist("twist_controller");
-	ros::NodeHandle nh_cartesian("cartesian_controller");
 	ros::NodeHandle nh_identifier("model_identifier");
 
 	// JointNames
@@ -53,12 +52,12 @@ bool OutputRecorder::initialize()
 	}
 	dof_ = joints_.size();
 	
-	if(!nh_cartesian.getParam("chain_base_link", chain_base_link_))
+	if(!nh_twist.getParam("chain_base_link", chain_base_link_))
 	{
 		ROS_ERROR("Parameter 'chain_base_link' not set");
 		return false;
 	}
-	if (!nh_cartesian.getParam("chain_tip_link", chain_tip_link_))
+	if (!nh_twist.getParam("chain_tip_link", chain_tip_link_))
 	{
 		ROS_ERROR("Parameter 'chain_tip_link' not set");
 		return false;

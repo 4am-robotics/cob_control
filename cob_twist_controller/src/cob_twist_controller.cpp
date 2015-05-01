@@ -41,7 +41,6 @@
 bool CobTwistController::initialize()
 {
     ros::NodeHandle nh_twist("twist_controller");
-    ros::NodeHandle nh_cartesian("cartesian_controller");
 
     // JointNames
     if(!nh_.getParam("joint_names", joints_))
@@ -52,12 +51,12 @@ bool CobTwistController::initialize()
     twistControllerParams_.dof = joints_.size();
 
     // Chain
-    if(!nh_cartesian.getParam("chain_base_link", chain_base_link_))
+    if(!nh_twist.getParam("chain_base_link", chain_base_link_))
     {
         ROS_ERROR("Parameter 'chain_base_link' not set");
         return false;
     }
-    if (!nh_cartesian.getParam("chain_tip_link", chain_tip_link_))
+    if (!nh_twist.getParam("chain_tip_link", chain_tip_link_))
     {
         ROS_ERROR("Parameter 'chain_tip_link' not set");
         return false;
@@ -67,22 +66,22 @@ bool CobTwistController::initialize()
     // Multi-Chain Support
 
     // Cartesian VelLimits
-    if (!nh_cartesian.getParam("max_vel_lin", twistControllerParams_.max_vel_lin))
+    if (!nh_twist.getParam("max_vel_lin", twistControllerParams_.max_vel_lin))
     {
         twistControllerParams_.max_vel_lin = 10.0;    //m/sec
         ROS_WARN_STREAM("Parameter 'max_vel_lin' not set. Using default: " << twistControllerParams_.max_vel_lin);
     }
-    if (!nh_cartesian.getParam("max_vel_rot", twistControllerParams_.max_vel_rot))
+    if (!nh_twist.getParam("max_vel_rot", twistControllerParams_.max_vel_rot))
     {
         twistControllerParams_.max_vel_rot = 6.28;    //rad/sec
         ROS_WARN_STREAM("Parameter 'max_vel_rot' not set. Using default: " << twistControllerParams_.max_vel_rot);
     }
-    if (!nh_cartesian.getParam("max_vel_lin_base", twistControllerParams_.max_vel_lin_base))
+    if (!nh_twist.getParam("max_vel_lin_base", twistControllerParams_.max_vel_lin_base))
     {
         twistControllerParams_.max_vel_lin_base = 0.5;    //m/sec
         ROS_WARN_STREAM("Parameter 'max_vel_lin_base' not set. Using default: " << twistControllerParams_.max_vel_lin_base);
     }
-    if (!nh_cartesian.getParam("max_vel_rot_base", twistControllerParams_.max_vel_rot_base))
+    if (!nh_twist.getParam("max_vel_rot_base", twistControllerParams_.max_vel_rot_base))
     {
         twistControllerParams_.max_vel_rot_base = 0.5;    //rad/sec
         ROS_WARN_STREAM("Parameter 'max_vel_rot_base' not set. Using default: " << twistControllerParams_.max_vel_rot_base);
@@ -125,7 +124,7 @@ bool CobTwistController::initialize()
     this->initAugmentedSolverParams();
 
     ///Setting up dynamic_reconfigure server for the AugmentedSolverParams
-    reconfigure_server_.reset(new dynamic_reconfigure::Server<cob_twist_controller::TwistControllerConfig>(reconfig_mutex_, nh_cartesian));
+    reconfigure_server_.reset(new dynamic_reconfigure::Server<cob_twist_controller::TwistControllerConfig>(reconfig_mutex_, nh_twist));
     reconfigure_server_->setCallback(boost::bind(&CobTwistController::reconfigure_callback,   this, _1, _2));
 
     ///initialize variables and current joint values and velocities
