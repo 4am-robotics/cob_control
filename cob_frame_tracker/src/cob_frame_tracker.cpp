@@ -44,17 +44,16 @@ bool CobFrameTracker::initialize()
 	ros::NodeHandle nh_;
 	ros::NodeHandle nh_tracker("frame_tracker");
 	ros::NodeHandle nh_twist("twist_controller");
-	ros::NodeHandle nh_cartesian("cartesian_controller");
 	
 	///get params
-	if (nh_cartesian.hasParam("update_rate"))
-	{	nh_cartesian.getParam("update_rate", update_rate_);	}
+	if (nh_tracker.hasParam("update_rate"))
+	{	nh_tracker.getParam("update_rate", update_rate_);	}
 	else
 	{	update_rate_ = 68.0;	}	//hz
 	
-	if (nh_cartesian.hasParam("chain_base_link"))
+	if (nh_tracker.hasParam("chain_base_link"))
 	{
-		nh_cartesian.getParam("chain_base_link", chain_base_);
+		nh_tracker.getParam("chain_base_link", chain_base_);
 	}
 	else
 	{
@@ -62,9 +61,9 @@ bool CobFrameTracker::initialize()
 		return false;
 	}
 	
-	if (nh_cartesian.hasParam("chain_tip_link"))
+	if (nh_tracker.hasParam("chain_tip_link"))
 	{
-		nh_cartesian.getParam("chain_tip_link", chain_tip_link_);
+		nh_tracker.getParam("chain_tip_link", chain_tip_link_);
 	}
 	else
 	{
@@ -99,38 +98,38 @@ bool CobFrameTracker::initialize()
 	q_temp = last_q_;
 	q_dot_temp = last_q_dot_;
 	
-	if (nh_cartesian.hasParam("movable_trans"))
-	{	nh_cartesian.getParam("movable_trans", movable_trans_);	}
+	if (nh_tracker.hasParam("movable_trans"))
+	{	nh_tracker.getParam("movable_trans", movable_trans_);	}
 	else
 	{	movable_trans_ = true;	}
-	if (nh_cartesian.hasParam("movable_rot"))
-	{	nh_cartesian.getParam("movable_rot", movable_rot_);	}
+	if (nh_tracker.hasParam("movable_rot"))
+	{	nh_tracker.getParam("movable_rot", movable_rot_);	}
 	else
 	{	movable_rot_ = true;	}
 	
-	if (nh_cartesian.hasParam("max_vel_lin"))
-	{	nh_cartesian.getParam("max_vel_lin", max_vel_lin_);	}
+	if (nh_tracker.hasParam("max_vel_lin"))
+	{	nh_tracker.getParam("max_vel_lin", max_vel_lin_);	}
 	else
 	{	max_vel_lin_ = 10.0;	}	//m/sec
 	
-	if (nh_cartesian.hasParam("max_vel_rot"))
-	{	nh_cartesian.getParam("max_vel_rot", max_vel_rot_);	}
+	if (nh_tracker.hasParam("max_vel_rot"))
+	{	nh_tracker.getParam("max_vel_rot", max_vel_rot_);	}
 	else
 	{	max_vel_rot_ = 6.28;	}	//rad/sec
 	
 	// Load PID Controller using gains set on parameter server
-	pid_controller_trans_x_.init(ros::NodeHandle(nh_cartesian, "pid_trans_x"));
+	pid_controller_trans_x_.init(ros::NodeHandle(nh_tracker, "pid_trans_x"));
 	pid_controller_trans_x_.reset();
-	pid_controller_trans_y_.init(ros::NodeHandle(nh_cartesian, "pid_trans_y"));
+	pid_controller_trans_y_.init(ros::NodeHandle(nh_tracker, "pid_trans_y"));
 	pid_controller_trans_y_.reset();
-	pid_controller_trans_z_.init(ros::NodeHandle(nh_cartesian, "pid_trans_z"));
+	pid_controller_trans_z_.init(ros::NodeHandle(nh_tracker, "pid_trans_z"));
 	pid_controller_trans_z_.reset();
 	
-	pid_controller_rot_x_.init(ros::NodeHandle(nh_cartesian, "pid_rot_x"));
+	pid_controller_rot_x_.init(ros::NodeHandle(nh_tracker, "pid_rot_x"));
 	pid_controller_rot_x_.reset();
-	pid_controller_rot_y_.init(ros::NodeHandle(nh_cartesian, "pid_rot_y"));
+	pid_controller_rot_y_.init(ros::NodeHandle(nh_tracker, "pid_rot_y"));
 	pid_controller_rot_y_.reset();
-	pid_controller_rot_z_.init(ros::NodeHandle(nh_cartesian, "pid_rot_z"));
+	pid_controller_rot_z_.init(ros::NodeHandle(nh_tracker, "pid_rot_z"));
 	pid_controller_rot_z_.reset();
 	
 	tracking_ = false;
@@ -154,7 +153,7 @@ bool CobFrameTracker::initialize()
 	abortion_counter_ = 0;
 	max_abortions_ = update_rate_;	//if tracking fails for 1 minute
 	
-	reconfigure_server_.reset(new dynamic_reconfigure::Server<cob_frame_tracker::FrameTrackerConfig>(reconfig_mutex_, nh_cartesian));
+	reconfigure_server_.reset(new dynamic_reconfigure::Server<cob_frame_tracker::FrameTrackerConfig>(reconfig_mutex_, nh_tracker));
 	reconfigure_server_->setCallback(boost::bind(&CobFrameTracker::reconfigure_callback,   this, _1, _2));
 	
 	
