@@ -33,6 +33,7 @@
 bool InteractiveFrameTarget::initialize()
 {
 	ros::NodeHandle nh_cartesian("cartesian_controller");
+	ros::NodeHandle nh_tracker("frame_tracker");
 	
 	///get params
 	if (nh_cartesian.hasParam("update_rate"))
@@ -80,15 +81,15 @@ bool InteractiveFrameTarget::initialize()
 	
 	tracking_ = false;
 	
-	ROS_WARN("Waiting for StartTrackingServer...");
-	ros::service::waitForService("start_tracking");
+	start_tracking_client_ = nh_tracker.serviceClient<cob_srvs::SetString>("start_tracking");
+	ROS_INFO("Waiting for StartTrackingServer...");
+	start_tracking_client_.waitForExistence();
 	ROS_INFO("...done");
-	start_tracking_client_ = nh_.serviceClient<cob_srvs::SetString>("start_tracking");
 	
-	ROS_WARN("Waiting for StopTrackingServer...");
-	ros::service::waitForService("stop_tracking");
+	stop_tracking_client_ = nh_tracker.serviceClient<std_srvs::Empty>("stop_tracking");
+	ROS_INFO("Waiting for StopTrackingServer...");
+	stop_tracking_client_.waitForExistence();
 	ROS_INFO("...done");
-	stop_tracking_client_ = nh_.serviceClient<std_srvs::Empty>("stop_tracking");
 	
 	bool transform_available = false;
 	while(!transform_available)

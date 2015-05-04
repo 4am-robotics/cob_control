@@ -53,14 +53,14 @@ class InteractiveFrameTarget:
 		
 		self.tracking = False
 		print "Waiting for StartTrackingServer..."
-		rospy.wait_for_service('start_tracking')
+		rospy.wait_for_service('frame_tracker/start_tracking')
 		print "...done!"
-		self.start_tracking_client = rospy.ServiceProxy('start_tracking', SetString)
+		self.start_tracking_client = rospy.ServiceProxy('frame_tracker/start_tracking', SetString)
 		
 		print "Waiting for StopTrackingServer..."
-		rospy.wait_for_service('stop_tracking')
+		rospy.wait_for_service('frame_tracker/stop_tracking')
 		print "...done!"
-		self.stop_tracking_client = rospy.ServiceProxy('stop_tracking', Empty)
+		self.stop_tracking_client = rospy.ServiceProxy('frame_tracker/stop_tracking', Empty)
 		
 		
 		self.target_pose = PoseStamped()
