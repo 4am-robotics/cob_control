@@ -72,17 +72,19 @@ public:
                           const KDL::Twist& v_in,
                           const KDL::Frame &base_position,
                           const KDL::Frame &chain_base,
+                          const Eigen::VectorXd &tracking_errors,
                           KDL::JntArray& qdot_out);
 
     inline virtual int CartToJnt(const KDL::JntArray& q_in,
                                  const KDL::JntArray& last_q_dot,
                                  const KDL::Twist& v_in,
+                                 const Eigen::VectorXd &tracking_errors,
                                  KDL::JntArray& qdot_out)
     {
         KDL::Frame dummy;
         dummy.p = KDL::Vector(0,0,0);
         dummy.M = KDL::Rotation::Quaternion(0,0,0,0);
-        return CartToJnt(q_in, last_q_dot, v_in, dummy, dummy, qdot_out);
+        return CartToJnt(q_in, last_q_dot, v_in, dummy, dummy, tracking_errors, qdot_out);
     }
 
     inline void SetAugmentedSolverParams(AugmentedSolverParams params)

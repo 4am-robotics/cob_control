@@ -48,6 +48,7 @@
 #include <kdl/frames.hpp>
 #include <kdl_parser/kdl_parser.hpp>
 
+#include <std_msgs/Float64MultiArray.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/String.h>
 
@@ -128,6 +129,9 @@ private:
 	
 	ros::Subscriber jointstate_sub;
 	ros::Publisher twist_pub_;
+
+	ros::Publisher error_pub_;
+
 	ros::ServiceServer start_server_;
 	ros::ServiceServer stop_server_;
 	

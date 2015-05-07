@@ -47,7 +47,10 @@ class ConstraintSolver
          * @param last_q_dot The last joint velocities.
          * @return The calculated new joint velocities.
          */
-        virtual Eigen::MatrixXd solve(const Eigen::VectorXd &inCartVelocities, const KDL::JntArray& q, const KDL::JntArray& last_q_dot) const = 0;
+        virtual Eigen::MatrixXd solve(const Eigen::VectorXd &inCartVelocities,
+                                      const KDL::JntArray& q,
+                                      const KDL::JntArray& last_q_dot,
+                                      const Eigen::VectorXd &tracking_errors) const = 0;
 
         /**
          * Inline method to set the damping factor

@@ -41,6 +41,7 @@ class ISolverFactory
                                                          const Eigen::VectorXd &inCartVelocities,
                                                          const KDL::JntArray& q,
                                                          const KDL::JntArray& last_q_dot,
+                                                         const Eigen::VectorXd& tracking_errors,
                                                          double dampingFactor) const = 0;
 
         virtual ~ISolverFactory() {}
@@ -70,11 +71,12 @@ class SolverFactory : public ISolverFactory
                                                  const Eigen::VectorXd &inCartVelocities,
                                                  const KDL::JntArray& q,
                                                  const KDL::JntArray& last_q_dot,
+                                                 const Eigen::VectorXd &tracking_errors,
                                                  double dampingFactor) const
         {
             T* cs = this->createSolver(asParams, jacobianData);
             cs->setDampingFactor(dampingFactor);
-            Eigen::MatrixXd new_q_dot = cs->solve(inCartVelocities, q, last_q_dot);
+            Eigen::MatrixXd new_q_dot = cs->solve(inCartVelocities, q, last_q_dot, tracking_errors);
             delete cs;
             cs = NULL;
             return new_q_dot;

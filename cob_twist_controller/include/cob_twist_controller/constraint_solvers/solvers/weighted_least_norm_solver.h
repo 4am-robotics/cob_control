@@ -42,7 +42,10 @@ class WeightedLeastNormSolver : public ConstraintSolver
          * Specific implementation of solve-method to solve IK problem with joint limit avoidance.
          * See base class ConstraintSolver for more details on params and returns.
          */
-        virtual Eigen::MatrixXd solve(const Eigen::VectorXd &inCartVelocities, const KDL::JntArray& q, const KDL::JntArray& last_q_dot) const;
+        virtual Eigen::MatrixXd solve(const Eigen::VectorXd &inCartVelocities,
+                                      const KDL::JntArray& q,
+                                      const KDL::JntArray& last_q_dot,
+                                      const Eigen::VectorXd &tracking_errors) const;
 
         WeightedLeastNormSolver(AugmentedSolverParams &asParams,
                                   Matrix6Xd &jacobianData)

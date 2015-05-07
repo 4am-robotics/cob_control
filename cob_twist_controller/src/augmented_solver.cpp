@@ -28,19 +28,28 @@
 #include "cob_twist_controller/augmented_solver.h"
 #include "cob_twist_controller/constraint_solvers/constraint_solver_factory_builder.h"
 
+//#include <Eigen/QR>
+//#include <Eigen/LU>
+
+#include "ros/ros.h"
+
 int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in,
                                const KDL::JntArray& last_q_dot,
                                const KDL::Twist& v_in,
                                const KDL::Frame &base_position,
                                const KDL::Frame &chain_base,
+                               const Eigen::VectorXd &tracking_errors,
                                KDL::JntArray& qdot_out)
 {
     int8_t retStat = -1;
     this->adjustJac(q_in, base_position, chain_base);
-    Eigen::VectorXd v_in_vec = Eigen::VectorXd::Zero(jac_.rows());
+    Eigen::VectorXd v_in_vec = Eigen::VectorXd::Zero(this->jac_.rows());
+
+    //ROS_INFO_STREAM_NAMED("AugmentedSolver::CartToJnt", "ColPivQR: Rank of Jacobian: " << this->jac_.data.colPivHouseholderQr().rank() << std::endl);
+    //ROS_INFO_STREAM_NAMED("AugmentedSolver::CartToJnt", "FullPivLu: Rank of Jacobian: " << this->jac_.data.fullPivLu().rank() << std::endl);
 
     ///convert input
-    for (int i=0; i < jac_.rows(); ++i)
+    for (int i=0; i < this->jac_.rows(); ++i)
     {
         v_in_vec(i) = v_in(i);
     }
@@ -51,6 +60,7 @@ int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in,
                                                                        v_in_vec,
                                                                        q_in,
                                                                        last_q_dot,
+                                                                       tracking_errors,
                                                                        qdot_out_vec);
 
     ///convert output

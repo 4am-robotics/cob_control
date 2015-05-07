@@ -159,7 +159,7 @@ KDL::JntArray LimiterAllJointPositions::enforceLimits(const KDL::JntArray& q_dot
 
     if (tolerance_surpassed)
     {
-        //ROS_DEBUG("Tolerance surpassed: Enforcing limits FOR ALL JOINT VELOCITIES with factor = %f", factor);
+        // ROS_INFO_THROTTLE(5, "Tolerance surpassed: Enforcing limits FOR ALL JOINT VELOCITIES with factor = %f", factor);
         for(int i = 0; i < q_dot_ik.rows() ; i++)
         {
             scaled_q_dot(i) = q_dot_ik(i) / factor;

@@ -25,6 +25,7 @@
  *   Implementation of an unconstraint solver.
  *
  ****************************************************************/
+#include <ros/ros.h>
 #include "cob_twist_controller/constraint_solvers/solvers/unconstraint_solver.h"
 
 /**
@@ -32,11 +33,14 @@
  * It calculates the pseudo-inverse of the Jacobian via the base implementation of calculatePinvJacobianBySVD.
  * With the pseudo-inverse the joint velocity vector is calculated.
  */
-Eigen::MatrixXd UnconstraintSolver::solve(const Eigen::VectorXd& inCartVelocities, const KDL::JntArray& q, const KDL::JntArray& last_q_dot) const
+Eigen::MatrixXd UnconstraintSolver::solve(const Eigen::VectorXd& inCartVelocities,
+                                          const KDL::JntArray& q,
+                                          const KDL::JntArray& last_q_dot,
+                                          const Eigen::VectorXd &tracking_errors) const
 {
     Eigen::JacobiSVD<Eigen::MatrixXd> svd(this->jacobianData_, Eigen::ComputeThinU | Eigen::ComputeThinV);
     Eigen::MatrixXd jacobianPseudoInverse = this->calculatePinvJacobianBySVD(svd);
-    Eigen::MatrixXd qdots_out = jacobianPseudoInverse * inCartVelocities;
+    Eigen::MatrixXd qdots_out = jacobianPseudoInverse * (inCartVelocities - this->asParams_.p_gain * tracking_errors);
     return qdots_out;
 }
 
