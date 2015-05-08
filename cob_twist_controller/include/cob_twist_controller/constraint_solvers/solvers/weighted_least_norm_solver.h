@@ -34,7 +34,7 @@
 #include "cob_twist_controller/constraint_solvers/solvers/constraint_solver_base.h"
 
 /// Implementation of ConstraintSolver to solve inverse kinematics by using a weighted least norm
-class WeightedLeastNormSolver : public ConstraintSolver
+class WeightedLeastNormSolver : public ConstraintSolver<>
 {
     public:
 

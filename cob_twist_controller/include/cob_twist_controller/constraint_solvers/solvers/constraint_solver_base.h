@@ -30,18 +30,17 @@
 #define CONSTRAINT_SOLVER_BASE_H_
 
 #include <Eigen/Core>
-#include <Eigen/SVD>
 #include <kdl/jntarray.hpp>
 #include <boost/shared_ptr.hpp>
+#include <cob_twist_controller/pseudoinverse_calculations/pseudoinverse_calculation.h>
 #include "cob_twist_controller/damping_methods/damping_base.h"
 #include "cob_twist_controller/augmented_solver_data_types.h"
 
 /// Base class for solvers, defining interface methods.
+template <typename PINV = PInvBySVD>
 class ConstraintSolver
 {
     public:
-        static const double DAMPING_LIMIT = 1.0e-12; ///< const. value for zero comparison with damping factor
-
         /**
          * The interface method to solve the inverse kinematics problem. Has to be implemented in inherited classes.
          * @param inCartVelocities The input velocities vector (in cartesian space).
@@ -63,7 +62,7 @@ class ConstraintSolver
             this->damping_ = damping;
         }
 
-        virtual ~ConstraintSolver() = 0;
+        virtual ~ConstraintSolver() {}
 
     protected:
 
@@ -79,11 +78,16 @@ class ConstraintSolver
          * @param jacobian The Jacobi matrix.
          * @return A pseudoinverse Jacobian
          */
-        Eigen::MatrixXd calculatePinvJacobianBySVD(const Eigen::MatrixXd& jacobian) const;
+        inline Eigen::MatrixXd calculatePinvJacobianBySVD(const Eigen::MatrixXd& jacobian) const
+        {
+            return pinvCalc_.calculate(this->asParams_, this->damping_, jacobian);
+        }
 
         const AugmentedSolverParams& asParams_; ///< References the augmented solver parameters.
         const Matrix6Xd& jacobianData_; ///< References the current Jacobian (matrix data only).
         boost::shared_ptr<DampingBase> damping_; ///< The currently set damping method.
+
+        PINV pinvCalc_;
 };
 
 #endif /* CONSTRAINT_SOLVER_BASE_H_ */

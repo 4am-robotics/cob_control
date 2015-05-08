@@ -38,7 +38,7 @@ Eigen::MatrixXd UnconstraintSolver::solve(const Eigen::VectorXd& inCartVelocitie
                                           const KDL::JntArray& last_q_dot,
                                           const Eigen::VectorXd &tracking_errors) const
 {
-    Eigen::MatrixXd jacobianPseudoInverse = this->calculatePinvJacobianBySVD(this->jacobianData_);
+    Eigen::MatrixXd jacobianPseudoInverse = pinvCalc_.calculate(this->asParams_, this->damping_, this->jacobianData_);
     Eigen::MatrixXd qdots_out = jacobianPseudoInverse * (inCartVelocities - this->asParams_.p_gain * tracking_errors);
     return qdots_out;
 }

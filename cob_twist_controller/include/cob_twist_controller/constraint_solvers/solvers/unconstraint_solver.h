@@ -32,7 +32,7 @@
 #include "cob_twist_controller/augmented_solver_data_types.h"
 #include "cob_twist_controller/constraint_solvers/solvers/constraint_solver_base.h"
 
-class UnconstraintSolver : public ConstraintSolver
+class UnconstraintSolver : public ConstraintSolver<>
 {
     public:
 

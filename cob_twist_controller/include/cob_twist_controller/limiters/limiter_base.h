@@ -47,10 +47,10 @@ class LimiterBase
          */
         virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const = 0;
 
-        virtual ~LimiterBase() = 0;
+        virtual ~LimiterBase() { }
 
     protected:
-        LimiterBase(const TwistControllerParams &tcParams, const KDL::Chain &chain);
+        LimiterBase(const TwistControllerParams &tcParams, const KDL::Chain &chain) : tcParams_(tcParams), chain_(chain) { }
 
         const TwistControllerParams &tcParams_;
         const KDL::Chain &chain_;

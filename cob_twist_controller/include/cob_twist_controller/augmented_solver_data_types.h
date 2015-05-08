@@ -63,6 +63,8 @@ struct AugmentedSolverParams {
     std::vector<double> limits_min;
 };
 
+const double DAMPING_LIMIT = 1.0e-12; ///< const. value for zero comparison with damping factor
+
 typedef Eigen::Matrix<double,6,Eigen::Dynamic> Matrix6Xd;
 
 #endif /* AUGMENTED_SOLVER_DATA_TYPES_H_ */
