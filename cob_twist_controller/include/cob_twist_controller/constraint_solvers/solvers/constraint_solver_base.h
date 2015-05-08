@@ -32,13 +32,15 @@
 #include <Eigen/Core>
 #include <Eigen/SVD>
 #include <kdl/jntarray.hpp>
+#include <boost/shared_ptr.hpp>
+#include "cob_twist_controller/damping_methods/damping_base.h"
 #include "cob_twist_controller/augmented_solver_data_types.h"
 
 /// Base class for solvers, defining interface methods.
 class ConstraintSolver
 {
     public:
-        static const double DAMPING_LIMIT = 1.0e-9; ///< const. value for zero comparison with damping factor
+        static const double DAMPING_LIMIT = 1.0e-12; ///< const. value for zero comparison with damping factor
 
         /**
          * The interface method to solve the inverse kinematics problem. Has to be implemented in inherited classes.
@@ -53,12 +55,12 @@ class ConstraintSolver
                                       const Eigen::VectorXd &tracking_errors) const = 0;
 
         /**
-         * Inline method to set the damping factor
-         * @param damping The new damping factor
+         * Inline method to set the damping
+         * @param damping The new damping
          */
-        inline void setDampingFactor(double damping)
+        inline void setDamping(boost::shared_ptr<DampingBase>& damping)
         {
-            this->dampingFactor_ = damping;
+            this->damping_ = damping;
         }
 
         virtual ~ConstraintSolver() = 0;
@@ -68,23 +70,20 @@ class ConstraintSolver
         ConstraintSolver(AugmentedSolverParams &asParams,
                          Matrix6Xd &jacobianData)
                          : asParams_(asParams),
-                           jacobianData_(jacobianData),
-                           dampingFactor_(0.0)
+                           jacobianData_(jacobianData)
         {
-
         }
 
         /**
          * Base method for calculation of the pseudoinverse Jacobian by using SVD.
-         * @param svd The singular value decomposition object of a Jacobian.
+         * @param jacobian The Jacobi matrix.
          * @return A pseudoinverse Jacobian
          */
-        Eigen::MatrixXd calculatePinvJacobianBySVD(Eigen::JacobiSVD<Eigen::MatrixXd> svd) const;
+        Eigen::MatrixXd calculatePinvJacobianBySVD(const Eigen::MatrixXd& jacobian) const;
 
-
-        const AugmentedSolverParams &asParams_; ///< References the augmented solver parameters.
-        const Matrix6Xd &jacobianData_; ///< References the current Jacobian (matrix data only).
-        double dampingFactor_; ///< The currently set damping factor.
+        const AugmentedSolverParams& asParams_; ///< References the augmented solver parameters.
+        const Matrix6Xd& jacobianData_; ///< References the current Jacobian (matrix data only).
+        boost::shared_ptr<DampingBase> damping_; ///< The currently set damping method.
 };
 
 #endif /* CONSTRAINT_SOLVER_BASE_H_ */

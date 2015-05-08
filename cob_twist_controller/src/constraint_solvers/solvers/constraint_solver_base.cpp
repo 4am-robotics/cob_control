@@ -37,11 +37,14 @@ ConstraintSolver::~ConstraintSolver()
  * Calculates the pseudoinverse of a Jacobian by using SVD.
  * Truncation is active always.
  * Means if calculated (damped) singular value is < than EPS than truncate the singular value to 0.0.
- * Damping is active in case of > than static const DAMPING_LIMT, else it is assumed that no damping is active.
+ * Damping is active in case of a damping method has been chosen in dynamic_reconfigure, else no damping.
+ * Threshold DAMPING_LIMIT is an additional check for no damping.
  */
-Eigen::MatrixXd ConstraintSolver::calculatePinvJacobianBySVD(Eigen::JacobiSVD<Eigen::MatrixXd> svd) const
+Eigen::MatrixXd ConstraintSolver::calculatePinvJacobianBySVD(const Eigen::MatrixXd& jacobian) const
 {
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd(jacobian, Eigen::ComputeThinU | Eigen::ComputeThinV);
     double eps = this->asParams_.eps;
+    double lambda = this->damping_->get_damping_factor();
     Eigen::VectorXd singularValues = svd.singularValues();
     Eigen::VectorXd singularValuesInv = Eigen::VectorXd::Zero(singularValues.rows());
 
@@ -49,15 +52,15 @@ Eigen::MatrixXd ConstraintSolver::calculatePinvJacobianBySVD(Eigen::JacobiSVD<Ei
     for(uint32_t i = 0; i < singularValues.rows(); ++i)
     {
         // small change to ref: here quadratic damping due to Control of Redundant Robot Manipulators : R.V. Patel, 2005, Springer [Page 13-14]
-        if (ConstraintSolver::DAMPING_LIMIT < this->dampingFactor_)
-        {
-            double denominator = (singularValues(i) * singularValues(i) + this->dampingFactor_ * this->dampingFactor_);
-            singularValuesInv(i) = (denominator < eps) ? 0.0 : singularValues(i) / denominator;
-        }
-        else
+        if (NONE == this->asParams_.damping_method || ConstraintSolver::DAMPING_LIMIT > lambda)
         {
             // damping is disabled due to damping factor lower than a const. limit
             singularValuesInv(i) = (singularValues(i) < eps) ? 0.0 : 1.0 / singularValues(i);
+        }
+        else
+        {
+            double denominator = (singularValues(i) * singularValues(i) + lambda * lambda);
+            singularValuesInv(i) = (denominator < eps) ? 0.0 : singularValues(i) / denominator;
         }
     }
 

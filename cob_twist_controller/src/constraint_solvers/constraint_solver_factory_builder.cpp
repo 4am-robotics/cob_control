@@ -55,12 +55,7 @@ int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverP
 {
     outJntVelocities = Eigen::MatrixXd();
     boost::shared_ptr<DampingBase> db (DampingBuilder::create_damping(asParams, jacobianData));
-    double dampingFactor;
-    if(NULL != db)
-    {
-        dampingFactor = db->get_damping_factor();
-    }
-    else
+    if(NULL == db)
     {
         ROS_ERROR("Returning NULL factory due to damping creation error.");
         return -1; // error
@@ -92,7 +87,7 @@ int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverP
                                                         q,
                                                         last_q_dot,
                                                         tracking_errors,
-                                                        dampingFactor);
+                                                        db);
     }
     else
     {
