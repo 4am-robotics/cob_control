@@ -28,7 +28,7 @@
 #ifndef I_PSEUDOINV_CALC_H_
 #define I_PSEUDOINV_CALC_H_
 
-#include <cob_twist_controller/pseudoinverse_calculations/pseudoinverse_calculation_base.h>
+#include <cob_twist_controller/inverse_jacobian_calculations/inverse_jacobian_calculation_base.h>
 
 /* BEGIN PInvBySVD **********************************************************************************************/
 class PInvBySVD : public IPseudoinverseCalculator

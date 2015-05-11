@@ -32,7 +32,7 @@
 #include <Eigen/Core>
 #include <kdl/jntarray.hpp>
 #include <boost/shared_ptr.hpp>
-#include <cob_twist_controller/pseudoinverse_calculations/pseudoinverse_calculation.h>
+#include <cob_twist_controller/inverse_jacobian_calculations/inverse_jacobian_calculation.h>
 #include "cob_twist_controller/damping_methods/damping_base.h"
 #include "cob_twist_controller/augmented_solver_data_types.h"
 

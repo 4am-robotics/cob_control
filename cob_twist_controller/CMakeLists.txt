@@ -31,8 +31,8 @@ set(SRC_CS_DIR "${SRC_C_DIR}/solvers")
 add_library(damping_methods src/damping_methods/damping.cpp)
 add_library(constraint_solvers ${SRC_CS_DIR}/unconstraint_solver.cpp ${SRC_CS_DIR}/wln_joint_limit_avoidance_solver.cpp ${SRC_CS_DIR}/weighted_least_norm_solver.cpp ${SRC_C_DIR}/constraint_solver_factory_builder.cpp)
 add_library(limiters src/limiters/limiter.cpp)
-add_library(pseudoinv_calculations src/pseudoinverse_calculations/pseudoinverse_calculation.cpp)
-target_link_libraries(constraint_solvers damping_methods pseudoinv_calculations)
+add_library(inv_calculations src/inverse_jacobian_calculations/inverse_jacobian_calculation.cpp)
+target_link_libraries(constraint_solvers damping_methods inv_calculations)
 
 add_library(augmented_solver src/augmented_solver.cpp)
 target_link_libraries(augmented_solver constraint_solvers ${orocos_kdl_LIBRARIES})
@@ -47,7 +47,7 @@ target_link_libraries(cob_twist_controller_node cob_twist_controller ${catkin_LI
 
 ## Install
 # Mark executables and/or libraries for installation
-install(TARGETS cob_twist_controller cob_twist_controller_node augmented_solver constraint_solvers damping_methods limiters pseudoinv_calculations
+install(TARGETS cob_twist_controller cob_twist_controller_node augmented_solver constraint_solvers damping_methods limiters inv_calculations
  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

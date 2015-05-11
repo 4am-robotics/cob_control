@@ -25,8 +25,7 @@
  *   Implementation pseudoinverse calculation classes.
  *
  ****************************************************************/
-#include <cob_twist_controller/pseudoinverse_calculations/pseudoinverse_calculation.h>
-
+#include <cob_twist_controller/inverse_jacobian_calculations/inverse_jacobian_calculation.h>
 #include <Eigen/Core>
 #include <Eigen/SVD>
 
