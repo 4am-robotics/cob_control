@@ -32,6 +32,20 @@
 #include "cob_twist_controller/augmented_solver_data_types.h"
 #include "cob_twist_controller/constraints/constraint_base.h"
 
+/* BEGIN ConstraintsBuilder *************************************************************************************/
+/// Class providing a static method to create constraints.
+template <typename PRIO = uint32_t>
+class ConstraintsBuilder
+{
+    public:
+        static std::set<tConstraintBase> create_constraints(AugmentedSolverParams &augmentedSolverParams);
+
+    private:
+        ConstraintsBuilder() {}
+        ~ConstraintsBuilder() {}
+};
+/* END ConstraintsBuilder ***************************************************************************************/
+
 /* BEGIN ConstraintParamsCA *************************************************************************************/
 /// Class that represents the parameters for the Collision Avoidance constraint.
 class ConstraintParamsCA : public ConstraintParamsBase
@@ -54,7 +68,7 @@ class CollisionAvoidance : public ConstraintBase<PRIO>
 {
     public:
 
-        CollisionAvoidance(const AugmentedSolverParams& params, PRIO prio) : ConstraintBase<PRIO>(params, prio)
+        CollisionAvoidance(PRIO prio) : ConstraintBase<PRIO>(prio)
         {}
 
         virtual void setConstraintParams(const ConstraintParamsBase* constraintParams);
@@ -93,7 +107,7 @@ class JointLimitAvoidance : public ConstraintBase<PRIO>
 {
     public:
 
-        JointLimitAvoidance(const AugmentedSolverParams& params, PRIO prio) : ConstraintBase<PRIO>(params, prio)
+        JointLimitAvoidance(PRIO prio) : ConstraintBase<PRIO>(prio)
         {}
 
         virtual void setConstraintParams(const ConstraintParamsBase* constraintParams);

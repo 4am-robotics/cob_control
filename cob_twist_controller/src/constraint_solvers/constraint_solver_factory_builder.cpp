@@ -43,6 +43,8 @@
 #include "cob_twist_controller/damping_methods/damping.h"
 #include "cob_twist_controller/constraint_solvers/factories/solver_factory.h"
 
+#include "cob_twist_controller/constraints/constraint.h"
+
 /**
  * Out of the parameters generates a damping method (e.g. constant or manipulability) and calculates the damping factor.
  * Dependent on JLA active flag a JointLimitAvoidanceSolver or a UnconstraintSolver is generated to solve the IK problem.
@@ -64,7 +66,12 @@ int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverP
         return -1; // error
     }
 
-    // ISolverFactory* sf = NULL;
+    // ConstraintsBuilder::create_constraints(asParams);
+
+    std::set<tConstraintBase> constraints = ConstraintsBuilder<>::create_constraints(asParams);
+
+    ROS_INFO_STREAM("ConstraintsBuilder returned std::set with size: " << constraints.size() << std::endl);
+
     boost::shared_ptr<ISolverFactory> sf;
     switch(asParams.constraint)
     {
@@ -77,7 +84,7 @@ int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverP
         case WLN_JLA:
             sf.reset(new SolverFactory<WLN_JointLimitAvoidanceSolver>());
             break;
-        case GPM_JLA:
+        case GPM:
             sf.reset(new SolverFactory<GradientProjectionMethodSolver>());
             break;
         default:
@@ -93,7 +100,8 @@ int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverP
                                                         q,
                                                         last_q_dot,
                                                         tracking_errors,
-                                                        db);
+                                                        db,
+                                                        constraints);
     }
     else
     {

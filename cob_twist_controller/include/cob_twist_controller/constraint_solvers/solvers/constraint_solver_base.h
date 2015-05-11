@@ -34,6 +34,7 @@
 #include <boost/shared_ptr.hpp>
 #include <cob_twist_controller/inverse_jacobian_calculations/inverse_jacobian_calculation.h>
 #include "cob_twist_controller/damping_methods/damping_base.h"
+#include "cob_twist_controller/constraints/constraint_base.h"
 #include "cob_twist_controller/augmented_solver_data_types.h"
 
 /// Base class for solvers, defining interface methods.
@@ -65,7 +66,7 @@ class ConstraintSolver
         /**
          * Method to initialize the solver if necessary
          */
-        virtual void init()
+        virtual void setConstraints(std::set<tConstraintBase>& constraints)
         {
 
         }

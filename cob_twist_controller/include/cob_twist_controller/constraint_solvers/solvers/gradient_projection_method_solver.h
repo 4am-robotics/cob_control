@@ -39,11 +39,6 @@
 #include "cob_twist_controller/constraints/constraint_base.h"
 #include "cob_twist_controller/constraints/constraint.h"
 
-#include <boost/shared_ptr.hpp>
-
-
-typedef boost::shared_ptr<ConstraintBase<> > tConstraintBase;
-
 class GradientProjectionMethodSolver : public ConstraintSolver<>
 {
     public:
@@ -57,13 +52,9 @@ class GradientProjectionMethodSolver : public ConstraintSolver<>
                                       const KDL::JntArray& last_q_dot,
                                       const Eigen::VectorXd &tracking_errors) const;
 
-        virtual void init()
+        virtual void setConstraints(std::set<tConstraintBase>& constraints)
         {
-            tConstraintBase ca(new CollisionAvoidance<>(this->asParams_, 100)); // TODO: LAter remove currently only for test
-            tConstraintBase jla(new JointLimitAvoidance<>(this->asParams_, 99)); // TODO: LAter remove currently only for test
-
-            registerConstraint(ca);
-            registerConstraint(jla);
+            this->constraints_ = constraints;
         }
 
         GradientProjectionMethodSolver(AugmentedSolverParams &asParams,

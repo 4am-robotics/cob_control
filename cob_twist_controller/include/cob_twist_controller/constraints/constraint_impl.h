@@ -30,6 +30,43 @@
 #define CONSTRAINT_IMPL_H_
 
 #include "cob_twist_controller/constraints/constraint.h"
+#include "ros/ros.h"
+
+/* BEGIN ConstraintsBuilder *************************************************************************************/
+/**
+ * Static builder method to create damping methods dependent on parameterization.
+ */
+template <typename PRIO>
+std::set<tConstraintBase> ConstraintsBuilder<PRIO>::create_constraints(AugmentedSolverParams &augmentedSolverParams)
+{
+    std::set<tConstraintBase> constraints;
+
+    tConstraintBase ca(new CollisionAvoidance<PRIO>(100)); // TODO: take case PRIO could be of different type than UINT32
+    ca->setConstraintParams(new ConstraintParamsCA(augmentedSolverParams));
+
+
+    constraints.insert(ca);
+
+//    ConstraintBase<PRIO> *db = NULL;
+//    switch(augmentedSolverParams.damping_method)
+//    {
+//        case NONE:
+//            db = new DampingNone(augmentedSolverParams);
+//            break;
+//        case CONSTANT:
+//            db = new DampingConstant(augmentedSolverParams);
+//            break;
+//        case MANIPULABILITY:
+//            db = new DampingManipulability(augmentedSolverParams);
+//            break;
+//        default:
+//            ROS_ERROR("DampingMethod %d not defined! Aborting!", augmentedSolverParams.damping_method);
+//            break;
+//    }
+
+    return constraints;
+}
+/* END ConstraintsBuilder *******************************************************************************************/
 
 /* BEGIN CollisionAvoidance *************************************************************************************/
 /// Class providing methods that realize a CollisionAvoidance constraint.

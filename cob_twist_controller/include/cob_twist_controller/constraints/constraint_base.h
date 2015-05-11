@@ -30,6 +30,8 @@
 #define CONSTRAINT_BASE_H_
 
 #include <stdint.h>
+#include <boost/shared_ptr.hpp>
+#include <set>
 
 #include "cob_twist_controller/augmented_solver_data_types.h"
 
@@ -53,9 +55,8 @@ class ConstraintBase
 {
     public:
 
-        ConstraintBase(const AugmentedSolverParams& params,
-                       PRIO prio)
-        : params_(params), priority_(prio)
+        ConstraintBase(PRIO prio)
+        : priority_(prio)
         {}
 
         virtual ~ConstraintBase()
@@ -88,17 +89,9 @@ class ConstraintBase
         }
 
     protected:
-        const AugmentedSolverParams& params_;
         PRIO priority_;
 };
 
-//class CompareConstraint
-//{
-//    public:
-//        inline bool operator()(const ConstraintBase& c1, const ConstraintBase& c2) const
-//        {
-//            return (c1 > c2);
-//        }
-//};
+typedef boost::shared_ptr<ConstraintBase<> > tConstraintBase;
 
 #endif /* CONSTRAINT_BASE_H_ */
