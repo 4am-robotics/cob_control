@@ -62,6 +62,14 @@ class ConstraintSolver
             this->damping_ = damping;
         }
 
+        /**
+         * Method to initialize the solver if necessary
+         */
+        virtual void init()
+        {
+
+        }
+
         virtual ~ConstraintSolver() {}
 
     protected:
@@ -71,16 +79,6 @@ class ConstraintSolver
                          : asParams_(asParams),
                            jacobianData_(jacobianData)
         {
-        }
-
-        /**
-         * Base method for calculation of the pseudoinverse Jacobian by using SVD.
-         * @param jacobian The Jacobi matrix.
-         * @return A pseudoinverse Jacobian
-         */
-        inline Eigen::MatrixXd calculatePinvJacobianBySVD(const Eigen::MatrixXd& jacobian) const
-        {
-            return pinvCalc_.calculate(this->asParams_, this->damping_, jacobian);
         }
 
         const AugmentedSolverParams& asParams_; ///< References the augmented solver parameters.

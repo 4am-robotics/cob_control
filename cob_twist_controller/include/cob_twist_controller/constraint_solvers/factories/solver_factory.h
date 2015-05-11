@@ -75,6 +75,7 @@ class SolverFactory : public ISolverFactory
                                                  boost::shared_ptr<DampingBase>& dampingMethod) const
         {
             T* cs = this->createSolver(asParams, jacobianData);
+            cs->init();
             cs->setDamping(dampingMethod);
             Eigen::MatrixXd new_q_dot = cs->solve(inCartVelocities, q, last_q_dot, tracking_errors);
             delete cs;

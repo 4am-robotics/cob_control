@@ -36,6 +36,9 @@
 #include "cob_twist_controller/constraint_solvers/solvers/unconstraint_solver.h"
 #include "cob_twist_controller/constraint_solvers/solvers/wln_joint_limit_avoidance_solver.h"
 #include "cob_twist_controller/constraint_solvers/solvers/weighted_least_norm_solver.h"
+
+#include "cob_twist_controller/constraint_solvers/solvers/gradient_projection_method_solver.h"
+
 #include "cob_twist_controller/constraint_solvers/constraint_solver_factory_builder.h"
 #include "cob_twist_controller/damping_methods/damping.h"
 #include "cob_twist_controller/constraint_solvers/factories/solver_factory.h"
@@ -73,6 +76,9 @@ int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverP
             break;
         case WLN_JLA:
             sf.reset(new SolverFactory<WLN_JointLimitAvoidanceSolver>());
+            break;
+        case GPM_JLA:
+            sf.reset(new SolverFactory<GradientProjectionMethodSolver>());
             break;
         default:
             ROS_ERROR("Returning NULL factory due to constraint solver creation error.");

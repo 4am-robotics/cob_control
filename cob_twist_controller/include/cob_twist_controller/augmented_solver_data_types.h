@@ -44,6 +44,7 @@ enum ContraintTypes {
     None = 0,
     WLN = 1,
     WLN_JLA = 2,
+    GPM_JLA = 3,
 };
 
 struct AugmentedSolverParams {

@@ -29,7 +29,7 @@ set(SRC_CS_DIR "${SRC_C_DIR}/solvers")
 
 # Declare a cpp library
 add_library(damping_methods src/damping_methods/damping.cpp)
-add_library(constraint_solvers ${SRC_CS_DIR}/unconstraint_solver.cpp ${SRC_CS_DIR}/wln_joint_limit_avoidance_solver.cpp ${SRC_CS_DIR}/weighted_least_norm_solver.cpp ${SRC_C_DIR}/constraint_solver_factory_builder.cpp)
+add_library(constraint_solvers ${SRC_CS_DIR}/unconstraint_solver.cpp ${SRC_CS_DIR}/wln_joint_limit_avoidance_solver.cpp ${SRC_CS_DIR}/weighted_least_norm_solver.cpp ${SRC_CS_DIR}/gradient_projection_method_solver.cpp ${SRC_C_DIR}/constraint_solver_factory_builder.cpp)
 add_library(limiters src/limiters/limiter.cpp)
 add_library(inv_calculations src/inverse_jacobian_calculations/inverse_jacobian_calculation.cpp)
 target_link_libraries(constraint_solvers damping_methods inv_calculations)
