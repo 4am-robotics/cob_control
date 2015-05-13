@@ -37,15 +37,31 @@
  * Static builder method to create damping methods dependent on parameterization.
  */
 template <typename PRIO>
-std::set<tConstraintBase> ConstraintsBuilder<PRIO>::create_constraints(AugmentedSolverParams &augmentedSolverParams)
+std::set<tConstraintBase> ConstraintsBuilder<PRIO>::create_constraints(AugmentedSolverParams &augmentedSolverParams,
+                                                                       const KDL::JntArray& q)
 {
     std::set<tConstraintBase> constraints;
 
-    tConstraintBase ca(new CollisionAvoidance<PRIO>(100)); // TODO: take case PRIO could be of different type than UINT32
-    ca->setConstraintParams(new ConstraintParamsCA(augmentedSolverParams));
+    //tConstraintBase ca(new CollisionAvoidance<PRIO>(100, q)); // TODO: take case PRIO could be of different type than UINT32
+    //ca->setConstraintParams(new ConstraintParamsCA(augmentedSolverParams));
 
+    tConstraintBase jla;
+    switch (augmentedSolverParams.constraint)
+    {
+        case GPM_JLA:
+            jla.reset(new JointLimitAvoidance<PRIO>(100, q)); // TODO: take case PRIO could be of different type than UINT32
+            jla->setConstraintParams(new ConstraintParamsJLA(augmentedSolverParams));
+            constraints.insert(jla);
+            break;
+        case GPM_JLA_MID:
+            jla.reset(new JointLimitAvoidanceMid<PRIO>(100, q)); // TODO: take case PRIO could be of different type than UINT32
+            jla->setConstraintParams(new ConstraintParamsJLA(augmentedSolverParams)); // same params as for normal JLA
+            constraints.insert(jla);
+            break;
+        default:
+            ROS_ERROR("Constraint %d not available for GPM", augmentedSolverParams.constraint);
+    }
 
-    constraints.insert(ca);
 
 //    ConstraintBase<PRIO> *db = NULL;
 //    switch(augmentedSolverParams.damping_method)
@@ -71,12 +87,6 @@ std::set<tConstraintBase> ConstraintsBuilder<PRIO>::create_constraints(Augmented
 /* BEGIN CollisionAvoidance *************************************************************************************/
 /// Class providing methods that realize a CollisionAvoidance constraint.
 template <typename PRIO>
-void CollisionAvoidance<PRIO>::setConstraintParams(const ConstraintParamsBase* constraintParams)
-{
-    const ConstraintParamsCA* cpca = dynamic_cast<const ConstraintParamsCA*>(constraintParams);
-}
-
-template <typename PRIO>
 double CollisionAvoidance<PRIO>::getValue() const
 {
     return 0.0;
@@ -95,24 +105,39 @@ double CollisionAvoidance<PRIO>::getSafeRegion() const
 }
 
 template <typename PRIO>
-double CollisionAvoidance<PRIO>::getPartialValue() const
+Eigen::VectorXd  CollisionAvoidance<PRIO>::getPartialValues() const
 {
-    return 0.0;
+    uint8_t vecRows = static_cast<uint8_t>(this->jointPos_.rows());
+    Eigen::VectorXd partialValues = Eigen::VectorXd::Zero(vecRows);
+    return partialValues;
 }
 /* END CollisionAvoidance ***************************************************************************************/
 
 /* BEGIN JointLimitAvoidance ************************************************************************************/
-/// Class providing methods that realize a CollisionAvoidance constraint.
+/// Class providing methods that realize a JLA constraint.
 template <typename PRIO>
-void JointLimitAvoidance<PRIO>::setConstraintParams(const ConstraintParamsBase* constraintParams)
+double JointLimitAvoidance<PRIO>::getValue(Eigen::VectorXd steps) const
 {
-    const ConstraintParamsJLA* cpca = dynamic_cast<const ConstraintParamsJLA*>(constraintParams);
+    const AugmentedSolverParams &params = this->constraintParams_->getAugmentedSolverParams();
+    std::vector<double> limits_min = params.limits_min;
+    std::vector<double> limits_max = params.limits_max;
+    double H_q = 0.0;
+    for(uint8_t i = 0; i < this->jointPos_.rows() ; ++i)
+    {
+        double jntPosWithStep = this->jointPos_(i) + steps(i);
+        double nom = pow(limits_max[i] - limits_min[i], 2.0);
+        double denom = (limits_max[i] - jntPosWithStep) * (jntPosWithStep - limits_min[i]);
+        H_q += nom / denom;
+    }
+
+    H_q = H_q / 4.0;
+    return H_q;
 }
 
 template <typename PRIO>
 double JointLimitAvoidance<PRIO>::getValue() const
 {
-    return 0.0;
+    return this->getValue(Eigen::VectorXd::Zero(this->jointPos_.rows()));
 }
 
 template <typename PRIO>
@@ -128,10 +153,154 @@ double JointLimitAvoidance<PRIO>::getSafeRegion() const
 }
 
 template <typename PRIO>
-double JointLimitAvoidance<PRIO>::getPartialValue() const
+double JointLimitAvoidance<PRIO>::getStepSize() const
+{
+    // k_H by Armijo-Rule
+    const AugmentedSolverParams &params = this->constraintParams_->getAugmentedSolverParams();
+    Eigen::VectorXd gradient = this->getPartialValues();
+    double costFunctionVal = this->getValue();
+
+    double l = 0.0;
+    double t = 1.0;
+    double beta = 0.9;
+
+    // Eigen::VectorXd d = params.kappa * gradient;
+    Eigen::VectorXd d = -1.0 * gradient;
+
+    Eigen::VectorXd new_d = t * d;
+    double nextCostFunctionVal = this->getValue(new_d);
+
+    double summand = t * gradient.transpose() * d;
+
+    while(nextCostFunctionVal > (costFunctionVal + summand))
+    {
+        double t_new = pow(beta, l + 1.0);
+
+        if (!( (t_new >= (0.0001 * t)) && (t_new <= (0.9999 * t))))
+        {
+            ROS_ERROR("Outside of valid t range. Break!!!");
+            t = t_new;
+            break;
+        }
+
+        t = t_new;
+        l = l + 1.0;
+
+        new_d = t * d;
+        nextCostFunctionVal = this->getValue(new_d);
+        summand = t * gradient.transpose() * d;
+    }
+
+
+    ROS_INFO_STREAM("Constructed step size t_k=" << t << std::endl);
+    return t;
+}
+
+template <typename PRIO>
+Eigen::VectorXd JointLimitAvoidance<PRIO>::getPartialValues() const
+{
+    const AugmentedSolverParams &params = this->constraintParams_->getAugmentedSolverParams();
+    std::vector<double> limits_min = params.limits_min;
+    std::vector<double> limits_max = params.limits_max;
+
+    double rad = M_PI / 180.0;
+    uint8_t vecRows = static_cast<uint8_t>(this->jointPos_.rows());
+    Eigen::VectorXd partialValues = Eigen::VectorXd::Zero(vecRows);
+
+    //ROS_WARN_STREAM("limits_min: " << std::endl << limits_min << std::endl);
+    //ROS_WARN_STREAM("limits_max: " << std::endl << limits_max << std::endl);
+
+
+
+    for(uint8_t i = 0; i < this->jointPos_.rows() ; ++i)
+    {
+        partialValues(i) = 0.0; // in the else cases -> output always 0
+        //See Chan paper ISSN 1042-296X [Page 288]
+        double minDelta = (this->jointPos_(i) - limits_min[i]);
+        double maxDelta = (limits_max[i] - this->jointPos_(i));
+
+//        ROS_WARN_STREAM("joint pos: " << this->jointPos_(i) << std::endl);
+//        ROS_WARN_STREAM("minDelta: " << minDelta << std::endl);
+//        ROS_WARN_STREAM("maxDelta: " << maxDelta << std::endl);
+//
+//        ROS_WARN_STREAM("limits_min: " << std::endl << limits_min[i] << std::endl);
+//        ROS_WARN_STREAM("limits_max: " << std::endl << limits_max[i] << std::endl);
+
+//        if( minDelta * maxDelta < 0.0)
+//        {
+//            ROS_ERROR_STREAM("LIMITING NECESSARY for joint : " << static_cast<unsigned int>(i) << std::endl);
+
+            double nominator = (2.0 * this->jointPos_(i) - limits_min[i] - limits_max[i]) * (limits_max[i] - limits_min[i]) * (limits_max[i] - limits_min[i]);
+            double denom = 4.0 * minDelta * minDelta * maxDelta * maxDelta;
+            partialValues(i) = nominator / denom;
+//        }
+    }
+
+    //double k = params.kappa;
+    return partialValues;
+}
+/* END JointLimitAvoidance **************************************************************************************/
+
+/* BEGIN 2nd JointLimitAvoidance ************************************************************************************/
+/// Class providing methods that realize a joint limit avoidance constraint (trying to stay next to the middle between limits).
+template <typename PRIO>
+double JointLimitAvoidanceMid<PRIO>::getValue() const
 {
     return 0.0;
 }
-/* END JointLimitAvoidance **************************************************************************************/
+
+template <typename PRIO>
+double JointLimitAvoidanceMid<PRIO>::getDerivativeValue() const
+{
+    return 0.0;
+}
+
+template <typename PRIO>
+double JointLimitAvoidanceMid<PRIO>::getSafeRegion() const
+{
+    return 0.0;
+}
+
+/// Method proposed by Liegeois
+template <typename PRIO>
+Eigen::VectorXd JointLimitAvoidanceMid<PRIO>::getPartialValues() const
+{
+    const AugmentedSolverParams &params = this->constraintParams_->getAugmentedSolverParams();
+    std::vector<double> limits_min = params.limits_min;
+    std::vector<double> limits_max = params.limits_max;
+
+    double rad = M_PI / 180.0;
+    uint8_t vecRows = static_cast<uint8_t>(this->jointPos_.rows());
+    Eigen::VectorXd partialValues = Eigen::VectorXd::Zero(vecRows);
+
+    for(uint8_t i = 0; i < vecRows; ++i)
+    {
+        double minDelta = (this->jointPos_(i) - limits_min[i]);
+        double maxDelta = (limits_max[i] - this->jointPos_(i));
+
+//        ROS_WARN_STREAM("joint pos: " << this->jointPos_(i) << std::endl);
+//        ROS_WARN_STREAM("minDelta: " << minDelta << std::endl);
+//        ROS_WARN_STREAM("maxDelta: " << maxDelta << std::endl);
+//
+//        ROS_WARN_STREAM("limits_min: " << std::endl << limits_min[i] << std::endl);
+//        ROS_WARN_STREAM("limits_max: " << std::endl << limits_max[i] << std::endl);
+
+        if( minDelta * maxDelta < 0.0)
+        {
+            ROS_WARN_STREAM("Limit of joint " << int(i) << " reached: " << std::endl
+                            << "pos=" << this->jointPos_(i) << ";lim_min=" << limits_min[i] << ";lim_max=" << limits_max[i]);
+        }
+
+        //Liegeois method can also be found in Chan paper ISSN 1042-296X [Page 288]
+        double limits_mid = 1.0 / 2.0 * (limits_max[i] + limits_min[i]);
+        double nominator = this->jointPos_(i) - limits_mid;
+        double denom = limits_max[i] - limits_min[i];
+        partialValues(i) = nominator / denom;
+    }
+
+    double k = params.kappa;
+    return k * partialValues;
+}
+/* END 2nd JointLimitAvoidance **************************************************************************************/
 
 #endif /* CONSTRAINT_IMPL_H_ */

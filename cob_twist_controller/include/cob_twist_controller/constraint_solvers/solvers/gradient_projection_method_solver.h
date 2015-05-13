@@ -52,16 +52,19 @@ class GradientProjectionMethodSolver : public ConstraintSolver<>
                                       const KDL::JntArray& last_q_dot,
                                       const Eigen::VectorXd &tracking_errors) const;
 
-        virtual void setConstraints(std::set<tConstraintBase>& constraints)
-        {
-            this->constraints_ = constraints;
-        }
-
         GradientProjectionMethodSolver(AugmentedSolverParams &asParams,
                            Matrix6Xd &jacobianData)
                            : ConstraintSolver(asParams,
                                               jacobianData)
         {
+        }
+
+        virtual void setConstraints(std::set<tConstraintBase>& constraints)
+        {
+            this->constraints_ = constraints;
+
+            ROS_WARN_STREAM("Cnt of constraints: " << this->constraints_.size() << std::endl);
+
         }
 
         virtual ~GradientProjectionMethodSolver()

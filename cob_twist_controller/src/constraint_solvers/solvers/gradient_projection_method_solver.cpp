@@ -35,10 +35,43 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Eigen::VectorXd &inC
                                       const Eigen::VectorXd &tracking_errors) const
 {
     uint16_t lv = 1;
+    Eigen::VectorXd q_dot_0 = Eigen::VectorXd::Zero(q.rows());
     for (std::set<tConstraintBase>::const_iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
     {
-        // ROS_INFO_STREAM("" << lv++ << ") GradientProjectionMethodSolver::solve: " << (*it)->getValue() << std::endl);
+        double stepSize = (*it)->getStepSize();
+        q_dot_0 += -stepSize * (*it)->getPartialValues();
+        //ROS_INFO_STREAM("" << lv++ << ") GradientProjectionMethodSolver::solve: " << std::endl << (*it)->getPartialValues() << std::endl);
     }
 
-    return Eigen::MatrixXd::Zero(7,1);
+    Eigen::MatrixXd jacobianPseudoInverse = pinvCalc_.calculate(this->asParams_, this->damping_, this->jacobianData_);
+    // Eigen::MatrixXd qdots_out = jacobianPseudoInverse * (inCartVelocities - this->asParams_.p_gain * tracking_errors);
+
+    //ROS_INFO_STREAM("Got q_dot_0: " << std::endl << q_dot_0 << std::endl);
+
+
+    Eigen::MatrixXd tmp = Eigen::MatrixXd::Identity(jacobianPseudoInverse.rows(), this->jacobianData_.cols()) + jacobianPseudoInverse * this->jacobianData_;
+
+    //ROS_INFO_STREAM("Gradient: " << std::endl << q_dot_0 << std::endl);
+
+    Eigen::MatrixXd tmp_q_dot = tmp * q_dot_0;
+
+    //ROS_INFO_STREAM("2nd sum term: " << std::endl << tmp_q_dot << std::endl);
+
+    // Eigen::MatrixXd qdots_out = Eigen::MatrixXd::Zero(tmp_q_dot.rows(), tmp_q_dot.cols());
+    Eigen::MatrixXd qdots_out = jacobianPseudoInverse * inCartVelocities;
+//    if (double(q_dot_0.norm()) < 0.00001 )
+//    {
+//        qdots_out =
+//    }
+//    else
+//    {
+//        ROS_INFO_STREAM("Found a gradient setting ee vel to 0 allow null-space motion!");
+//        // qdots_out = zeroVec;
+//    }
+
+    qdots_out += tmp_q_dot;
+
+    // (Eigen::MatrixXd::Identity(jacobianPseudoInverse.rows(), jacobianPseudoInverse.cols()) + jacobianPseudoInverse * this->jacobianData_) * q_dot_0;
+
+    return qdots_out;
 }

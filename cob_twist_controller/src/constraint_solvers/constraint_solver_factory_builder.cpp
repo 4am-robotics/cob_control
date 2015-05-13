@@ -68,7 +68,7 @@ int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverP
 
     // ConstraintsBuilder::create_constraints(asParams);
 
-    std::set<tConstraintBase> constraints = ConstraintsBuilder<>::create_constraints(asParams);
+    std::set<tConstraintBase> constraints = ConstraintsBuilder<>::create_constraints(asParams, q);
 
     ROS_INFO_STREAM("ConstraintsBuilder returned std::set with size: " << constraints.size() << std::endl);
 
@@ -84,7 +84,10 @@ int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverP
         case WLN_JLA:
             sf.reset(new SolverFactory<WLN_JointLimitAvoidanceSolver>());
             break;
-        case GPM:
+        case GPM_JLA:
+            sf.reset(new SolverFactory<GradientProjectionMethodSolver>());
+            break;
+        case GPM_JLA_MID:
             sf.reset(new SolverFactory<GradientProjectionMethodSolver>());
             break;
         default:

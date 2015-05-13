@@ -28,6 +28,8 @@
  ****************************************************************/
 #include "cob_twist_controller/constraint_solvers/solvers/wln_joint_limit_avoidance_solver.h"
 
+#include "ros/ros.h"
+
 /**
  * This function calculates the weighting matrix used to penalize a joint when it is near and moving towards a limit.
  * The last joint velocity is used to determine if it that happens or not
@@ -60,6 +62,8 @@ Eigen::MatrixXd WLN_JointLimitAvoidanceSolver::calculateWeighting(const KDL::Jnt
             }
         }
     }
+
+    ROS_WARN_STREAM("Weightings : " << std::endl << output << std::endl);
 
     return output.asDiagonal();
 }

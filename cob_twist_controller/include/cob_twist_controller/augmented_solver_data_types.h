@@ -44,7 +44,8 @@ enum ContraintTypes {
     None = 0,
     WLN = 1,
     WLN_JLA = 2,
-    GPM = 3,
+    GPM_JLA = 3,
+    GPM_JLA_MID = 4,
 };
 
 struct AugmentedSolverParams {
@@ -58,6 +59,7 @@ struct AugmentedSolverParams {
     bool base_active;
     double base_ratio;
     double p_gain;
+    double kappa;
 
     // added limits from URDF file
     std::vector<double> limits_max;

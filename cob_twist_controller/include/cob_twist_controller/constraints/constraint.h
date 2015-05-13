@@ -38,7 +38,8 @@ template <typename PRIO = uint32_t>
 class ConstraintsBuilder
 {
     public:
-        static std::set<tConstraintBase> create_constraints(AugmentedSolverParams &augmentedSolverParams);
+        static std::set<tConstraintBase> create_constraints(AugmentedSolverParams &augmentedSolverParams,
+                                                            const KDL::JntArray& q);
 
     private:
         ConstraintsBuilder() {}
@@ -68,15 +69,13 @@ class CollisionAvoidance : public ConstraintBase<PRIO>
 {
     public:
 
-        CollisionAvoidance(PRIO prio) : ConstraintBase<PRIO>(prio)
+        CollisionAvoidance(PRIO prio, const KDL::JntArray& q) : ConstraintBase<PRIO>(prio, q)
         {}
-
-        virtual void setConstraintParams(const ConstraintParamsBase* constraintParams);
 
         virtual double getValue() const;
         virtual double getDerivativeValue() const;
         virtual double getSafeRegion() const;
-        virtual double getPartialValue() const;
+        virtual Eigen::VectorXd getPartialValues() const;
 
 
         virtual ~CollisionAvoidance()
@@ -107,23 +106,45 @@ class JointLimitAvoidance : public ConstraintBase<PRIO>
 {
     public:
 
-        JointLimitAvoidance(PRIO prio) : ConstraintBase<PRIO>(prio)
+        JointLimitAvoidance(PRIO prio, const KDL::JntArray& q) : ConstraintBase<PRIO>(prio, q)
         {}
-
-        virtual void setConstraintParams(const ConstraintParamsBase* constraintParams);
 
         virtual double getValue() const;
         virtual double getDerivativeValue() const;
         virtual double getSafeRegion() const;
-        virtual double getPartialValue() const;
+        virtual Eigen::VectorXd getPartialValues() const;
+        virtual double getStepSize() const;
 
+        double getValue(Eigen::VectorXd steps) const;
 
         virtual ~JointLimitAvoidance()
         {
         }
+
 };
 /* END JointLimitAvoidance **************************************************************************************/
 
+/* BEGIN JointLimitAvoidanceMid *********************************************************************************/
+/// Class providing methods that realize a CollisionAvoidance constraint.
+template <typename PRIO = uint32_t>
+class JointLimitAvoidanceMid : public ConstraintBase<PRIO>
+{
+    public:
+
+        JointLimitAvoidanceMid(PRIO prio, const KDL::JntArray& q) : ConstraintBase<PRIO>(prio, q)
+        {}
+
+        virtual double getValue() const;
+        virtual double getDerivativeValue() const;
+        virtual double getSafeRegion() const;
+        virtual Eigen::VectorXd getPartialValues() const;
+
+
+        virtual ~JointLimitAvoidanceMid()
+        {
+        }
+};
+/* END JointLimitAvoidanceMid ***********************************************************************************/
 
 
 #include "cob_twist_controller/constraints/constraint_impl.h" // implementation of templated class

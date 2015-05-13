@@ -29,9 +29,11 @@
 #ifndef CONSTRAINT_BASE_H_
 #define CONSTRAINT_BASE_H_
 
+#include <set>
 #include <stdint.h>
 #include <boost/shared_ptr.hpp>
-#include <set>
+#include <kdl/jntarray.hpp>
+#include <Eigen/Core>
 
 #include "cob_twist_controller/augmented_solver_data_types.h"
 
@@ -45,6 +47,11 @@ class ConstraintParamsBase
         virtual ~ConstraintParamsBase()
         {}
 
+        virtual const AugmentedSolverParams& getAugmentedSolverParams() const
+        {
+            return this->params_;
+        }
+
     protected:
         const AugmentedSolverParams& params_;
 };
@@ -55,9 +62,11 @@ class ConstraintBase
 {
     public:
 
-        ConstraintBase(PRIO prio)
-        : priority_(prio)
-        {}
+        ConstraintBase(PRIO prio, const KDL::JntArray& q)
+        : priority_(prio), jointPos_(q)
+        {
+            this->constraintParams_ = NULL;
+        }
 
         virtual ~ConstraintBase()
         {}
@@ -67,11 +76,21 @@ class ConstraintBase
             this->priority_ = prio;
         }
 
-        virtual void setConstraintParams(const ConstraintParamsBase* constraintParams) = 0;
+        virtual void setConstraintParams(const ConstraintParamsBase* constraintParams)
+        {
+            this->constraintParams_ = constraintParams;
+        }
+
+
         virtual double getValue() const = 0;
         virtual double getDerivativeValue() const = 0;
         virtual double getSafeRegion() const = 0;
-        virtual double getPartialValue() const = 0;
+        virtual Eigen::VectorXd getPartialValues() const = 0;
+        virtual double getStepSize() const
+        {
+            return 0.0;
+        }
+
 
         inline bool operator<(const ConstraintBase& other) const
         {
@@ -90,6 +109,8 @@ class ConstraintBase
 
     protected:
         PRIO priority_;
+        const KDL::JntArray& jointPos_;
+        const ConstraintParamsBase* constraintParams_;
 };
 
 typedef boost::shared_ptr<ConstraintBase<> > tConstraintBase;

@@ -187,6 +187,7 @@ void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControl
     params.limits_min = twistControllerParams_.limits_min; // from cob_twist_controller init
     params.limits_max = twistControllerParams_.limits_max; // from cob_twist_controller init
     params.p_gain = config.p_gain;
+    params.kappa = config.kappa;
 
     reset_markers_ = config.reset_markers;
 
@@ -229,6 +230,7 @@ void CobTwistController::initAugmentedSolverParams()
     params.limits_min = twistControllerParams_.limits_min;
     params.limits_max = twistControllerParams_.limits_max;
     params.p_gain = 0.0;
+    params.kappa = 1.0;
 
     p_augmented_solver_->SetAugmentedSolverParams(params);
 }
