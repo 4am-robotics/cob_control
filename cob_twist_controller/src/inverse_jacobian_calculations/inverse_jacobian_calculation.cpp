@@ -63,3 +63,40 @@ Eigen::MatrixXd PInvBySVD::calculate(const AugmentedSolverParams& params,
     return pseudoInverseJacobian;
 }
 
+
+
+
+Eigen::MatrixXd PInvByLID::calculate(const AugmentedSolverParams& params,
+                                                 boost::shared_ptr<DampingBase> db,
+                                                 const Eigen::MatrixXd& jacobian) const
+{
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd(jacobian, Eigen::ComputeThinU | Eigen::ComputeThinV);
+    double eps = params.eps;
+    double lambda;// = db->get_damping_factor();
+    double lambda_max = 0.5;
+    double beta = params.beta;
+    Eigen::VectorXd singularValues = svd.singularValues();
+    Eigen::VectorXd singularValuesInv = Eigen::VectorXd::Zero(singularValues.rows());
+    Eigen::MatrixXd pseudoInverseJacobian_1 = Eigen::MatrixXd::Zero(svd.matrixV().rows(),svd.matrixU().rows());
+
+    // Formula 15 Singularity-robust Task-priority Redundandancy Resolution
+    if((double)singularValues(singularValues.rows()-1) < eps){
+        lambda = sqrt( (1-pow((double)singularValues(singularValues.rows()-1)/eps,2)) * pow(lambda_max,2) );
+    }else{
+        lambda=0;
+    }
+
+    uint32_t i = 0;
+    for(; i < singularValues.rows()-1; ++i)
+    {
+        // beta² << lambda²
+        pseudoInverseJacobian_1 += singularValues(i) / ( pow((double)singularValues(i),2) + pow(beta,2) ) * svd.matrixV().col(i) * svd.matrixU().col(i).transpose();
+    }
+
+
+    Eigen::MatrixXd pseudoInverseJacobian_2 = singularValues(i) / ( pow((double)singularValues(i),2) + pow(beta,2) + pow(lambda,2) ) * svd.matrixV().col(i) * svd.matrixU().col(i).transpose();
+
+
+    Eigen::MatrixXd pseudoInverseJacobian = pseudoInverseJacobian_1 + pseudoInverseJacobian_2;
+    return pseudoInverseJacobian;
+}

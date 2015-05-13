@@ -37,7 +37,7 @@
 #include "cob_twist_controller/augmented_solver_data_types.h"
 
 /// Base class for solvers, defining interface methods.
-template <typename PINV = PInvBySVD>
+template <typename PINV = PInvByLID>
 class ConstraintSolver
 {
     public:
