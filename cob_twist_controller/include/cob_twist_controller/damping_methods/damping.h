@@ -56,6 +56,7 @@ class DampingNone : public DampingBase
         ~DampingNone() {}
 
         virtual double get_damping_factor() const;
+        virtual VectorXd calc_damped_singulars(VectorXd sortedSingValues) const;
 };
 /* END DampingNone **********************************************************************************************/
 
@@ -86,6 +87,22 @@ class DampingManipulability : public DampingBase
         ~DampingManipulability() {}
 
         virtual double get_damping_factor() const;
+};
+/* END DampingManipulability ************************************************************************************/
+
+/* BEGIN DampingManipulability **********************************************************************************/
+/// Class implementing a method to return a factor corresponding to the measure of manipulability.
+class DampingLowIsotropic : public DampingBase
+{
+    public:
+        DampingLowIsotropic(AugmentedSolverParams &asParams, Matrix6Xd &jacobianData)
+        : DampingBase(asParams, jacobianData)
+        {}
+
+        ~DampingLowIsotropic() {}
+
+        virtual double get_damping_factor() const;
+        virtual VectorXd calc_damped_singulars(VectorXd sortedSingValues) const;
 };
 /* END DampingManipulability ************************************************************************************/
 
