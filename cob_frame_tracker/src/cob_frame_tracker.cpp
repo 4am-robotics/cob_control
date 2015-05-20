@@ -495,27 +495,27 @@ void CobFrameTracker::reconfigure_callback(cob_frame_tracker::FrameTrackerConfig
 /** checks whether the twist is infinitesimally small **/
 bool CobFrameTracker::checkInfinitesimalTwist(const KDL::Twist current)
 {
-	if (fabs(current.vel.x() > twist_dead_threshold_lin_))
+	if (fabs(current.vel.x()) > twist_dead_threshold_lin_)
 	{
 		return false;
 	}
-	if (fabs(current.vel.y() > twist_dead_threshold_lin_))
+	if (fabs(current.vel.y()) > twist_dead_threshold_lin_)
 	{
 		return false;
 	}
-	if (fabs(current.vel.z() > twist_dead_threshold_lin_))
+	if (fabs(current.vel.z()) > twist_dead_threshold_lin_)
 	{
 		return false;
 	}
-	if (fabs(current.rot.x() > twist_dead_threshold_rot_))
+	if (fabs(current.rot.x()) > twist_dead_threshold_rot_)
 	{
 		return false;
 	}
-	if (fabs(current.rot.x() > twist_dead_threshold_rot_))
+	if (fabs(current.rot.x()) > twist_dead_threshold_rot_)
 	{
 		return false;
 	}
-	if (fabs(current.rot.x() > twist_dead_threshold_rot_))
+	if (fabs(current.rot.x()) > twist_dead_threshold_rot_)
 	{
 		return false;
 	}
