@@ -34,7 +34,8 @@
 class DampingBase
 {
     public:
-        virtual double get_damping_factor() const = 0;
+        virtual double get_damping_factor(const Eigen::VectorXd &sortedSingularValues) const = 0;
+
         virtual ~DampingBase() {}
 
     protected:

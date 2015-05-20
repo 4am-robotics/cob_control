@@ -38,6 +38,7 @@ enum DampingMethodTypes {
     NONE = 0,
     CONSTANT = 1,
     MANIPULABILITY = 2,
+    LSV = 3,
 };
 
 enum ContraintTypes {
@@ -51,16 +52,19 @@ enum ContraintTypes {
 
 struct AugmentedSolverParams {
     DampingMethodTypes damping_method;
-    ContraintTypes constraint;
-    double eps;
+    bool numerical_filtering;
     double damping_factor;
-    double lambda0;
-    double wt;
+    double lambda_max;
+    double w_threshold;
+    double beta;
+    double eps_damping;
+    ContraintTypes constraint;
+    double kappa;
+    double eps_truncation;
     bool base_compensation;
     bool base_active;
     double base_ratio;
     double p_gain;
-    double kappa;
 
     // added limits from URDF file
     std::vector<double> limits_max;

@@ -55,7 +55,7 @@ class DampingNone : public DampingBase
 
         ~DampingNone() {}
 
-        virtual double get_damping_factor() const;
+        virtual double get_damping_factor(const Eigen::VectorXd &sortedSingularValues) const;
 };
 /* END DampingNone **********************************************************************************************/
 
@@ -70,7 +70,7 @@ class DampingConstant : public DampingBase
 
         ~DampingConstant() {}
 
-        virtual double get_damping_factor() const;
+        virtual double get_damping_factor(const Eigen::VectorXd &sortedSingularValues) const;
 };
 /* END DampingConstant ******************************************************************************************/
 
@@ -85,8 +85,23 @@ class DampingManipulability : public DampingBase
 
         ~DampingManipulability() {}
 
-        virtual double get_damping_factor() const;
+        virtual double get_damping_factor(const Eigen::VectorXd &sortedSingularValues) const;
 };
 /* END DampingManipulability ************************************************************************************/
+
+/* BEGIN DampingLeastSingularValues **********************************************************************************/
+/// Class implementing a method to return a damping factor based on least singular value.
+class DampingLeastSingularValues : public DampingBase
+{
+    public:
+        DampingLeastSingularValues(AugmentedSolverParams &asParams, Matrix6Xd &jacobianData)
+        : DampingBase(asParams, jacobianData)
+        {}
+
+        ~DampingLeastSingularValues() {}
+
+        virtual double get_damping_factor(const Eigen::VectorXd &sortedSingularValues) const;
+};
+/* END DampingLeastSingularValues ************************************************************************************/
 
 #endif /* DAMPING_H_ */
