@@ -45,6 +45,4 @@ class PInvBySVD : public IPseudoinverseCalculator
         virtual ~PInvBySVD() {}
 };
 /* END PInvBySVD ************************************************************************************************/
-
-
 #endif /* I_PSEUDOINV_CALC_H_ */

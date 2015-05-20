@@ -29,12 +29,13 @@
 #define DAMPING_METHOD_INTERFACE_H_
 
 #include "cob_twist_controller/augmented_solver_data_types.h"
-
+using namespace Eigen;
 /// Base class for solvers, defining interface methods.
 class DampingBase
 {
     public:
-        virtual double get_damping_factor() const = 0;
+        virtual double get_damping_factor(const VectorXd &sortedSingValues) const = 0;
+
         virtual ~DampingBase() {}
 
     protected:
