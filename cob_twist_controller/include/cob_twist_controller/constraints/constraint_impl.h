@@ -38,24 +38,31 @@
  */
 template <typename PRIO>
 std::set<tConstraintBase> ConstraintsBuilder<PRIO>::create_constraints(AugmentedSolverParams &augmentedSolverParams,
-                                                                       const KDL::JntArray& q)
+                                                                       const KDL::JntArray& q,
+                                                                       const Matrix6Xd &jacobianData,
+                                                                       const Eigen::Vector3d& eePosition)
 {
     std::set<tConstraintBase> constraints;
 
-    //tConstraintBase ca(new CollisionAvoidance<PRIO>(100, q)); // TODO: take case PRIO could be of different type than UINT32
+    //tConstraintBase ca(new CollisionAvoidance<PRIO>(100, q)); // TODO: take care PRIO could be of different type than UINT32
     //ca->setConstraintParams(new ConstraintParamsCA(augmentedSolverParams));
 
     tConstraintBase jla;
     switch (augmentedSolverParams.constraint)
     {
         case GPM_JLA:
-            jla.reset(new JointLimitAvoidance<PRIO>(100, q)); // TODO: take case PRIO could be of different type than UINT32
+            jla.reset(new JointLimitAvoidance<PRIO>(100, q)); // TODO: take care PRIO could be of different type than UINT32
             jla->setConstraintParams(new ConstraintParamsJLA(augmentedSolverParams));
             constraints.insert(jla);
             break;
         case GPM_JLA_MID:
-            jla.reset(new JointLimitAvoidanceMid<PRIO>(100, q)); // TODO: take case PRIO could be of different type than UINT32
+            jla.reset(new JointLimitAvoidanceMid<PRIO>(100, q)); // TODO: take care PRIO could be of different type than UINT32
             jla->setConstraintParams(new ConstraintParamsJLA(augmentedSolverParams)); // same params as for normal JLA
+            constraints.insert(jla);
+            break;
+        case GPM_CA:
+            jla.reset(new CollisionAvoidance<PRIO>(50, q)); // TODO: take care PRIO could be of different type than UINT32
+            jla->setConstraintParams(new ConstraintParamsCA(augmentedSolverParams, jacobianData, eePosition));
             constraints.insert(jla);
             break;
         default:
@@ -89,6 +96,7 @@ std::set<tConstraintBase> ConstraintsBuilder<PRIO>::create_constraints(Augmented
 template <typename PRIO>
 double CollisionAvoidance<PRIO>::getValue() const
 {
+
     return 0.0;
 }
 
@@ -101,7 +109,7 @@ double CollisionAvoidance<PRIO>::getDerivativeValue() const
 template <typename PRIO>
 double CollisionAvoidance<PRIO>::getSafeRegion() const
 {
-    return 0.0;
+    return 0.5; // in [m]
 }
 
 template <typename PRIO>
@@ -109,6 +117,77 @@ Eigen::VectorXd  CollisionAvoidance<PRIO>::getPartialValues() const
 {
     uint8_t vecRows = static_cast<uint8_t>(this->jointPos_.rows());
     Eigen::VectorXd partialValues = Eigen::VectorXd::Zero(vecRows);
+
+
+
+    // Create virtual obstacle
+    double stepSize = 0.01;
+    Eigen::Vector3d obstaclePosition(0.5, -0.3, 1);// [m]
+    Eigen::Vector3d obstacleDirectionA(0, 1, 0);
+    Eigen::Vector3d obstacleDirectionB(0, 0, 1);
+
+
+    // Calculate the nearest obstacle
+    // v_x = v_x_0 + s * v_a + t * v_b;
+    const ConstraintParamsCA* constrParamCAPtr = reinterpret_cast<const ConstraintParamsCA*>(this->constraintParams_);
+    Eigen::Vector3d endeffectorPosition = constrParamCAPtr->getEndeffectorPosition();
+    Eigen::Vector3d obstVector;
+    //OS_INFO_STREAM("endeffectorPosition: " << std::endl << endeffectorPosition);
+    bool found = false;
+    double dist;
+    for (double s = 0.0; s < 1.0; s = s + stepSize)
+    {
+        for (double t = 0.0; t < 1.0; t = t + stepSize)
+        {
+            Eigen::Vector3d tmpObstVector = obstaclePosition + s * obstacleDirectionA + t * obstacleDirectionB;
+            Eigen::Vector3d distVec = endeffectorPosition - tmpObstVector;
+            dist = distVec.norm();
+
+
+            //ROS_INFO_STREAM("tmpObstVector: " << std::endl << tmpObstVector);
+            //ROS_INFO_STREAM("Calculated distance: " << dist);
+
+            if (this->getSafeRegion() > dist)
+            {
+                obstVector = tmpObstVector;
+                found = true;
+                break;
+            }
+        }
+
+        if(found)
+        {
+            break;
+        }
+    }
+
+    if (found)
+    {
+        const ConstraintParamsCA* constrParamCAPtr = reinterpret_cast<const ConstraintParamsCA*>(this->constraintParams_);
+        Matrix6Xd jac = constrParamCAPtr->getEndeffectorJacobian();
+        Eigen::Vector3d endeffectorPosition = constrParamCAPtr->getEndeffectorPosition();
+        Eigen::Matrix3Xd m = Eigen::Matrix3Xd::Zero(3, jac.cols());
+
+        m << jac.row(0),
+             jac.row(1),
+             jac.row(2);
+
+        Eigen::Vector3d distVector = endeffectorPosition - obstVector;
+
+        if (dist != 0.0)
+        {
+            partialValues =  2.0 * ((dist - this->getSafeRegion()) / dist) * m.transpose() * distVector;
+        }
+        else
+        {
+            partialValues =  2.0 * (((1.0e-9) - this->getSafeRegion()) / (1.0e-9)) * m.transpose() * distVector;
+        }
+
+
+        ROS_INFO_STREAM("Costfunction results: " << pow( (dist - this->getSafeRegion()), 2.0));
+        ROS_INFO_STREAM("jac: " << std::endl << jac);
+    }
+
     return partialValues;
 }
 /* END CollisionAvoidance ***************************************************************************************/
@@ -193,7 +272,8 @@ double JointLimitAvoidance<PRIO>::getStepSize() const
 
 
     ROS_INFO_STREAM("Constructed step size t_k=" << t << std::endl);
-    return t;
+    //return t;
+    return params.kappa;
 }
 
 template <typename PRIO>

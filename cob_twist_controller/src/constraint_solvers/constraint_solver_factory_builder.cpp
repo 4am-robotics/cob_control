@@ -51,14 +51,15 @@
  * The objects are generated for each solve-request. After calculation the objects are deleted.
  */
 int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverParams &asParams,
-                                                                        Matrix6Xd &jacobianData,
-                                                                        const Eigen::VectorXd &inCartVelocities,
-                                                                        const KDL::JntArray& q,
-                                                                        const KDL::JntArray& last_q_dot,
-                                                                        const Eigen::VectorXd& tracking_errors,
-                                                                        Eigen::MatrixXd &outJntVelocities)
+                                                                Matrix6Xd &jacobianData,
+                                                                const Eigen::VectorXd &inCartVelocities,
+                                                                const KDL::JntArray& q,
+                                                                const KDL::JntArray& last_q_dot,
+                                                                const Eigen::VectorXd& tracking_errors,
+                                                                const Eigen::Vector3d& eePosition,
+                                                                Eigen::MatrixXd &outJntVelocities)
 {
-    outJntVelocities = Eigen::MatrixXd();
+    outJntVelocities = Eigen::MatrixXd::Zero(last_q_dot.rows(), last_q_dot.columns());
     boost::shared_ptr<DampingBase> db (DampingBuilder::create_damping(asParams, jacobianData));
     if(NULL == db)
     {
@@ -66,9 +67,7 @@ int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverP
         return -1; // error
     }
 
-    // ConstraintsBuilder::create_constraints(asParams);
-
-    std::set<tConstraintBase> constraints = ConstraintsBuilder<>::create_constraints(asParams, q);
+    std::set<tConstraintBase> constraints = ConstraintsBuilder<>::create_constraints(asParams, q, jacobianData, eePosition);
 
     ROS_INFO_STREAM("ConstraintsBuilder returned std::set with size: " << constraints.size() << std::endl);
 
@@ -90,8 +89,11 @@ int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverP
         case GPM_JLA_MID:
             sf.reset(new SolverFactory<GradientProjectionMethodSolver>());
             break;
+        case GPM_CA:
+            sf.reset(new SolverFactory<GradientProjectionMethodSolver>());
+            break;
         default:
-            ROS_ERROR("Returning NULL factory due to constraint solver creation error.");
+            ROS_ERROR("Returning NULL factory due to constraint solver creation error. There is no solver method for %d implemented.", asParams.constraint);
             break;
     }
 

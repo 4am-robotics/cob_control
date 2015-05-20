@@ -54,6 +54,7 @@ class ConstraintSolverFactoryBuilder
                                                const KDL::JntArray& q,
                                                const KDL::JntArray& last_q_dot,
                                                const Eigen::VectorXd& tracking_errors,
+                                               const Eigen::Vector3d& eePosition,
                                                Eigen::MatrixXd &outJntVelocities);
 
     private:

@@ -39,7 +39,9 @@ class ConstraintsBuilder
 {
     public:
         static std::set<tConstraintBase> create_constraints(AugmentedSolverParams &augmentedSolverParams,
-                                                            const KDL::JntArray& q);
+                                                            const KDL::JntArray& q,
+                                                            const Matrix6Xd &jacobianData,
+                                                            const Eigen::Vector3d& eePosition);
 
     private:
         ConstraintsBuilder() {}
@@ -53,11 +55,28 @@ class ConstraintParamsCA : public ConstraintParamsBase
 {
     public:
 
-        ConstraintParamsCA(const AugmentedSolverParams& params) : ConstraintParamsBase(params)
+        ConstraintParamsCA(const AugmentedSolverParams& params, const Matrix6Xd &jacobianData, const Eigen::Vector3d& eePosition)
+        : ConstraintParamsBase(params), jacobianData_(jacobianData), eePosition_(eePosition)
         {}
 
         virtual ~ConstraintParamsCA()
         {}
+
+        Matrix6Xd getEndeffectorJacobian() const
+        {
+            return this->jacobianData_;
+        }
+
+        Eigen::Vector3d getEndeffectorPosition() const
+        {
+            return this->eePosition_;
+        }
+
+
+    private:
+        const Matrix6Xd& jacobianData_;
+        const Eigen::Vector3d& eePosition_;
+
 
 };
 /* END ConstraintParamsCA ***************************************************************************************/

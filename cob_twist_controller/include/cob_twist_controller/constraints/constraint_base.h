@@ -88,7 +88,7 @@ class ConstraintBase
         virtual Eigen::VectorXd getPartialValues() const = 0;
         virtual double getStepSize() const
         {
-            return 0.0;
+            return this->constraintParams_->getAugmentedSolverParams().kappa;
         }
 
 

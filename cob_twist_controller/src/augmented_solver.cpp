@@ -33,6 +33,9 @@
 
 #include "ros/ros.h"
 
+#include "cob_twist_controller/chainfk_solvers/advanced_chainfksolverpos_recursive.h"
+
+
 int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in,
                                const KDL::JntArray& last_q_dot,
                                const KDL::Twist& v_in,
@@ -54,6 +57,14 @@ int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in,
         v_in_vec(i) = v_in(i);
     }
 
+    // Get current x and y position from EE and chain_base with respect to base_footprint
+    Eigen::Vector3d eePosition(base_position.p.x(),
+                                base_position.p.y(),
+                                base_position.p.z());
+
+
+    // ROS_INFO_STREAM("Endeffector position: " << std::endl << eePosition);
+
     Eigen::MatrixXd qdot_out_vec;
     retStat = ConstraintSolverFactoryBuilder::calculateJointVelocities(this->params_,
                                                                        this->jac_.data,
@@ -61,6 +72,7 @@ int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in,
                                                                        q_in,
                                                                        last_q_dot,
                                                                        tracking_errors,
+                                                                       eePosition,
                                                                        qdot_out_vec);
 
     ///convert output
@@ -81,9 +93,52 @@ void AugmentedSolver::adjustJac(const KDL::JntArray& q_in,
                                 const KDL::Frame &chain_base)
 {
     ///Let the ChainJntToJacSolver calculate the jacobian "jac_chain" for the current joint positions "q_in"
+
+    AdvancedChainFkSolverPos_recursive adChnFkSolverPos(chain_);
+
+    KDL::Frame pOut;
+    int retVal = adChnFkSolverPos.JntToCart(q_in, pOut);
+    //ROS_INFO_STREAM("adChnFkSolverPos retVal: " << retVal << std::endl);
+    //adChnFkSolverPos.dumpAllJntPostures();
+
+
+
     KDL::Jacobian jac_chain(chain_.getNrOfJoints());
     Eigen::Matrix<double,6,3> jac_b;
     jnt2jac_.JntToJac(q_in, jac_chain);
+
+
+    KDL::Frame pos;
+
+    //ROS_INFO_STREAM("Other Endeffector position: " << std::endl << pos.p.x() << std::endl << pos.p.y() << std::endl << pos.p.z());
+
+    KDL::Jacobian jac_chain_2(jac_chain);
+
+//    KDL::JntArray q_tmp_in(3);
+//
+//    for(unsigned int i = 0; i < q_tmp_in.rows(); i++)
+//    {
+//        q_tmp_in(i) = q_in(i);
+//        ROS_INFO_STREAM("q_tmp_in: " << q_tmp_in(i));
+//        ROS_INFO_STREAM("q_in: " << q_in(i));
+//    }
+
+    // int retVal = jnt2jac_.JntToJac(q_tmp_in, jac_chain_2);
+
+
+//    Eigen::Matrix<double, 6, Eigen::Dynamic> jac_blubby;
+//    jac_blubby.resize(6, chain_.getNrOfJoints() - 3);
+//    jac_blubby << jac_chain_2.data;
+
+
+    // ROS_INFO_STREAM("Jac (6 x 7): " << std::endl << jac_chain_2.data);
+    //jac_chain_2.data.conservativeResize(6, chain_.getNrOfJoints() - 3);
+
+    // jac_chain_2.data << jac_blubby;
+    //ROS_INFO_STREAM("Jac (6 x 4): " << std::endl << jac_chain_2.data);
+    // ROS_INFO_STREAM("Return Value: " << retVal);
+
+
     if(params_.base_active)
     {
         Eigen::Matrix<double, 3, 3> chain_base_rot, base_rot, tip_base_rot;
@@ -137,7 +192,7 @@ void AugmentedSolver::adjustJac(const KDL::JntArray& q_in,
         //combine chain Jacobian and platform Jacobian
         Eigen::Matrix<double, 6, Eigen::Dynamic> jac_full;
         jac_full.resize(6,chain_.getNrOfJoints() + jac_b.cols());
-        jac_full << jac_chain.data,jac_b;
+        jac_full << jac_chain.data, jac_b;
         jac_.resize(chain_.getNrOfJoints() + jac_b.cols());
         jac_.data << jac_full;
     }
