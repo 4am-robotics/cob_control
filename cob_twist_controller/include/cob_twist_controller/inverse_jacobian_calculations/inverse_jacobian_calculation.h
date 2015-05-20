@@ -45,22 +45,4 @@ class PInvBySVD : public IPseudoinverseCalculator
         virtual ~PInvBySVD() {}
 };
 /* END PInvBySVD ************************************************************************************************/
-
-
-/* BEGIN PInvByLID **********************************************************************************************/
-class PInvByLID : public IPseudoinverseCalculator
-{
-    public:
-
-        /** Implementation of calculate member
-         * See base for more information on parameters
-         */
-        virtual Eigen::MatrixXd calculate(const AugmentedSolverParams& params,
-                                          boost::shared_ptr<DampingBase> db,
-                                          const Eigen::MatrixXd& jacobian) const;
-
-        virtual ~PInvByLID() {}
-};
-/* END PInvByLID ************************************************************************************************/
-
 #endif /* I_PSEUDOINV_CALC_H_ */

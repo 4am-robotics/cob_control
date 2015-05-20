@@ -34,21 +34,7 @@ using namespace Eigen;
 class DampingBase
 {
     public:
-        virtual double get_damping_factor() const = 0;
-
-        virtual VectorXd calc_damped_singulars(VectorXd sortedSingValues) const
-        {
-            // small change to ref: here quadratic damping due to Control of Redundant Robot Manipulators : R.V. Patel, 2005, Springer [Page 13-14]
-            VectorXd singularValuesInv = VectorXd::Zero(sortedSingValues.rows());
-            double lambda = this->get_damping_factor();
-            for(uint32_t i = 0; i < sortedSingValues.rows(); ++i)
-            {
-                double denominator = (sortedSingValues(i) * sortedSingValues(i) + pow(lambda, 2) );
-                singularValuesInv(i) = (denominator < this->asParams_.eps) ? 0.0 : sortedSingValues(i) / denominator;
-            }
-
-            return singularValuesInv;
-        }
+        virtual double get_damping_factor(const VectorXd &sortedSingValues) const = 0;
 
         virtual ~DampingBase() {}
 

@@ -55,8 +55,7 @@ class DampingNone : public DampingBase
 
         ~DampingNone() {}
 
-        virtual double get_damping_factor() const;
-        virtual VectorXd calc_damped_singulars(VectorXd sortedSingValues) const;
+        virtual double get_damping_factor(const VectorXd &sortedSingValues) const;
 };
 /* END DampingNone **********************************************************************************************/
 
@@ -71,7 +70,7 @@ class DampingConstant : public DampingBase
 
         ~DampingConstant() {}
 
-        virtual double get_damping_factor() const;
+        virtual double get_damping_factor(const VectorXd &sortedSingValues) const;
 };
 /* END DampingConstant ******************************************************************************************/
 
@@ -86,24 +85,23 @@ class DampingManipulability : public DampingBase
 
         ~DampingManipulability() {}
 
-        virtual double get_damping_factor() const;
+        virtual double get_damping_factor(const VectorXd &sortedSingValues) const;
 };
 /* END DampingManipulability ************************************************************************************/
 
-/* BEGIN DampingManipulability **********************************************************************************/
-/// Class implementing a method to return a factor corresponding to the measure of manipulability.
-class DampingLowIsotropic : public DampingBase
+/* BEGIN DampingLeastSingularValues **********************************************************************************/
+/// Class implementing a method to return a damping factor based on least singular value.
+class DampingLeastSingularValues : public DampingBase
 {
     public:
-        DampingLowIsotropic(AugmentedSolverParams &asParams, Matrix6Xd &jacobianData)
+        DampingLeastSingularValues(AugmentedSolverParams &asParams, Matrix6Xd &jacobianData)
         : DampingBase(asParams, jacobianData)
         {}
 
-        ~DampingLowIsotropic() {}
+        ~DampingLeastSingularValues() {}
 
-        virtual double get_damping_factor() const;
-        virtual VectorXd calc_damped_singulars(VectorXd sortedSingValues) const;
+        virtual double get_damping_factor(const VectorXd &sortedSingValues) const;
 };
-/* END DampingManipulability ************************************************************************************/
+/* END DampingLeastSingularValues ************************************************************************************/
 
 #endif /* DAMPING_H_ */

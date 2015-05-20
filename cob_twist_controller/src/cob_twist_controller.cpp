@@ -176,19 +176,21 @@ void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControl
 {
     AugmentedSolverParams params;
     params.damping_method = static_cast<DampingMethodTypes>(config.damping_method);
-    params.constraint = static_cast<ContraintTypes>(config.constraint);
-    params.eps = config.eps;
+    params.numerical_filtering = config.numerical_filtering;
     params.damping_factor = config.damping_factor;
-    params.lambda0 = config.lambda0;
-    params.wt = config.wt;
+    params.lambda_max = config.lambda_max;
+    params.w_threshold = config.w_threshold;
+    params.beta = config.beta;
+    params.eps_damping = config.eps_damping;
+    params.constraint = static_cast<ContraintTypes>(config.constraint);
+    params.eps_truncation = config.eps_truncation;
+    params.p_gain = config.p_gain;
     params.base_compensation = config.base_compensation;
     params.base_active = config.base_active;
     params.base_ratio = config.base_ratio;
     params.limits_min = twistControllerParams_.limits_min; // from cob_twist_controller init
     params.limits_max = twistControllerParams_.limits_max; // from cob_twist_controller init
-    params.p_gain = config.p_gain;
-    params.beta = config.beta;
-    params.lambda_max = config.lambda_max;
+
 
     reset_markers_ = config.reset_markers;
 
@@ -221,10 +223,10 @@ void CobTwistController::initAugmentedSolverParams()
     AugmentedSolverParams params;
     params.damping_method = MANIPULABILITY;
     params.constraint = WLN_JLA;
-    params.eps = 0.001;
+    params.eps_truncation = 0.001;
     params.damping_factor = 0.2;
-    params.lambda0 = 0.1;
-    params.wt = 0.005;
+    params.lambda_max = 0.1;
+    params.w_threshold = 0.005;
     params.base_compensation = false;
     params.base_active = false;
     params.base_ratio = 0.0;
