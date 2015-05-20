@@ -55,7 +55,7 @@ class DampingNone : public DampingBase
 
         ~DampingNone() {}
 
-        virtual double get_damping_factor(const VectorXd &sortedSingValues) const;
+        virtual double get_damping_factor(const Eigen::VectorXd &sortedSingularValues) const;
 };
 /* END DampingNone **********************************************************************************************/
 
@@ -70,7 +70,7 @@ class DampingConstant : public DampingBase
 
         ~DampingConstant() {}
 
-        virtual double get_damping_factor(const VectorXd &sortedSingValues) const;
+        virtual double get_damping_factor(const Eigen::VectorXd &sortedSingularValues) const;
 };
 /* END DampingConstant ******************************************************************************************/
 
@@ -85,7 +85,7 @@ class DampingManipulability : public DampingBase
 
         ~DampingManipulability() {}
 
-        virtual double get_damping_factor(const VectorXd &sortedSingValues) const;
+        virtual double get_damping_factor(const Eigen::VectorXd &sortedSingularValues) const;
 };
 /* END DampingManipulability ************************************************************************************/
 
@@ -100,7 +100,7 @@ class DampingLeastSingularValues : public DampingBase
 
         ~DampingLeastSingularValues() {}
 
-        virtual double get_damping_factor(const VectorXd &sortedSingValues) const;
+        virtual double get_damping_factor(const Eigen::VectorXd &sortedSingularValues) const;
 };
 /* END DampingLeastSingularValues ************************************************************************************/
 
