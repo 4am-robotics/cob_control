@@ -89,13 +89,14 @@ class CollisionAvoidance : public ConstraintBase<PRIO>
     public:
 
         CollisionAvoidance(PRIO prio, const KDL::JntArray& q) : ConstraintBase<PRIO>(prio, q)
-        {}
+        {
+        }
 
         virtual double getValue() const;
         virtual double getDerivativeValue() const;
         virtual double getSafeRegion() const;
         virtual Eigen::VectorXd getPartialValues() const;
-
+        virtual double getSelfMotionMagnitude(Eigen::MatrixXd& particularSolution, Eigen::MatrixXd& homogeneousSolution) const;
 
         virtual ~CollisionAvoidance()
         {
@@ -126,13 +127,14 @@ class JointLimitAvoidance : public ConstraintBase<PRIO>
     public:
 
         JointLimitAvoidance(PRIO prio, const KDL::JntArray& q) : ConstraintBase<PRIO>(prio, q)
-        {}
+        {
+        }
 
         virtual double getValue() const;
         virtual double getDerivativeValue() const;
         virtual double getSafeRegion() const;
         virtual Eigen::VectorXd getPartialValues() const;
-        virtual double getStepSize() const;
+        virtual double getSelfMotionMagnitude(Eigen::MatrixXd& particularSolution, Eigen::MatrixXd& homogeneousSolution) const;
 
         double getValue(Eigen::VectorXd steps) const;
 
@@ -151,13 +153,14 @@ class JointLimitAvoidanceMid : public ConstraintBase<PRIO>
     public:
 
         JointLimitAvoidanceMid(PRIO prio, const KDL::JntArray& q) : ConstraintBase<PRIO>(prio, q)
-        {}
+        {
+        }
 
         virtual double getValue() const;
         virtual double getDerivativeValue() const;
         virtual double getSafeRegion() const;
         virtual Eigen::VectorXd getPartialValues() const;
-
+        virtual double getSelfMotionMagnitude(Eigen::MatrixXd& particularSolution, Eigen::MatrixXd& homogeneousSolution) const;
 
         virtual ~JointLimitAvoidanceMid()
         {

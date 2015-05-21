@@ -34,6 +34,9 @@
 #include <vector>
 #include <stdint.h>
 
+#define MAX_CRIT true
+#define MIN_CRIT false
+
 enum DampingMethodTypes {
     NONE = 0,
     CONSTANT = 1,
@@ -68,6 +71,7 @@ struct AugmentedSolverParams {
     // added limits from URDF file
     std::vector<double> limits_max;
     std::vector<double> limits_min;
+    std::vector<double> limits_vel;
 };
 
 const double DAMPING_LIMIT = 1.0e-12; ///< const. value for zero comparison with damping factor

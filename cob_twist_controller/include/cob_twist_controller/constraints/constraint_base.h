@@ -36,6 +36,7 @@
 #include <Eigen/Core>
 
 #include "cob_twist_controller/augmented_solver_data_types.h"
+#include "cob_twist_controller/constraints/self_motion_magnitude.h"
 
 class ConstraintParamsBase
 {
@@ -81,16 +82,11 @@ class ConstraintBase
             this->constraintParams_ = constraintParams;
         }
 
-
         virtual double getValue() const = 0;
         virtual double getDerivativeValue() const = 0;
         virtual double getSafeRegion() const = 0;
         virtual Eigen::VectorXd getPartialValues() const = 0;
-        virtual double getStepSize() const
-        {
-            return this->constraintParams_->getAugmentedSolverParams().kappa;
-        }
-
+        virtual double getSelfMotionMagnitude(Eigen::MatrixXd& particularSolution, Eigen::MatrixXd& homogeneousSolution) const = 0;
 
         inline bool operator<(const ConstraintBase& other) const
         {
@@ -111,8 +107,11 @@ class ConstraintBase
         PRIO priority_;
         const KDL::JntArray& jointPos_;
         const ConstraintParamsBase* constraintParams_;
+
+
 };
 
-typedef boost::shared_ptr<ConstraintBase<> > tConstraintBase;
+
+typedef boost::shared_ptr<ConstraintBase<uint32_t> > tConstraintBase;
 
 #endif /* CONSTRAINT_BASE_H_ */

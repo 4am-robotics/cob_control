@@ -188,6 +188,7 @@ void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControl
     params.base_ratio = config.base_ratio;
     params.limits_min = twistControllerParams_.limits_min; // from cob_twist_controller init
     params.limits_max = twistControllerParams_.limits_max; // from cob_twist_controller init
+    params.limits_vel = twistControllerParams_.limits_vel; // from cob_twist_controller init
     params.kappa = config.kappa;
 
     reset_markers_ = config.reset_markers;

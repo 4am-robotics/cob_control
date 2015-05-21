@@ -44,9 +44,6 @@ std::set<tConstraintBase> ConstraintsBuilder<PRIO>::create_constraints(Augmented
 {
     std::set<tConstraintBase> constraints;
 
-    //tConstraintBase ca(new CollisionAvoidance<PRIO>(100, q)); // TODO: take care PRIO could be of different type than UINT32
-    //ca->setConstraintParams(new ConstraintParamsCA(augmentedSolverParams));
-
     tConstraintBase jla;
     switch (augmentedSolverParams.constraint)
     {
@@ -111,6 +108,7 @@ double CollisionAvoidance<PRIO>::getSafeRegion() const
 {
     return 0.5; // in [m]
 }
+
 
 template <typename PRIO>
 Eigen::VectorXd  CollisionAvoidance<PRIO>::getPartialValues() const
@@ -190,6 +188,13 @@ Eigen::VectorXd  CollisionAvoidance<PRIO>::getPartialValues() const
 
     return partialValues;
 }
+
+template <typename PRIO>
+double CollisionAvoidance<PRIO>::getSelfMotionMagnitude(Eigen::MatrixXd& particularSolution, Eigen::MatrixXd& homogeneousSolution) const
+{
+    const AugmentedSolverParams &params = this->constraintParams_->getAugmentedSolverParams();
+    return SelfMotionMagnitudeFactory< SmmDeterminatorVelocityBounds<MAX_CRIT> >::calculate(params, particularSolution, homogeneousSolution);
+}
 /* END CollisionAvoidance ***************************************************************************************/
 
 /* BEGIN JointLimitAvoidance ************************************************************************************/
@@ -232,48 +237,48 @@ double JointLimitAvoidance<PRIO>::getSafeRegion() const
 }
 
 template <typename PRIO>
-double JointLimitAvoidance<PRIO>::getStepSize() const
+double JointLimitAvoidance<PRIO>::getSelfMotionMagnitude(Eigen::MatrixXd& particularSolution, Eigen::MatrixXd& homogeneousSolution) const
 {
     // k_H by Armijo-Rule
+    double t;
     const AugmentedSolverParams &params = this->constraintParams_->getAugmentedSolverParams();
-    Eigen::VectorXd gradient = this->getPartialValues();
-    double costFunctionVal = this->getValue();
+//    Eigen::VectorXd gradient = this->getPartialValues();
+//    double costFunctionVal = this->getValue();
+//
+//    double l = 0.0;
+//    double t = 1.0;
+//    double beta = 0.9;
+//
+//    // Eigen::VectorXd d = params.kappa * gradient;
+//    Eigen::VectorXd d = -1.0 * gradient;
+//
+//    Eigen::VectorXd new_d = t * d;
+//    double nextCostFunctionVal = this->getValue(new_d);
+//
+//    double summand = t * gradient.transpose() * d;
+//
+//    while(nextCostFunctionVal > (costFunctionVal + summand))
+//    {
+//        double t_new = pow(beta, l + 1.0);
+//
+//        if (!( (t_new >= (0.0001 * t)) && (t_new <= (0.9999 * t))))
+//        {
+//            ROS_ERROR("Outside of valid t range. Break!!!");
+//            t = t_new;
+//            break;
+//        }
+//
+//        t = t_new;
+//        l = l + 1.0;
+//
+//        new_d = t * d;
+//        nextCostFunctionVal = this->getValue(new_d);
+//        summand = t * gradient.transpose() * d;
+//    }
 
-    double l = 0.0;
-    double t = 1.0;
-    double beta = 0.9;
 
-    // Eigen::VectorXd d = params.kappa * gradient;
-    Eigen::VectorXd d = -1.0 * gradient;
-
-    Eigen::VectorXd new_d = t * d;
-    double nextCostFunctionVal = this->getValue(new_d);
-
-    double summand = t * gradient.transpose() * d;
-
-    while(nextCostFunctionVal > (costFunctionVal + summand))
-    {
-        double t_new = pow(beta, l + 1.0);
-
-        if (!( (t_new >= (0.0001 * t)) && (t_new <= (0.9999 * t))))
-        {
-            ROS_ERROR("Outside of valid t range. Break!!!");
-            t = t_new;
-            break;
-        }
-
-        t = t_new;
-        l = l + 1.0;
-
-        new_d = t * d;
-        nextCostFunctionVal = this->getValue(new_d);
-        summand = t * gradient.transpose() * d;
-    }
-
-
-    ROS_INFO_STREAM("Constructed step size t_k=" << t << std::endl);
-    //return t;
-    return params.kappa;
+    t = SelfMotionMagnitudeFactory< SmmDeterminatorVelocityBounds<MIN_CRIT> >::calculate(params, particularSolution, homogeneousSolution);
+    return t;
 }
 
 template <typename PRIO>
@@ -380,6 +385,13 @@ Eigen::VectorXd JointLimitAvoidanceMid<PRIO>::getPartialValues() const
 
     double k = params.kappa;
     return k * partialValues;
+}
+
+template <typename PRIO>
+double JointLimitAvoidanceMid<PRIO>::getSelfMotionMagnitude(Eigen::MatrixXd& particularSolution, Eigen::MatrixXd& homogeneousSolution) const
+{
+    const AugmentedSolverParams &params = this->constraintParams_->getAugmentedSolverParams();
+    return SelfMotionMagnitudeFactory<SmmDeterminatorVelocityBounds<MAX_CRIT> >::calculate(params, particularSolution, homogeneousSolution);
 }
 /* END 2nd JointLimitAvoidance **************************************************************************************/
 

@@ -28,17 +28,31 @@
  ****************************************************************/
 #include "cob_twist_controller/constraint_solvers/solvers/gradient_projection_method_solver.h"
 
-
 Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Eigen::VectorXd &inCartVelocities,
                                       const KDL::JntArray& q,
                                       const KDL::JntArray& last_q_dot) const
 {
     uint16_t lv = 1;
+    double kappa;
     Eigen::VectorXd q_dot_0 = Eigen::VectorXd::Zero(q.rows());
+
+
+    Eigen::MatrixXd jacobianPseudoInverse = pinvCalc_.calculate(this->asParams_, this->damping_, this->jacobianData_);
+    Eigen::MatrixXd projector = Eigen::MatrixXd::Identity(jacobianPseudoInverse.rows(), this->jacobianData_.cols()) - jacobianPseudoInverse * this->jacobianData_;
+
+    Eigen::MatrixXd partialSolution = jacobianPseudoInverse * inCartVelocities;
+
+    Eigen::MatrixXd homogeneousSolution = Eigen::MatrixXd::Zero(partialSolution.rows(), partialSolution.cols());
     for (std::set<tConstraintBase>::const_iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
     {
-        double stepSize = (*it)->getStepSize();
-        q_dot_0 += -stepSize * (*it)->getPartialValues();
+        //double stepSize = (*it)->getStepSize();
+        q_dot_0 = (*it)->getPartialValues();
+
+        Eigen::MatrixXd tmpHomogeneousSolution = projector * q_dot_0;
+        homogeneousSolution += tmpHomogeneousSolution;
+
+        kappa = (*it)->getSelfMotionMagnitude(partialSolution, tmpHomogeneousSolution);
+
         //ROS_INFO_STREAM("" << lv++ << ") GradientProjectionMethodSolver::solve: " << std::endl << (*it)->getPartialValues() << std::endl);
     }
 
@@ -47,13 +61,13 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Eigen::VectorXd &inC
         ROS_INFO_STREAM("q_dot_0: " << std::endl << q_dot_0);
     }
 
-    Eigen::MatrixXd jacobianPseudoInverse = pinvCalc_.calculate(this->asParams_, this->damping_, this->jacobianData_);
+
     // Eigen::MatrixXd qdots_out = jacobianPseudoInverse * (inCartVelocities - this->asParams_.p_gain * tracking_errors);
 
     //ROS_INFO_STREAM("Got q_dot_0: " << std::endl << q_dot_0 << std::endl);
 
 
-    Eigen::MatrixXd tmp = Eigen::MatrixXd::Identity(jacobianPseudoInverse.rows(), this->jacobianData_.cols()) - jacobianPseudoInverse * this->jacobianData_;
+
 
     //ROS_INFO_STREAM("Gradient: " << std::endl << q_dot_0 << std::endl);
 //    q_dot_0(0) = 1.0;
@@ -63,12 +77,11 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Eigen::VectorXd &inC
 //    q_dot_0(4) = 1.0;
 //    q_dot_0(5) = 0.0;
 //    q_dot_0(6) = -1.0;
-    Eigen::MatrixXd tmp_q_dot = tmp * q_dot_0;
 
-    ROS_INFO_STREAM("2nd sum term: " << std::endl << tmp_q_dot << std::endl);
+//    ROS_INFO_STREAM("2nd sum term: " << std::endl << tmp_q_dot << std::endl);
 
     // Eigen::MatrixXd qdots_out = Eigen::MatrixXd::Zero(tmp_q_dot.rows(), tmp_q_dot.cols());
-    Eigen::MatrixXd qdots_out = jacobianPseudoInverse * inCartVelocities;
+
 //    if (double(q_dot_0.norm()) < 0.00001 )
 //    {
 //        qdots_out =
@@ -79,7 +92,7 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Eigen::VectorXd &inC
 //        // qdots_out = zeroVec;
 //    }
 
-    qdots_out += tmp_q_dot;
+    Eigen::MatrixXd qdots_out = partialSolution + kappa * homogeneousSolution;
 
     // (Eigen::MatrixXd::Identity(jacobianPseudoInverse.rows(), jacobianPseudoInverse.cols()) + jacobianPseudoInverse * this->jacobianData_) * q_dot_0;
 
