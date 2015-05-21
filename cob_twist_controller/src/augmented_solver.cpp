@@ -41,7 +41,6 @@ int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in,
                                const KDL::Twist& v_in,
                                const KDL::Frame &base_position,
                                const KDL::Frame &chain_base,
-                               const Eigen::VectorXd &tracking_errors,
                                KDL::JntArray& qdot_out)
 {
     int8_t retStat = -1;
@@ -71,7 +70,6 @@ int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in,
                                                                        v_in_vec,
                                                                        q_in,
                                                                        last_q_dot,
-                                                                       tracking_errors,
                                                                        eePosition,
                                                                        qdot_out_vec);
 

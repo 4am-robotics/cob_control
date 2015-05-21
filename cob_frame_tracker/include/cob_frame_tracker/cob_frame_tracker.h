@@ -60,16 +60,23 @@
 #include <kdl/jntarrayvel.hpp>
 
 #include <boost/thread/mutex.hpp>
+
 #include <dynamic_reconfigure/server.h>
 
 #include <control_toolbox/pid.h>
 
+typedef actionlib::SimpleActionServer<cob_frame_tracker::FrameTrackingAction> tSAS_FrameTrackingAction;
 
 class CobFrameTracker
 {
 public:
 	CobFrameTracker() {;}
-	~CobFrameTracker() {;}
+	~CobFrameTracker()
+	{
+	    jntToCartSolver_vel_.reset();
+	    as_.reset();
+	    reconfigure_server_.reset();
+	}
 	
 	bool initialize();
 	void run(const ros::TimerEvent& event);
@@ -117,7 +124,7 @@ private:
 	KDL::JntArray q_dot_temp;
 	KDL::JntArray last_q_;
 	KDL::JntArray last_q_dot_;
-	KDL::ChainFkSolverVel_recursive* jntToCartSolver_vel_;
+	boost::shared_ptr<KDL::ChainFkSolverVel_recursive> jntToCartSolver_vel_;
 	KDL::Vector vector_vel_,vector_rot_;
 	std::string chain_base_;
 	std::string chain_tip_;
@@ -130,14 +137,13 @@ private:
 	ros::Subscriber jointstate_sub;
 	ros::Publisher twist_pub_;
 
-	ros::Publisher error_pub_;
-
 	ros::ServiceServer start_server_;
 	ros::ServiceServer stop_server_;
 	
 	/// Action interface
 	std::string action_name_;
-	actionlib::SimpleActionServer<cob_frame_tracker::FrameTrackingAction> *as_;
+	boost::shared_ptr<tSAS_FrameTrackingAction> as_;
+
 	cob_frame_tracker::FrameTrackingFeedback action_feedback_;
 	cob_frame_tracker::FrameTrackingResult action_result_;
 	

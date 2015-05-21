@@ -160,13 +160,12 @@ bool CobFrameTracker::initialize()
 	///initialize ROS interfaces
 	jointstate_sub = nh_.subscribe("joint_states", 1, &CobFrameTracker::jointstate_cb, this);
 	twist_pub_ = nh_twist.advertise<geometry_msgs::TwistStamped> ("command_twist_stamped", 1);
-	error_pub_ = nh_twist.advertise<std_msgs::Float64MultiArray> ("command_errors", 1);
 
 	start_server_ = nh_tracker.advertiseService("start_tracking", &CobFrameTracker::start_tracking_cb, this);
 	stop_server_ = nh_tracker.advertiseService("stop_tracking", &CobFrameTracker::stop_tracking_cb, this);
 
 	action_name_ = "tracking_action";
-	as_ = new actionlib::SimpleActionServer<cob_frame_tracker::FrameTrackingAction>(nh_tracker, action_name_, false),
+	as_.reset(new tSAS_FrameTrackingAction(nh_tracker, action_name_, false));
 	as_->registerGoalCallback(boost::bind(&CobFrameTracker::goalCB, this));
 	as_->registerPreemptCallback(boost::bind(&CobFrameTracker::preemptCB, this));
 	as_->start();
@@ -211,10 +210,6 @@ void CobFrameTracker::publish_twist(ros::Duration period)
 {
 	tf::StampedTransform transform_tf;
 	geometry_msgs::TwistStamped twist_msg;
-
-    std_msgs::Float64MultiArray error_msg;
-
-
 	double roll, pitch, yaw;
 	
 	try
@@ -231,10 +226,6 @@ void CobFrameTracker::publish_twist(ros::Duration period)
 		twist_msg.twist.linear.x = pid_controller_trans_x_.computeCommand(transform_tf.getOrigin().x(), period);
 		twist_msg.twist.linear.y = pid_controller_trans_y_.computeCommand(transform_tf.getOrigin().y(), period);
 		twist_msg.twist.linear.z = pid_controller_trans_z_.computeCommand(transform_tf.getOrigin().z(), period);
-
-		error_msg.data.push_back(transform_tf.getOrigin().x());
-		error_msg.data.push_back(transform_tf.getOrigin().y());
-		error_msg.data.push_back(transform_tf.getOrigin().z());
 	}
 	
 	if(movable_rot_)
@@ -245,10 +236,6 @@ void CobFrameTracker::publish_twist(ros::Duration period)
 		twist_msg.twist.angular.x = pid_controller_rot_x_.computeCommand(transform_tf.getRotation().x(), period);
 		twist_msg.twist.angular.y = pid_controller_rot_y_.computeCommand(transform_tf.getRotation().y(), period);
 		twist_msg.twist.angular.z = pid_controller_rot_z_.computeCommand(transform_tf.getRotation().z(), period);
-
-        error_msg.data.push_back(transform_tf.getRotation().x());
-        error_msg.data.push_back(transform_tf.getRotation().y());
-        error_msg.data.push_back(transform_tf.getRotation().z());
 	}
 	
 	twist_msg.header.frame_id = chain_tip_link_;
@@ -289,7 +276,6 @@ void CobFrameTracker::publish_twist(ros::Duration period)
 	target_twist_.rot.z(twist_msg.twist.angular.z);
 
 	twist_pub_.publish(twist_msg);
-	error_pub_.publish(error_msg);
 }
 
 bool CobFrameTracker::start_tracking_cb(cob_srvs::SetString::Request& request, cob_srvs::SetString::Response& response)
@@ -467,7 +453,7 @@ void CobFrameTracker::jointstate_cb(const sensor_msgs::JointState::ConstPtr& msg
 		///---------------------------------------------------------------------
 		KDL::FrameVel FrameVel;
 		KDL::JntArrayVel jntArrayVel = KDL::JntArrayVel(last_q_, last_q_dot_);
-		jntToCartSolver_vel_ = new KDL::ChainFkSolverVel_recursive(chain_);
+		jntToCartSolver_vel_.reset(new KDL::ChainFkSolverVel_recursive(chain_));
 		int ret = jntToCartSolver_vel_->JntToCart(jntArrayVel,FrameVel,-1);
 		if(ret>=0)
 		{

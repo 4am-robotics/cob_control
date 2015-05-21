@@ -41,7 +41,6 @@ class ISolverFactory
                                                          const Eigen::VectorXd &inCartVelocities,
                                                          const KDL::JntArray& q,
                                                          const KDL::JntArray& last_q_dot,
-                                                         const Eigen::VectorXd& tracking_errors,
                                                          boost::shared_ptr<DampingBase>& dampingMethod,
                                                          std::set<tConstraintBase>& constraints) const = 0;
 
@@ -72,14 +71,13 @@ class SolverFactory : public ISolverFactory
                                                  const Eigen::VectorXd &inCartVelocities,
                                                  const KDL::JntArray& q,
                                                  const KDL::JntArray& last_q_dot,
-                                                 const Eigen::VectorXd &tracking_errors,
                                                  boost::shared_ptr<DampingBase>& dampingMethod,
                                                  std::set<tConstraintBase>& constraints) const
         {
             T* cs = this->createSolver(asParams, jacobianData);
             cs->setConstraints(constraints);
             cs->setDamping(dampingMethod);
-            Eigen::MatrixXd new_q_dot = cs->solve(inCartVelocities, q, last_q_dot, tracking_errors);
+            Eigen::MatrixXd new_q_dot = cs->solve(inCartVelocities, q, last_q_dot);
             delete cs;
             cs = NULL;
             return new_q_dot;

@@ -71,8 +71,6 @@ private:
     ros::Subscriber odometry_sub;
     ros::Subscriber twist_sub;
 
-    ros::Subscriber error_sub_;
-
     ros::Subscriber twist_stamped_sub;
     ros::Subscriber base_sub;
     ros::Publisher vel_pub;
@@ -86,8 +84,6 @@ private:
     std::string chain_base_link_;
     std::string chain_tip_link_;
     std::vector<std::string> joints_;
-
-    Eigen::VectorXd tracking_err_;
 
     bool reset_markers_;
 
@@ -126,7 +122,6 @@ public:
     {
         twistControllerParams_.base_active = false;
         twistControllerParams_.base_compensation = false;
-        tracking_err_ = Eigen::VectorXd::Zero(6); // use initial DOM without sing (= 6 = 3 transl + 3 rot)
     }
 
     ~CobTwistController()
@@ -147,8 +142,6 @@ public:
     void jointstate_cb(const sensor_msgs::JointState::ConstPtr& msg);
     void odometry_cb(const nav_msgs::Odometry::ConstPtr& msg);
     void twist_cb(const geometry_msgs::Twist::ConstPtr& msg);
-
-    void twist_errors_cb(const std_msgs::Float64MultiArray::ConstPtr& msg);
 
     void base_twist_cb(const geometry_msgs::Twist::ConstPtr& msg);
 

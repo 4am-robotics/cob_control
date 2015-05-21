@@ -31,8 +31,7 @@
 
 Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Eigen::VectorXd &inCartVelocities,
                                       const KDL::JntArray& q,
-                                      const KDL::JntArray& last_q_dot,
-                                      const Eigen::VectorXd &tracking_errors) const
+                                      const KDL::JntArray& last_q_dot) const
 {
     uint16_t lv = 1;
     Eigen::VectorXd q_dot_0 = Eigen::VectorXd::Zero(q.rows());

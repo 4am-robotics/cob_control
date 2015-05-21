@@ -64,7 +64,6 @@ struct AugmentedSolverParams {
     bool base_compensation;
     bool base_active;
     double base_ratio;
-    double p_gain;
 
     // added limits from URDF file
     std::vector<double> limits_max;

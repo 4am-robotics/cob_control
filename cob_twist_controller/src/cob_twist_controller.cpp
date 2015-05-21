@@ -138,7 +138,6 @@ bool CobTwistController::initialize()
     jointstate_sub = nh_.subscribe("joint_states", 1, &CobTwistController::jointstate_cb, this);
     twist_sub = nh_twist.subscribe("command_twist", 1, &CobTwistController::twist_cb, this);
     twist_stamped_sub = nh_twist.subscribe("command_twist_stamped", 1, &CobTwistController::twist_stamped_cb, this);
-    error_sub_ = nh_twist.subscribe("command_errors", 1, &CobTwistController::twist_errors_cb, this);
 
     vel_pub = nh_.advertise<std_msgs::Float64MultiArray>("joint_group_velocity_controller/command", 1);
 
@@ -184,13 +183,11 @@ void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControl
     params.eps_damping = config.eps_damping;
     params.constraint = static_cast<ContraintTypes>(config.constraint);
     params.eps_truncation = config.eps_truncation;
-    params.p_gain = config.p_gain;
     params.base_compensation = config.base_compensation;
     params.base_active = config.base_active;
     params.base_ratio = config.base_ratio;
     params.limits_min = twistControllerParams_.limits_min; // from cob_twist_controller init
     params.limits_max = twistControllerParams_.limits_max; // from cob_twist_controller init
-    params.p_gain = config.p_gain;
     params.kappa = config.kappa;
 
     reset_markers_ = config.reset_markers;
@@ -233,7 +230,6 @@ void CobTwistController::initAugmentedSolverParams()
     params.base_ratio = 0.0;
     params.limits_min = twistControllerParams_.limits_min;
     params.limits_max = twistControllerParams_.limits_max;
-    params.p_gain = 0.0;
     params.kappa = 1.0;
 
     p_augmented_solver_->SetAugmentedSolverParams(params);
@@ -275,26 +271,6 @@ void CobTwistController::twist_stamped_cb(const geometry_msgs::TwistStamped::Con
 
     solve_twist(twist_transformed);
 }
-
-
-void CobTwistController::twist_errors_cb(const std_msgs::Float64MultiArray::ConstPtr& msg)
-{
-    boost::mutex::scoped_lock lock(lock_tracking_errors);
-    if(msg->data.size() != tracking_err_.rows())
-    {
-        ROS_ERROR("Size does not match! Stopping! Expected: %d, but got %d",
-                  static_cast<unsigned int>(tracking_err_.rows()),
-                  static_cast<unsigned int>(msg->data.size()));
-        tracking_err_ = Eigen::VectorXd::Zero(6);
-        return;
-    }
-
-    for(unsigned int i = 0; i < msg->data.size(); ++i)
-    {
-        tracking_err_(i) = msg->data[i];
-    }
-}
-
 
 
 /// Orientation of twist_msg is with respect to chain_base coordinate system
@@ -375,7 +351,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
         cb_frame_bl.M = KDL::Rotation::Quaternion(cb_transform_bl.getRotation().x(), cb_transform_bl.getRotation().y(), cb_transform_bl.getRotation().z(), cb_transform_bl.getRotation().w());
 
         //Solve twist
-        ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, bl_frame_ct, cb_frame_bl, tracking_err_, q_dot_ik);
+        ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, bl_frame_ct, cb_frame_bl, q_dot_ik);
     }
 
     if(twistControllerParams_.base_compensation)
@@ -435,7 +411,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 
 
 
-        ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, bl_frame_ct, cb_frame_bl, tracking_err_, q_dot_ik);
+        ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, bl_frame_ct, cb_frame_bl, q_dot_ik);
     }
 
     if(0 != ret_ik)

@@ -55,7 +55,6 @@ int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverP
                                                                 const Eigen::VectorXd &inCartVelocities,
                                                                 const KDL::JntArray& q,
                                                                 const KDL::JntArray& last_q_dot,
-                                                                const Eigen::VectorXd& tracking_errors,
                                                                 const Eigen::Vector3d& eePosition,
                                                                 Eigen::MatrixXd &outJntVelocities)
 {
@@ -104,7 +103,6 @@ int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverP
                                                         inCartVelocities,
                                                         q,
                                                         last_q_dot,
-                                                        tracking_errors,
                                                         db,
                                                         constraints);
     }

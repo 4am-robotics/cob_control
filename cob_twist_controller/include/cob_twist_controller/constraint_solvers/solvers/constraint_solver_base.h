@@ -51,8 +51,7 @@ class ConstraintSolver
          */
         virtual Eigen::MatrixXd solve(const Eigen::VectorXd &inCartVelocities,
                                       const KDL::JntArray& q,
-                                      const KDL::JntArray& last_q_dot,
-                                      const Eigen::VectorXd &tracking_errors) const = 0;
+                                      const KDL::JntArray& last_q_dot) const = 0;
 
         /**
          * Inline method to set the damping

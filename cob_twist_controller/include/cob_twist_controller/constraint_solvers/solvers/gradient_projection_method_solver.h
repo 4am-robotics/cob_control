@@ -49,8 +49,7 @@ class GradientProjectionMethodSolver : public ConstraintSolver<>
          */
         virtual Eigen::MatrixXd solve(const Eigen::VectorXd &inCartVelocities,
                                       const KDL::JntArray& q,
-                                      const KDL::JntArray& last_q_dot,
-                                      const Eigen::VectorXd &tracking_errors) const;
+                                      const KDL::JntArray& last_q_dot) const;
 
         GradientProjectionMethodSolver(AugmentedSolverParams &asParams,
                            Matrix6Xd &jacobianData)

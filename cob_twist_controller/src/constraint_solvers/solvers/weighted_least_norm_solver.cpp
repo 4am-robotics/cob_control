@@ -36,8 +36,7 @@
  */
 Eigen::MatrixXd WeightedLeastNormSolver::solve(const Eigen::VectorXd &inCartVelocities,
                                                const KDL::JntArray& q,
-                                               const KDL::JntArray& last_q_dot,
-                                               const Eigen::VectorXd &tracking_errors) const
+                                               const KDL::JntArray& last_q_dot) const
 {
     Eigen::MatrixXd W_WLN = this->calculateWeighting(q, last_q_dot);
     // for the following formulas see Chan paper ISSN 1042-296X [Page 288]
@@ -48,7 +47,7 @@ Eigen::MatrixXd WeightedLeastNormSolver::solve(const Eigen::VectorXd &inCartVelo
     Eigen::MatrixXd weightedJacobianPseudoInverse = pinvCalc_.calculate(this->asParams_, this->damping_, this->jacobianData_ * inv_root_W_WLN);
 
     // Take care: W^(1/2) * q_dot = weighted_pinv_J * x_dot -> One must consider the weighting!!!
-    Eigen::MatrixXd qdots_out = inv_root_W_WLN * weightedJacobianPseudoInverse * (inCartVelocities - this->asParams_.p_gain * tracking_errors);
+    Eigen::MatrixXd qdots_out = inv_root_W_WLN * weightedJacobianPseudoInverse * inCartVelocities;
     return qdots_out;
 }
 
