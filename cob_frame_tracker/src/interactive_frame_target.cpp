@@ -32,35 +32,35 @@
 
 bool InteractiveFrameTarget::initialize()
 {
-	ros::NodeHandle nh_cartesian("cartesian_controller");
+	ros::NodeHandle nh_tracker("frame_tracker");
 	
 	///get params
-	if (nh_cartesian.hasParam("update_rate"))
-	{	nh_cartesian.getParam("update_rate", update_rate_);	}
+	if (nh_tracker.hasParam("update_rate"))
+	{	nh_tracker.getParam("update_rate", update_rate_);	}
 	else
 	{	update_rate_ = 68.0;	}	//hz
 	
-	if (nh_cartesian.hasParam("chain_tip_link"))
+	if (nh_tracker.hasParam("chain_tip_link"))
 	{
-		nh_cartesian.getParam("chain_tip_link", chain_tip_link_);
+		nh_tracker.getParam("chain_tip_link", chain_tip_link_);
 	}
 	else
 	{
 		ROS_ERROR("No chain_tip_link specified. Aborting!");
 		return false;
 	}
-	if (nh_cartesian.hasParam("tracking_frame"))
+	if (nh_tracker.hasParam("tracking_frame"))
 	{
-		nh_cartesian.getParam("tracking_frame", tracking_frame_);
+		nh_tracker.getParam("tracking_frame", tracking_frame_);
 	}
 	else
 	{
 		ROS_ERROR("No tracking_frame specified. Aborting!");
 		return false;
 	}
-	if (nh_cartesian.hasParam("root_frame"))
+	if (nh_tracker.hasParam("root_frame"))
 	{
-		nh_cartesian.getParam("root_frame", root_frame_);
+		nh_tracker.getParam("root_frame", root_frame_);
 	}
 	else
 	{
@@ -69,26 +69,26 @@ bool InteractiveFrameTarget::initialize()
 	}
 	
 	
-	if (nh_cartesian.hasParam("movable_trans"))
-	{	nh_cartesian.getParam("movable_trans", movable_trans_);	}
+	if (nh_tracker.hasParam("movable_trans"))
+	{	nh_tracker.getParam("movable_trans", movable_trans_);	}
 	else
 	{	movable_trans_ = true;	}
-	if (nh_cartesian.hasParam("movable_rot"))
-	{	nh_cartesian.getParam("movable_rot", movable_rot_);	}
+	if (nh_tracker.hasParam("movable_rot"))
+	{	nh_tracker.getParam("movable_rot", movable_rot_);	}
 	else
 	{	movable_rot_ = true;	}
 	
 	tracking_ = false;
 	
-	ROS_WARN("Waiting for StartTrackingServer...");
-	ros::service::waitForService("start_tracking");
+	start_tracking_client_ = nh_tracker.serviceClient<cob_srvs::SetString>("start_tracking");
+	ROS_INFO("Waiting for StartTrackingServer...");
+	start_tracking_client_.waitForExistence();
 	ROS_INFO("...done");
-	start_tracking_client_ = nh_.serviceClient<cob_srvs::SetString>("start_tracking");
 	
-	ROS_WARN("Waiting for StopTrackingServer...");
-	ros::service::waitForService("stop_tracking");
+	stop_tracking_client_ = nh_tracker.serviceClient<std_srvs::Empty>("stop_tracking");
+	ROS_INFO("Waiting for StopTrackingServer...");
+	stop_tracking_client_.waitForExistence();
 	ROS_INFO("...done");
-	stop_tracking_client_ = nh_.serviceClient<std_srvs::Empty>("stop_tracking");
 	
 	bool transform_available = false;
 	while(!transform_available)

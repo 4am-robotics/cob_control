@@ -43,7 +43,7 @@
 bool CobArticulation::initialize()
 {
 	ros::NodeHandle nh_articulation("articulation");
-	ros::NodeHandle nh_cartesian("cartesian_controller");
+	ros::NodeHandle nh_tracker("frame_tracker");
 	
 	///get params articulation Nodehandle
 	if(!nh_articulation.getParam("file_name", fileName_))
@@ -65,14 +65,14 @@ bool CobArticulation::initialize()
 	}
 	
 	/// Cartesian Nodehandle
-	if (!nh_cartesian.getParam("chain_tip_link", chain_tip_link_))
+	if (!nh_tracker.getParam("chain_tip_link", chain_tip_link_))
 	{
 		ROS_ERROR("Parameter 'chain_tip_link' not set");
 		return false;
 	}
 	
-	if (nh_cartesian.hasParam("update_rate"))
-	{	nh_cartesian.getParam("update_rate", update_rate_);	}
+	if (nh_tracker.hasParam("update_rate"))
+	{	nh_tracker.getParam("update_rate", update_rate_);	}
 	else
 	{	update_rate_ = 68.0;	}	//hz
 	
@@ -89,10 +89,10 @@ bool CobArticulation::initialize()
 	jerk_pub_ = nh_articulation.advertise<std_msgs::Float64> ("debug/linear_jerk", 1);
 	
 	ROS_WARN("Waiting for Services...");
-	ros::service::waitForService(nh_.getNamespace()+"/start_tracking");
-	ros::service::waitForService(nh_.getNamespace()+"/stop_tracking");
-	startTracking_ = nh_.serviceClient<cob_srvs::SetString>("start_tracking");
-	stopTracking_ = nh_.serviceClient<std_srvs::Empty>("stop_tracking");
+	startTracking_ = nh_tracker.serviceClient<cob_srvs::SetString>("start_tracking");
+	stopTracking_ = nh_tracker.serviceClient<std_srvs::Empty>("stop_tracking");
+	startTracking_.waitForExistence();
+	stopTracking_.waitForExistence();
 	ROS_INFO("...done!");
 	
 	return true;
