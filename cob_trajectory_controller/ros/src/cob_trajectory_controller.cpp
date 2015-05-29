@@ -115,7 +115,7 @@ public:
     action_name_("follow_joint_trajectory")
     {
         joint_vel_pub_ = n_.advertise<std_msgs::Float64MultiArray>("joint_group_velocity_controller/command", 1);
-        controller_state_ = n_.subscribe("state", 1, &cob_trajectory_controller_node::state_callback, this);
+        controller_state_ = n_.subscribe("joint_trajectory_controller/state", 1, &cob_trajectory_controller_node::state_callback, this);
         operation_mode_ = n_.subscribe("driver/current_operationmode", 1, &cob_trajectory_controller_node::operationmode_callback, this);
         srvServer_Stop_ = n_.advertiseService("driver/stop", &cob_trajectory_controller_node::srvCallback_Stop, this);
         srvServer_SetVel_ = n_.advertiseService("driver/set_joint_velocity", &cob_trajectory_controller_node::srvCallback_setVel, this);
