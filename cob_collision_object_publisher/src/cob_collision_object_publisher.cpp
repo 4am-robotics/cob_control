@@ -36,9 +36,8 @@
 
 #include <ctime>
 
-#include "cob_collision_object_publisher/MarkerShapes.hpp"
-
 #include "cob_collision_object_publisher/ObjectOfInterest.h"
+#include "cob_collision_object_publisher/marker_shapes.hpp"
 
 
 typedef boost::shared_ptr< IMarkerShape > tPtrMarkerShapeBase;
