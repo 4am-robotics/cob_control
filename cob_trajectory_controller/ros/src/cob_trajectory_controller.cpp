@@ -61,12 +61,12 @@
 
 #include "ros/ros.h"
 #include <std_msgs/String.h>
+#include <std_msgs/Float64MultiArray.h>
 #include <sensor_msgs/JointState.h>
 #include <control_msgs/JointTrajectoryControllerState.h>
 #include <actionlib/server/simple_action_server.h>
 #include <control_msgs/FollowJointTrajectoryAction.h>
 
-#include <brics_actuator/JointVelocities.h>
 #include <cob_trajectory_controller/genericArmCtrl.h>
 // ROS service includes
 #include <std_srvs/Trigger.h>
@@ -114,7 +114,7 @@ public:
     as_(n_, "joint_trajectory_controller/follow_joint_trajectory", boost::bind(&cob_trajectory_controller_node::executeFollowTrajectory, this, _1), false),
     action_name_("follow_joint_trajectory")
     {
-        joint_vel_pub_ = n_.advertise<brics_actuator::JointVelocities>("command_vel", 1);
+        joint_vel_pub_ = n_.advertise<std_msgs::Float64MultiArray>("joint_group_velocity_controller/command", 1);
         controller_state_ = n_.subscribe("state", 1, &cob_trajectory_controller_node::state_callback, this);
         operation_mode_ = n_.subscribe("driver/current_operationmode", 1, &cob_trajectory_controller_node::operationmode_callback, this);
         srvServer_Stop_ = n_.advertiseService("driver/stop", &cob_trajectory_controller_node::srvCallback_Stop, this);
@@ -416,13 +416,10 @@ public:
                     executing_ = false;
                     preemted_ = false;
                 }
-                brics_actuator::JointVelocities target_joint_vel;
-                target_joint_vel.velocities.resize(DOF);
+                std_msgs::Float64MultiArray target_joint_vel;
                 for(int i=0; i<DOF; i++)
                 {
-                    target_joint_vel.velocities[i].joint_uri = JointNames_[i].c_str();
-                    target_joint_vel.velocities[i].unit = "rad";
-                    target_joint_vel.velocities[i].value = des_vel.at(i);
+                    target_joint_vel.data.push_back(des_vel.at(i));
                 }
                 
                 //send everything
@@ -439,13 +436,10 @@ public:
         {   //WATCHDOG TODO: don't always send
             if(watchdog_counter < 10)
             {
-                brics_actuator::JointVelocities target_joint_vel;
-                target_joint_vel.velocities.resize(DOF);
-                for (int i = 0; i < DOF; i += 1)
+                std_msgs::Float64MultiArray target_joint_vel;
+                for(int i=0; i<DOF; i++)
                 {
-                    target_joint_vel.velocities[i].joint_uri = JointNames_[i].c_str();
-                    target_joint_vel.velocities[i].unit = "rad";
-                    target_joint_vel.velocities[i].value = 0;
+                    target_joint_vel.data.push_back(0.0);
                 }
                 joint_vel_pub_.publish(target_joint_vel);
             }
