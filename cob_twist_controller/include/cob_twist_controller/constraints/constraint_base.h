@@ -86,7 +86,7 @@ class ConstraintBase
         virtual double getDerivativeValue() const = 0;
         virtual double getSafeRegion() const = 0;
         virtual Eigen::VectorXd getPartialValues() const = 0;
-        virtual double getSelfMotionMagnitude(Eigen::MatrixXd& particularSolution, Eigen::MatrixXd& homogeneousSolution) const = 0;
+        virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particularSolution, const Eigen::MatrixXd& homogeneousSolution) const = 0;
 
         inline bool operator<(const ConstraintBase& other) const
         {

@@ -36,34 +36,10 @@
 #include "fcl/collision_object.h"
 
 #include "cob_collision_object_publisher/fcl_marker_converter.hpp"
+#include "cob_collision_object_publisher/marker_shapes_interface.hpp"
 
 static const std::string g_marker_namespace = "collision_object";
 static const std::string g_frame_id = "base_link";
-
-/* BEGIN IMarkerShape *******************************************************************************************/
-/// Interface class marking methods that have to be implemented in derived classes.
-class IMarkerShape
-{
-    protected:
-        static uint32_t classCtr_;
-
-    public:
-         IMarkerShape()
-         {
-             classCtr_++;
-         }
-
-         virtual uint32_t getId() const = 0;
-         virtual void setColor(double color_r, double color_g, double color_b, double color_a = 1.0) = 0;
-         virtual visualization_msgs::Marker getMarker() = 0;
-         virtual void setDrawn() = 0;
-         virtual bool isDrawn() const = 0;
-         virtual fcl::CollisionObject getCollisionObject() const = 0;
-         virtual ~IMarkerShape() {}
-};
-
-/* END IMarkerShape *********************************************************************************************/
-
 
 /* BEGIN MarkerShape ********************************************************************************************/
 /// Template class implementation for box, sphere and cylinder fcl::shapes. Creates visualization marker.
@@ -109,6 +85,7 @@ class MarkerShape : public IMarkerShape
         inline void setDrawn();
         inline bool isDrawn() const;
         fcl::CollisionObject getCollisionObject() const;
+//        T getGeoShapeObject() const;
 
         virtual ~MarkerShape(){}
 };
@@ -118,9 +95,6 @@ class MarkerShape : public IMarkerShape
 
 
 
-
-
-
-#include "cob_collision_object_publisher/marker_shapes_impl.hpp"
+#include "../../../cob_collision_object_publisher/include/cob_collision_object_publisher/marker_shapes_impl.hpp"
 
 #endif /* MARKER_SHAPES_HPP_ */

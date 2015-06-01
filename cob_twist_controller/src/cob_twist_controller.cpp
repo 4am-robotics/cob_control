@@ -35,6 +35,9 @@
 
 #include <Eigen/Dense>
 
+#include "cob_collision_object_publisher/ObjectOfInterest.h"
+
+
 #define DEBUG_BASE_ACTIVE    0
 #define DEBUG_BASE_COMP     0
 
@@ -102,6 +105,9 @@ bool CobTwistController::initialize()
         return false;
     }
 
+
+    my_tree.getChain("base_link", chain_tip_link_, from_base_link_chain_);
+
     ///parse robot_description and set velocity limits
     urdf::Model model;
     if (!model.initParam("/robot_description"))
@@ -116,6 +122,9 @@ bool CobTwistController::initialize()
         twistControllerParams_.limits_min.push_back(model.getJoint(joints_[i])->limits->lower);
         twistControllerParams_.limits_max.push_back(model.getJoint(joints_[i])->limits->upper);
     }
+
+
+    // ros::ServiceClient client = nh_twist.serviceClient<cob_collision_object_publisher::ObjectOfInterest>("getSmallestDistance");
 
     ///initialize configuration control solver
     p_augmented_solver_.reset(new AugmentedSolver(chain_, 0.001));
@@ -166,6 +175,9 @@ bool CobTwistController::initialize()
 
     this->limiters_.reset(new LimiterContainer(this->twistControllerParams_, this->chain_));
     this->limiters_->init();
+
+
+
 
     ROS_INFO("...initialized!");
     return true;
@@ -397,6 +409,9 @@ void CobTwistController::solve_twist(KDL::Twist twist)
         {
             tf_listener_.waitForTransform(chain_base_link_,"base_link", ros::Time(0), ros::Duration(0.5));
             tf_listener_.lookupTransform(chain_base_link_,"base_link", ros::Time(0), cb_transform_bl);
+
+            ROS_INFO_STREAM("chain_base_link_: " << chain_base_link_ << std::endl);
+            // ROS_INFO_STREAM("cb_transform_bl: " << cb_transform_bl << std::endl);
         }
         catch (tf::TransformException &ex)
         {

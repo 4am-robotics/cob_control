@@ -33,6 +33,7 @@
 #include <Eigen/LU> // necessary to use several methods on EIGEN Matrices.
 #include <vector>
 #include <stdint.h>
+#include <kdl/chainjnttojacsolver.hpp>
 
 #define MAX_CRIT true
 #define MIN_CRIT false
@@ -67,6 +68,8 @@ struct AugmentedSolverParams {
     bool base_compensation;
     bool base_active;
     double base_ratio;
+    KDL::ChainJntToJacSolver* jnt2jac;
+
 
     // added limits from URDF file
     std::vector<double> limits_max;

@@ -32,10 +32,12 @@
 
 #include "cob_collision_object_publisher/marker_shapes.hpp"
 
-uint32_t IMarkerShape::classCtr_ = 0;
+/* BEGIN IMarkerShape *******************************************************************************************/
+//uint32_t IMarkerShape::classCtr_ = 0;
+/* END IMarkerShape *********************************************************************************************/
 
 
-
+/* BEGIN MarkerShape ********************************************************************************************/
 template <typename T>
 MarkerShape<T>::MarkerShape(T &fclObject,
       double x, double y, double z,
@@ -134,8 +136,8 @@ fcl::CollisionObject MarkerShape<T>::getCollisionObject() const
                                   this->marker_.pose.position.y,
                                   this->marker_.pose.position.z));
 
-    T *ptrGeoShape = fclMarkerConverter_.getGeoShape();
-    fcl::CollisionObject cobj(boost::shared_ptr<fcl::CollisionGeometry>(ptrGeoShape), x);
+    T geoShape = fclMarkerConverter_.getGeoShape();
+    fcl::CollisionObject cobj(boost::shared_ptr<fcl::CollisionGeometry>(new T(geoShape)), x);
 
 //            fcl::Quaternion3f q = cobj.getQuatRotation();
 //            fcl::Vec3f v = cobj.getTranslation();
@@ -144,6 +146,24 @@ fcl::CollisionObject MarkerShape<T>::getCollisionObject() const
 
     return cobj;
 }
+
+
+
+//template <typename T>
+//T MarkerShape<T>::getGeoShapeObject() const
+//{
+//    T geoShape = fclMarkerConverter_.getGeoShape();
+//    fcl::CollisionObject cobj(boost::shared_ptr<fcl::CollisionGeometry>(&geoShape), x);
+//
+////            fcl::Quaternion3f q = cobj.getQuatRotation();
+////            fcl::Vec3f v = cobj.getTranslation();
+////            ROS_INFO_STREAM("Quaternion3f: " << q.getW() << "; " << q.getX() << "; " << q.getY() << "; " << q.getZ() << std::endl);
+////            ROS_INFO_STREAM("Vec3f: " << v << std::endl);
+//
+//    return geoShape;
+//}
+
+/* END MarkerShape **********************************************************************************************/
 
 
 #endif /* MARKER_SHAPES_IMPL_HPP_ */

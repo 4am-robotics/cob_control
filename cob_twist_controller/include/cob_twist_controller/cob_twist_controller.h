@@ -76,7 +76,8 @@ private:
     ros::Publisher vel_pub;
     ros::Publisher base_vel_pub;
 
-    KDL::Chain chain_;
+    KDL::Chain chain_, from_base_link_chain_;
+
     KDL::Twist twist_odometry_cb_;
     KDL::JntArray last_q_;
     KDL::JntArray last_q_dot_;

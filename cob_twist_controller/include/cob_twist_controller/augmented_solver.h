@@ -97,6 +97,7 @@ public:
 
 private:
     const KDL::Chain chain_;
+    const KDL::Chain from_base_link_chain_;
     KDL::Jacobian jac_, jac_base_;
     KDL::ChainJntToJacSolver jnt2jac_;
     AugmentedSolverParams params_;

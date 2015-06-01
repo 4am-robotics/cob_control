@@ -1,0 +1,65 @@
+/*
+ *****************************************************************
+ * \file
+ *
+ * \note
+ *   Copyright (c) 2015 \n
+ *   Fraunhofer Institute for Manufacturing Engineering
+ *   and Automation (IPA) \n\n
+ *
+ *****************************************************************
+ *
+ * \note
+ *   Project name: care-o-bot
+ * \note
+ *   ROS stack name: cob_control
+ * \note
+ *   ROS package name: cob_collision_object_publisher
+ *
+ * \author
+ *   Author: Marco Bezzon, email: Marco.Bezzon@ipa.fraunhofer.de
+ *
+ * \date Date of creation: May, 2015
+ *
+ * \brief
+ *   Implementation of the ShapesManager definitions.
+ ****************************************************************/
+#include "cob_collision_object_publisher/shapes_manager.hpp"
+
+
+ShapesManager::ShapesManager(const ros::Publisher &pub) : pub_(pub)
+{
+}
+
+
+ShapesManager::~ShapesManager()
+{
+    this->clear();
+}
+
+
+void ShapesManager::addShape(tPtrMarkerShapeBase s)
+{
+    this->shapes_.push_back(s);
+}
+
+
+void ShapesManager::draw(bool enforceDraw)
+{
+    for(tcIter iter = shapes_.begin(); iter != shapes_.end(); ++iter)
+    {
+        if(!((*iter)->isDrawn()) || enforceDraw)
+        {
+            ROS_INFO_STREAM("Publishing marker #" << (*iter)->getId() << std::endl);
+            visualization_msgs::Marker marker = (*iter)->getMarker();
+            this->pub_.publish(marker);
+            (*iter)->setDrawn();
+        }
+    }
+}
+
+
+void ShapesManager::clear()
+{
+    this->shapes_.clear();
+}

@@ -31,6 +31,11 @@
 
 #include "cob_twist_controller/constraints/constraint.h"
 #include "ros/ros.h"
+#include "cob_collision_object_publisher/ObjectOfInterest.h"
+
+#include <kdl/chainiksolver.hpp>
+#include <kdl/chainjnttojacsolver.hpp>
+#include <kdl/jntarray.hpp>
 
 /* BEGIN ConstraintsBuilder *************************************************************************************/
 /**
@@ -106,7 +111,7 @@ double CollisionAvoidance<PRIO>::getDerivativeValue() const
 template <typename PRIO>
 double CollisionAvoidance<PRIO>::getSafeRegion() const
 {
-    return 0.5; // in [m]
+    return 0.1; // in [m]
 }
 
 
@@ -116,84 +121,125 @@ Eigen::VectorXd  CollisionAvoidance<PRIO>::getPartialValues() const
     uint8_t vecRows = static_cast<uint8_t>(this->jointPos_.rows());
     Eigen::VectorXd partialValues = Eigen::VectorXd::Zero(vecRows);
 
-
-
     // Create virtual obstacle
-    double stepSize = 0.01;
-    Eigen::Vector3d obstaclePosition(0.5, -0.3, 1);// [m]
-    Eigen::Vector3d obstacleDirectionA(0, 1, 0);
-    Eigen::Vector3d obstacleDirectionB(0, 0, 1);
+//    double stepSize = 0.01;
+//    Eigen::Vector3d obstaclePosition(0.5, -0.3, 1);// [m]
+//    Eigen::Vector3d obstacleDirectionA(0, 1, 0);
+//    Eigen::Vector3d obstacleDirectionB(0, 0, 1);
 
 
-    // Calculate the nearest obstacle
-    // v_x = v_x_0 + s * v_a + t * v_b;
+//    // Calculate the nearest obstacle
+//    // v_x = v_x_0 + s * v_a + t * v_b;
     const ConstraintParamsCA* constrParamCAPtr = reinterpret_cast<const ConstraintParamsCA*>(this->constraintParams_);
-    Eigen::Vector3d endeffectorPosition = constrParamCAPtr->getEndeffectorPosition();
-    Eigen::Vector3d obstVector;
-    //OS_INFO_STREAM("endeffectorPosition: " << std::endl << endeffectorPosition);
-    bool found = false;
-    double dist;
-    for (double s = 0.0; s < 1.0; s = s + stepSize)
+    const AugmentedSolverParams &params = constrParamCAPtr->getAugmentedSolverParams();
+//    Eigen::Vector3d endeffectorPosition = constrParamCAPtr->getEndeffectorPosition();
+//    Eigen::Vector3d obstVector;
+//    //OS_INFO_STREAM("endeffectorPosition: " << std::endl << endeffectorPosition);
+//    bool found = false;
+//    double dist;
+//    for (double s = 0.0; s < 1.0; s = s + stepSize)
+//    {
+//        for (double t = 0.0; t < 1.0; t = t + stepSize)
+//        {
+//            Eigen::Vector3d tmpObstVector = obstaclePosition + s * obstacleDirectionA + t * obstacleDirectionB;
+//            Eigen::Vector3d distVec = endeffectorPosition - tmpObstVector;
+//            dist = distVec.norm();
+//
+//
+//            //ROS_INFO_STREAM("tmpObstVector: " << std::endl << tmpObstVector);
+//            //ROS_INFO_STREAM("Calculated distance: " << dist);
+//
+//            if (this->getSafeRegion() > dist)
+//            {
+//                obstVector = tmpObstVector;
+//                found = true;
+//                break;
+//            }
+//        }
+//
+//        if(found)
+//        {
+//            break;
+//        }
+//    }
+
+    if (ros::service::exists("/getSmallestDistance", true))
     {
-        for (double t = 0.0; t < 1.0; t = t + stepSize)
+        ROS_INFO_STREAM("Service seems to exist!!!");
+
+        Eigen::Vector3d endeffectorPosition = constrParamCAPtr->getEndeffectorPosition();
+        cob_collision_object_publisher::ObjectOfInterest ooi;
+
+        ooi.request.p.position.x = endeffectorPosition(0);
+        ooi.request.p.position.y = endeffectorPosition(1);
+        ooi.request.p.position.z = endeffectorPosition(2);
+        ooi.request.p.orientation.w = 1.0;
+
+        ooi.request.shapeType = 2; // visualization_msgs::Marker::SPHERE
+
+        //ROS_INFO_STREAM("Calling service");
+        bool found = ros::service::call("/getSmallestDistance", ooi);
+        //ROS_INFO_STREAM("Service returned" << found);
+
+        if (found)
         {
-            Eigen::Vector3d tmpObstVector = obstaclePosition + s * obstacleDirectionA + t * obstacleDirectionB;
-            Eigen::Vector3d distVec = endeffectorPosition - tmpObstVector;
-            dist = distVec.norm();
 
+            KDL::Jacobian new_jac_chain(7); // TODO: Change hard coded
+            KDL::JntArray ja = this->jointPos_;
+            //params.jnt2jac.JntToJac(ja, new_jac_chain); // TODO: Change hard coded
 
-            //ROS_INFO_STREAM("tmpObstVector: " << std::endl << tmpObstVector);
-            //ROS_INFO_STREAM("Calculated distance: " << dist);
+            params.jnt2jac->JntToJac(ja, new_jac_chain, 4);
+
+            double dist = ooi.response.distance;
 
             if (this->getSafeRegion() > dist)
             {
-                obstVector = tmpObstVector;
-                found = true;
-                break;
+                Eigen::Vector3d obstVector;
+                obstVector <<  ooi.response.obstacle.position.x,  ooi.response.obstacle.position.y, ooi.response.obstacle.position.z;
+
+                const ConstraintParamsCA* constrParamCAPtr = reinterpret_cast<const ConstraintParamsCA*>(this->constraintParams_);
+                //Matrix6Xd jac = constrParamCAPtr->getEndeffectorJacobian();
+
+                Matrix6Xd jac = new_jac_chain.data;
+
+                Eigen::Vector3d endeffectorPosition = constrParamCAPtr->getEndeffectorPosition();
+                Eigen::Matrix3Xd m = Eigen::Matrix3Xd::Zero(3, jac.cols());
+
+                m << jac.row(0),
+                     jac.row(1),
+                     jac.row(2);
+
+                // m.conservativeResize(3, 4);
+
+                Eigen::Vector3d distVector = endeffectorPosition - obstVector;
+
+                if (dist > 0.0)
+                {
+                    partialValues =  2.0 * ((dist - this->getSafeRegion()) / dist) * m.transpose() * distVector;
+                }
+                else
+                {
+                    partialValues =  2.0 * (((1.0e-9) - this->getSafeRegion()) / (1.0e-9)) * m.transpose() * distVector;
+                }
+
+
+                ROS_INFO_STREAM("Costfunction results: " << pow( (dist - this->getSafeRegion()), 2.0));
+                ROS_INFO_STREAM("jac: " << std::endl << jac);
             }
         }
-
-        if(found)
-        {
-            break;
-        }
     }
 
-    if (found)
-    {
-        const ConstraintParamsCA* constrParamCAPtr = reinterpret_cast<const ConstraintParamsCA*>(this->constraintParams_);
-        Matrix6Xd jac = constrParamCAPtr->getEndeffectorJacobian();
-        Eigen::Vector3d endeffectorPosition = constrParamCAPtr->getEndeffectorPosition();
-        Eigen::Matrix3Xd m = Eigen::Matrix3Xd::Zero(3, jac.cols());
 
-        m << jac.row(0),
-             jac.row(1),
-             jac.row(2);
-
-        Eigen::Vector3d distVector = endeffectorPosition - obstVector;
-
-        if (dist != 0.0)
-        {
-            partialValues =  2.0 * ((dist - this->getSafeRegion()) / dist) * m.transpose() * distVector;
-        }
-        else
-        {
-            partialValues =  2.0 * (((1.0e-9) - this->getSafeRegion()) / (1.0e-9)) * m.transpose() * distVector;
-        }
-
-
-        ROS_INFO_STREAM("Costfunction results: " << pow( (dist - this->getSafeRegion()), 2.0));
-        ROS_INFO_STREAM("jac: " << std::endl << jac);
-    }
 
     return partialValues;
 }
 
 template <typename PRIO>
-double CollisionAvoidance<PRIO>::getSelfMotionMagnitude(Eigen::MatrixXd& particularSolution, Eigen::MatrixXd& homogeneousSolution) const
+double CollisionAvoidance<PRIO>::getSelfMotionMagnitude(const Eigen::MatrixXd& particularSolution, const Eigen::MatrixXd& homogeneousSolution) const
 {
     const AugmentedSolverParams &params = this->constraintParams_->getAugmentedSolverParams();
-    return SelfMotionMagnitudeFactory< SmmDeterminatorVelocityBounds<MAX_CRIT> >::calculate(params, particularSolution, homogeneousSolution);
+    //return SelfMotionMagnitudeFactory< SmmDeterminatorVelocityBounds<MAX_CRIT> >::calculate(params, particularSolution, homogeneousSolution);
+    return params.kappa;
 }
 /* END CollisionAvoidance ***************************************************************************************/
 
@@ -237,7 +283,7 @@ double JointLimitAvoidance<PRIO>::getSafeRegion() const
 }
 
 template <typename PRIO>
-double JointLimitAvoidance<PRIO>::getSelfMotionMagnitude(Eigen::MatrixXd& particularSolution, Eigen::MatrixXd& homogeneousSolution) const
+double JointLimitAvoidance<PRIO>::getSelfMotionMagnitude(const Eigen::MatrixXd& particularSolution, const Eigen::MatrixXd& homogeneousSolution) const
 {
     // k_H by Armijo-Rule
     double t;
@@ -388,7 +434,7 @@ Eigen::VectorXd JointLimitAvoidanceMid<PRIO>::getPartialValues() const
 }
 
 template <typename PRIO>
-double JointLimitAvoidanceMid<PRIO>::getSelfMotionMagnitude(Eigen::MatrixXd& particularSolution, Eigen::MatrixXd& homogeneousSolution) const
+double JointLimitAvoidanceMid<PRIO>::getSelfMotionMagnitude(const Eigen::MatrixXd& particularSolution, const Eigen::MatrixXd& homogeneousSolution) const
 {
     const AugmentedSolverParams &params = this->constraintParams_->getAugmentedSolverParams();
     return SelfMotionMagnitudeFactory<SmmDeterminatorVelocityBounds<MAX_CRIT> >::calculate(params, particularSolution, homogeneousSolution);

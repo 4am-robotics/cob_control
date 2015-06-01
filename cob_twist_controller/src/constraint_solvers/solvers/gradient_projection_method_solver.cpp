@@ -36,9 +36,9 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Eigen::VectorXd &inC
     double kappa;
     Eigen::VectorXd q_dot_0 = Eigen::VectorXd::Zero(q.rows());
 
-
     Eigen::MatrixXd jacobianPseudoInverse = pinvCalc_.calculate(this->asParams_, this->damping_, this->jacobianData_);
-    Eigen::MatrixXd projector = Eigen::MatrixXd::Identity(jacobianPseudoInverse.rows(), this->jacobianData_.cols()) - jacobianPseudoInverse * this->jacobianData_;
+    Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(jacobianPseudoInverse.rows(), this->jacobianData_.cols());
+    Eigen::MatrixXd projector = ident - jacobianPseudoInverse * this->jacobianData_;
 
     Eigen::MatrixXd partialSolution = jacobianPseudoInverse * inCartVelocities;
 
@@ -57,8 +57,15 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Eigen::VectorXd &inC
     }
 
     if(q_dot_0.norm() > 0.00001)
+    //if(false)
     {
+        ROS_INFO_STREAM("jacobianPseudoInverse: " << std::endl << jacobianPseudoInverse);
+        ROS_INFO_STREAM("this->jacobianData_: " << std::endl << this->jacobianData_);
+        ROS_INFO_STREAM("projector: " << std::endl << projector);
         ROS_INFO_STREAM("q_dot_0: " << std::endl << q_dot_0);
+        ROS_INFO_STREAM("kappa: " << std::endl << kappa);
+        ROS_INFO_STREAM("partialSolution: " << std::endl << partialSolution);
+        ROS_INFO_STREAM("homogeneousSolution: " << std::endl << homogeneousSolution);
     }
 
 
@@ -93,6 +100,12 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Eigen::VectorXd &inC
 //    }
 
     Eigen::MatrixXd qdots_out = partialSolution + kappa * homogeneousSolution;
+    if(q_dot_0.norm() > 0.00001)
+    //if(false)
+    {
+        ROS_INFO_STREAM("qdots_out: " << std::endl << qdots_out);
+    }
+
 
     // (Eigen::MatrixXd::Identity(jacobianPseudoInverse.rows(), jacobianPseudoInverse.cols()) + jacobianPseudoInverse * this->jacobianData_) * q_dot_0;
 
