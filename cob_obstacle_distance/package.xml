@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>cob_collision_object_publisher</name>
+  <name>cob_obstacle_distance</name>
   <version>0.0.1</version>
-  <description>The cob_collision_object_publisher package</description>
+  <description>The cob_obstacle_distance package</description>
 
   <author email="fxm-mb@ipa.fhg.de">Marco Bezzon</author>
   <maintainer email="fxm-mb@ipa.fhg.de">Marco Bezzon</maintainer>

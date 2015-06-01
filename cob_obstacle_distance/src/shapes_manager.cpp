@@ -14,7 +14,7 @@
  * \note
  *   ROS stack name: cob_control
  * \note
- *   ROS package name: cob_collision_object_publisher
+ *   ROS package name: cob_obstacle_distance
  *
  * \author
  *   Author: Marco Bezzon, email: Marco.Bezzon@ipa.fraunhofer.de
@@ -24,7 +24,7 @@
  * \brief
  *   Implementation of the ShapesManager definitions.
  ****************************************************************/
-#include "cob_collision_object_publisher/shapes_manager.hpp"
+#include "cob_obstacle_distance/shapes_manager.hpp"
 
 
 ShapesManager::ShapesManager(const ros::Publisher &pub) : pub_(pub)

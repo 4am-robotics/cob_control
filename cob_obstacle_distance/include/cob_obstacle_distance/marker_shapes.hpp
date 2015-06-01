@@ -14,7 +14,7 @@
  * \note
  *   ROS stack name: cob_control
  * \note
- *   ROS package name: cob_collision_object_publisher
+ *   ROS package name: cob_obstacle_distance
  *
  * \author
  *   Author: Marco Bezzon, email: Marco.Bezzon@ipa.fraunhofer.de
@@ -35,8 +35,8 @@
 #include "fcl/shape/geometric_shapes.h"
 #include "fcl/collision_object.h"
 
-#include "cob_collision_object_publisher/fcl_marker_converter.hpp"
-#include "cob_collision_object_publisher/marker_shapes_interface.hpp"
+#include "cob_obstacle_distance/fcl_marker_converter.hpp"
+#include "cob_obstacle_distance/marker_shapes_interface.hpp"
 
 static const std::string g_marker_namespace = "collision_object";
 static const std::string g_frame_id = "base_link";
@@ -95,6 +95,6 @@ class MarkerShape : public IMarkerShape
 
 
 
-#include "../../../cob_collision_object_publisher/include/cob_collision_object_publisher/marker_shapes_impl.hpp"
+#include "../../../cob_obstacle_distance/include/cob_obstacle_distance/marker_shapes_impl.hpp"
 
 #endif /* MARKER_SHAPES_HPP_ */

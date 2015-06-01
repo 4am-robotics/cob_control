@@ -37,7 +37,7 @@
 
 
 
-#include "cob_collision_object_publisher/ObjectOfInterest.h"
+#include "cob_obstacle_distance/ObjectOfInterest.h"
 
 
 int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in,
@@ -118,7 +118,7 @@ int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in,
 
     if (ros::service::exists("/getSmallestDistance", true))
     {
-        cob_collision_object_publisher::ObjectOfInterest ooi;
+        cob_obstacle_distance::ObjectOfInterest ooi;
 
         ooi.request.p.position.x = eePosition(0);
         ooi.request.p.position.y = eePosition(1);

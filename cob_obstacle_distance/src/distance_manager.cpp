@@ -14,7 +14,7 @@
  * \note
  *   ROS stack name: cob_control
  * \note
- *   ROS package name: cob_collision_object_publisher
+ *   ROS package name: cob_obstacle_distance
  *
  * \author
  *   Author: Marco Bezzon, email: Marco.Bezzon@ipa.fraunhofer.de
@@ -25,7 +25,7 @@
  *   Implementation of the DistanceManager definitions.
  ****************************************************************/
 
-#include "cob_collision_object_publisher/distance_manager.hpp"
+#include "cob_obstacle_distance/distance_manager.hpp"
 
 #include "fcl/collision_object.h"
 #include "fcl/collision.h"
@@ -108,12 +108,12 @@ bool DistanceManager::collide(tPtrMarkerShapeBase s1, tPtrMarkerShapeBase s2)
 //            ROS_INFO_STREAM("Nearest Point 2 (abs. from base link): " << (resultD2.nearest_points[1] + y.getTranslation()) << std::endl);
 }
 
-bool DistanceManager::getSmallestDistance(cob_collision_object_publisher::ObjectOfInterest::Request& request,
-                                          cob_collision_object_publisher::ObjectOfInterest::Response& response)
+bool DistanceManager::getSmallestDistance(cob_obstacle_distance::ObjectOfInterest::Request& request,
+                                          cob_obstacle_distance::ObjectOfInterest::Response& response)
 {
 
     ROS_INFO_STREAM("Retrieved service request!!! ");
-    response = cob_collision_object_publisher::ObjectOfInterest::Response();
+    response = cob_obstacle_distance::ObjectOfInterest::Response();
     bool success = true;
     std_msgs::ColorRGBA col;
     col.a = 1.0;

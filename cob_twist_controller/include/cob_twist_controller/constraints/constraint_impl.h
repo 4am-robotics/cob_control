@@ -31,7 +31,7 @@
 
 #include "cob_twist_controller/constraints/constraint.h"
 #include "ros/ros.h"
-#include "cob_collision_object_publisher/ObjectOfInterest.h"
+#include "cob_obstacle_distance/ObjectOfInterest.h"
 
 #include <kdl/chainiksolver.hpp>
 #include <kdl/chainjnttojacsolver.hpp>
@@ -168,7 +168,7 @@ Eigen::VectorXd  CollisionAvoidance<PRIO>::getPartialValues() const
         ROS_INFO_STREAM("Service seems to exist!!!");
 
         Eigen::Vector3d endeffectorPosition = constrParamCAPtr->getEndeffectorPosition();
-        cob_collision_object_publisher::ObjectOfInterest ooi;
+        cob_obstacle_distance::ObjectOfInterest ooi;
 
         ooi.request.p.position.x = endeffectorPosition(0);
         ooi.request.p.position.y = endeffectorPosition(1);

@@ -14,7 +14,7 @@
  * \note
  *   ROS stack name: cob_control
  * \note
- *   ROS package name: cob_collision_object_publisher
+ *   ROS package name: cob_obstacle_distance
  *
  * \author
  *   Author: Marco Bezzon, email: Marco.Bezzon@ipa.fraunhofer.de
@@ -31,9 +31,9 @@
 #define DISTANCE_MANAGER_HPP_
 
 #include <boost/scoped_ptr.hpp>
-#include "cob_collision_object_publisher/ObjectOfInterest.h"
-#include "cob_collision_object_publisher/marker_shapes.hpp"
-#include "cob_collision_object_publisher/shapes_manager.hpp"
+#include "cob_obstacle_distance/ObjectOfInterest.h"
+#include "cob_obstacle_distance/marker_shapes.hpp"
+#include "cob_obstacle_distance/shapes_manager.hpp"
 
 class DistanceManager
 {
@@ -54,8 +54,8 @@ class DistanceManager
         void drawObstacles(bool enforceDraw = false);
         void drawObjectsOfInterest(bool enforceDraw = false);
         bool collide(tPtrMarkerShapeBase s1, tPtrMarkerShapeBase s2);
-        bool getSmallestDistance(cob_collision_object_publisher::ObjectOfInterest::Request& request,
-                                 cob_collision_object_publisher::ObjectOfInterest::Response& response);
+        bool getSmallestDistance(cob_obstacle_distance::ObjectOfInterest::Request& request,
+                                 cob_obstacle_distance::ObjectOfInterest::Response& response);
 };
 
 

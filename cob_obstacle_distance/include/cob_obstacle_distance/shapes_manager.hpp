@@ -14,7 +14,7 @@
  * \note
  *   ROS stack name: cob_control
  * \note
- *   ROS package name: cob_collision_object_publisher
+ *   ROS package name: cob_obstacle_distance
  *
  * \author
  *   Author: Marco Bezzon, email: Marco.Bezzon@ipa.fraunhofer.de
@@ -32,7 +32,7 @@
 #include <ros/ros.h>
 #include <vector>
 
-#include "cob_collision_object_publisher/marker_shapes_interface.hpp"
+#include "cob_obstacle_distance/marker_shapes_interface.hpp"
 
 class ShapesManager
 {

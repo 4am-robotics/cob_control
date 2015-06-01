@@ -35,7 +35,7 @@
 
 #include <Eigen/Dense>
 
-#include "cob_collision_object_publisher/ObjectOfInterest.h"
+#include "cob_obstacle_distance/ObjectOfInterest.h"
 
 
 #define DEBUG_BASE_ACTIVE    0
@@ -124,7 +124,7 @@ bool CobTwistController::initialize()
     }
 
 
-    // ros::ServiceClient client = nh_twist.serviceClient<cob_collision_object_publisher::ObjectOfInterest>("getSmallestDistance");
+    // ros::ServiceClient client = nh_twist.serviceClient<cob_obstacle_distance::ObjectOfInterest>("getSmallestDistance");
 
     ///initialize configuration control solver
     p_augmented_solver_.reset(new AugmentedSolver(chain_, 0.001));

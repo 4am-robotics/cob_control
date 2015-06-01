@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(cob_collision_object_publisher)
+project(cob_obstacle_distance)
 
 set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 
@@ -18,17 +18,16 @@ add_service_files(
   ObjectOfInterest.srv
 )
 
-#generate_messages(
-#  DEPENDENCIES
-#  std_msgs
-#  geometry_msgs
-#)
+generate_messages(
+  DEPENDENCIES
+  geometry_msgs
+)
 
 # Declare catkin package
 catkin_package(
    INCLUDE_DIRS include
-   LIBRARIES 
-   CATKIN_DEPENDS roscpp sensor_msgs geometry_msgs nav_msgs
+   LIBRARIES
+   CATKIN_DEPENDS roscpp sensor_msgs geometry_msgs nav_msgs message_runtime
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${FCL_INCLUDE_DIRS})
@@ -37,19 +36,20 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${FCL_I
 ## Build
 
 ## Declare a cpp executable
-add_executable(cob_collision_object_publisher src/cob_collision_object_publisher.cpp src/marker_shapes_interface.cpp src/shapes_manager.cpp src/distance_manager.cpp)
-target_link_libraries(cob_collision_object_publisher ${fcl_LIBRARIES} ${catkin_LIBRARIES})
+add_executable(cob_obstacle_distance src/cob_obstacle_distance.cpp src/marker_shapes_interface.cpp src/shapes_manager.cpp src/distance_manager.cpp)
+target_link_libraries(cob_obstacle_distance ${fcl_LIBRARIES} ${catkin_LIBRARIES})
+add_dependencies(cob_obstacle_distance cob_obstacle_distance_gencpp)
 
 ## Install
 # Mark executables and/or libraries for installation
-install(TARGETS cob_collision_object_publisher
+install(TARGETS cob_obstacle_distance
  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 ## Mark cpp header files for installation
-install(DIRECTORY include/cob_collision_object_publisher/
+install(DIRECTORY include/cob_obstacle_distance/
  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
  FILES_MATCHING PATTERN "*.h"
  PATTERN ".svn" EXCLUDE

@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(cob_twist_controller)
 
 # Load catkin and all dependencies required for this package
-find_package(catkin REQUIRED COMPONENTS cmake_modules roscpp sensor_msgs geometry_msgs nav_msgs kdl_parser kdl_conversions tf tf_conversions dynamic_reconfigure cob_collision_object_publisher)
+find_package(catkin REQUIRED COMPONENTS cmake_modules roscpp sensor_msgs geometry_msgs nav_msgs kdl_parser kdl_conversions tf tf_conversions dynamic_reconfigure cob_obstacle_distance)
 
 find_package(Eigen REQUIRED)
 add_definitions(${EIGEN_DEFINITIONS})
@@ -17,7 +17,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
    INCLUDE_DIRS include
    LIBRARIES twist_controller augmented_solver damping_methods constraint_solvers limiters
-   CATKIN_DEPENDS roscpp sensor_msgs geometry_msgs nav_msgs cob_collision_object_publisher
+   CATKIN_DEPENDS roscpp sensor_msgs geometry_msgs nav_msgs cob_obstacle_distance
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${orocos_kdl_INCLUDE_DIRS} )
@@ -34,8 +34,7 @@ add_library(constraint_solvers ${SRC_CS_DIR}/unconstraint_solver.cpp ${SRC_CS_DI
 add_library(limiters src/limiters/limiter.cpp)
 add_library(inv_calculations src/inverse_jacobian_calculations/inverse_jacobian_calculation.cpp)
 target_link_libraries(constraint_solvers damping_methods inv_calculations chainfk_solvers)
-# add_dependencies(constraint_solvers cob_collision_object_publisher_gencpp)
-add_dependencies(constraint_solvers ${cob_twist_controller_EXPORTED_TARGETS})
+add_dependencies(constraint_solvers cob_obstacle_distance_gencpp)
 
 
 add_library(augmented_solver src/augmented_solver.cpp)

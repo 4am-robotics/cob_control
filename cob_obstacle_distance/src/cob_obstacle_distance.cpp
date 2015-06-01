@@ -14,7 +14,7 @@
  * \note
  *   ROS stack name: cob_control
  * \note
- *   ROS package name: cob_collision_object_publisher
+ *   ROS package name: cob_obstacle_distance
  *
  * \author
  *   Author: Marco Bezzon, email: Marco.Bezzon@ipa.fraunhofer.de
@@ -32,8 +32,8 @@
 #include <visualization_msgs/Marker.h>
 #include <std_msgs/Float64.h>
 
-#include "cob_collision_object_publisher/distance_manager.hpp"
-#include "cob_collision_object_publisher/marker_shapes.hpp"
+#include "cob_obstacle_distance/distance_manager.hpp"
+#include "cob_obstacle_distance/marker_shapes.hpp"
 
 bool waitForSubscriber(ros::Publisher &pub)
 {
@@ -55,7 +55,7 @@ bool waitForSubscriber(ros::Publisher &pub)
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "cob_collision_object_publisher");
+    ros::init(argc, argv, "cob_obstacle_distance");
     ros::NodeHandle nh;
     ros::Rate r(1.0);
     ros::Publisher marker_pub = nh.advertise<visualization_msgs::Marker>("visualization_marker", 1);
