@@ -20,8 +20,6 @@
   <run_depend>cob_control_mode_adapter</run_depend>
   <run_depend>cob_footprint_observer</run_depend>
   <run_depend>cob_frame_tracker</run_depend>
-  <run_depend>cob_hardware_interface</run_depend>
-  <run_depend>cob_lookat_controller</run_depend>
   <run_depend>cob_path_broadcaster</run_depend>
   <run_depend>cob_trajectory_controller</run_depend>
   <run_depend>cob_twist_controller</run_depend>
