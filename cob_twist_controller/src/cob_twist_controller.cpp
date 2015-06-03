@@ -141,6 +141,8 @@ bool CobTwistController::initialize()
     error_sub_ = nh_twist.subscribe("command_errors", 1, &CobTwistController::twist_errors_cb, this);
 
     vel_pub = nh_.advertise<std_msgs::Float64MultiArray>("joint_group_velocity_controller/command", 1);
+    pos_pub = nh_.advertise<std_msgs::Float64MultiArray>("joint_group_position_controller/command", 1);
+
 
     odometry_sub = nh_.subscribe("/base/odometry_controller/odometry", 1, &CobTwistController::odometry_cb, this);
     base_vel_pub = nh_.advertise<geometry_msgs::Twist>("/base/twist_controller/command", 1);
@@ -160,10 +162,6 @@ bool CobTwistController::initialize()
         debug_base_active_twist_base_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_base", 1);
         debug_base_active_twist_ee_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_ee", 1);
     #endif
-
-    ros::Time time_ = ros::Time::now();
-    ros::Time last_update_time_ = time_;
-    ros::Duration period_ = time_ - last_update_time_;
 
     this->limiters_.reset(new LimiterContainer(this->twistControllerParams_, this->chain_));
     this->limiters_->init();
@@ -314,6 +312,30 @@ void CobTwistController::solve_twist(KDL::Twist twist)
     int ret_ik;
     KDL::JntArray q_dot_ik(chain_.getNrOfJoints());
 
+    if(firstIteration_)
+    {
+        time_now_ = ros::Time::now();
+        last_update_time_ = time_now_;
+        integration_period_ = time_now_ - last_update_time_;
+    }
+    else
+    {
+        time_now_ = ros::Time::now();
+        integration_period_ = time_now_ - last_update_time_;
+    }
+
+    try
+   {
+       tf_listener_.waitForTransform("base_link",chain_tip_link_, ros::Time(0), ros::Duration(0.5));
+       tf_listener_.lookupTransform("base_link",chain_tip_link_,  ros::Time(0), bl_transform_ct);
+       ROS_INFO("Test");
+   }
+   catch (tf::TransformException &ex)
+   {
+       ROS_ERROR("%s",ex.what());
+       return;
+   }
+
     if(twistControllerParams_.base_active)
     {
         #if DEBUG == 1
@@ -343,20 +365,9 @@ void CobTwistController::solve_twist(KDL::Twist twist)
             }
         #endif
         q_dot_ik.resize(chain_.getNrOfJoints() + 3); // + 3 for base
-        try
-        {
-            tf_listener_.waitForTransform("base_link",chain_tip_link_, ros::Time(0), ros::Duration(0.5));
-            tf_listener_.lookupTransform("base_link",chain_tip_link_,  ros::Time(0), bl_transform_ct);
-        }
-        catch (tf::TransformException &ex)
-        {
-            ROS_ERROR("%s",ex.what());
-            return;
-        }
 
         bl_frame_ct.p = KDL::Vector(bl_transform_ct.getOrigin().x(), bl_transform_ct.getOrigin().y(), bl_transform_ct.getOrigin().z());
         bl_frame_ct.M = KDL::Rotation::Quaternion(bl_transform_ct.getRotation().x(), bl_transform_ct.getRotation().y(), bl_transform_ct.getRotation().z(), bl_transform_ct.getRotation().w());
-
 
         try
         {
@@ -396,7 +407,6 @@ void CobTwistController::solve_twist(KDL::Twist twist)
         #endif
     }
 
-
     if(!twistControllerParams_.base_active)
     {
         ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, tracking_err_, q_dot_ik);
@@ -411,11 +421,33 @@ void CobTwistController::solve_twist(KDL::Twist twist)
         q_dot_ik = this->limiters_->enforceLimits(q_dot_ik, last_q_);
 
         std_msgs::Float64MultiArray vel_msg;
+        std_msgs::Float64MultiArray pos_msg;
         for(unsigned int i=0; i < twistControllerParams_.dof; i++)
         {
             vel_msg.data.push_back(q_dot_ik(i));
             //ROS_DEBUG("DesiredVel %d: %f", i, q_dot_ik(i));
+            if(firstIteration_)
+            {
+                pos_msg.data.push_back(0);
+                old_pos_.push_back(initial_pos_[i]);
+//                ROS_INFO_STREAM("Test:" << old_pos_[i]);
+            }
+            else
+            {
+                if(!initial_pos_.empty())
+                {
+//                    std::vector<double> k1,k2,k3,k4;
+                    pos_msg.data.push_back(((vel_msg.data[i]+old_vel_[i])/2)*integration_period_.toSec()+initial_pos_[i]);
+                    ROS_INFO_STREAM("old_pos:" << old_pos_[i] << "\n" << "vel_msg: " << vel_msg.data[i] << "\n" << "old_vel: " << old_vel_[i]);
+                }
+                else
+                {
+                    ROS_ERROR("Initial Position vector empty!");
+                }
+            }
         }
+//        ROS_INFO_STREAM("Test:" << old_pos_ << "\n" << "vel_msg: " << vel_msg.data << "\n" << "old_vel: " << old_vel_);
+        old_vel_.clear();
 
         if(twistControllerParams_.base_active)
         {
@@ -455,9 +487,34 @@ void CobTwistController::solve_twist(KDL::Twist twist)
             #endif
 
         }
+        if(firstIteration_)
+        {
+            for(int i=0; i<vel_msg.data.size();i++)
+            {
+                old_vel_.push_back(0);
+            }
+        }
+        else
+        {
+            for(int i=0; i<vel_msg.data.size();i++)
+            {
+                old_vel_.push_back(vel_msg.data[i]);
+            }
+        }
+        last_update_time_ = time_now_;
 
+        if(!firstIteration_)
+        {
+            pos_pub.publish(pos_msg);
+            old_pos_.clear();
+            for(int i=0; i<pos_msg.data.size();i++)
+            {
+                old_pos_.push_back(pos_msg.data[i]);
+            }
+        }
         vel_pub.publish(vel_msg);
     }
+    firstIteration_=false;
 }
 
 
@@ -485,6 +542,12 @@ void CobTwistController::jointstate_cb(const sensor_msgs::JointState::ConstPtr& 
     {
         last_q_ = q_temp;
         last_q_dot_ = q_dot_temp;
+    }
+    initial_pos_.clear();
+
+    for(int i = 0; i< msg->position.size();i++)
+    {
+        initial_pos_.push_back(msg->position[i]);
     }
 }
 

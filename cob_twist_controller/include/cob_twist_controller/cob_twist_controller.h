@@ -65,8 +65,6 @@ private:
     boost::mutex lock_tracking_errors;
 
     ros::NodeHandle nh_;
-    ros::Time last_update_time_,time_;
-    ros::Duration period_;
     ros::Subscriber jointstate_sub;
     ros::Subscriber odometry_sub;
     ros::Subscriber twist_sub;
@@ -76,6 +74,7 @@ private:
     ros::Subscriber twist_stamped_sub;
     ros::Subscriber base_sub;
     ros::Publisher vel_pub;
+    ros::Publisher pos_pub;
     ros::Publisher base_vel_pub;
 
     KDL::Chain chain_;
@@ -117,12 +116,18 @@ private:
                 bl_frame_ct,
                 cb_frame_bl;
 
+    bool firstIteration_;
+    ros::Duration integration_period_;
+    ros::Time time_now_;
+    ros::Time last_update_time_;
+
+    std::vector<double> old_vel_,old_pos_,initial_pos_;
     void initAugmentedSolverParams();
 
 
 public:
     CobTwistController():
-        reset_markers_(false)
+        reset_markers_(false),firstIteration_(true)
     {
         twistControllerParams_.base_active = false;
         twistControllerParams_.base_compensation = false;
