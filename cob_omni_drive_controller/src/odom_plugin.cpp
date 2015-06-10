@@ -8,7 +8,7 @@
 #include <cob_omni_drive_controller/UndercarriageCtrlGeom.h>
 #include <cob_omni_drive_controller/OdometryTracker.h>
 
-#include <cob_srvs/Trigger.h>
+#include <std_srvs/Trigger.h>
 
 #include "GeomController.h"
 
@@ -59,16 +59,16 @@ public:
         reset_ = false;
     }
 
-    virtual bool srv_reset(cob_srvs::Trigger::Request &req, cob_srvs::Trigger::Response &res)
+    virtual bool srv_reset(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
     {
         if(!isRunning()){
-            res.error_message.data = "not running";
-            res.success.data = false;
+            res.message = "not running";
+            res.success = false;
         }else{
             boost::mutex::scoped_lock lock(mutex_);
             reset_ = true;
             lock.unlock();
-            res.success.data = true;
+            res.success = true;
             ROS_INFO("Resetting odometry to zero.");
         }
 
