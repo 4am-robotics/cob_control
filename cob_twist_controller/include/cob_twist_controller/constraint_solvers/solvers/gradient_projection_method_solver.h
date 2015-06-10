@@ -62,7 +62,7 @@ class GradientProjectionMethodSolver : public ConstraintSolver<>
         {
             this->constraints_ = constraints;
 
-            ROS_WARN_STREAM("Cnt of constraints: " << this->constraints_.size() << std::endl);
+            ROS_WARN_STREAM("setConstraints: Cnt of constraints: " << this->constraints_.size() << std::endl);
 
         }
 

@@ -33,6 +33,8 @@
 #include <Eigen/Core>
 
 #include "cob_twist_controller/augmented_solver_data_types.h"
+#include "cob_twist_controller/callback_data_mediator.h"
+#include "cob_twist_controller/constraint_solvers/constraint_solver_factory_builder.h"
 
 /**
 * Implementation of a inverse velocity kinematics algorithm based
@@ -51,16 +53,14 @@ public:
      *
      * @param chain the chain to calculate the inverse velocity
      * kinematics for
-     * @param eps if a singular value is below this value, its
-     * inverse is set to zero, default: 0.00001
-     * @param maxiter maximum iterations for the svd calculation,
-     * default: 150
      *
      */
-    AugmentedSolver(const KDL::Chain& chain, double eps=0.001) :
+    AugmentedSolver(const KDL::Chain& chain, CallbackDataMediator& data_mediator) :
         chain_(chain),
         jac_(chain_.getNrOfJoints()),
-        jnt2jac_(chain_)
+        jnt2jac_(chain_),
+        callback_data_mediator_(data_mediator),
+        constraint_solver_factory_(data_mediator, jnt2jac_)
     {
     }
 
@@ -101,6 +101,8 @@ private:
     KDL::Jacobian jac_, jac_base_;
     KDL::ChainJntToJacSolver jnt2jac_;
     AugmentedSolverParams params_;
+    CallbackDataMediator& callback_data_mediator_;
+    ConstraintSolverFactoryBuilder constraint_solver_factory_;
 
     /**
      * Adjustment of the member Jacobian

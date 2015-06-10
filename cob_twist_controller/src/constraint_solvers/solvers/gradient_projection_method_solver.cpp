@@ -32,19 +32,19 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Eigen::VectorXd &inC
                                       const KDL::JntArray& q,
                                       const KDL::JntArray& last_q_dot) const
 {
+    ROS_INFO_STREAM("GradientProjectionMethodSolver::solve");
     uint16_t lv = 1;
     double kappa;
     Eigen::VectorXd q_dot_0 = Eigen::VectorXd::Zero(q.rows());
-
     Eigen::MatrixXd jacobianPseudoInverse = pinvCalc_.calculate(this->asParams_, this->damping_, this->jacobianData_);
     Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(jacobianPseudoInverse.rows(), this->jacobianData_.cols());
     Eigen::MatrixXd projector = ident - jacobianPseudoInverse * this->jacobianData_;
-
     Eigen::MatrixXd partialSolution = jacobianPseudoInverse * inCartVelocities;
-
     Eigen::MatrixXd homogeneousSolution = Eigen::MatrixXd::Zero(partialSolution.rows(), partialSolution.cols());
-    for (std::set<tConstraintBase>::const_iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
+
+    for (std::set<tConstraintBase>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
     {
+        ROS_INFO_STREAM("In loop!!!!!!!!!!!!!!");
         //double stepSize = (*it)->getStepSize();
         q_dot_0 = (*it)->getPartialValues();
 

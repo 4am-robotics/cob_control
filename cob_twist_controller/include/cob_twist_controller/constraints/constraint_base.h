@@ -37,81 +37,79 @@
 
 #include "cob_twist_controller/augmented_solver_data_types.h"
 #include "cob_twist_controller/constraints/self_motion_magnitude.h"
-
-class ConstraintParamsBase
-{
-    public:
-
-        ConstraintParamsBase(const AugmentedSolverParams& params) : params_(params)
-        {}
-
-        virtual ~ConstraintParamsBase()
-        {}
-
-        virtual const AugmentedSolverParams& getAugmentedSolverParams() const
-        {
-            return this->params_;
-        }
-
-    protected:
-        const AugmentedSolverParams& params_;
-};
+#include "cob_twist_controller/constraints/constraint_params.h"
 
 template
-<typename PRIO = uint32_t> // if it is desired to implement an own priority class (ensure overriding of <, > and == parameters)
-class ConstraintBase
+<typename PRIO = uint32_t>
+class PriorityBase
 {
     public:
 
-        ConstraintBase(PRIO prio, const KDL::JntArray& q)
-        : priority_(prio), jointPos_(q)
+        PriorityBase(PRIO prio) : priority_(prio)
         {
-            this->constraintParams_ = NULL;
+
         }
 
-        virtual ~ConstraintBase()
-        {}
+        virtual ~PriorityBase()
+        {
+
+        }
 
         inline void setPriority(PRIO prio)
         {
             this->priority_ = prio;
         }
 
-        virtual void setConstraintParams(const ConstraintParamsBase* constraintParams)
+        inline bool operator<(const PriorityBase& other) const
         {
-            this->constraintParams_ = constraintParams;
+            return ( this->priority_ < other.priority_ );
+        }
+
+        inline bool operator>(const PriorityBase& other) const
+        {
+            return ( this->priority_ > other.priority_ );
+        }
+
+        inline bool operator==(const PriorityBase& other) const
+        {
+            return ( this->priority_ == other.priority_ );
         }
 
         virtual double getValue() const = 0;
         virtual double getDerivativeValue() const = 0;
         virtual double getSafeRegion() const = 0;
         virtual Eigen::VectorXd getPartialValues() const = 0;
-        virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particularSolution, const Eigen::MatrixXd& homogeneousSolution) const = 0;
-
-        inline bool operator<(const ConstraintBase& other) const
-        {
-            return ( this->priority_ < other.priority_ );
-        }
-
-        inline bool operator>(const ConstraintBase& other) const
-        {
-            return ( this->priority_ > other.priority_ );
-        }
-
-        inline bool operator==(const ConstraintBase& other) const
-        {
-            return ( this->priority_ == other.priority_ );
-        }
+        virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particularSolution,
+                                              const Eigen::MatrixXd& homogeneousSolution) const = 0;
 
     protected:
         PRIO priority_;
-        const KDL::JntArray& jointPos_;
-        const ConstraintParamsBase* constraintParams_;
-
-
 };
 
 
-typedef boost::shared_ptr<ConstraintBase<uint32_t> > tConstraintBase;
+template
+<typename T_PARAMS, typename PRIO = uint32_t> // if it is desired to implement an own priority class (ensure overriding of <, > and == parameters)
+class ConstraintBase : public PriorityBase<PRIO>
+{
+    public:
+        ConstraintBase(PRIO prio,
+                       const KDL::JntArray& q,
+                       boost::shared_ptr<T_PARAMS> params)
+        : PriorityBase<PRIO>(prio), jointPos_(q), constraintParams_(params)
+        {
+        }
+
+        virtual ~ConstraintBase()
+        {
+            this->constraintParams_.reset();
+        }
+
+    protected:
+        const KDL::JntArray& jointPos_;
+        boost::shared_ptr<T_PARAMS> constraintParams_;
+};
+
+
+typedef boost::shared_ptr<PriorityBase<uint32_t> > tConstraintBase;
 
 #endif /* CONSTRAINT_BASE_H_ */

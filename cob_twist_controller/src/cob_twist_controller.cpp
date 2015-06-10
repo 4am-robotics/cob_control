@@ -35,8 +35,9 @@
 
 #include <Eigen/Dense>
 
-#include "cob_obstacle_distance/ObjectOfInterest.h"
+#include <fstream>
 
+#include "cob_obstacle_distance/Registration.h"
 
 #define DEBUG_BASE_ACTIVE    0
 #define DEBUG_BASE_COMP     0
@@ -98,15 +99,21 @@ bool CobTwistController::initialize()
         ROS_ERROR("Failed to construct kdl tree");
         return false;
     }
+
+//    std::fstream fs;
+//    fs.open("/home/fxm-mb/projects_ws/src/cob_control/cob_obstacle_distance/testdata/robot_description.txt", std::fstream::out | std::fstream::app);
+//    fs << robot_desc_string;
+//    fs.close();
+
+
+
+
     my_tree.getChain(chain_base_link_, chain_tip_link_, chain_);
     if(chain_.getNrOfJoints() == 0)
     {
         ROS_ERROR("Failed to initialize kinematic chain");
         return false;
     }
-
-
-    my_tree.getChain("base_link", chain_tip_link_, from_base_link_chain_);
 
     ///parse robot_description and set velocity limits
     urdf::Model model;
@@ -123,11 +130,8 @@ bool CobTwistController::initialize()
         twistControllerParams_.limits_max.push_back(model.getJoint(joints_[i])->limits->upper);
     }
 
-
-    // ros::ServiceClient client = nh_twist.serviceClient<cob_obstacle_distance::ObjectOfInterest>("getSmallestDistance");
-
     ///initialize configuration control solver
-    p_augmented_solver_.reset(new AugmentedSolver(chain_, 0.001));
+    p_augmented_solver_.reset(new AugmentedSolver(chain_, callback_data_mediator_));
 
     // Before setting up dynamic_reconfigure server: init AugmentedSolverParams with default values
     this->initAugmentedSolverParams();
@@ -144,6 +148,9 @@ bool CobTwistController::initialize()
     ros::Duration(1.0).sleep();
 
     ///initialize ROS interfaces
+    std::string robo_namespace = nh_.getNamespace();
+    robo_namespace.erase(0, 2); // delete "//"
+    obstacle_distance_sub_ = nh_.subscribe("/cob_obstacle_distance/" + robo_namespace, 1, &CallbackDataMediator::distancesToObstaclesCallback, &callback_data_mediator_);
     jointstate_sub = nh_.subscribe("joint_states", 1, &CobTwistController::jointstate_cb, this);
     twist_sub = nh_twist.subscribe("command_twist", 1, &CobTwistController::twist_cb, this);
     twist_stamped_sub = nh_twist.subscribe("command_twist_stamped", 1, &CobTwistController::twist_stamped_cb, this);
@@ -176,11 +183,46 @@ bool CobTwistController::initialize()
     this->limiters_.reset(new LimiterContainer(this->twistControllerParams_, this->chain_));
     this->limiters_->init();
 
-
-
-
     ROS_INFO("...initialized!");
     return true;
+}
+
+void CobTwistController::reinitServiceRegistration()
+{
+    ROS_INFO("Reinit of Service registration!");
+    std::string robo_namespace = nh_.getNamespace();
+    robo_namespace.erase(0, 2); // delete "//"
+
+    std::size_t found = robo_namespace.find("arm_right"); // TODO: currently for arm_right
+    if (found!=std::string::npos)
+    {
+        ros::ServiceClient client = nh_.serviceClient<cob_obstacle_distance::Registration>("/cob_obstacle_distance/" + robo_namespace + "/registerPointOfInterest");
+        ROS_INFO_STREAM("Created service client for service /cob_obstacle_distance/" << robo_namespace << "/registerPointOfInterest");
+
+        std::string oois[] = {"arm_right_3_joint",
+                              "arm_right_4_joint"};
+
+        for(int i = 0; i < sizeof(oois) / sizeof(std::string); ++i)
+        {
+            cob_obstacle_distance::Registration r;
+            r.request.joint_name = oois[i];
+            r.request.robot_namespace = robo_namespace;
+            r.request.shape_type = 2; // Sphere
+            if (client.call(r))
+            {
+                ROS_INFO_STREAM("Called registration service with success: " << int(r.response.success) << ". Got message: " << r.response.message);
+            }
+            else
+            {
+                ROS_ERROR_STREAM("Failed to call registration service for robo_namespace: " << robo_namespace);
+                break;
+            }
+        }
+    }
+    else
+    {
+        ROS_ERROR_STREAM("Could not find arm_right in robo_namespace: " << robo_namespace);
+    }
 }
 
 void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControllerConfig &config, uint32_t level)
@@ -201,6 +243,7 @@ void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControl
     params.limits_min = twistControllerParams_.limits_min; // from cob_twist_controller init
     params.limits_max = twistControllerParams_.limits_max; // from cob_twist_controller init
     params.limits_vel = twistControllerParams_.limits_vel; // from cob_twist_controller init
+    params.joint_names = joints_;
     params.kappa = config.kappa;
 
     reset_markers_ = config.reset_markers;
@@ -221,6 +264,8 @@ void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControl
     }
 
     p_augmented_solver_->SetAugmentedSolverParams(params);
+
+    this->reinitServiceRegistration();
 }
 
 void CobTwistController::initAugmentedSolverParams()
@@ -243,6 +288,8 @@ void CobTwistController::initAugmentedSolverParams()
     params.base_ratio = 0.0;
     params.limits_min = twistControllerParams_.limits_min;
     params.limits_max = twistControllerParams_.limits_max;
+    params.limits_vel = twistControllerParams_.limits_vel;
+    params.joint_names = joints_;
     params.kappa = 1.0;
 
     p_augmented_solver_->SetAugmentedSolverParams(params);
@@ -260,7 +307,6 @@ void CobTwistController::run()
 /// Orientation of twist_stamped_msg is with respect to coordinate system given in header.frame_id
 void CobTwistController::twist_stamped_cb(const geometry_msgs::TwistStamped::ConstPtr& msg)
 {
-    boost::mutex::scoped_lock lock(lock_tracking_errors);
     tf::StampedTransform transform_tf;
     KDL::Frame frame;
     KDL::Twist twist, twist_transformed;
@@ -289,7 +335,6 @@ void CobTwistController::twist_stamped_cb(const geometry_msgs::TwistStamped::Con
 /// Orientation of twist_msg is with respect to chain_base coordinate system
 void CobTwistController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
 {
-    boost::mutex::scoped_lock lock(lock_tracking_errors);
     KDL::Twist twist;
     tf::twistMsgToKDL(*msg, twist);
     solve_twist(twist);

@@ -68,13 +68,13 @@ struct AugmentedSolverParams {
     bool base_compensation;
     bool base_active;
     double base_ratio;
-    KDL::ChainJntToJacSolver* jnt2jac;
 
 
     // added limits from URDF file
     std::vector<double> limits_max;
     std::vector<double> limits_min;
     std::vector<double> limits_vel;
+    std::vector<std::string> joint_names;
 };
 
 const double DAMPING_LIMIT = 1.0e-12; ///< const. value for zero comparison with damping factor

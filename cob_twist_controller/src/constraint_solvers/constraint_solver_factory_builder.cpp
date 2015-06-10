@@ -55,7 +55,6 @@ int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverP
                                                                 const Eigen::VectorXd &inCartVelocities,
                                                                 const KDL::JntArray& q,
                                                                 const KDL::JntArray& last_q_dot,
-                                                                const Eigen::Vector3d& eePosition,
                                                                 Eigen::MatrixXd &outJntVelocities)
 {
     outJntVelocities = Eigen::MatrixXd::Zero(last_q_dot.rows(), last_q_dot.columns());
@@ -66,7 +65,11 @@ int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverP
         return -1; // error
     }
 
-    std::set<tConstraintBase> constraints = ConstraintsBuilder<>::create_constraints(asParams, q, jacobianData, eePosition);
+    std::set<tConstraintBase> constraints = ConstraintsBuilder<>::createConstraints(asParams,
+                                                                                     q,
+                                                                                     jacobianData,
+                                                                                     this->jnt_to_jac_,
+                                                                                     this->data_mediator_);
 
     ROS_INFO_STREAM("ConstraintsBuilder returned std::set with size: " << constraints.size() << std::endl);
 

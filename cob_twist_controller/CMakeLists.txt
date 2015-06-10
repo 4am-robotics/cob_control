@@ -37,7 +37,7 @@ target_link_libraries(constraint_solvers damping_methods inv_calculations chainf
 add_dependencies(constraint_solvers cob_obstacle_distance_gencpp)
 
 
-add_library(augmented_solver src/augmented_solver.cpp)
+add_library(augmented_solver src/augmented_solver.cpp src/callback_data_mediator.cpp)
 target_link_libraries(augmented_solver constraint_solvers chainfk_solvers ${orocos_kdl_LIBRARIES})
 
 add_library(twist_controller src/cob_twist_controller.cpp)

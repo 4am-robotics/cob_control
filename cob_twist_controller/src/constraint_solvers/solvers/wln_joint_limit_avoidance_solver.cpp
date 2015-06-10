@@ -63,7 +63,5 @@ Eigen::MatrixXd WLN_JointLimitAvoidanceSolver::calculateWeighting(const KDL::Jnt
         }
     }
 
-    ROS_WARN_STREAM("Weightings : " << std::endl << output << std::endl);
-
     return output.asDiagonal();
 }

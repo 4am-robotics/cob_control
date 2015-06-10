@@ -57,12 +57,14 @@
 #include <cob_twist_controller/TwistControllerConfig.h>
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/limiters/limiter.h"
+#include "cob_twist_controller/callback_data_mediator.h"
 
 class CobTwistController
 {
 private:
 
-    boost::mutex lock_tracking_errors;
+    CallbackDataMediator callback_data_mediator_;
+
 
     ros::NodeHandle nh_;
     ros::Time last_update_time_,time_;
@@ -71,12 +73,14 @@ private:
     ros::Subscriber odometry_sub;
     ros::Subscriber twist_sub;
 
+    ros::Subscriber obstacle_distance_sub_;
+
     ros::Subscriber twist_stamped_sub;
     ros::Subscriber base_sub;
     ros::Publisher vel_pub;
     ros::Publisher base_vel_pub;
 
-    KDL::Chain chain_, from_base_link_chain_;
+    KDL::Chain chain_;
 
     KDL::Twist twist_odometry_cb_;
     KDL::JntArray last_q_;
@@ -134,6 +138,7 @@ public:
 
     bool initialize();
     void run();
+    void reinitServiceRegistration();
 
     boost::recursive_mutex reconfig_mutex_;
     boost::shared_ptr< dynamic_reconfigure::Server<cob_twist_controller::TwistControllerConfig> > reconfigure_server_;

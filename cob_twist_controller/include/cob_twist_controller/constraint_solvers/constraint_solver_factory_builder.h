@@ -48,17 +48,24 @@ class ConstraintSolverFactoryBuilder
          * @param outJntVelocities The calculated joint velocities as output reference.
          * @return The calculated new joint velocities in (m x 1)-Matrix.
          */
-        static int8_t calculateJointVelocities(AugmentedSolverParams &asParams,
-                                               Matrix6Xd &jacobianData,
-                                               const Eigen::VectorXd &inCartVelocities,
-                                               const KDL::JntArray& q,
-                                               const KDL::JntArray& last_q_dot,
-                                               const Eigen::Vector3d& eePosition,
-                                               Eigen::MatrixXd &outJntVelocities);
+        int8_t calculateJointVelocities(AugmentedSolverParams &asParams,
+                                        Matrix6Xd &jacobianData,
+                                        const Eigen::VectorXd &inCartVelocities,
+                                        const KDL::JntArray& q,
+                                        const KDL::JntArray& last_q_dot,
+                                        Eigen::MatrixXd &outJntVelocities);
+
+        ConstraintSolverFactoryBuilder(CallbackDataMediator& data_mediator, KDL::ChainJntToJacSolver& jnt_to_jac) :
+            data_mediator_(data_mediator), jnt_to_jac_(jnt_to_jac)
+        {
+
+        }
+
+        ~ConstraintSolverFactoryBuilder() {}
 
     private:
-        ConstraintSolverFactoryBuilder() {}
-        ~ConstraintSolverFactoryBuilder() {}
+        CallbackDataMediator& data_mediator_;
+        KDL::ChainJntToJacSolver& jnt_to_jac_;
 };
 
 #endif /* CONSTRAINT_SOLVER_FACTORY_BUILDER_H_ */

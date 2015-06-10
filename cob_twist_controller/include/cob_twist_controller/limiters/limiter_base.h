@@ -50,6 +50,7 @@ class LimiterBase
         virtual ~LimiterBase() { }
 
     protected:
+
         LimiterBase(const TwistControllerParams &tcParams, const KDL::Chain &chain) : tcParams_(tcParams), chain_(chain) { }
 
         const TwistControllerParams &tcParams_;
