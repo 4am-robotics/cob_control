@@ -31,8 +31,28 @@
 
 #include "cob_twist_controller/augmented_solver_data_types.h"
 #include "cob_twist_controller/constraints/constraint_base.h"
-
 #include "cob_twist_controller/callback_data_mediator.h"
+
+/* BEGIN ConstraintParamFactory *********************************************************************************/
+/// Creates constraint parameters and fills them with the values provided by CallbackDataMediator.
+template
+<typename T>
+class ConstraintParamFactory
+{
+    public:
+        static T createConstraintParams(AugmentedSolverParams &augmentedSolverParams,
+                                        CallbackDataMediator& data_mediator)
+        {
+            T params(augmentedSolverParams);
+            data_mediator.fill(params);
+            return params;
+        }
+
+    private:
+        ConstraintParamFactory()
+        {}
+};
+/* END ConstraintParamFactory ***********************************************************************************/
 
 /* BEGIN ConstraintsBuilder *************************************************************************************/
 /// Class providing a static method to create constraints.
@@ -60,22 +80,19 @@ class CollisionAvoidance : public ConstraintBase<T_PARAMS, PRIO>
     public:
 
         CollisionAvoidance(PRIO prio, const KDL::JntArray& q,
-                           boost::shared_ptr<T_PARAMS> constraintParams,
+                           T_PARAMS constraintParams,
                            KDL::ChainJntToJacSolver& jnt_to_jac) :
             ConstraintBase<T_PARAMS, PRIO>(prio, q, constraintParams), jnt_to_jac_(jnt_to_jac)
-        {
-            ROS_INFO_STREAM("ctor CollisionAvoidance::constraintParams " << this->constraintParams_->current_distance_.min_distance);
-        }
+        {}
+
+        virtual ~CollisionAvoidance()
+        {}
 
         virtual double getValue() const;
         virtual double getDerivativeValue() const;
-        virtual double getSafeRegion() const;
+        virtual double getActivationThreshold() const;
         virtual Eigen::VectorXd getPartialValues() const;
         virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particularSolution, const Eigen::MatrixXd& homogeneousSolution) const;
-
-        virtual ~CollisionAvoidance()
-        {
-        }
 
     private:
         KDL::ChainJntToJacSolver& jnt_to_jac_;
@@ -93,22 +110,21 @@ class JointLimitAvoidance : public ConstraintBase<T_PARAMS, PRIO>
 
         JointLimitAvoidance(PRIO prio,
                             const KDL::JntArray& q,
-                            boost::shared_ptr<T_PARAMS> constraintParams)
+                            T_PARAMS constraintParams)
             : ConstraintBase<T_PARAMS, PRIO>(prio, q, constraintParams)
-        {
-        }
+        {}
+
+        virtual ~JointLimitAvoidance()
+        {}
 
         virtual double getValue() const;
         virtual double getDerivativeValue() const;
-        virtual double getSafeRegion() const;
+        virtual double getActivationThreshold() const;
         virtual Eigen::VectorXd getPartialValues() const;
         virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particularSolution, const Eigen::MatrixXd& homogeneousSolution) const;
-
         double getValue(Eigen::VectorXd steps) const;
 
-        virtual ~JointLimitAvoidance()
-        {
-        }
+
 };
 /* END JointLimitAvoidance **************************************************************************************/
 
@@ -119,21 +135,20 @@ class JointLimitAvoidanceMid : public ConstraintBase<T_PARAMS, PRIO>
 {
     public:
 
-        JointLimitAvoidanceMid(PRIO prio, const KDL::JntArray& q, boost::shared_ptr<T_PARAMS> constraintParams)
+        JointLimitAvoidanceMid(PRIO prio,
+                               const KDL::JntArray& q,
+                               T_PARAMS constraintParams)
             : ConstraintBase<T_PARAMS, PRIO>(prio, q, constraintParams)
-        {
-        }
+        {}
+
+        virtual ~JointLimitAvoidanceMid()
+        {}
 
         virtual double getValue() const;
         virtual double getDerivativeValue() const;
-        virtual double getSafeRegion() const;
+        virtual double getActivationThreshold() const;
         virtual Eigen::VectorXd getPartialValues() const;
         virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particularSolution, const Eigen::MatrixXd& homogeneousSolution) const;
-
-        virtual ~JointLimitAvoidanceMid()
-        {
-
-        }
 };
 /* END JointLimitAvoidanceMid ***********************************************************************************/
 

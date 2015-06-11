@@ -1,10 +1,30 @@
-/*
- * constraint_params.h
+/*!
+ *****************************************************************
+ * \file
  *
- *  Created on: Jun 8, 2015
- *      Author: fxm-mb
- */
-
+ * \note
+ *   Copyright (c) 2015 \n
+ *   Fraunhofer Institute for Manufacturing Engineering
+ *   and Automation (IPA) \n\n
+ *
+ *****************************************************************
+ *
+ * \note
+ *   Project name: care-o-bot
+ * \note
+ *   ROS stack name: cob_control
+ * \note
+ *   ROS package name: cob_twist_controller
+ *
+ * \author
+ *   Author: Marco Bezzon, email: Marco.Bezzon@ipa.fraunhofer.de
+ *
+ * \date Date of creation: June, 2015
+ *
+ * \brief
+ *   Implementation of parameter classes for constraints.
+ *
+ ****************************************************************/
 #ifndef CONSTRAINT_PARAMS_H_
 #define CONSTRAINT_PARAMS_H_
 
@@ -13,17 +33,11 @@
 
 #include <ros/ros.h>
 
+#include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/augmented_solver_data_types.h"
 
-
-
-struct Distance
-{
-    double min_distance;
-    Eigen::Vector3d distance_vec;
-    std::string frame_name;
-};
-
+/* BEGIN ConstraintParamsBase ***********************************************************************************/
+/// Base class for all derived parameter classes.
 class ConstraintParamsBase
 {
     public:
@@ -36,14 +50,13 @@ class ConstraintParamsBase
 
         const AugmentedSolverParams& getAugmentedSolverParams() const
         {
-            ROS_INFO_STREAM("AugmentedSolverParams");
-
             return this->params_;
         }
 
     protected:
         const AugmentedSolverParams& params_;
 };
+/* END ConstraintParamsBase *************************************************************************************/
 
 /* BEGIN ConstraintParamsCA *************************************************************************************/
 /// Class that represents the parameters for the Collision Avoidance constraint.
@@ -60,7 +73,6 @@ class ConstraintParamsCA : public ConstraintParamsBase
         ConstraintParamsCA(const ConstraintParamsCA& cpca)
         : ConstraintParamsBase(cpca.params_)
         {
-            ROS_INFO_STREAM("Called copy constructor: " << params_.constraint);
             current_distance_ = cpca.current_distance_;
         }
 

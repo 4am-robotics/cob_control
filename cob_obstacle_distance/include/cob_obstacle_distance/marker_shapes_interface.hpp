@@ -40,7 +40,7 @@
 class IMarkerShape
 {
     protected:
-        static uint32_t classCtr_;
+        static uint32_t class_ctr_;
 
     public:
          IMarkerShape();

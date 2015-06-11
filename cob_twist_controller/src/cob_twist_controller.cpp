@@ -199,14 +199,13 @@ void CobTwistController::reinitServiceRegistration()
         ros::ServiceClient client = nh_.serviceClient<cob_obstacle_distance::Registration>("/cob_obstacle_distance/" + robo_namespace + "/registerPointOfInterest");
         ROS_INFO_STREAM("Created service client for service /cob_obstacle_distance/" << robo_namespace << "/registerPointOfInterest");
 
-        std::string oois[] = {"arm_right_3_joint",
-                              "arm_right_4_joint"};
+        std::string fois[] = {"arm_right_3_link",
+                              "arm_right_5_link"};
 
-        for(int i = 0; i < sizeof(oois) / sizeof(std::string); ++i)
+        for(int i = 0; i < sizeof(fois) / sizeof(std::string); ++i)
         {
             cob_obstacle_distance::Registration r;
-            r.request.joint_name = oois[i];
-            r.request.robot_namespace = robo_namespace;
+            r.request.frame_id = fois[i];
             r.request.shape_type = 2; // Sphere
             if (client.call(r))
             {
@@ -243,7 +242,12 @@ void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControl
     params.limits_min = twistControllerParams_.limits_min; // from cob_twist_controller init
     params.limits_max = twistControllerParams_.limits_max; // from cob_twist_controller init
     params.limits_vel = twistControllerParams_.limits_vel; // from cob_twist_controller init
-    params.joint_names = joints_;
+    params.frame_names.clear();
+    for (uint16_t i = 0; i < chain_.getNrOfSegments(); ++i)
+    {
+        params.frame_names.push_back(chain_.getSegment(i).getName());
+    }
+
     params.kappa = config.kappa;
 
     reset_markers_ = config.reset_markers;
@@ -289,8 +293,13 @@ void CobTwistController::initAugmentedSolverParams()
     params.limits_min = twistControllerParams_.limits_min;
     params.limits_max = twistControllerParams_.limits_max;
     params.limits_vel = twistControllerParams_.limits_vel;
-    params.joint_names = joints_;
     params.kappa = 1.0;
+
+    params.frame_names.clear();
+    for (uint16_t i = 0; i < chain_.getNrOfSegments(); ++i)
+    {
+        params.frame_names.push_back(chain_.getSegment(i).getName());
+    }
 
     p_augmented_solver_->SetAugmentedSolverParams(params);
 }
@@ -310,7 +319,6 @@ void CobTwistController::twist_stamped_cb(const geometry_msgs::TwistStamped::Con
     tf::StampedTransform transform_tf;
     KDL::Frame frame;
     KDL::Twist twist, twist_transformed;
-
     try{
         tf_listener_.lookupTransform(chain_base_link_, msg->header.frame_id, ros::Time(0), transform_tf);
         frame.M = KDL::Rotation::Quaternion(transform_tf.getRotation().x(), transform_tf.getRotation().y(), transform_tf.getRotation().z(), transform_tf.getRotation().w());
@@ -322,12 +330,6 @@ void CobTwistController::twist_stamped_cb(const geometry_msgs::TwistStamped::Con
 
     tf::twistMsgToKDL(msg->twist, twist);
     twist_transformed = frame*twist;
-
-    //ROS_DEBUG("Twist Vel (%f, %f, %f)", twist.vel.x(), twist.vel.y(), twist.vel.z());
-    //ROS_DEBUG("Twist Rot (%f, %f, %f)", twist.rot.x(), twist.rot.y(), twist.rot.z());
-    //ROS_DEBUG("TwistTransformed Vel (%f, %f, %f)", twist_transformed.vel.x(), twist_transformed.vel.y(), twist_transformed.vel.z());
-    //ROS_DEBUG("TwistTransformed Rot (%f, %f, %f)", twist_transformed.rot.x(), twist_transformed.rot.y(), twist_transformed.rot.z());
-
     solve_twist(twist_transformed);
 }
 

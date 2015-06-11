@@ -46,14 +46,10 @@ class PriorityBase
     public:
 
         PriorityBase(PRIO prio) : priority_(prio)
-        {
-
-        }
+        {}
 
         virtual ~PriorityBase()
-        {
-
-        }
+        {}
 
         inline void setPriority(PRIO prio)
         {
@@ -77,7 +73,7 @@ class PriorityBase
 
         virtual double getValue() const = 0;
         virtual double getDerivativeValue() const = 0;
-        virtual double getSafeRegion() const = 0;
+        virtual double getActivationThreshold() const = 0;
         virtual Eigen::VectorXd getPartialValues() const = 0;
         virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particularSolution,
                                               const Eigen::MatrixXd& homogeneousSolution) const = 0;
@@ -94,19 +90,16 @@ class ConstraintBase : public PriorityBase<PRIO>
     public:
         ConstraintBase(PRIO prio,
                        const KDL::JntArray& q,
-                       boost::shared_ptr<T_PARAMS> params)
+                       T_PARAMS params)
         : PriorityBase<PRIO>(prio), jointPos_(q), constraintParams_(params)
-        {
-        }
+        {}
 
         virtual ~ConstraintBase()
-        {
-            this->constraintParams_.reset();
-        }
+        {}
 
     protected:
         const KDL::JntArray& jointPos_;
-        boost::shared_ptr<T_PARAMS> constraintParams_;
+        T_PARAMS constraintParams_;
 };
 
 

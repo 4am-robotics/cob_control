@@ -1,5 +1,0 @@
-geometry_msgs/Pose p
-uint32 shapeType
----
-geometry_msgs/Pose obstacle
-float64 distance

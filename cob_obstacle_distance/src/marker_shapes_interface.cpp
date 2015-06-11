@@ -32,8 +32,8 @@
 /// Interface class marking methods that have to be implemented in derived classes.
 IMarkerShape::IMarkerShape()
 {
-    classCtr_++;
+    class_ctr_++;
 }
 
-uint32_t IMarkerShape::classCtr_ = 0;
+uint32_t IMarkerShape::class_ctr_ = 0;
 /* END IMarkerShape *********************************************************************************************/

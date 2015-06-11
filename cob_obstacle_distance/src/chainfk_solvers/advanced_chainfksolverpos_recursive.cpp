@@ -5,9 +5,8 @@
  *      Author: fxm-mb
  */
 
-
-#include "cob_twist_controller/chainfk_solvers/advanced_chainfksolverpos_recursive.h"
 #include <ros/ros.h>
+#include "cob_obstacle_distance/chainfk_solvers/advanced_chainfksolverpos_recursive.h"
 
 AdvancedChainFkSolverPos_recursive::AdvancedChainFkSolverPos_recursive(const KDL::Chain& _chain):
     chain_(_chain)
@@ -38,7 +37,7 @@ int AdvancedChainFkSolverPos_recursive::JntToCart(const KDL::JntArray& q_in, KDL
     }
     else
     {
-        this->jntPos_.clear();
+        this->segment_pos_.clear();
         int j=0;
         for(unsigned int i=0;i<segmentNr;i++)
         {
@@ -52,32 +51,32 @@ int AdvancedChainFkSolverPos_recursive::JntToCart(const KDL::JntArray& q_in, KDL
                 p_out = p_out * this->chain_.getSegment(i).pose(0.0);
             }
 
-            this->jntPos_.push_back(KDL::Frame(p_out)); // store copies not references
+            this->segment_pos_.push_back(KDL::Frame(p_out)); // store copies not references
         }
         return 0;
     }
 }
 
-KDL::Frame AdvancedChainFkSolverPos_recursive::getPostureAtJnt(uint16_t jntIndex) const
+KDL::Frame AdvancedChainFkSolverPos_recursive::getFrameAtSegment(uint16_t seg_idx) const
 {
     KDL::Frame p_out = KDL::Frame::Identity();
 
-    if (jntIndex < this->chain_.getNrOfJoints())
+    if (seg_idx < this->chain_.getNrOfSegments())
     {
-        p_out = this->jntPos_.at(jntIndex);
+        p_out = this->segment_pos_.at(seg_idx);
     }
 
     return p_out;
 }
 
-void AdvancedChainFkSolverPos_recursive::dumpAllJntPostures() const
+void AdvancedChainFkSolverPos_recursive::dumpAllSegmentPostures() const
 {
     uint16_t id = 0;
     ROS_INFO_STREAM("=== Dump all Jnt Postures ===");
-    for(tFrameVector::const_iterator it = this->jntPos_.begin(); it != this->jntPos_.end(); ++it)
+    for(tFrameVector::const_iterator it = this->segment_pos_.begin(); it != this->segment_pos_.end(); ++it)
     {
 
-        ROS_INFO_STREAM("Jnt " << id++ << ". Position: " << std::endl <<
+        ROS_INFO_STREAM("Segment " << id++ << ". Position: " << std::endl <<
                         it->p.x() << std::endl <<
                         it->p.y() << std::endl <<
                         it->p.z());

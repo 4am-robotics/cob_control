@@ -48,8 +48,8 @@ template
 class MarkerShape : public IMarkerShape
 {
     private:
-        bool isDrawn_;
-        FclMarkerConverter<T> fclMarkerConverter_;
+        bool is_drawn_;
+        FclMarkerConverter<T> fcl_marker_converter_;
         visualization_msgs::Marker marker_;
 
         void init(double x, double y, double z,
@@ -57,20 +57,20 @@ class MarkerShape : public IMarkerShape
                   double color_r, double color_g, double color_b, double color_a);
 
     public:
-        MarkerShape(T &fclObject, geometry_msgs::Pose &pose, std_msgs::ColorRGBA &col)
-        : MarkerShape(fclObject,
+        MarkerShape(T &fcl_object, geometry_msgs::Pose &pose, std_msgs::ColorRGBA &col)
+        : MarkerShape(fcl_object,
                 pose.position.x, pose.position.y, pose.position.z,
                 pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w,
                 col.r, col.g, col.b, col.a)
         {
         }
 
-        MarkerShape(T &fclObject, geometry_msgs::Point &pos, geometry_msgs::Quaternion &quat, std_msgs::ColorRGBA &col)
-        : MarkerShape(fclObject, pos.x, pos.y, pos.z, quat.x, quat.y, quat.z, quat.w, col.r, col.g, col.b, col.a)
+        MarkerShape(T &fcl_object, geometry_msgs::Point &pos, geometry_msgs::Quaternion &quat, std_msgs::ColorRGBA &col)
+        : MarkerShape(fcl_object, pos.x, pos.y, pos.z, quat.x, quat.y, quat.z, quat.w, col.r, col.g, col.b, col.a)
         {
         }
 
-        MarkerShape(T &fclObject,
+        MarkerShape(T &fcl_object,
               double x, double y, double z,
               double quat_x = 0.0, double quat_y = 0.0, double quat_z = 0.0, double quat_w = 1.0,
               double color_r = 0.0, double color_g = 0.0, double color_b = 0.0, double color_a = 1.0);
@@ -85,16 +85,11 @@ class MarkerShape : public IMarkerShape
         inline void setDrawn();
         inline bool isDrawn() const;
         fcl::CollisionObject getCollisionObject() const;
-//        T getGeoShapeObject() const;
 
         virtual ~MarkerShape(){}
 };
 /* END MarkerShape **********************************************************************************************/
 
-
-
-
-
-#include "../../../cob_obstacle_distance/include/cob_obstacle_distance/marker_shapes_impl.hpp"
+#include "cob_obstacle_distance/marker_shapes_impl.hpp"
 
 #endif /* MARKER_SHAPES_HPP_ */

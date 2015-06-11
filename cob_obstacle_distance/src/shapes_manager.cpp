@@ -44,11 +44,11 @@ void ShapesManager::addShape(tPtrMarkerShapeBase s)
 }
 
 
-void ShapesManager::draw(bool enforceDraw)
+void ShapesManager::draw(bool enforce_draw)
 {
     for(tcIter iter = shapes_.begin(); iter != shapes_.end(); ++iter)
     {
-        if(!((*iter)->isDrawn()) || enforceDraw)
+        if(!((*iter)->isDrawn()) || enforce_draw)
         {
             ROS_INFO_STREAM("Publishing marker #" << (*iter)->getId() << std::endl);
             visualization_msgs::Marker marker = (*iter)->getMarker();

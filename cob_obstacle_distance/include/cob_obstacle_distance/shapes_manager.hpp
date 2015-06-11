@@ -49,7 +49,7 @@ class ShapesManager
         ~ShapesManager();
 
         void addShape(tPtrMarkerShapeBase s);
-        void draw(bool enforceDraw = false);
+        void draw(bool enforce_draw = false);
         void clear();
 
         iterator begin() {return this->shapes_.begin(); }

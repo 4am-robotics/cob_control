@@ -39,33 +39,6 @@
 
 #include "cob_twist_controller/constraints/constraint.h"
 #include "cob_twist_controller/constraints/constraint_params.h"
-#include "cob_obstacle_distance/PartialValues.h"
-
-template
-<typename T>
-class ConstraintParamFactory
-{
-    public:
-        static boost::shared_ptr<T> createConstraintParams(AugmentedSolverParams &augmentedSolverParams,
-                                         CallbackDataMediator& data_mediator)
-        {
-//            std::vector<boost::shared_ptr<T> > v;
-//
-//            boost::shared_ptr<T> params = boost::shared_ptr<T>(new T(augmentedSolverParams));
-//            //T* params = new T(augmentedSolverParams);
-//            data_mediator.fill(params);
-
-            boost::shared_ptr<T> params = boost::shared_ptr<T>(new T(augmentedSolverParams));
-            data_mediator.fill(params);
-            return params;
-        }
-
-    private:
-        ConstraintParamFactory()
-        {}
-};
-
-
 
 /* BEGIN ConstraintsBuilder *************************************************************************************/
 /**
@@ -82,7 +55,7 @@ std::set<tConstraintBase> ConstraintsBuilder<PRIO>::createConstraints(AugmentedS
     if (GPM_JLA == augmentedSolverParams.constraint)
     {
         typedef JointLimitAvoidance<ConstraintParamsJLA, PRIO> tJla;
-        boost::shared_ptr<ConstraintParamsJLA> params = ConstraintParamFactory<ConstraintParamsJLA>::createConstraintParams(augmentedSolverParams, data_mediator);
+        ConstraintParamsJLA params = ConstraintParamFactory<ConstraintParamsJLA>::createConstraintParams(augmentedSolverParams, data_mediator);
         // TODO: take care PRIO could be of different type than UINT32
         boost::shared_ptr<tJla > jla(new tJla(100, q, params));
         constraints.insert(boost::static_pointer_cast<PriorityBase<PRIO> >(jla));
@@ -91,7 +64,7 @@ std::set<tConstraintBase> ConstraintsBuilder<PRIO>::createConstraints(AugmentedS
     {
         typedef JointLimitAvoidanceMid<ConstraintParamsJLA, PRIO> tJlaMid;
         // same params as for normal JLA
-        boost::shared_ptr<ConstraintParamsJLA> params = ConstraintParamFactory<ConstraintParamsJLA>::createConstraintParams(augmentedSolverParams, data_mediator);
+        ConstraintParamsJLA params = ConstraintParamFactory<ConstraintParamsJLA>::createConstraintParams(augmentedSolverParams, data_mediator);
         // TODO: take care PRIO could be of different type than UINT32
         boost::shared_ptr<tJlaMid > jla(new tJlaMid(100, q, params));
         constraints.insert(boost::static_pointer_cast<PriorityBase<PRIO> >(jla));
@@ -100,13 +73,10 @@ std::set<tConstraintBase> ConstraintsBuilder<PRIO>::createConstraints(AugmentedS
     {
         typedef CollisionAvoidance<ConstraintParamsCA, PRIO> tCollisionAvoidance;
         uint32_t available_dists = data_mediator.obstacleDistancesCnt();
-
-        ROS_INFO_STREAM(">>>>>>>>>>>>> FOUND available_dists: " << available_dists);
-
         uint32_t startPrio = 100;
         for (uint32_t i = 0; i < available_dists; ++i)
         {
-            boost::shared_ptr<ConstraintParamsCA> params = ConstraintParamFactory<ConstraintParamsCA>::createConstraintParams(augmentedSolverParams, data_mediator);
+            ConstraintParamsCA params = ConstraintParamFactory<ConstraintParamsCA>::createConstraintParams(augmentedSolverParams, data_mediator);
             // TODO: take care PRIO could be of different type than UINT32
             boost::shared_ptr<tCollisionAvoidance > ca(new tCollisionAvoidance(startPrio--, q, params, jnt_to_jac));
             constraints.insert(boost::static_pointer_cast<PriorityBase<PRIO> >(ca));
@@ -137,208 +107,33 @@ double CollisionAvoidance<T_PARAMS, PRIO>::getDerivativeValue() const
 }
 
 template <typename T_PARAMS, typename PRIO>
-double CollisionAvoidance<T_PARAMS, PRIO>::getSafeRegion() const
+double CollisionAvoidance<T_PARAMS, PRIO>::getActivationThreshold() const
 {
     return 0.1; // in [m]
 }
 
-
-//template <typename PRIO>
-//Eigen::VectorXd  CollisionAvoidance<PRIO>::getPartialValues() const
-//{
-//    uint8_t vecRows = static_cast<uint8_t>(this->jointPos_.rows());
-//    Eigen::VectorXd partialValues = Eigen::VectorXd::Zero(vecRows);
-//
-//    // Create virtual obstacle
-////    double stepSize = 0.01;
-////    Eigen::Vector3d obstaclePosition(0.5, -0.3, 1);// [m]
-////    Eigen::Vector3d obstacleDirectionA(0, 1, 0);
-////    Eigen::Vector3d obstacleDirectionB(0, 0, 1);
-//
-//
-////    // Calculate the nearest obstacle
-////    // v_x = v_x_0 + s * v_a + t * v_b;
-//    const ConstraintParamsCA* constrParamCAPtr = reinterpret_cast<const ConstraintParamsCA*>(this->constraintParams_);
-//    const AugmentedSolverParams &params = constrParamCAPtr->getAugmentedSolverParams();
-////    Eigen::Vector3d endeffectorPosition = constrParamCAPtr->getEndeffectorPosition();
-////    Eigen::Vector3d obstVector;
-////    //OS_INFO_STREAM("endeffectorPosition: " << std::endl << endeffectorPosition);
-////    bool found = false;
-////    double dist;
-////    for (double s = 0.0; s < 1.0; s = s + stepSize)
-////    {
-////        for (double t = 0.0; t < 1.0; t = t + stepSize)
-////        {
-////            Eigen::Vector3d tmpObstVector = obstaclePosition + s * obstacleDirectionA + t * obstacleDirectionB;
-////            Eigen::Vector3d distVec = endeffectorPosition - tmpObstVector;
-////            dist = distVec.norm();
-////
-////
-////            //ROS_INFO_STREAM("tmpObstVector: " << std::endl << tmpObstVector);
-////            //ROS_INFO_STREAM("Calculated distance: " << dist);
-////
-////            if (this->getSafeRegion() > dist)
-////            {
-////                obstVector = tmpObstVector;
-////                found = true;
-////                break;
-////            }
-////        }
-////
-////        if(found)
-////        {
-////            break;
-////        }
-////    }
-//
-//    if (ros::service::exists("/getSmallestDistance", true))
-//    {
-//        ROS_INFO_STREAM("Service seems to exist!!!");
-//
-//        Eigen::Vector3d endeffectorPosition = constrParamCAPtr->getEndeffectorPosition();
-//        cob_obstacle_distance::ObjectOfInterest ooi;
-//
-//        ooi.request.p.position.x = endeffectorPosition(0);
-//        ooi.request.p.position.y = endeffectorPosition(1);
-//        ooi.request.p.position.z = endeffectorPosition(2);
-//        ooi.request.p.orientation.w = 1.0;
-//
-//        ooi.request.shapeType = 2; // visualization_msgs::Marker::SPHERE
-//
-//        //ROS_INFO_STREAM("Calling service");
-//        bool found = ros::service::call("/getSmallestDistance", ooi);
-//        //ROS_INFO_STREAM("Service returned" << found);
-//
-//        if (found)
-//        {
-//
-//            KDL::Jacobian new_jac_chain(7); // TODO: Change hard coded
-//            KDL::JntArray ja = this->jointPos_;
-//            //params.jnt2jac.JntToJac(ja, new_jac_chain); // TODO: Change hard coded
-//
-//            params.jnt2jac->JntToJac(ja, new_jac_chain, 4);
-//
-//            double dist = ooi.response.distance;
-//
-//            if (this->getSafeRegion() > dist)
-//            {
-//                Eigen::Vector3d obstVector;
-//                obstVector <<  ooi.response.obstacle.position.x,  ooi.response.obstacle.position.y, ooi.response.obstacle.position.z;
-//
-//                const ConstraintParamsCA* constrParamCAPtr = reinterpret_cast<const ConstraintParamsCA*>(this->constraintParams_);
-//                //Matrix6Xd jac = constrParamCAPtr->getEndeffectorJacobian();
-//
-//                Matrix6Xd jac = new_jac_chain.data;
-//
-//                Eigen::Vector3d endeffectorPosition = constrParamCAPtr->getEndeffectorPosition();
-//                Eigen::Matrix3Xd m = Eigen::Matrix3Xd::Zero(3, jac.cols());
-//
-//                m << jac.row(0),
-//                     jac.row(1),
-//                     jac.row(2);
-//
-//                // m.conservativeResize(3, 4);
-//
-//                Eigen::Vector3d distVector = endeffectorPosition - obstVector;
-//
-//                if (dist > 0.0)
-//                {
-//                    partialValues =  2.0 * ((dist - this->getSafeRegion()) / dist) * m.transpose() * distVector;
-//                }
-//                else
-//                {
-//                    partialValues =  2.0 * (((1.0e-9) - this->getSafeRegion()) / (1.0e-9)) * m.transpose() * distVector;
-//                }
-//
-//
-//                ROS_INFO_STREAM("Costfunction results: " << pow( (dist - this->getSafeRegion()), 2.0));
-//                ROS_INFO_STREAM("jac: " << std::endl << jac);
-//            }
-//        }
-//    }
-//
-//
-//
-//    return partialValues;
-//}
-
 template <typename T_PARAMS, typename PRIO>
 Eigen::VectorXd  CollisionAvoidance<T_PARAMS, PRIO>::getPartialValues() const
 {
-    ROS_INFO_STREAM("CollisionAvoidance<T_PARAMS, PRIO>::getPartialValues()");
     uint8_t vecRows = static_cast<uint8_t>(this->jointPos_.rows());
-    ROS_INFO_STREAM("uint8_t vecRows = static_cast<uint8_t>(this->jointPos_.rows());");
     Eigen::VectorXd partialValues = Eigen::VectorXd::Zero(vecRows);
-
-    // Create virtual obstacle
-//    double stepSize = 0.01;
-//    Eigen::Vector3d obstaclePosition(0.5, -0.3, 1);// [m]
-//    Eigen::Vector3d obstacleDirectionA(0, 1, 0);
-//    Eigen::Vector3d obstacleDirectionB(0, 0, 1);
-
-
-//    // Calculate the nearest obstacle
-//    // v_x = v_x_0 + s * v_a + t * v_b;
-
-    //boost::shared_ptr<ConstraintParamsCA> constrParamCAPtr = boost::static_pointer_cast<ConstraintParamsCA>(this->constraintParams_);
-    //const ConstraintParamsCA* constrParamCAPtr = reinterpret_cast<const ConstraintParamsCA*>(this->constraintParams_);
-
-    ROS_INFO_STREAM("Eigen::VectorXd partialValues = Eigen::VectorXd::Zero(vecRows);");
-    ROS_INFO_STREAM("this->constraintParams_->current_distance_.min_distance: " << this->constraintParams_->current_distance_.min_distance);
-    //const AugmentedSolverParams &params = this->constraintParams_->getAugmentedSolverParams();
-    //AugmentedSolverParams params;
-    //ROS_INFO_STREAM("AugmentedSolverParams params;");
-
-    AugmentedSolverParams params = this->constraintParams_->getAugmentedSolverParams();
-    ROS_INFO_STREAM("this->constraintParams_->getAugmentedSolverParams();");
-//    Eigen::Vector3d endeffectorPosition = constrParamCAPtr->getEndeffectorPosition();
-//    Eigen::Vector3d obstVector;
-//    //OS_INFO_STREAM("endeffectorPosition: " << std::endl << endeffectorPosition);
-//    bool found = false;
-//    double dist;
-//    for (double s = 0.0; s < 1.0; s = s + stepSize)
-//    {
-//        for (double t = 0.0; t < 1.0; t = t + stepSize)
-//        {
-//            Eigen::Vector3d tmpObstVector = obstaclePosition + s * obstacleDirectionA + t * obstacleDirectionB;
-//            Eigen::Vector3d distVec = endeffectorPosition - tmpObstVector;
-//            dist = distVec.norm();
-//
-//
-//            //ROS_INFO_STREAM("tmpObstVector: " << std::endl << tmpObstVector);
-//            //ROS_INFO_STREAM("Calculated distance: " << dist);
-//
-//            if (this->getSafeRegion() > dist)
-//            {
-//                obstVector = tmpObstVector;
-//                found = true;
-//                break;
-//            }
-//        }
-//
-//        if(found)
-//        {
-//            break;
-//        }
-//    }
-
-    int size_of_jnts = params.joint_names.size();
-    Distance d = this->constraintParams_->current_distance_;
-    ROS_INFO_STREAM("Distance d = this->constraintParams_->current_distance_;");
-    if (this->getSafeRegion() > d.min_distance)
+    const AugmentedSolverParams& params = this->constraintParams_.getAugmentedSolverParams();
+    int size_of_frames = params.frame_names.size();
+    Distance d = this->constraintParams_.current_distance_;
+    if (this->getActivationThreshold() > d.min_distance)
     {
-        std::vector<std::string>::const_iterator str_it = std::find(params.joint_names.begin(), params.joint_names.end(), d.frame_name);
-        if (params.joint_names.end() != str_it)
+        std::vector<std::string>::const_iterator str_it = std::find(params.frame_names.begin(),
+                                                                    params.frame_names.end(),
+                                                                    d.frame_id);
+        if (params.frame_names.end() != str_it)
         {
-
-            int pos = str_it - params.joint_names.begin();
-            ROS_INFO_STREAM("Found frame name: " << d.frame_name << " at pos: " << pos);
-            int jnt_number = pos + 1;
-            KDL::Jacobian new_jac_chain(size_of_jnts);
+            uint32_t pos = str_it - params.frame_names.begin();
+            uint32_t frame_number = pos + 1;
+            KDL::Jacobian new_jac_chain(size_of_frames);
             KDL::JntArray ja = this->jointPos_;
-            this->jnt_to_jac_.JntToJac(ja, new_jac_chain, jnt_number);
+            this->jnt_to_jac_.JntToJac(ja, new_jac_chain, frame_number);
 
-            Eigen::Matrix3Xd m = Eigen::Matrix3Xd::Zero(3, size_of_jnts);
+            Eigen::Matrix3Xd m = Eigen::Matrix3Xd::Zero(3, size_of_frames);
 
             m << new_jac_chain.data.row(0),
                  new_jac_chain.data.row(1),
@@ -346,94 +141,10 @@ Eigen::VectorXd  CollisionAvoidance<T_PARAMS, PRIO>::getPartialValues() const
 
             if (d.min_distance > 0.0)
             {
-                partialValues =  2.0 * ((d.min_distance - this->getSafeRegion()) / d.min_distance) * m.transpose() * d.distance_vec;
-                ROS_INFO_STREAM("Calculated partial values of " << d.frame_name << " : " << partialValues);
+                partialValues =  2.0 * ((d.min_distance - this->getActivationThreshold()) / d.min_distance) * m.transpose() * d.distance_vec;
             }
         }
     }
-
-
-
-
-
-
-
-//    if (ros::service::exists("/getAnotherSmallestDistance", true))
-//    {
-//        ROS_INFO_STREAM("Service seems to exist!!!");
-//
-//        Eigen::Vector3d endeffectorPosition; // = constrParamCAPtr->getEndeffectorPosition();
-//        cob_obstacle_distance::PartialValues ooi;
-//
-//        //ooi.request.p.position.x = endeffectorPosition(0);
-//        //ooi.request.p.position.y = endeffectorPosition(1);
-//        //ooi.request.p.position.z = endeffectorPosition(2);
-//        //ooi.request.p.orientation.w = 1.0;
-//
-//        ooi.request.shapeType = 2; // visualization_msgs::Marker::SPHERE
-//        ooi.request.jntNumber = 4; // TODO: Hard Coded
-//        ooi.request.activationDistance = 0.1; // TODO: Hard Coded
-//
-//        //ROS_INFO_STREAM("Calling service");
-//        bool found = ros::service::call("/getAnotherSmallestDistance", ooi);
-//        //ROS_INFO_STREAM("Service returned" << found);
-//
-//        if (found)
-//        {
-//
-//            KDL::Jacobian new_jac_chain(7); // TODO: Change hard coded
-//            KDL::JntArray ja = this->jointPos_;
-//            this->jnt_to_jac_.JntToJac(ja, new_jac_chain);
-////
-////            params.jnt2jac->JntToJac(ja, new_jac_chain, 4);
-////
-////            double dist = ooi.response.distance;
-////
-////            if (this->getSafeRegion() > dist)
-////            {
-////                Eigen::Vector3d obstVector;
-////                obstVector <<  ooi.response.obstacle.position.x,  ooi.response.obstacle.position.y, ooi.response.obstacle.position.z;
-////
-////                const ConstraintParamsCA* constrParamCAPtr = reinterpret_cast<const ConstraintParamsCA*>(this->constraintParams_);
-////                //Matrix6Xd jac = constrParamCAPtr->getEndeffectorJacobian();
-////
-////                Matrix6Xd jac = new_jac_chain.data;
-////
-////                Eigen::Vector3d endeffectorPosition = constrParamCAPtr->getEndeffectorPosition();
-////                Eigen::Matrix3Xd m = Eigen::Matrix3Xd::Zero(3, jac.cols());
-////
-////                m << jac.row(0),
-////                     jac.row(1),
-////                     jac.row(2);
-////
-////                // m.conservativeResize(3, 4);
-////
-////                Eigen::Vector3d distVector = endeffectorPosition - obstVector;
-////
-////                if (dist > 0.0)
-////                {
-////                    partialValues =  2.0 * ((dist - this->getSafeRegion()) / dist) * m.transpose() * distVector;
-////                }
-////                else
-////                {
-////                    partialValues =  2.0 * (((1.0e-9) - this->getSafeRegion()) / (1.0e-9)) * m.transpose() * distVector;
-////                }
-////
-////
-////                ROS_INFO_STREAM("Costfunction results: " << pow( (dist - this->getSafeRegion()), 2.0));
-////                ROS_INFO_STREAM("jac: " << std::endl << jac);
-////            }
-//
-//            int cnt = 0;
-//            for(std::vector<double>::const_iterator it = ooi.response.partialValues.begin(); it != ooi.response.partialValues.end(); ++it)
-//            {
-//                partialValues(cnt++) = *it;
-//            }
-//
-//        }
-//    }
-
-
 
     return partialValues;
 }
@@ -441,7 +152,7 @@ Eigen::VectorXd  CollisionAvoidance<T_PARAMS, PRIO>::getPartialValues() const
 template <typename T_PARAMS, typename PRIO>
 double CollisionAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::MatrixXd& particularSolution, const Eigen::MatrixXd& homogeneousSolution) const
 {
-    const AugmentedSolverParams &params = this->constraintParams_->getAugmentedSolverParams();
+    const AugmentedSolverParams &params = this->constraintParams_.getAugmentedSolverParams();
     //return SelfMotionMagnitudeFactory< SmmDeterminatorVelocityBounds<MAX_CRIT> >::calculate(params, particularSolution, homogeneousSolution);
     return params.kappa;
 }
@@ -452,7 +163,7 @@ double CollisionAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::M
 template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidance<T_PARAMS, PRIO>::getValue(Eigen::VectorXd steps) const
 {
-    const AugmentedSolverParams &params = this->constraintParams_->getAugmentedSolverParams();
+    const AugmentedSolverParams &params = this->constraintParams_.getAugmentedSolverParams();
     std::vector<double> limits_min = params.limits_min;
     std::vector<double> limits_max = params.limits_max;
     double H_q = 0.0;
@@ -481,7 +192,7 @@ double JointLimitAvoidance<T_PARAMS, PRIO>::getDerivativeValue() const
 }
 
 template <typename T_PARAMS, typename PRIO>
-double JointLimitAvoidance<T_PARAMS, PRIO>::getSafeRegion() const
+double JointLimitAvoidance<T_PARAMS, PRIO>::getActivationThreshold() const
 {
     return 0.0;
 }
@@ -491,7 +202,7 @@ double JointLimitAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::
 {
     // k_H by Armijo-Rule
     double t;
-    const AugmentedSolverParams &params = this->constraintParams_->getAugmentedSolverParams();
+    const AugmentedSolverParams &params = this->constraintParams_.getAugmentedSolverParams();
 //    Eigen::VectorXd gradient = this->getPartialValues();
 //    double costFunctionVal = this->getValue();
 //
@@ -534,45 +245,25 @@ double JointLimitAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::
 template <typename T_PARAMS, typename PRIO>
 Eigen::VectorXd JointLimitAvoidance<T_PARAMS, PRIO>::getPartialValues() const
 {
-    const AugmentedSolverParams &params = this->constraintParams_->getAugmentedSolverParams();
+    const AugmentedSolverParams &params = this->constraintParams_.getAugmentedSolverParams();
     std::vector<double> limits_min = params.limits_min;
     std::vector<double> limits_max = params.limits_max;
-
     double rad = M_PI / 180.0;
-    uint8_t vecRows = static_cast<uint8_t>(this->jointPos_.rows());
-    Eigen::VectorXd partialValues = Eigen::VectorXd::Zero(vecRows);
-
-    //ROS_WARN_STREAM("limits_min: " << std::endl << limits_min << std::endl);
-    //ROS_WARN_STREAM("limits_max: " << std::endl << limits_max << std::endl);
-
-
-
+    uint8_t vec_rows = static_cast<uint8_t>(this->jointPos_.rows());
+    Eigen::VectorXd partial_values = Eigen::VectorXd::Zero(vec_rows);
     for(uint8_t i = 0; i < this->jointPos_.rows() ; ++i)
     {
-        partialValues(i) = 0.0; // in the else cases -> output always 0
+        partial_values(i) = 0.0; // in the else cases -> output always 0
         //See Chan paper ISSN 1042-296X [Page 288]
-        double minDelta = (this->jointPos_(i) - limits_min[i]);
-        double maxDelta = (limits_max[i] - this->jointPos_(i));
+        double min_delta = (this->jointPos_(i) - limits_min[i]);
+        double max_delta = (limits_max[i] - this->jointPos_(i));
+        double nominator = (2.0 * this->jointPos_(i) - limits_min[i] - limits_max[i]) * (limits_max[i] - limits_min[i]) * (limits_max[i] - limits_min[i]);
+        double denom = 4.0 * min_delta * min_delta * max_delta * max_delta;
+        partial_values(i) = nominator / denom;
 
-//        ROS_WARN_STREAM("joint pos: " << this->jointPos_(i) << std::endl);
-//        ROS_WARN_STREAM("minDelta: " << minDelta << std::endl);
-//        ROS_WARN_STREAM("maxDelta: " << maxDelta << std::endl);
-//
-//        ROS_WARN_STREAM("limits_min: " << std::endl << limits_min[i] << std::endl);
-//        ROS_WARN_STREAM("limits_max: " << std::endl << limits_max[i] << std::endl);
-
-//        if( minDelta * maxDelta < 0.0)
-//        {
-//            ROS_ERROR_STREAM("LIMITING NECESSARY for joint : " << static_cast<unsigned int>(i) << std::endl);
-
-            double nominator = (2.0 * this->jointPos_(i) - limits_min[i] - limits_max[i]) * (limits_max[i] - limits_min[i]) * (limits_max[i] - limits_min[i]);
-            double denom = 4.0 * minDelta * minDelta * maxDelta * maxDelta;
-            partialValues(i) = nominator / denom;
-//        }
     }
 
-    //double k = params.kappa;
-    return partialValues;
+    return partial_values;
 }
 /* END JointLimitAvoidance **************************************************************************************/
 
@@ -591,7 +282,7 @@ double JointLimitAvoidanceMid<T_PARAMS, PRIO>::getDerivativeValue() const
 }
 
 template <typename T_PARAMS, typename PRIO>
-double JointLimitAvoidanceMid<T_PARAMS, PRIO>::getSafeRegion() const
+double JointLimitAvoidanceMid<T_PARAMS, PRIO>::getActivationThreshold() const
 {
     return 0.0;
 }
@@ -600,27 +291,19 @@ double JointLimitAvoidanceMid<T_PARAMS, PRIO>::getSafeRegion() const
 template <typename T_PARAMS, typename PRIO>
 Eigen::VectorXd JointLimitAvoidanceMid<T_PARAMS, PRIO>::getPartialValues() const
 {
-    const AugmentedSolverParams &params = this->constraintParams_->getAugmentedSolverParams();
+    const AugmentedSolverParams &params = this->constraintParams_.getAugmentedSolverParams();
     std::vector<double> limits_min = params.limits_min;
     std::vector<double> limits_max = params.limits_max;
 
     double rad = M_PI / 180.0;
-    uint8_t vecRows = static_cast<uint8_t>(this->jointPos_.rows());
-    Eigen::VectorXd partialValues = Eigen::VectorXd::Zero(vecRows);
+    uint8_t vec_rows = static_cast<uint8_t>(this->jointPos_.rows());
+    Eigen::VectorXd partial_values = Eigen::VectorXd::Zero(vec_rows);
 
-    for(uint8_t i = 0; i < vecRows; ++i)
+    for(uint8_t i = 0; i < vec_rows; ++i)
     {
-        double minDelta = (this->jointPos_(i) - limits_min[i]);
-        double maxDelta = (limits_max[i] - this->jointPos_(i));
-
-//        ROS_WARN_STREAM("joint pos: " << this->jointPos_(i) << std::endl);
-//        ROS_WARN_STREAM("minDelta: " << minDelta << std::endl);
-//        ROS_WARN_STREAM("maxDelta: " << maxDelta << std::endl);
-//
-//        ROS_WARN_STREAM("limits_min: " << std::endl << limits_min[i] << std::endl);
-//        ROS_WARN_STREAM("limits_max: " << std::endl << limits_max[i] << std::endl);
-
-        if( minDelta * maxDelta < 0.0)
+        double min_delta = (this->jointPos_(i) - limits_min[i]);
+        double max_delta = (limits_max[i] - this->jointPos_(i));
+        if( min_delta * max_delta < 0.0)
         {
             ROS_WARN_STREAM("Limit of joint " << int(i) << " reached: " << std::endl
                             << "pos=" << this->jointPos_(i) << ";lim_min=" << limits_min[i] << ";lim_max=" << limits_max[i]);
@@ -630,17 +313,17 @@ Eigen::VectorXd JointLimitAvoidanceMid<T_PARAMS, PRIO>::getPartialValues() const
         double limits_mid = 1.0 / 2.0 * (limits_max[i] + limits_min[i]);
         double nominator = this->jointPos_(i) - limits_mid;
         double denom = limits_max[i] - limits_min[i];
-        partialValues(i) = nominator / denom;
+        partial_values(i) = nominator / denom;
     }
 
     double k = params.kappa;
-    return k * partialValues;
+    return k * partial_values;
 }
 
 template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidanceMid<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::MatrixXd& particularSolution, const Eigen::MatrixXd& homogeneousSolution) const
 {
-    const AugmentedSolverParams &params = this->constraintParams_->getAugmentedSolverParams();
+    const AugmentedSolverParams &params = this->constraintParams_.getAugmentedSolverParams();
     return SelfMotionMagnitudeFactory<SmmDeterminatorVelocityBounds<MAX_CRIT> >::calculate(params, particularSolution, homogeneousSolution);
 }
 /* END 2nd JointLimitAvoidance **************************************************************************************/

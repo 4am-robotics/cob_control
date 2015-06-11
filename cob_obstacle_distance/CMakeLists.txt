@@ -21,8 +21,6 @@ add_message_files(
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
-  ObjectOfInterest.srv
-  PartialValues.srv
   Registration.srv
 )
 

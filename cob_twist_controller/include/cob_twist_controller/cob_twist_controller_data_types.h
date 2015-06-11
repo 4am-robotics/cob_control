@@ -31,6 +31,15 @@
 
 #include <vector>
 #include <stdint.h>
+#include <Eigen/Core>
+#include <Eigen/LU> // necessary to use several methods on EIGEN Matrices.
+
+struct Distance
+{
+    double min_distance;
+    Eigen::Vector3d distance_vec;
+    std::string frame_id;
+};
 
 struct TwistControllerParams {
     uint8_t dof;
@@ -45,7 +54,6 @@ struct TwistControllerParams {
     bool keep_direction;
     bool enforce_pos_limits;
     bool enforce_vel_limits;
-
 
     // added limits from URDF file
     std::vector<double> limits_vel;

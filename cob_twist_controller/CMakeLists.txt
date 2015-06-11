@@ -28,17 +28,16 @@ set(SRC_C_DIR "src/constraint_solvers")
 set(SRC_CS_DIR "${SRC_C_DIR}/solvers")
 
 # Declare a cpp library
-add_library(chainfk_solvers src/chainfk_solvers/advanced_chainfksolverpos_recursive.cpp)
 add_library(damping_methods src/damping_methods/damping.cpp)
 add_library(constraint_solvers ${SRC_CS_DIR}/unconstraint_solver.cpp ${SRC_CS_DIR}/wln_joint_limit_avoidance_solver.cpp ${SRC_CS_DIR}/weighted_least_norm_solver.cpp ${SRC_CS_DIR}/gradient_projection_method_solver.cpp ${SRC_C_DIR}/constraint_solver_factory_builder.cpp)
 add_library(limiters src/limiters/limiter.cpp)
 add_library(inv_calculations src/inverse_jacobian_calculations/inverse_jacobian_calculation.cpp)
-target_link_libraries(constraint_solvers damping_methods inv_calculations chainfk_solvers)
+target_link_libraries(constraint_solvers damping_methods inv_calculations)
 add_dependencies(constraint_solvers cob_obstacle_distance_gencpp)
 
 
 add_library(augmented_solver src/augmented_solver.cpp src/callback_data_mediator.cpp)
-target_link_libraries(augmented_solver constraint_solvers chainfk_solvers ${orocos_kdl_LIBRARIES})
+target_link_libraries(augmented_solver constraint_solvers ${orocos_kdl_LIBRARIES})
 
 add_library(twist_controller src/cob_twist_controller.cpp)
 add_dependencies(augmented_solver cob_twist_controller_gencfg)
@@ -50,7 +49,7 @@ target_link_libraries(cob_twist_controller_node twist_controller ${catkin_LIBRAR
 
 ## Install
 # Mark executables and/or libraries for installation
-install(TARGETS cob_twist_controller_node twist_controller augmented_solver constraint_solvers damping_methods limiters inv_calculations chainfk_solvers
+install(TARGETS cob_twist_controller_node twist_controller augmented_solver constraint_solvers damping_methods limiters inv_calculations
  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

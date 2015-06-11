@@ -32,17 +32,12 @@
 
 #include "cob_obstacle_distance/marker_shapes.hpp"
 
-/* BEGIN IMarkerShape *******************************************************************************************/
-//uint32_t IMarkerShape::classCtr_ = 0;
-/* END IMarkerShape *********************************************************************************************/
-
-
 /* BEGIN MarkerShape ********************************************************************************************/
 template <typename T>
-MarkerShape<T>::MarkerShape(T &fclObject,
+MarkerShape<T>::MarkerShape(T &fcl_object,
       double x, double y, double z,
       double quat_x, double quat_y, double quat_z, double quat_w,
-      double color_r, double color_g, double color_b, double color_a) : fclMarkerConverter_(fclObject), isDrawn_(false)
+      double color_r, double color_g, double color_b, double color_a) : fcl_marker_converter_(fcl_object), is_drawn_(false)
 {
     this->init(x, y, z, quat_x, quat_y, quat_z, quat_w, color_r, color_g, color_b, color_a);
 }
@@ -51,7 +46,7 @@ MarkerShape<T>::MarkerShape(T &fclObject,
 template <typename T>
 MarkerShape<T>::MarkerShape(double x, double y, double z,
             double quat_x, double quat_y, double quat_z, double quat_w,
-            double color_r, double color_g, double color_b, double color_a) : isDrawn_(false)
+            double color_r, double color_g, double color_b, double color_a) : is_drawn_(false)
 {
     this->init(x, y, z, quat_x, quat_y, quat_z, quat_w, color_r, color_g, color_b, color_a);
 }
@@ -80,9 +75,9 @@ void MarkerShape<T>::init(double x, double y, double z,
     marker_.header.stamp = ros::Time::now();
     marker_.ns = g_marker_namespace;
     marker_.action = visualization_msgs::Marker::ADD;
-    marker_.id = classCtr_;
+    marker_.id = class_ctr_;
 
-    fclMarkerConverter_.assignValues(marker_);
+    fcl_marker_converter_.assignValues(marker_);
 }
 
 
@@ -114,14 +109,14 @@ inline visualization_msgs::Marker MarkerShape<T>::getMarker()
 template <typename T>
 inline void MarkerShape<T>::setDrawn()
 {
-    this->isDrawn_ = true;
+    this->is_drawn_ = true;
 }
 
 
 template <typename T>
 inline bool MarkerShape<T>::isDrawn() const
 {
-    return this->isDrawn_;
+    return this->is_drawn_;
 }
 
 
@@ -136,32 +131,10 @@ fcl::CollisionObject MarkerShape<T>::getCollisionObject() const
                                   this->marker_.pose.position.y,
                                   this->marker_.pose.position.z));
 
-    T geoShape = fclMarkerConverter_.getGeoShape();
+    T geoShape = fcl_marker_converter_.getGeoShape();
     fcl::CollisionObject cobj(boost::shared_ptr<fcl::CollisionGeometry>(new T(geoShape)), x);
-
-//            fcl::Quaternion3f q = cobj.getQuatRotation();
-//            fcl::Vec3f v = cobj.getTranslation();
-//            ROS_INFO_STREAM("Quaternion3f: " << q.getW() << "; " << q.getX() << "; " << q.getY() << "; " << q.getZ() << std::endl);
-//            ROS_INFO_STREAM("Vec3f: " << v << std::endl);
-
     return cobj;
 }
-
-
-
-//template <typename T>
-//T MarkerShape<T>::getGeoShapeObject() const
-//{
-//    T geoShape = fclMarkerConverter_.getGeoShape();
-//    fcl::CollisionObject cobj(boost::shared_ptr<fcl::CollisionGeometry>(&geoShape), x);
-//
-////            fcl::Quaternion3f q = cobj.getQuatRotation();
-////            fcl::Vec3f v = cobj.getTranslation();
-////            ROS_INFO_STREAM("Quaternion3f: " << q.getW() << "; " << q.getX() << "; " << q.getY() << "; " << q.getZ() << std::endl);
-////            ROS_INFO_STREAM("Vec3f: " << v << std::endl);
-//
-//    return geoShape;
-//}
 
 /* END MarkerShape **********************************************************************************************/
 
