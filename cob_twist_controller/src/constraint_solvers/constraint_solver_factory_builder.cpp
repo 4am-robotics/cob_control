@@ -52,7 +52,7 @@
  */
 int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverParams &asParams,
                                                                 Matrix6Xd &jacobianData,
-                                                                const Eigen::VectorXd &inCartVelocities,
+                                                                const Vector6d &inCartVelocities,
                                                                 const KDL::JntArray& q,
                                                                 const KDL::JntArray& last_q_dot,
                                                                 Eigen::MatrixXd &outJntVelocities)
@@ -70,8 +70,6 @@ int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverP
                                                                                      jacobianData,
                                                                                      this->jnt_to_jac_,
                                                                                      this->data_mediator_);
-
-    ROS_INFO_STREAM("ConstraintsBuilder returned std::set with size: " << constraints.size() << std::endl);
 
     boost::shared_ptr<ISolverFactory> sf;
     switch(asParams.constraint)

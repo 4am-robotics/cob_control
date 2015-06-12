@@ -174,6 +174,32 @@ bool DistanceManager::collide(tPtrMarkerShapeBase s1, tPtrMarkerShapeBase s2)
 }
 
 
+int DistanceManager::getMarkerShape(uint32_t shape_type, const Eigen::Vector3d& abs_pos, tPtrMarkerShapeBase& segment_of_interest_marker_shape)
+{
+    // Representation of segment_of_interest as specific shape
+    fcl::Box b(0.1, 0.1, 0.1);
+    fcl::Sphere s(0.1);
+    fcl::Cylinder c(0.1, 0.1);
+    switch(shape_type)
+    {
+        case visualization_msgs::Marker::CUBE:
+            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Box>(b, abs_pos(0), abs_pos(1), abs_pos(2)));
+            break;
+        case visualization_msgs::Marker::SPHERE:
+            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Sphere>(s, abs_pos(0), abs_pos(1), abs_pos(2)));
+            break;
+        case visualization_msgs::Marker::CYLINDER:
+            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Cylinder>(c, abs_pos(0), abs_pos(1), abs_pos(2)));
+            break;
+        default:
+           ROS_ERROR("Failed to process request due to unknown shape type: %d", shape_type);
+           return false;
+    }
+
+    return true;
+}
+
+
 void DistanceManager::calculate()
 {
     bool initial = true;
@@ -218,20 +244,9 @@ void DistanceManager::calculate()
         fcl::Sphere s(0.1);
         fcl::Cylinder c(0.1, 0.1);
         tPtrMarkerShapeBase ooi;
-        switch(it->second.shape_type)
+        if(!DistanceManager::getMarkerShape(it->second.shape_type, abs_jnt_pos, ooi))
         {
-            case visualization_msgs::Marker::CUBE:
-                ooi.reset(new MarkerShape<fcl::Box>(b, abs_jnt_pos(0), abs_jnt_pos(1), abs_jnt_pos(2)));
-                break;
-            case visualization_msgs::Marker::SPHERE:
-                ooi.reset(new MarkerShape<fcl::Sphere>(s, abs_jnt_pos(0), abs_jnt_pos(1), abs_jnt_pos(2)));
-                break;
-            case visualization_msgs::Marker::CYLINDER:
-                ooi.reset(new MarkerShape<fcl::Cylinder>(c, abs_jnt_pos(0), abs_jnt_pos(1), abs_jnt_pos(2)));
-                break;
-            default:
-               ROS_ERROR("Failed to process request due to unknown shape type: %d", it->second.shape_type);
-               return;
+            return;
         }
 
         fcl::CollisionObject ooi_co = ooi->getCollisionObject();

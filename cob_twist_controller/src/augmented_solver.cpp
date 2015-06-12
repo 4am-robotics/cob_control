@@ -27,18 +27,12 @@
  ****************************************************************/
 #include "cob_twist_controller/augmented_solver.h"
 
-//#include <Eigen/QR>
-//#include <Eigen/LU>
+#include <ros/ros.h>
+#include <eigen_conversions/eigen_kdl.h>
 
-#include "ros/ros.h"
-
-//#include "cob_twist_controller/chainfk_solvers/advanced_chainfksolverpos_recursive.h"
-
-
-
-#include "cob_obstacle_distance/ObjectOfInterest.h"
-
-
+/**
+ * Solve the inverse kinematics problem at the first order differential level.
+ */
 int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in,
                                const KDL::JntArray& last_q_dot,
                                const KDL::Twist& v_in,
@@ -48,68 +42,11 @@ int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in,
 {
     int8_t retStat = -1;
     this->adjustJac(q_in, base_position, chain_base);
-    Eigen::VectorXd v_in_vec = Eigen::VectorXd::Zero(this->jac_.rows());
 
-    //ROS_INFO_STREAM_NAMED("AugmentedSolver::CartToJnt", "ColPivQR: Rank of Jacobian: " << this->jac_.data.colPivHouseholderQr().rank() << std::endl);
-    //ROS_INFO_STREAM_NAMED("AugmentedSolver::CartToJnt", "FullPivLu: Rank of Jacobian: " << this->jac_.data.fullPivLu().rank() << std::endl);
-
-    ///convert input
-    for (int i=0; i < this->jac_.rows(); ++i)
-    {
-        v_in_vec(i) = v_in(i);
-    }
-
-//    AdvancedChainFkSolverPos_recursive adChnFkSolverPos(chain_);
-//
-//    KDL::Frame pOut;
-//    int retVal = adChnFkSolverPos.JntToCart(q_in, pOut);
-//
-//    KDL::Frame joint4pos = adChnFkSolverPos.getPostureAtJnt(3);
-//
-//
-//    Eigen::Matrix<double, 3, 3> chain_base_rot;
-//
-//    chain_base_rot << chain_base.M.data[0],chain_base.M.data[1],chain_base.M.data[2],
-//                      chain_base.M.data[3],chain_base.M.data[4],chain_base.M.data[5],
-//                      chain_base.M.data[6],chain_base.M.data[7],chain_base.M.data[8];
-//
-//    Eigen::Vector3d base2chainbaseTranslation(chain_base.p.x(),
-//                                              chain_base.p.y(),
-//                                              chain_base.p.z());
-//    Eigen::Vector3d baseLink2armBase = (-1) * chain_base_rot.inverse() * base2chainbaseTranslation;
-    //ROS_INFO_STREAM("ROTATED base2chainbaseTranslation: " << baseLink2armBase << std::endl);
-
-
-    // Get current x and y position from EE and chain_base with respect to base_footprint
-//    Eigen::Vector3d chainbase2fourthJntPos(joint4pos.p.x(),
-//                                           joint4pos.p.y(),
-//                                           joint4pos.p.z());
-
-    //Eigen::Vector3d testo2 = chain_base_rot * base_pos_rot.inverse() * chainbase2fourthJntPos;
-//    Eigen::Vector3d armBase2JntPos = chain_base_rot.inverse() * chainbase2fourthJntPos;
-    //ROS_INFO_STREAM("ROTATED chainbase2fourthJntPos: " << armBase2JntPos << std::endl);
-
-
-//    Eigen::Vector3d eePosition = baseLink2armBase + armBase2JntPos;
-
-    //ROS_INFO_STREAM("base2chainbaseTranslation: " << base2chainbaseTranslation << std::endl);
-    //ROS_INFO_STREAM("chainbase2fourthJntPos: " << chainbase2fourthJntPos << std::endl);
-//    ROS_INFO_STREAM("eePosition: " << eePosition << std::endl);
-
-
-    // ROS_INFO_STREAM("Endeffector position: " << std::endl << eePosition);
+    Vector6d v_in_vec;
+    tf::twistKDLToEigen(v_in, v_in_vec);
 
     Eigen::MatrixXd qdot_out_vec;
-
-//    this->params_.jnt2jac = &jnt2jac_;
-//    retStat = ConstraintSolverFactoryBuilder::calculateJointVelocities(this->params_,
-//                                                                       this->jac_.data,
-//                                                                       v_in_vec,
-//                                                                       q_in,
-//                                                                       last_q_dot,
-//                                                                       callback_data_mediator_,
-//                                                                       qdot_out_vec);
-
     retStat = constraint_solver_factory_.calculateJointVelocities(this->params_,
                                                                   this->jac_.data,
                                                                   v_in_vec,
@@ -142,7 +79,7 @@ void AugmentedSolver::adjustJac(const KDL::JntArray& q_in,
 
     if(params_.base_active)
     {
-        Eigen::Matrix<double, 3, 3> chain_base_rot, base_rot, tip_base_rot;
+        Eigen::Matrix3d base_rot, tip_base_rot;
         Eigen::Vector3d w_chain_base;
         Eigen::Vector3d r_chain_base;
         Eigen::Vector3d tangential_vel;
@@ -157,15 +94,14 @@ void AugmentedSolver::adjustJac(const KDL::JntArray& q_in,
                                     base_position.p.y(),
                                     base_position.p.z());
 
-        chain_base_rot <<     chain_base.M.data[0],chain_base.M.data[1],chain_base.M.data[2],
-                        chain_base.M.data[3],chain_base.M.data[4],chain_base.M.data[5],
-                        chain_base.M.data[6],chain_base.M.data[7],chain_base.M.data[8];
+        Eigen::Quaterniond chain_base_quat;
+        tf::quaternionKDLToEigen(chain_base.M, chain_base_quat);
+        Eigen::Matrix3d chain_base_rot = chain_base_quat.toRotationMatrix();
 
         // Transform from base_link to chain_base
         Eigen::Vector3d w_base_link(0,0,base_ratio);
-        //Eigen::Vector3d w_base_link(0,0,1);
-        w_chain_base = chain_base_rot*w_base_link;
-        r_chain_base = chain_base_rot*r_base_link;
+        w_chain_base = chain_base_quat*w_base_link;
+        r_chain_base = chain_base_quat*r_base_link;
 
         //Calculate tangential velocity
         tangential_vel = w_chain_base.cross(r_chain_base);
@@ -191,7 +127,7 @@ void AugmentedSolver::adjustJac(const KDL::JntArray& q_in,
         jac_b(5,2) = w_chain_base(2);
 
         //combine chain Jacobian and platform Jacobian
-        Eigen::Matrix<double, 6, Eigen::Dynamic> jac_full;
+        Matrix6Xd jac_full;
         jac_full.resize(6,chain_.getNrOfJoints() + jac_b.cols());
         jac_full << jac_chain.data, jac_b;
         jac_.resize(chain_.getNrOfJoints() + jac_b.cols());

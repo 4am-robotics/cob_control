@@ -49,7 +49,7 @@ class ConstraintSolver
          * @param last_q_dot The last joint velocities.
          * @return The calculated new joint velocities.
          */
-        virtual Eigen::MatrixXd solve(const Eigen::VectorXd &inCartVelocities,
+        virtual Eigen::MatrixXd solve(const Vector6d &inCartVelocities,
                                       const KDL::JntArray& q,
                                       const KDL::JntArray& last_q_dot) const = 0;
 

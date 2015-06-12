@@ -45,6 +45,8 @@
 bool CobTwistController::initialize()
 {
     ros::NodeHandle nh_twist("twist_controller");
+    std::string robo_namespace = nh_.getNamespace();
+    robo_namespace.erase(0, 2); // delete "//" to get "arm_right" or "arm_left" ...
 
     // JointNames
     if(!nh_.getParam("joint_names", joints_))
@@ -91,6 +93,14 @@ bool CobTwistController::initialize()
         ROS_WARN_STREAM("Parameter 'max_vel_rot_base' not set. Using default: " << twistControllerParams_.max_vel_rot_base);
     }
 
+    // Frames of Interest
+    if(!nh_twist.getParam("collision_check_frames", twistControllerParams_.collision_check_frames))
+    {
+        ROS_WARN_STREAM("Parameter vector 'collision_check_frames' not set. Using default: 3rd link and 5th link of manipulator.");
+        twistControllerParams_.collision_check_frames.push_back(robo_namespace + "_3_link");
+        twistControllerParams_.collision_check_frames.push_back(robo_namespace + "_5_link");
+    }
+
     ///parse robot_description and generate KDL chains
     KDL::Tree my_tree;
     std::string robot_desc_string;
@@ -99,14 +109,6 @@ bool CobTwistController::initialize()
         ROS_ERROR("Failed to construct kdl tree");
         return false;
     }
-
-//    std::fstream fs;
-//    fs.open("/home/fxm-mb/projects_ws/src/cob_control/cob_obstacle_distance/testdata/robot_description.txt", std::fstream::out | std::fstream::app);
-//    fs << robot_desc_string;
-//    fs.close();
-
-
-
 
     my_tree.getChain(chain_base_link_, chain_tip_link_, chain_);
     if(chain_.getNrOfJoints() == 0)
@@ -148,8 +150,6 @@ bool CobTwistController::initialize()
     ros::Duration(1.0).sleep();
 
     ///initialize ROS interfaces
-    std::string robo_namespace = nh_.getNamespace();
-    robo_namespace.erase(0, 2); // delete "//"
     obstacle_distance_sub_ = nh_.subscribe("/cob_obstacle_distance/" + robo_namespace, 1, &CallbackDataMediator::distancesToObstaclesCallback, &callback_data_mediator_);
     jointstate_sub = nh_.subscribe("joint_states", 1, &CobTwistController::jointstate_cb, this);
     twist_sub = nh_twist.subscribe("command_twist", 1, &CobTwistController::twist_cb, this);
@@ -192,35 +192,25 @@ void CobTwistController::reinitServiceRegistration()
     ROS_INFO("Reinit of Service registration!");
     std::string robo_namespace = nh_.getNamespace();
     robo_namespace.erase(0, 2); // delete "//"
+    ros::ServiceClient client = nh_.serviceClient<cob_obstacle_distance::Registration>("/cob_obstacle_distance/" + robo_namespace + "/registerPointOfInterest");
+    ROS_INFO_STREAM("Created service client for service /cob_obstacle_distance/" << robo_namespace << "/registerPointOfInterest");
 
-    std::size_t found = robo_namespace.find("arm_right"); // TODO: currently for arm_right
-    if (found!=std::string::npos)
+    for(std::vector<std::string>::const_iterator it = twistControllerParams_.collision_check_frames.begin();
+            it != twistControllerParams_.collision_check_frames.end();
+            it++)
     {
-        ros::ServiceClient client = nh_.serviceClient<cob_obstacle_distance::Registration>("/cob_obstacle_distance/" + robo_namespace + "/registerPointOfInterest");
-        ROS_INFO_STREAM("Created service client for service /cob_obstacle_distance/" << robo_namespace << "/registerPointOfInterest");
-
-        std::string fois[] = {"arm_right_3_link",
-                              "arm_right_5_link"};
-
-        for(int i = 0; i < sizeof(fois) / sizeof(std::string); ++i)
+        cob_obstacle_distance::Registration r;
+        r.request.frame_id = *it;
+        r.request.shape_type = visualization_msgs::Marker::SPHERE;
+        if (client.call(r))
         {
-            cob_obstacle_distance::Registration r;
-            r.request.frame_id = fois[i];
-            r.request.shape_type = 2; // Sphere
-            if (client.call(r))
-            {
-                ROS_INFO_STREAM("Called registration service with success: " << int(r.response.success) << ". Got message: " << r.response.message);
-            }
-            else
-            {
-                ROS_ERROR_STREAM("Failed to call registration service for robo_namespace: " << robo_namespace);
-                break;
-            }
+            ROS_INFO_STREAM("Called registration service with success: " << int(r.response.success) << ". Got message: " << r.response.message);
         }
-    }
-    else
-    {
-        ROS_ERROR_STREAM("Could not find arm_right in robo_namespace: " << robo_namespace);
+        else
+        {
+            ROS_WARN_STREAM("Failed to call registration service for robo_namespace: " << robo_namespace);
+            break;
+        }
     }
 }
 
@@ -395,7 +385,6 @@ void CobTwistController::solve_twist(KDL::Twist twist)
         bl_frame_ct.p = KDL::Vector(bl_transform_ct.getOrigin().x(), bl_transform_ct.getOrigin().y(), bl_transform_ct.getOrigin().z());
         bl_frame_ct.M = KDL::Rotation::Quaternion(bl_transform_ct.getRotation().x(), bl_transform_ct.getRotation().y(), bl_transform_ct.getRotation().z(), bl_transform_ct.getRotation().w());
 
-
         try
         {
             tf_listener_.waitForTransform(chain_base_link_,"base_link", ros::Time(0), ros::Duration(0.5));
@@ -434,47 +423,9 @@ void CobTwistController::solve_twist(KDL::Twist twist)
         #endif
     }
 
-
     if(!twistControllerParams_.base_active)
     {
-        try
-        {
-            tf_listener_.waitForTransform("base_link",chain_tip_link_, ros::Time(0), ros::Duration(0.5));
-            tf_listener_.lookupTransform("base_link",chain_tip_link_,  ros::Time(0), bl_transform_ct);
-        }
-        catch (tf::TransformException &ex)
-        {
-            ROS_ERROR("%s",ex.what());
-            return;
-        }
-
-        bl_frame_ct.p = KDL::Vector(bl_transform_ct.getOrigin().x(), bl_transform_ct.getOrigin().y(), bl_transform_ct.getOrigin().z());
-        bl_frame_ct.M = KDL::Rotation::Quaternion(bl_transform_ct.getRotation().x(), bl_transform_ct.getRotation().y(), bl_transform_ct.getRotation().z(), bl_transform_ct.getRotation().w());
-
-
-        try
-        {
-            tf_listener_.waitForTransform(chain_base_link_,"base_link", ros::Time(0), ros::Duration(0.5));
-            tf_listener_.lookupTransform(chain_base_link_,"base_link", ros::Time(0), cb_transform_bl);
-
-            ROS_INFO_STREAM("chain_base_link_: " << chain_base_link_ << std::endl);
-            // ROS_INFO_STREAM("cb_transform_bl: " << cb_transform_bl << std::endl);
-        }
-        catch (tf::TransformException &ex)
-        {
-            ROS_ERROR("%s",ex.what());
-            return;
-        }
-
-        cb_frame_bl.p = KDL::Vector(cb_transform_bl.getOrigin().x(), cb_transform_bl.getOrigin().y(), cb_transform_bl.getOrigin().z());
-        cb_frame_bl.M = KDL::Rotation::Quaternion(cb_transform_bl.getRotation().x(), cb_transform_bl.getRotation().y(), cb_transform_bl.getRotation().z(), cb_transform_bl.getRotation().w());
-
-
-
-
-
-
-        ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, bl_frame_ct, cb_frame_bl, q_dot_ik);
+        ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik);
     }
 
     if(0 != ret_ik)

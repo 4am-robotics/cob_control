@@ -28,7 +28,7 @@
  ****************************************************************/
 #include "cob_twist_controller/constraint_solvers/solvers/gradient_projection_method_solver.h"
 
-Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Eigen::VectorXd &inCartVelocities,
+Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Vector6d &inCartVelocities,
                                       const KDL::JntArray& q,
                                       const KDL::JntArray& last_q_dot) const
 {

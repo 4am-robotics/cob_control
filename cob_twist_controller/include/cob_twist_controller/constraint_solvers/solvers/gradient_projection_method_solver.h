@@ -47,7 +47,7 @@ class GradientProjectionMethodSolver : public ConstraintSolver<>
          * Specific implementation of solve-method to solve IK problem without any constraints.
          * See base class ConstraintSolver for more details on params and returns.
          */
-        virtual Eigen::MatrixXd solve(const Eigen::VectorXd &inCartVelocities,
+        virtual Eigen::MatrixXd solve(const Vector6d &inCartVelocities,
                                       const KDL::JntArray& q,
                                       const KDL::JntArray& last_q_dot) const;
 

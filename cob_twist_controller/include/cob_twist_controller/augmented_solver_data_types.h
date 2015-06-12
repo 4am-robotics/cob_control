@@ -81,4 +81,6 @@ const double DAMPING_LIMIT = 1.0e-12; ///< const. value for zero comparison with
 
 typedef Eigen::Matrix<double,6,Eigen::Dynamic> Matrix6Xd;
 
+typedef Eigen::Matrix<double,6,1> Vector6d;
+
 #endif /* AUGMENTED_SOLVER_DATA_TYPES_H_ */

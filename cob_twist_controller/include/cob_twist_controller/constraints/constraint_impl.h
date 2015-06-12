@@ -84,7 +84,7 @@ std::set<tConstraintBase> ConstraintsBuilder<PRIO>::createConstraints(AugmentedS
     }
     else
     {
-        ROS_ERROR("Constraint %d not available for GPM", augmentedSolverParams.constraint);
+        // Nothing to do here!
     }
 
     return constraints;

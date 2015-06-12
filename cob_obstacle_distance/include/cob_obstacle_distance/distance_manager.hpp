@@ -114,6 +114,8 @@ class DistanceManager
         {
             return this->robo_namespace_;
         }
+
+        static int getMarkerShape(uint32_t shape_type, const Eigen::Vector3d& abs_pos, tPtrMarkerShapeBase& segment_of_interest_marker_shape);
 };
 
 #endif /* DISTANCE_MANAGER_HPP_ */

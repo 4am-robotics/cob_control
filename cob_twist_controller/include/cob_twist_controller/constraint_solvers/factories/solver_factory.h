@@ -38,7 +38,7 @@ class ISolverFactory
     public:
         virtual Eigen::MatrixXd calculateJointVelocities(AugmentedSolverParams &asParams,
                                                          Matrix6Xd &jacobianData,
-                                                         const Eigen::VectorXd &inCartVelocities,
+                                                         const Vector6d &inCartVelocities,
                                                          const KDL::JntArray& q,
                                                          const KDL::JntArray& last_q_dot,
                                                          boost::shared_ptr<DampingBase>& dampingMethod,
@@ -68,7 +68,7 @@ class SolverFactory : public ISolverFactory
          */
         Eigen::MatrixXd calculateJointVelocities(AugmentedSolverParams &asParams,
                                                  Matrix6Xd &jacobianData,
-                                                 const Eigen::VectorXd &inCartVelocities,
+                                                 const Vector6d &inCartVelocities,
                                                  const KDL::JntArray& q,
                                                  const KDL::JntArray& last_q_dot,
                                                  boost::shared_ptr<DampingBase>& dampingMethod,
@@ -93,7 +93,7 @@ class SolverFactory : public ISolverFactory
          * @return A specific solver.
          */
         T* createSolver(AugmentedSolverParams &asParams,
-                                               Matrix6Xd &jacobianData) const
+                        Matrix6Xd &jacobianData) const
         {
             return new T(asParams, jacobianData);
         }

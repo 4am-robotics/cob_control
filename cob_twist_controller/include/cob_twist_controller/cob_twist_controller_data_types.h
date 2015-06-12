@@ -59,6 +59,9 @@ struct TwistControllerParams {
     std::vector<double> limits_vel;
     std::vector<double> limits_min;
     std::vector<double> limits_max;
+
+    // added a vector to contain all frames of interest for collision checking.
+    std::vector<std::string> collision_check_frames;
 };
 
 #endif /* COB_TWIST_CONTROLLER_DATA_TYPES_H_ */

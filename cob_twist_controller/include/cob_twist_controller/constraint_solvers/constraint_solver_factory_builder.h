@@ -50,7 +50,7 @@ class ConstraintSolverFactoryBuilder
          */
         int8_t calculateJointVelocities(AugmentedSolverParams &asParams,
                                         Matrix6Xd &jacobianData,
-                                        const Eigen::VectorXd &inCartVelocities,
+                                        const Vector6d &inCartVelocities,
                                         const KDL::JntArray& q,
                                         const KDL::JntArray& last_q_dot,
                                         Eigen::MatrixXd &outJntVelocities);
