@@ -31,12 +31,29 @@
 #include <Eigen/Core>
 #include <Eigen/SVD>
 #include <kdl/jntarray.hpp>
+#include <boost/shared_ptr.hpp>
+
 #include "cob_twist_controller/augmented_solver_data_types.h"
+#include "cob_twist_controller/constraint_solvers/factories/solver_factory.h"
+#include "cob_twist_controller/callback_data_mediator.h"
 
 /// Static class providing a single method for creation of damping method, solver and starting the solving of the IK problem.
 class ConstraintSolverFactoryBuilder
 {
     public:
+
+        /**
+         * Ctor of ConstraintSolverFactoryBuilder.
+         * @param data_mediator: Reference to an callback data mediator.
+         * @param jnt_to_jac: Reference to an joint to Jacobian solver.
+         */
+        ConstraintSolverFactoryBuilder(CallbackDataMediator& data_mediator, KDL::ChainJntToJacSolver& jnt_to_jac) :
+            data_mediator_(data_mediator), jnt_to_jac_(jnt_to_jac)
+        {
+
+        }
+
+        ~ConstraintSolverFactoryBuilder() {}
 
         /**
          * Calculation of new joint velocities according to current joint positions and cartesian velocities.
@@ -55,13 +72,14 @@ class ConstraintSolverFactoryBuilder
                                         const KDL::JntArray& last_q_dot,
                                         Eigen::MatrixXd &outJntVelocities);
 
-        ConstraintSolverFactoryBuilder(CallbackDataMediator& data_mediator, KDL::ChainJntToJacSolver& jnt_to_jac) :
-            data_mediator_(data_mediator), jnt_to_jac_(jnt_to_jac)
-        {
-
-        }
-
-        ~ConstraintSolverFactoryBuilder() {}
+        /**
+         * Given a constraint_type create a solver_factory instance and return it.
+         * In case of an error false will be returned.
+         * @param constraint_type: Enum value of the constraint.
+         * @param solver_factory: Reference of a shared pointer to be filled.
+         */
+        static bool getSolverFactory(uint32_t constraint_type,
+                                     boost::shared_ptr<ISolverFactory>& solver_factory);
 
     private:
         CallbackDataMediator& data_mediator_;

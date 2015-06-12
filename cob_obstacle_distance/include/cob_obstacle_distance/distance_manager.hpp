@@ -92,30 +92,104 @@ class DistanceManager
         KDL::JntArray last_q_dot_;
 
     public:
+        /**
+         * @param nh Reference to the ROS node handle.
+         */
         DistanceManager(ros::NodeHandle& nh);
 
         ~DistanceManager();
 
+        /**
+         * Clears all managed obstacles and objects of interest.
+         */
         void clear();
+
+        /**
+         * Add a new obstacle to the obstacles that shall be managed.
+         * @param s Pointer to an already created MarkerShape that represent an obstacle.
+         */
         void addObstacle(tPtrMarkerShapeBase s);
+
+        /**
+         * Add a new object of interest that shall be investigated for collisions.
+         * @param s Pointer to an already created MarkerShape that represent the object of interest (i.e. shape in reference frame of segment).
+         */
         void addObjectOfInterest(tPtrMarkerShapeBase s);
+
+        /**
+         * Simply draw all obstacle markers in RVIZ.
+         * @param enforceDraw Draw again, also marker already exists.
+         */
         void drawObstacles(bool enforceDraw = false);
+
+        /**
+         * Simply draw all object of interest markers in RVIZ.
+         * @param enforceDraw Draw again, also marker already exists.
+         */
         void drawObjectsOfInterest(bool enforceDraw = false);
+
+        /**
+         * Check whether a collision between two given shapes has been occurred or not.
+         * @param s1 First shape to be checked against second shape.
+         * @param s2 Second shape to be checked against first shape.
+         */
         bool collide(tPtrMarkerShapeBase s1, tPtrMarkerShapeBase s2);
+
+        /**
+         * Updates the joint states.
+         * @param msg Joint state message.
+         */
         void jointstateCb(const sensor_msgs::JointState::ConstPtr& msg);
+
+        /**
+         * Initialization of ROS robot structure, parameters, publishers and subscribers.
+         * @return Error status. If 0 then success.
+         */
         int init();
+
+        /**
+         * tf Transformation between chain_base_link (arm_right_base_link or arm_left_base_link) and the base_link).
+         * @return True if transformation was successfull.
+         */
         bool transform();
+
+        /**
+         * Calculate the distances between the objects of interest (reference frames at KDL::segments) and obstacles.
+         * Publishes them on the obstacle_distance topic according to robot_namespace (arm_right, arm_left, ...)
+         */
         void calculate();
+
+        /**
+         * Wait loop until a marker topic subscriber (RVIZ) is available.
+         * @return True if subscriber could be found.
+         */
         bool waitForMarkerSubscriber();
+
+        /**
+         * Registers a new point of interest at a given frame id.
+         * @param request The service request for registration of a point of interest (i.e. reference frame id corresponding to segment)
+         * @param response Success message.
+         * @return Registration service call successfull or not.
+         */
         bool registerPointOfInterest(cob_obstacle_distance::Registration::Request& request,
                                      cob_obstacle_distance::Registration::Response& response);
 
+        /**
+         * Returns the robot namespace.
+         * @return robot namespace (arm_right, arm_left, ...)
+         */
         inline std::string getRoboNamespace() const
         {
             return this->robo_namespace_;
         }
 
-        static int getMarkerShape(uint32_t shape_type, const Eigen::Vector3d& abs_pos, tPtrMarkerShapeBase& segment_of_interest_marker_shape);
+        /**
+         * Given a proper shape_type and a absolute position vector a MarkerShape will be generated to represent the object of interest
+         * (i.e. shape in reference frame of segment)
+         */
+        static bool getMarkerShape(uint32_t shape_type,
+                                   const Eigen::Vector3d& abs_pos,
+                                   tPtrMarkerShapeBase& segment_of_interest_marker_shape);
 };
 
 #endif /* DISTANCE_MANAGER_HPP_ */

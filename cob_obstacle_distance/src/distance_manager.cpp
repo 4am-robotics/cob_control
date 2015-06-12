@@ -173,33 +173,6 @@ bool DistanceManager::collide(tPtrMarkerShapeBase s1, tPtrMarkerShapeBase s2)
     ROS_INFO_STREAM("isCollision: " << result.isCollision() << std::endl);
 }
 
-
-int DistanceManager::getMarkerShape(uint32_t shape_type, const Eigen::Vector3d& abs_pos, tPtrMarkerShapeBase& segment_of_interest_marker_shape)
-{
-    // Representation of segment_of_interest as specific shape
-    fcl::Box b(0.1, 0.1, 0.1);
-    fcl::Sphere s(0.1);
-    fcl::Cylinder c(0.1, 0.1);
-    switch(shape_type)
-    {
-        case visualization_msgs::Marker::CUBE:
-            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Box>(b, abs_pos(0), abs_pos(1), abs_pos(2)));
-            break;
-        case visualization_msgs::Marker::SPHERE:
-            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Sphere>(s, abs_pos(0), abs_pos(1), abs_pos(2)));
-            break;
-        case visualization_msgs::Marker::CYLINDER:
-            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Cylinder>(c, abs_pos(0), abs_pos(1), abs_pos(2)));
-            break;
-        default:
-           ROS_ERROR("Failed to process request due to unknown shape type: %d", shape_type);
-           return false;
-    }
-
-    return true;
-}
-
-
 void DistanceManager::calculate()
 {
     bool initial = true;
@@ -299,7 +272,6 @@ void DistanceManager::calculate()
     }
 }
 
-
 bool DistanceManager::transform()
 {
     bool success = true;
@@ -318,7 +290,6 @@ bool DistanceManager::transform()
 
     return success;
 }
-
 
 void DistanceManager::jointstateCb(const sensor_msgs::JointState::ConstPtr& msg)
 {
@@ -373,6 +344,31 @@ bool DistanceManager::registerPointOfInterest(cob_obstacle_distance::Registratio
             response.message = "Failed to insert element " + request.frame_id + "!";
             ROS_ERROR_STREAM(response.message);
         }
+    }
+
+    return true;
+}
+
+bool DistanceManager::getMarkerShape(uint32_t shape_type, const Eigen::Vector3d& abs_pos, tPtrMarkerShapeBase& segment_of_interest_marker_shape)
+{
+    // Representation of segment_of_interest as specific fcl::Shape
+    fcl::Box b(0.1, 0.1, 0.1);
+    fcl::Sphere s(0.1);
+    fcl::Cylinder c(0.1, 0.1);
+    switch(shape_type)
+    {
+        case visualization_msgs::Marker::CUBE:
+            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Box>(b, abs_pos(0), abs_pos(1), abs_pos(2)));
+            break;
+        case visualization_msgs::Marker::SPHERE:
+            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Sphere>(s, abs_pos(0), abs_pos(1), abs_pos(2)));
+            break;
+        case visualization_msgs::Marker::CYLINDER:
+            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Cylinder>(c, abs_pos(0), abs_pos(1), abs_pos(2)));
+            break;
+        default:
+           ROS_ERROR("Failed to process request due to unknown shape type: %d", shape_type);
+           return false;
     }
 
     return true;

@@ -50,9 +50,29 @@ class CallbackDataMediator
     public:
         CallbackDataMediator();
 
+        /**
+         * @return Number of active distances to obstacles.
+         */
         uint32_t obstacleDistancesCnt();
+
+        /**
+         * Special implementation for Collision Avoidance parameters.
+         * @param params_ca Reference to Collision Avoidance parameters.
+         * @return Success of filling parameters.
+         */
         bool fill(ConstraintParamsCA& params_ca);
+
+        /**
+         * Special implementation for Joint Limit Avoidance parameters.
+         * @param params_jla Reference to JLA parameters.
+         * @return Success of filling parameters.
+         */
         bool fill(ConstraintParamsJLA& params_jla);
+
+        /**
+         * Callback method that can be used by a ROS subscriber to a obstacle distance topic.
+         * @param msg The published message containting obstacle distances.
+         */
         void distancesToObstaclesCallback(const cob_obstacle_distance::ObstacleDistances::ConstPtr& msg);
 };
 

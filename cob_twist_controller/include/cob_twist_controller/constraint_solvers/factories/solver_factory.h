@@ -32,6 +32,9 @@
 #include <Eigen/SVD>
 #include <kdl/jntarray.hpp>
 
+#include "cob_twist_controller/damping_methods/damping_base.h"
+#include "cob_twist_controller/constraints/constraint_base.h"
+
 /// Interface definition to support generic usage of the solver factory without specifying a typename in prior.
 class ISolverFactory
 {

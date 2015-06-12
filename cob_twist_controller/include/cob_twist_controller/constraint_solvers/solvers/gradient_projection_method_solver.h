@@ -44,7 +44,7 @@ class GradientProjectionMethodSolver : public ConstraintSolver<>
     public:
 
         /**
-         * Specific implementation of solve-method to solve IK problem without any constraints.
+         * Specific implementation of solve-method to solve IK problem with constraints by using the GPM.
          * See base class ConstraintSolver for more details on params and returns.
          */
         virtual Eigen::MatrixXd solve(const Vector6d &inCartVelocities,
@@ -58,12 +58,13 @@ class GradientProjectionMethodSolver : public ConstraintSolver<>
         {
         }
 
+        /**
+         * Set all created constraints in a (priorized) set.
+         * @param constraints: All constraints ordered according to priority.
+         */
         virtual void setConstraints(std::set<tConstraintBase>& constraints)
         {
             this->constraints_ = constraints;
-
-            ROS_WARN_STREAM("setConstraints: Cnt of constraints: " << this->constraints_.size() << std::endl);
-
         }
 
         virtual ~GradientProjectionMethodSolver()
@@ -71,18 +72,18 @@ class GradientProjectionMethodSolver : public ConstraintSolver<>
             this->clearConstraints();
         }
 
-        void registerConstraint(tConstraintBase constraint)
-        {
-            this->constraints_.insert(constraint);
-        }
-
+        /**
+         * Calls destructor on all objects and clears the set
+         */
         void clearConstraints()
         {
-            this->constraints_.clear(); // calls destructor on all objects and clears the set
+            this->constraints_.clear();
         }
 
     protected:
-        std::set<tConstraintBase> constraints_; // set inserts sorted (default less operator); if element has already been added it returns an iterator on it.
+
+        /// set inserts sorted (default less operator); if element has already been added it returns an iterator on it.
+        std::set<tConstraintBase> constraints_;
 };
 
 #endif /* GRADIENT_PROJECTION_METHOD_SOLVER_H_ */

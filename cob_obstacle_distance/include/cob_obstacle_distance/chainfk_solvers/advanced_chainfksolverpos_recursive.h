@@ -48,8 +48,19 @@ class AdvancedChainFkSolverPos_recursive : public KDL::ChainFkSolverPos
         AdvancedChainFkSolverPos_recursive(const KDL::Chain& chain);
         ~AdvancedChainFkSolverPos_recursive();
 
+        /**
+         * @param q_in Joint states.
+         * @param p_out The output frame of the given segment or end-effector.
+         * @param seg_nr The max. segment nr until calculation should stop.
+         */
         virtual int JntToCart(const KDL::JntArray& q_in, KDL::Frame& p_out, int seg_nr = -1);
+
+        /**
+         * @param seg_idx Index of the segment starting with 0.
+         * @return The reference frame of the segment.
+         */
         KDL::Frame getFrameAtSegment(uint16_t seg_idx) const;
+
         void dumpAllSegmentPostures() const;
 
     private:

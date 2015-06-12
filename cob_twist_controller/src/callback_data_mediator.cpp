@@ -36,6 +36,7 @@ CallbackDataMediator::CallbackDataMediator()
     this->it_distances = this->obstacle_distances_.end();
 }
 
+/// Counts all currently available distances to obstacles.
 uint32_t CallbackDataMediator::obstacleDistancesCnt()
 {
     boost::mutex::scoped_lock lock(distances_to_obstacles_lock_);

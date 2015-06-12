@@ -28,11 +28,16 @@
  ****************************************************************/
 #include "cob_twist_controller/constraint_solvers/solvers/gradient_projection_method_solver.h"
 
+/**
+ * Solve the inverse differential kinematics equation by using GPM.
+ * In addtion to the partial solution q_dot = J^+ * v the homogeneous solution (I - J^+ * J) q_dot_0 is calculated.
+ * The q_dot_0 results from the sum of the constraint cost function gradients. The terms of the sum are weighted with a factor k_H separately.
+ */
 Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Vector6d &inCartVelocities,
                                       const KDL::JntArray& q,
                                       const KDL::JntArray& last_q_dot) const
 {
-    double kappa;
+    double k_H;
     Eigen::VectorXd q_dot_0 = Eigen::VectorXd::Zero(q.rows());
     Eigen::MatrixXd jacobianPseudoInverse = pinvCalc_.calculate(this->asParams_, this->damping_, this->jacobianData_);
     Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(jacobianPseudoInverse.rows(), this->jacobianData_.cols());
@@ -44,8 +49,8 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Vector6d &inCartVelo
     {
         q_dot_0 = (*it)->getPartialValues();
         Eigen::MatrixXd tmpHomogeneousSolution = projector * q_dot_0;
-        homogeneousSolution += tmpHomogeneousSolution;
-        kappa = (*it)->getSelfMotionMagnitude(partialSolution, tmpHomogeneousSolution);
+        k_H = (*it)->getSelfMotionMagnitude(partialSolution, tmpHomogeneousSolution);
+        homogeneousSolution += (k_H * tmpHomogeneousSolution);
     }
 
     if(q_dot_0.norm() > 0.00001)
@@ -54,12 +59,12 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Vector6d &inCartVelo
         ROS_INFO_STREAM("jacobianPseudoInverse: " << std::endl << jacobianPseudoInverse);
         ROS_INFO_STREAM("this->jacobianData_: " << std::endl << this->jacobianData_);
         ROS_INFO_STREAM("projector: " << std::endl << projector);
-        ROS_INFO_STREAM("q_dot_0: " << std::endl << q_dot_0);
-        ROS_INFO_STREAM("kappa: " << std::endl << kappa);
+        ROS_INFO_STREAM("q_dot_0: " << std::endl << q_dot_0.transpose());
+        ROS_INFO_STREAM("Last k_H: " << std::endl << k_H);
         ROS_INFO_STREAM("partialSolution: " << std::endl << partialSolution);
         ROS_INFO_STREAM("homogeneousSolution: " << std::endl << homogeneousSolution);
     }
 
-    Eigen::MatrixXd qdots_out = partialSolution + kappa * homogeneousSolution;
+    Eigen::MatrixXd qdots_out = partialSolution + homogeneousSolution; // weighting with k_H is done in loop
     return qdots_out;
 }

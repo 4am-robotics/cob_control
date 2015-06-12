@@ -92,7 +92,7 @@ std::set<tConstraintBase> ConstraintsBuilder<PRIO>::createConstraints(AugmentedS
 /* END ConstraintsBuilder *******************************************************************************************/
 
 /* BEGIN CollisionAvoidance *************************************************************************************/
-/// Class providing methods that realize a CollisionAvoidance constraint.
+/// Returns values of the cost function
 template <typename T_PARAMS, typename PRIO>
 double CollisionAvoidance<T_PARAMS, PRIO>::getValue() const
 {
@@ -100,26 +100,29 @@ double CollisionAvoidance<T_PARAMS, PRIO>::getValue() const
     return 0.0;
 }
 
+/// Returns values of the derivative of the cost function
 template <typename T_PARAMS, typename PRIO>
 double CollisionAvoidance<T_PARAMS, PRIO>::getDerivativeValue() const
 {
     return 0.0;
 }
 
+/// Returns the threshold of the cost function to become active.
 template <typename T_PARAMS, typename PRIO>
 double CollisionAvoidance<T_PARAMS, PRIO>::getActivationThreshold() const
 {
     return 0.1; // in [m]
 }
 
+/// Returns values of the gradient of the cost function
 template <typename T_PARAMS, typename PRIO>
 Eigen::VectorXd  CollisionAvoidance<T_PARAMS, PRIO>::getPartialValues() const
 {
-    uint8_t vecRows = static_cast<uint8_t>(this->jointPos_.rows());
+    uint8_t vecRows = static_cast<uint8_t>(this->joint_pos_.rows());
     Eigen::VectorXd partialValues = Eigen::VectorXd::Zero(vecRows);
-    const AugmentedSolverParams& params = this->constraintParams_.getAugmentedSolverParams();
+    const AugmentedSolverParams& params = this->constraint_params_.getAugmentedSolverParams();
     int size_of_frames = params.frame_names.size();
-    Distance d = this->constraintParams_.current_distance_;
+    Distance d = this->constraint_params_.current_distance_;
     if (this->getActivationThreshold() > d.min_distance)
     {
         std::vector<std::string>::const_iterator str_it = std::find(params.frame_names.begin(),
@@ -130,7 +133,7 @@ Eigen::VectorXd  CollisionAvoidance<T_PARAMS, PRIO>::getPartialValues() const
             uint32_t pos = str_it - params.frame_names.begin();
             uint32_t frame_number = pos + 1;
             KDL::Jacobian new_jac_chain(size_of_frames);
-            KDL::JntArray ja = this->jointPos_;
+            KDL::JntArray ja = this->joint_pos_;
             this->jnt_to_jac_.JntToJac(ja, new_jac_chain, frame_number);
 
             Eigen::Matrix3Xd m = Eigen::Matrix3Xd::Zero(3, size_of_frames);
@@ -141,6 +144,8 @@ Eigen::VectorXd  CollisionAvoidance<T_PARAMS, PRIO>::getPartialValues() const
 
             if (d.min_distance > 0.0)
             {
+                // Gradient of the cost function from: Strasse O., Escande A., Mansard N. et al.
+                // "Real-Time (Self)-Collision Avoidance Task on a HRP-2 Humanoid Robot", 2008 IEEE International Conference
                 partialValues =  2.0 * ((d.min_distance - this->getActivationThreshold()) / d.min_distance) * m.transpose() * d.distance_vec;
             }
         }
@@ -149,27 +154,28 @@ Eigen::VectorXd  CollisionAvoidance<T_PARAMS, PRIO>::getPartialValues() const
     return partialValues;
 }
 
+/// Returns a value for k_H to weight the partial values for GPM e.g.
 template <typename T_PARAMS, typename PRIO>
-double CollisionAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::MatrixXd& particularSolution, const Eigen::MatrixXd& homogeneousSolution) const
+double CollisionAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const
 {
-    const AugmentedSolverParams &params = this->constraintParams_.getAugmentedSolverParams();
-    //return SelfMotionMagnitudeFactory< SmmDeterminatorVelocityBounds<MAX_CRIT> >::calculate(params, particularSolution, homogeneousSolution);
+    const AugmentedSolverParams &params = this->constraint_params_.getAugmentedSolverParams();
+    //return SelfMotionMagnitudeFactory< SmmDeterminatorVelocityBounds<MAX_CRIT> >::calculate(params, particular_solution, homogeneous_solution);
     return params.kappa;
 }
 /* END CollisionAvoidance ***************************************************************************************/
 
 /* BEGIN JointLimitAvoidance ************************************************************************************/
-/// Class providing methods that realize a JLA constraint.
+/// Returns values of the JLA cost function with adapted joint pos.
 template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidance<T_PARAMS, PRIO>::getValue(Eigen::VectorXd steps) const
 {
-    const AugmentedSolverParams &params = this->constraintParams_.getAugmentedSolverParams();
+    const AugmentedSolverParams &params = this->constraint_params_.getAugmentedSolverParams();
     std::vector<double> limits_min = params.limits_min;
     std::vector<double> limits_max = params.limits_max;
     double H_q = 0.0;
-    for(uint8_t i = 0; i < this->jointPos_.rows() ; ++i)
+    for(uint8_t i = 0; i < this->joint_pos_.rows() ; ++i)
     {
-        double jntPosWithStep = this->jointPos_(i) + steps(i);
+        double jntPosWithStep = this->joint_pos_(i) + steps(i);
         double nom = pow(limits_max[i] - limits_min[i], 2.0);
         double denom = (limits_max[i] - jntPosWithStep) * (jntPosWithStep - limits_min[i]);
         H_q += nom / denom;
@@ -179,30 +185,34 @@ double JointLimitAvoidance<T_PARAMS, PRIO>::getValue(Eigen::VectorXd steps) cons
     return H_q;
 }
 
+/// Returns values of the JLA cost function.
 template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidance<T_PARAMS, PRIO>::getValue() const
 {
-    return this->getValue(Eigen::VectorXd::Zero(this->jointPos_.rows()));
+    return this->getValue(Eigen::VectorXd::Zero(this->joint_pos_.rows()));
 }
 
+/// Returns values of the derivative of the JLA cost function
 template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidance<T_PARAMS, PRIO>::getDerivativeValue() const
 {
     return 0.0;
 }
 
+/// Returns the threshold of the cost function to become active.
 template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidance<T_PARAMS, PRIO>::getActivationThreshold() const
 {
     return 0.0;
 }
 
+/// Returns a value for k_H to weight the partial values for GPM e.g.
 template <typename T_PARAMS, typename PRIO>
-double JointLimitAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::MatrixXd& particularSolution, const Eigen::MatrixXd& homogeneousSolution) const
+double JointLimitAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const
 {
     // k_H by Armijo-Rule
     double t;
-    const AugmentedSolverParams &params = this->constraintParams_.getAugmentedSolverParams();
+    const AugmentedSolverParams &params = this->constraint_params_.getAugmentedSolverParams();
 //    Eigen::VectorXd gradient = this->getPartialValues();
 //    double costFunctionVal = this->getValue();
 //
@@ -238,26 +248,27 @@ double JointLimitAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::
 //    }
 
 
-    t = SelfMotionMagnitudeFactory< SmmDeterminatorVelocityBounds<MIN_CRIT> >::calculate(params, particularSolution, homogeneousSolution);
+    t = SelfMotionMagnitudeFactory< SmmDeterminatorVelocityBounds<MIN_CRIT> >::calculate(params, particular_solution, homogeneous_solution);
     return t;
 }
 
+/// Returns values of the gradient of the cost function
 template <typename T_PARAMS, typename PRIO>
 Eigen::VectorXd JointLimitAvoidance<T_PARAMS, PRIO>::getPartialValues() const
 {
-    const AugmentedSolverParams &params = this->constraintParams_.getAugmentedSolverParams();
+    const AugmentedSolverParams &params = this->constraint_params_.getAugmentedSolverParams();
     std::vector<double> limits_min = params.limits_min;
     std::vector<double> limits_max = params.limits_max;
     double rad = M_PI / 180.0;
-    uint8_t vec_rows = static_cast<uint8_t>(this->jointPos_.rows());
+    uint8_t vec_rows = static_cast<uint8_t>(this->joint_pos_.rows());
     Eigen::VectorXd partial_values = Eigen::VectorXd::Zero(vec_rows);
-    for(uint8_t i = 0; i < this->jointPos_.rows() ; ++i)
+    for(uint8_t i = 0; i < this->joint_pos_.rows() ; ++i)
     {
         partial_values(i) = 0.0; // in the else cases -> output always 0
         //See Chan paper ISSN 1042-296X [Page 288]
-        double min_delta = (this->jointPos_(i) - limits_min[i]);
-        double max_delta = (limits_max[i] - this->jointPos_(i));
-        double nominator = (2.0 * this->jointPos_(i) - limits_min[i] - limits_max[i]) * (limits_max[i] - limits_min[i]) * (limits_max[i] - limits_min[i]);
+        double min_delta = (this->joint_pos_(i) - limits_min[i]);
+        double max_delta = (limits_max[i] - this->joint_pos_(i));
+        double nominator = (2.0 * this->joint_pos_(i) - limits_min[i] - limits_max[i]) * (limits_max[i] - limits_min[i]) * (limits_max[i] - limits_min[i]);
         double denom = 4.0 * min_delta * min_delta * max_delta * max_delta;
         partial_values(i) = nominator / denom;
 
@@ -268,50 +279,52 @@ Eigen::VectorXd JointLimitAvoidance<T_PARAMS, PRIO>::getPartialValues() const
 /* END JointLimitAvoidance **************************************************************************************/
 
 /* BEGIN 2nd JointLimitAvoidance ************************************************************************************/
-/// Class providing methods that realize a joint limit avoidance constraint (trying to stay next to the middle between limits).
+/// Returns values of the JLA_Mid cost function.
 template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidanceMid<T_PARAMS, PRIO>::getValue() const
 {
     return 0.0;
 }
 
+/// Returns values of the derivative of the JLA cost function
 template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidanceMid<T_PARAMS, PRIO>::getDerivativeValue() const
 {
     return 0.0;
 }
 
+/// Returns the threshold of the cost function to become active.
 template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidanceMid<T_PARAMS, PRIO>::getActivationThreshold() const
 {
     return 0.0;
 }
 
-/// Method proposed by Liegeois
+/// Returns values of the gradient of the cost function. Method proposed by Liegeois
 template <typename T_PARAMS, typename PRIO>
 Eigen::VectorXd JointLimitAvoidanceMid<T_PARAMS, PRIO>::getPartialValues() const
 {
-    const AugmentedSolverParams &params = this->constraintParams_.getAugmentedSolverParams();
+    const AugmentedSolverParams &params = this->constraint_params_.getAugmentedSolverParams();
     std::vector<double> limits_min = params.limits_min;
     std::vector<double> limits_max = params.limits_max;
 
     double rad = M_PI / 180.0;
-    uint8_t vec_rows = static_cast<uint8_t>(this->jointPos_.rows());
+    uint8_t vec_rows = static_cast<uint8_t>(this->joint_pos_.rows());
     Eigen::VectorXd partial_values = Eigen::VectorXd::Zero(vec_rows);
 
     for(uint8_t i = 0; i < vec_rows; ++i)
     {
-        double min_delta = (this->jointPos_(i) - limits_min[i]);
-        double max_delta = (limits_max[i] - this->jointPos_(i));
+        double min_delta = (this->joint_pos_(i) - limits_min[i]);
+        double max_delta = (limits_max[i] - this->joint_pos_(i));
         if( min_delta * max_delta < 0.0)
         {
             ROS_WARN_STREAM("Limit of joint " << int(i) << " reached: " << std::endl
-                            << "pos=" << this->jointPos_(i) << ";lim_min=" << limits_min[i] << ";lim_max=" << limits_max[i]);
+                            << "pos=" << this->joint_pos_(i) << ";lim_min=" << limits_min[i] << ";lim_max=" << limits_max[i]);
         }
 
         //Liegeois method can also be found in Chan paper ISSN 1042-296X [Page 288]
         double limits_mid = 1.0 / 2.0 * (limits_max[i] + limits_min[i]);
-        double nominator = this->jointPos_(i) - limits_mid;
+        double nominator = this->joint_pos_(i) - limits_mid;
         double denom = limits_max[i] - limits_min[i];
         partial_values(i) = nominator / denom;
     }
@@ -320,11 +333,12 @@ Eigen::VectorXd JointLimitAvoidanceMid<T_PARAMS, PRIO>::getPartialValues() const
     return k * partial_values;
 }
 
+/// Returns a value for k_H to weight the partial values for GPM e.g.
 template <typename T_PARAMS, typename PRIO>
-double JointLimitAvoidanceMid<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::MatrixXd& particularSolution, const Eigen::MatrixXd& homogeneousSolution) const
+double JointLimitAvoidanceMid<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const
 {
-    const AugmentedSolverParams &params = this->constraintParams_.getAugmentedSolverParams();
-    return SelfMotionMagnitudeFactory<SmmDeterminatorVelocityBounds<MAX_CRIT> >::calculate(params, particularSolution, homogeneousSolution);
+    const AugmentedSolverParams &params = this->constraint_params_.getAugmentedSolverParams();
+    return SelfMotionMagnitudeFactory<SmmDeterminatorVelocityBounds<MAX_CRIT> >::calculate(params, particular_solution, homogeneous_solution);
 }
 /* END 2nd JointLimitAvoidance **************************************************************************************/
 

@@ -26,22 +26,16 @@
  *
  ****************************************************************/
 
-#include "ros/ros.h"
-#include <Eigen/Core>
-#include <Eigen/SVD>
-#include <kdl/jntarray.hpp>
-#include <boost/shared_ptr.hpp>
-#include "cob_twist_controller/augmented_solver_data_types.h"
+#include <ros/ros.h>
+
+#include "cob_twist_controller/constraint_solvers/constraint_solver_factory_builder.h"
 #include "cob_twist_controller/constraint_solvers/solvers/constraint_solver_base.h"
 #include "cob_twist_controller/constraint_solvers/solvers/unconstraint_solver.h"
 #include "cob_twist_controller/constraint_solvers/solvers/wln_joint_limit_avoidance_solver.h"
 #include "cob_twist_controller/constraint_solvers/solvers/weighted_least_norm_solver.h"
-
 #include "cob_twist_controller/constraint_solvers/solvers/gradient_projection_method_solver.h"
 
-#include "cob_twist_controller/constraint_solvers/constraint_solver_factory_builder.h"
 #include "cob_twist_controller/damping_methods/damping.h"
-#include "cob_twist_controller/constraint_solvers/factories/solver_factory.h"
 
 #include "cob_twist_controller/constraints/constraint.h"
 
@@ -72,48 +66,52 @@ int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverP
                                                                                      this->data_mediator_);
 
     boost::shared_ptr<ISolverFactory> sf;
-    switch(asParams.constraint)
-    {
-        case None:
-            sf.reset(new SolverFactory<UnconstraintSolver>());
-            break;
-        case WLN:
-            sf.reset(new SolverFactory<WeightedLeastNormSolver>());
-            break;
-        case WLN_JLA:
-            sf.reset(new SolverFactory<WLN_JointLimitAvoidanceSolver>());
-            break;
-        case GPM_JLA:
-            sf.reset(new SolverFactory<GradientProjectionMethodSolver>());
-            break;
-        case GPM_JLA_MID:
-            sf.reset(new SolverFactory<GradientProjectionMethodSolver>());
-            break;
-        case GPM_CA:
-            sf.reset(new SolverFactory<GradientProjectionMethodSolver>());
-            break;
-        default:
-            ROS_ERROR("Returning NULL factory due to constraint solver creation error. There is no solver method for %d implemented.", asParams.constraint);
-            break;
-    }
-
-    if (NULL != sf)
-    {
-        outJntVelocities = sf->calculateJointVelocities(asParams,
-                                                        jacobianData,
-                                                        inCartVelocities,
-                                                        q,
-                                                        last_q_dot,
-                                                        db,
-                                                        constraints);
-    }
-    else
+    if (!ConstraintSolverFactoryBuilder::getSolverFactory(asParams.constraint, sf))
     {
         return -2; // error: no valid selection for constraint
     }
+
+    outJntVelocities = sf->calculateJointVelocities(asParams,
+                                                    jacobianData,
+                                                    inCartVelocities,
+                                                    q,
+                                                    last_q_dot,
+                                                    db,
+                                                    constraints);
 
     sf.reset();
     db.reset();
 
     return 0; // success
+}
+
+/**
+ * Given a proper constraint_type a corresponding SolverFactory is generated and returned.
+ */
+bool ConstraintSolverFactoryBuilder::getSolverFactory(uint32_t constraint_type,
+                                                      boost::shared_ptr<ISolverFactory>& solver_factory)
+{
+    switch(constraint_type)
+    {
+        case None:
+            solver_factory.reset(new SolverFactory<UnconstraintSolver>());
+            break;
+        case WLN:
+            solver_factory.reset(new SolverFactory<WeightedLeastNormSolver>());
+            break;
+        case WLN_JLA:
+            solver_factory.reset(new SolverFactory<WLN_JointLimitAvoidanceSolver>());
+            break;
+        case GPM_JLA:
+        case GPM_JLA_MID:
+        case GPM_CA:
+            solver_factory.reset(new SolverFactory<GradientProjectionMethodSolver>());
+            break;
+        default:
+            ROS_ERROR("Returning NULL factory due to constraint solver creation error. There is no solver method for %d implemented.",
+                      constraint_type);
+            return false;
+    }
+
+    return true;
 }

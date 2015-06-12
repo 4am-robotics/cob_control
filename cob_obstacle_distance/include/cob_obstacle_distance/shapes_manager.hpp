@@ -34,6 +34,7 @@
 
 #include "cob_obstacle_distance/marker_shapes_interface.hpp"
 
+/// Class to manage fcl::Shapes and connect with RVIZ marker type.
 class ShapesManager
 {
     private:
@@ -45,11 +46,29 @@ class ShapesManager
         typedef std::vector<tPtrMarkerShapeBase>::iterator iterator;
         typedef std::vector<tPtrMarkerShapeBase>::const_iterator const_iterator;
 
+        /**
+         * Ctor
+         * @param pub Publisher on a marker topic (visualize marker in RVIZ).
+         */
         ShapesManager(const ros::Publisher &pub);
+
         ~ShapesManager();
 
+        /**
+         * Adds a new shape to the manager.
+         * @param s Pointer to an already created marker shape.
+         */
         void addShape(tPtrMarkerShapeBase s);
+
+        /**
+         * Draw the marker managed by the ShapesManager
+         * @param enforce_draw Enforce drawing also in case of marker has already been drawn.
+         */
         void draw(bool enforce_draw = false);
+
+        /**
+         * Clear the managed shapes.
+         */
         void clear();
 
         iterator begin() {return this->shapes_.begin(); }

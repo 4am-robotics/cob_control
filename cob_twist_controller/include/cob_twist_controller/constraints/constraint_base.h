@@ -39,6 +39,10 @@
 #include "cob_twist_controller/constraints/self_motion_magnitude.h"
 #include "cob_twist_controller/constraints/constraint_params.h"
 
+/**
+ * Main base class for all derived constraints. Used to create abstract containers that can be filled with concrete constraints.
+ * @tparam PRIO A priority class that has operators <, > and == for comparison overridden. Default uint comparison.
+ */
 template
 <typename PRIO = uint32_t>
 class PriorityBase
@@ -75,31 +79,42 @@ class PriorityBase
         virtual double getDerivativeValue() const = 0;
         virtual double getActivationThreshold() const = 0;
         virtual Eigen::VectorXd getPartialValues() const = 0;
-        virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particularSolution,
-                                              const Eigen::MatrixXd& homogeneousSolution) const = 0;
+        virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution,
+                                              const Eigen::MatrixXd& homogeneous_solution) const = 0;
 
     protected:
         PRIO priority_;
 };
 
 
+/**
+ * Base class for all derived constraints. Used to represent a common data structure for all concrete constraints.
+ * @tparam T_PARAMS A specific constraint parameter class.
+ * @tparam PRIO See base class.
+ */
 template
-<typename T_PARAMS, typename PRIO = uint32_t> // if it is desired to implement an own priority class (ensure overriding of <, > and == parameters)
+<typename T_PARAMS, typename PRIO = uint32_t>
 class ConstraintBase : public PriorityBase<PRIO>
 {
     public:
+
+        /**
+         * @param prio A priority value / object.
+         * @param q The joint states.
+         * @param params The parameters for the constraint to parameterize the calculation of the cost function values.
+         */
         ConstraintBase(PRIO prio,
                        const KDL::JntArray& q,
                        T_PARAMS params)
-        : PriorityBase<PRIO>(prio), jointPos_(q), constraintParams_(params)
+        : PriorityBase<PRIO>(prio), joint_pos_(q), constraint_params_(params)
         {}
 
         virtual ~ConstraintBase()
         {}
 
     protected:
-        const KDL::JntArray& jointPos_;
-        T_PARAMS constraintParams_;
+        const KDL::JntArray& joint_pos_;
+        T_PARAMS constraint_params_;
 };
 
 

@@ -13,6 +13,11 @@ AdvancedChainFkSolverPos_recursive::AdvancedChainFkSolverPos_recursive(const KDL
 {
 }
 
+/**
+ * Calculates the cartesion positions given to the joints array.
+ * This special implementation ensures that the positions are stored in a vector so it is not necessary to call the method for each segment
+ * again and again.
+ */
 int AdvancedChainFkSolverPos_recursive::JntToCart(const KDL::JntArray& q_in, KDL::Frame& p_out, int seg_nr)
 {
     unsigned int segmentNr;
@@ -57,6 +62,9 @@ int AdvancedChainFkSolverPos_recursive::JntToCart(const KDL::JntArray& q_in, KDL
     }
 }
 
+/**
+ * Access previously set segment positions via index.
+ */
 KDL::Frame AdvancedChainFkSolverPos_recursive::getFrameAtSegment(uint16_t seg_idx) const
 {
     KDL::Frame p_out = KDL::Frame::Identity();
@@ -69,6 +77,9 @@ KDL::Frame AdvancedChainFkSolverPos_recursive::getFrameAtSegment(uint16_t seg_id
     return p_out;
 }
 
+/**
+ * Output of all previously set segment positions.
+ */
 void AdvancedChainFkSolverPos_recursive::dumpAllSegmentPostures() const
 {
     uint16_t id = 0;

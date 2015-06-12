@@ -24,7 +24,6 @@
   <build_depend>dynamic_reconfigure</build_depend>
   <build_depend>fcl</build_depend>
   <build_depend>message_generation</build_depend>
-  <build_depend>cob_srvs</build_depend>
   
   <run_depend>roscpp</run_depend>
   <run_depend>rospy</run_depend>
@@ -39,7 +38,6 @@
   <run_depend>dynamic_reconfigure</run_depend>
   <run_depend>fcl</run_depend>
   <run_depend>message_runtime</run_depend>
-  <run_depend>cob_srvs</run_depend>
 
   <export>
   </export>
