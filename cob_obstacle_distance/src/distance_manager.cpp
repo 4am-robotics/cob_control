@@ -32,6 +32,7 @@
 #include <stdint.h>
 
 #include <ros/ros.h>
+
 #include <fcl/collision_object.h>
 #include <fcl/collision.h>
 #include <fcl/distance.h>
@@ -42,6 +43,11 @@
 
 #include "cob_obstacle_distance/ObstacleDistance.h"
 #include "cob_obstacle_distance/ObstacleDistances.h"
+
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/path.hpp>
+
+#include <ros/package.h>
 
 #define VEC_X 0
 #define VEC_Y 1
@@ -56,12 +62,21 @@ DistanceManager::~DistanceManager()
 
 int DistanceManager::init()
 {
-    KDL::Tree my_tree;
-    if (!kdl_parser::treeFromFile("/home/fxm-mb/projects_ws/src/cob_control/cob_obstacle_distance/testdata/robot_description.xml",
-                                  my_tree)) // TODO: HARD CODE - CHANGE
-    {
-        ROS_ERROR("Failed to construct kdl tree");
-        return -1;
+    KDL::Tree robot_structure;
+    std::string robot_desc_string;
+    nh_.param("/robot_description", robot_desc_string, std::string());
+    if (!kdl_parser::treeFromString(robot_desc_string, robot_structure)){
+        ROS_ERROR("Failed to construct kdl tree from parameter '/robot_description'.");
+        std::string path = ros::package::getPath("cob_obstacle_distance");
+        std::string testdata_path = ros::package::getPath("cob_obstacle_distance") + "/testdata/robot_description.xml";
+        if (!kdl_parser::treeFromFile(testdata_path,
+                                      robot_structure))
+        {
+            ROS_ERROR("Failed to construct kdl tree from test data. ");
+            return -1;
+        }
+
+        ROS_WARN_STREAM("Constructed from test data in \"" << testdata_path << "\".");
     }
 
     if(!nh_.getParam("robo_namespace", this->robo_namespace_))
@@ -88,23 +103,19 @@ int DistanceManager::init()
         return -5;
     }
 
-    my_tree.getChain(this->chain_base_link_, this->chain_tip_link_, this->chain_);
+    robot_structure.getChain(this->chain_base_link_, this->chain_tip_link_, this->chain_);
     if(chain_.getNrOfJoints() == 0)
     {
         ROS_ERROR("Failed to initialize kinematic chain");
         return -6;
     }
 
-
-    ROS_INFO_STREAM("Get Nr of Segments: " << chain_.getNrOfSegments());
-    ROS_INFO_STREAM("Get Nr of Joints: " << chain_.getNrOfJoints());
     for(uint16_t i = 0; i < chain_.getNrOfSegments(); ++i)
     {
         KDL::Segment s = chain_.getSegment(i);
         this->segments_.push_back(s.getName());
-        ROS_INFO_STREAM("Segment Name: " << s.getName());
+        ROS_INFO_STREAM("Managing Segment Name: " << s.getName());
     }
-
 
     this->marker_pub_ = this->nh_.advertise<visualization_msgs::Marker>("visualization_marker", 1);
     this->obstacle_distances_pub_ = this->nh_.advertise<cob_obstacle_distance::ObstacleDistances>(this->robo_namespace_, 1);
