@@ -33,6 +33,55 @@
 #include <stdint.h>
 #include <Eigen/Core>
 #include <Eigen/LU> // necessary to use several methods on EIGEN Matrices.
+#include <kdl/chainjnttojacsolver.hpp>
+
+#define MAX_CRIT true
+#define MIN_CRIT false
+
+const double DAMPING_LIMIT = 1.0e-12; ///< const. value for zero comparison with damping factor
+
+typedef Eigen::Matrix<double,6,Eigen::Dynamic> Matrix6Xd;
+
+typedef Eigen::Matrix<double,6,1> Vector6d;
+
+enum DampingMethodTypes {
+    NONE = 0,
+    CONSTANT = 1,
+    MANIPULABILITY = 2,
+    LSV = 3,
+};
+
+enum ContraintTypes {
+    None = 0,
+    WLN = 1,
+    WLN_JLA = 2,
+    GPM_JLA = 3,
+    GPM_JLA_MID = 4,
+    GPM_CA = 5,
+};
+
+struct InvDiffKinSolverParams {
+    DampingMethodTypes damping_method;
+    bool numerical_filtering;
+    double damping_factor;
+    double lambda_max;
+    double w_threshold;
+    double beta;
+    double eps_damping;
+    ContraintTypes constraint;
+    double kappa;
+    double eps_truncation;
+    bool base_compensation;
+    bool base_active;
+    double base_ratio;
+
+
+    // added limits from URDF file
+    std::vector<double> limits_max;
+    std::vector<double> limits_min;
+    std::vector<double> limits_vel;
+    std::vector<std::string> frame_names;
+};
 
 struct Distance
 {

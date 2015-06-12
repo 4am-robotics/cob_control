@@ -28,7 +28,7 @@
 #ifndef I_PSEUDOINV_CALC_H_
 #define I_PSEUDOINV_CALC_H_
 
-#include <cob_twist_controller/inverse_jacobian_calculations/inverse_jacobian_calculation_base.h>
+#include "cob_twist_controller/inverse_jacobian_calculations/inverse_jacobian_calculation_base.h"
 
 /* BEGIN PInvBySVD **********************************************************************************************/
 class PInvBySVD : public IPseudoinverseCalculator
@@ -38,7 +38,7 @@ class PInvBySVD : public IPseudoinverseCalculator
         /** Implementation of calculate member
          * See base for more information on parameters
          */
-        virtual Eigen::MatrixXd calculate(const AugmentedSolverParams& params,
+        virtual Eigen::MatrixXd calculate(const InvDiffKinSolverParams& params,
                                           boost::shared_ptr<DampingBase> db,
                                           const Eigen::MatrixXd& jacobian) const;
 

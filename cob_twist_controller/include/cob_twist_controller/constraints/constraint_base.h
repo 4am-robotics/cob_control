@@ -35,7 +35,7 @@
 #include <kdl/jntarray.hpp>
 #include <Eigen/Core>
 
-#include "cob_twist_controller/augmented_solver_data_types.h"
+#include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/constraints/self_motion_magnitude.h"
 #include "cob_twist_controller/constraints/constraint_params.h"
 

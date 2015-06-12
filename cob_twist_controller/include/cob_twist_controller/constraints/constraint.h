@@ -29,7 +29,7 @@
 #ifndef CONSTRAINT_H_
 #define CONSTRAINT_H_
 
-#include "cob_twist_controller/augmented_solver_data_types.h"
+#include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/constraints/constraint_base.h"
 #include "cob_twist_controller/callback_data_mediator.h"
 
@@ -40,10 +40,10 @@ template
 class ConstraintParamFactory
 {
     public:
-        static T createConstraintParams(AugmentedSolverParams &augmentedSolverParams,
+        static T createConstraintParams(InvDiffKinSolverParams &inv_diff_kin_params,
                                         CallbackDataMediator& data_mediator)
         {
-            T params(augmentedSolverParams);
+            T params(inv_diff_kin_params);
             data_mediator.fill(params);
             return params;
         }
@@ -60,9 +60,9 @@ template <typename PRIO = uint32_t>
 class ConstraintsBuilder
 {
     public:
-        static std::set<tConstraintBase> createConstraints(AugmentedSolverParams &augmentedSolverParams,
+        static std::set<tConstraintBase> createConstraints(InvDiffKinSolverParams &params,
                                                             const KDL::JntArray& q,
-                                                            const Matrix6Xd &jacobianData,
+                                                            const Matrix6Xd &jacobian_data,
                                                             KDL::ChainJntToJacSolver& jnt_to_jac_,
                                                             CallbackDataMediator& data_mediator);
 
@@ -80,9 +80,9 @@ class CollisionAvoidance : public ConstraintBase<T_PARAMS, PRIO>
     public:
 
         CollisionAvoidance(PRIO prio, const KDL::JntArray& q,
-                           T_PARAMS constraintParams,
+                           T_PARAMS constraint_params,
                            KDL::ChainJntToJacSolver& jnt_to_jac) :
-            ConstraintBase<T_PARAMS, PRIO>(prio, q, constraintParams), jnt_to_jac_(jnt_to_jac)
+            ConstraintBase<T_PARAMS, PRIO>(prio, q, constraint_params), jnt_to_jac_(jnt_to_jac)
         {}
 
         virtual ~CollisionAvoidance()
@@ -110,8 +110,8 @@ class JointLimitAvoidance : public ConstraintBase<T_PARAMS, PRIO>
 
         JointLimitAvoidance(PRIO prio,
                             const KDL::JntArray& q,
-                            T_PARAMS constraintParams)
-            : ConstraintBase<T_PARAMS, PRIO>(prio, q, constraintParams)
+                            T_PARAMS constraint_params)
+            : ConstraintBase<T_PARAMS, PRIO>(prio, q, constraint_params)
         {}
 
         virtual ~JointLimitAvoidance()
@@ -137,8 +137,8 @@ class JointLimitAvoidanceMid : public ConstraintBase<T_PARAMS, PRIO>
 
         JointLimitAvoidanceMid(PRIO prio,
                                const KDL::JntArray& q,
-                               T_PARAMS constraintParams)
-            : ConstraintBase<T_PARAMS, PRIO>(prio, q, constraintParams)
+                               T_PARAMS constraint_params)
+            : ConstraintBase<T_PARAMS, PRIO>(prio, q, constraint_params)
         {}
 
         virtual ~JointLimitAvoidanceMid()

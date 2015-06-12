@@ -35,7 +35,7 @@
 #include <cob_twist_controller/inverse_jacobian_calculations/inverse_jacobian_calculation.h>
 #include "cob_twist_controller/damping_methods/damping_base.h"
 #include "cob_twist_controller/constraints/constraint_base.h"
-#include "cob_twist_controller/augmented_solver_data_types.h"
+#include "cob_twist_controller/cob_twist_controller_data_types.h"
 
 /// Base class for solvers, defining interface methods.
 template <typename PINV = PInvBySVD>
@@ -49,7 +49,7 @@ class ConstraintSolver
          * @param last_q_dot The last joint velocities.
          * @return The calculated new joint velocities.
          */
-        virtual Eigen::MatrixXd solve(const Vector6d &inCartVelocities,
+        virtual Eigen::MatrixXd solve(const Vector6d &in_cart_velocities,
                                       const KDL::JntArray& q,
                                       const KDL::JntArray& last_q_dot) const = 0;
 
@@ -74,18 +74,18 @@ class ConstraintSolver
 
     protected:
 
-        ConstraintSolver(AugmentedSolverParams &asParams,
-                         Matrix6Xd &jacobianData)
-                         : asParams_(asParams),
-                           jacobianData_(jacobianData)
+        ConstraintSolver(InvDiffKinSolverParams &params,
+                         Matrix6Xd &jacobian_data)
+                         : params_(params),
+                           jacobian_data_(jacobian_data)
         {
         }
 
-        const AugmentedSolverParams& asParams_; ///< References the augmented solver parameters.
-        const Matrix6Xd& jacobianData_; ///< References the current Jacobian (matrix data only).
+        const InvDiffKinSolverParams& params_; ///< References the augmented solver parameters.
+        const Matrix6Xd& jacobian_data_; ///< References the current Jacobian (matrix data only).
         boost::shared_ptr<DampingBase> damping_; ///< The currently set damping method.
 
-        PINV pinvCalc_;
+        PINV pinv_calc_;
 };
 
 #endif /* CONSTRAINT_SOLVER_BASE_H_ */

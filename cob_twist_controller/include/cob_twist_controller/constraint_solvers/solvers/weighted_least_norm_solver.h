@@ -30,7 +30,7 @@
 #ifndef WEIGHTED_LEAST_NORM_SOLVER_H_
 #define WEIGHTED_LEAST_NORM_SOLVER_H_
 
-#include "cob_twist_controller/augmented_solver_data_types.h"
+#include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/constraint_solvers/solvers/constraint_solver_base.h"
 
 /// Implementation of ConstraintSolver to solve inverse kinematics by using a weighted least norm
@@ -42,14 +42,14 @@ class WeightedLeastNormSolver : public ConstraintSolver<>
          * Specific implementation of solve-method to solve IK problem with joint limit avoidance.
          * See base class ConstraintSolver for more details on params and returns.
          */
-        virtual Eigen::MatrixXd solve(const Vector6d &inCartVelocities,
+        virtual Eigen::MatrixXd solve(const Vector6d &in_cart_velocities,
                                       const KDL::JntArray& q,
                                       const KDL::JntArray& last_q_dot) const;
 
-        WeightedLeastNormSolver(AugmentedSolverParams &asParams,
-                                  Matrix6Xd &jacobianData)
-                                  : ConstraintSolver(asParams,
-                                                     jacobianData)
+        WeightedLeastNormSolver(InvDiffKinSolverParams &params,
+                                  Matrix6Xd &jacobian_data)
+                                  : ConstraintSolver(params,
+                                                     jacobian_data)
         {
 
         }

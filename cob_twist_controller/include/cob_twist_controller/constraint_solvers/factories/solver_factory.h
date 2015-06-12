@@ -39,12 +39,12 @@
 class ISolverFactory
 {
     public:
-        virtual Eigen::MatrixXd calculateJointVelocities(AugmentedSolverParams &asParams,
-                                                         Matrix6Xd &jacobianData,
-                                                         const Vector6d &inCartVelocities,
+        virtual Eigen::MatrixXd calculateJointVelocities(InvDiffKinSolverParams &params,
+                                                         Matrix6Xd &jacobian_data,
+                                                         const Vector6d &in_cart_velocities,
                                                          const KDL::JntArray& q,
                                                          const KDL::JntArray& last_q_dot,
-                                                         boost::shared_ptr<DampingBase>& dampingMethod,
+                                                         boost::shared_ptr<DampingBase>& damping_method,
                                                          std::set<tConstraintBase>& constraints) const = 0;
 
         virtual ~ISolverFactory() {}
@@ -60,27 +60,26 @@ class SolverFactory : public ISolverFactory
          * The base calculation method to calculate joint velocities out of input velocities (cartesian space).
          * Creates a solver according to implemented createSolver-method (in subclass).
          * Use the specialized solve-method to calculate new joint velocities.
-         * @param asParams References the augmented solver parameters.
-         * @param jacobianData References the current Jacobian (matrix data only).
-         * @param jacobianDataTransposed References the current Jacobian transpose (matrix data only).
-         * @param inCartVelocities The input velocities vector (in cartesian space).
+         * @param params References the augmented solver parameters.
+         * @param jacobian_data References the current Jacobian (matrix data only).
+         * @param in_cart_velocities The input velocities vector (in cartesian space).
          * @param q The current joint positions.
          * @param last_q_dot The last joint velocities.
-         * @param dampingFactor The damping factor corresponding to damping method.
+         * @param damping_method The damping method.
          * @return Joint velocities in a (m x 1)-Matrix.
          */
-        Eigen::MatrixXd calculateJointVelocities(AugmentedSolverParams &asParams,
-                                                 Matrix6Xd &jacobianData,
-                                                 const Vector6d &inCartVelocities,
+        Eigen::MatrixXd calculateJointVelocities(InvDiffKinSolverParams &params,
+                                                 Matrix6Xd &jacobian_data,
+                                                 const Vector6d &in_cart_velocities,
                                                  const KDL::JntArray& q,
                                                  const KDL::JntArray& last_q_dot,
-                                                 boost::shared_ptr<DampingBase>& dampingMethod,
+                                                 boost::shared_ptr<DampingBase>& damping_method,
                                                  std::set<tConstraintBase>& constraints) const
         {
-            T* cs = this->createSolver(asParams, jacobianData);
+            T* cs = this->createSolver(params, jacobian_data);
             cs->setConstraints(constraints);
-            cs->setDamping(dampingMethod);
-            Eigen::MatrixXd new_q_dot = cs->solve(inCartVelocities, q, last_q_dot);
+            cs->setDamping(damping_method);
+            Eigen::MatrixXd new_q_dot = cs->solve(in_cart_velocities, q, last_q_dot);
             delete cs;
             cs = NULL;
             return new_q_dot;
@@ -90,15 +89,14 @@ class SolverFactory : public ISolverFactory
 
         /**
          * The interface method to create a specific solver to solve the inverse kinematics problem.
-         * @param asParams References the augmented solver parameters.
-         * @param jacobianData References the current Jacobian (matrix data only).
-         * @param jacobianDataTransposed References the current Jacobian transpose (matrix data only).
+         * @param params References the augmented solver parameters.
+         * @param jacobian_data References the current Jacobian (matrix data only).
          * @return A specific solver.
          */
-        T* createSolver(AugmentedSolverParams &asParams,
-                        Matrix6Xd &jacobianData) const
+        T* createSolver(InvDiffKinSolverParams &params,
+                        Matrix6Xd &jacobian_data) const
         {
-            return new T(asParams, jacobianData);
+            return new T(params, jacobian_data);
         }
 
 };

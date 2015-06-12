@@ -44,36 +44,36 @@
  * Dependent on JLA active flag a JointLimitAvoidanceSolver or a UnconstraintSolver is generated to solve the IK problem.
  * The objects are generated for each solve-request. After calculation the objects are deleted.
  */
-int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverParams &asParams,
-                                                                Matrix6Xd &jacobianData,
-                                                                const Vector6d &inCartVelocities,
+int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(InvDiffKinSolverParams &params,
+                                                                Matrix6Xd &jacobian_data,
+                                                                const Vector6d &in_cart_velocities,
                                                                 const KDL::JntArray& q,
                                                                 const KDL::JntArray& last_q_dot,
-                                                                Eigen::MatrixXd &outJntVelocities)
+                                                                Eigen::MatrixXd &out_jnt_velocities)
 {
-    outJntVelocities = Eigen::MatrixXd::Zero(last_q_dot.rows(), last_q_dot.columns());
-    boost::shared_ptr<DampingBase> db (DampingBuilder::create_damping(asParams, jacobianData));
+    out_jnt_velocities = Eigen::MatrixXd::Zero(last_q_dot.rows(), last_q_dot.columns());
+    boost::shared_ptr<DampingBase> db (DampingBuilder::create_damping(params, jacobian_data));
     if(NULL == db)
     {
         ROS_ERROR("Returning NULL factory due to damping creation error.");
         return -1; // error
     }
 
-    std::set<tConstraintBase> constraints = ConstraintsBuilder<>::createConstraints(asParams,
+    std::set<tConstraintBase> constraints = ConstraintsBuilder<>::createConstraints(params,
                                                                                      q,
-                                                                                     jacobianData,
+                                                                                     jacobian_data,
                                                                                      this->jnt_to_jac_,
                                                                                      this->data_mediator_);
 
     boost::shared_ptr<ISolverFactory> sf;
-    if (!ConstraintSolverFactoryBuilder::getSolverFactory(asParams.constraint, sf))
+    if (!ConstraintSolverFactoryBuilder::getSolverFactory(params.constraint, sf))
     {
         return -2; // error: no valid selection for constraint
     }
 
-    outJntVelocities = sf->calculateJointVelocities(asParams,
-                                                    jacobianData,
-                                                    inCartVelocities,
+    out_jnt_velocities = sf->calculateJointVelocities(params,
+                                                    jacobian_data,
+                                                    in_cart_velocities,
                                                     q,
                                                     last_q_dot,
                                                     db,

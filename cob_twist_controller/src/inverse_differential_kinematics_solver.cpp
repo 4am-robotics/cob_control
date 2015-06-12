@@ -25,7 +25,7 @@
  *   This package provides the implementation of an inverse kinematics solver.
  *
  ****************************************************************/
-#include "cob_twist_controller/augmented_solver.h"
+#include "cob_twist_controller/inverse_differential_kinematics_solver.h"
 
 #include <ros/ros.h>
 #include <eigen_conversions/eigen_kdl.h>
@@ -33,12 +33,12 @@
 /**
  * Solve the inverse kinematics problem at the first order differential level.
  */
-int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in,
-                               const KDL::JntArray& last_q_dot,
-                               const KDL::Twist& v_in,
-                               const KDL::Frame &base_position,
-                               const KDL::Frame &chain_base,
-                               KDL::JntArray& qdot_out)
+int InverseDifferentialKinematicsSolver::CartToJnt(const KDL::JntArray& q_in,
+                                                   const KDL::JntArray& last_q_dot,
+                                                   const KDL::Twist& v_in,
+                                                   const KDL::Frame &base_position,
+                                                   const KDL::Frame &chain_base,
+                                                   KDL::JntArray& qdot_out)
 {
     int8_t retStat = -1;
     this->adjustJac(q_in, base_position, chain_base);
@@ -67,9 +67,9 @@ int AugmentedSolver::CartToJnt(const KDL::JntArray& q_in,
  * Adjustment for the Jacobian in case of base gets active or not.
  * If base_active new columns will be added here.
  */
-void AugmentedSolver::adjustJac(const KDL::JntArray& q_in,
-                                const KDL::Frame &base_position,
-                                const KDL::Frame &chain_base)
+void InverseDifferentialKinematicsSolver::adjustJac(const KDL::JntArray& q_in,
+                                                    const KDL::Frame &base_position,
+                                                    const KDL::Frame &chain_base)
 {
     ///Let the ChainJntToJacSolver calculate the jacobian "jac_chain" for the current joint positions "q_in"
     KDL::Jacobian jac_chain(chain_.getNrOfJoints());

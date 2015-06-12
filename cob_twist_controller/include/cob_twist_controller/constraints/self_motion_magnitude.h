@@ -8,7 +8,7 @@
 #ifndef SELF_MOTION_MAGNITUDE_H_
 #define SELF_MOTION_MAGNITUDE_H_
 
-#include "cob_twist_controller/augmented_solver_data_types.h"
+#include "cob_twist_controller/cob_twist_controller_data_types.h"
 
 #include "ros/ros.h"
 
@@ -28,7 +28,8 @@ class SelfMotionMagnitudeDeterminatorBase
 
         }
 
-        virtual double calculate(const AugmentedSolverParams& params, const Eigen::MatrixXd& particularSolution, const Eigen::MatrixXd& homogeneousSolution) const = 0;
+        virtual double calculate(const InvDiffKinSolverParams& params, const Eigen::MatrixXd& particular_solution,
+                                 const Eigen::MatrixXd& homogeneous_solution) const = 0;
 };
 
 template
@@ -43,14 +44,14 @@ class SmmDeterminatorVelocityBounds : public SelfMotionMagnitudeDeterminatorBase
 
         virtual ~SmmDeterminatorVelocityBounds() {}
 
-        virtual double calculate(const AugmentedSolverParams& params, const Eigen::MatrixXd& particularSolution, const Eigen::MatrixXd& homogeneousSolution) const
+        virtual double calculate(const InvDiffKinSolverParams& params, const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const
         {
             std::vector<double> velLim = params.limits_vel;
-            uint16_t cntRows = particularSolution.rows();
-            if (cntRows != homogeneousSolution.rows() || cntRows != velLim.size())
+            uint16_t cntRows = particular_solution.rows();
+            if (cntRows != homogeneous_solution.rows() || cntRows != velLim.size())
             {
                 ROS_ERROR("Count of rows do not match for particular solution, homogeneous solution and vector limits.");
-                ROS_ERROR("Part.Solution = %d\nHom.Solution = %d\velLim = %d\n", cntRows, (int) homogeneousSolution.rows(), (int) velLim.size());
+                ROS_ERROR("Part.Solution = %d\nHom.Solution = %d\velLim = %d\n", cntRows, (int) homogeneous_solution.rows(), (int) velLim.size());
                 return 0.0;
             }
 
@@ -59,8 +60,8 @@ class SmmDeterminatorVelocityBounds : public SelfMotionMagnitudeDeterminatorBase
             double kResult = 0.0;
             for (uint16_t i = 0; i < cntRows; ++i)
             {
-                double upper = (velLim[i] - particularSolution(i)) / homogeneousSolution(i);
-                double lower = (-velLim[i] - particularSolution(i)) / homogeneousSolution(i);
+                double upper = (velLim[i] - particular_solution(i)) / homogeneous_solution(i);
+                double lower = (-velLim[i] - particular_solution(i)) / homogeneous_solution(i);
 
                 if (0 == i)
                 {
@@ -109,7 +110,7 @@ class SmmDeterminatorConstant : public SelfMotionMagnitudeDeterminatorBase
 
         virtual ~SmmDeterminatorConstant() {}
 
-        virtual double calculate(const AugmentedSolverParams& params, const Eigen::MatrixXd& particularSolution, const Eigen::MatrixXd& homogeneousSolution) const
+        virtual double calculate(const InvDiffKinSolverParams& params, const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const
         {
             return params.kappa;
         }
@@ -122,10 +123,10 @@ class SelfMotionMagnitudeFactory
 {
     public:
 
-        static double calculate(const AugmentedSolverParams& params, const Eigen::MatrixXd& particularSolution, const Eigen::MatrixXd& homogeneousSolution)
+        static double calculate(const InvDiffKinSolverParams& params, const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution)
         {
             T* cs = getInstance();
-            double k = cs->calculate(params, particularSolution, homogeneousSolution);
+            double k = cs->calculate(params, particular_solution, homogeneous_solution);
             return k;
         }
 
@@ -149,11 +150,6 @@ class SelfMotionMagnitudeFactory
 
             return instance_;
         }
-
-
-
-
-
 };
 
 template <typename T>

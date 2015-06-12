@@ -35,8 +35,6 @@
 
 #include <Eigen/Dense>
 
-#include <fstream>
-
 #include "cob_obstacle_distance/Registration.h"
 
 #define DEBUG_BASE_ACTIVE    0
@@ -133,10 +131,10 @@ bool CobTwistController::initialize()
     }
 
     ///initialize configuration control solver
-    p_augmented_solver_.reset(new AugmentedSolver(chain_, callback_data_mediator_));
+    p_inv_diff_kin_solver_.reset(new InverseDifferentialKinematicsSolver(chain_, callback_data_mediator_));
 
     // Before setting up dynamic_reconfigure server: init AugmentedSolverParams with default values
-    this->initAugmentedSolverParams();
+    this->initInvDiffKinSolverParams();
 
     ///Setting up dynamic_reconfigure server for the AugmentedSolverParams
     reconfigure_server_.reset(new dynamic_reconfigure::Server<cob_twist_controller::TwistControllerConfig>(reconfig_mutex_, nh_twist));
@@ -216,7 +214,7 @@ void CobTwistController::reinitServiceRegistration()
 
 void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControllerConfig &config, uint32_t level)
 {
-    AugmentedSolverParams params;
+    InvDiffKinSolverParams params;
     params.damping_method = static_cast<DampingMethodTypes>(config.damping_method);
     params.numerical_filtering = config.numerical_filtering;
     params.damping_factor = config.damping_factor;
@@ -257,20 +255,20 @@ void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControl
         ROS_ERROR("base_active and base_compensation cannot be enabled at the same time");
     }
 
-    p_augmented_solver_->SetAugmentedSolverParams(params);
+    p_inv_diff_kin_solver_->SetInvDiffKinSolverParams(params);
 
     this->reinitServiceRegistration();
 }
 
-void CobTwistController::initAugmentedSolverParams()
+void CobTwistController::initInvDiffKinSolverParams()
 {
-    if(NULL == this->p_augmented_solver_)
+    if(NULL == this->p_inv_diff_kin_solver_)
     {
         ROS_ERROR("p_augmented_solver_ not yet initialized.");
         return;
     }
 
-    AugmentedSolverParams params;
+    InvDiffKinSolverParams params;
     params.damping_method = MANIPULABILITY;
     params.constraint = WLN_JLA;
     params.eps_truncation = 0.001;
@@ -291,7 +289,7 @@ void CobTwistController::initAugmentedSolverParams()
         params.frame_names.push_back(chain_.getSegment(i).getName());
     }
 
-    p_augmented_solver_->SetAugmentedSolverParams(params);
+    p_inv_diff_kin_solver_->SetInvDiffKinSolverParams(params);
 }
 
 
@@ -400,7 +398,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
         cb_frame_bl.M = KDL::Rotation::Quaternion(cb_transform_bl.getRotation().x(), cb_transform_bl.getRotation().y(), cb_transform_bl.getRotation().z(), cb_transform_bl.getRotation().w());
 
         //Solve twist
-        ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, bl_frame_ct, cb_frame_bl, q_dot_ik);
+        ret_ik = p_inv_diff_kin_solver_->CartToJnt(last_q_, last_q_dot_, twist, bl_frame_ct, cb_frame_bl, q_dot_ik);
     }
 
     if(twistControllerParams_.base_compensation)
@@ -425,7 +423,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 
     if(!twistControllerParams_.base_active)
     {
-        ret_ik = p_augmented_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik);
+        ret_ik = p_inv_diff_kin_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik);
     }
 
     if(0 != ret_ik)

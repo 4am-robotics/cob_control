@@ -32,7 +32,7 @@
 #include <set>
 #include "ros/ros.h"
 
-#include "cob_twist_controller/augmented_solver_data_types.h"
+#include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/constraint_solvers/solvers/constraint_solver_base.h"
 
 
@@ -47,14 +47,14 @@ class GradientProjectionMethodSolver : public ConstraintSolver<>
          * Specific implementation of solve-method to solve IK problem with constraints by using the GPM.
          * See base class ConstraintSolver for more details on params and returns.
          */
-        virtual Eigen::MatrixXd solve(const Vector6d &inCartVelocities,
+        virtual Eigen::MatrixXd solve(const Vector6d &in_cart_velocities,
                                       const KDL::JntArray& q,
                                       const KDL::JntArray& last_q_dot) const;
 
-        GradientProjectionMethodSolver(AugmentedSolverParams &asParams,
-                           Matrix6Xd &jacobianData)
-                           : ConstraintSolver(asParams,
-                                              jacobianData)
+        GradientProjectionMethodSolver(InvDiffKinSolverParams &params,
+                           Matrix6Xd &jacobian_data)
+                           : ConstraintSolver(params,
+                                              jacobian_data)
         {
         }
 

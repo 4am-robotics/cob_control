@@ -34,7 +34,6 @@
 #include <ros/ros.h>
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
-#include "cob_twist_controller/augmented_solver_data_types.h"
 
 /* BEGIN ConstraintParamsBase ***********************************************************************************/
 /// Base class for all derived parameter classes.
@@ -42,19 +41,19 @@ class ConstraintParamsBase
 {
     public:
 
-        ConstraintParamsBase(const AugmentedSolverParams& params) : params_(params)
+        ConstraintParamsBase(const InvDiffKinSolverParams& params) : params_(params)
         {}
 
         ~ConstraintParamsBase()
         {}
 
-        const AugmentedSolverParams& getAugmentedSolverParams() const
+        const InvDiffKinSolverParams& getInvDiffKinSolverParams() const
         {
             return this->params_;
         }
 
     protected:
-        const AugmentedSolverParams& params_;
+        const InvDiffKinSolverParams& params_;
 };
 /* END ConstraintParamsBase *************************************************************************************/
 
@@ -66,7 +65,7 @@ class ConstraintParamsCA : public ConstraintParamsBase
 
         Distance current_distance_;
 
-        ConstraintParamsCA(const AugmentedSolverParams& params)
+        ConstraintParamsCA(const InvDiffKinSolverParams& params)
         : ConstraintParamsBase(params)
         {}
 
@@ -88,7 +87,7 @@ class ConstraintParamsJLA : public ConstraintParamsBase
 {
     public:
 
-        ConstraintParamsJLA(const AugmentedSolverParams& params)
+        ConstraintParamsJLA(const InvDiffKinSolverParams& params)
         : ConstraintParamsBase(params)
         {}
 

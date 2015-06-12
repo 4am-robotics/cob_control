@@ -33,7 +33,7 @@
 #include <kdl/jntarray.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include "cob_twist_controller/augmented_solver_data_types.h"
+#include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/constraint_solvers/factories/solver_factory.h"
 #include "cob_twist_controller/callback_data_mediator.h"
 
@@ -57,20 +57,20 @@ class ConstraintSolverFactoryBuilder
 
         /**
          * Calculation of new joint velocities according to current joint positions and cartesian velocities.
-         * @param asParams References the augmented solver parameters.
-         * @param jacobianData References the current Jacobian (matrix data only).
-         * @param inCartVelocities The input velocities vector (in cartesian space).
+         * @param params References the augmented solver parameters.
+         * @param jacobian_data References the current Jacobian (matrix data only).
+         * @param in_cart_velocities The input velocities vector (in cartesian space).
          * @param q The current joint positions.
          * @param last_q_dot The last joint velocities.
-         * @param outJntVelocities The calculated joint velocities as output reference.
+         * @param out_jnt_velocities The calculated joint velocities as output reference.
          * @return The calculated new joint velocities in (m x 1)-Matrix.
          */
-        int8_t calculateJointVelocities(AugmentedSolverParams &asParams,
-                                        Matrix6Xd &jacobianData,
-                                        const Vector6d &inCartVelocities,
+        int8_t calculateJointVelocities(InvDiffKinSolverParams &params,
+                                        Matrix6Xd &jacobian_data,
+                                        const Vector6d &in_cart_velocities,
                                         const KDL::JntArray& q,
                                         const KDL::JntArray& last_q_dot,
-                                        Eigen::MatrixXd &outJntVelocities);
+                                        Eigen::MatrixXd &out_jnt_velocities);
 
         /**
          * Given a constraint_type create a solver_factory instance and return it.
