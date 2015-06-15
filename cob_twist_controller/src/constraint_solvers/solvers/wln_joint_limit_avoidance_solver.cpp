@@ -40,12 +40,10 @@ Eigen::MatrixXd WLN_JointLimitAvoidanceSolver::calculateWeighting(const KDL::Jnt
     std::vector<double> limits_max = this->params_.limits_max;
     uint32_t cols = this->jacobian_data_.cols();
     Eigen::VectorXd output = Eigen::VectorXd::Zero(cols);
-    double rad = M_PI / 180.0;
-
     for(uint32_t i = 0; i < cols ; ++i)
     {
-        output(i) = 1; // in the else cases -> output always 1
-        if(i < q.rows()) // q has been initialized with chain_getNrOfJoints -> q.rows should be equal to getNrOfJoints.
+        output(i) = 1.0; // in the else cases -> output always 1
+        if(i < q.rows())
         {
             //See Chan paper ISSN 1042-296X [Page 288]
             if( (last_q_dot(i) > 0.0 && ((limits_max[i] - q(i)) < (q(i) - limits_min[i])))
@@ -56,7 +54,8 @@ Eigen::MatrixXd WLN_JointLimitAvoidanceSolver::calculateWeighting(const KDL::Jnt
                 double denominator = 4.0 * pow(limits_max[i] - q(i), 2.0) * pow(q(i) - limits_min[i], 2.0);
                 if (denominator != 0.0)
                 {
-                    double partialPerformanceCriterion = rad * fabs(nominator / denominator);
+                    //double partialPerformanceCriterion = rad * fabs(nominator / denominator);
+                    double partialPerformanceCriterion = fabs(nominator / denominator);
                     output(i) = 1 + partialPerformanceCriterion;
                 }
             }
