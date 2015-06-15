@@ -40,9 +40,9 @@
 
 const double DAMPING_LIMIT = 1.0e-12; ///< const. value for zero comparison with damping factor
 
-typedef Eigen::Matrix<double,6,Eigen::Dynamic> Matrix6Xd;
+typedef Eigen::Matrix<double,6,Eigen::Dynamic> t_Matrix6Xd;
 
-typedef Eigen::Matrix<double,6,1> Vector6d;
+typedef Eigen::Matrix<double,6,1> t_Vector6d;
 
 enum DampingMethodTypes {
     NONE = 0,
@@ -69,7 +69,7 @@ struct InvDiffKinSolverParams {
     double beta;
     double eps_damping;
     ContraintTypes constraint;
-    double kappa;
+    double k_H;
     double eps_truncation;
     bool base_compensation;
     bool base_active;
@@ -83,7 +83,7 @@ struct InvDiffKinSolverParams {
     std::vector<std::string> frame_names;
 };
 
-struct Distance
+struct ObstacleDistanceInfo
 {
     double min_distance;
     Eigen::Vector3d distance_vec;

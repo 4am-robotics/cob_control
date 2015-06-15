@@ -49,7 +49,7 @@ class ConstraintSolver
          * @param last_q_dot The last joint velocities.
          * @return The calculated new joint velocities.
          */
-        virtual Eigen::MatrixXd solve(const Vector6d &in_cart_velocities,
+        virtual Eigen::MatrixXd solve(const t_Vector6d &in_cart_velocities,
                                       const KDL::JntArray& q,
                                       const KDL::JntArray& last_q_dot) const = 0;
 
@@ -75,14 +75,14 @@ class ConstraintSolver
     protected:
 
         ConstraintSolver(InvDiffKinSolverParams &params,
-                         Matrix6Xd &jacobian_data)
+                         t_Matrix6Xd &jacobian_data)
                          : params_(params),
                            jacobian_data_(jacobian_data)
         {
         }
 
-        const InvDiffKinSolverParams& params_; ///< References the augmented solver parameters.
-        const Matrix6Xd& jacobian_data_; ///< References the current Jacobian (matrix data only).
+        const InvDiffKinSolverParams& params_; ///< References the inv. diff. kin. solver parameters.
+        const t_Matrix6Xd& jacobian_data_; ///< References the current Jacobian (matrix data only).
         boost::shared_ptr<DampingBase> damping_; ///< The currently set damping method.
 
         PINV pinv_calc_;

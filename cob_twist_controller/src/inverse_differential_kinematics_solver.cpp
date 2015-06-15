@@ -43,7 +43,7 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const KDL::JntArray& q_in,
     int8_t retStat = -1;
     this->adjustJac(q_in, base_position, chain_base);
 
-    Vector6d v_in_vec;
+    t_Vector6d v_in_vec;
     tf::twistKDLToEigen(v_in, v_in_vec);
 
     Eigen::MatrixXd qdot_out_vec;
@@ -127,7 +127,7 @@ void InverseDifferentialKinematicsSolver::adjustJac(const KDL::JntArray& q_in,
         jac_b(5,2) = w_chain_base(2);
 
         //combine chain Jacobian and platform Jacobian
-        Matrix6Xd jac_full;
+        t_Matrix6Xd jac_full;
         jac_full.resize(6,chain_.getNrOfJoints() + jac_b.cols());
         jac_full << jac_chain.data, jac_b;
         jac_.resize(chain_.getNrOfJoints() + jac_b.cols());

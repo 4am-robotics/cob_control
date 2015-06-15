@@ -12,14 +12,14 @@
  * \note
  *   Project name: care-o-bot
  * \note
- *   ROS stack name: cob_driver
+ *   ROS stack name: cob_control
  * \note
- *   ROS package name: cob_twist_controller
+ *   ROS package name: cob_obstacle_distance
  *
  * \author
  *   Author: Marco Bezzon, email: Marco.Bezzon@ipa.fraunhofer.de
  *
- * \date Date of creation: May, 2014
+ * \date Date of creation: May, 2015
  *
  * \brief
  *   Header declaring an implementation for ChainFkSolverPos.

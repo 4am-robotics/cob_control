@@ -47,7 +47,7 @@
 template <typename PRIO>
 std::set<tConstraintBase> ConstraintsBuilder<PRIO>::createConstraints(InvDiffKinSolverParams &inv_diff_kin_solver_params,
                                                                        const KDL::JntArray& q,
-                                                                       const Matrix6Xd &jacobian_data,
+                                                                       const t_Matrix6Xd &jacobian_data,
                                                                        KDL::ChainJntToJacSolver& jnt_to_jac,
                                                                        CallbackDataMediator& data_mediator)
 {
@@ -85,6 +85,8 @@ std::set<tConstraintBase> ConstraintsBuilder<PRIO>::createConstraints(InvDiffKin
     else
     {
         // Nothing to do here!
+        // Create constraints will be called also in case of an unconstraint solver etc.
+        // So the log would be filled unnecessarily.
     }
 
     return constraints;
@@ -122,7 +124,7 @@ Eigen::VectorXd  CollisionAvoidance<T_PARAMS, PRIO>::getPartialValues() const
     Eigen::VectorXd partial_values = Eigen::VectorXd::Zero(vecRows);
     const InvDiffKinSolverParams& params = this->constraint_params_.getInvDiffKinSolverParams();
     int size_of_frames = params.frame_names.size();
-    Distance d = this->constraint_params_.current_distance_;
+    ObstacleDistanceInfo d = this->constraint_params_.current_distance_;
     if (this->getActivationThreshold() > d.min_distance)
     {
         std::vector<std::string>::const_iterator str_it = std::find(params.frame_names.begin(),
@@ -159,8 +161,7 @@ template <typename T_PARAMS, typename PRIO>
 double CollisionAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const
 {
     const InvDiffKinSolverParams &params = this->constraint_params_.getInvDiffKinSolverParams();
-    //return SelfMotionMagnitudeFactory< SmmDeterminatorVelocityBounds<MAX_CRIT> >::calculate(params, particular_solution, homogeneous_solution);
-    return params.kappa;
+    return SelfMotionMagnitudeFactory<SmmDeterminatorConstant >::calculate(params, particular_solution, homogeneous_solution);
 }
 /* END CollisionAvoidance ***************************************************************************************/
 
@@ -213,41 +214,6 @@ double JointLimitAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::
     // k_H by Armijo-Rule
     double t;
     const InvDiffKinSolverParams &params = this->constraint_params_.getInvDiffKinSolverParams();
-//    Eigen::VectorXd gradient = this->getPartialValues();
-//    double costFunctionVal = this->getValue();
-//
-//    double l = 0.0;
-//    double t = 1.0;
-//    double beta = 0.9;
-//
-//    // Eigen::VectorXd d = params.kappa * gradient;
-//    Eigen::VectorXd d = -1.0 * gradient;
-//
-//    Eigen::VectorXd new_d = t * d;
-//    double nextCostFunctionVal = this->getValue(new_d);
-//
-//    double summand = t * gradient.transpose() * d;
-//
-//    while(nextCostFunctionVal > (costFunctionVal + summand))
-//    {
-//        double t_new = pow(beta, l + 1.0);
-//
-//        if (!( (t_new >= (0.0001 * t)) && (t_new <= (0.9999 * t))))
-//        {
-//            ROS_ERROR("Outside of valid t range. Break!!!");
-//            t = t_new;
-//            break;
-//        }
-//
-//        t = t_new;
-//        l = l + 1.0;
-//
-//        new_d = t * d;
-//        nextCostFunctionVal = this->getValue(new_d);
-//        summand = t * gradient.transpose() * d;
-//    }
-
-
     t = SelfMotionMagnitudeFactory< SmmDeterminatorVelocityBounds<MIN_CRIT> >::calculate(params, particular_solution, homogeneous_solution);
     return t;
 }
@@ -329,8 +295,7 @@ Eigen::VectorXd JointLimitAvoidanceMid<T_PARAMS, PRIO>::getPartialValues() const
         partial_values(i) = nominator / denom;
     }
 
-    double k = params.kappa;
-    return k * partial_values;
+    return partial_values;
 }
 
 /// Returns a value for k_H to weight the partial values for GPM e.g.

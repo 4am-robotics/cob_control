@@ -54,7 +54,7 @@ class IMarkerShape
 };
 /* END IMarkerShape *********************************************************************************************/
 
-typedef boost::shared_ptr< IMarkerShape > tPtrMarkerShapeBase;
+typedef boost::shared_ptr< IMarkerShape > t_ptr_IMarkerShape;
 
 
 #endif /* MARKER_SHAPES_INTERFACE_HPP_ */

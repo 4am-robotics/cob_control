@@ -34,7 +34,7 @@
  * This is done by calculation of a weighting which is dependent on inherited classes for the Jacobian.
  * Uses the base implementation of calculatePinvJacobianBySVD to calculate the pseudo-inverse (weighted) Jacobian.
  */
-Eigen::MatrixXd WeightedLeastNormSolver::solve(const Vector6d &in_cart_velocities,
+Eigen::MatrixXd WeightedLeastNormSolver::solve(const t_Vector6d &in_cart_velocities,
                                                const KDL::JntArray& q,
                                                const KDL::JntArray& last_q_dot) const
 {

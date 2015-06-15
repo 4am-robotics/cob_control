@@ -1,9 +1,38 @@
-/*
- * self_motion_magnitude.h
+/*!
+ *****************************************************************
+ * \file
  *
- *  Created on: May 21, 2015
- *      Author: fxm-mb
- */
+ * \note
+ *   Copyright (c) 2015 \n
+ *   Fraunhofer Institute for Manufacturing Engineering
+ *   and Automation (IPA) \n\n
+ *
+ *****************************************************************
+ *
+ * \note
+ *   Project name: care-o-bot
+ * \note
+ *   ROS stack name: cob_control
+ * \note
+ *   ROS package name: cob_twist_controller
+ *
+ * \author
+ *   Author: Marco Bezzon, email: Marco.Bezzon@ipa.fraunhofer.de
+ *
+ * \date Date of creation: June, 2015
+ *
+ * \brief
+ *   This header contains the template implementations for
+ *   self motion magnitude determination (factor k_H for GPM)
+ *   One proposal according to:
+ *   Euler J.A., Dubey R.V., Babcock S.M. (1989),
+ *   "Self motion determination based on actuator velocity bounds
+ *   for redundant manipulators". J. Robotic Syst., 6: 417-425
+ *
+ *   Other:
+ *   Parameter from dynamic_reconfigure.
+ *
+ ****************************************************************/
 
 #ifndef SELF_MOTION_MAGNITUDE_H_
 #define SELF_MOTION_MAGNITUDE_H_
@@ -44,6 +73,7 @@ class SmmDeterminatorVelocityBounds : public SelfMotionMagnitudeDeterminatorBase
 
         virtual ~SmmDeterminatorVelocityBounds() {}
 
+        /// Implementation of SMM. Formula: See header comment!
         virtual double calculate(const InvDiffKinSolverParams& params, const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const
         {
             std::vector<double> velLim = params.limits_vel;
@@ -112,47 +142,27 @@ class SmmDeterminatorConstant : public SelfMotionMagnitudeDeterminatorBase
 
         virtual double calculate(const InvDiffKinSolverParams& params, const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const
         {
-            return params.kappa;
+            return params.k_H;
         }
 };
 
 
-/// Abstract base class defining interfaces for the creation of a specific solver.
+/// Factory to create an SMM type object and call calculate method on it.
 template <typename T>
 class SelfMotionMagnitudeFactory
 {
     public:
 
-        static double calculate(const InvDiffKinSolverParams& params, const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution)
+        static double calculate(const InvDiffKinSolverParams& params,
+                                const Eigen::MatrixXd& particular_solution,
+                                const Eigen::MatrixXd& homogeneous_solution)
         {
-            T* cs = getInstance();
-            double k = cs->calculate(params, particular_solution, homogeneous_solution);
+            T smm_determinator;
+            double k = smm_determinator.calculate(params, particular_solution, homogeneous_solution);
             return k;
         }
 
     protected:
-
-        static T* instance_;
-
-        /**
-         * The interface method to create a specific solver to solve the inverse kinematics problem.
-         * @param asParams References the augmented solver parameters.
-         * @param jacobianData References the current Jacobian (matrix data only).
-         * @param jacobianDataTransposed References the current Jacobian transpose (matrix data only).
-         * @return A specific solver.
-         */
-        static T* getInstance()
-        {
-            if (NULL == instance_)
-            {
-                instance_ = new T();
-            }
-
-            return instance_;
-        }
 };
-
-template <typename T>
-T* SelfMotionMagnitudeFactory<T>::instance_ = NULL;
 
 #endif /* SELF_MOTION_MAGNITUDE_H_ */

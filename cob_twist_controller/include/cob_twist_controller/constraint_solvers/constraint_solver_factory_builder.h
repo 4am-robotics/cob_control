@@ -57,7 +57,7 @@ class ConstraintSolverFactoryBuilder
 
         /**
          * Calculation of new joint velocities according to current joint positions and cartesian velocities.
-         * @param params References the augmented solver parameters.
+         * @param params References the inv. diff. kin. solver parameters.
          * @param jacobian_data References the current Jacobian (matrix data only).
          * @param in_cart_velocities The input velocities vector (in cartesian space).
          * @param q The current joint positions.
@@ -66,8 +66,8 @@ class ConstraintSolverFactoryBuilder
          * @return The calculated new joint velocities in (m x 1)-Matrix.
          */
         int8_t calculateJointVelocities(InvDiffKinSolverParams &params,
-                                        Matrix6Xd &jacobian_data,
-                                        const Vector6d &in_cart_velocities,
+                                        t_Matrix6Xd &jacobian_data,
+                                        const t_Vector6d &in_cart_velocities,
                                         const KDL::JntArray& q,
                                         const KDL::JntArray& last_q_dot,
                                         Eigen::MatrixXd &out_jnt_velocities);

@@ -45,8 +45,8 @@
  * The objects are generated for each solve-request. After calculation the objects are deleted.
  */
 int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(InvDiffKinSolverParams &params,
-                                                                Matrix6Xd &jacobian_data,
-                                                                const Vector6d &in_cart_velocities,
+                                                                t_Matrix6Xd &jacobian_data,
+                                                                const t_Vector6d &in_cart_velocities,
                                                                 const KDL::JntArray& q,
                                                                 const KDL::JntArray& last_q_dot,
                                                                 Eigen::MatrixXd &out_jnt_velocities)

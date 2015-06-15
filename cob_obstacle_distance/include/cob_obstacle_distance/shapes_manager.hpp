@@ -38,13 +38,13 @@
 class ShapesManager
 {
     private:
-        std::vector<tPtrMarkerShapeBase> shapes_;
-        typedef std::vector<tPtrMarkerShapeBase>::iterator tcIter;
+        std::vector<t_ptr_IMarkerShape> shapes_;
+
         const ros::Publisher& pub_;
 
     public:
-        typedef std::vector<tPtrMarkerShapeBase>::iterator iterator;
-        typedef std::vector<tPtrMarkerShapeBase>::const_iterator const_iterator;
+        typedef std::vector<t_ptr_IMarkerShape>::iterator t_iter;
+        typedef std::vector<t_ptr_IMarkerShape>::const_iterator t_const_iterator;
 
         /**
          * Ctor
@@ -58,7 +58,7 @@ class ShapesManager
          * Adds a new shape to the manager.
          * @param s Pointer to an already created marker shape.
          */
-        void addShape(tPtrMarkerShapeBase s);
+        void addShape(t_ptr_IMarkerShape s);
 
         /**
          * Draw the marker managed by the ShapesManager
@@ -71,10 +71,10 @@ class ShapesManager
          */
         void clear();
 
-        iterator begin() {return this->shapes_.begin(); }
-        const_iterator begin() const {return this->shapes_.begin(); }
-        iterator end() {return this->shapes_.end(); }
-        const_iterator end() const {return this->shapes_.end(); }
+        t_iter begin() {return this->shapes_.begin(); }
+        t_const_iterator begin() const {return this->shapes_.begin(); }
+        t_iter end() {return this->shapes_.end(); }
+        t_const_iterator end() const {return this->shapes_.end(); }
 };
 
 #endif /* SHAPES_MANAGER_HPP_ */

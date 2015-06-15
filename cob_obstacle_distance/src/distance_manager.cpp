@@ -62,10 +62,9 @@ DistanceManager::~DistanceManager()
 
 int DistanceManager::init()
 {
+    ros::NodeHandle global_nh;
     KDL::Tree robot_structure;
-    std::string robot_desc_string;
-    nh_.param("/robot_description", robot_desc_string, std::string());
-    if (!kdl_parser::treeFromString(robot_desc_string, robot_structure)){
+    if (!kdl_parser::treeFromParam("/robot_description", robot_structure)){
         ROS_ERROR("Failed to construct kdl tree from parameter '/robot_description'.");
         std::string path = ros::package::getPath("cob_obstacle_distance");
         std::string testdata_path = ros::package::getPath("cob_obstacle_distance") + "/testdata/robot_description.xml";
@@ -79,35 +78,33 @@ int DistanceManager::init()
         ROS_WARN_STREAM("Constructed from test data in \"" << testdata_path << "\".");
     }
 
-    if(!nh_.getParam("robo_namespace", this->robo_namespace_))
+    // Use global namespace here
+    if(!global_nh.getParam("joint_names", this->joints_))
     {
-        ROS_ERROR("Failed to get parameter \"robo_namespace\".");
+        ROS_ERROR("Failed to get parameter \"joint_names\".");
         return -2;
     }
 
+    // Use specialized namespace here
+    // TODO: Make common -> cob_twist_controller uses this param as well.
     if(!nh_.getParam("chain_base_link", this->chain_base_link_))
     {
         ROS_ERROR("Failed to get parameter \"chain_base_link\".");
         return -3;
     }
 
+    // TODO: Make common -> cob_twist_controller uses this param as well.
     if (!nh_.getParam("chain_tip_link", this->chain_tip_link_))
     {
         ROS_ERROR("Failed to get parameter \"chain_tip_link\".");
         return -4;
     }
 
-    if(!nh_.getParam("joint_names", this->joints_))
-    {
-        ROS_ERROR("Failed to get parameter \"joint_names\".");
-        return -5;
-    }
-
     robot_structure.getChain(this->chain_base_link_, this->chain_tip_link_, this->chain_);
     if(chain_.getNrOfJoints() == 0)
     {
         ROS_ERROR("Failed to initialize kinematic chain");
-        return -6;
+        return -5;
     }
 
     for(uint16_t i = 0; i < chain_.getNrOfSegments(); ++i)
@@ -118,7 +115,7 @@ int DistanceManager::init()
     }
 
     this->marker_pub_ = this->nh_.advertise<visualization_msgs::Marker>("visualization_marker", 1);
-    this->obstacle_distances_pub_ = this->nh_.advertise<cob_obstacle_distance::ObstacleDistances>(this->robo_namespace_, 1);
+    this->obstacle_distances_pub_ = this->nh_.advertise<cob_obstacle_distance::ObstacleDistances>(this->nh_.getNamespace(), 1);
 
     obstacle_mgr_.reset(new ShapesManager(this->marker_pub_));
     object_of_interest_mgr_.reset(new ShapesManager(this->marker_pub_));
@@ -154,12 +151,12 @@ bool DistanceManager::waitForMarkerSubscriber()
     return true;
 }
 
-void DistanceManager::addObstacle(tPtrMarkerShapeBase s)
+void DistanceManager::addObstacle(t_ptr_IMarkerShape s)
 {
     this->obstacle_mgr_->addShape(s);
 }
 
-void DistanceManager::addObjectOfInterest(tPtrMarkerShapeBase s)
+void DistanceManager::addObjectOfInterest(t_ptr_IMarkerShape s)
 {
     this->object_of_interest_mgr_->addShape(s);
 }
@@ -174,7 +171,7 @@ void DistanceManager::drawObjectsOfInterest(bool enforceDraw)
     this->object_of_interest_mgr_->draw(enforceDraw);
 }
 
-bool DistanceManager::collide(tPtrMarkerShapeBase s1, tPtrMarkerShapeBase s2)
+bool DistanceManager::collide(t_ptr_IMarkerShape s1, t_ptr_IMarkerShape s2)
 {
     fcl::CollisionObject x = s1->getCollisionObject();
     fcl::CollisionObject y = s2->getCollisionObject();
@@ -217,17 +214,17 @@ void DistanceManager::calculate()
         KDL::Frame p_out;
         int retVal = adv_chn_fk_solver_pos_->JntToCart(last_q_, p_out);
         KDL::Frame frame_pos = adv_chn_fk_solver_pos_->getFrameAtSegment(idx);
-        Eigen::Vector3d chainbase2fourth_jnt_pos(frame_pos.p.x(),
-                                                 frame_pos.p.y(),
-                                                 frame_pos.p.z());
-        Eigen::Vector3d abs_jnt_pos = tf_cb_frame_bl_.inverse() * chainbase2fourth_jnt_pos;
+        Eigen::Vector3d chainbase2frame_pos(frame_pos.p.x(),
+                                            frame_pos.p.y(),
+                                            frame_pos.p.z());
+        Eigen::Vector3d abs_jnt_pos = tf_cb_frame_bl_.inverse() * chainbase2frame_pos;
         /* ******* End Transformation part ************** */
 
         // Representation of segment_of_interest as specific shape
         fcl::Box b(0.1, 0.1, 0.1);
         fcl::Sphere s(0.1);
         fcl::Cylinder c(0.1, 0.1);
-        tPtrMarkerShapeBase ooi;
+        t_ptr_IMarkerShape ooi;
         if(!DistanceManager::getMarkerShape(it->second.shape_type, abs_jnt_pos, ooi))
         {
             return;
@@ -240,7 +237,7 @@ void DistanceManager::calculate()
         fcl::CollisionObject result_collision_obj = ooi_co;
         fcl::FCL_REAL lastDist = std::numeric_limits<fcl::FCL_REAL>::max();
         ROS_INFO_STREAM("Iteration over obstacles for segment of interest: " << frame_of_interest_name);
-        for(ShapesManager::iterator it = this->obstacle_mgr_->begin(); it != this->obstacle_mgr_->end(); ++it)
+        for(ShapesManager::t_iter it = this->obstacle_mgr_->begin(); it != this->obstacle_mgr_->end(); ++it)
         {
             fcl::CollisionObject collision_obj = (*it)->getCollisionObject();
             fcl::DistanceResult tmpResult;
@@ -360,7 +357,7 @@ bool DistanceManager::registerPointOfInterest(cob_obstacle_distance::Registratio
     return true;
 }
 
-bool DistanceManager::getMarkerShape(uint32_t shape_type, const Eigen::Vector3d& abs_pos, tPtrMarkerShapeBase& segment_of_interest_marker_shape)
+bool DistanceManager::getMarkerShape(uint32_t shape_type, const Eigen::Vector3d& abs_pos, t_ptr_IMarkerShape& segment_of_interest_marker_shape)
 {
     // Representation of segment_of_interest as specific fcl::Shape
     fcl::Box b(0.1, 0.1, 0.1);

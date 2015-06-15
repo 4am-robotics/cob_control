@@ -1,9 +1,30 @@
 /*
- * advanced_chainfksolverpos_recursive.h
+ *****************************************************************
+ * \file
  *
- *  Created on: May 20, 2015
- *      Author: fxm-mb
- */
+ * \note
+ *   Copyright (c) 2015 \n
+ *   Fraunhofer Institute for Manufacturing Engineering
+ *   and Automation (IPA) \n\n
+ *
+ *****************************************************************
+ *
+ * \note
+ *   Project name: care-o-bot
+ * \note
+ *   ROS stack name: cob_control
+ * \note
+ *   ROS package name: cob_obstacle_distance
+ *
+ * \author
+ *   Author: Marco Bezzon, email: Marco.Bezzon@ipa.fraunhofer.de
+ *
+ * \date Date of creation: May, 2015
+ *
+ * \brief
+ *   Chain Forward Kinematics Solver Pos (recursive) methods implementation.
+ *
+ ****************************************************************/
 
 #include <ros/ros.h>
 #include "cob_obstacle_distance/chainfk_solvers/advanced_chainfksolverpos_recursive.h"

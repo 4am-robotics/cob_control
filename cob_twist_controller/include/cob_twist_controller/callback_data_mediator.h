@@ -43,8 +43,8 @@
 class CallbackDataMediator
 {
     private:
-        std::vector<Distance> obstacle_distances_;
-        std::vector<Distance>::const_iterator it_distances;
+        std::vector<ObstacleDistanceInfo> obstacle_distances_;
+        std::vector<ObstacleDistanceInfo>::const_iterator it_distances;
         boost::mutex distances_to_obstacles_lock_;
 
     public:

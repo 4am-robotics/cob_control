@@ -40,7 +40,7 @@ class WLN_JointLimitAvoidanceSolver : public WeightedLeastNormSolver
     public:
 
         WLN_JointLimitAvoidanceSolver(InvDiffKinSolverParams &params,
-                                  Matrix6Xd &jacobian_data)
+                                  t_Matrix6Xd &jacobian_data)
                                   : WeightedLeastNormSolver(params,
                                                             jacobian_data)
         {

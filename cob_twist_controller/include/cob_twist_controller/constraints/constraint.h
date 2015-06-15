@@ -62,7 +62,7 @@ class ConstraintsBuilder
     public:
         static std::set<tConstraintBase> createConstraints(InvDiffKinSolverParams &params,
                                                             const KDL::JntArray& q,
-                                                            const Matrix6Xd &jacobian_data,
+                                                            const t_Matrix6Xd &jacobian_data,
                                                             KDL::ChainJntToJacSolver& jnt_to_jac_,
                                                             CallbackDataMediator& data_mediator);
 

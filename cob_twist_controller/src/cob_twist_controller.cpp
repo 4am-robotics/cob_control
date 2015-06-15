@@ -101,9 +101,7 @@ bool CobTwistController::initialize()
 
     ///parse robot_description and generate KDL chains
     KDL::Tree my_tree;
-    std::string robot_desc_string;
-    nh_.param("/robot_description", robot_desc_string, std::string());
-    if (!kdl_parser::treeFromString(robot_desc_string, my_tree)){
+    if (!kdl_parser::treeFromParam("/robot_description", my_tree)){
         ROS_ERROR("Failed to construct kdl tree");
         return false;
     }
@@ -148,7 +146,7 @@ bool CobTwistController::initialize()
     ros::Duration(1.0).sleep();
 
     ///initialize ROS interfaces
-    obstacle_distance_sub_ = nh_.subscribe("/cob_obstacle_distance/" + robo_namespace, 1, &CallbackDataMediator::distancesToObstaclesCallback, &callback_data_mediator_);
+    obstacle_distance_sub_ = nh_.subscribe("obstacle_distance", 1, &CallbackDataMediator::distancesToObstaclesCallback, &callback_data_mediator_);
     jointstate_sub = nh_.subscribe("joint_states", 1, &CobTwistController::jointstate_cb, this);
     twist_sub = nh_twist.subscribe("command_twist", 1, &CobTwistController::twist_cb, this);
     twist_stamped_sub = nh_twist.subscribe("command_twist_stamped", 1, &CobTwistController::twist_stamped_cb, this);
@@ -157,7 +155,6 @@ bool CobTwistController::initialize()
 
     odometry_sub = nh_.subscribe("/base/odometry_controller/odometry", 1, &CobTwistController::odometry_cb, this);
     base_vel_pub = nh_.advertise<geometry_msgs::Twist>("/base/twist_controller/command", 1);
-
 
     /// Debug
     #if DEBUG_BASE_COMP == 1
@@ -189,9 +186,9 @@ void CobTwistController::reinitServiceRegistration()
 {
     ROS_INFO("Reinit of Service registration!");
     std::string robo_namespace = nh_.getNamespace();
-    robo_namespace.erase(0, 2); // delete "//"
-    ros::ServiceClient client = nh_.serviceClient<cob_obstacle_distance::Registration>("/cob_obstacle_distance/" + robo_namespace + "/registerPointOfInterest");
-    ROS_INFO_STREAM("Created service client for service /cob_obstacle_distance/" << robo_namespace << "/registerPointOfInterest");
+    robo_namespace.erase(0, 1); // delete "/"
+    ros::ServiceClient client = nh_.serviceClient<cob_obstacle_distance::Registration>(robo_namespace + "/obstacle_distance/registerPointOfInterest");
+    ROS_INFO_STREAM("Created service client for service " << robo_namespace << "/obstacle_distance/registerPointOfInterest");
 
     for(std::vector<std::string>::const_iterator it = twistControllerParams_.collision_check_frames.begin();
             it != twistControllerParams_.collision_check_frames.end();
@@ -236,7 +233,7 @@ void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControl
         params.frame_names.push_back(chain_.getSegment(i).getName());
     }
 
-    params.kappa = config.kappa;
+    params.k_H = config.k_H;
 
     reset_markers_ = config.reset_markers;
 
@@ -264,7 +261,7 @@ void CobTwistController::initInvDiffKinSolverParams()
 {
     if(NULL == this->p_inv_diff_kin_solver_)
     {
-        ROS_ERROR("p_augmented_solver_ not yet initialized.");
+        ROS_ERROR("p_inv_diff_kin_solver_ not yet initialized.");
         return;
     }
 
@@ -281,7 +278,7 @@ void CobTwistController::initInvDiffKinSolverParams()
     params.limits_min = twistControllerParams_.limits_min;
     params.limits_max = twistControllerParams_.limits_max;
     params.limits_vel = twistControllerParams_.limits_vel;
-    params.kappa = 1.0;
+    params.k_H = 1.0;
 
     params.frame_names.clear();
     for (uint16_t i = 0; i < chain_.getNrOfSegments(); ++i)

@@ -40,8 +40,8 @@ class ISolverFactory
 {
     public:
         virtual Eigen::MatrixXd calculateJointVelocities(InvDiffKinSolverParams &params,
-                                                         Matrix6Xd &jacobian_data,
-                                                         const Vector6d &in_cart_velocities,
+                                                         t_Matrix6Xd &jacobian_data,
+                                                         const t_Vector6d &in_cart_velocities,
                                                          const KDL::JntArray& q,
                                                          const KDL::JntArray& last_q_dot,
                                                          boost::shared_ptr<DampingBase>& damping_method,
@@ -60,7 +60,7 @@ class SolverFactory : public ISolverFactory
          * The base calculation method to calculate joint velocities out of input velocities (cartesian space).
          * Creates a solver according to implemented createSolver-method (in subclass).
          * Use the specialized solve-method to calculate new joint velocities.
-         * @param params References the augmented solver parameters.
+         * @param params References the inv. diff. kin. solver parameters.
          * @param jacobian_data References the current Jacobian (matrix data only).
          * @param in_cart_velocities The input velocities vector (in cartesian space).
          * @param q The current joint positions.
@@ -69,8 +69,8 @@ class SolverFactory : public ISolverFactory
          * @return Joint velocities in a (m x 1)-Matrix.
          */
         Eigen::MatrixXd calculateJointVelocities(InvDiffKinSolverParams &params,
-                                                 Matrix6Xd &jacobian_data,
-                                                 const Vector6d &in_cart_velocities,
+                                                 t_Matrix6Xd &jacobian_data,
+                                                 const t_Vector6d &in_cart_velocities,
                                                  const KDL::JntArray& q,
                                                  const KDL::JntArray& last_q_dot,
                                                  boost::shared_ptr<DampingBase>& damping_method,
@@ -89,12 +89,12 @@ class SolverFactory : public ISolverFactory
 
         /**
          * The interface method to create a specific solver to solve the inverse kinematics problem.
-         * @param params References the augmented solver parameters.
+         * @param params References the inv. diff. kin. solver parameters.
          * @param jacobian_data References the current Jacobian (matrix data only).
          * @return A specific solver.
          */
         T* createSolver(InvDiffKinSolverParams &params,
-                        Matrix6Xd &jacobian_data) const
+                        t_Matrix6Xd &jacobian_data) const
         {
             return new T(params, jacobian_data);
         }

@@ -38,7 +38,7 @@ ShapesManager::~ShapesManager()
 }
 
 
-void ShapesManager::addShape(tPtrMarkerShapeBase s)
+void ShapesManager::addShape(t_ptr_IMarkerShape s)
 {
     this->shapes_.push_back(s);
 }
@@ -46,7 +46,7 @@ void ShapesManager::addShape(tPtrMarkerShapeBase s)
 
 void ShapesManager::draw(bool enforce_draw)
 {
-    for(tcIter iter = shapes_.begin(); iter != shapes_.end(); ++iter)
+    for(t_iter iter = shapes_.begin(); iter != shapes_.end(); ++iter)
     {
         if(!((*iter)->isDrawn()) || enforce_draw)
         {

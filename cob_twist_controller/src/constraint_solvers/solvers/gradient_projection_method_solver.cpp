@@ -33,7 +33,7 @@
  * In addtion to the partial solution q_dot = J^+ * v the homogeneous solution (I - J^+ * J) q_dot_0 is calculated.
  * The q_dot_0 results from the sum of the constraint cost function gradients. The terms of the sum are weighted with a factor k_H separately.
  */
-Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Vector6d &inCartVelocities,
+Eigen::MatrixXd GradientProjectionMethodSolver::solve(const t_Vector6d &inCartVelocities,
                                       const KDL::JntArray& q,
                                       const KDL::JntArray& last_q_dot) const
 {

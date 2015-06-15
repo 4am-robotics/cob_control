@@ -38,7 +38,6 @@
   <run_depend>tf_conversions</run_depend>
   <run_depend>dynamic_reconfigure</run_depend>
   <run_depend>cob_obstacle_distance</run_depend>
-  <run_depend>message_runtime</run_depend>
 
   <export>
   </export>

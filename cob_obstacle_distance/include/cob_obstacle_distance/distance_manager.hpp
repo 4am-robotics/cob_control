@@ -69,7 +69,6 @@ class DistanceManager
 
         std::string chain_base_link_;
         std::string chain_tip_link_;
-        std::string robo_namespace_;
 
         t_map_ObstacleDistance obstacle_distances_;
         boost::scoped_ptr<ShapesManager> obstacle_mgr_;
@@ -108,13 +107,13 @@ class DistanceManager
          * Add a new obstacle to the obstacles that shall be managed.
          * @param s Pointer to an already created MarkerShape that represent an obstacle.
          */
-        void addObstacle(tPtrMarkerShapeBase s);
+        void addObstacle(t_ptr_IMarkerShape s);
 
         /**
          * Add a new object of interest that shall be investigated for collisions.
          * @param s Pointer to an already created MarkerShape that represent the object of interest (i.e. shape in reference frame of segment).
          */
-        void addObjectOfInterest(tPtrMarkerShapeBase s);
+        void addObjectOfInterest(t_ptr_IMarkerShape s);
 
         /**
          * Simply draw all obstacle markers in RVIZ.
@@ -133,7 +132,7 @@ class DistanceManager
          * @param s1 First shape to be checked against second shape.
          * @param s2 Second shape to be checked against first shape.
          */
-        bool collide(tPtrMarkerShapeBase s1, tPtrMarkerShapeBase s2);
+        bool collide(t_ptr_IMarkerShape s1, t_ptr_IMarkerShape s2);
 
         /**
          * Updates the joint states.
@@ -175,21 +174,12 @@ class DistanceManager
                                      cob_obstacle_distance::Registration::Response& response);
 
         /**
-         * Returns the robot namespace.
-         * @return robot namespace (arm_right, arm_left, ...)
-         */
-        inline std::string getRoboNamespace() const
-        {
-            return this->robo_namespace_;
-        }
-
-        /**
          * Given a proper shape_type and a absolute position vector a MarkerShape will be generated to represent the object of interest
          * (i.e. shape in reference frame of segment)
          */
         static bool getMarkerShape(uint32_t shape_type,
                                    const Eigen::Vector3d& abs_pos,
-                                   tPtrMarkerShapeBase& segment_of_interest_marker_shape);
+                                   t_ptr_IMarkerShape& segment_of_interest_marker_shape);
 };
 
 #endif /* DISTANCE_MANAGER_HPP_ */

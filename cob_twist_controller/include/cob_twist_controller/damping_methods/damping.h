@@ -36,7 +36,7 @@
 class DampingBuilder
 {
     public:
-        static DampingBase* create_damping(InvDiffKinSolverParams &params, Matrix6Xd &jacobian_data);
+        static DampingBase* create_damping(InvDiffKinSolverParams &params, t_Matrix6Xd &jacobian_data);
 
     private:
         DampingBuilder() {}
@@ -49,7 +49,7 @@ class DampingBuilder
 class DampingNone : public DampingBase
 {
     public:
-        DampingNone(InvDiffKinSolverParams &params, Matrix6Xd &jacobian_data)
+        DampingNone(InvDiffKinSolverParams &params, t_Matrix6Xd &jacobian_data)
         : DampingBase(params, jacobian_data)
         {}
 
@@ -64,7 +64,7 @@ class DampingNone : public DampingBase
 class DampingConstant : public DampingBase
 {
     public:
-        DampingConstant(InvDiffKinSolverParams &params, Matrix6Xd &jacobian_data)
+        DampingConstant(InvDiffKinSolverParams &params, t_Matrix6Xd &jacobian_data)
         : DampingBase(params, jacobian_data)
         {}
 
@@ -79,7 +79,7 @@ class DampingConstant : public DampingBase
 class DampingManipulability : public DampingBase
 {
     public:
-        DampingManipulability(InvDiffKinSolverParams &params, Matrix6Xd &jacobian_data)
+        DampingManipulability(InvDiffKinSolverParams &params, t_Matrix6Xd &jacobian_data)
         : DampingBase(params, jacobian_data)
         {}
 
@@ -94,7 +94,7 @@ class DampingManipulability : public DampingBase
 class DampingLeastSingularValues : public DampingBase
 {
     public:
-        DampingLeastSingularValues(InvDiffKinSolverParams &params, Matrix6Xd &jacobian_data)
+        DampingLeastSingularValues(InvDiffKinSolverParams &params, t_Matrix6Xd &jacobian_data)
         : DampingBase(params, jacobian_data)
         {}
 

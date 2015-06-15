@@ -63,7 +63,7 @@ class ConstraintParamsCA : public ConstraintParamsBase
 {
     public:
 
-        Distance current_distance_;
+        ObstacleDistanceInfo current_distance_;
 
         ConstraintParamsCA(const InvDiffKinSolverParams& params)
         : ConstraintParamsBase(params)

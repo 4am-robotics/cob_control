@@ -37,43 +37,33 @@
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "cob_obstacle_distance");
-    ros::NodeHandle nh("cob_obstacle_distance");
+    ros::NodeHandle global_nh;
+    ros::NodeHandle nh("obstacle_distance");
     ros::Rate r(1.0);
-
     DistanceManager sm(nh);
+
     if (0 != sm.init())
     {
         ROS_ERROR("Failed to initialize DistanceManager.");
         return -4;
     }
 
-    ros::ServiceServer registration_srv = nh.advertiseService(sm.getRoboNamespace() + "/registerPointOfInterest" , &DistanceManager::registerPointOfInterest, &sm);
-    ros::Subscriber jointstate_sub = nh.subscribe("/joint_states", 1, &DistanceManager::jointstateCb, &sm);
+    // subscribe to /arm_right/joint_states or /arm_left/joint_states or ...
+    ros::Subscriber jointstate_sub = global_nh.subscribe("joint_states", 1, &DistanceManager::jointstateCb, &sm);
+
+    // provide a service at /arm_right/cob_obstacle_distance/registerPointOfInterest or ...
+    ros::ServiceServer registration_srv = nh.advertiseService("registerPointOfInterest" , &DistanceManager::registerPointOfInterest, &sm);
 
     ROS_INFO("Starting basic_shapes ...\r\n");
     fcl::Box b(0.3, 0.3, 0.3);
-//    tPtrMarkerShapeBase sptr_Cube(new MarkerShape<fcl::Box>(b, 1.0, 1.0, 1.0));
-//    tPtrMarkerShapeBase sptr_Cube2(new MarkerShape<fcl::Box>(b, -1.0, -1.0, 1.0));
-//    tPtrMarkerShapeBase sptr_Sphere(new MarkerShape<fcl::Sphere>(1.0, -1.0, -1.0));
-//    tPtrMarkerShapeBase sptr_Cyl(new MarkerShape<fcl::Cylinder>(-1.0, 1.0, -1.0));
 
-    tPtrMarkerShapeBase sptr_Cube(new MarkerShape<fcl::Box>(b, 0.5, -0.5, 1.0));
-    //tPtrMarkerShapeBase sptr_Cube2(new MarkerShape<fcl::Box>(b, -1.0, -1.0, 1.0));
-    //tPtrMarkerShapeBase sptr_Sphere(new MarkerShape<fcl::Sphere>(1.0, -1.0, -1.0));
-    //tPtrMarkerShapeBase sptr_Cyl(new MarkerShape<fcl::Cylinder>(-1.0, 1.0, -1.0));
-
-    //IMarkerShape *ims = new XMarkerShapeBase<fcl::Box>(b, 1.0, 1.0, 1.0);
-    // XMarkerShapeBase<fcl::Box> testo(b, 1.0, 1.0, 1.0);
-
+    t_ptr_IMarkerShape sptr_Cube(new MarkerShape<fcl::Box>(b, 0.5, -0.5, 1.0));
+    // t_ptr_IMarkerShape sptr_Sphere(new MarkerShape<fcl::Sphere>(1.0, -1.0, -1.0));
+    // t_ptr_IMarkerShape sptr_Cyl(new MarkerShape<fcl::Cylinder>(-1.0, 1.0, -1.0));
 
     sm.addObstacle(sptr_Cube);
-    //sm.addObstacle(sptr_Cube2);
-    //sm.addObstacle(sptr_Sphere);
-    //sm.addObstacle(sptr_Cyl);
-    //sm.addShape(sphere);
-    //sm.addShape(cylinder);
-
-    //sm.collide(sptr_Cube, sptr_Cube2);
+    // sm.addObstacle(sptr_Sphere);
+    // sm.addObstacle(sptr_Cyl);
 
     if(!sm.waitForMarkerSubscriber())
     {

@@ -78,7 +78,7 @@ void CallbackDataMediator::distancesToObstaclesCallback(const cob_obstacle_dista
     this->obstacle_distances_.clear();
     for(cob_obstacle_distance::ObstacleDistances::_distances_type::const_iterator it = msg->distances.begin(); it != msg->distances.end(); it++)
     {
-        Distance d;
+        ObstacleDistanceInfo d;
         d.min_distance = it->distance;
         d.distance_vec << it->distance_vector.x, it->distance_vector.y, it->distance_vector.z;
         d.frame_id = it->id.frame_id;
