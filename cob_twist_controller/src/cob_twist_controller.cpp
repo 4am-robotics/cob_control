@@ -52,7 +52,7 @@ bool CobTwistController::initialize()
         ROS_ERROR("Parameter 'joint_names' not set");
         return false;
     }
-    twistControllerParams_.dof = joints_.size();
+    twist_controller_params_.dof = joints_.size();
 
     // Chain
     if(!nh_twist.getParam("chain_base_link", chain_base_link_))
@@ -70,33 +70,33 @@ bool CobTwistController::initialize()
     // Multi-Chain Support
 
     // Cartesian VelLimits
-    if (!nh_twist.getParam("max_vel_lin", twistControllerParams_.max_vel_lin))
+    if (!nh_twist.getParam("max_vel_lin", twist_controller_params_.max_vel_lin))
     {
-        twistControllerParams_.max_vel_lin = 10.0;    //m/sec
-        ROS_WARN_STREAM("Parameter 'max_vel_lin' not set. Using default: " << twistControllerParams_.max_vel_lin);
+        twist_controller_params_.max_vel_lin = 10.0;    //m/sec
+        ROS_WARN_STREAM("Parameter 'max_vel_lin' not set. Using default: " << twist_controller_params_.max_vel_lin);
     }
-    if (!nh_twist.getParam("max_vel_rot", twistControllerParams_.max_vel_rot))
+    if (!nh_twist.getParam("max_vel_rot", twist_controller_params_.max_vel_rot))
     {
-        twistControllerParams_.max_vel_rot = 6.28;    //rad/sec
-        ROS_WARN_STREAM("Parameter 'max_vel_rot' not set. Using default: " << twistControllerParams_.max_vel_rot);
+        twist_controller_params_.max_vel_rot = 6.28;    //rad/sec
+        ROS_WARN_STREAM("Parameter 'max_vel_rot' not set. Using default: " << twist_controller_params_.max_vel_rot);
     }
-    if (!nh_twist.getParam("max_vel_lin_base", twistControllerParams_.max_vel_lin_base))
+    if (!nh_twist.getParam("max_vel_lin_base", twist_controller_params_.max_vel_lin_base))
     {
-        twistControllerParams_.max_vel_lin_base = 0.5;    //m/sec
-        ROS_WARN_STREAM("Parameter 'max_vel_lin_base' not set. Using default: " << twistControllerParams_.max_vel_lin_base);
+        twist_controller_params_.max_vel_lin_base = 0.5;    //m/sec
+        ROS_WARN_STREAM("Parameter 'max_vel_lin_base' not set. Using default: " << twist_controller_params_.max_vel_lin_base);
     }
-    if (!nh_twist.getParam("max_vel_rot_base", twistControllerParams_.max_vel_rot_base))
+    if (!nh_twist.getParam("max_vel_rot_base", twist_controller_params_.max_vel_rot_base))
     {
-        twistControllerParams_.max_vel_rot_base = 0.5;    //rad/sec
-        ROS_WARN_STREAM("Parameter 'max_vel_rot_base' not set. Using default: " << twistControllerParams_.max_vel_rot_base);
+        twist_controller_params_.max_vel_rot_base = 0.5;    //rad/sec
+        ROS_WARN_STREAM("Parameter 'max_vel_rot_base' not set. Using default: " << twist_controller_params_.max_vel_rot_base);
     }
 
     // Frames of Interest
-    if(!nh_twist.getParam("collision_check_frames", twistControllerParams_.collision_check_frames))
+    if(!nh_twist.getParam("collision_check_frames", twist_controller_params_.collision_check_frames))
     {
         ROS_WARN_STREAM("Parameter vector 'collision_check_frames' not set. Using default: 3rd link and 5th link of manipulator.");
-        twistControllerParams_.collision_check_frames.push_back(robo_namespace + "_3_link");
-        twistControllerParams_.collision_check_frames.push_back(robo_namespace + "_5_link");
+        twist_controller_params_.collision_check_frames.push_back(robo_namespace + "_3_link");
+        twist_controller_params_.collision_check_frames.push_back(robo_namespace + "_5_link");
     }
 
     ///parse robot_description and generate KDL chains
@@ -121,11 +121,11 @@ bool CobTwistController::initialize()
         return false;
     }
 
-    for(unsigned int i=0; i < twistControllerParams_.dof; i++)
+    for(unsigned int i=0; i < twist_controller_params_.dof; i++)
     {
-        twistControllerParams_.limits_vel.push_back(model.getJoint(joints_[i])->limits->velocity);
-        twistControllerParams_.limits_min.push_back(model.getJoint(joints_[i])->limits->lower);
-        twistControllerParams_.limits_max.push_back(model.getJoint(joints_[i])->limits->upper);
+        twist_controller_params_.limits_vel.push_back(model.getJoint(joints_[i])->limits->velocity);
+        twist_controller_params_.limits_min.push_back(model.getJoint(joints_[i])->limits->lower);
+        twist_controller_params_.limits_max.push_back(model.getJoint(joints_[i])->limits->upper);
     }
 
     ///initialize configuration control solver
@@ -136,7 +136,7 @@ bool CobTwistController::initialize()
 
     ///Setting up dynamic_reconfigure server for the AugmentedSolverParams
     reconfigure_server_.reset(new dynamic_reconfigure::Server<cob_twist_controller::TwistControllerConfig>(reconfig_mutex_, nh_twist));
-    reconfigure_server_->setCallback(boost::bind(&CobTwistController::reconfigure_callback,   this, _1, _2));
+    reconfigure_server_->setCallback(boost::bind(&CobTwistController::reconfigureCallback,   this, _1, _2));
 
     ///initialize variables and current joint values and velocities
     last_q_ = KDL::JntArray(chain_.getNrOfJoints());
@@ -147,13 +147,13 @@ bool CobTwistController::initialize()
 
     ///initialize ROS interfaces
     obstacle_distance_sub_ = nh_.subscribe("obstacle_distance", 1, &CallbackDataMediator::distancesToObstaclesCallback, &callback_data_mediator_);
-    jointstate_sub = nh_.subscribe("joint_states", 1, &CobTwistController::jointstate_cb, this);
-    twist_sub = nh_twist.subscribe("command_twist", 1, &CobTwistController::twist_cb, this);
-    twist_stamped_sub = nh_twist.subscribe("command_twist_stamped", 1, &CobTwistController::twist_stamped_cb, this);
+    jointstate_sub = nh_.subscribe("joint_states", 1, &CobTwistController::jointstateCallback, this);
+    twist_sub = nh_twist.subscribe("command_twist", 1, &CobTwistController::twistCallback, this);
+    twist_stamped_sub = nh_twist.subscribe("command_twist_stamped", 1, &CobTwistController::twistStampedCallback, this);
 
     vel_pub = nh_.advertise<std_msgs::Float64MultiArray>("joint_group_velocity_controller/command", 1);
 
-    odometry_sub = nh_.subscribe("/base/odometry_controller/odometry", 1, &CobTwistController::odometry_cb, this);
+    odometry_sub = nh_.subscribe("/base/odometry_controller/odometry", 1, &CobTwistController::odometryCallback, this);
     base_vel_pub = nh_.advertise<geometry_msgs::Twist>("/base/twist_controller/command", 1);
 
     /// Debug
@@ -175,7 +175,11 @@ bool CobTwistController::initialize()
     ros::Time last_update_time_ = time_;
     ros::Duration period_ = time_ - last_update_time_;
 
-    this->limiters_.reset(new LimiterContainer(this->twistControllerParams_, this->chain_));
+    this->twist_controller_params_.keep_direction = true;
+    this->twist_controller_params_.enforce_pos_limits = true;
+    this->twist_controller_params_.enforce_vel_limits = true;
+
+    this->limiters_.reset(new LimiterContainer(this->twist_controller_params_, this->chain_));
     this->limiters_->init();
 
     ROS_INFO("...initialized!");
@@ -190,8 +194,8 @@ void CobTwistController::reinitServiceRegistration()
     ros::ServiceClient client = nh_.serviceClient<cob_obstacle_distance::Registration>(robo_namespace + "/obstacle_distance/registerPointOfInterest");
     ROS_INFO_STREAM("Created service client for service " << robo_namespace << "/obstacle_distance/registerPointOfInterest");
 
-    for(std::vector<std::string>::const_iterator it = twistControllerParams_.collision_check_frames.begin();
-            it != twistControllerParams_.collision_check_frames.end();
+    for(std::vector<std::string>::const_iterator it = twist_controller_params_.collision_check_frames.begin();
+            it != twist_controller_params_.collision_check_frames.end();
             it++)
     {
         cob_obstacle_distance::Registration r;
@@ -209,7 +213,7 @@ void CobTwistController::reinitServiceRegistration()
     }
 }
 
-void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControllerConfig &config, uint32_t level)
+void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControllerConfig &config, uint32_t level)
 {
     InvDiffKinSolverParams params;
     params.damping_method = static_cast<DampingMethodTypes>(config.damping_method);
@@ -224,9 +228,9 @@ void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControl
     params.base_compensation = config.base_compensation;
     params.base_active = config.base_active;
     params.base_ratio = config.base_ratio;
-    params.limits_min = twistControllerParams_.limits_min; // from cob_twist_controller init
-    params.limits_max = twistControllerParams_.limits_max; // from cob_twist_controller init
-    params.limits_vel = twistControllerParams_.limits_vel; // from cob_twist_controller init
+    params.limits_min = twist_controller_params_.limits_min; // from cob_twist_controller init
+    params.limits_max = twist_controller_params_.limits_max; // from cob_twist_controller init
+    params.limits_vel = twist_controller_params_.limits_vel; // from cob_twist_controller init
     params.frame_names.clear();
     for (uint16_t i = 0; i < chain_.getNrOfSegments(); ++i)
     {
@@ -237,17 +241,17 @@ void CobTwistController::reconfigure_callback(cob_twist_controller::TwistControl
 
     reset_markers_ = config.reset_markers;
 
-    twistControllerParams_.enforce_pos_limits = config.enforce_pos_limits;
-    twistControllerParams_.enforce_vel_limits = config.enforce_vel_limits;
-    twistControllerParams_.base_active = config.base_active;
-    twistControllerParams_.base_compensation = config.base_compensation;
-    twistControllerParams_.tolerance = config.tolerance;
-    twistControllerParams_.keep_direction = config.keep_direction;
+    twist_controller_params_.enforce_pos_limits = config.enforce_pos_limits;
+    twist_controller_params_.enforce_vel_limits = config.enforce_vel_limits;
+    twist_controller_params_.base_active = config.base_active;
+    twist_controller_params_.base_compensation = config.base_compensation;
+    twist_controller_params_.tolerance = config.tolerance;
+    twist_controller_params_.keep_direction = config.keep_direction;
 
-    this->limiters_.reset(new LimiterContainer(this->twistControllerParams_, this->chain_));
+    this->limiters_.reset(new LimiterContainer(this->twist_controller_params_, this->chain_));
     this->limiters_->init();
 
-    if(twistControllerParams_.base_active && twistControllerParams_.base_compensation)
+    if(twist_controller_params_.base_active && twist_controller_params_.base_compensation)
     {
         ROS_ERROR("base_active and base_compensation cannot be enabled at the same time");
     }
@@ -275,9 +279,9 @@ void CobTwistController::initInvDiffKinSolverParams()
     params.base_compensation = false;
     params.base_active = false;
     params.base_ratio = 0.0;
-    params.limits_min = twistControllerParams_.limits_min;
-    params.limits_max = twistControllerParams_.limits_max;
-    params.limits_vel = twistControllerParams_.limits_vel;
+    params.limits_min = twist_controller_params_.limits_min;
+    params.limits_max = twist_controller_params_.limits_max;
+    params.limits_vel = twist_controller_params_.limits_vel;
     params.k_H = 1.0;
 
     params.frame_names.clear();
@@ -299,7 +303,7 @@ void CobTwistController::run()
 
 
 /// Orientation of twist_stamped_msg is with respect to coordinate system given in header.frame_id
-void CobTwistController::twist_stamped_cb(const geometry_msgs::TwistStamped::ConstPtr& msg)
+void CobTwistController::twistStampedCallback(const geometry_msgs::TwistStamped::ConstPtr& msg)
 {
     tf::StampedTransform transform_tf;
     KDL::Frame frame;
@@ -315,21 +319,21 @@ void CobTwistController::twist_stamped_cb(const geometry_msgs::TwistStamped::Con
 
     tf::twistMsgToKDL(msg->twist, twist);
     twist_transformed = frame*twist;
-    solve_twist(twist_transformed);
+    solveTwist(twist_transformed);
 }
 
 
 /// Orientation of twist_msg is with respect to chain_base coordinate system
-void CobTwistController::twist_cb(const geometry_msgs::Twist::ConstPtr& msg)
+void CobTwistController::twistCallback(const geometry_msgs::Twist::ConstPtr& msg)
 {
     KDL::Twist twist;
     tf::twistMsgToKDL(*msg, twist);
-    solve_twist(twist);
+    solveTwist(twist);
 }
 
 
 /// Orientation of twist is with respect to chain_base coordinate system
-void CobTwistController::solve_twist(KDL::Twist twist)
+void CobTwistController::solveTwist(KDL::Twist twist)
 {
     geometry_msgs::Pose pose_tip, pose_base;
     geometry_msgs::Point point_base, point_ee;
@@ -337,7 +341,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
     int ret_ik;
     KDL::JntArray q_dot_ik(chain_.getNrOfJoints());
 
-    if(twistControllerParams_.base_active)
+    if(twist_controller_params_.base_active)
     {
         #if DEBUG == 1
             debug();
@@ -398,7 +402,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
         ret_ik = p_inv_diff_kin_solver_->CartToJnt(last_q_, last_q_dot_, twist, bl_frame_ct, cb_frame_bl, q_dot_ik);
     }
 
-    if(twistControllerParams_.base_compensation)
+    if(twist_controller_params_.base_compensation)
     {
         twist = twist - twist_odometry_cb_;
 
@@ -418,7 +422,7 @@ void CobTwistController::solve_twist(KDL::Twist twist)
         #endif
     }
 
-    if(!twistControllerParams_.base_active)
+    if(!twist_controller_params_.base_active)
     {
         ret_ik = p_inv_diff_kin_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik);
     }
@@ -432,19 +436,19 @@ void CobTwistController::solve_twist(KDL::Twist twist)
         q_dot_ik = this->limiters_->enforceLimits(q_dot_ik, last_q_);
 
         std_msgs::Float64MultiArray vel_msg;
-        for(unsigned int i=0; i < twistControllerParams_.dof; i++)
+        for(unsigned int i=0; i < twist_controller_params_.dof; i++)
         {
             vel_msg.data.push_back(q_dot_ik(i));
             //ROS_DEBUG("DesiredVel %d: %f", i, q_dot_ik(i));
         }
 
-        if(twistControllerParams_.base_active)
+        if(twist_controller_params_.base_active)
         {
             geometry_msgs::Twist base_vel_msg;
             /// Base Velocities with respect to base_link
-            base_vel_msg.linear.x = q_dot_ik(twistControllerParams_.dof);
-            base_vel_msg.linear.y = q_dot_ik(twistControllerParams_.dof + 1);
-            base_vel_msg.angular.z = q_dot_ik(twistControllerParams_.dof + 2);
+            base_vel_msg.linear.x = q_dot_ik(twist_controller_params_.dof);
+            base_vel_msg.linear.y = q_dot_ik(twist_controller_params_.dof + 1);
+            base_vel_msg.angular.z = q_dot_ik(twist_controller_params_.dof + 2);
             base_vel_pub.publish(base_vel_msg);
 
             #if DEBUG_BASE_ACTIVE == 1
@@ -482,13 +486,13 @@ void CobTwistController::solve_twist(KDL::Twist twist)
 }
 
 
-void CobTwistController::jointstate_cb(const sensor_msgs::JointState::ConstPtr& msg)
+void CobTwistController::jointstateCallback(const sensor_msgs::JointState::ConstPtr& msg)
 {
     KDL::JntArray q_temp = last_q_;
     KDL::JntArray q_dot_temp = last_q_dot_;
     int count = 0;
 
-    for(unsigned int j = 0; j < twistControllerParams_.dof; j++)
+    for(unsigned int j = 0; j < twist_controller_params_.dof; j++)
     {
         for(unsigned int i = 0; i < msg->name.size(); i++)
         {
@@ -509,7 +513,7 @@ void CobTwistController::jointstate_cb(const sensor_msgs::JointState::ConstPtr& 
     }
 }
 
-void CobTwistController::odometry_cb(const nav_msgs::Odometry::ConstPtr& msg)
+void CobTwistController::odometryCallback(const nav_msgs::Odometry::ConstPtr& msg)
 {
     KDL::Twist twist_odometry_bl, tangential_twist_bl, twist_odometry_transformed_cb;
 

@@ -92,31 +92,30 @@ private:
 
     bool reset_markers_;
 
-    TwistControllerParams twistControllerParams_;
+    TwistControllerParams twist_controller_params_;
 
     boost::shared_ptr<InverseDifferentialKinematicsSolver> p_inv_diff_kin_solver_;
     boost::shared_ptr<LimiterContainer> limiters_;
-    boost::shared_ptr<KDL::ChainFkSolverVel_recursive> jntToCartSolver_vel_;
 
     tf::TransformListener tf_listener_;
 
     ///Debug
-    ros::Publisher     debug_base_compensation_visual_tip_pub_,debug_base_compensation_visual_base_pub_,debug_base_compensation_pose_base_pub_,
+    ros::Publisher  debug_base_compensation_visual_tip_pub_,debug_base_compensation_visual_base_pub_,debug_base_compensation_pose_base_pub_,
                     debug_base_compensation_pose_tip_pub_,debug_base_compensation_twist_manipulator_pub_,debug_base_active_twist_manipulator_pub_,
                     debug_base_active_twist_base_pub_,debug_base_active_twist_ee_pub_;
     std::vector<geometry_msgs::Point> point_base_vec_,point_ee_vec_;
 
-    tf::StampedTransform     odom_transform_ct,
-                            odom_transform_bl,
-                            bl_transform_cb,
-                            bl_transform_ct,
-                            cb_transform_bl;
+    tf::StampedTransform odom_transform_ct,
+                         odom_transform_bl,
+                         bl_transform_cb,
+                         bl_transform_ct,
+                         cb_transform_bl;
 
-    KDL::Frame     odom_frame_ct,
-                odom_frame_bl,
-                bl_frame_cb,
-                bl_frame_ct,
-                cb_frame_bl;
+    KDL::Frame odom_frame_ct,
+               odom_frame_bl,
+               bl_frame_cb,
+               bl_frame_ct,
+               cb_frame_bl;
 
     void initInvDiffKinSolverParams();
 
@@ -125,38 +124,39 @@ public:
     CobTwistController():
         reset_markers_(false)
     {
-        twistControllerParams_.base_active = false;
-        twistControllerParams_.base_compensation = false;
+        this->twist_controller_params_.keep_direction = true;
+        this->twist_controller_params_.enforce_pos_limits = true;
+        this->twist_controller_params_.enforce_vel_limits = true;
+        this->twist_controller_params_.base_active = false;
+        this->twist_controller_params_.base_compensation = false;
     }
 
     ~CobTwistController()
     {
         this->p_inv_diff_kin_solver_.reset();
-        this->jntToCartSolver_vel_.reset();
         this->limiters_.reset();
     }
 
-    bool initialize();
     void run();
+
+    bool initialize();
     void reinitServiceRegistration();
 
-    boost::recursive_mutex reconfig_mutex_;
-    boost::shared_ptr< dynamic_reconfigure::Server<cob_twist_controller::TwistControllerConfig> > reconfigure_server_;
-    void reconfigure_callback(cob_twist_controller::TwistControllerConfig &config, uint32_t level);
+    void reconfigureCallback(cob_twist_controller::TwistControllerConfig &config, uint32_t level);
+    void jointstateCallback(const sensor_msgs::JointState::ConstPtr& msg);
+    void odometryCallback(const nav_msgs::Odometry::ConstPtr& msg);
+    void twistCallback(const geometry_msgs::Twist::ConstPtr& msg);
+    void baseTwistCallback(const geometry_msgs::Twist::ConstPtr& msg);
+    void twistStampedCallback(const geometry_msgs::TwistStamped::ConstPtr& msg);
 
-
-    void jointstate_cb(const sensor_msgs::JointState::ConstPtr& msg);
-    void odometry_cb(const nav_msgs::Odometry::ConstPtr& msg);
-    void twist_cb(const geometry_msgs::Twist::ConstPtr& msg);
-
-    void base_twist_cb(const geometry_msgs::Twist::ConstPtr& msg);
-
-    void twist_stamped_cb(const geometry_msgs::TwistStamped::ConstPtr& msg);
-    void solve_twist(KDL::Twist twist);
+    void solveTwist(KDL::Twist twist);
 
     ///Debug
     void showMarker(int marker_id,double red, double green, double blue, std::string ns, ros::Publisher pub, std::vector<geometry_msgs::Point> &pos_v);
     void debug();
+
+    boost::recursive_mutex reconfig_mutex_;
+    boost::shared_ptr< dynamic_reconfigure::Server<cob_twist_controller::TwistControllerConfig> > reconfigure_server_;
 
 };
 #endif
