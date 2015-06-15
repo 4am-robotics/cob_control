@@ -48,7 +48,6 @@
 class OdometryTracker{
     nav_msgs::Odometry odom_;
     double theta_rob_rad_;
-    boost::mutex mutex_;
 public:
     OdometryTracker(const std::string &from = "/wheelodom", const std::string &to = "/base_footprint" , double cov_pose = 0.1, double cov_twist = 0.1) {
         odom_.header.frame_id = from;
@@ -75,18 +74,15 @@ public:
         odom_.pose.pose.position.x = 0;
         odom_.pose.pose.position.y = 0;
         odom_.pose.pose.orientation = tf::createQuaternionMsgFromYaw(theta_rob_rad_);
-        
+
     }
-    const nav_msgs::Odometry getOdometry(){
-        boost::mutex::scoped_lock lock(mutex_);
+    const nav_msgs::Odometry &getOdometry(){
         return odom_;
     }
     void track(const ros::Time &now, double dt, double vel_x, double vel_y, double vel_theta){
-        boost::mutex::scoped_try_lock lock(mutex_);
-        
         // calculation from ROS odom publisher tutorial http://www.ros.org/wiki/navigation/Tutorials/RobotSetup/Odom, using now midpoint integration
 
-        if(lock && dt > 0){
+        if(dt > 0){
             odom_.header.stamp = now;
 
             double vel_x_mid = (vel_x+odom_.twist.twist.linear.x)/2.0;

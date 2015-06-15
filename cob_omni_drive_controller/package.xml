@@ -40,6 +40,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <build_depend>angles</build_depend>
+  <build_depend>std_srvs</build_depend>
   <build_depend>controller_interface</build_depend>
   <build_depend>hardware_interface</build_depend>
   <build_depend>sensor_msgs</build_depend>
@@ -49,8 +50,9 @@
   <build_depend>urdf</build_depend>
 
   <run_depend>angles</run_depend>
+  <run_depend>std_srvs</run_depend>
   <run_depend>controller_interface</run_depend>
-  <run_depend>controller_interface</run_depend>
+  <run_depend>hardware_interface</run_depend>
   <run_depend>sensor_msgs</run_depend>
   <run_depend>geometry_msgs</run_depend>
   <run_depend>nav_msgs</run_depend>
