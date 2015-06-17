@@ -2,6 +2,17 @@
 Changelog for package cob_trajectory_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.7 (2015-06-17)
+------------------
+* fix topic names
+* replace brics_actuator
+* use new Trigger from std_srvs
+* cleanup/replace cob_srvs
+* fix getParam, fix ActionServer auto_start
+* adapt cob_trajecory_controller to new namespaces
+* remove obsolete files
+* Contributors: ipa-fxm
+
 0.6.6 (2014-12-18)
 ------------------
 

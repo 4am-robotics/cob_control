@@ -2,6 +2,29 @@
 Changelog for package cob_model_identifier
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.7 (2015-06-17)
+------------------
+* restructure namespaces for parameters of cartesian controllers
+* cleanup/replace cob_srvs
+* beautify CMakeLists
+* remove obsolete files
+* remove obsolete config
+* new features
+* Added README
+* cleaned up
+* last commit before pull
+* cleaning up cob_model_identifier
+* neutral file path
+* input script for model_identifier
+* close file
+* fixed console bug
+* input_generator as python script
+* new features
+* merge with fmx-cm
+* add tracking_action
+* test
+* Contributors: Christian Ehrmann, ipa-fxm, ipa-fxm-cm
+
 0.6.6 (2014-12-18)
 ------------------
 

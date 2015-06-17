@@ -2,6 +2,43 @@
 Changelog for package cob_frame_tracker
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.7 (2015-06-17)
+------------------
+* restructure namespaces for parameters of cartesian controllers
+* complete revision of frame_tracker structure and action server
+* cleanup/replace cob_srvs
+* beautify CMakeLists
+* cleanup dependencies
+* use individual pid parameters to reduce output
+* remove obsolet files
+* proper expert interaction mode
+* delete obsolete files
+* merged running
+* frame_tracker after merge
+* merge with fxm - not working
+* remove obsolete files
+* last update
+* attach menu to marker, beautify
+* MOVE_ROTATE_3D for interactive markers
+* update before creating new branch
+* gitignore
+* gitignore
+* update working frame_tracker
+* correct cmake
+* update after merge
+* merge with fm-cm-ce
+* cleaning up
+* more efficient c++ version of interactive_frame_target
+* diff twist calc
+* update frame_tracker
+* frame_tracker_new
+* Merge branch 'indigo_dev' of https://github.com/ipa320/cob_control into fm_cm_merged_new
+* new rqt_features
+* test
+* cleaned up again
+* Cleaned up
+* Contributors: Christian Ehrmann, ipa-fxm, ipa-fxm-cm
+
 0.6.6 (2014-12-18)
 ------------------
 
