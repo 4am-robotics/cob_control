@@ -32,6 +32,12 @@
 #include <vector>
 #include <stdint.h>
 
+enum InterfaceType {
+    VELOCITY = 0,
+    POSITION = 1,
+};
+
+
 struct TwistControllerParams {
     uint8_t dof;
     bool base_active;
@@ -45,6 +51,8 @@ struct TwistControllerParams {
     bool keep_direction;
     bool enforce_pos_limits;
     bool enforce_vel_limits;
+
+    InterfaceType interface_type;
 
 
     // added limits from URDF file
