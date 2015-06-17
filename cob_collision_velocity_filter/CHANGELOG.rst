@@ -2,6 +2,11 @@
 Changelog for package cob_collision_velocity_filter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* beautify CMakeLists
+* Contributors: ipa-fxm
+
 0.6.6 (2014-12-18)
 ------------------
 

@@ -2,6 +2,11 @@
 Changelog for package cob_footprint_observer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* beautify CMakeLists
+* Contributors: ipa-fxm
+
 0.6.6 (2014-12-18)
 ------------------
 
