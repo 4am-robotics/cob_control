@@ -136,7 +136,7 @@ private:
 
 
     ros::NodeHandle nh_;
-    ros::Time last_update_time_,time_;
+    ros::Time time_;
     ros::Duration period_;
     ros::Subscriber jointstate_sub;
     ros::Subscriber odometry_sub;
@@ -197,14 +197,14 @@ private:
 
     std::vector<MovingAverage> ma_;
     std::vector<double> old_vel_,old_pos_,initial_pos_,old_vel_2_;
-    int iteration_counter;
+    int iteration_counter_;
 
     void initInvDiffKinSolverParams();
 
 
 public:
     CobTwistController():
-        reset_markers_(false),firstIteration_(true)
+        reset_markers_(false),firstIteration_(true),iteration_counter_(0)
     {
         this->twist_controller_params_.keep_direction = true;
         this->twist_controller_params_.enforce_pos_limits = true;

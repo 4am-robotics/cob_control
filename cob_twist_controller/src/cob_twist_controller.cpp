@@ -126,6 +126,8 @@ bool CobTwistController::initialize()
         twist_controller_params_.limits_vel.push_back(model.getJoint(joints_[i])->limits->velocity);
         twist_controller_params_.limits_min.push_back(model.getJoint(joints_[i])->limits->lower);
         twist_controller_params_.limits_max.push_back(model.getJoint(joints_[i])->limits->upper);
+
+        ma_.push_back(MovingAverage());
     }
 
     ///initialize configuration control solver
@@ -184,7 +186,7 @@ bool CobTwistController::initialize()
     this->limiters_.reset(new LimiterContainer(this->twist_controller_params_, this->chain_));
     this->limiters_->init();
 
-    iteration_counter = 0;
+    iteration_counter_ = 0;
     ROS_INFO("...initialized!");
     return true;
 }
@@ -244,13 +246,13 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
 
     reset_markers_ = config.reset_markers;
 
-    twistControllerParams_.interface_type = static_cast<InterfaceType>(config.interface_type);
-    twistControllerParams_.enforce_pos_limits = config.enforce_pos_limits;
-    twistControllerParams_.enforce_vel_limits = config.enforce_vel_limits;
-    twistControllerParams_.base_active = config.base_active;
-    twistControllerParams_.base_compensation = config.base_compensation;
-    twistControllerParams_.tolerance = config.tolerance;
-    twistControllerParams_.keep_direction = config.keep_direction;
+    twist_controller_params_.interface_type = static_cast<InterfaceType>(config.interface_type);
+    twist_controller_params_.enforce_pos_limits = config.enforce_pos_limits;
+    twist_controller_params_.enforce_vel_limits = config.enforce_vel_limits;
+    twist_controller_params_.base_active = config.base_active;
+    twist_controller_params_.base_compensation = config.base_compensation;
+    twist_controller_params_.tolerance = config.tolerance;
+    twist_controller_params_.keep_direction = config.keep_direction;
 
     this->limiters_.reset(new LimiterContainer(this->twist_controller_params_, this->chain_));
     this->limiters_->init();
@@ -369,7 +371,7 @@ void CobTwistController::solveTwist(KDL::Twist twist)
        return;
    }
 
-    if(twistControllerParams_.base_active)
+    if(twist_controller_params_.base_active)
     {
         #if DEBUG == 1
             debug();
@@ -470,6 +472,8 @@ void CobTwistController::solveTwist(KDL::Twist twist)
         {
             vel_msg.data.push_back(q_dot_ik(i));
             //ROS_DEBUG("DesiredVel %d: %f", i, q_dot_ik(i));
+            ROS_INFO("vel_msg[%i]: %f",i,vel_msg.data[i]);
+
             if(firstIteration_)
             {
                 pos_msg.data.push_back(0);
@@ -486,7 +490,7 @@ void CobTwistController::solveTwist(KDL::Twist twist)
 //                    ma_[i].add_element(integration_period_.toSec() * (old_vel_[i]+old_vel_[i]+vel_msg.data[i]) / 2 + initial_pos_[i]);
 
                     // Simpson
-                    if(iteration_counter>1)
+                    if(iteration_counter_>1)
                     {
                         ma_[i].add_element(integration_period_.toSec()/6 * (old_vel_2_[i]+ 4* (old_vel_2_[i] + old_vel_[i]) + old_vel_2_[i] + old_vel_[i] + vel_msg.data[i]) + initial_pos_[i]);
 //                        pos_msg.data.push_back(ma_[i].calc_moving_average());
@@ -544,7 +548,7 @@ void CobTwistController::solveTwist(KDL::Twist twist)
             #endif
         }
 
-        if(iteration_counter == 0)
+        if(iteration_counter_ == 0)
         {
             for(int i=0; i < vel_msg.data.size(); i++)
             {
@@ -552,7 +556,7 @@ void CobTwistController::solveTwist(KDL::Twist twist)
             }
         }
 
-        if(iteration_counter == 1)
+        if(iteration_counter_ == 1)
         {
             for(int i=0; i < vel_msg.data.size(); i++)
             {
@@ -560,7 +564,7 @@ void CobTwistController::solveTwist(KDL::Twist twist)
             }
         }
 
-        if(iteration_counter>1)
+        if(iteration_counter_>1)
         {
             old_vel_2_.clear();
             for(int i=0; i < old_vel_.size(); i++)
@@ -577,9 +581,9 @@ void CobTwistController::solveTwist(KDL::Twist twist)
 
         if(!firstIteration_)
         {
-            if(twistControllerParams_.interface_type == POSITION)
+            if(twist_controller_params_.interface_type == POSITION)
             {
-                if(iteration_counter>1)
+                if(iteration_counter_>1)
                 {
                     pub = nh_.advertise<std_msgs::Float64MultiArray>("joint_group_position_controller/command", 1);
                     pub.publish(pos_msg);
@@ -596,15 +600,15 @@ void CobTwistController::solveTwist(KDL::Twist twist)
             }
         }
 
-        if(twistControllerParams_.interface_type == VELOCITY)
+        if(twist_controller_params_.interface_type == VELOCITY)
         {
             pub = nh_.advertise<std_msgs::Float64MultiArray>("joint_group_velocity_controller/command", 1);
             pub.publish(vel_msg);
         }
     }
-    if(iteration_counter<3)
+    if(iteration_counter_<3)
     {
-        iteration_counter++;
+        iteration_counter_++;
     }
     firstIteration_=false;
 }
