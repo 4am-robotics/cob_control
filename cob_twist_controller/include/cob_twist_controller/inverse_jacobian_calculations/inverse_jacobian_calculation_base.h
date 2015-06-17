@@ -32,7 +32,7 @@
 #include <Eigen/Core>
 #include <boost/shared_ptr.hpp>
 #include "cob_twist_controller/damping_methods/damping_base.h"
-#include "cob_twist_controller/augmented_solver_data_types.h"
+#include "cob_twist_controller/cob_twist_controller_data_types.h"
 
 class IPseudoinverseCalculator
 {
@@ -45,7 +45,7 @@ class IPseudoinverseCalculator
          * @param jacobian The Jacobi matrix.
          * @return A pseudoinverse Jacobian
          */
-        virtual Eigen::MatrixXd calculate(const AugmentedSolverParams& params,
+        virtual Eigen::MatrixXd calculate(const InvDiffKinSolverParams& params,
                                                  boost::shared_ptr<DampingBase> db,
                                                  const Eigen::MatrixXd& jacobian) const = 0;
 

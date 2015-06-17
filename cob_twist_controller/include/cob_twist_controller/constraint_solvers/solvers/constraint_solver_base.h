@@ -34,7 +34,8 @@
 #include <boost/shared_ptr.hpp>
 #include <cob_twist_controller/inverse_jacobian_calculations/inverse_jacobian_calculation.h>
 #include "cob_twist_controller/damping_methods/damping_base.h"
-#include "cob_twist_controller/augmented_solver_data_types.h"
+#include "cob_twist_controller/constraints/constraint_base.h"
+#include "cob_twist_controller/cob_twist_controller_data_types.h"
 
 /// Base class for solvers, defining interface methods.
 template <typename PINV = PInvBySVD>
@@ -48,10 +49,9 @@ class ConstraintSolver
          * @param last_q_dot The last joint velocities.
          * @return The calculated new joint velocities.
          */
-        virtual Eigen::MatrixXd solve(const Eigen::VectorXd &inCartVelocities,
+        virtual Eigen::MatrixXd solve(const t_Vector6d &in_cart_velocities,
                                       const KDL::JntArray& q,
-                                      const KDL::JntArray& last_q_dot,
-                                      const Eigen::VectorXd &tracking_errors) const = 0;
+                                      const KDL::JntArray& last_q_dot) const = 0;
 
         /**
          * Inline method to set the damping
@@ -62,32 +62,30 @@ class ConstraintSolver
             this->damping_ = damping;
         }
 
+        /**
+         * Method to initialize the solver if necessary
+         */
+        virtual void setConstraints(std::set<tConstraintBase>& constraints)
+        {
+
+        }
+
         virtual ~ConstraintSolver() {}
 
     protected:
 
-        ConstraintSolver(AugmentedSolverParams &asParams,
-                         Matrix6Xd &jacobianData)
-                         : asParams_(asParams),
-                           jacobianData_(jacobianData)
+        ConstraintSolver(InvDiffKinSolverParams &params,
+                         t_Matrix6Xd &jacobian_data)
+                         : params_(params),
+                           jacobian_data_(jacobian_data)
         {
         }
 
-        /**
-         * Base method for calculation of the pseudoinverse Jacobian by using SVD.
-         * @param jacobian The Jacobi matrix.
-         * @return A pseudoinverse Jacobian
-         */
-        inline Eigen::MatrixXd calculatePinvJacobianBySVD(const Eigen::MatrixXd& jacobian) const
-        {
-            return pinvCalc_.calculate(this->asParams_, this->damping_, jacobian);
-        }
-
-        const AugmentedSolverParams& asParams_; ///< References the augmented solver parameters.
-        const Matrix6Xd& jacobianData_; ///< References the current Jacobian (matrix data only).
+        const InvDiffKinSolverParams& params_; ///< References the inv. diff. kin. solver parameters.
+        const t_Matrix6Xd& jacobian_data_; ///< References the current Jacobian (matrix data only).
         boost::shared_ptr<DampingBase> damping_; ///< The currently set damping method.
 
-        PINV pinvCalc_;
+        PINV pinv_calc_;
 };
 
 #endif /* CONSTRAINT_SOLVER_BASE_H_ */

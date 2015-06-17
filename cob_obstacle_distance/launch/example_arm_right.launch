@@ -1,0 +1,7 @@
+<launch>
+    <node ns="arm_right" name="obstacle_distance" pkg="cob_obstacle_distance" type="cob_obstacle_distance" output="screen">
+        <rosparam param="joint_names">[arm_right_1_joint, arm_right_2_joint, arm_right_3_joint, arm_right_4_joint, arm_right_5_joint, arm_right_6_joint, arm_right_7_joint]</rosparam>
+        <rosparam param="chain_base_link">arm_right_base_link</rosparam>
+        <rosparam param="chain_tip_link">arm_right_7_link</rosparam>
+    </node>
+</launch>

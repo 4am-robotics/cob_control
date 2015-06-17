@@ -25,14 +25,16 @@
  *   This package provides the definitions of an inverse kinematics solver.
  *
  ****************************************************************/
-#ifndef AUGMENTED_SOLVER_H
-#define AUGMENTED_SOLVER_H
+#ifndef INVERSE_DIFFERENTIAL_KINEMATICS_SOLVER_H
+#define INVERSE_DIFFERENTIAL_KINEMATICS_SOLVER_H
 
 #include <kdl/chainiksolver.hpp>
 #include <kdl/chainjnttojacsolver.hpp>
 #include <Eigen/Core>
 
-#include "cob_twist_controller/augmented_solver_data_types.h"
+#include "cob_twist_controller/cob_twist_controller_data_types.h"
+#include "cob_twist_controller/callback_data_mediator.h"
+#include "cob_twist_controller/constraint_solvers/constraint_solver_factory_builder.h"
 
 /**
 * Implementation of a inverse velocity kinematics algorithm based
@@ -43,7 +45,7 @@
 *
 * @ingroup KinematicFamily
 */
-class AugmentedSolver
+class InverseDifferentialKinematicsSolver
 {
 public:
     /**
@@ -51,20 +53,18 @@ public:
      *
      * @param chain the chain to calculate the inverse velocity
      * kinematics for
-     * @param eps if a singular value is below this value, its
-     * inverse is set to zero, default: 0.00001
-     * @param maxiter maximum iterations for the svd calculation,
-     * default: 150
      *
      */
-    AugmentedSolver(const KDL::Chain& chain, double eps=0.001) :
+        InverseDifferentialKinematicsSolver(const KDL::Chain& chain, CallbackDataMediator& data_mediator) :
         chain_(chain),
         jac_(chain_.getNrOfJoints()),
-        jnt2jac_(chain_)
+        jnt2jac_(chain_),
+        callback_data_mediator_(data_mediator),
+        constraint_solver_factory_(data_mediator, jnt2jac_)
     {
     }
 
-    virtual ~AugmentedSolver() {};
+    virtual ~InverseDifferentialKinematicsSolver() {};
     
     /** CartToJnt for chain using SVD including base and various DampingMethods **/
     virtual int CartToJnt(const KDL::JntArray& q_in,
@@ -72,36 +72,37 @@ public:
                           const KDL::Twist& v_in,
                           const KDL::Frame &base_position,
                           const KDL::Frame &chain_base,
-                          const Eigen::VectorXd &tracking_errors,
                           KDL::JntArray& qdot_out);
 
     inline virtual int CartToJnt(const KDL::JntArray& q_in,
                                  const KDL::JntArray& last_q_dot,
                                  const KDL::Twist& v_in,
-                                 const Eigen::VectorXd &tracking_errors,
                                  KDL::JntArray& qdot_out)
     {
         KDL::Frame dummy;
         dummy.p = KDL::Vector(0,0,0);
         dummy.M = KDL::Rotation::Quaternion(0,0,0,0);
-        return CartToJnt(q_in, last_q_dot, v_in, dummy, dummy, tracking_errors, qdot_out);
+        return CartToJnt(q_in, last_q_dot, v_in, dummy, dummy, qdot_out);
     }
 
-    inline void SetAugmentedSolverParams(AugmentedSolverParams params)
+    inline void SetInvDiffKinSolverParams(InvDiffKinSolverParams params)
     {
         params_ = params;
     }
 
-    inline AugmentedSolverParams GetAugmentedSolverParams()
+    inline InvDiffKinSolverParams GetInvDiffKinSolverParams() const
     {
         return params_;
     }
 
 private:
     const KDL::Chain chain_;
+    const KDL::Chain from_base_link_chain_;
     KDL::Jacobian jac_, jac_base_;
     KDL::ChainJntToJacSolver jnt2jac_;
-    AugmentedSolverParams params_;
+    InvDiffKinSolverParams params_;
+    CallbackDataMediator& callback_data_mediator_;
+    ConstraintSolverFactoryBuilder constraint_solver_factory_;
 
     /**
      * Adjustment of the member Jacobian
@@ -111,4 +112,4 @@ private:
      */
     void adjustJac(const KDL::JntArray& q_in, const KDL::Frame &base_position, const KDL::Frame &chain_base);
 };
-#endif
+#endif // INVERSE_DIFFERENTIAL_KINEMATICS_SOLVER_H

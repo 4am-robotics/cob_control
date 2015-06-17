@@ -34,7 +34,7 @@
  * Calculates the pseudoinverse of the Jacobian by using SVD technique.
  * This allows to get information about singular values and evaluate them.
  */
-Eigen::MatrixXd PInvBySVD::calculate(const AugmentedSolverParams& params,
+Eigen::MatrixXd PInvBySVD::calculate(const InvDiffKinSolverParams& params,
                                                  boost::shared_ptr<DampingBase> db,
                                                  const Eigen::MatrixXd& jacobian) const
 {
@@ -48,12 +48,11 @@ Eigen::MatrixXd PInvBySVD::calculate(const AugmentedSolverParams& params,
 
     if(params.numerical_filtering)
     {
-//        ROS_INFO("Numerical Filtering");
         // Formula 20 Singularity-robust Task-priority Redundandancy Resolution
         // Sum part
         for(; i < singularValues.rows()-1; ++i)
         {
-            // beta² << lambda²
+            // pow(beta, 2) << pow(lambda, 2)
             singularValuesInv(i) = singularValues(i) / ( pow((double)singularValues(i),2) + pow(params.beta,2) );
         }
         // Formula 20 - additional part
@@ -61,7 +60,6 @@ Eigen::MatrixXd PInvBySVD::calculate(const AugmentedSolverParams& params,
     }
     else
     {
-//        ROS_INFO("Truncation");
         // small change to ref: here quadratic damping due to Control of Redundant Robot Manipulators : R.V. Patel, 2005, Springer [Page 13-14]
         for(; i < singularValues.rows(); ++i)
         {
