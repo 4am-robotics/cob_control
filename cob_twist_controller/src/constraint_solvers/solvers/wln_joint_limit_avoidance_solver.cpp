@@ -26,9 +26,9 @@
  *   Special constraint: Avoid joint limits.
  *
  ****************************************************************/
-#include "cob_twist_controller/constraint_solvers/solvers/wln_joint_limit_avoidance_solver.h"
+#include <ros/ros.h>
 
-#include "ros/ros.h"
+#include "cob_twist_controller/constraint_solvers/solvers/wln_joint_limit_avoidance_solver.h"
 
 /**
  * This function calculates the weighting matrix used to penalize a joint when it is near and moving towards a limit.

@@ -225,7 +225,6 @@ Eigen::VectorXd JointLimitAvoidance<T_PARAMS, PRIO>::getPartialValues() const
     const InvDiffKinSolverParams &params = this->constraint_params_.getInvDiffKinSolverParams();
     std::vector<double> limits_min = params.limits_min;
     std::vector<double> limits_max = params.limits_max;
-    double rad = M_PI / 180.0;
     uint8_t vec_rows = static_cast<uint8_t>(this->joint_pos_.rows());
     Eigen::VectorXd partial_values = Eigen::VectorXd::Zero(vec_rows);
     for(uint8_t i = 0; i < this->joint_pos_.rows() ; ++i)
@@ -237,7 +236,6 @@ Eigen::VectorXd JointLimitAvoidance<T_PARAMS, PRIO>::getPartialValues() const
         double nominator = (2.0 * this->joint_pos_(i) - limits_min[i] - limits_max[i]) * (limits_max[i] - limits_min[i]) * (limits_max[i] - limits_min[i]);
         double denom = 4.0 * min_delta * min_delta * max_delta * max_delta;
         partial_values(i) = nominator / denom;
-
     }
 
     return partial_values;
