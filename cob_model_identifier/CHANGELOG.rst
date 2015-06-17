@@ -2,8 +2,8 @@
 Changelog for package cob_model_identifier
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.7 (2015-06-17)
+------------------
 * restructure namespaces for parameters of cartesian controllers
 * cleanup/replace cob_srvs
 * beautify CMakeLists

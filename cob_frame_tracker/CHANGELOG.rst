@@ -2,8 +2,8 @@
 Changelog for package cob_frame_tracker
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.7 (2015-06-17)
+------------------
 * restructure namespaces for parameters of cartesian controllers
 * complete revision of frame_tracker structure and action server
 * cleanup/replace cob_srvs

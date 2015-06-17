@@ -2,8 +2,8 @@
 Changelog for package cob_control
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.7 (2015-06-17)
+------------------
 * update meta-package
 * Contributors: ipa-fxm
 

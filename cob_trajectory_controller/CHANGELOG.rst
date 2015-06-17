@@ -2,8 +2,8 @@
 Changelog for package cob_trajectory_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.7 (2015-06-17)
+------------------
 * fix topic names
 * replace brics_actuator
 * use new Trigger from std_srvs

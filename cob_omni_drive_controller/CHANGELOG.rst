@@ -2,8 +2,8 @@
 Changelog for package cob_omni_drive_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.7 (2015-06-17)
+------------------
 * migrated to std_srvs/Trigger
 * improved realtime behavoíour, no updates can get lost anymore
 * added dependency on cob_srvs, fixed c&p bug

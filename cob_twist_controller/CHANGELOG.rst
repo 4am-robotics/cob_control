@@ -2,8 +2,8 @@
 Changelog for package cob_twist_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.7 (2015-06-17)
+------------------
 * reduce output in limiters
 * restructure namespaces for parameters of cartesian controllers
 * - Instead of creating png create eps.

@@ -2,8 +2,8 @@
 Changelog for package cob_path_broadcaster
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.7 (2015-06-17)
+------------------
 * restructure namespaces for parameters of cartesian controllers
 * beautify CMakeLists
 * remove obsolete files
