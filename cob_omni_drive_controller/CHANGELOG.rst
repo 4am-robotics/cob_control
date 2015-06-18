@@ -2,6 +2,9 @@
 Changelog for package cob_omni_drive_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.8 (2015-06-17)
+------------------
+
 0.6.7 (2015-06-17)
 ------------------
 * migrated to std_srvs/Trigger

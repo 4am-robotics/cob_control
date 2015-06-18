@@ -2,6 +2,12 @@
 Changelog for package cob_control
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.8 (2015-06-17)
+------------------
+* merge with release candidate
+* package renaming: cob_path_broadcaster -> cob_cartesian_controller
+* Contributors: ipa-fxm
+
 0.6.7 (2015-06-17)
 ------------------
 * update meta-package
