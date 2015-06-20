@@ -2,6 +2,9 @@
 Changelog for package cob_frame_tracker
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.6.8 (2015-06-17)
 ------------------
 
