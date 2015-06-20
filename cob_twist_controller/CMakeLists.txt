@@ -30,19 +30,21 @@ set(SRC_CS_DIR "${SRC_C_DIR}/solvers")
 # Declare a cpp library
 add_library(damping_methods src/damping_methods/damping_base.cpp src/damping_methods/damping.cpp)
 add_library(constraint_solvers ${SRC_CS_DIR}/constraint_solver_base.cpp ${SRC_CS_DIR}/unconstraint_solver.cpp ${SRC_CS_DIR}/wln_joint_limit_avoidance_solver.cpp ${SRC_CS_DIR}/weighted_least_norm_solver.cpp ${SRC_C_DIR}/constraint_solver_factory_builder.cpp)
+target_link_libraries(constraint_solvers damping_methods ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES} ${EIGEN_LIBRARIES})
+
 add_library(limiters src/limiters/limiter_base.cpp src/limiters/limiter.cpp)
-target_link_libraries(constraint_solvers damping_methods)
+target_link_libraries(limiters ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 
 add_library(augmented_solver src/augmented_solver.cpp)
-target_link_libraries(augmented_solver constraint_solvers ${orocos_kdl_LIBRARIES})
+target_link_libraries(augmented_solver constraint_solvers ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES} ${EIGEN_LIBRARIES})
 
 add_library(cob_twist_controller src/cob_twist_controller.cpp )
 add_dependencies(augmented_solver cob_twist_controller_gencfg)
-target_link_libraries(cob_twist_controller augmented_solver limiters ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
+target_link_libraries(cob_twist_controller augmented_solver limiters ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES} ${EIGEN_LIBRARIES})
 
 ## Declare a cpp executable
 add_executable(cob_twist_controller_node src/cob_twist_controller_node.cpp)
-target_link_libraries(cob_twist_controller_node cob_twist_controller ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
+target_link_libraries(cob_twist_controller_node cob_twist_controller ${catkin_LIBRARIES})
 
 ## Install
 # Mark executables and/or libraries for installation
