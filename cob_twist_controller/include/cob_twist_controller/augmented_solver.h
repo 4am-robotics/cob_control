@@ -31,6 +31,7 @@
 #include <kdl/chainiksolver.hpp>
 #include <kdl/chainjnttojacsolver.hpp>
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 
 #include "cob_twist_controller/augmented_solver_data_types.h"
 
