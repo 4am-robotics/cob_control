@@ -15,9 +15,10 @@ generate_dynamic_reconfigure_options(
 
 # Declare catkin package
 catkin_package(
-   INCLUDE_DIRS include
-   LIBRARIES cob_twist_controller augmented_solver damping_methods constraint_solvers limiters
-   CATKIN_DEPENDS roscpp sensor_msgs geometry_msgs nav_msgs visualization_msgs
+  INCLUDE_DIRS include
+  LIBRARIES cob_twist_controller augmented_solver damping_methods constraint_solvers limiters
+  CATKIN_DEPENDS roscpp sensor_msgs geometry_msgs nav_msgs visualization_msgs
+  DEPENDS eigen
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${orocos_kdl_INCLUDE_DIRS} )
