@@ -1,0 +1,15 @@
+<launch>
+    <arg name="robot" default="$(optenv ROBOT !!NO_ROBOT_SET!!)"/>
+    <arg name="pkg_hardware_config" default="$(find cob_hardware_config)"/>
+    <arg name="component_name" default="arm_right"/>
+
+    <include file="$(arg pkg_hardware_config)/common/upload_robot.launch">
+        <arg name="robot" default="$(optenv ROBOT !!NO_ROBOT_SET!!)"/>
+    </include>
+    
+    <group ns="$(arg component_name)">
+        <rosparam command="load" file="$(arg pkg_hardware_config)/$(arg robot)/config/$(arg component_name)_controller.yaml"/>
+        <rosparam command="load" file="$(arg pkg_hardware_config)/$(arg robot)/config/$(arg component_name)_cartesian_controller.yaml"/>
+        <node name="obstacle_distance" pkg="cob_obstacle_distance" type="cob_obstacle_distance" output="screen" />
+    </group>
+</launch>

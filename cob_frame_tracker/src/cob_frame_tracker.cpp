@@ -51,9 +51,9 @@ bool CobFrameTracker::initialize()
 	else
 	{	update_rate_ = 68.0;	}	//hz
 	
-	if (nh_tracker.hasParam("chain_base_link"))
+	if (nh_.hasParam("chain_base_link"))
 	{
-		nh_tracker.getParam("chain_base_link", chain_base_);
+		nh_.getParam("chain_base_link", chain_base_);
 	}
 	else
 	{
@@ -61,9 +61,9 @@ bool CobFrameTracker::initialize()
 		return false;
 	}
 	
-	if (nh_tracker.hasParam("chain_tip_link"))
+	if (nh_.hasParam("chain_tip_link"))
 	{
-		nh_tracker.getParam("chain_tip_link", chain_tip_link_);
+		nh_.getParam("chain_tip_link", chain_tip_link_);
 	}
 	else
 	{
@@ -78,14 +78,13 @@ bool CobFrameTracker::initialize()
 	}
 	dof_ = joints_.size();
 	
-	///parse robot_description and generate KDL chains
-	nh_.param("/robot_description", robot_desc_string, std::string());
-	if (!kdl_parser::treeFromString(robot_desc_string, my_tree)){
+	KDL::Tree tree;
+	if (!kdl_parser::treeFromParam("/robot_description", tree)){
 		ROS_ERROR("Failed to construct kdl tree");
 		return false;
 	}
 	
-	my_tree.getChain(chain_base_, chain_tip_link_, chain_);
+	tree.getChain(chain_base_, chain_tip_link_, chain_);
 	if(chain_.getNrOfJoints() == 0)
 	{
 		ROS_ERROR("Failed to initialize kinematic chain");
