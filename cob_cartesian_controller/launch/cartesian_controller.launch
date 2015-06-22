@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<launch>
+	<arg name="component_name"/>
+	
+	<!-- 
+		Usage: 
+		 - component_name="arm_left"
+		 - Damping: Constant (1), damping_factor 0.2
+		 - Constraints: No_constraint (0)
+		 - base_active: enabled
+		 - use default for other params
+	-->
+	
+	<node ns="$(arg component_name)" pkg="cob_cartesian_controller" type="cartesian_controller_node" name="cartesian_controller" output="screen">
+		<param name="reference_frame" type="str" value="odom_combined"/>
+		<param name="target_frame" type="str" value="cartesian_target"/>
+		
+		<!--param name="file_name" type="str" value="move_relative.prog"/-->
+		<!--param name="file_name" type="str" value="move_circ.prog"/-->
+		<param name="file_name" type="str" value="move_santa.prog"/>
+	</node>
+</launch>

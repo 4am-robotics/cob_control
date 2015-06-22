@@ -1,6 +1,36 @@
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package cob_path_broadcaster
+Changelog for package cob_cartesian_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Forthcoming
+-----------
+
+0.6.8 (2015-06-17)
+------------------
+* merge with release candidate
+* package renaming: cob_path_broadcaster -> cob_cartesian_controller
+* Contributors: ipa-fxm
+
+0.6.7 (2015-06-17)
+------------------
+* restructure namespaces for parameters of cartesian controllers
+* beautify CMakeLists
+* remove obsolete files
+* testing
+* missing files
+* new prog files
+* new features
+* new files
+* new movement files
+* clean up cob_path_broadcaster
+* new features
+* cleaned up
+* update merged2
+* feature reachable_goal
+* fixed a bug in circular interpolation
+* test
+* Modified for the new structure
+* Contributors: Christian Ehrmann, ipa-fxm, ipa-fxm-cm, ipa-fxm-fm
 
 0.6.6 (2014-12-18)
 ------------------
