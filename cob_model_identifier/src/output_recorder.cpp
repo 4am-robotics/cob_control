@@ -35,9 +35,6 @@
 #include <fstream>
 #include <boost/thread.hpp>
 
-using namespace Eigen;
-using namespace std;
-
 
 bool OutputRecorder::initialize()
 {
@@ -601,7 +598,7 @@ void OutputRecorder::stepResponsePlot(std::string fileName, std::vector<double> 
 	myfile << "t = linspace(0,k(1)*" << fabs(dt_) << ",size(" <<fileName << "_in));" << std::endl;
 	
 	myfile << "figure" << std::endl;
-	myfile << "plot(t," << fileName << "_in,t," << fileName << "_x_lin_out,t," << fileName << "_y_lin_out,t," << fileName << "_z_lin_out,t," << fileName << "_x_rot_out,t," << fileName << "_y_rot_out,t," << fileName << "_z_rot_out)" << endl;  
+	myfile << "plot(t," << fileName << "_in,t," << fileName << "_x_lin_out,t," << fileName << "_y_lin_out,t," << fileName << "_z_lin_out,t," << fileName << "_x_rot_out,t," << fileName << "_y_rot_out,t," << fileName << "_z_rot_out)" << std::endl;  
 	myfile << "c=legend('Input','x_lin_out','y_lin_out','z_lin_out','x_rot_out','y_rot_out','z_rot_out','Location','NorthEastOutside'); \n set(c,'Interpreter','none');" << std::endl;
 	myfile << "grid" << std::endl;
 	
@@ -760,12 +757,12 @@ void OutputRecorder::writeToMFile(std::string fileName,std::vector<double> *dot_
 	// Plot
 	myfile << "figure" << std::endl;
 	myfile << "subplot(2,1,1);" << std::endl;
-	myfile << "plot(t," << fileName << "_dot_in,t," << fileName << "_dot_out,t,Gs_" << fileName << "_out1)" << endl;  
+	myfile << "plot(t," << fileName << "_dot_in,t," << fileName << "_dot_out,t,Gs_" << fileName << "_out1)" << std::endl;  
 	myfile << "c=legend('Velocity Input','Velocity Systemresponse','PT1 Modelresponse','Location','NorthEastOutside'); \n set(c,'Interpreter','none');" << std::endl;
 	myfile << "title('" << fileName << " Velocity Stepresponse','interpreter','none')"  << std::endl;
 	myfile << "grid" << std::endl;
 	myfile << "subplot(2,1,2);" << std::endl;
-	myfile << "plot(t," << fileName << "_dot_in,t," << fileName << "_dot_integrated,t,Gs_" << fileName << "_out_integrated1)" << endl;
+	myfile << "plot(t," << fileName << "_dot_in,t," << fileName << "_dot_integrated,t,Gs_" << fileName << "_out_integrated1)" << std::endl;
 	myfile << "c=legend('Velocity Input','Position Systemresponse','IT1 Modelresponse','Location','NorthEastOutside'); \n set(c,'Interpreter','none');" << std::endl;
 	myfile << "title('" << fileName << " Position Stepresponse','interpreter','none')"  << std::endl;
 	myfile << "grid" << std::endl;
@@ -781,12 +778,12 @@ void OutputRecorder::writeToMFile(std::string fileName,std::vector<double> *dot_
 	//Plot
 	myfile << "figure" << std::endl;
 	myfile << "subplot(2,1,1);" << std::endl;
-	myfile << "plot(t," << fileName << "_dot_in,t," << fileName << "_dot_out,t,Gs_" << fileName << "_out2)" << endl;  
+	myfile << "plot(t," << fileName << "_dot_in,t," << fileName << "_dot_out,t,Gs_" << fileName << "_out2)" << std::endl;  
 	myfile << "c=legend('Velocity Input','Velocity Systemresponse','PDT2 Modelresponse','Location','NorthEastOutside'); \n set(c,'Interpreter','none');" << std::endl;
 	myfile << "title('" << fileName << " Velocity Stepresponse','interpreter','none')"  << std::endl;
 	myfile << "grid" << std::endl;
 	myfile << "subplot(2,1,2);" << std::endl;
-	myfile << "plot(t," << fileName << "_dot_in,t," << fileName << "_dot_integrated,t,Gs_" << fileName << "_out_integrated2)" << endl;
+	myfile << "plot(t," << fileName << "_dot_in,t," << fileName << "_dot_integrated,t,Gs_" << fileName << "_out_integrated2)" << std::endl;
 	myfile << "c=legend('Velocity Input','Position Systemresponse','PIDT2 Modelresponse','Location','NorthEastOutside'); \n set(c,'Interpreter','none');" << std::endl;
 	myfile << "title('" << fileName << " Position Stepresponse','interpreter','none')"  << std::endl;
 	myfile << "grid" << std::endl;
@@ -802,12 +799,12 @@ void OutputRecorder::writeToMFile(std::string fileName,std::vector<double> *dot_
 	//Plot
 	myfile << "figure" << std::endl;
 	myfile << "subplot(2,1,1);" << std::endl;
-	myfile << "plot(t," << fileName << "_dot_in,t," << fileName << "_dot_out,t,Gs_" << fileName << "_out3)" << endl;  
+	myfile << "plot(t," << fileName << "_dot_in,t," << fileName << "_dot_out,t,Gs_" << fileName << "_out3)" << std::endl;  
 	myfile << "c=legend('Velocity Input','Velocity Systemresponse','PD2T3 Modelresponse','Location','NorthEastOutside'); \n set(c,'Interpreter','none');" << std::endl;
 	myfile << "title('" << fileName << " Velocity Stepresponse','interpreter','none')"  << std::endl;
 	myfile << "grid" << std::endl;
 	myfile << "subplot(2,1,2);" << std::endl;
-	myfile << "plot(t," << fileName << "_dot_in,t," << fileName << "_dot_integrated,t,Gs_" << fileName << "_out_integrated3)" << endl;
+	myfile << "plot(t," << fileName << "_dot_in,t," << fileName << "_dot_integrated,t,Gs_" << fileName << "_out_integrated3)" << std::endl;
 	myfile << "c=legend('Velocity Input','Position Systemresponse','PID2T3 Modelresponse','Location','NorthEastOutside'); \n set(c,'Interpreter','none');" << std::endl;
 	myfile << "title('" << fileName << " Position Stepresponse','interpreter','none')"  << std::endl;
 	myfile << "grid" << std::endl;

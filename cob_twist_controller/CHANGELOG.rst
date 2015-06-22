@@ -2,6 +2,15 @@
 Changelog for package cob_twist_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
+* add missing include
+* Contributors: ipa-fxm
+
+* missing dependency
+* Contributors: ipa-fxm
+
 0.6.8 (2015-06-17)
 ------------------
 
