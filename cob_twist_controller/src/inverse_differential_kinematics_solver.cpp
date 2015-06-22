@@ -29,6 +29,7 @@
 
 #include <ros/ros.h>
 #include <eigen_conversions/eigen_kdl.h>
+#include <kdl/chainfksolverpos_recursive.hpp>
 
 /**
  * Solve the inverse kinematics problem at the first order differential level.
@@ -46,6 +47,18 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const KDL::JntArray& q_in,
     t_Vector6d v_in_vec;
     tf::twistKDLToEigen(v_in, v_in_vec);
 
+    KDL::ChainFkSolverPos_recursive fk_solver(this->chain_);
+    KDL::Frame cartpos;
+    fk_solver.JntToCart(q_in, cartpos);
+
+    double rot_x, rot_y, rot_z, rot_w;
+    cartpos.M.GetQuaternion(rot_x, rot_y, rot_z, rot_w); // Similar to frametracker
+    //cartpos.p.x()
+    t_Vector6d p_in_vec;
+    p_in_vec << cartpos.p.x(), cartpos.p.y(), cartpos.p.z(), rot_x, rot_y, rot_z;
+
+    this->params_.delta_p_vec = p_in_vec - last_p_in_vec_;
+
     Eigen::MatrixXd qdot_out_vec;
     retStat = constraint_solver_factory_.calculateJointVelocities(this->params_,
                                                                   this->jac_.data,
@@ -59,6 +72,8 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const KDL::JntArray& q_in,
     {
         qdot_out(i) = qdot_out_vec(i);
     }
+
+    last_p_in_vec_ = p_in_vec;
 
     return retStat;
 }

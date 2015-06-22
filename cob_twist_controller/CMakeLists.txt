@@ -18,6 +18,7 @@ catkin_package(
    INCLUDE_DIRS include
    LIBRARIES twist_controller inverse_differential_kinematics_solver damping_methods constraint_solvers limiters
    CATKIN_DEPENDS roscpp sensor_msgs geometry_msgs nav_msgs cob_obstacle_distance
+   DEPENDS eigen
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${orocos_kdl_INCLUDE_DIRS} )
@@ -29,7 +30,7 @@ set(SRC_CS_DIR "${SRC_C_DIR}/solvers")
 
 # Declare a cpp library
 add_library(damping_methods src/damping_methods/damping.cpp)
-add_library(constraint_solvers ${SRC_CS_DIR}/unconstraint_solver.cpp ${SRC_CS_DIR}/wln_joint_limit_avoidance_solver.cpp ${SRC_CS_DIR}/weighted_least_norm_solver.cpp ${SRC_CS_DIR}/gradient_projection_method_solver.cpp ${SRC_C_DIR}/constraint_solver_factory_builder.cpp)
+add_library(constraint_solvers ${SRC_CS_DIR}/unconstraint_solver.cpp ${SRC_CS_DIR}/wln_joint_limit_avoidance_solver.cpp ${SRC_CS_DIR}/weighted_least_norm_solver.cpp ${SRC_CS_DIR}/gradient_projection_method_solver.cpp ${SRC_CS_DIR}/stack_of_tasks_solver.cpp ${SRC_C_DIR}/constraint_solver_factory_builder.cpp)
 add_library(limiters src/limiters/limiter.cpp)
 add_library(inv_calculations src/inverse_jacobian_calculations/inverse_jacobian_calculation.cpp)
 target_link_libraries(constraint_solvers damping_methods inv_calculations)

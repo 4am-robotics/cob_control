@@ -95,7 +95,7 @@ bool CobTwistController::initialize()
     if(!nh_twist.getParam("collision_check_frames", twist_controller_params_.collision_check_frames))
     {
         ROS_WARN_STREAM("Parameter vector 'collision_check_frames' not set. Using default: 3rd link and 5th link of manipulator.");
-        twist_controller_params_.collision_check_frames.push_back(robo_namespace + "_3_link");
+        // twist_controller_params_.collision_check_frames.push_back(robo_namespace + "_3_link");
         twist_controller_params_.collision_check_frames.push_back(robo_namespace + "_5_link");
     }
 
@@ -228,6 +228,12 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     params.base_compensation = config.base_compensation;
     params.base_active = config.base_active;
     params.base_ratio = config.base_ratio;
+
+
+    params.mu = config.mu;
+    params.conv_speed = config.conv_speed;
+
+
     params.limits_min = twist_controller_params_.limits_min; // from cob_twist_controller init
     params.limits_max = twist_controller_params_.limits_max; // from cob_twist_controller init
     params.limits_vel = twist_controller_params_.limits_vel; // from cob_twist_controller init

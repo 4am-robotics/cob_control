@@ -62,6 +62,7 @@ public:
         callback_data_mediator_(data_mediator),
         constraint_solver_factory_(data_mediator, jnt2jac_)
     {
+            last_p_in_vec_ = t_Vector6d::Zero();
     }
 
     virtual ~InverseDifferentialKinematicsSolver() {};
@@ -103,6 +104,8 @@ private:
     InvDiffKinSolverParams params_;
     CallbackDataMediator& callback_data_mediator_;
     ConstraintSolverFactoryBuilder constraint_solver_factory_;
+
+    t_Vector6d last_p_in_vec_;
 
     /**
      * Adjustment of the member Jacobian

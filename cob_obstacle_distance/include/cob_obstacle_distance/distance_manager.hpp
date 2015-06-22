@@ -90,6 +90,8 @@ class DistanceManager
         KDL::JntArray last_q_;
         KDL::JntArray last_q_dot_;
 
+        static uint32_t seq_nr_;
+
     public:
         /**
          * @param nh Reference to the ROS node handle.
@@ -179,6 +181,7 @@ class DistanceManager
          */
         static bool getMarkerShape(uint32_t shape_type,
                                    const Eigen::Vector3d& abs_pos,
+                                   const Eigen::Quaterniond& quat_pos,
                                    t_ptr_IMarkerShape& segment_of_interest_marker_shape);
 };
 

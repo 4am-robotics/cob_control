@@ -73,7 +73,7 @@ int main(int argc, char **argv)
     ROS_INFO_ONCE("Subscriber to the marker has been created");
     sm.drawObstacles();
 
-    ros::Rate loop_rate(20);
+    ros::Rate loop_rate(60);
     while(ros::ok())
     {
         sm.calculate();
