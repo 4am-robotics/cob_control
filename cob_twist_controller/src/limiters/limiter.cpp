@@ -159,7 +159,7 @@ KDL::JntArray LimiterAllJointPositions::enforceLimits(const KDL::JntArray& q_dot
 
     if (tolerance_surpassed)
     {
-        // ROS_INFO_THROTTLE(5, "Tolerance surpassed: Enforcing limits FOR ALL JOINT VELOCITIES with factor = %f", factor);
+        ROS_WARN_ONCE("Tolerance surpassed: Enforcing limits FOR ALL JOINT POSITIONS with factor = %f", factor);
         for(int i = 0; i < q_dot_ik.rows() ; i++)
         {
             scaled_q_dot(i) = q_dot_ik(i) / factor;
@@ -217,6 +217,7 @@ KDL::JntArray LimiterAllJointVelocities::enforceLimits(const KDL::JntArray& q_do
     if(max_factor > 1.0)
     {
         //ROS_DEBUG("Normalizing velocities (Factor: %f!", max_factor);
+        ROS_WARN_ONCE("Tolerance surpassed: Enforcing limits FOR ALL JOINT VELOCITIES with factor = %f", max_factor);
         for(uint8_t i = 0; i < this->tc_params_.dof; ++i)
         {
             q_dot_norm(i) = q_dot_ik(i) / max_factor;
@@ -303,7 +304,6 @@ KDL::JntArray LimiterIndividualJointVelocities::enforceLimits(const KDL::JntArra
         {
             max_factor = std::fabs((q_dot_ik(i) / tmpLimits[i]));
             q_dot_norm(i) = q_dot_ik(i) / max_factor;
-            //ROS_WARN("Joint %d exceeds limit: Desired %f, Limit %f, Factor %f", i, q_dot_ik(i), limits_vel_[i], max_factor);
         }
     }
 

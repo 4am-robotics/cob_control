@@ -83,7 +83,11 @@ class CollisionAvoidance : public ConstraintBase<T_PARAMS, PRIO>
                            T_PARAMS constraint_params,
                            KDL::ChainJntToJacSolver& jnt_to_jac) :
             ConstraintBase<T_PARAMS, PRIO>(prio, q, constraint_params), jnt_to_jac_(jnt_to_jac)
-        {}
+        {
+            // obstacle_avoidance_distance_vec_ = std::numeric_limits<double>::max() * Eigen::Vector3d::Ones();
+            obstacle_avoidance_distance_vec_ = std::numeric_limits<double>::max() * t_Vector6d::Ones();
+            minimal_distance_ = std::numeric_limits<double>::max();
+        }
 
         virtual ~CollisionAvoidance()
         {}
@@ -91,11 +95,18 @@ class CollisionAvoidance : public ConstraintBase<T_PARAMS, PRIO>
         virtual double getValue() const;
         virtual double getDerivativeValue() const;
         virtual double getActivationThreshold() const;
-        virtual Eigen::VectorXd getPartialValues() const;
+        virtual Eigen::VectorXd getPartialValues();
         virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const;
+        virtual Eigen::MatrixXd getObstacleAvoidancePointJac() const;
+        // virtual Eigen::Vector3d getDistanceVector() const;
+
 
     private:
         KDL::ChainJntToJacSolver& jnt_to_jac_;
+        Eigen::MatrixXd obstacle_avoidance_point_jac_;
+        // Eigen::Vector3d obstacle_avoidance_distance_vec_;
+        t_Vector6d obstacle_avoidance_distance_vec_;
+        double minimal_distance_;
 
 
 };
@@ -120,9 +131,11 @@ class JointLimitAvoidance : public ConstraintBase<T_PARAMS, PRIO>
         virtual double getValue() const;
         virtual double getDerivativeValue() const;
         virtual double getActivationThreshold() const;
-        virtual Eigen::VectorXd getPartialValues() const;
+        virtual Eigen::VectorXd getPartialValues();
         virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const;
         double getValue(Eigen::VectorXd steps) const;
+        virtual Eigen::MatrixXd getObstacleAvoidancePointJac() const;
+        //virtual Eigen::Vector3d getDistanceVector() const;
 
 
 };
@@ -147,8 +160,10 @@ class JointLimitAvoidanceMid : public ConstraintBase<T_PARAMS, PRIO>
         virtual double getValue() const;
         virtual double getDerivativeValue() const;
         virtual double getActivationThreshold() const;
-        virtual Eigen::VectorXd getPartialValues() const;
+        virtual Eigen::VectorXd getPartialValues();
         virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const;
+        virtual Eigen::MatrixXd getObstacleAvoidancePointJac() const;
+        // virtual Eigen::Vector3d getDistanceVector() const;
 };
 /* END JointLimitAvoidanceMid ***********************************************************************************/
 

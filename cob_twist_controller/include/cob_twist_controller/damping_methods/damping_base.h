@@ -39,7 +39,7 @@ class DampingBase
         virtual ~DampingBase() {}
 
     protected:
-        DampingBase(InvDiffKinSolverParams &params, t_Matrix6Xd &jacobian_data) : params_(params), jacobian_data_(jacobian_data) { }
+        DampingBase(const InvDiffKinSolverParams &params, const t_Matrix6Xd &jacobian_data) : params_(params), jacobian_data_(jacobian_data) { }
 
         const InvDiffKinSolverParams &params_;
         const t_Matrix6Xd &jacobian_data_;

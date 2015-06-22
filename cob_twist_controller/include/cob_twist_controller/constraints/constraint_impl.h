@@ -29,6 +29,7 @@
 #ifndef CONSTRAINT_IMPL_H_
 #define CONSTRAINT_IMPL_H_
 
+#include <boost/shared_ptr.hpp>
 #include <boost/pointer_cast.hpp>
 
 #include <ros/ros.h>
@@ -39,6 +40,12 @@
 
 #include "cob_twist_controller/constraints/constraint.h"
 #include "cob_twist_controller/constraints/constraint_params.h"
+
+#include "cob_twist_controller/damping_methods/damping.h"
+#include "cob_twist_controller/inverse_jacobian_calculations/inverse_jacobian_calculation.h"
+
+
+
 
 /* BEGIN ConstraintsBuilder *************************************************************************************/
 /**
@@ -69,7 +76,9 @@ std::set<tConstraintBase> ConstraintsBuilder<PRIO>::createConstraints(InvDiffKin
         boost::shared_ptr<tJlaMid > jla(new tJlaMid(100, q, params));
         constraints.insert(boost::static_pointer_cast<PriorityBase<PRIO> >(jla));
     }
-    else if(GPM_CA == inv_diff_kin_solver_params.constraint)
+    else if(GPM_CA == inv_diff_kin_solver_params.constraint ||
+            TASK_STACK == inv_diff_kin_solver_params.constraint ||
+            TASK_PRIO == inv_diff_kin_solver_params.constraint)
     {
         typedef CollisionAvoidance<ConstraintParamsCA, PRIO> tCollisionAvoidance;
         uint32_t available_dists = data_mediator.obstacleDistancesCnt();
@@ -98,8 +107,13 @@ std::set<tConstraintBase> ConstraintsBuilder<PRIO>::createConstraints(InvDiffKin
 template <typename T_PARAMS, typename PRIO>
 double CollisionAvoidance<T_PARAMS, PRIO>::getValue() const
 {
+    return minimal_distance_;
 
-    return 0.0;
+//    ObstacleDistanceInfo d = this->constraint_params_.current_distance_;
+//    if (this->getActivationThreshold() > d.min_distance)
+//        return pow(d.min_distance - this->getActivationThreshold(), 2.0);
+//    else
+//        return 0.0;
 }
 
 /// Returns values of the derivative of the cost function
@@ -116,15 +130,31 @@ double CollisionAvoidance<T_PARAMS, PRIO>::getActivationThreshold() const
     return 0.1; // in [m]
 }
 
+
+template <typename T_PARAMS, typename PRIO>
+Eigen::MatrixXd CollisionAvoidance<T_PARAMS, PRIO>::getObstacleAvoidancePointJac() const
+{
+    return obstacle_avoidance_point_jac_;
+}
+
+//template <typename T_PARAMS, typename PRIO>
+//Eigen::Vector3d CollisionAvoidance<T_PARAMS, PRIO>::getDistanceVector() const
+//{
+//    return obstacle_avoidance_distance_;
+//}
+
 /// Returns values of the gradient of the cost function
 template <typename T_PARAMS, typename PRIO>
-Eigen::VectorXd  CollisionAvoidance<T_PARAMS, PRIO>::getPartialValues() const
+Eigen::VectorXd  CollisionAvoidance<T_PARAMS, PRIO>::getPartialValues()
 {
     uint8_t vecRows = static_cast<uint8_t>(this->joint_pos_.rows());
     Eigen::VectorXd partial_values = Eigen::VectorXd::Zero(vecRows);
     const InvDiffKinSolverParams& params = this->constraint_params_.getInvDiffKinSolverParams();
     int size_of_frames = params.frame_names.size();
     ObstacleDistanceInfo d = this->constraint_params_.current_distance_;
+
+    ROS_INFO_STREAM("d.min_distance: " << d.min_distance);
+
     if (this->getActivationThreshold() > d.min_distance)
     {
         std::vector<std::string>::const_iterator str_it = std::find(params.frame_names.begin(),
@@ -133,23 +163,43 @@ Eigen::VectorXd  CollisionAvoidance<T_PARAMS, PRIO>::getPartialValues() const
         if (params.frame_names.end() != str_it)
         {
             uint32_t pos = str_it - params.frame_names.begin();
-            uint32_t frame_number = pos + 1;
+            uint32_t frame_number = pos;
             KDL::Jacobian new_jac_chain(size_of_frames);
             KDL::JntArray ja = this->joint_pos_;
             this->jnt_to_jac_.JntToJac(ja, new_jac_chain, frame_number);
 
-            Eigen::Matrix3Xd m = Eigen::Matrix3Xd::Zero(3, size_of_frames);
+            obstacle_avoidance_point_jac_ = new_jac_chain.data;
+            obstacle_avoidance_distance_vec_ = d.distance_vec;
+            minimal_distance_ = d.min_distance;
 
-            m << new_jac_chain.data.row(0),
+            Eigen::Matrix3Xd m_transl = Eigen::Matrix3Xd::Zero(3, size_of_frames);
+            m_transl << new_jac_chain.data.row(0),
                  new_jac_chain.data.row(1),
                  new_jac_chain.data.row(2);
 
-            if (d.min_distance > 0.0)
-            {
-                // Gradient of the cost function from: Strasse O., Escande A., Mansard N. et al.
-                // "Real-Time (Self)-Collision Avoidance Task on a HRP-2 Humanoid Robot", 2008 IEEE International Conference
-                partial_values =  2.0 * ((d.min_distance - this->getActivationThreshold()) / d.min_distance) * m.transpose() * d.distance_vec;
-            }
+            Eigen::Matrix3Xd m_rot = Eigen::Matrix3Xd::Zero(3, size_of_frames);
+            m_rot << new_jac_chain.data.row(3),
+                 new_jac_chain.data.row(4),
+                 new_jac_chain.data.row(5);
+
+            /* According to Schwienbacher M., Buschmann T., et al,
+               "Self-Collision Avoidance and Angular Momentum Compensation for a Biped Humanoid Robot", 2011,
+               IEEE International Conference on Robotics and Automation
+               The calculation of the general translational Jacobian for a point p is given by (using the translational and rotational
+               part of the Jacobian), else the min criteria is not sufficient for all manipulator postures:
+            */
+            //////Eigen::VectorXd term_2nd = (m_transl.transpose() + m_rot.transpose()) * d.distance_vec;
+            Eigen::VectorXd term_2nd =  new_jac_chain.data.transpose() * d.distance_vec;
+            ROS_INFO_STREAM(">>>>>>>>>> FULL d.distance_vec: " << std::endl << d.distance_vec.transpose());
+            ROS_INFO_STREAM(">>>>>>>>>> 2nd term: " << std::endl << term_2nd.transpose());
+
+            // Gradient of the cost function from: Strasse O., Escande A., Mansard N. et al.
+            // "Real-Time (Self)-Collision Avoidance Task on a HRP-2 Humanoid Robot", 2008 IEEE International Conference
+            partial_values =  (2.0 * ((d.min_distance - this->getActivationThreshold()) / d.min_distance) * term_2nd);
+        }
+        else
+        {
+            ROS_ERROR_STREAM("Frame id not found: " << d.frame_id);
         }
     }
 
@@ -166,6 +216,20 @@ double CollisionAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::M
 /* END CollisionAvoidance ***************************************************************************************/
 
 /* BEGIN JointLimitAvoidance ************************************************************************************/
+
+template <typename T_PARAMS, typename PRIO>
+Eigen::MatrixXd JointLimitAvoidance<T_PARAMS, PRIO>::getObstacleAvoidancePointJac() const
+{
+    Eigen::MatrixXd x = Eigen::MatrixXd::Zero(6, 7); // TODO: Correct rows and cols
+    return x;
+}
+
+//template <typename T_PARAMS, typename PRIO>
+//Eigen::Vector3d JointLimitAvoidance<T_PARAMS, PRIO>::getDistanceVector() const
+//{
+//    return Eigen::Vector3d::Zero();
+//}
+
 /// Returns values of the JLA cost function with adapted joint pos.
 template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidance<T_PARAMS, PRIO>::getValue(Eigen::VectorXd steps) const
@@ -220,7 +284,7 @@ double JointLimitAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::
 
 /// Returns values of the gradient of the cost function
 template <typename T_PARAMS, typename PRIO>
-Eigen::VectorXd JointLimitAvoidance<T_PARAMS, PRIO>::getPartialValues() const
+Eigen::VectorXd JointLimitAvoidance<T_PARAMS, PRIO>::getPartialValues()
 {
     const InvDiffKinSolverParams &params = this->constraint_params_.getInvDiffKinSolverParams();
     std::vector<double> limits_min = params.limits_min;
@@ -243,6 +307,21 @@ Eigen::VectorXd JointLimitAvoidance<T_PARAMS, PRIO>::getPartialValues() const
 /* END JointLimitAvoidance **************************************************************************************/
 
 /* BEGIN 2nd JointLimitAvoidance ************************************************************************************/
+
+//template <typename T_PARAMS, typename PRIO>
+//Eigen::Vector3d JointLimitAvoidanceMid<T_PARAMS, PRIO>::getDistanceVector() const
+//{
+//    return Eigen::Vector3d::Zero();
+//}
+
+
+template <typename T_PARAMS, typename PRIO>
+Eigen::MatrixXd JointLimitAvoidanceMid<T_PARAMS, PRIO>::getObstacleAvoidancePointJac() const
+{
+    Eigen::MatrixXd x = Eigen::MatrixXd::Zero(6, 7); // TODO: Correct rows and cols
+    return x;
+}
+
 /// Returns values of the JLA_Mid cost function.
 template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidanceMid<T_PARAMS, PRIO>::getValue() const
@@ -266,7 +345,7 @@ double JointLimitAvoidanceMid<T_PARAMS, PRIO>::getActivationThreshold() const
 
 /// Returns values of the gradient of the cost function. Method proposed by Liegeois
 template <typename T_PARAMS, typename PRIO>
-Eigen::VectorXd JointLimitAvoidanceMid<T_PARAMS, PRIO>::getPartialValues() const
+Eigen::VectorXd JointLimitAvoidanceMid<T_PARAMS, PRIO>::getPartialValues()
 {
     const InvDiffKinSolverParams &params = this->constraint_params_.getInvDiffKinSolverParams();
     std::vector<double> limits_min = params.limits_min;

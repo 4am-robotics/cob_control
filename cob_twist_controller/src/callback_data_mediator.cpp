@@ -50,7 +50,9 @@ bool CallbackDataMediator::fill(ConstraintParamsCA& params_ca)
     bool success = false;
     if (this->obstacle_distances_.end() != this->it_distances)
     {
-        params_ca.current_distance_ = *(this->it_distances);
+        params_ca.current_distance_.distance_vec = this->it_distances->distance_vec;
+        params_ca.current_distance_.frame_id = this->it_distances->frame_id;
+        params_ca.current_distance_.min_distance = this->it_distances->min_distance;
         this->it_distances++;
 
         // Let the iterator point to the first element again -> Returns the same elements again until callback occurred.
@@ -80,8 +82,14 @@ void CallbackDataMediator::distancesToObstaclesCallback(const cob_obstacle_dista
     {
         ObstacleDistanceInfo d;
         d.min_distance = it->distance;
-        d.distance_vec << it->distance_vector.x, it->distance_vector.y, it->distance_vector.z;
-        d.frame_id = it->id.frame_id;
+        d.distance_vec << it->distance_vector.pose.position.x,
+                          it->distance_vector.pose.position.y,
+                          it->distance_vector.pose.position.z,
+                          it->distance_vector.pose.orientation.x,
+                          it->distance_vector.pose.orientation.y,
+                          it->distance_vector.pose.orientation.z;
+
+        d.frame_id = it->distance_vector.header.frame_id;
         this->obstacle_distances_.push_back(d);
     }
 

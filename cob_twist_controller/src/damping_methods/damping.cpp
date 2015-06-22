@@ -33,7 +33,7 @@
 /**
  * Static builder method to create damping methods dependent on parameterization.
  */
-DampingBase* DampingBuilder::create_damping(InvDiffKinSolverParams &params, t_Matrix6Xd &jacobian_data)
+DampingBase* DampingBuilder::create_damping(const InvDiffKinSolverParams &params, const t_Matrix6Xd &jacobian_data)
 {
     DampingBase *db = NULL;
     switch(params.damping_method)

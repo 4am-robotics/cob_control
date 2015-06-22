@@ -58,6 +58,8 @@ enum ContraintTypes {
     GPM_JLA = 3,
     GPM_JLA_MID = 4,
     GPM_CA = 5,
+    TASK_STACK = 6,
+    TASK_PRIO = 7,
 };
 
 struct InvDiffKinSolverParams {
@@ -75,6 +77,10 @@ struct InvDiffKinSolverParams {
     bool base_active;
     double base_ratio;
 
+    double mu;
+    double conv_speed;
+    t_Vector6d delta_p_vec;
+
 
     // added limits from URDF file
     std::vector<double> limits_max;
@@ -86,7 +92,8 @@ struct InvDiffKinSolverParams {
 struct ObstacleDistanceInfo
 {
     double min_distance;
-    Eigen::Vector3d distance_vec;
+    // Eigen::Vector3d distance_vec;
+    t_Vector6d distance_vec;
     std::string frame_id;
 };
 

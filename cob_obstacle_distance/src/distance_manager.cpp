@@ -47,8 +47,6 @@
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/path.hpp>
 
-#include <ros/package.h>
-
 #include <eigen_conversions/eigen_kdl.h>
 
 #define VEC_X 0
@@ -66,38 +64,31 @@ DistanceManager::~DistanceManager()
 
 int DistanceManager::init()
 {
-    ros::NodeHandle global_nh;
     KDL::Tree robot_structure;
     if (!kdl_parser::treeFromParam("/robot_description", robot_structure)){
         ROS_ERROR("Failed to construct kdl tree from parameter '/robot_description'.");
-        std::string path = ros::package::getPath("cob_obstacle_distance");
-        std::string testdata_path = ros::package::getPath("cob_obstacle_distance") + "/testdata/robot_description.xml";
-        if (!kdl_parser::treeFromFile(testdata_path,
-                                      robot_structure))
-        {
-            ROS_ERROR("Failed to construct kdl tree from test data. ");
-            return -1;
-        }
-
-        ROS_WARN_STREAM("Constructed from test data in \"" << testdata_path << "\".");
+        return -1;
     }
 
-    // Use global namespace here
-    if(!global_nh.getParam("joint_names", this->joints_))
+    if(!nh_.getParam("joint_names", this->joints_))
     {
         ROS_ERROR("Failed to get parameter \"joint_names\".");
         return -2;
     }
 
-    // Use specialized namespace here
-    // TODO: Make common -> cob_twist_controller uses this param as well.
+
+    if(!nh_.getParam("root_frame", this->root_frame_))
+    {
+        ROS_ERROR("Failed to get parameter \"chain_base_link\".");
+        return -3;
+    }
+
     if(!nh_.getParam("chain_base_link", this->chain_base_link_))
     {
         ROS_ERROR("Failed to get parameter \"chain_base_link\".");
         return -3;
     }
 
-    // TODO: Make common -> cob_twist_controller uses this param as well.
     if (!nh_.getParam("chain_tip_link", this->chain_tip_link_))
     {
         ROS_ERROR("Failed to get parameter \"chain_tip_link\".");
@@ -118,8 +109,10 @@ int DistanceManager::init()
         ROS_INFO_STREAM("Managing Segment Name: " << s.getName());
     }
 
-    this->marker_pub_ = this->nh_.advertise<visualization_msgs::Marker>("visualization_marker", 1);
-    this->obstacle_distances_pub_ = this->nh_.advertise<cob_obstacle_distance::ObstacleDistances>(this->nh_.getNamespace(), 1);
+
+    // Latched and continue in case there is no subscriber at the moment for a marker
+    this->marker_pub_ = this->nh_.advertise<visualization_msgs::Marker>("obstacle_distance/marker", 1, true);
+    this->obstacle_distances_pub_ = this->nh_.advertise<cob_obstacle_distance::ObstacleDistances>("obstacle_distance", 1);
 
     obstacle_mgr_.reset(new ShapesManager(this->marker_pub_));
     object_of_interest_mgr_.reset(new ShapesManager(this->marker_pub_));
@@ -187,21 +180,21 @@ bool DistanceManager::collide(t_ptr_IMarkerShape s1, t_ptr_IMarkerShape s2)
 
 void DistanceManager::calculate()
 {
-    bool initial = true;
     cob_obstacle_distance::ObstacleDistances obstacle_distances;
+
+    // Transform needs to be calculated only once for robot structure
+    // and is same for all obstacles.
+    if(this->obstacle_distances_.size() > 0)
+    {
+        if (!this->transform())
+        {
+            ROS_ERROR("Failed to transform Return with no publish!");
+            return;
+        }
+    }
+
     for(t_map_ObstacleDistance_iter it = this->obstacle_distances_.begin(); it != this->obstacle_distances_.end(); ++it)
     {
-        if(initial)
-        {
-            if (!this->transform())
-            {
-                ROS_ERROR("Failed to transform Return with no publish!");
-                return;
-            }
-
-            initial = false;
-        }
-
         std::string frame_of_interest_name = it->first;
         std::vector<std::string>::const_iterator str_it = std::find(this->segments_.begin(),
                                                                     this->segments_.end(),
@@ -346,8 +339,8 @@ bool DistanceManager::transform()
     try
     {
         tf::StampedTransform cb_transform_bl;
-        tf_listener_.waitForTransform(chain_base_link_, "base_link", ros::Time(0), ros::Duration(0.5));
-        tf_listener_.lookupTransform(chain_base_link_, "base_link", ros::Time(0), cb_transform_bl);
+        tf_listener_.waitForTransform(chain_base_link_, root_frame_, ros::Time(0), ros::Duration(0.5));
+        tf_listener_.lookupTransform(chain_base_link_, root_frame_, ros::Time(0), cb_transform_bl);
         tf::transformTFToEigen(cb_transform_bl, tf_cb_frame_bl_);
     }
     catch (tf::TransformException &ex)

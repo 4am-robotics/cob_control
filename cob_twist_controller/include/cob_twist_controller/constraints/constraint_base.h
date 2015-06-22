@@ -78,9 +78,11 @@ class PriorityBase
         virtual double getValue() const = 0;
         virtual double getDerivativeValue() const = 0;
         virtual double getActivationThreshold() const = 0;
-        virtual Eigen::VectorXd getPartialValues() const = 0;
+        virtual Eigen::VectorXd getPartialValues() = 0;
         virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution,
                                               const Eigen::MatrixXd& homogeneous_solution) const = 0;
+        virtual Eigen::MatrixXd getObstacleAvoidancePointJac() const = 0;
+        // virtual Eigen::Vector3d getDistanceVector() const = 0;
 
     protected:
         PRIO priority_;

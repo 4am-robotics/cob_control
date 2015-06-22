@@ -1,3 +1,2 @@
-Header id
 float64 distance
-geometry_msgs/Point distance_vector
+geometry_msgs/PoseStamped distance_vector

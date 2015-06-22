@@ -113,7 +113,7 @@ void InverseDifferentialKinematicsSolver::adjustJac(const KDL::JntArray& q_in,
         tf::quaternionKDLToEigen(chain_base.M, chain_base_quat);
         Eigen::Matrix3d chain_base_rot = chain_base_quat.toRotationMatrix();
 
-        // Transform from base_link to chain_base
+        // Transform from root frame (e.g. base_link) to chain_base
         Eigen::Vector3d w_base_link(0,0,base_ratio);
         w_chain_base = chain_base_quat*w_base_link;
         r_chain_base = chain_base_quat*r_base_link;
@@ -136,7 +136,7 @@ void InverseDifferentialKinematicsSolver::adjustJac(const KDL::JntArray& q_in,
         jac_b(2,1) = base_ratio*chain_base_rot(2,1);
         jac_b(2,2) = tangential_vel(2);
 
-        //Phi <==> Wz with respect to base_link
+        //Phi <==> Wz with respect to root frame (e.g. base_link)
         jac_b(3,2) = w_chain_base(0);
         jac_b(4,2) = w_chain_base(1);
         jac_b(5,2) = w_chain_base(2);

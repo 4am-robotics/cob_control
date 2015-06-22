@@ -34,6 +34,8 @@
 #include "cob_twist_controller/constraint_solvers/solvers/wln_joint_limit_avoidance_solver.h"
 #include "cob_twist_controller/constraint_solvers/solvers/weighted_least_norm_solver.h"
 #include "cob_twist_controller/constraint_solvers/solvers/gradient_projection_method_solver.h"
+#include "cob_twist_controller/constraint_solvers/solvers/stack_of_tasks_solver.h"
+// #include "cob_twist_controller/constraint_solvers/solvers/task_priority_solver.h"
 
 #include "cob_twist_controller/damping_methods/damping.h"
 
@@ -60,10 +62,10 @@ int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(InvDiffKinSolver
     }
 
     std::set<tConstraintBase> constraints = ConstraintsBuilder<>::createConstraints(params,
-                                                                                     q,
-                                                                                     jacobian_data,
-                                                                                     this->jnt_to_jac_,
-                                                                                     this->data_mediator_);
+                                                                                    q,
+                                                                                    jacobian_data,
+                                                                                    this->jnt_to_jac_,
+                                                                                    this->data_mediator_);
 
     boost::shared_ptr<ISolverFactory> sf;
     if (!ConstraintSolverFactoryBuilder::getSolverFactory(params.constraint, sf))
@@ -107,6 +109,12 @@ bool ConstraintSolverFactoryBuilder::getSolverFactory(uint32_t constraint_type,
         case GPM_CA:
             solver_factory.reset(new SolverFactory<GradientProjectionMethodSolver>());
             break;
+        case TASK_STACK:
+            solver_factory.reset(new SolverFactory<StackOfTasksSolver>());
+            break;
+//        case TASK_PRIO:
+//            solver_factory.reset(new SolverFactory<TaskPrioritySolver>());
+//            break;
         default:
             ROS_ERROR("Returning NULL factory due to constraint solver creation error. There is no solver method for %d implemented.",
                       constraint_type);

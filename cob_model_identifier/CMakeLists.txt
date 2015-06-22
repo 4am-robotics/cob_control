@@ -13,6 +13,7 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES input_generator output_recorder
   CATKIN_DEPENDS roscpp std_msgs geometry_msgs tf std_srvs
+  DEPENDS eigen
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${orocos_kdl_INCLUDE_DIRS} )
@@ -21,10 +22,11 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${oroco
 ## Build
 # Declare a cpp library
 add_library(output_recorder src/output_recorder.cpp )
+target_link_libraries(output_recorder ${catkin_LIBRARIES} ${EIGEN_LIBRARIES} ${orocos_kdl_INCLUDE_DIRS} )
 
 ## Declare a cpp executable
 add_executable(output_recorder_node src/output_recorder_node.cpp)
-target_link_libraries(output_recorder_node output_recorder ${catkin_LIBRARIES} ${orocos_kdl_INCLUDE_DIRS} )
+target_link_libraries(output_recorder_node output_recorder)
 
 
 ## Install

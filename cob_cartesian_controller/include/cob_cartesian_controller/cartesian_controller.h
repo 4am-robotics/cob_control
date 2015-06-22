@@ -15,7 +15,7 @@
  * \note
  *   ROS stack name: cob_control
  * \note
- *   ROS package name: cob_articulation
+ *   ROS package name: cob_cartesian_controller
  *
  * \author
  *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de
@@ -26,19 +26,21 @@
  *   ...
  *
  ****************************************************************/
-#ifndef COB_ARTICULATION_H
-#define COB_ARTICULATION_H
+#ifndef CARTESIAN_CONTROLLER_H
+#define CARTESIAN_CONTROLLER_H
+
+#include <vector>
+#include <tinyxml.h>
 
 #include <ros/ros.h>
+#include <std_msgs/Float64.h>
+#include <geometry_msgs/Pose.h>
+#include <visualization_msgs/Marker.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
-#include <tinyxml.h>
-#include <std_msgs/Float64.h>
-#include <visualization_msgs/Marker.h>
-#include <vector>
 
 
-class CobArticulation
+class CartesianController
 {
 public:
 	bool initialize();
@@ -99,4 +101,3 @@ private:
 };
 
 #endif
-

@@ -14,7 +14,7 @@
  * \note
  *   ROS stack name: cob_control
  * \note
- *   ROS package name: cob_articulation
+ *   ROS package name: cob_cartesian_controller
  *
  * \author
  *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de / christoph.mark@gmail.com
@@ -25,42 +25,41 @@
  *   ...
  *
  ****************************************************************/
-#include <ros/ros.h>
+
 #include <math.h>
-#include <cob_path_broadcaster/cob_articulation.h>
-#include <tf/transform_broadcaster.h>
-#include <tinyxml.h>
-#include <std_msgs/Float64.h>
-#include <geometry_msgs/Pose.h>
-#include <visualization_msgs/Marker.h>
-#include <vector>
-#include <kdl_conversions/kdl_msg.h>
-#include <std_srvs/Empty.h>
-#include <cob_srvs/SetString.h>
 #include <algorithm>
+
+#include <ros/ros.h>
 #include "ros/package.h"
 
-bool CobArticulation::initialize()
+#include <std_srvs/Empty.h>
+#include <cob_srvs/SetString.h>
+
+#include <kdl_conversions/kdl_msg.h>
+#include <cob_cartesian_controller/cartesian_controller.h>
+
+
+bool CartesianController::initialize()
 {
-	ros::NodeHandle nh_articulation("articulation");
+	ros::NodeHandle nh_private("~");
 	ros::NodeHandle nh_tracker("frame_tracker");
 	
 	///get params articulation Nodehandle
-	if(!nh_articulation.getParam("file_name", fileName_))
+	if(!nh_private.getParam("file_name", fileName_))
 	{
 		ROS_ERROR("Parameter 'file_name' not set");
 		return false;
 	}
 	
-	if(!nh_articulation.getParam("reference_frame", referenceFrame_))
+	if(!nh_private.getParam("reference_frame", referenceFrame_))
 	{
 		ROS_ERROR("Parameter 'reference_frame' not set");
 		return false;
 	}
 	
-	if(!nh_articulation.getParam("articulation_target_frame", targetFrame_))
+	if(!nh_private.getParam("target_frame", targetFrame_))
 	{
-		ROS_ERROR("Parameter 'articulation_target_frame' not set");
+		ROS_ERROR("Parameter 'target_frame' not set");
 		return false;
 	}
 	
@@ -76,17 +75,17 @@ bool CobArticulation::initialize()
 	else
 	{	update_rate_ = 68.0;	}	//hz
 	
-	stringPath_ = ros::package::getPath("cob_path_broadcaster"); 
+	stringPath_ = ros::package::getPath("cob_cartesian_controller"); 
 	stringPath_ = stringPath_+"/movement/"+fileName_;
 	charPath_ = stringPath_.c_str();
 	
 	marker1_=0;
 	
-	vis_pub_ = nh_articulation.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
-	speed_pub_ = nh_articulation.advertise<std_msgs::Float64> ("debug/linear_vel", 1);
-	accl_pub_ = nh_articulation.advertise<std_msgs::Float64> ("debug/linear_accl", 1);
-	path_pub_ = nh_articulation.advertise<std_msgs::Float64> ("debug/linear_path", 1);
-	jerk_pub_ = nh_articulation.advertise<std_msgs::Float64> ("debug/linear_jerk", 1);
+	vis_pub_ = nh_private.advertise<visualization_msgs::Marker>( "visualization_marker", 0 );
+	speed_pub_ = nh_private.advertise<std_msgs::Float64> ("debug/linear_vel", 1);
+	accl_pub_ = nh_private.advertise<std_msgs::Float64> ("debug/linear_accl", 1);
+	path_pub_ = nh_private.advertise<std_msgs::Float64> ("debug/linear_path", 1);
+	jerk_pub_ = nh_private.advertise<std_msgs::Float64> ("debug/linear_jerk", 1);
 	
 	ROS_WARN("Waiting for Services...");
 	startTracking_ = nh_tracker.serviceClient<cob_srvs::SetString>("start_tracking");
@@ -98,8 +97,8 @@ bool CobArticulation::initialize()
 	return true;
 }
 
-void CobArticulation::load()
-{	
+void CartesianController::load()
+{
 	stop_tracking();
 	ROS_INFO("Stopping current tracking");
 	std::vector <geometry_msgs::Pose> posVec;
@@ -257,7 +256,7 @@ void CobArticulation::load()
 				actualTcpPose = getEndeffectorPose();
 				ROS_INFO("Hold position");
 				holdTime = atof(child->Attribute( "time"));
-				ros::Timer timer = nh_.createTimer(ros::Duration(holdTime), &CobArticulation::timerCallback, this);
+				ros::Timer timer = nh_.createTimer(ros::Duration(holdTime), &CartesianController::timerCallback, this);
 				hold_=true;
 				PoseToRPY(actualTcpPose,roll,pitch,yaw);
 				ROS_INFO("Hold Orientation: %f %f %f",roll,pitch,yaw);
@@ -271,12 +270,14 @@ void CobArticulation::load()
 	stop_tracking();
 }
 
-void CobArticulation::timerCallback(const ros::TimerEvent& event){
+void CartesianController::timerCallback(const ros::TimerEvent& event)
+{
 	hold_=false;
 }
 
 // Pseudo PTP
-void CobArticulation::move_ptp(geometry_msgs::Pose targetPose, double epsilon){
+void CartesianController::move_ptp(geometry_msgs::Pose targetPose, double epsilon)
+{
 	reached_pos_=false;
 	int reached_pos_counter=0;
 	double ro,pi,ya;
@@ -285,7 +286,8 @@ void CobArticulation::move_ptp(geometry_msgs::Pose targetPose, double epsilon){
 	tf::Quaternion q;
 	bool transformed=false;
 	
-	while(ros::ok()){
+	while(ros::ok())
+	{
 		// Linearkoordinaten
 		transform_.setOrigin( tf::Vector3(targetPose.position.x,targetPose.position.y,targetPose.position.z) );
 	
@@ -296,11 +298,13 @@ void CobArticulation::move_ptp(geometry_msgs::Pose targetPose, double epsilon){
 		br_.sendTransform(tf::StampedTransform(transform_, ros::Time::now(), referenceFrame_, targetFrame_));
 		
 		// Get transformation
-		try{
-		listener_.lookupTransform(targetFrame_,chain_tip_link_, ros::Time(0), stampedTransform);
+		try
+		{
+			listener_.lookupTransform(targetFrame_,chain_tip_link_, ros::Time(0), stampedTransform);
 		}
-		catch (tf::TransformException &ex) {
-		ROS_ERROR("%s",ex.what());
+		catch (tf::TransformException &ex)
+		{
+			ROS_ERROR("%s",ex.what());
 		}
 		
 		// Get current RPY out of quaternion
@@ -309,15 +313,18 @@ void CobArticulation::move_ptp(geometry_msgs::Pose targetPose, double epsilon){
 				
 				
 		// Wait for arm_7_link to be in position
-		if(epsilon_area(stampedTransform.getOrigin().x(), stampedTransform.getOrigin().y(), stampedTransform.getOrigin().z(),ro,pi,ya,epsilon)){
+		if(epsilon_area(stampedTransform.getOrigin().x(), stampedTransform.getOrigin().y(), stampedTransform.getOrigin().z(),ro,pi,ya,epsilon))
+		{
 			reached_pos_counter++;	// Count up if end effector position is in the epsilon area to avoid wrong values
 		}
 		
-		if(reached_pos_counter>=50){
+		if(reached_pos_counter>=50)
+		{
 			reached_pos_=true;
 		}
 		
-		if(reached_pos_==true){	// Cancle while loop
+		if(reached_pos_==true)	// Cancel while loop
+		{
 			break;
 		}
 		rate.sleep();
@@ -325,7 +332,8 @@ void CobArticulation::move_ptp(geometry_msgs::Pose targetPose, double epsilon){
 	}
 }
 
-void CobArticulation::pose_path_broadcaster(std::vector <geometry_msgs::Pose> *poseVector){
+void CartesianController::pose_path_broadcaster(std::vector <geometry_msgs::Pose> *poseVector)
+{
 	ros::Rate rate(update_rate_);
 	tf::Quaternion q;
 	double T_IPO=pow(update_rate_,-1);
@@ -348,10 +356,9 @@ void CobArticulation::pose_path_broadcaster(std::vector <geometry_msgs::Pose> *p
 		ros::spinOnce();
 		rate.sleep();
 	}
-	
 }
 
-void CobArticulation::hold_position(geometry_msgs::Pose holdPose)
+void CartesianController::hold_position(geometry_msgs::Pose holdPose)
 {
 	ros::Rate rate(update_rate_);
 	tf::Quaternion q;
@@ -373,7 +380,7 @@ void CobArticulation::hold_position(geometry_msgs::Pose holdPose)
 
 // Helper Functions 
 //--------------------------------------------------------------------------------------------------------------
-void CobArticulation::linear_interpolation(	std::vector <geometry_msgs::Pose> *poseVector,
+void CartesianController::linear_interpolation(	std::vector <geometry_msgs::Pose> *poseVector,
 											geometry_msgs::Pose start, geometry_msgs::Pose end,
 											double VelMax, double AcclMax, std::string profile,bool justRotate) 
 {
@@ -432,7 +439,7 @@ void CobArticulation::linear_interpolation(	std::vector <geometry_msgs::Pose> *p
 	}
 }
 
-void CobArticulation::circular_interpolation(	std::vector<geometry_msgs::Pose>* poseVector,
+void CartesianController::circular_interpolation(	std::vector<geometry_msgs::Pose>* poseVector,
 												double M_x,double M_y,double M_z,
 												double M_roll,double M_pitch,double M_yaw,
 												double startAngle, double endAngle,double r, double VelMax, double AcclMax,
@@ -507,7 +514,7 @@ void CobArticulation::circular_interpolation(	std::vector<geometry_msgs::Pose>* 
 	showLevel(C,marker4,1.0,0,0,"level");
 }
 
-void CobArticulation::calculateProfile(std::vector<double> *pathArray,double Se, double VelMax, double AcclMax, std::string profile)
+void CartesianController::calculateProfile(std::vector<double> *pathArray,double Se, double VelMax, double AcclMax, std::string profile)
 {	
 	int steps_te,steps_tv,steps_tb=0;
 	double tv,tb,te=0;
@@ -583,7 +590,7 @@ void CobArticulation::calculateProfile(std::vector<double> *pathArray,double Se,
 	}
 }
 
-void CobArticulation::calculateProfileForAngularMovements(std::vector<double> *pathMatrix,
+void CartesianController::calculateProfileForAngularMovements(std::vector<double> *pathMatrix,
 										 				 double Se, double Se_roll, double Se_pitch, double Se_yaw,
 										 				 double start_angle_roll, double start_angle_pitch, double start_angle_yaw,
 														 double VelMax, double AcclMax,std::string profile, bool justRotate)
@@ -692,7 +699,7 @@ void CobArticulation::calculateProfileForAngularMovements(std::vector<double> *p
 	pathMatrix[3]=yawPath;
 }
 
-geometry_msgs::Pose CobArticulation::getEndeffectorPose()
+geometry_msgs::Pose CartesianController::getEndeffectorPose()
 {
 	geometry_msgs::Pose pos;
 	tf::StampedTransform stampedTransform;
@@ -725,7 +732,7 @@ geometry_msgs::Pose CobArticulation::getEndeffectorPose()
 }
 
 // Checks if the endeffector is in the area of the 'br' frame
-bool CobArticulation::epsilon_area(double x,double y, double z, double roll, double pitch, double yaw,double epsilon)
+bool CartesianController::epsilon_area(double x,double y, double z, double roll, double pitch, double yaw,double epsilon)
 {
 	bool x_okay=false, y_okay=false, z_okay=false;
 	bool roll_okay=false, pitch_okay=false, yaw_okay=false;
@@ -744,16 +751,18 @@ bool CobArticulation::epsilon_area(double x,double y, double z, double roll, dou
 	if(pitch < epsilon){ pitch_okay = true; };
 	if(yaw < epsilon){ yaw_okay = true; };
 	
-	if(x_okay && y_okay && z_okay && roll_okay && pitch_okay && yaw_okay){
+	if(x_okay && y_okay && z_okay && roll_okay && pitch_okay && yaw_okay)
+	{
 		return true;
-	}else{
+	}else
+	{
 		return false;
 	}
 }
 
-void CobArticulation::showMarker(tf::StampedTransform tf,int marker_id,double red, double green, double blue,std::string ns)
+void CartesianController::showMarker(tf::StampedTransform tf,int marker_id,double red, double green, double blue,std::string ns)
 {
-  	visualization_msgs::Marker marker;
+	visualization_msgs::Marker marker;
 	marker.header.frame_id = referenceFrame_;
 	marker.header.stamp = ros::Time();
 	marker.ns = ns;
@@ -777,12 +786,11 @@ void CobArticulation::showMarker(tf::StampedTransform tf,int marker_id,double re
 	
 	marker.color.a = 1.0;
 	vis_pub_.publish( marker );
-	
 }
 
-void CobArticulation::showDot(double x,double y,double z,int marker_id,double red, double green, double blue,std::string ns)
+void CartesianController::showDot(double x,double y,double z,int marker_id,double red, double green, double blue,std::string ns)
 {
-  	visualization_msgs::Marker marker;
+	visualization_msgs::Marker marker;
 	marker.header.frame_id = referenceFrame_;
 	marker.header.stamp = ros::Time();
 	marker.ns = ns;
@@ -810,9 +818,9 @@ void CobArticulation::showDot(double x,double y,double z,int marker_id,double re
 	vis_pub_.publish( marker );
 }
 
-void CobArticulation::showLevel(tf::Transform pos,int marker_id,double red, double green, double blue,std::string ns)
+void CartesianController::showLevel(tf::Transform pos,int marker_id,double red, double green, double blue,std::string ns)
 {
-  	visualization_msgs::Marker marker;
+	visualization_msgs::Marker marker;
 	marker.header.frame_id = referenceFrame_;
 	marker.header.stamp = ros::Time();
 	marker.ns = ns;
@@ -838,33 +846,38 @@ void CobArticulation::showLevel(tf::Transform pos,int marker_id,double red, doub
 	vis_pub_.publish( marker );
 }
 
-void CobArticulation::start_tracking()
+void CartesianController::start_tracking()
 {
 	cob_srvs::SetString start;
 	start.request.data = targetFrame_;
 	startTracking_.call(start);
 	
-	if(start.response.success==true){
+	if(start.response.success==true)
+	{
 		ROS_INFO("...service called!");
 	}
-	else{
+	else
+	{
 		ROS_INFO("...service failed");
 	}
 }
 
-void CobArticulation::stop_tracking()
+void CartesianController::stop_tracking()
 {
 	std_srvs::Empty srv_save_stop;
 	srv_save_stop.request;
-	if(stopTracking_.call(srv_save_stop)){
+	if(stopTracking_.call(srv_save_stop))
+	{
 		ROS_INFO("... service stopped!");
-		}
-		else {
-			ROS_ERROR("... service stop failed! FATAL!");
-		}
+	}
+	else
+	{
+		ROS_ERROR("... service stop failed! FATAL!");
+	}
 }
 
-void CobArticulation::generatePath(std::vector<double> *pathArray,double T_IPO, double VelMax, double AcclMax,double Se_max, int steps_max, std::string profile){	
+void CartesianController::generatePath(std::vector<double> *pathArray,double T_IPO, double VelMax, double AcclMax,double Se_max, int steps_max, std::string profile)
+{
 	double tv,tb,te=0;
 	int steps_te,steps_tv,steps_tb=0;
 	
@@ -876,12 +889,14 @@ void CobArticulation::generatePath(std::vector<double> *pathArray,double T_IPO, 
 	AcclMax = VelMax / tb;
 	
 	// Calculate the Profile Timings for the longest path
-	if(profile == "ramp"){
+	if(profile == "ramp")
+	{
 		tb = VelMax/AcclMax;
 		te = (std::fabs(Se_max) / VelMax) + tb;
 		tv = te - tb;
 	}
-	else{
+	else
+	{
 		tb = 2*VelMax/AcclMax;
 		te = (std::fabs(Se_max) / VelMax) + tb;
 		tv = te - tb;
@@ -891,13 +906,14 @@ void CobArticulation::generatePath(std::vector<double> *pathArray,double T_IPO, 
 	steps_tb = (double)tb / T_IPO;
 	steps_tv = (double)(tv-tb) / T_IPO;
 	steps_te = (double)(te-tv) / T_IPO;
-		
+	
 	// Reconfigure timings wtih T_IPO
 	tb=steps_tb*T_IPO;
 	tv=(steps_tb+steps_tv)*T_IPO;
 	te=(steps_tb+steps_tv+steps_te)*T_IPO;
 	
-	if(profile == "ramp"){
+	if(profile == "ramp")
+	{
 		// Calculate the ramp profile path
 		// 0 <= t <= tb
 		for(int i=0;i<=steps_tb-1;i++){
@@ -912,33 +928,40 @@ void CobArticulation::generatePath(std::vector<double> *pathArray,double T_IPO, 
 			pathArray->push_back(Se_max/std::fabs(Se_max)*(VelMax * (te-tb) - 0.5*AcclMax* pow(te-(i*T_IPO),2)));
 		}
 	}
-	else{
+	else
+	{
 		// Calculate the sinoide profile path
 		// 0 <= t <= tb
-		for(int i=0;i<=steps_tb-1;i++){	
+		for(int i=0;i<=steps_tb-1;i++)
+		{
 			pathArray->push_back( Se_max/std::fabs(Se_max)*( AcclMax*(0.25*pow(i*T_IPO,2) + pow(tb,2)/(8*pow(M_PI,2)) *(cos(2*M_PI/tb * (i*T_IPO))-1))));
 		}
 		// tb <= t <= tv
-		for(int i=steps_tb;i<=(steps_tb+steps_tv-1);i++){
+		for(int i=steps_tb;i<=(steps_tb+steps_tv-1);i++)
+		{
 			pathArray->push_back(Se_max/std::fabs(Se_max)*(VelMax*(i*T_IPO-0.5*tb)));
 		}
 		// tv <= t <= te
-		for(int i=(steps_tb+steps_tv);i<(steps_tv+steps_tb+steps_te-1);i++){
+		for(int i=(steps_tb+steps_tv);i<(steps_tv+steps_tb+steps_te-1);i++)
+		{
 			pathArray->push_back(Se_max/std::fabs(Se_max)*(0.5*AcclMax*( te*(i*T_IPO + tb) - 0.5*(pow(i*T_IPO,2)+pow(te,2)+2*pow(tb,2)) + (pow(tb,2)/(4*pow(M_PI,2))) * (1-cos( ((2*M_PI)/tb) * (i*T_IPO-tv))))));
 		}
 	}
+	//ToDo: we should use the final else-case for "unknown profile" in which we return failure
 }
 
-void CobArticulation::generatePathWithTe(std::vector<double> *pathArray,double T_IPO, double te, double AcclMax,double Se_max, int steps_max,double start_angle,std::string profile){	
+void CartesianController::generatePathWithTe(std::vector<double> *pathArray,double T_IPO, double te, double AcclMax,double Se_max, int steps_max,double start_angle,std::string profile)
+{
 	double tv,tb=0;
 	int steps_te,steps_tv,steps_tb=0;
 	double VelMax;
-
 	
 	// Calculate the Profile Timings
-	if(profile == "ramp"){
+	if(profile == "ramp")
+	{
 		// Reconfigure AcclMax and Velmax
-		while(te< 2*sqrt(std::fabs(Se_max)/AcclMax)){
+		while(te< 2*sqrt(std::fabs(Se_max)/AcclMax))
+		{
 			AcclMax+=0.001;
 		}
 		VelMax = AcclMax * te / 2 - sqrt((pow(AcclMax,2)*pow(te,2)/4) - std::fabs(Se_max) * AcclMax );
@@ -947,9 +970,11 @@ void CobArticulation::generatePathWithTe(std::vector<double> *pathArray,double T
 		tb = VelMax/AcclMax;
 		tv = te - tb;
 	}
-	else{	// Sinoide
+	else
+	{
 		// Reconfigure AcclMax and Velmax
-		while(te< sqrt(std::fabs(Se_max)*8/AcclMax)){
+		while(te< sqrt(std::fabs(Se_max)*8/AcclMax))
+		{
 			AcclMax+=0.001;
 		}
 		VelMax = AcclMax * te / 4 - sqrt((pow(AcclMax,2)*pow(te,2)/16) - std::fabs(Se_max) * AcclMax/2 );
@@ -958,7 +983,7 @@ void CobArticulation::generatePathWithTe(std::vector<double> *pathArray,double T
 		tb = 2*VelMax/AcclMax;
 		tv = te - tb;
 	}
-
+	
 	// Interpolationsteps for every timesequence
 	steps_tb = (double)tb / T_IPO;
 	steps_tv = (double)(tv-tb) / T_IPO;
@@ -969,29 +994,36 @@ void CobArticulation::generatePathWithTe(std::vector<double> *pathArray,double T
 	tv=(steps_tb+steps_tv)*T_IPO;
 	te=(steps_tb+steps_tv+steps_te)*T_IPO;
 	
-	if(profile == "ramp"){
+	if(profile == "ramp")
+	{
 		// Calculate the ramp profile path
 		// 0 <= t <= tb
-		for(int i=0;i<=steps_tb-1;i++){	
+		for(int i=0;i<=steps_tb-1;i++)
+		{
 			pathArray->push_back( start_angle + Se_max/std::fabs(Se_max)*(0.5*AcclMax*pow((T_IPO*i),2)));
 		}
 		// tb <= t <= tv
-		for(int i=steps_tb;i<=(steps_tb+steps_tv-1);i++){
+		for(int i=steps_tb;i<=(steps_tb+steps_tv-1);i++)
+		{
 			pathArray->push_back(start_angle + Se_max/std::fabs(Se_max)*(VelMax*(T_IPO*i)-0.5*pow(VelMax,2)/AcclMax));
 		}
 		// tv <= t <= te
-		for(int i=(steps_tb+steps_tv);i<(steps_tv+steps_tb+steps_te-1);i++){
+		for(int i=(steps_tb+steps_tv);i<(steps_tv+steps_tb+steps_te-1);i++)
+		{
 			pathArray->push_back(start_angle + Se_max/std::fabs(Se_max)*(VelMax * (te-tb) - 0.5*AcclMax* pow(te-(i*T_IPO),2)));
 		}
 	}
-	else{
+	else
+	{
 		// Calculate the sinoide profile path
 		// 0 <= t <= tb
-		for(int i=0;i<=steps_tb-1;i++){	
+		for(int i=0;i<=steps_tb-1;i++)
+		{
 			pathArray->push_back(start_angle + Se_max/std::fabs(Se_max)*( AcclMax*(0.25*pow(i*T_IPO,2) + pow(tb,2)/(8*pow(M_PI,2)) *(cos(2*M_PI/tb * (i*T_IPO))-1))));
 		}
 		// tb <= t <= tv
-		for(int i=steps_tb;i<=(steps_tb+steps_tv-1);i++){
+		for(int i=steps_tb;i<=(steps_tb+steps_tv-1);i++)
+		{
 			pathArray->push_back(start_angle + Se_max/std::fabs(Se_max)*(VelMax*(i*T_IPO-0.5*tb)));
 		}
 		// tv <= t <= te
@@ -1001,7 +1033,8 @@ void CobArticulation::generatePathWithTe(std::vector<double> *pathArray,double T
 	}
 }
 
-void CobArticulation::PoseToRPY(geometry_msgs::Pose pose,double &roll, double &pitch, double &yaw){
+void CartesianController::PoseToRPY(geometry_msgs::Pose pose,double &roll, double &pitch, double &yaw)
+{
 	tf::Quaternion q = tf::Quaternion(pose.orientation.x,pose.orientation.y,pose.orientation.z,pose.orientation.w);
 	tf::Matrix3x3(q).getRPY(roll,pitch,yaw);
 }
