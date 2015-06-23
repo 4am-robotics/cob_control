@@ -188,10 +188,10 @@ Eigen::VectorXd  CollisionAvoidance<T_PARAMS, PRIO>::getPartialValues()
                The calculation of the general translational Jacobian for a point p is given by (using the translational and rotational
                part of the Jacobian), else the min criteria is not sufficient for all manipulator postures:
             */
-            //////Eigen::VectorXd term_2nd = (m_transl.transpose() + m_rot.transpose()) * d.distance_vec;
-            Eigen::VectorXd term_2nd =  new_jac_chain.data.transpose() * d.distance_vec;
+            Eigen::Vector3d vec;
+            vec << d.distance_vec[0], d.distance_vec[1], d.distance_vec[2];
+            Eigen::VectorXd term_2nd = (m_transl.transpose()) * vec;
             ROS_INFO_STREAM(">>>>>>>>>> FULL d.distance_vec: " << std::endl << d.distance_vec.transpose());
-            ROS_INFO_STREAM(">>>>>>>>>> 2nd term: " << std::endl << term_2nd.transpose());
 
             // Gradient of the cost function from: Strasse O., Escande A., Mansard N. et al.
             // "Real-Time (Self)-Collision Avoidance Task on a HRP-2 Humanoid Robot", 2008 IEEE International Conference

@@ -219,33 +219,6 @@ void DistanceManager::calculate()
         Eigen::Matrix3d x = tf_cb_frame_bl_.rotation();
         Eigen::Quaterniond q;
         tf::quaternionKDLToEigen (frame_pos.M, q);
-        Eigen::Quaterniond cb_quat_bl(x);
-        Eigen::Quaterniond bl_quat_abl0 = cb_quat_bl * q;
-        Eigen::Quaterniond bl_quat_abl = cb_quat_bl.inverse() * q;
-        Eigen::Quaterniond bl_quat_abl1 = q * cb_quat_bl;
-        Eigen::Quaterniond bl_quat_abl2 = q * cb_quat_bl.inverse();
-        Eigen::Quaterniond bl_quat_abl3 = q.inverse() * cb_quat_bl;
-        Eigen::Quaterniond bl_quat_abl4 = q.inverse() * cb_quat_bl.inverse();
-        Eigen::Quaterniond bl_quat_abl5 = cb_quat_bl.inverse() * q.inverse();
-        ROS_INFO_STREAM("bl_quat_abl0: " << bl_quat_abl0.x() << "; " << bl_quat_abl0.y() << "; " << bl_quat_abl0.z() << "; " << bl_quat_abl0.w());
-        ROS_INFO_STREAM("bl_quat_abl: " << bl_quat_abl.x() << "; " << bl_quat_abl.y() << "; " << bl_quat_abl.z() << "; " << bl_quat_abl.w());
-        ROS_INFO_STREAM("bl_quat_abl1: " << bl_quat_abl1.x() << "; " << bl_quat_abl1.y() << "; " << bl_quat_abl1.z() << "; " << bl_quat_abl1.w());
-        ROS_INFO_STREAM("bl_quat_abl2: " << bl_quat_abl2.x() << "; " << bl_quat_abl2.y() << "; " << bl_quat_abl2.z() << "; " << bl_quat_abl2.w());
-        ROS_INFO_STREAM("bl_quat_abl3: " << bl_quat_abl3.x() << "; " << bl_quat_abl3.y() << "; " << bl_quat_abl3.z() << "; " << bl_quat_abl3.w());
-        ROS_INFO_STREAM("bl_quat_abl4: " << bl_quat_abl4.x() << "; " << bl_quat_abl4.y() << "; " << bl_quat_abl4.z() << "; " << bl_quat_abl4.w());
-        ROS_INFO_STREAM("bl_quat_abl5: " << bl_quat_abl5.x() << "; " << bl_quat_abl5.y() << "; " << bl_quat_abl5.z() << "; " << bl_quat_abl5.w());
-
-
-
-        if (bl_quat_abl.w() > 0.0)
-        {
-            bl_quat_abl = Eigen::Quaterniond(1.0 * bl_quat_abl.w(), -1.0 * bl_quat_abl.x(), -1.0 * bl_quat_abl.y(), -1.0 * bl_quat_abl.z());
-            // bl_quat_abl = -1 * bl_quat_abl;
-            ROS_INFO_STREAM("changed bl_quat_abl: " << bl_quat_abl.x() << "; " << bl_quat_abl.y() << "; " << bl_quat_abl.z() << "; " << bl_quat_abl.w());
-        }
-
-
-
         /* ******* End Transformation part ************** */
 
         // Representation of segment_of_interest as specific shape
@@ -254,9 +227,7 @@ void DistanceManager::calculate()
         fcl::Cylinder c(0.1, 0.1);
         t_ptr_IMarkerShape ooi;
 
-
-
-        if(!DistanceManager::getMarkerShape(it->second.shape_type, abs_jnt_pos, bl_quat_abl, ooi))
+        if(!DistanceManager::getMarkerShape(it->second.shape_type, abs_jnt_pos, q, ooi))
         {
             return;
         }
@@ -272,7 +243,7 @@ void DistanceManager::calculate()
         {
             fcl::CollisionObject collision_obj = (*it)->getCollisionObject();
             fcl::DistanceResult tmpResult;
-            fcl::DistanceRequest distRequest(true);
+            fcl::DistanceRequest distRequest(true, 0.01, 0.0000001);
             fcl::FCL_REAL dist = fcl::distance(&ooi_co, &collision_obj, distRequest, tmpResult);
             if (dist < last_dist)
             {
@@ -287,29 +258,31 @@ void DistanceManager::calculate()
         {
             fcl::Vec3f t = result_collision_obj.getTransform().transform(dist_result.nearest_points[1]); // Transform from "base_link" frame!!!
             fcl::Vec3f a = ooi_co.getTransform().transform(dist_result.nearest_points[0]);
-
             fcl::Quaternion3f qt = result_collision_obj.getQuatRotation();
-//            fcl::Matrix3f rt = result_collision_obj.getRotation();
             fcl::Quaternion3f qa = ooi_co.getQuatRotation();
-//            fcl::Matrix3f ra = ooi_co.getRotation();
             fcl::Quaternion3f diff_a_t = qa - qt;
 
-
-            Eigen::Vector3d obst_vector(t[VEC_X],
+            Eigen::Vector3d abs_obst_vector(t[VEC_X],
                                        t[VEC_Y],
                                        t[VEC_Z]);
+            Eigen::Vector3d obst_vector = tf_cb_frame_bl_.rotation() * abs_obst_vector + tf_cb_frame_bl_.translation();
+
 
             Eigen::Vector3d abs_jnt_pos_update(a[VEC_X],
                                                a[VEC_Y],
                                                a[VEC_Z]);
 
-            Eigen::Vector3d dist_vector = abs_jnt_pos_update - obst_vector;
+            Eigen::Vector3d dist_vector = tf_cb_frame_bl_ * abs_jnt_pos_update - obst_vector; // expressed in arm base link frame
+
+            Eigen::Vector3d nearestPoints1;
+            nearestPoints1 << dist_result.nearest_points[1][0], dist_result.nearest_points[1][1], dist_result.nearest_points[1][2];
 
             ROS_INFO_STREAM("Minimal distance: " << dist_result.min_distance);
-            ROS_INFO_STREAM("Nearest Pnt on obstacle: " << obst_vector.transpose());
+            ROS_INFO_STREAM("Nearest Pnt on obstacle (from root frame): " << abs_obst_vector.transpose());
+            ROS_INFO_STREAM("Nearest Pnt on obstacle (from chain base link frame): " << obst_vector.transpose());
             ROS_INFO_STREAM("Nearest Pnt on robot: " << abs_jnt_pos_update.transpose());
+            ROS_INFO_STREAM("Nearest Pnt on robot (from chain base link frame): " << (tf_cb_frame_bl_ * abs_jnt_pos_update).transpose());
             ROS_INFO_STREAM("Distance Vector: " << dist_vector.transpose());
-            ROS_INFO_STREAM("Diff Quat: " << diff_a_t.getX() << "; " << diff_a_t.getY() << "; " << diff_a_t.getZ() << "; " << diff_a_t.getW());
 
             cob_obstacle_distance::ObstacleDistance od_msg;
             od_msg.distance = dist_result.min_distance;
@@ -339,9 +312,14 @@ bool DistanceManager::transform()
     try
     {
         tf::StampedTransform cb_transform_bl;
+        tf::StampedTransform bl_transform_cb;
         tf_listener_.waitForTransform(chain_base_link_, root_frame_, ros::Time(0), ros::Duration(0.5));
         tf_listener_.lookupTransform(chain_base_link_, root_frame_, ros::Time(0), cb_transform_bl);
         tf::transformTFToEigen(cb_transform_bl, tf_cb_frame_bl_);
+
+        tf_listener_.waitForTransform(root_frame_, chain_base_link_, ros::Time(0), ros::Duration(0.5));
+        tf_listener_.lookupTransform(root_frame_, chain_base_link_, ros::Time(0), bl_transform_cb);
+        tf::transformTFToEigen(bl_transform_cb, tf_bl_frame_cb_);
     }
     catch (tf::TransformException &ex)
     {
@@ -414,8 +392,8 @@ bool DistanceManager::getMarkerShape(uint32_t shape_type, const Eigen::Vector3d&
 {
     // Representation of segment_of_interest as specific fcl::Shape
     fcl::Box b(0.1, 0.1, 0.1);
-    fcl::Sphere s(0.1);
-    fcl::Cylinder c(0.1, 0.1);
+    fcl::Sphere s(0.05);
+    fcl::Cylinder c(0.05, 0.1);
 
     geometry_msgs::Pose pose;
     pose.position.x = abs_pos(VEC_X);

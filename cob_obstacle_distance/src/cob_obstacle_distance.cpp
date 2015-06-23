@@ -51,9 +51,9 @@ int main(int argc, char **argv)
     ros::ServiceServer registration_srv = nh.advertiseService("obstacle_distance/registerPointOfInterest" , &DistanceManager::registerPointOfInterest, &sm);
 
     ROS_INFO("Starting basic_shapes ...\r\n");
-    fcl::Box b(0.3, 0.3, 0.3);
+    fcl::Sphere b(0.1);
 
-    t_ptr_IMarkerShape sptr_Cube(new MarkerShape<fcl::Box>(b, 0.5, -0.5, 1.0));
+    t_ptr_IMarkerShape sptr_Cube(new MarkerShape<fcl::Sphere>(b, 0.35, -0.35, 0.8));
     // t_ptr_IMarkerShape sptr_Sphere(new MarkerShape<fcl::Sphere>(1.0, -1.0, -1.0));
     // t_ptr_IMarkerShape sptr_Cyl(new MarkerShape<fcl::Cylinder>(-1.0, 1.0, -1.0));
 

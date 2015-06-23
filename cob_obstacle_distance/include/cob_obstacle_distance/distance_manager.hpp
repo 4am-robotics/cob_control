@@ -85,6 +85,7 @@ class DistanceManager
 
         tf::TransformListener tf_listener_;
         Eigen::Affine3d tf_cb_frame_bl_;
+        Eigen::Affine3d tf_bl_frame_cb_;
 
         std::vector<std::string> joints_;
         std::vector<std::string> segments_;
