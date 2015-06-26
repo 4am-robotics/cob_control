@@ -132,6 +132,7 @@ fcl::CollisionObject MarkerShape<T>::getCollisionObject() const
                                   this->marker_.pose.position.z));
 
     T geoShape = fcl_marker_converter_.getGeoShape();
+    geoShape.computeLocalAABB();
     fcl::CollisionObject cobj(boost::shared_ptr<fcl::CollisionGeometry>(new T(geoShape)), x);
     return cobj;
 }

@@ -61,10 +61,10 @@ class ConstraintsBuilder
 {
     public:
         static std::set<tConstraintBase> createConstraints(InvDiffKinSolverParams &params,
-                                                            const KDL::JntArray& q,
-                                                            const t_Matrix6Xd &jacobian_data,
-                                                            KDL::ChainJntToJacSolver& jnt_to_jac_,
-                                                            CallbackDataMediator& data_mediator);
+                                                           const JointStates& joint_states,
+                                                           const t_Matrix6Xd &jacobian_data,
+                                                           KDL::ChainJntToJacSolver& jnt_to_jac_,
+                                                           CallbackDataMediator& data_mediator);
 
     private:
         ConstraintsBuilder() {}
@@ -79,13 +79,14 @@ class CollisionAvoidance : public ConstraintBase<T_PARAMS, PRIO>
 {
     public:
 
-        CollisionAvoidance(PRIO prio, const KDL::JntArray& q,
+        CollisionAvoidance(PRIO prio,
+                           const JointStates& joint_states,
                            T_PARAMS constraint_params,
                            KDL::ChainJntToJacSolver& jnt_to_jac) :
-            ConstraintBase<T_PARAMS, PRIO>(prio, q, constraint_params), jnt_to_jac_(jnt_to_jac)
+            ConstraintBase<T_PARAMS, PRIO>(prio, joint_states, constraint_params), jnt_to_jac_(jnt_to_jac)
         {
-            // obstacle_avoidance_distance_vec_ = std::numeric_limits<double>::max() * Eigen::Vector3d::Ones();
-            obstacle_avoidance_distance_vec_ = std::numeric_limits<double>::max() * t_Vector6d::Ones();
+            obstacle_avoidance_distance_vec_ = std::numeric_limits<double>::max() * Eigen::Vector3d::Ones();
+            //obstacle_avoidance_distance_vec_ = std::numeric_limits<double>::max() * t_Vector6d::Ones();
             minimal_distance_ = std::numeric_limits<double>::max();
         }
 
@@ -98,14 +99,14 @@ class CollisionAvoidance : public ConstraintBase<T_PARAMS, PRIO>
         virtual Eigen::VectorXd getPartialValues();
         virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const;
         virtual Eigen::MatrixXd getObstacleAvoidancePointJac() const;
-        // virtual Eigen::Vector3d getDistanceVector() const;
+        virtual Eigen::Vector3d getDistanceVector() const;
 
 
     private:
         KDL::ChainJntToJacSolver& jnt_to_jac_;
-        Eigen::MatrixXd obstacle_avoidance_point_jac_;
-        // Eigen::Vector3d obstacle_avoidance_distance_vec_;
-        t_Vector6d obstacle_avoidance_distance_vec_;
+        Eigen::Matrix3Xd obstacle_avoidance_point_jac_;
+        Eigen::Vector3d obstacle_avoidance_distance_vec_;
+        // t_Vector6d obstacle_avoidance_distance_vec_;
         double minimal_distance_;
 
 
@@ -120,9 +121,9 @@ class JointLimitAvoidance : public ConstraintBase<T_PARAMS, PRIO>
     public:
 
         JointLimitAvoidance(PRIO prio,
-                            const KDL::JntArray& q,
+                            const JointStates& joint_states,
                             T_PARAMS constraint_params)
-            : ConstraintBase<T_PARAMS, PRIO>(prio, q, constraint_params)
+            : ConstraintBase<T_PARAMS, PRIO>(prio, joint_states, constraint_params)
         {}
 
         virtual ~JointLimitAvoidance()
@@ -135,7 +136,7 @@ class JointLimitAvoidance : public ConstraintBase<T_PARAMS, PRIO>
         virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const;
         double getValue(Eigen::VectorXd steps) const;
         virtual Eigen::MatrixXd getObstacleAvoidancePointJac() const;
-        //virtual Eigen::Vector3d getDistanceVector() const;
+        virtual Eigen::Vector3d getDistanceVector() const;
 
 
 };
@@ -149,9 +150,9 @@ class JointLimitAvoidanceMid : public ConstraintBase<T_PARAMS, PRIO>
     public:
 
         JointLimitAvoidanceMid(PRIO prio,
-                               const KDL::JntArray& q,
+                               const JointStates& joint_states,
                                T_PARAMS constraint_params)
-            : ConstraintBase<T_PARAMS, PRIO>(prio, q, constraint_params)
+            : ConstraintBase<T_PARAMS, PRIO>(prio, joint_states, constraint_params)
         {}
 
         virtual ~JointLimitAvoidanceMid()
@@ -163,7 +164,7 @@ class JointLimitAvoidanceMid : public ConstraintBase<T_PARAMS, PRIO>
         virtual Eigen::VectorXd getPartialValues();
         virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const;
         virtual Eigen::MatrixXd getObstacleAvoidancePointJac() const;
-        // virtual Eigen::Vector3d getDistanceVector() const;
+        virtual Eigen::Vector3d getDistanceVector() const;
 };
 /* END JointLimitAvoidanceMid ***********************************************************************************/
 

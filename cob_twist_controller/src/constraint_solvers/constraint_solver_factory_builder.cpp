@@ -35,7 +35,8 @@
 #include "cob_twist_controller/constraint_solvers/solvers/weighted_least_norm_solver.h"
 #include "cob_twist_controller/constraint_solvers/solvers/gradient_projection_method_solver.h"
 #include "cob_twist_controller/constraint_solvers/solvers/stack_of_tasks_solver.h"
-// #include "cob_twist_controller/constraint_solvers/solvers/task_priority_solver.h"
+#include "cob_twist_controller/constraint_solvers/solvers/stack_of_tasks_solver_2nd.h"
+#include "cob_twist_controller/constraint_solvers/solvers/task_priority_solver.h"
 
 #include "cob_twist_controller/damping_methods/damping.h"
 
@@ -49,11 +50,11 @@
 int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(InvDiffKinSolverParams &params,
                                                                 t_Matrix6Xd &jacobian_data,
                                                                 const t_Vector6d &in_cart_velocities,
-                                                                const KDL::JntArray& q,
-                                                                const KDL::JntArray& last_q_dot,
+                                                                const JointStates& joint_states,
                                                                 Eigen::MatrixXd &out_jnt_velocities)
 {
-    out_jnt_velocities = Eigen::MatrixXd::Zero(last_q_dot.rows(), last_q_dot.columns());
+    out_jnt_velocities = Eigen::MatrixXd::Zero(joint_states.current_q_dot_.rows(),
+                                               joint_states.current_q_dot_.columns());
     boost::shared_ptr<DampingBase> db (DampingBuilder::create_damping(params, jacobian_data));
     if(NULL == db)
     {
@@ -62,7 +63,7 @@ int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(InvDiffKinSolver
     }
 
     std::set<tConstraintBase> constraints = ConstraintsBuilder<>::createConstraints(params,
-                                                                                    q,
+                                                                                    joint_states,
                                                                                     jacobian_data,
                                                                                     this->jnt_to_jac_,
                                                                                     this->data_mediator_);
@@ -76,8 +77,7 @@ int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(InvDiffKinSolver
     out_jnt_velocities = sf->calculateJointVelocities(params,
                                                     jacobian_data,
                                                     in_cart_velocities,
-                                                    q,
-                                                    last_q_dot,
+                                                    joint_states,
                                                     db,
                                                     constraints);
 
@@ -112,9 +112,12 @@ bool ConstraintSolverFactoryBuilder::getSolverFactory(uint32_t constraint_type,
         case TASK_STACK:
             solver_factory.reset(new SolverFactory<StackOfTasksSolver>());
             break;
-//        case TASK_PRIO:
-//            solver_factory.reset(new SolverFactory<TaskPrioritySolver>());
-//            break;
+        case TASK_STACK_2ND:
+            solver_factory.reset(new SolverFactory<StackOfTasksSolver2nd>());
+            break;
+        case TASK_PRIO:
+            solver_factory.reset(new SolverFactory<TaskPrioritySolver>());
+            break;
         default:
             ROS_ERROR("Returning NULL factory due to constraint solver creation error. There is no solver method for %d implemented.",
                       constraint_type);

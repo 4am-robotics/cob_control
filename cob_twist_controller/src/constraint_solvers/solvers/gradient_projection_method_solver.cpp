@@ -30,14 +30,15 @@
 
 #include <cmath>
 
+#include "cob_twist_controller/constraints/self_motion_magnitude.h"
+
 /**
  * Solve the inverse differential kinematics equation by using GPM.
  * In addtion to the partial solution q_dot = J^+ * v the homogeneous solution (I - J^+ * J) q_dot_0 is calculated.
  * The q_dot_0 results from the sum of the constraint cost function gradients. The terms of the sum are weighted with a factor k_H separately.
  */
 Eigen::MatrixXd GradientProjectionMethodSolver::solve(const t_Vector6d &inCartVelocities,
-                                      const KDL::JntArray& q,
-                                      const KDL::JntArray& last_q_dot) const
+                                                      const JointStates& joint_states) const
 {
     //static double last_distance = 0.0;
     //static double delta_distance_factor = 1.0;
@@ -45,7 +46,7 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const t_Vector6d &inCartVe
     double k_H;
     double min_dist;
     double activation;
-    Eigen::VectorXd q_dot_0 = Eigen::VectorXd::Zero(q.rows());
+    Eigen::VectorXd q_dot_0 = Eigen::VectorXd::Zero(joint_states.current_q_.rows());
     Eigen::MatrixXd jacobianPseudoInverse = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
     Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(jacobianPseudoInverse.rows(), this->jacobian_data_.cols());
     Eigen::MatrixXd projector = ident - jacobianPseudoInverse * this->jacobian_data_;
@@ -62,45 +63,22 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const t_Vector6d &inCartVe
         homogeneousSolution += (k_H * tmpHomogeneousSolution);
     }
 
-    if(activation > min_dist)
-    //if(false)
-    {
-//        if(!activated)
-//        {
-//            activated = true;
-//            double delta = (min_dist - last_distance);
-//            double abs_delta = std::abs(delta);
-//
-//            ROS_INFO_STREAM("delta: " << delta);
-//            ROS_INFO_STREAM("abs_delta: " << abs_delta);
-//
-//            if(abs_delta > 0.000000001)
-//            {
-//                delta_distance_factor = delta / abs_delta;
-//            }
-//
-//            ROS_INFO_STREAM("delta_distance_factor: " << delta_distance_factor);
-//        }
+    double smm_gain = SelfMotionMagnitudeFactory< SmmDeterminatorVelocityBounds<MIN_CRIT> >::calculate(this->params_,
+                                                                                                       partialSolution,
+                                                                                                       homogeneousSolution);
+    homogeneousSolution = smm_gain * homogeneousSolution;
 
-        //ROS_INFO_STREAM("delta: " << delta);
-        //ROS_INFO_STREAM("abs_delta: " << abs_delta);
+    if(activation > min_dist)
+    {
         ROS_INFO_STREAM("min_dist: " << min_dist);
 //        ROS_INFO_STREAM("delta_distance_factor: " << delta_distance_factor);
         ROS_INFO_STREAM("k_H: " << k_H);
-        ROS_INFO_STREAM("projector: " << std::endl << projector);
+        ROS_INFO_STREAM("smm gain: " << smm_gain);
+//        ROS_INFO_STREAM("projector: " << std::endl << projector);
         ROS_INFO_STREAM("q_dot_0: " << std::endl << q_dot_0.transpose());
-        ROS_INFO_STREAM("partialSolution: " << std::endl << partialSolution);
-        ROS_INFO_STREAM("homogeneousSolution: " << std::endl << homogeneousSolution);
-
-//        homogeneousSolution = delta_distance_factor * homogeneousSolution;
-
-
+//        ROS_INFO_STREAM("partialSolution: " << std::endl << partialSolution);
+//        ROS_INFO_STREAM("homogeneousSolution: " << std::endl << homogeneousSolution);
     }
-    else
-    {
-//        activated = false;
-    }
-
 
 //    last_distance = min_dist;
     Eigen::MatrixXd qdots_out = partialSolution + homogeneousSolution; // weighting with k_H is done in loop

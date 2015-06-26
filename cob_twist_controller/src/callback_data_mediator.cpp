@@ -31,6 +31,8 @@
 
 #include "cob_twist_controller/callback_data_mediator.h"
 
+#include <eigen_conversions/eigen_msg.h>
+
 CallbackDataMediator::CallbackDataMediator()
 {
     this->it_distances = this->obstacle_distances_.end();
@@ -53,6 +55,7 @@ bool CallbackDataMediator::fill(ConstraintParamsCA& params_ca)
         params_ca.current_distance_.distance_vec = this->it_distances->distance_vec;
         params_ca.current_distance_.frame_id = this->it_distances->frame_id;
         params_ca.current_distance_.min_distance = this->it_distances->min_distance;
+        params_ca.current_distance_.collision_pnt_vector = this->it_distances->collision_pnt_vector;
         this->it_distances++;
 
         // Let the iterator point to the first element again -> Returns the same elements again until callback occurred.
@@ -82,14 +85,17 @@ void CallbackDataMediator::distancesToObstaclesCallback(const cob_obstacle_dista
     {
         ObstacleDistanceInfo d;
         d.min_distance = it->distance;
-        d.distance_vec << it->distance_vector.pose.position.x,
-                          it->distance_vector.pose.position.y,
-                          it->distance_vector.pose.position.z,
-                          it->distance_vector.pose.orientation.x,
-                          it->distance_vector.pose.orientation.y,
-                          it->distance_vector.pose.orientation.z;
 
-        d.frame_id = it->distance_vector.header.frame_id;
+        d.distance_vec << it->distance_vector.position.x,
+                          it->distance_vector.position.y,
+                          it->distance_vector.position.z,
+                          it->distance_vector.orientation.x,
+                          it->distance_vector.orientation.y,
+                          it->distance_vector.orientation.z;
+        tf::twistMsgToEigen(it->frame_twist, d.frame_twist);
+        tf::vectorMsgToEigen(it->collision_pnt_vector, d.collision_pnt_vector);
+
+        d.frame_id = it->header.frame_id;
         this->obstacle_distances_.push_back(d);
     }
 

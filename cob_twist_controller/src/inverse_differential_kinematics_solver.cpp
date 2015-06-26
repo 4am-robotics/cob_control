@@ -34,22 +34,21 @@
 /**
  * Solve the inverse kinematics problem at the first order differential level.
  */
-int InverseDifferentialKinematicsSolver::CartToJnt(const KDL::JntArray& q_in,
-                                                   const KDL::JntArray& last_q_dot,
+int InverseDifferentialKinematicsSolver::CartToJnt(const JointStates& joint_states,
                                                    const KDL::Twist& v_in,
                                                    const KDL::Frame &base_position,
                                                    const KDL::Frame &chain_base,
                                                    KDL::JntArray& qdot_out)
 {
     int8_t retStat = -1;
-    this->adjustJac(q_in, base_position, chain_base);
+    this->adjustJac(joint_states, base_position, chain_base);
 
     t_Vector6d v_in_vec;
     tf::twistKDLToEigen(v_in, v_in_vec);
 
     KDL::ChainFkSolverPos_recursive fk_solver(this->chain_);
     KDL::Frame cartpos;
-    fk_solver.JntToCart(q_in, cartpos);
+    fk_solver.JntToCart(joint_states.current_q_, cartpos);
 
     double rot_x, rot_y, rot_z, rot_w;
     cartpos.M.GetQuaternion(rot_x, rot_y, rot_z, rot_w); // Similar to frametracker
@@ -59,12 +58,16 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const KDL::JntArray& q_in,
 
     this->params_.delta_p_vec = p_in_vec - last_p_in_vec_;
 
+
+    this->params_.task_stack_controller = &this->task_stack_controller_;
+
+
+
     Eigen::MatrixXd qdot_out_vec;
     retStat = constraint_solver_factory_.calculateJointVelocities(this->params_,
                                                                   this->jac_.data,
                                                                   v_in_vec,
-                                                                  q_in,
-                                                                  last_q_dot,
+                                                                  joint_states,
                                                                   qdot_out_vec);
 
     ///convert output
@@ -82,14 +85,14 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const KDL::JntArray& q_in,
  * Adjustment for the Jacobian in case of base gets active or not.
  * If base_active new columns will be added here.
  */
-void InverseDifferentialKinematicsSolver::adjustJac(const KDL::JntArray& q_in,
+void InverseDifferentialKinematicsSolver::adjustJac(const JointStates& joint_states,
                                                     const KDL::Frame &base_position,
                                                     const KDL::Frame &chain_base)
 {
     ///Let the ChainJntToJacSolver calculate the jacobian "jac_chain" for the current joint positions "q_in"
     KDL::Jacobian jac_chain(chain_.getNrOfJoints());
     Eigen::Matrix<double,6,3> jac_b;
-    jnt2jac_.JntToJac(q_in, jac_chain);
+    jnt2jac_.JntToJac(joint_states.current_q_, jac_chain);
     KDL::Frame pos;
 
     if(params_.base_active)

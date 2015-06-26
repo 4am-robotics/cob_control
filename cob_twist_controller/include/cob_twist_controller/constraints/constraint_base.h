@@ -82,7 +82,7 @@ class PriorityBase
         virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution,
                                               const Eigen::MatrixXd& homogeneous_solution) const = 0;
         virtual Eigen::MatrixXd getObstacleAvoidancePointJac() const = 0;
-        // virtual Eigen::Vector3d getDistanceVector() const = 0;
+        virtual Eigen::Vector3d getDistanceVector() const = 0;
 
     protected:
         PRIO priority_;
@@ -106,16 +106,16 @@ class ConstraintBase : public PriorityBase<PRIO>
          * @param params The parameters for the constraint to parameterize the calculation of the cost function values.
          */
         ConstraintBase(PRIO prio,
-                       const KDL::JntArray& q,
+                       const JointStates& joint_states,
                        T_PARAMS params)
-        : PriorityBase<PRIO>(prio), joint_pos_(q), constraint_params_(params)
+        : PriorityBase<PRIO>(prio), joint_states_(joint_states), constraint_params_(params)
         {}
 
         virtual ~ConstraintBase()
         {}
 
     protected:
-        const KDL::JntArray& joint_pos_;
+        const JointStates& joint_states_;
         T_PARAMS constraint_params_;
 };
 

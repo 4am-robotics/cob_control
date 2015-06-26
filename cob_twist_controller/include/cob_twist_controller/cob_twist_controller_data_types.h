@@ -35,14 +35,19 @@
 #include <Eigen/LU> // necessary to use several methods on EIGEN Matrices.
 #include <kdl/chainjnttojacsolver.hpp>
 
+#include "cob_twist_controller/task_stack/task_stack_controller.h"
+
 #define MAX_CRIT true
 #define MIN_CRIT false
 
 const double DAMPING_LIMIT = 1.0e-12; ///< const. value for zero comparison with damping factor
+const double ZERO_LIMIT = 1.0e-9;
 
 typedef Eigen::Matrix<double,6,Eigen::Dynamic> t_Matrix6Xd;
 
 typedef Eigen::Matrix<double,6,1> t_Vector6d;
+typedef Eigen::Matrix<double,7,1> t_Vector7d;
+typedef Eigen::Matrix<double,7,6> t_Matrix76d;
 
 enum DampingMethodTypes {
     NONE = 0,
@@ -59,7 +64,16 @@ enum ContraintTypes {
     GPM_JLA_MID = 4,
     GPM_CA = 5,
     TASK_STACK = 6,
-    TASK_PRIO = 7,
+    TASK_STACK_2ND = 7,
+    TASK_PRIO = 8,
+};
+
+struct JointStates
+{
+    KDL::JntArray current_q_;
+    KDL::JntArray last_q_;
+    KDL::JntArray current_q_dot_;
+    KDL::JntArray last_q_dot_;
 };
 
 struct InvDiffKinSolverParams {
@@ -87,6 +101,10 @@ struct InvDiffKinSolverParams {
     std::vector<double> limits_min;
     std::vector<double> limits_vel;
     std::vector<std::string> frame_names;
+
+
+    // TODO: Check for better place
+    TaskStackController_t *task_stack_controller;
 };
 
 struct ObstacleDistanceInfo
@@ -94,7 +112,9 @@ struct ObstacleDistanceInfo
     double min_distance;
     // Eigen::Vector3d distance_vec;
     t_Vector6d distance_vec;
+    t_Vector6d frame_twist;
     std::string frame_id;
+    Eigen::Vector3d collision_pnt_vector;
 };
 
 struct TwistControllerParams {

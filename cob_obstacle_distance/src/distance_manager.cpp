@@ -48,6 +48,9 @@
 #include <boost/filesystem/path.hpp>
 
 #include <eigen_conversions/eigen_kdl.h>
+#include <eigen_conversions/eigen_msg.h>
+
+#include <kdl_conversions/kdl_msg.h>
 
 #define VEC_X 0
 #define VEC_Y 1
@@ -117,12 +120,12 @@ int DistanceManager::init()
     obstacle_mgr_.reset(new ShapesManager(this->marker_pub_));
     object_of_interest_mgr_.reset(new ShapesManager(this->marker_pub_));
 
-    adv_chn_fk_solver_pos_.reset(new AdvancedChainFkSolverPos_recursive(chain_));
+    adv_chn_fk_solver_vel_.reset(new AdvancedChainFkSolverVel_recursive(chain_));
 
     last_q_ = KDL::JntArray(chain_.getNrOfJoints());
     last_q_dot_ = KDL::JntArray(chain_.getNrOfJoints());
 
-    jnt2jac_.reset(new KDL::ChainJntToJacSolver(chain_));
+
     return 0;
 }
 
@@ -191,6 +194,10 @@ void DistanceManager::calculate()
             ROS_ERROR("Failed to transform Return with no publish!");
             return;
         }
+
+        KDL::FrameVel p_dot_out;
+        KDL::JntArrayVel jnt_arr(last_q_, last_q_dot_);
+        adv_chn_fk_solver_vel_->JntToCart(jnt_arr, p_dot_out);
     }
 
     for(t_map_ObstacleDistance_iter it = this->obstacle_distances_.begin(); it != this->obstacle_distances_.end(); ++it)
@@ -208,15 +215,13 @@ void DistanceManager::calculate()
         uint16_t idx = str_it - this->segments_.begin();
 
         /* ******* Start Transformation part ************** */
-        KDL::Frame p_out;
-        int retVal = adv_chn_fk_solver_pos_->JntToCart(last_q_, p_out);
-        KDL::Frame frame_pos = adv_chn_fk_solver_pos_->getFrameAtSegment(idx);
+        KDL::FrameVel frame_vel = adv_chn_fk_solver_vel_->getFrameVelAtSegment(idx);
+        KDL::Frame frame_pos = frame_vel.GetFrame();
         Eigen::Vector3d chainbase2frame_pos(frame_pos.p.x(),
                                             frame_pos.p.y(),
                                             frame_pos.p.z());
         Eigen::Vector3d abs_jnt_pos = tf_cb_frame_bl_.inverse() * chainbase2frame_pos;
 
-        Eigen::Matrix3d x = tf_cb_frame_bl_.rotation();
         Eigen::Quaterniond q;
         tf::quaternionKDLToEigen (frame_pos.M, q);
         /* ******* End Transformation part ************** */
@@ -243,7 +248,7 @@ void DistanceManager::calculate()
         {
             fcl::CollisionObject collision_obj = (*it)->getCollisionObject();
             fcl::DistanceResult tmpResult;
-            fcl::DistanceRequest distRequest(true, 0.01, 0.0000001);
+            fcl::DistanceRequest distRequest(true);
             fcl::FCL_REAL dist = fcl::distance(&ooi_co, &collision_obj, distRequest, tmpResult);
             if (dist < last_dist)
             {
@@ -265,37 +270,44 @@ void DistanceManager::calculate()
             Eigen::Vector3d abs_obst_vector(t[VEC_X],
                                        t[VEC_Y],
                                        t[VEC_Z]);
-            Eigen::Vector3d obst_vector = tf_cb_frame_bl_.rotation() * abs_obst_vector + tf_cb_frame_bl_.translation();
-
+            Eigen::Vector3d obst_vector = tf_cb_frame_bl_ * abs_obst_vector;
+            Eigen::Vector3d tmp_obst_vector = tf_cb_frame_bl_.rotation() * abs_obst_vector + tf_cb_frame_bl_.translation();
 
             Eigen::Vector3d abs_jnt_pos_update(a[VEC_X],
                                                a[VEC_Y],
                                                a[VEC_Z]);
 
-            Eigen::Vector3d dist_vector = tf_cb_frame_bl_ * abs_jnt_pos_update - obst_vector; // expressed in arm base link frame
+            Eigen::Vector3d rel_base_link_frame_pos = tf_cb_frame_bl_ * abs_jnt_pos_update;
+            Eigen::Vector3d dist_vector = rel_base_link_frame_pos - obst_vector; // expressed in arm base link frame
 
-            Eigen::Vector3d nearestPoints1;
-            nearestPoints1 << dist_result.nearest_points[1][0], dist_result.nearest_points[1][1], dist_result.nearest_points[1][2];
+            // vector from frame origin to collision point
+            Eigen::Vector3d rel_frame_origin_to_collision_pnt = rel_base_link_frame_pos - chainbase2frame_pos;
 
+
+//            ROS_INFO_STREAM("rel_frame_origin_to_collision_pnt: " << rel_frame_origin_to_collision_pnt.transpose());
             ROS_INFO_STREAM("Minimal distance: " << dist_result.min_distance);
-            ROS_INFO_STREAM("Nearest Pnt on obstacle (from root frame): " << abs_obst_vector.transpose());
-            ROS_INFO_STREAM("Nearest Pnt on obstacle (from chain base link frame): " << obst_vector.transpose());
-            ROS_INFO_STREAM("Nearest Pnt on robot: " << abs_jnt_pos_update.transpose());
-            ROS_INFO_STREAM("Nearest Pnt on robot (from chain base link frame): " << (tf_cb_frame_bl_ * abs_jnt_pos_update).transpose());
+//            ROS_INFO_STREAM("Nearest Pnt on obstacle from FCL: " << dist_result.nearest_points[1]);
+//            ROS_INFO_STREAM("Nearest Pnt on obstacle (from root frame): " << abs_obst_vector.transpose());
+//            ROS_INFO_STREAM("Nearest Pnt on obstacle (from chain base link frame): " << obst_vector.transpose());
+//            ROS_INFO_STREAM("Nearest Pnt on robot: " << abs_jnt_pos_update.transpose());
+//            ROS_INFO_STREAM("Nearest Pnt on robot (from chain base link frame): " << (tf_cb_frame_bl_ * abs_jnt_pos_update).transpose());
+//            ROS_INFO_STREAM("Diff: " << (obst_vector - tmp_obst_vector).transpose());
             ROS_INFO_STREAM("Distance Vector: " << dist_vector.transpose());
 
             cob_obstacle_distance::ObstacleDistance od_msg;
             od_msg.distance = dist_result.min_distance;
-            od_msg.distance_vector.pose.position.x = dist_vector(VEC_X);
-            od_msg.distance_vector.pose.position.y = dist_vector(VEC_Y);
-            od_msg.distance_vector.pose.position.z = dist_vector(VEC_Z);
-            od_msg.distance_vector.pose.orientation.x = diff_a_t.getX();
-            od_msg.distance_vector.pose.orientation.y = diff_a_t.getY();
-            od_msg.distance_vector.pose.orientation.z = diff_a_t.getZ();
-            od_msg.distance_vector.pose.orientation.w = diff_a_t.getW();
-            od_msg.distance_vector.header.frame_id = frame_of_interest_name;
-            od_msg.distance_vector.header.stamp = ros::Time::now();
-            od_msg.distance_vector.header.seq = seq_nr_;
+            od_msg.distance_vector.position.x = dist_vector(VEC_X);
+            od_msg.distance_vector.position.y = dist_vector(VEC_Y);
+            od_msg.distance_vector.position.z = dist_vector(VEC_Z);
+            od_msg.distance_vector.orientation.x = diff_a_t.getX();
+            od_msg.distance_vector.orientation.y = diff_a_t.getY();
+            od_msg.distance_vector.orientation.z = diff_a_t.getZ();
+            od_msg.distance_vector.orientation.w = diff_a_t.getW();
+            od_msg.header.frame_id = frame_of_interest_name;
+            od_msg.header.stamp = ros::Time::now();
+            od_msg.header.seq = seq_nr_;
+            tf::twistKDLToMsg(frame_vel.GetTwist(), od_msg.frame_twist);
+            tf::vectorEigenToMsg(rel_frame_origin_to_collision_pnt, od_msg.collision_pnt_vector);
             obstacle_distances.distances.push_back(od_msg);
         }
     }
@@ -312,14 +324,9 @@ bool DistanceManager::transform()
     try
     {
         tf::StampedTransform cb_transform_bl;
-        tf::StampedTransform bl_transform_cb;
         tf_listener_.waitForTransform(chain_base_link_, root_frame_, ros::Time(0), ros::Duration(0.5));
         tf_listener_.lookupTransform(chain_base_link_, root_frame_, ros::Time(0), cb_transform_bl);
         tf::transformTFToEigen(cb_transform_bl, tf_cb_frame_bl_);
-
-        tf_listener_.waitForTransform(root_frame_, chain_base_link_, ros::Time(0), ros::Duration(0.5));
-        tf_listener_.lookupTransform(root_frame_, chain_base_link_, ros::Time(0), bl_transform_cb);
-        tf::transformTFToEigen(bl_transform_cb, tf_bl_frame_cb_);
     }
     catch (tf::TransformException &ex)
     {
@@ -382,6 +389,73 @@ bool DistanceManager::registerPointOfInterest(cob_obstacle_distance::Registratio
             response.success = false;
             response.message = "Failed to insert element " + request.frame_id + "!";
             ROS_ERROR_STREAM(response.message);
+        }
+    }
+
+    return true;
+}
+
+bool DistanceManager::predictDistance(cob_obstacle_distance::PredictDistance::Request& request,
+                                      cob_obstacle_distance::PredictDistance::Response& response)
+{
+    // Transform needs to be calculated only once for robot structure
+    // and is same for all obstacles.
+    response.min_dist = -1.0;
+
+    if (!this->transform())
+    {
+        ROS_ERROR("Failed to transform Return with no publish!");
+        return true;
+    }
+
+    KDL::FrameVel p_dot_out;
+    KDL::JntArrayVel jnt_arr(last_q_, last_q_dot_);
+    adv_chn_fk_solver_vel_->JntToCart(jnt_arr, p_dot_out);
+
+    KDL::JntArray joint_pos(request.joint_pos.size());
+    for(uint32_t lv = 0; lv < request.joint_pos.size(); ++lv)
+    {
+        joint_pos(lv) = request.joint_pos.at(lv);
+    }
+
+    std::vector<std::string>::const_iterator str_it = std::find(this->segments_.begin(),
+                                                                this->segments_.end(),
+                                                                request.frame_id);
+    uint16_t idx = str_it - this->segments_.begin();
+
+    /* ******* Start Transformation part ************** */
+    KDL::FrameVel frame_vel = adv_chn_fk_solver_vel_->getFrameVelAtSegment(idx);
+    KDL::Frame frame_pos = frame_vel.GetFrame();
+    Eigen::Vector3d chainbase2frame_pos(frame_pos.p.x(),
+                                        frame_pos.p.y(),
+                                        frame_pos.p.z());
+    Eigen::Vector3d abs_jnt_pos = tf_cb_frame_bl_.inverse() * chainbase2frame_pos;
+    Eigen::Quaterniond q;
+    tf::quaternionKDLToEigen (frame_pos.M, q);
+    /* ******* End Transformation part ************** */
+
+    // Representation of segment_of_interest as specific shape
+    t_ptr_IMarkerShape ooi;
+    if(!DistanceManager::getMarkerShape(visualization_msgs::Marker::SPHERE, abs_jnt_pos, q, ooi))
+    {
+        return true;
+    }
+
+    fcl::CollisionObject ooi_co = ooi->getCollisionObject();
+    ooi.reset();
+    fcl::CollisionObject result_collision_obj = ooi_co;
+    fcl::FCL_REAL last_dist = std::numeric_limits<fcl::FCL_REAL>::max();
+    for(ShapesManager::t_iter it = this->obstacle_mgr_->begin(); it != this->obstacle_mgr_->end(); ++it)
+    {
+        fcl::CollisionObject collision_obj = (*it)->getCollisionObject();
+        fcl::DistanceResult tmpResult;
+        fcl::DistanceRequest distRequest(true);
+        fcl::FCL_REAL dist = fcl::distance(&ooi_co, &collision_obj, distRequest, tmpResult);
+        if (dist < last_dist)
+        {
+            result_collision_obj = collision_obj;
+            last_dist = dist;
+            response.min_dist = dist;
         }
     }
 

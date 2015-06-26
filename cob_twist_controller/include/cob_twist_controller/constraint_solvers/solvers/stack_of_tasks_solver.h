@@ -59,8 +59,7 @@ class StackOfTasksSolver : public ConstraintSolver<>
          * See base class ConstraintSolver for more details on params and returns.
          */
         virtual Eigen::MatrixXd solve(const t_Vector6d &in_cart_velocities,
-                                      const KDL::JntArray& q,
-                                      const KDL::JntArray& last_q_dot) const;
+                                      const JointStates& joint_states) const;
 
         /**
          * Set all created constraints in a (priorized) set.

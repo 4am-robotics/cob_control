@@ -135,8 +135,10 @@ bool CobTwistController::initialize()
     reconfigure_server_->setCallback(boost::bind(&CobTwistController::reconfigureCallback,   this, _1, _2));
 
     ///initialize variables and current joint values and velocities
-    last_q_ = KDL::JntArray(chain_.getNrOfJoints());
-    last_q_dot_ = KDL::JntArray(chain_.getNrOfJoints());
+    this->joint_states_.current_q_ = KDL::JntArray(chain_.getNrOfJoints());
+    this->joint_states_.current_q_dot_ = KDL::JntArray(chain_.getNrOfJoints());
+    this->joint_states_.last_q_ = KDL::JntArray(chain_.getNrOfJoints());
+    this->joint_states_.last_q_dot_ = KDL::JntArray(chain_.getNrOfJoints());
 
     ///give tf_listener some time to fill tf-cache
     ros::Duration(1.0).sleep();
@@ -399,7 +401,11 @@ void CobTwistController::solveTwist(KDL::Twist twist)
         cb_frame_bl.M = KDL::Rotation::Quaternion(cb_transform_bl.getRotation().x(), cb_transform_bl.getRotation().y(), cb_transform_bl.getRotation().z(), cb_transform_bl.getRotation().w());
 
         //Solve twist
-        ret_ik = p_inv_diff_kin_solver_->CartToJnt(last_q_, last_q_dot_, twist, bl_frame_ct, cb_frame_bl, q_dot_ik);
+        ret_ik = p_inv_diff_kin_solver_->CartToJnt(this->joint_states_,
+                                                   twist,
+                                                   bl_frame_ct,
+                                                   cb_frame_bl,
+                                                   q_dot_ik);
     }
 
     if(twist_controller_params_.base_compensation)
@@ -424,7 +430,9 @@ void CobTwistController::solveTwist(KDL::Twist twist)
 
     if(!twist_controller_params_.base_active)
     {
-        ret_ik = p_inv_diff_kin_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik);
+        ret_ik = p_inv_diff_kin_solver_->CartToJnt(this->joint_states_,
+                                                   twist,
+                                                   q_dot_ik);
     }
 
     if(0 != ret_ik)
@@ -433,7 +441,7 @@ void CobTwistController::solveTwist(KDL::Twist twist)
     }
     else
     {
-        q_dot_ik = this->limiters_->enforceLimits(q_dot_ik, last_q_);
+        q_dot_ik = this->limiters_->enforceLimits(q_dot_ik, this->joint_states_.current_q_);
 
         std_msgs::Float64MultiArray vel_msg;
         for(unsigned int i=0; i < twist_controller_params_.dof; i++)
@@ -461,7 +469,7 @@ void CobTwistController::solveTwist(KDL::Twist twist)
                 debug_twistControllerParams_.base_activetwist_base_pub_.publish(base_vel_msg);    // Base twist in base_link
 
                 /////calculate current Manipulator-Twists
-                KDL::JntArrayVel jntArrayVel = KDL::JntArrayVel(last_q_,last_q_dot_);
+                KDL::JntArrayVel jntArrayVel = KDL::JntArrayVel(current_q_,current_q_dot_);
                 jntToCartSolver_vel_.reset(new KDL::ChainFkSolverVel_recursive(chain_));
                 int ret = jntToCartSolver_vel_->JntToCart(jntArrayVel,FrameVel_cb,-1);
 
@@ -488,8 +496,8 @@ void CobTwistController::solveTwist(KDL::Twist twist)
 
 void CobTwistController::jointstateCallback(const sensor_msgs::JointState::ConstPtr& msg)
 {
-    KDL::JntArray q_temp = last_q_;
-    KDL::JntArray q_dot_temp = last_q_dot_;
+    KDL::JntArray q_temp = this->joint_states_.current_q_;
+    KDL::JntArray q_dot_temp = this->joint_states_.current_q_dot_;
     int count = 0;
 
     for(unsigned int j = 0; j < twist_controller_params_.dof; j++)
@@ -508,8 +516,10 @@ void CobTwistController::jointstateCallback(const sensor_msgs::JointState::Const
 
     if(count == joints_.size())
     {
-        last_q_ = q_temp;
-        last_q_dot_ = q_dot_temp;
+        this->joint_states_.last_q_ = joint_states_.current_q_;
+        this->joint_states_.last_q_dot_ = joint_states_.current_q_dot_;
+        this->joint_states_.current_q_ = q_temp;
+        this->joint_states_.current_q_dot_ = q_dot_temp;
     }
 }
 

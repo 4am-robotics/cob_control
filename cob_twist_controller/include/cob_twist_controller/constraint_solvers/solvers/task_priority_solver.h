@@ -19,15 +19,15 @@
  * \author
  *   Author: Marco Bezzon, email: Marco.Bezzon@ipa.fraunhofer.de
  *
- * \date Date of creation: March, 2015
+ * \date Date of creation: June, 2015
  *
  * \brief
- *   This header contains the description of the unconstraint solver
+ *   This header contains the description of stack of tasks solver
  *   Implements methods from constraint_solver_base
  *
  ****************************************************************/
-#ifndef GRADIENT_PROJECTION_METHOD_SOLVER_H_
-#define GRADIENT_PROJECTION_METHOD_SOLVER_H_
+#ifndef TASK_PRIORITY_SOLVER_H_
+#define TASK_PRIORITY_SOLVER_H_
 
 #include <set>
 #include "ros/ros.h"
@@ -39,17 +39,17 @@
 #include "cob_twist_controller/constraints/constraint_base.h"
 #include "cob_twist_controller/constraints/constraint.h"
 
-class GradientProjectionMethodSolver : public ConstraintSolver<>
+class TaskPrioritySolver : public ConstraintSolver<>
 {
     public:
-        GradientProjectionMethodSolver(InvDiffKinSolverParams &params,
+        TaskPrioritySolver(InvDiffKinSolverParams &params,
                            t_Matrix6Xd &jacobian_data)
                            : ConstraintSolver(params,
                                               jacobian_data)
         {
         }
 
-        virtual ~GradientProjectionMethodSolver()
+        virtual ~TaskPrioritySolver()
         {
             this->clearConstraints();
         }
@@ -84,4 +84,4 @@ class GradientProjectionMethodSolver : public ConstraintSolver<>
         std::set<tConstraintBase> constraints_;
 };
 
-#endif /* GRADIENT_PROJECTION_METHOD_SOLVER_H_ */
+#endif /* TASK_PRIORITY_SOLVER_H_ */

@@ -25,7 +25,7 @@
  *   Implementation of a solver for a stack of tasks
  *
  ****************************************************************/
-#include "cob_twist_controller/constraint_solvers/solvers/xxx_task_priority_solver.h"
+#include <cob_twist_controller/constraint_solvers/solvers/task_priority_solver.h>
 
 /**
  * Solve the inverse differential kinematics equation by using a two tasks.
@@ -33,15 +33,14 @@
  */
 //
 Eigen::MatrixXd TaskPrioritySolver::solve(const t_Vector6d &in_cart_velocities,
-                                          const KDL::JntArray& q,
-                                          const KDL::JntArray& last_q_dot) const
+                                          const JointStates& joint_states) const
 {
 
-    Eigen::MatrixXd qdots_out = Eigen::MatrixXd::Zero(q.rows(), 1);
+    Eigen::MatrixXd qdots_out = Eigen::MatrixXd::Zero(joint_states.current_q_.rows(), 1);
 
     double k_H;
     double crit_distance;
-    Eigen::VectorXd q_dot_0 = Eigen::VectorXd::Zero(q.rows());
+    Eigen::VectorXd q_dot_0 = Eigen::VectorXd::Zero(joint_states.current_q_.rows());
     Eigen::Vector3d distance;
     double min_dist;
 
@@ -64,15 +63,16 @@ Eigen::MatrixXd TaskPrioritySolver::solve(const t_Vector6d &in_cart_velocities,
 
         }
 
-        t_Vector6d ext_distance;
+//        t_Vector6d ext_distance;
+        Eigen::Vector3d ext_distance;
 
         //ROS_INFO_STREAM("q_dot_0: " << q_dot_0);
         //ROS_INFO_STREAM("distance: " << distance);
 
         for (int i = 0; i < distance.rows(); ++i)
         {
-            ext_distance(i, 0) = distance(i);
-            ext_distance(i+3, 0) = 0.0;
+            ext_distance(i) = distance(i);
+            //ext_distance(i+3, 0) = 0.0;
         }
 
         //ROS_INFO_STREAM("Ext distance: " << ext_distance);
@@ -86,13 +86,7 @@ Eigen::MatrixXd TaskPrioritySolver::solve(const t_Vector6d &in_cart_velocities,
         if(min_dist <= crit_distance)
         //if(false)
         {
-
-
-            Eigen::Matrix3Xd m = Eigen::Matrix3Xd::Zero(3, 7); // TODO: Not const 7 bad style
-            m << obst_dist_pnt_jac.row(0),
-                 obst_dist_pnt_jac.row(1),
-                 obst_dist_pnt_jac.row(2);
-
+            ROS_INFO_STREAM("Crit distance detected...");
             //Eigen::MatrixXd tmp_matrix = m * projector;
             Eigen::MatrixXd tmp_matrix = obst_dist_pnt_jac * projector;
 
@@ -104,14 +98,15 @@ Eigen::MatrixXd TaskPrioritySolver::solve(const t_Vector6d &in_cart_velocities,
 
 
 
-            if (min_dist > 0.015)
-            {
-                t_Vector6d unit_direction = ext_distance / norm_ext_dist;
-                // Eigen::Vector3d unit_direction = distance / norm_ext_dist;
+//            if (min_dist > 0.015)
+//            {
 
-                //ROS_INFO_STREAM("unit_direction: " << unit_direction.transpose());
+                //t_Vector6d unit_direction = ext_distance / norm_ext_dist;
+                Eigen::Vector3d unit_direction = distance / norm_ext_dist;
 
-                magnitude = pow(crit_distance / min_dist, 2.0) - 1.0;
+                ROS_INFO_STREAM("unit_direction: " << unit_direction.transpose());
+
+                magnitude = pow(2 * crit_distance / min_dist, 2.0) - 1.0;
                 activation = 1.0;
 
                 //ROS_INFO_STREAM("magnitude: " << std::endl << magnitude);
@@ -131,15 +126,16 @@ Eigen::MatrixXd TaskPrioritySolver::solve(const t_Vector6d &in_cart_velocities,
 
 
                 ROS_INFO_STREAM("[min_dist > 0.015] qdots_out: " << std::endl << qdots_out);
-            }
-            else
-            {
-                t_Vector6d unit_direction = ext_distance;
-                qdots_out = jac_inv_2nd_term * (10.0 * unit_direction - obst_dist_pnt_jac * partialSolution);
-
-
-                ROS_WARN_STREAM("[min_dist < 0.015] qdots_out: " << std::endl << qdots_out);
-            }
+//            }
+//            else
+//            {
+//                //t_Vector6d unit_direction = ext_distance;
+//                Eigen::Vector3d unit_direction = distance;
+//                qdots_out = jac_inv_2nd_term * (10.0 * unit_direction - obst_dist_pnt_jac * partialSolution);
+//
+//
+//                ROS_WARN_STREAM("[min_dist < 0.015] qdots_out: " << std::endl << qdots_out);
+//            }
 
 
         }

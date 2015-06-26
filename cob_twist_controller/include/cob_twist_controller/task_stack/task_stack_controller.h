@@ -32,6 +32,7 @@
 
 #include <Eigen/Dense>
 #include <set>
+#include <vector>
 #include <stdint.h>
 
 #include <ros/ros.h>
@@ -46,12 +47,13 @@ struct Task
     Eigen::MatrixXd task_jacobian_;
     Eigen::VectorXd task_;
     std::string id_;
+    bool is_active_;
 
-    Task(PRIO prio, std::string id) : prio_(prio), id_(id)
+    Task(PRIO prio, std::string id) : prio_(prio), id_(id), is_active_(true)
     {}
 
     Task(PRIO prio, std::string id, Eigen::MatrixXd task_jacobian, Eigen::VectorXd task)
-    : prio_(prio), id_(id), task_jacobian_(task_jacobian), task_(task)
+    : prio_(prio), id_(id), task_jacobian_(task_jacobian), task_(task), is_active_(true)
     {}
 
     inline void setPriority(PRIO prio)
@@ -79,135 +81,189 @@ template
 <typename PRIO>
 class TaskStackController
 {
-    private:
-        // TODO: Use a activation flag here instead of managing separate lists?
-        std::set<Task<PRIO> > active_tasks_;
-        std::set<Task<PRIO> > inactive_tasks_;
-
     public:
-        typedef typename std::set<Task<PRIO> >::iterator TypedIter_t;
+        typedef typename std::vector<Task<PRIO> >::iterator TypedIter_t;
 
         ~TaskStackController()
         {
-            active_tasks_.clear();
-            inactive_tasks_.clear();
+            this->tasks_.clear();
+        }
+
+        TaskStackController()
+        {
+            this->active_task_iter_ = this->tasks_.begin();
         }
 
         void addTask(Task<PRIO> t);
 
-        void deactivateTask(typename std::set<Task<PRIO> >::iterator it);
+        void deactivateTask(typename std::vector<Task<PRIO> >::iterator it);
         void deactivateTask(std::string task_id);
+        void deactivateAllTasks();
 
         void activateAllTasks();
+        void activateHighestPrioTask();
 
-        typename std::set<Task<PRIO> >::iterator getActiveTasksBegin();
+        typename std::vector<Task<PRIO> >::iterator getTasksBegin();
 
-        typename std::set<Task<PRIO> >::iterator getActiveTasksEnd();
+        typename std::vector<Task<PRIO> >::iterator getTasksEnd();
+
+        typename std::vector<Task<PRIO> >::iterator nextActiveTask();
+
+        typename std::vector<Task<PRIO> >::iterator beginTaskIter();
+
+    private:
+        // Use a vector instead of a set here. Set stores const references ->
+        // so they cannot be changed.
+        std::vector<Task<PRIO> > tasks_;
+
+        TypedIter_t active_task_iter_;
+
+
 };
 
+/**
+ * Insert new task sorted.
+ */
 template <typename PRIO>
 void TaskStackController<PRIO>::addTask(Task<PRIO> t)
 {
-    TypedIter_t mem_it = this->inactive_tasks_.end();
-    for(TypedIter_t it = this->inactive_tasks_.begin(); it != this->inactive_tasks_.end(); it++)
+    TypedIter_t begin_it = this->tasks_.begin();
+    TypedIter_t mem_it = this->tasks_.end();
+    for(TypedIter_t it = this->tasks_.begin(); it != this->tasks_.end(); it++)
     {
         if(it->id_ == t.id_) // task already existent -> ignore add
         {
             mem_it = it;
-            ROS_WARN("Task already existent in inactive_tasks_");
+            it->task_jacobian_ = t.task_jacobian_;
+            it->task_ = t.task_;
             break;
         }
     }
 
-    if(this->inactive_tasks_.end() != mem_it)
+    if (this->tasks_.end() == mem_it)
     {
-        this->inactive_tasks_.erase(mem_it);
-        this->inactive_tasks_.insert(t);
-        return; // already found no check for active.
-    }
-
-    mem_it = this->active_tasks_.end();
-    for(TypedIter_t it = this->active_tasks_.begin(); it != this->active_tasks_.end(); it++)
-    {
-        if(it->id_ == t.id_) // task already existent -> ignore add
+        for(TypedIter_t it = this->tasks_.begin(); it != this->tasks_.end(); it++)
         {
-            ROS_WARN("Task already existent in active_tasks_ ... Updating matrices");
-            mem_it = it;
-            break;
+            if(t.prio_ < it->prio_)
+            {
+                mem_it = it;
+                break;
+            }
+        }
+
+        if(this->tasks_.end() == mem_it)
+        {
+            this->tasks_.push_back(t);
+        }
+        else
+        {
+            this->tasks_.insert(mem_it, t);
         }
     }
-
-    if(this->active_tasks_.end() != mem_it)
-    {
-        this->active_tasks_.erase(mem_it);
-    }
-
-    this->active_tasks_.insert(t);
 }
 
 template <typename PRIO>
 void TaskStackController<PRIO>::activateAllTasks()
 {
-    for(TypedIter_t it = this->inactive_tasks_.begin(); it != this->inactive_tasks_.end(); it++)
+    for(TypedIter_t it = this->tasks_.begin(); it != this->tasks_.end(); it++)
     {
-        Task<PRIO> t(it->prio_, it->id_, it->task_jacobian_, it->task_);
-        this->addTask(t);
+        it->is_active_ = true;
     }
-
-    this->inactive_tasks_.clear();
 }
 
 template <typename PRIO>
-typename std::set<Task<PRIO> >::iterator TaskStackController<PRIO>::getActiveTasksBegin()
+void TaskStackController<PRIO>::activateHighestPrioTask()
 {
-    return this->active_tasks_.begin();
-}
-
-
-template <typename PRIO>
-typename std::set<Task<PRIO> >::iterator TaskStackController<PRIO>::getActiveTasksEnd()
-{
-    return this->active_tasks_.end();
-}
-
-
-template <typename PRIO>
-void TaskStackController<PRIO>::deactivateTask(typename std::set<Task<PRIO> >::iterator it)
-{
-    if(std::find(this->active_tasks_.begin(), this->active_tasks_.end(), it) != this->active_tasks_.end())
+    TypedIter_t it = this->tasks_.begin();
+    if(this->tasks_.end() != it)
     {
-        this->inactive_tasks_.insert(*it);
-        this->active_tasks_.erase(it);
+        ROS_WARN_STREAM("Activation of highest prio task in stack: " << it->id_);
+        it->is_active_ = true;
+    }
+}
+
+template <typename PRIO>
+typename std::vector<Task<PRIO> >::iterator TaskStackController<PRIO>::getTasksBegin()
+{
+    return this->tasks_.begin();
+}
+
+
+template <typename PRIO>
+typename std::vector<Task<PRIO> >::iterator TaskStackController<PRIO>::getTasksEnd()
+{
+    return this->tasks_.end();
+}
+
+
+template <typename PRIO>
+void TaskStackController<PRIO>::deactivateTask(typename std::vector<Task<PRIO> >::iterator it)
+{
+    if(std::find(this->tasks_.begin(), this->tasks_.end(), it) != this->tasks_.end())
+    {
+        it->is_active_ = false;
     }
 }
 
 template <typename PRIO>
 void TaskStackController<PRIO>::deactivateTask(std::string task_id)
 {
-    if(this->active_tasks_.size() <= 1)
-    {
-        return; // already all deactivated. One task must be left.
-    }
+//    if(this->tasks_.size() <= 1)
+//    {
+//        return; // already all deactivated. One task must be left.
+//    }
 
-    TypedIter_t mem_it = this->active_tasks_.end();
-    for (TypedIter_t it = this->active_tasks_.begin(); it != this->active_tasks_.end(); it++)
+    for (TypedIter_t it = this->tasks_.begin(); it != this->tasks_.end(); it++)
     {
         if(it->id_ == task_id)
         {
-            mem_it = it;
+            it->is_active_ = false;
             break;
         }
     }
+}
 
-    if (this->active_tasks_.end() != mem_it)
+template <typename PRIO>
+void TaskStackController<PRIO>::deactivateAllTasks()
+{
+    for (TypedIter_t it = this->tasks_.begin(); it != this->tasks_.end(); it++)
     {
-        this->inactive_tasks_.insert(*mem_it);
-        this->active_tasks_.erase(mem_it);
+        it->is_active_ = false;
     }
 }
 
+
+template <typename PRIO>
+typename std::vector<Task<PRIO> >::iterator TaskStackController<PRIO>::nextActiveTask()
+{
+    TypedIter_t ret = this->tasks_.end();
+
+    while(this->tasks_.end() != this->active_task_iter_)
+    {
+        if(this->active_task_iter_->is_active_)
+        {
+            ret = this->active_task_iter_++;
+            break;
+
+        }
+
+        this->active_task_iter_++;
+    }
+
+    return ret;
+}
+
+
+template <typename PRIO>
+typename std::vector<Task<PRIO> >::iterator TaskStackController<PRIO>::beginTaskIter()
+{
+    this->active_task_iter_ = this->tasks_.begin();
+    return this->active_task_iter_;
+}
+
+
 typedef TaskStackController<uint32_t> TaskStackController_t;
 typedef Task<uint32_t> Task_t;
-typedef std::set<Task_t >::iterator TaskSetIter_t;
+typedef std::vector<Task_t >::iterator TaskSetIter_t;
 
 #endif /* TASK_STACK_CONTROLLER_H_ */

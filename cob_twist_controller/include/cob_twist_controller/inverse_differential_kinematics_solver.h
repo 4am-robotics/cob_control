@@ -36,6 +36,8 @@
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/callback_data_mediator.h"
 #include "cob_twist_controller/constraint_solvers/constraint_solver_factory_builder.h"
+#include "cob_twist_controller/task_stack/task_stack_controller.h"
+
 
 /**
 * Implementation of a inverse velocity kinematics algorithm based
@@ -69,22 +71,20 @@ public:
     virtual ~InverseDifferentialKinematicsSolver() {};
     
     /** CartToJnt for chain using SVD including base and various DampingMethods **/
-    virtual int CartToJnt(const KDL::JntArray& q_in,
-                          const KDL::JntArray& last_q_dot,
+    virtual int CartToJnt(const JointStates& joint_states,
                           const KDL::Twist& v_in,
                           const KDL::Frame &base_position,
                           const KDL::Frame &chain_base,
                           KDL::JntArray& qdot_out);
 
-    inline virtual int CartToJnt(const KDL::JntArray& q_in,
-                                 const KDL::JntArray& last_q_dot,
+    inline virtual int CartToJnt(const JointStates& joint_states,
                                  const KDL::Twist& v_in,
                                  KDL::JntArray& qdot_out)
     {
         KDL::Frame dummy;
         dummy.p = KDL::Vector(0,0,0);
         dummy.M = KDL::Rotation::Quaternion(0,0,0,0);
-        return CartToJnt(q_in, last_q_dot, v_in, dummy, dummy, qdot_out);
+        return CartToJnt(joint_states, v_in, dummy, dummy, qdot_out);
     }
 
     inline void SetInvDiffKinSolverParams(InvDiffKinSolverParams params)
@@ -105,14 +105,16 @@ private:
     CallbackDataMediator& callback_data_mediator_;
     ConstraintSolverFactoryBuilder constraint_solver_factory_;
 
+    TaskStackController_t task_stack_controller_;
+
     t_Vector6d last_p_in_vec_;
 
     /**
      * Adjustment of the member Jacobian
-     * @param q_in Input joint positions.
+     * @param joint_states Input joint states with history.
      * @param base_position Current base position.
      * @param chain_base Current frame of the chain base.
      */
-    void adjustJac(const KDL::JntArray& q_in, const KDL::Frame &base_position, const KDL::Frame &chain_base);
+    void adjustJac(const JointStates& joint_states, const KDL::Frame &base_position, const KDL::Frame &chain_base);
 };
 #endif // INVERSE_DIFFERENTIAL_KINEMATICS_SOLVER_H

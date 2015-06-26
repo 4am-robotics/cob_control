@@ -62,7 +62,7 @@ class WLN_JointLimitAvoidanceSolver : public WeightedLeastNormSolver
          * @param q_dot The current joint velocities.
          * @return Diagonal weighting matrix that adapts the Jacobian.
          */
-        virtual Eigen::MatrixXd calculateWeighting(const KDL::JntArray& q, const KDL::JntArray& q_dot) const;
+        virtual Eigen::MatrixXd calculateWeighting(const JointStates& joint_states) const;
 };
 
 #endif /* JOINT_LIMIT_AVOIDANCE_SOLVER_H_ */

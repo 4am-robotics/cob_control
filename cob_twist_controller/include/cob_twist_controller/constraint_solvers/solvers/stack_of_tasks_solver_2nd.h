@@ -26,8 +26,8 @@
  *   Implements methods from constraint_solver_base
  *
  ****************************************************************/
-#ifndef TASK_PRIORITY_SOLVER_H_
-#define TASK_PRIORITY_SOLVER_H_
+#ifndef STACK_OF_TASKS_SOLVER_2ND_H_
+#define STACK_OF_TASKS_SOLVER_2ND_H_
 
 #include <set>
 #include "ros/ros.h"
@@ -39,17 +39,17 @@
 #include "cob_twist_controller/constraints/constraint_base.h"
 #include "cob_twist_controller/constraints/constraint.h"
 
-class TaskPrioritySolver : public ConstraintSolver<>
+class StackOfTasksSolver2nd : public ConstraintSolver<>
 {
     public:
-        TaskPrioritySolver(InvDiffKinSolverParams &params,
+        StackOfTasksSolver2nd(InvDiffKinSolverParams &params,
                            t_Matrix6Xd &jacobian_data)
                            : ConstraintSolver(params,
                                               jacobian_data)
         {
         }
 
-        virtual ~TaskPrioritySolver()
+        virtual ~StackOfTasksSolver2nd()
         {
             this->clearConstraints();
         }
@@ -59,8 +59,7 @@ class TaskPrioritySolver : public ConstraintSolver<>
          * See base class ConstraintSolver for more details on params and returns.
          */
         virtual Eigen::MatrixXd solve(const t_Vector6d &in_cart_velocities,
-                                      const KDL::JntArray& q,
-                                      const KDL::JntArray& last_q_dot) const;
+                                      const JointStates& joint_states) const;
 
         /**
          * Set all created constraints in a (priorized) set.
@@ -85,4 +84,4 @@ class TaskPrioritySolver : public ConstraintSolver<>
         std::set<tConstraintBase> constraints_;
 };
 
-#endif /* TASK_PRIORITY_SOLVER_H_ */
+#endif /* STACK_OF_TASKS_SOLVER_2ND_H_ */

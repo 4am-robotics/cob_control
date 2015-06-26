@@ -42,8 +42,7 @@ class ISolverFactory
         virtual Eigen::MatrixXd calculateJointVelocities(InvDiffKinSolverParams &params,
                                                          t_Matrix6Xd &jacobian_data,
                                                          const t_Vector6d &in_cart_velocities,
-                                                         const KDL::JntArray& q,
-                                                         const KDL::JntArray& last_q_dot,
+                                                         const JointStates& joint_states,
                                                          boost::shared_ptr<DampingBase>& damping_method,
                                                          std::set<tConstraintBase>& constraints) const = 0;
 
@@ -63,23 +62,21 @@ class SolverFactory : public ISolverFactory
          * @param params References the inv. diff. kin. solver parameters.
          * @param jacobian_data References the current Jacobian (matrix data only).
          * @param in_cart_velocities The input velocities vector (in cartesian space).
-         * @param q The current joint positions.
-         * @param last_q_dot The last joint velocities.
+         * @param joint_states The joint states with history.
          * @param damping_method The damping method.
          * @return Joint velocities in a (m x 1)-Matrix.
          */
         Eigen::MatrixXd calculateJointVelocities(InvDiffKinSolverParams &params,
                                                  t_Matrix6Xd &jacobian_data,
                                                  const t_Vector6d &in_cart_velocities,
-                                                 const KDL::JntArray& q,
-                                                 const KDL::JntArray& last_q_dot,
+                                                 const JointStates& joint_states,
                                                  boost::shared_ptr<DampingBase>& damping_method,
                                                  std::set<tConstraintBase>& constraints) const
         {
             T* cs = this->createSolver(params, jacobian_data);
             cs->setConstraints(constraints);
             cs->setDamping(damping_method);
-            Eigen::MatrixXd new_q_dot = cs->solve(in_cart_velocities, q, last_q_dot);
+            Eigen::MatrixXd new_q_dot = cs->solve(in_cart_velocities, joint_states);
             delete cs;
             cs = NULL;
             return new_q_dot;

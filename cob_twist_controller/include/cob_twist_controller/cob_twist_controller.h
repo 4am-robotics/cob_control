@@ -83,8 +83,13 @@ private:
     KDL::Chain chain_;
 
     KDL::Twist twist_odometry_cb_;
-    KDL::JntArray last_q_;
-    KDL::JntArray last_q_dot_;
+    //KDL::JntArray current_q_;
+    //KDL::JntArray current_q_dot_;
+
+    //KDL::JntArray last_q_;
+    //KDL::JntArray last_q_dot_;
+
+    JointStates joint_states_;
 
     std::string chain_base_link_;
     std::string chain_tip_link_;
