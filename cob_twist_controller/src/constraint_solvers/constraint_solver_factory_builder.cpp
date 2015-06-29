@@ -26,74 +26,92 @@
  *
  ****************************************************************/
 
-#include "ros/ros.h"
-#include <Eigen/Core>
-#include <Eigen/SVD>
-#include <kdl/jntarray.hpp>
-#include <boost/shared_ptr.hpp>
-#include "cob_twist_controller/augmented_solver_data_types.h"
+#include <ros/ros.h>
+
+#include "cob_twist_controller/constraint_solvers/constraint_solver_factory_builder.h"
 #include "cob_twist_controller/constraint_solvers/solvers/constraint_solver_base.h"
 #include "cob_twist_controller/constraint_solvers/solvers/unconstraint_solver.h"
 #include "cob_twist_controller/constraint_solvers/solvers/wln_joint_limit_avoidance_solver.h"
 #include "cob_twist_controller/constraint_solvers/solvers/weighted_least_norm_solver.h"
-#include "cob_twist_controller/constraint_solvers/constraint_solver_factory_builder.h"
+#include "cob_twist_controller/constraint_solvers/solvers/gradient_projection_method_solver.h"
+
 #include "cob_twist_controller/damping_methods/damping.h"
-#include "cob_twist_controller/constraint_solvers/factories/solver_factory.h"
+
+#include "cob_twist_controller/constraints/constraint.h"
 
 /**
  * Out of the parameters generates a damping method (e.g. constant or manipulability) and calculates the damping factor.
  * Dependent on JLA active flag a JointLimitAvoidanceSolver or a UnconstraintSolver is generated to solve the IK problem.
  * The objects are generated for each solve-request. After calculation the objects are deleted.
  */
-int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(AugmentedSolverParams &asParams,
-                                                                        Matrix6Xd &jacobianData,
-                                                                        const Eigen::VectorXd &inCartVelocities,
-                                                                        const KDL::JntArray& q,
-                                                                        const KDL::JntArray& last_q_dot,
-                                                                        Eigen::MatrixXd &outJntVelocities)
+int8_t ConstraintSolverFactoryBuilder::calculateJointVelocities(InvDiffKinSolverParams &params,
+                                                                t_Matrix6Xd &jacobian_data,
+                                                                const t_Vector6d &in_cart_velocities,
+                                                                const KDL::JntArray& q,
+                                                                const KDL::JntArray& last_q_dot,
+                                                                Eigen::MatrixXd &out_jnt_velocities)
 {
-    outJntVelocities = Eigen::MatrixXd();
-    boost::shared_ptr<DampingBase> db (DampingBuilder::create_damping(asParams, jacobianData));
-    double dampingFactor;
-    if(NULL != db)
-    {
-        dampingFactor = db->get_damping_factor();
-    }
-    else
+    out_jnt_velocities = Eigen::MatrixXd::Zero(last_q_dot.rows(), last_q_dot.columns());
+    boost::shared_ptr<DampingBase> db (DampingBuilder::create_damping(params, jacobian_data));
+    if(NULL == db)
     {
         ROS_ERROR("Returning NULL factory due to damping creation error.");
         return -1; // error
     }
 
-    // ISolverFactory* sf = NULL;
-    boost::shared_ptr<ISolverFactory> sf;
-    switch(asParams.constraint)
-    {
-        case None:
-            sf.reset(new SolverFactory<UnconstraintSolver>());
-            break;
-        case WLN:
-            sf.reset(new SolverFactory<WeightedLeastNormSolver>());
-            break;
-        case WLN_JLA:
-            sf.reset(new SolverFactory<WLN_JointLimitAvoidanceSolver>());
-            break;
-        default:
-            ROS_ERROR("Returning NULL factory due to constraint solver creation error.");
-            break;
-    }
+    std::set<tConstraintBase> constraints = ConstraintsBuilder<>::createConstraints(params,
+                                                                                     q,
+                                                                                     jacobian_data,
+                                                                                     this->jnt_to_jac_,
+                                                                                     this->data_mediator_);
 
-    if (NULL != sf)
-    {
-        outJntVelocities = sf->calculateJointVelocities(asParams, jacobianData, inCartVelocities, q, last_q_dot, dampingFactor);
-    }
-    else
+    boost::shared_ptr<ISolverFactory> sf;
+    if (!ConstraintSolverFactoryBuilder::getSolverFactory(params.constraint, sf))
     {
         return -2; // error: no valid selection for constraint
     }
+
+    out_jnt_velocities = sf->calculateJointVelocities(params,
+                                                    jacobian_data,
+                                                    in_cart_velocities,
+                                                    q,
+                                                    last_q_dot,
+                                                    db,
+                                                    constraints);
 
     sf.reset();
     db.reset();
 
     return 0; // success
+}
+
+/**
+ * Given a proper constraint_type a corresponding SolverFactory is generated and returned.
+ */
+bool ConstraintSolverFactoryBuilder::getSolverFactory(uint32_t constraint_type,
+                                                      boost::shared_ptr<ISolverFactory>& solver_factory)
+{
+    switch(constraint_type)
+    {
+        case None:
+            solver_factory.reset(new SolverFactory<UnconstraintSolver>());
+            break;
+        case WLN:
+            solver_factory.reset(new SolverFactory<WeightedLeastNormSolver>());
+            break;
+        case WLN_JLA:
+            solver_factory.reset(new SolverFactory<WLN_JointLimitAvoidanceSolver>());
+            break;
+        case GPM_JLA:
+        case GPM_JLA_MID:
+        case GPM_CA:
+            solver_factory.reset(new SolverFactory<GradientProjectionMethodSolver>());
+            break;
+        default:
+            ROS_ERROR("Returning NULL factory due to constraint solver creation error. There is no solver method for %d implemented.",
+                      constraint_type);
+            return false;
+    }
+
+    return true;
 }

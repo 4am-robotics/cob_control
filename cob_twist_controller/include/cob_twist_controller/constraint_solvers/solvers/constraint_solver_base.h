@@ -30,16 +30,18 @@
 #define CONSTRAINT_SOLVER_BASE_H_
 
 #include <Eigen/Core>
-#include <Eigen/SVD>
 #include <kdl/jntarray.hpp>
-#include "cob_twist_controller/augmented_solver_data_types.h"
+#include <boost/shared_ptr.hpp>
+#include <cob_twist_controller/inverse_jacobian_calculations/inverse_jacobian_calculation.h>
+#include "cob_twist_controller/damping_methods/damping_base.h"
+#include "cob_twist_controller/constraints/constraint_base.h"
+#include "cob_twist_controller/cob_twist_controller_data_types.h"
 
 /// Base class for solvers, defining interface methods.
+template <typename PINV = PInvBySVD>
 class ConstraintSolver
 {
     public:
-        static const double DAMPING_LIMIT = 1.0e-9; ///< const. value for zero comparison with damping factor
-
         /**
          * The interface method to solve the inverse kinematics problem. Has to be implemented in inherited classes.
          * @param inCartVelocities The input velocities vector (in cartesian space).
@@ -47,41 +49,43 @@ class ConstraintSolver
          * @param last_q_dot The last joint velocities.
          * @return The calculated new joint velocities.
          */
-        virtual Eigen::MatrixXd solve(const Eigen::VectorXd &inCartVelocities, const KDL::JntArray& q, const KDL::JntArray& last_q_dot) const = 0;
+        virtual Eigen::MatrixXd solve(const t_Vector6d &in_cart_velocities,
+                                      const KDL::JntArray& q,
+                                      const KDL::JntArray& last_q_dot) const = 0;
 
         /**
-         * Inline method to set the damping factor
-         * @param damping The new damping factor
+         * Inline method to set the damping
+         * @param damping The new damping
          */
-        inline void setDampingFactor(double damping)
+        inline void setDamping(boost::shared_ptr<DampingBase>& damping)
         {
-            this->dampingFactor_ = damping;
+            this->damping_ = damping;
         }
 
-        virtual ~ConstraintSolver() = 0;
+        /**
+         * Method to initialize the solver if necessary
+         */
+        virtual void setConstraints(std::set<tConstraintBase>& constraints)
+        {
+
+        }
+
+        virtual ~ConstraintSolver() {}
 
     protected:
 
-        ConstraintSolver(AugmentedSolverParams &asParams,
-                         Matrix6Xd &jacobianData)
-                         : asParams_(asParams),
-                           jacobianData_(jacobianData),
-                           dampingFactor_(0.0)
+        ConstraintSolver(InvDiffKinSolverParams &params,
+                         t_Matrix6Xd &jacobian_data)
+                         : params_(params),
+                           jacobian_data_(jacobian_data)
         {
-
         }
 
-        /**
-         * Base method for calculation of the pseudoinverse Jacobian by using SVD.
-         * @param svd The singular value decomposition object of a Jacobian.
-         * @return A pseudoinverse Jacobian
-         */
-        Eigen::MatrixXd calculatePinvJacobianBySVD(Eigen::JacobiSVD<Eigen::MatrixXd> svd) const;
+        const InvDiffKinSolverParams& params_; ///< References the inv. diff. kin. solver parameters.
+        const t_Matrix6Xd& jacobian_data_; ///< References the current Jacobian (matrix data only).
+        boost::shared_ptr<DampingBase> damping_; ///< The currently set damping method.
 
-
-        const AugmentedSolverParams &asParams_; ///< References the augmented solver parameters.
-        const Matrix6Xd &jacobianData_; ///< References the current Jacobian (matrix data only).
-        double dampingFactor_; ///< The currently set damping factor.
+        PINV pinv_calc_;
 };
 
 #endif /* CONSTRAINT_SOLVER_BASE_H_ */

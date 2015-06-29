@@ -28,20 +28,21 @@
 #ifndef DAMPING_METHOD_INTERFACE_H_
 #define DAMPING_METHOD_INTERFACE_H_
 
-#include "cob_twist_controller/augmented_solver_data_types.h"
+#include "cob_twist_controller/cob_twist_controller_data_types.h"
 
 /// Base class for solvers, defining interface methods.
 class DampingBase
 {
     public:
-        virtual double get_damping_factor() const = 0;
-        virtual ~DampingBase() = 0;
+        virtual double get_damping_factor(const Eigen::VectorXd &sorted_singular_values) const = 0;
+
+        virtual ~DampingBase() {}
 
     protected:
-        DampingBase(AugmentedSolverParams &asParams, Matrix6Xd &jacobianData);
+        DampingBase(InvDiffKinSolverParams &params, t_Matrix6Xd &jacobian_data) : params_(params), jacobian_data_(jacobian_data) { }
 
-        const AugmentedSolverParams &asParams_;
-        const Matrix6Xd &jacobianData_;
+        const InvDiffKinSolverParams &params_;
+        const t_Matrix6Xd &jacobian_data_;
 };
 
 #endif /* DAMPING_METHOD_INTERFACE_H_ */

@@ -51,9 +51,9 @@ bool CobFrameTracker::initialize()
 	else
 	{	update_rate_ = 68.0;	}	//hz
 	
-	if (nh_tracker.hasParam("chain_base_link"))
+	if (nh_.hasParam("chain_base_link"))
 	{
-		nh_tracker.getParam("chain_base_link", chain_base_);
+		nh_.getParam("chain_base_link", chain_base_);
 	}
 	else
 	{
@@ -61,9 +61,9 @@ bool CobFrameTracker::initialize()
 		return false;
 	}
 	
-	if (nh_tracker.hasParam("chain_tip_link"))
+	if (nh_.hasParam("chain_tip_link"))
 	{
-		nh_tracker.getParam("chain_tip_link", chain_tip_link_);
+		nh_.getParam("chain_tip_link", chain_tip_link_);
 	}
 	else
 	{
@@ -78,14 +78,13 @@ bool CobFrameTracker::initialize()
 	}
 	dof_ = joints_.size();
 	
-	///parse robot_description and generate KDL chains
-	nh_.param("/robot_description", robot_desc_string, std::string());
-	if (!kdl_parser::treeFromString(robot_desc_string, my_tree)){
+	KDL::Tree tree;
+	if (!kdl_parser::treeFromParam("/robot_description", tree)){
 		ROS_ERROR("Failed to construct kdl tree");
 		return false;
 	}
 	
-	my_tree.getChain(chain_base_, chain_tip_link_, chain_);
+	tree.getChain(chain_base_, chain_tip_link_, chain_);
 	if(chain_.getNrOfJoints() == 0)
 	{
 		ROS_ERROR("Failed to initialize kinematic chain");
@@ -165,7 +164,7 @@ bool CobFrameTracker::initialize()
 	stop_server_ = nh_tracker.advertiseService("stop_tracking", &CobFrameTracker::stop_tracking_cb, this);
 
 	action_name_ = "tracking_action";
-	as_ = new actionlib::SimpleActionServer<cob_frame_tracker::FrameTrackingAction>(nh_tracker, action_name_, false),
+	as_.reset(new tSAS_FrameTrackingAction(nh_tracker, action_name_, false));
 	as_->registerGoalCallback(boost::bind(&CobFrameTracker::goalCB, this));
 	as_->registerPreemptCallback(boost::bind(&CobFrameTracker::preemptCB, this));
 	as_->start();
@@ -453,7 +452,7 @@ void CobFrameTracker::jointstate_cb(const sensor_msgs::JointState::ConstPtr& msg
 		///---------------------------------------------------------------------
 		KDL::FrameVel FrameVel;
 		KDL::JntArrayVel jntArrayVel = KDL::JntArrayVel(last_q_, last_q_dot_);
-		jntToCartSolver_vel_ = new KDL::ChainFkSolverVel_recursive(chain_);
+		jntToCartSolver_vel_.reset(new KDL::ChainFkSolverVel_recursive(chain_));
 		int ret = jntToCartSolver_vel_->JntToCart(jntArrayVel,FrameVel,-1);
 		if(ret>=0)
 		{
@@ -481,27 +480,27 @@ void CobFrameTracker::reconfigure_callback(cob_frame_tracker::FrameTrackerConfig
 /** checks whether the twist is infinitesimally small **/
 bool CobFrameTracker::checkInfinitesimalTwist(const KDL::Twist current)
 {
-	if (fabs(current.vel.x() > twist_dead_threshold_lin_))
+	if (fabs(current.vel.x()) > twist_dead_threshold_lin_)
 	{
 		return false;
 	}
-	if (fabs(current.vel.y() > twist_dead_threshold_lin_))
+	if (fabs(current.vel.y()) > twist_dead_threshold_lin_)
 	{
 		return false;
 	}
-	if (fabs(current.vel.z() > twist_dead_threshold_lin_))
+	if (fabs(current.vel.z()) > twist_dead_threshold_lin_)
 	{
 		return false;
 	}
-	if (fabs(current.rot.x() > twist_dead_threshold_rot_))
+	if (fabs(current.rot.x()) > twist_dead_threshold_rot_)
 	{
 		return false;
 	}
-	if (fabs(current.rot.x() > twist_dead_threshold_rot_))
+	if (fabs(current.rot.x()) > twist_dead_threshold_rot_)
 	{
 		return false;
 	}
-	if (fabs(current.rot.x() > twist_dead_threshold_rot_))
+	if (fabs(current.rot.x()) > twist_dead_threshold_rot_)
 	{
 		return false;
 	}

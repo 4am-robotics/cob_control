@@ -49,15 +49,15 @@ class LimiterContainer : public LimiterBase
 
         virtual ~LimiterContainer();
 
-        LimiterContainer(const TwistControllerParams &tcParams, const KDL::Chain &chain)
-            : LimiterBase(tcParams, chain)
+        LimiterContainer(const TwistControllerParams &tc_params, const KDL::Chain &chain)
+            : LimiterBase(tc_params, chain)
         {
 
         }
 
     protected:
         std::vector<const LimiterBase*> limiters;
-        typedef std::vector<const LimiterBase*>::const_iterator limIter;
+        typedef std::vector<const LimiterBase*>::const_iterator t_lim_iter;
 
         /**
          * Add method
@@ -83,8 +83,8 @@ class LimiterAllJointPositions : public LimiterBase
          */
         virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const;
 
-        LimiterAllJointPositions(const TwistControllerParams &tcParams, const KDL::Chain &chain) :
-            LimiterBase(tcParams, chain)
+        LimiterAllJointPositions(const TwistControllerParams &tc_params, const KDL::Chain &chain) :
+            LimiterBase(tc_params, chain)
         {
         }
 };
@@ -101,8 +101,8 @@ class LimiterAllJointVelocities : public LimiterBase
          */
         virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const;
 
-        LimiterAllJointVelocities(const TwistControllerParams &tcParams, const KDL::Chain &chain) :
-            LimiterBase(tcParams, chain)
+        LimiterAllJointVelocities(const TwistControllerParams &tc_params, const KDL::Chain &chain) :
+            LimiterBase(tc_params, chain)
         {
         }
 };
@@ -119,8 +119,8 @@ class LimiterIndividualJointPositions : public LimiterBase
          */
         virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const;
 
-        LimiterIndividualJointPositions(const TwistControllerParams &tcParams, const KDL::Chain &chain) :
-            LimiterBase(tcParams, chain)
+        LimiterIndividualJointPositions(const TwistControllerParams &tc_params, const KDL::Chain &chain) :
+            LimiterBase(tc_params, chain)
         {
         }
 };
@@ -137,8 +137,8 @@ class LimiterIndividualJointVelocities : public LimiterBase
          */
         virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const;
 
-        LimiterIndividualJointVelocities(const TwistControllerParams &tcParams, const KDL::Chain &chain) :
-            LimiterBase(tcParams, chain)
+        LimiterIndividualJointVelocities(const TwistControllerParams &tc_params, const KDL::Chain &chain) :
+            LimiterBase(tc_params, chain)
         {
         }
 };

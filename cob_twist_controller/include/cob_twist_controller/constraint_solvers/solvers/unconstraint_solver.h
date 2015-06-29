@@ -29,10 +29,10 @@
 #ifndef UNCONSTRAINT_SOLVER_H_
 #define UNCONSTRAINT_SOLVER_H_
 
-#include "cob_twist_controller/augmented_solver_data_types.h"
+#include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/constraint_solvers/solvers/constraint_solver_base.h"
 
-class UnconstraintSolver : public ConstraintSolver
+class UnconstraintSolver : public ConstraintSolver<>
 {
     public:
 
@@ -40,20 +40,18 @@ class UnconstraintSolver : public ConstraintSolver
          * Specific implementation of solve-method to solve IK problem without any constraints.
          * See base class ConstraintSolver for more details on params and returns.
          */
-        virtual Eigen::MatrixXd solve(const Eigen::VectorXd &inCartVelocities, const KDL::JntArray& q, const KDL::JntArray& last_q_dot) const;
+        virtual Eigen::MatrixXd solve(const t_Vector6d &in_cart_velocities,
+                                      const KDL::JntArray& q,
+                                      const KDL::JntArray& last_q_dot) const;
 
-        UnconstraintSolver(AugmentedSolverParams &asParams,
-                           Matrix6Xd &jacobianData)
-                           : ConstraintSolver(asParams,
-                                              jacobianData)
-        {
-
-        }
+        UnconstraintSolver(InvDiffKinSolverParams &params,
+                           t_Matrix6Xd &jacobian_data)
+                           : ConstraintSolver(params,
+                                              jacobian_data)
+        {}
 
         virtual ~UnconstraintSolver()
-        {
-
-        }
+        {}
 };
 
 #endif /* UNCONSTRAINT_SOLVER_H_ */
