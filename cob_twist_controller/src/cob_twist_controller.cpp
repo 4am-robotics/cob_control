@@ -37,8 +37,6 @@
 
 #include "cob_obstacle_distance/Registration.h"
 
-#define DEBUG_BASE_ACTIVE    0
-#define DEBUG_BASE_COMP      0
 
 bool CobTwistController::initialize()
 {
@@ -146,23 +144,6 @@ bool CobTwistController::initialize()
     twist_stamped_sub = nh_twist.subscribe("command_twist_stamped", 1, &CobTwistController::twistStampedCallback, this);
 
     odometry_sub = nh_.subscribe("/base/odometry_controller/odometry", 1, &CobTwistController::odometryCallback, this);
-    base_vel_pub = nh_.advertise<geometry_msgs::Twist>("/base/twist_controller/command", 1);
-
-
-    /// Debug
-    #if DEBUG_BASE_COMP == 1
-        debug_base_compensation_visual_tip_pub_ = nh_twist.advertise<visualization_msgs::Marker>( "debug/vis_tip", 0 );
-        debug_base_compensation_visual_base_pub_ = nh_twist.advertise<visualization_msgs::Marker>( "debug/vis_base", 0 );
-        debug_base_compensation_pose_base_pub_ = nh_twist.advertise<geometry_msgs::Pose> ("debug/pose_base", 0);
-        debug_base_compensation_pose_tip_pub_ = nh_twist.advertise<geometry_msgs::Pose> ("debug/pose_tip", 0);
-        debug_base_compensation_twist_manipulator_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_mani", 1);
-    #endif
-
-    #if DEBUG_BASE_ACTIVE == 1
-        debug_base_active_twist_manipulator_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_mani", 1);
-        debug_base_active_twist_base_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_base", 1);
-        debug_base_active_twist_ee_pub_ = nh_twist.advertise<geometry_msgs::Twist> ("debug/twist_ee", 1);
-    #endif
 
     ros::Time time_ = ros::Time::now();
     ros::Time last_update_time_ = time_;
@@ -231,8 +212,6 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     }
 
     params.k_H = config.k_H;
-
-    reset_markers_ = config.reset_markers;
 
     twist_controller_params_.interface_type = static_cast<InterfaceType>(config.interface_type);
     twist_controller_params_.enforce_pos_limits = config.enforce_pos_limits;
@@ -333,101 +312,12 @@ void CobTwistController::solveTwist(KDL::Twist twist)
     int ret_ik;
     KDL::JntArray q_dot_ik(chain_.getNrOfJoints());
 
-    if(twist_controller_params_.base_active)
-    {
-        #if DEBUG == 1
-            debug();
-            if(!reset_markers_){
-                point_ee.x = odom_transform_ct.getOrigin().x();
-                point_ee.y = odom_transform_ct.getOrigin().y();
-                point_ee.z = odom_transform_ct.getOrigin().z();
-
-                point_base.x = odom_transform_bl.getOrigin().x();
-                point_base.y = odom_transform_bl.getOrigin().y();
-                point_base.z = odom_transform_bl.getOrigin().z();
-
-                point_ee_vec_.push_back(point_ee);
-                point_base_vec_.push_back(point_base);
-
-                double id1 = 0;
-                double id2 = 1;
-
-                showMarker(id1, std_msgs::ColorRGBA(1,0,0,1), "marker_tip", debug_base_compensation_visual_tip_pub_, point_ee_vec_);
-                showMarker(id2, std_msgs::ColorRGBA(0,1,0,1), "marker_base", debug_base_compensation_visual_base_pub_, point_base_vec_);
-            }
-
-            if(reset_markers_){
-                point_ee_vec_.clear();
-                point_base_vec_.clear();
-            }
-        #endif
-        q_dot_ik.resize(chain_.getNrOfJoints() + 6); // +6 for max. additional DoF
-        try
-        {
-            tf_listener_.waitForTransform("base_link",chain_tip_link_, ros::Time(0), ros::Duration(0.5));
-            tf_listener_.lookupTransform("base_link",chain_tip_link_,  ros::Time(0), bl_transform_ct);
-        }
-        catch (tf::TransformException &ex)
-        {
-            ROS_ERROR("%s",ex.what());
-            return;
-        }
-
-        bl_frame_ct.p = KDL::Vector(bl_transform_ct.getOrigin().x(), bl_transform_ct.getOrigin().y(), bl_transform_ct.getOrigin().z());
-        bl_frame_ct.M = KDL::Rotation::Quaternion(bl_transform_ct.getRotation().x(), bl_transform_ct.getRotation().y(), bl_transform_ct.getRotation().z(), bl_transform_ct.getRotation().w());
-
-
-        try
-        {
-            tf_listener_.waitForTransform(chain_base_link_,"base_link", ros::Time(0), ros::Duration(0.5));
-            tf_listener_.lookupTransform(chain_base_link_,"base_link", ros::Time(0), cb_transform_bl);
-        }
-        catch (tf::TransformException &ex)
-        {
-            ROS_ERROR("%s",ex.what());
-            return;
-        }
-
-        cb_frame_bl.p = KDL::Vector(cb_transform_bl.getOrigin().x(), cb_transform_bl.getOrigin().y(), cb_transform_bl.getOrigin().z());
-        cb_frame_bl.M = KDL::Rotation::Quaternion(cb_transform_bl.getRotation().x(), cb_transform_bl.getRotation().y(), cb_transform_bl.getRotation().z(), cb_transform_bl.getRotation().w());
-
-        //Solve twist
-        // 1 for possible DoF of the extended system. In the Base_Active case it looks like the following configuration
-        ExtendedJacobianDimension dim;
-        dim.lin_x=1;
-        dim.lin_y=1;
-        dim.lin_z=0;
-
-        dim.rot_x=0;
-        dim.rot_y=0;
-        dim.rot_z=1;
-        ret_ik = p_inv_diff_kin_solver_->CartToJnt(last_q_, last_q_dot_, twist, bl_frame_ct, cb_frame_bl, q_dot_ik, dim);
-    }
-
     if(twist_controller_params_.base_compensation)
     {
         twist = twist - twist_odometry_cb_;
-
-        #if DEBUG_BASE_COMP == 1
-            debug();
-            tf::poseKDLToMsg(odom_frame_ct,pose_tip);
-            tf::poseKDLToMsg(odom_frame_bl,pose_base);
-            geometry_msgs::Twist twist_manipulator_bl;
-
-            ////Twist Manipulator in base_link
-            tf::twistKDLToMsg(bl_frame_cb * twist,twist_manipulator_bl);
-
-            //Debug publisher
-            debug_base_compensation_pose_base_pub_.publish(pose_base);
-            debug_base_compensation_pose_tip_pub_.publish(pose_tip);
-            debug_base_compensation_twist_manipulator_pub_.publish(twist_manipulator_bl);    // Base_link
-        #endif
     }
 
-    if(!twist_controller_params_.base_active)
-    {
-        ret_ik = p_inv_diff_kin_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik);
-    }
+    ret_ik = p_inv_diff_kin_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik);
 
     if(0 != ret_ik)
     {
@@ -439,48 +329,6 @@ void CobTwistController::solveTwist(KDL::Twist twist)
 
         // Change between velocity and position interface
         this->interface_->process_result(q_dot_ik, initial_pos_);
-
-
-        if(twist_controller_params_.base_active)
-        {
-            geometry_msgs::Twist base_vel_msg;
-            /// Base Velocities with respect to base_link
-            base_vel_msg.linear.x = q_dot_ik(twist_controller_params_.dof);
-            base_vel_msg.linear.y = q_dot_ik(twist_controller_params_.dof + 1);
-            base_vel_msg.linear.z = q_dot_ik(twist_controller_params_.dof + 2);
-            base_vel_msg.angular.x = q_dot_ik(twist_controller_params_.dof + 3);
-            base_vel_msg.angular.y = q_dot_ik(twist_controller_params_.dof + 4);
-            base_vel_msg.angular.z = q_dot_ik(twist_controller_params_.dof + 5);
-            base_vel_pub.publish(base_vel_msg);
-
-            #if DEBUG_BASE_ACTIVE == 1
-                KDL::Twist twist_base_bl, twist_manipulator_cb, twist_manipulator_bl;
-                KDL::FrameVel FrameVel_cb;
-
-                geometry_msgs::Twist twist_manipulator_msg, twist_combined_msg;
-
-                tf::twistMsgToKDL(base_vel_msg, twist_base_bl);
-                debug_twistControllerParams_.base_activetwist_base_pub_.publish(base_vel_msg);    // Base twist in base_link
-
-                /////calculate current Manipulator-Twists
-                KDL::JntArrayVel jntArrayVel = KDL::JntArrayVel(last_q_, last_q_dot_);
-                jntToCartSolver_vel_.reset(new KDL::ChainFkSolverVel_recursive(chain_));
-                int ret = jntToCartSolver_vel_->JntToCart(jntArrayVel, FrameVel_cb, -1);
-
-                if(ret>=0){
-                    twist_manipulator_cb = FrameVel_cb.GetTwist();
-                    twist_manipulator_bl = bl_frame_cb * twist_manipulator_cb;
-                    tf::twistKDLToMsg(twist_manipulator_bl, twist_manipulator_msg);    // Manipulator twist in base_link
-                }
-                else{
-                    ROS_WARN("ChainFkSolverVel failed!");
-                }
-
-                debug_twistControllerParams_.base_activetwist_manipulator_pub_.publish(twist_manipulator_msg);
-                tf::twistKDLToMsg(twist_base_bl+twist_manipulator_bl,twist_combined_msg);    // Combined twist in base_link
-                debug_twistControllerParams_.base_activetwist_ee_pub_.publish(twist_combined_msg);
-            #endif
-        }
     }
 }
 
@@ -561,59 +409,3 @@ void CobTwistController::odometryCallback(const nav_msgs::Odometry::ConstPtr& ms
 
     twist_odometry_cb_ = twist_odometry_transformed_cb;
 }
-
-
-void CobTwistController::showMarker(int marker_id, std_msgs::ColorRGBA color_rgba, std::string ns, ros::Publisher pub, std::vector<geometry_msgs::Point> &pos_v)
-{
-    visualization_msgs::Marker marker;
-    marker.header.frame_id = "odom_combined";
-    marker.header.stamp = ros::Time();
-    marker.ns = ns;
-    marker.id = marker_id;
-    marker.type = visualization_msgs::Marker::LINE_STRIP;
-    marker.action = visualization_msgs::Marker::ADD;
-
-    marker.pose.orientation.w = 1.0;
-    marker.scale.x = 0.01;
-
-    marker.color = color_rgba;
-    
-    marker.points.insert(marker.points.begin(), pos_v.begin(), pos_v.end());
-    
-    pub.publish( marker );
-}
-
-void CobTwistController::debug()
-{
-    try{
-        tf_listener_.waitForTransform("base_link",chain_base_link_, ros::Time(0), ros::Duration(0.5));
-        tf_listener_.lookupTransform("base_link",chain_base_link_, ros::Time(0), bl_transform_cb);
-    }catch (tf::TransformException &ex){
-        ROS_ERROR("%s",ex.what());
-        return;
-    }
-
-    try{
-        tf_listener_.waitForTransform("odom_combined",chain_tip_link_, ros::Time(0), ros::Duration(0.5));
-        tf_listener_.lookupTransform("odom_combined",chain_tip_link_, ros::Time(0), odom_transform_ct);
-    }catch (tf::TransformException &ex){
-        ROS_ERROR("%s",ex.what());
-        return;
-    }
-    try{
-        tf_listener_.waitForTransform("odom_combined","base_link", ros::Time(0), ros::Duration(0.5));
-        tf_listener_.lookupTransform("odom_combined","base_link", ros::Time(0), odom_transform_bl);
-    }catch (tf::TransformException &ex){
-        ROS_ERROR("%s",ex.what());
-        return;
-    }
-    odom_frame_ct.p = KDL::Vector(odom_transform_ct.getOrigin().x(), odom_transform_ct.getOrigin().y(), odom_transform_ct.getOrigin().z());
-    odom_frame_ct.M = KDL::Rotation::Quaternion(odom_transform_ct.getRotation().x(), odom_transform_ct.getRotation().y(), odom_transform_ct.getRotation().z(), odom_transform_ct.getRotation().w());
-
-    odom_frame_bl.p = KDL::Vector(odom_transform_bl.getOrigin().x(), odom_transform_bl.getOrigin().y(), odom_transform_bl.getOrigin().z());
-    odom_frame_bl.M = KDL::Rotation::Quaternion(odom_transform_bl.getRotation().x(), odom_transform_bl.getRotation().y(), odom_transform_bl.getRotation().z(), odom_transform_bl.getRotation().w());
-
-    bl_frame_cb.p = KDL::Vector(bl_transform_cb.getOrigin().x(), bl_transform_cb.getOrigin().y(), bl_transform_cb.getOrigin().z());
-    bl_frame_cb.M = KDL::Rotation::Quaternion(bl_transform_cb.getRotation().x(), bl_transform_cb.getRotation().y(), bl_transform_cb.getRotation().z(), bl_transform_cb.getRotation().w());
-}
-

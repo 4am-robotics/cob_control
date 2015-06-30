@@ -77,7 +77,6 @@ private:
 
     ros::Subscriber odometry_sub;
     ros::Subscriber base_sub;
-    ros::Publisher base_vel_pub;
 
     KDL::Chain chain_;
     KDL::Twist twist_odometry_cb_;
@@ -88,8 +87,6 @@ private:
     std::string chain_tip_link_;
     std::vector<std::string> joints_;
 
-    bool reset_markers_;
-
     TwistControllerParams twist_controller_params_;
 
     boost::shared_ptr<KDL::ChainFkSolverVel_recursive> jntToCartSolver_vel_;
@@ -99,12 +96,6 @@ private:
     std::vector<double> initial_pos_;
 
     tf::TransformListener tf_listener_;
-
-    ///Debug
-    ros::Publisher debug_base_compensation_visual_tip_pub_, debug_base_compensation_visual_base_pub_, debug_base_compensation_pose_base_pub_,
-                   debug_base_compensation_pose_tip_pub_, debug_base_compensation_twist_manipulator_pub_, debug_base_active_twist_manipulator_pub_,
-                   debug_base_active_twist_base_pub_, debug_base_active_twist_ee_pub_;
-    std::vector<geometry_msgs::Point> point_base_vec_, point_ee_vec_;
 
     tf::StampedTransform odom_transform_ct,
                          odom_transform_bl,
@@ -122,8 +113,7 @@ private:
 
 
 public:
-    CobTwistController():
-        reset_markers_(false)
+    CobTwistController()
     {
         this->twist_controller_params_.keep_direction = true;
         this->twist_controller_params_.enforce_pos_limits = true;
@@ -151,10 +141,6 @@ public:
     void twistStampedCallback(const geometry_msgs::TwistStamped::ConstPtr& msg);
 
     void solveTwist(KDL::Twist twist);
-
-    ///Debug
-    void showMarker(int marker_id, std_msgs::ColorRGBA color_rgba, std::string ns, ros::Publisher pub, std::vector<geometry_msgs::Point> &pos_v);
-    void debug();
 
     boost::recursive_mutex reconfig_mutex_;
     boost::shared_ptr< dynamic_reconfigure::Server<cob_twist_controller::TwistControllerConfig> > reconfigure_server_;

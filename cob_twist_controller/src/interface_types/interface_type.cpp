@@ -29,7 +29,6 @@
 #include "cob_twist_controller/interface_types/interface_type.h"
 
 
-
 InterfaceBase* InterfaceBuilder::create_interface(ros::NodeHandle& nh,
                                                   const TwistControllerParams &params)
 {

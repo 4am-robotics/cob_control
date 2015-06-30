@@ -36,11 +36,11 @@
 class InterfaceBuilder
 {
     public:
-        static InterfaceBase* create_interface(ros::NodeHandle& nh,
-                                               const TwistControllerParams &params);
-
         InterfaceBuilder() {}
         ~InterfaceBuilder() {}
+        
+        static InterfaceBase* create_interface(ros::NodeHandle& nh,
+                                               const TwistControllerParams &params);
 };
 /* END InterfaceBuilder *******************************************************************************************/
 
