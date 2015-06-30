@@ -1,0 +1,5 @@
+<map id="DampingBase" name="DampingBase">
+<area shape="rect" id="node2" href="$classDampingConstant.html" title="Class implementing a method to return the constant factor. " alt="" coords="5,80,131,107"/>
+<area shape="rect" id="node3" href="$classDampingManipulability.html" title="Class implementing a method to return a factor corresponding to the measure of manipulability. " alt="" coords="155,80,308,107"/>
+<area shape="rect" id="node4" href="$classDampingNone.html" title="Class implementing a method to return the constant factor. " alt="" coords="333,80,437,107"/>
+</map>

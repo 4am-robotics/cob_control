@@ -1,0 +1,83 @@
+\hypertarget{classAugmentedSolver}{\section{Augmented\-Solver Class Reference}
+\label{classAugmentedSolver}\index{Augmented\-Solver@{Augmented\-Solver}}
+}
+
+
+{\ttfamily \#include $<$augmented\-\_\-solver.\-h$>$}
+
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classAugmentedSolver_a35d52c13881a84cc466a0690b606dceb}{Augmented\-Solver} (const K\-D\-L\-::\-Chain \&chain, double eps=0.\-001)
+\item 
+virtual int \hyperlink{classAugmentedSolver_a9e0bf7d41497a64341b113b91c2c2011}{Cart\-To\-Jnt} (const K\-D\-L\-::\-Jnt\-Array \&q\-\_\-in, const K\-D\-L\-::\-Jnt\-Array \&last\-\_\-q\-\_\-dot, const K\-D\-L\-::\-Twist \&v\-\_\-in, const K\-D\-L\-::\-Frame \&base\-\_\-position, const K\-D\-L\-::\-Frame \&chain\-\_\-base, K\-D\-L\-::\-Jnt\-Array \&qdot\-\_\-out)
+\item 
+\hypertarget{classAugmentedSolver_a18a1deb97750840a0419b9e7fc63e9c6}{virtual int {\bfseries Cart\-To\-Jnt} (const K\-D\-L\-::\-Jnt\-Array \&q\-\_\-in, const K\-D\-L\-::\-Jnt\-Array \&last\-\_\-q\-\_\-dot, const K\-D\-L\-::\-Twist \&v\-\_\-in, K\-D\-L\-::\-Jnt\-Array \&qdot\-\_\-out)}\label{classAugmentedSolver_a18a1deb97750840a0419b9e7fc63e9c6}
+
+\item 
+\hypertarget{classAugmentedSolver_a5f9c96640a7ba94846971afde8d7708b}{void {\bfseries Set\-Augmented\-Solver\-Params} (\hyperlink{structAugmentedSolverParams}{Augmented\-Solver\-Params} params)}\label{classAugmentedSolver_a5f9c96640a7ba94846971afde8d7708b}
+
+\item 
+\hypertarget{classAugmentedSolver_a011b617df37cb359ca65e15549a344ca}{\hyperlink{structAugmentedSolverParams}{Augmented\-Solver\-Params} {\bfseries Get\-Augmented\-Solver\-Params} ()}\label{classAugmentedSolver_a011b617df37cb359ca65e15549a344ca}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Implementation of a inverse velocity kinematics algorithm based on the generalize pseudo inverse to calculate the velocity transformation from Cartesian to joint space of a general K\-D\-L\-::\-Chain. It uses a svd-\/calculation based on householders rotations. 
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classAugmentedSolver_a35d52c13881a84cc466a0690b606dceb}{\index{Augmented\-Solver@{Augmented\-Solver}!Augmented\-Solver@{Augmented\-Solver}}
+\index{Augmented\-Solver@{Augmented\-Solver}!AugmentedSolver@{Augmented\-Solver}}
+\subsubsection[{Augmented\-Solver}]{\setlength{\rightskip}{0pt plus 5cm}Augmented\-Solver\-::\-Augmented\-Solver (
+\begin{DoxyParamCaption}
+\item[{const K\-D\-L\-::\-Chain \&}]{chain, }
+\item[{double}]{eps = {\ttfamily 0.001}}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}}\label{classAugmentedSolver_a35d52c13881a84cc466a0690b606dceb}
+Constructor of the solver
+
+
+\begin{DoxyParams}{Parameters}
+{\em chain} & the chain to calculate the inverse velocity kinematics for \\
+\hline
+{\em eps} & if a singular value is below this value, its inverse is set to zero, default\-: 0.\-00001 \\
+\hline
+{\em maxiter} & maximum iterations for the svd calculation, default\-: 150 \\
+\hline
+\end{DoxyParams}
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classAugmentedSolver_a9e0bf7d41497a64341b113b91c2c2011}{\index{Augmented\-Solver@{Augmented\-Solver}!Cart\-To\-Jnt@{Cart\-To\-Jnt}}
+\index{Cart\-To\-Jnt@{Cart\-To\-Jnt}!AugmentedSolver@{Augmented\-Solver}}
+\subsubsection[{Cart\-To\-Jnt}]{\setlength{\rightskip}{0pt plus 5cm}int Augmented\-Solver\-::\-Cart\-To\-Jnt (
+\begin{DoxyParamCaption}
+\item[{const K\-D\-L\-::\-Jnt\-Array \&}]{q\-\_\-in, }
+\item[{const K\-D\-L\-::\-Jnt\-Array \&}]{last\-\_\-q\-\_\-dot, }
+\item[{const K\-D\-L\-::\-Twist \&}]{v\-\_\-in, }
+\item[{const K\-D\-L\-::\-Frame \&}]{base\-\_\-position, }
+\item[{const K\-D\-L\-::\-Frame \&}]{chain\-\_\-base, }
+\item[{K\-D\-L\-::\-Jnt\-Array \&}]{qdot\-\_\-out}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [virtual]}}}\label{classAugmentedSolver_a9e0bf7d41497a64341b113b91c2c2011}
+Cart\-To\-Jnt for chain using S\-V\-D including base and various Damping\-Methods convert input
+
+convert output 
+
+Here is the call graph for this function\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classAugmentedSolver_a9e0bf7d41497a64341b113b91c2c2011_cgraph}
+\end{center}
+\end{figure}
+
+
+
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+/home/fxm-\/cm/catkin\-\_\-ws/src/cob\-\_\-control/cob\-\_\-twist\-\_\-controller/include/cob\-\_\-twist\-\_\-controller/\hyperlink{augmented__solver_8h}{augmented\-\_\-solver.\-h}\item 
+/home/fxm-\/cm/catkin\-\_\-ws/src/cob\-\_\-control/cob\-\_\-twist\-\_\-controller/src/\hyperlink{augmented__solver_8cpp}{augmented\-\_\-solver.\-cpp}\end{DoxyCompactItemize}

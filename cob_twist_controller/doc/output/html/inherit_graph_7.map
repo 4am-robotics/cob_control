@@ -1,0 +1,4 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$classISolverFactory.html" title="Interface definition to support generic usage of the solver factory without specifying a typename in ..." alt="" coords="5,5,112,32"/>
+<area shape="rect" id="node2" href="$classSolverFactory.html" title="Abstract base class defining interfaces for the creation of a specific solver. " alt="" coords="161,5,295,32"/>
+</map>

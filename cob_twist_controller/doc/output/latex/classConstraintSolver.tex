@@ -1,0 +1,141 @@
+\hypertarget{classConstraintSolver}{\section{Constraint\-Solver Class Reference}
+\label{classConstraintSolver}\index{Constraint\-Solver@{Constraint\-Solver}}
+}
+
+
+Base class for solvers, defining interface methods.  
+
+
+
+
+{\ttfamily \#include $<$constraint\-\_\-solver\-\_\-base.\-h$>$}
+
+
+
+Inheritance diagram for Constraint\-Solver\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=345pt]{classConstraintSolver__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for Constraint\-Solver\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=208pt]{classConstraintSolver__coll__graph}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+virtual Eigen\-::\-Matrix\-Xd \hyperlink{classConstraintSolver_a6208240cb2dc47fdd9adfc3a069408cd}{solve} (const Eigen\-::\-Vector\-Xd \&in\-Cart\-Velocities, const K\-D\-L\-::\-Jnt\-Array \&q, const K\-D\-L\-::\-Jnt\-Array \&last\-\_\-q\-\_\-dot) const =0
+\item 
+void \hyperlink{classConstraintSolver_aa28788d041bb495b0a2c94182e3a126f}{set\-Damping\-Factor} (double damping)
+\end{DoxyCompactItemize}
+\subsection*{Static Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classConstraintSolver_a0dfdb039dd2a0c8b464410068e3b2ffb}{static const double \hyperlink{classConstraintSolver_a0dfdb039dd2a0c8b464410068e3b2ffb}{D\-A\-M\-P\-I\-N\-G\-\_\-\-L\-I\-M\-I\-T} = 1.\-0e-\/9}\label{classConstraintSolver_a0dfdb039dd2a0c8b464410068e3b2ffb}
+
+\begin{DoxyCompactList}\small\item\em const. value for zero comparison with damping factor \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classConstraintSolver_adcb585a5c7f9e1c1d6fa1512e14a3213}{{\bfseries Constraint\-Solver} (\hyperlink{structAugmentedSolverParams}{Augmented\-Solver\-Params} \&as\-Params, Matrix6\-Xd \&jacobian\-Data)}\label{classConstraintSolver_adcb585a5c7f9e1c1d6fa1512e14a3213}
+
+\item 
+Eigen\-::\-Matrix\-Xd \hyperlink{classConstraintSolver_a015784de5861c9320991a3fd3523f232}{calculate\-Pinv\-Jacobian\-By\-S\-V\-D} (Eigen\-::\-Jacobi\-S\-V\-D$<$ Eigen\-::\-Matrix\-Xd $>$ svd) const 
+\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classConstraintSolver_ab0d5f3ad9e40ebe198a7fbf52ad93f60}{const \hyperlink{structAugmentedSolverParams}{Augmented\-Solver\-Params} \& \hyperlink{classConstraintSolver_ab0d5f3ad9e40ebe198a7fbf52ad93f60}{as\-Params\-\_\-}}\label{classConstraintSolver_ab0d5f3ad9e40ebe198a7fbf52ad93f60}
+
+\begin{DoxyCompactList}\small\item\em References the augmented solver parameters. \end{DoxyCompactList}\item 
+\hypertarget{classConstraintSolver_a7c926205c0aed8f7c6d6390a4b84a52d}{const Matrix6\-Xd \& \hyperlink{classConstraintSolver_a7c926205c0aed8f7c6d6390a4b84a52d}{jacobian\-Data\-\_\-}}\label{classConstraintSolver_a7c926205c0aed8f7c6d6390a4b84a52d}
+
+\begin{DoxyCompactList}\small\item\em References the current Jacobian (matrix data only). \end{DoxyCompactList}\item 
+\hypertarget{classConstraintSolver_a38e253500733cab242cfe8462963e2e7}{double \hyperlink{classConstraintSolver_a38e253500733cab242cfe8462963e2e7}{damping\-Factor\-\_\-}}\label{classConstraintSolver_a38e253500733cab242cfe8462963e2e7}
+
+\begin{DoxyCompactList}\small\item\em The currently set damping factor. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Base class for solvers, defining interface methods. 
+
+\subsection{Member Function Documentation}
+\hypertarget{classConstraintSolver_a015784de5861c9320991a3fd3523f232}{\index{Constraint\-Solver@{Constraint\-Solver}!calculate\-Pinv\-Jacobian\-By\-S\-V\-D@{calculate\-Pinv\-Jacobian\-By\-S\-V\-D}}
+\index{calculate\-Pinv\-Jacobian\-By\-S\-V\-D@{calculate\-Pinv\-Jacobian\-By\-S\-V\-D}!ConstraintSolver@{Constraint\-Solver}}
+\subsubsection[{calculate\-Pinv\-Jacobian\-By\-S\-V\-D}]{\setlength{\rightskip}{0pt plus 5cm}Eigen\-::\-Matrix\-Xd Constraint\-Solver\-::calculate\-Pinv\-Jacobian\-By\-S\-V\-D (
+\begin{DoxyParamCaption}
+\item[{Eigen\-::\-Jacobi\-S\-V\-D$<$ Eigen\-::\-Matrix\-Xd $>$}]{svd}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [protected]}}}\label{classConstraintSolver_a015784de5861c9320991a3fd3523f232}
+Base method for calculation of the pseudoinverse Jacobian by using S\-V\-D. 
+\begin{DoxyParams}{Parameters}
+{\em svd} & The singular value decomposition object of a Jacobian. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+A pseudoinverse Jacobian
+\end{DoxyReturn}
+Calculates the pseudoinverse of a Jacobian by using S\-V\-D. Truncation is active always. Means if calculated (damped) singular value is $<$ than E\-P\-S than truncate the singular value to 0.\-0. Damping is active in case of $>$ than static const D\-A\-M\-P\-I\-N\-G\-\_\-\-L\-I\-M\-T, else it is assumed that no damping is active. 
+
+Here is the caller graph for this function\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classConstraintSolver_a015784de5861c9320991a3fd3523f232_icgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{classConstraintSolver_aa28788d041bb495b0a2c94182e3a126f}{\index{Constraint\-Solver@{Constraint\-Solver}!set\-Damping\-Factor@{set\-Damping\-Factor}}
+\index{set\-Damping\-Factor@{set\-Damping\-Factor}!ConstraintSolver@{Constraint\-Solver}}
+\subsubsection[{set\-Damping\-Factor}]{\setlength{\rightskip}{0pt plus 5cm}void Constraint\-Solver\-::set\-Damping\-Factor (
+\begin{DoxyParamCaption}
+\item[{double}]{damping}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [inline]}}}\label{classConstraintSolver_aa28788d041bb495b0a2c94182e3a126f}
+Inline method to set the damping factor 
+\begin{DoxyParams}{Parameters}
+{\em damping} & The new damping factor \\
+\hline
+\end{DoxyParams}
+\hypertarget{classConstraintSolver_a6208240cb2dc47fdd9adfc3a069408cd}{\index{Constraint\-Solver@{Constraint\-Solver}!solve@{solve}}
+\index{solve@{solve}!ConstraintSolver@{Constraint\-Solver}}
+\subsubsection[{solve}]{\setlength{\rightskip}{0pt plus 5cm}virtual Eigen\-::\-Matrix\-Xd Constraint\-Solver\-::solve (
+\begin{DoxyParamCaption}
+\item[{const Eigen\-::\-Vector\-Xd \&}]{in\-Cart\-Velocities, }
+\item[{const K\-D\-L\-::\-Jnt\-Array \&}]{q, }
+\item[{const K\-D\-L\-::\-Jnt\-Array \&}]{last\-\_\-q\-\_\-dot}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [pure virtual]}}}\label{classConstraintSolver_a6208240cb2dc47fdd9adfc3a069408cd}
+The interface method to solve the inverse kinematics problem. Has to be implemented in inherited classes. 
+\begin{DoxyParams}{Parameters}
+{\em in\-Cart\-Velocities} & The input velocities vector (in cartesian space). \\
+\hline
+{\em q} & The current joint positions. \\
+\hline
+{\em last\-\_\-q\-\_\-dot} & The last joint velocities. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+The calculated new joint velocities. 
+\end{DoxyReturn}
+
+
+Implemented in \hyperlink{classWeightedLeastNormSolver_a0868fb81e9e75999037d96b4a6407ce7}{Weighted\-Least\-Norm\-Solver}, and \hyperlink{classUnconstraintSolver_a72e63efba891d2a55f4c95746b8d7b33}{Unconstraint\-Solver}.
+
+
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+/home/fxm-\/cm/catkin\-\_\-ws/src/cob\-\_\-control/cob\-\_\-twist\-\_\-controller/include/cob\-\_\-twist\-\_\-controller/constraint\-\_\-solvers/solvers/\hyperlink{constraint__solver__base_8h}{constraint\-\_\-solver\-\_\-base.\-h}\item 
+/home/fxm-\/cm/catkin\-\_\-ws/src/cob\-\_\-control/cob\-\_\-twist\-\_\-controller/src/constraint\-\_\-solvers/solvers/\hyperlink{constraint__solver__base_8cpp}{constraint\-\_\-solver\-\_\-base.\-cpp}\end{DoxyCompactItemize}

@@ -1,0 +1,6 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$classConstraintSolver.html" title="Base class for solvers, defining interface methods. " alt="" coords="6,31,125,57"/>
+<area shape="rect" id="node2" href="$classUnconstraintSolver.html" title="UnconstraintSolver" alt="" coords="196,5,329,32"/>
+<area shape="rect" id="node3" href="$classWeightedLeastNormSolver.html" title="Implementation of ConstraintSolver to solve inverse kinematics by using a weighted least norm..." alt="" coords="173,56,352,83"/>
+<area shape="rect" id="node4" href="$classWLN__JointLimitAvoidanceSolver.html" title="WLN_JointLimitAvoidanceSolver" alt="" coords="400,56,613,83"/>
+</map>

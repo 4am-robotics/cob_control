@@ -1,0 +1,135 @@
+\hypertarget{classSolverFactory}{\section{Solver\-Factory$<$ T $>$ Class Template Reference}
+\label{classSolverFactory}\index{Solver\-Factory$<$ T $>$@{Solver\-Factory$<$ T $>$}}
+}
+
+
+Abstract base class defining interfaces for the creation of a specific solver.  
+
+
+
+
+{\ttfamily \#include $<$solver\-\_\-factory.\-h$>$}
+
+
+
+Inheritance diagram for Solver\-Factory$<$ T $>$\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=180pt]{classSolverFactory__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for Solver\-Factory$<$ T $>$\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=180pt]{classSolverFactory__coll__graph}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+Eigen\-::\-Matrix\-Xd \hyperlink{classSolverFactory_a1dfa247805c6c9ec5a0adf36a710366d}{calculate\-Joint\-Velocities} (\hyperlink{structAugmentedSolverParams}{Augmented\-Solver\-Params} \&as\-Params, Matrix6\-Xd \&jacobian\-Data, const Eigen\-::\-Vector\-Xd \&in\-Cart\-Velocities, const K\-D\-L\-::\-Jnt\-Array \&q, const K\-D\-L\-::\-Jnt\-Array \&last\-\_\-q\-\_\-dot, double damping\-Factor) const 
+\end{DoxyCompactItemize}
+\subsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+T $\ast$ \hyperlink{classSolverFactory_a49a73417f779159054fee4f6218ce7c8}{create\-Solver} (\hyperlink{structAugmentedSolverParams}{Augmented\-Solver\-Params} \&as\-Params, Matrix6\-Xd \&jacobian\-Data) const 
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\subsubsection*{template$<$typename T$>$class Solver\-Factory$<$ T $>$}
+
+Abstract base class defining interfaces for the creation of a specific solver. 
+
+\subsection{Member Function Documentation}
+\hypertarget{classSolverFactory_a1dfa247805c6c9ec5a0adf36a710366d}{\index{Solver\-Factory@{Solver\-Factory}!calculate\-Joint\-Velocities@{calculate\-Joint\-Velocities}}
+\index{calculate\-Joint\-Velocities@{calculate\-Joint\-Velocities}!SolverFactory@{Solver\-Factory}}
+\subsubsection[{calculate\-Joint\-Velocities}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ Eigen\-::\-Matrix\-Xd {\bf Solver\-Factory}$<$ T $>$\-::calculate\-Joint\-Velocities (
+\begin{DoxyParamCaption}
+\item[{{\bf Augmented\-Solver\-Params} \&}]{as\-Params, }
+\item[{Matrix6\-Xd \&}]{jacobian\-Data, }
+\item[{const Eigen\-::\-Vector\-Xd \&}]{in\-Cart\-Velocities, }
+\item[{const K\-D\-L\-::\-Jnt\-Array \&}]{q, }
+\item[{const K\-D\-L\-::\-Jnt\-Array \&}]{last\-\_\-q\-\_\-dot, }
+\item[{double}]{damping\-Factor}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [virtual]}}}\label{classSolverFactory_a1dfa247805c6c9ec5a0adf36a710366d}
+The base calculation method to calculate joint velocities out of input velocities (cartesian space). Creates a solver according to implemented create\-Solver-\/method (in subclass). Use the specialized solve-\/method to calculate new joint velocities. 
+\begin{DoxyParams}{Parameters}
+{\em as\-Params} & References the augmented solver parameters. \\
+\hline
+{\em jacobian\-Data} & References the current Jacobian (matrix data only). \\
+\hline
+{\em jacobian\-Data\-Transposed} & References the current Jacobian transpose (matrix data only). \\
+\hline
+{\em in\-Cart\-Velocities} & The input velocities vector (in cartesian space). \\
+\hline
+{\em q} & The current joint positions. \\
+\hline
+{\em last\-\_\-q\-\_\-dot} & The last joint velocities. \\
+\hline
+{\em damping\-Factor} & The damping factor corresponding to damping method. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Joint velocities in a (m x 1)-\/\-Matrix. 
+\end{DoxyReturn}
+
+
+Implements \hyperlink{classISolverFactory}{I\-Solver\-Factory}.
+
+
+
+Here is the call graph for this function\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSolverFactory_a1dfa247805c6c9ec5a0adf36a710366d_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{classSolverFactory_a49a73417f779159054fee4f6218ce7c8}{\index{Solver\-Factory@{Solver\-Factory}!create\-Solver@{create\-Solver}}
+\index{create\-Solver@{create\-Solver}!SolverFactory@{Solver\-Factory}}
+\subsubsection[{create\-Solver}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename T $>$ T$\ast$ {\bf Solver\-Factory}$<$ T $>$\-::create\-Solver (
+\begin{DoxyParamCaption}
+\item[{{\bf Augmented\-Solver\-Params} \&}]{as\-Params, }
+\item[{Matrix6\-Xd \&}]{jacobian\-Data}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [protected]}}}\label{classSolverFactory_a49a73417f779159054fee4f6218ce7c8}
+The interface method to create a specific solver to solve the inverse kinematics problem. 
+\begin{DoxyParams}{Parameters}
+{\em as\-Params} & References the augmented solver parameters. \\
+\hline
+{\em jacobian\-Data} & References the current Jacobian (matrix data only). \\
+\hline
+{\em jacobian\-Data\-Transposed} & References the current Jacobian transpose (matrix data only). \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+A specific solver. 
+\end{DoxyReturn}
+
+
+Here is the caller graph for this function\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classSolverFactory_a49a73417f779159054fee4f6218ce7c8_icgraph}
+\end{center}
+\end{figure}
+
+
+
+
+The documentation for this class was generated from the following file\-:\begin{DoxyCompactItemize}
+\item 
+/home/fxm-\/cm/catkin\-\_\-ws/src/cob\-\_\-control/cob\-\_\-twist\-\_\-controller/include/cob\-\_\-twist\-\_\-controller/constraint\-\_\-solvers/factories/\hyperlink{solver__factory_8h}{solver\-\_\-factory.\-h}\end{DoxyCompactItemize}

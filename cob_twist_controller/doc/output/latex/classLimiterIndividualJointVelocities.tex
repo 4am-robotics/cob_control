@@ -1,0 +1,67 @@
+\hypertarget{classLimiterIndividualJointVelocities}{\section{Limiter\-Individual\-Joint\-Velocities Class Reference}
+\label{classLimiterIndividualJointVelocities}\index{Limiter\-Individual\-Joint\-Velocities@{Limiter\-Individual\-Joint\-Velocities}}
+}
+
+
+Class for joint velocity limiter (individually scaled -\/$>$ changes direction), implementing interface methods.  
+
+
+
+
+{\ttfamily \#include $<$limiter.\-h$>$}
+
+
+
+Inheritance diagram for Limiter\-Individual\-Joint\-Velocities\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=230pt]{classLimiterIndividualJointVelocities__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for Limiter\-Individual\-Joint\-Velocities\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=230pt]{classLimiterIndividualJointVelocities__coll__graph}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+virtual K\-D\-L\-::\-Jnt\-Array \hyperlink{classLimiterIndividualJointVelocities_a298fddd7c5f1c806eb7efeb9a18a0cf8}{enforce\-Limits} (const K\-D\-L\-::\-Jnt\-Array \&q\-\_\-dot\-\_\-ik, const K\-D\-L\-::\-Jnt\-Array \&q) const 
+\item 
+\hypertarget{classLimiterIndividualJointVelocities_a0d5c210fe2d43a1f2e692323763f0f3b}{{\bfseries Limiter\-Individual\-Joint\-Velocities} (const \hyperlink{structTwistControllerParams}{Twist\-Controller\-Params} \&tc\-Params, const K\-D\-L\-::\-Chain \&chain)}\label{classLimiterIndividualJointVelocities_a0d5c210fe2d43a1f2e692323763f0f3b}
+
+\end{DoxyCompactItemize}
+\subsection*{Additional Inherited Members}
+
+
+\subsection{Detailed Description}
+Class for joint velocity limiter (individually scaled -\/$>$ changes direction), implementing interface methods. 
+
+\subsection{Member Function Documentation}
+\hypertarget{classLimiterIndividualJointVelocities_a298fddd7c5f1c806eb7efeb9a18a0cf8}{\index{Limiter\-Individual\-Joint\-Velocities@{Limiter\-Individual\-Joint\-Velocities}!enforce\-Limits@{enforce\-Limits}}
+\index{enforce\-Limits@{enforce\-Limits}!LimiterIndividualJointVelocities@{Limiter\-Individual\-Joint\-Velocities}}
+\subsubsection[{enforce\-Limits}]{\setlength{\rightskip}{0pt plus 5cm}K\-D\-L\-::\-Jnt\-Array Limiter\-Individual\-Joint\-Velocities\-::enforce\-Limits (
+\begin{DoxyParamCaption}
+\item[{const K\-D\-L\-::\-Jnt\-Array \&}]{q\-\_\-dot\-\_\-ik, }
+\item[{const K\-D\-L\-::\-Jnt\-Array \&}]{q}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [virtual]}}}\label{classLimiterIndividualJointVelocities_a298fddd7c5f1c806eb7efeb9a18a0cf8}
+Specific implementation of enforce\-Limits-\/method. See base class \hyperlink{classLimiterBase}{Limiter\-Base} for more details on params and returns.
+
+This implementation calculates limits for the joint velocities without keeping the direction. For each joint velocity in the vector an individual factor for scaling is calculated and used. 
+
+Implements \hyperlink{classLimiterBase_a1755edebc0cacfd79f945852ead8ae04}{Limiter\-Base}.
+
+
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+/home/fxm-\/cm/catkin\-\_\-ws/src/cob\-\_\-control/cob\-\_\-twist\-\_\-controller/include/cob\-\_\-twist\-\_\-controller/limiters/\hyperlink{limiter_8h}{limiter.\-h}\item 
+/home/fxm-\/cm/catkin\-\_\-ws/src/cob\-\_\-control/cob\-\_\-twist\-\_\-controller/src/limiters/\hyperlink{limiter_8cpp}{limiter.\-cpp}\end{DoxyCompactItemize}

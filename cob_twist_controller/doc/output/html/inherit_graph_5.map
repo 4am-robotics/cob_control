@@ -1,0 +1,6 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$classDampingBase.html" title="Base class for solvers, defining interface methods. " alt="" coords="5,56,109,83"/>
+<area shape="rect" id="node2" href="$classDampingConstant.html" title="Class implementing a method to return the constant factor. " alt="" coords="171,5,298,32"/>
+<area shape="rect" id="node3" href="$classDampingManipulability.html" title="Class implementing a method to return a factor corresponding to the measure of manipulability. " alt="" coords="158,56,311,83"/>
+<area shape="rect" id="node4" href="$classDampingNone.html" title="Class implementing a method to return the constant factor. " alt="" coords="182,107,287,133"/>
+</map>

@@ -1,0 +1,8 @@
+<map id="/home/fxm&#45;cm/catkin_ws/src/cob_control/cob_twist_controller/include/cob_twist_controller/cob_twist_controller_data_types.h" name="/home/fxm&#45;cm/catkin_ws/src/cob_control/cob_twist_controller/include/cob_twist_controller/cob_twist_controller_data_types.h">
+<area shape="rect" id="node2" href="$cob__twist__controller_8h.html" title="This package provides a generic Twist controller for the Care&#45;O&#45;bot. " alt="" coords="12,405,199,491"/>
+<area shape="rect" id="node4" href="$limiter__base_8h.html" title="This header contains the interface description of limiters. " alt="" coords="89,139,276,224"/>
+<area shape="rect" id="node3" href="$cob__twist__controller_8cpp.html" title="This package provides a generic Twist controller for the Care&#45;O&#45;bot. " alt="" coords="11,539,200,610"/>
+<area shape="rect" id="node5" href="$limiter__base_8cpp.html" title="This header contains the interface description of damping methods. " alt="" coords="90,272,235,357"/>
+<area shape="rect" id="node6" href="$limiter_8h.html" title="This header contains the class definitions of all limiter implementations. " alt="" coords="260,272,447,357"/>
+<area shape="rect" id="node7" href="$limiter_8cpp.html" title="This module contains the implementation of all classes and their methods to limit joint positions / v..." alt="" coords="276,413,429,483"/>
+</map>

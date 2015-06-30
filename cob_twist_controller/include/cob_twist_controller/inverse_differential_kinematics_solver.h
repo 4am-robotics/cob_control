@@ -72,7 +72,8 @@ public:
                           const KDL::Twist& v_in,
                           const KDL::Frame &base_position,
                           const KDL::Frame &chain_base,
-                          KDL::JntArray& qdot_out);
+                          KDL::JntArray& qdot_out,
+                          ExtendedJacobianDimension& dim);
 
     inline virtual int CartToJnt(const KDL::JntArray& q_in,
                                  const KDL::JntArray& last_q_dot,
@@ -82,7 +83,10 @@ public:
         KDL::Frame dummy;
         dummy.p = KDL::Vector(0,0,0);
         dummy.M = KDL::Rotation::Quaternion(0,0,0,0);
-        return CartToJnt(q_in, last_q_dot, v_in, dummy, dummy, qdot_out);
+
+        ExtendedJacobianDimension dummy_dim;
+
+        return CartToJnt(q_in, last_q_dot, v_in, dummy, dummy, qdot_out, dummy_dim);
     }
 
     inline void SetInvDiffKinSolverParams(InvDiffKinSolverParams params)
@@ -110,6 +114,6 @@ private:
      * @param base_position Current base position.
      * @param chain_base Current frame of the chain base.
      */
-    void adjustJac(const KDL::JntArray& q_in, const KDL::Frame &base_position, const KDL::Frame &chain_base);
+    void adjustJac(const KDL::JntArray& q_in, const KDL::Frame &base_position, const KDL::Frame &chain_base, ExtendedJacobianDimension& dim);
 };
 #endif // INVERSE_DIFFERENTIAL_KINEMATICS_SOLVER_H

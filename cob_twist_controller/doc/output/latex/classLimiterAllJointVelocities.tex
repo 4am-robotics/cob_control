@@ -1,0 +1,67 @@
+\hypertarget{classLimiterAllJointVelocities}{\section{Limiter\-All\-Joint\-Velocities Class Reference}
+\label{classLimiterAllJointVelocities}\index{Limiter\-All\-Joint\-Velocities@{Limiter\-All\-Joint\-Velocities}}
+}
+
+
+Class for joint velocity limiter (all scaled to keep direction), implementing interface methods.  
+
+
+
+
+{\ttfamily \#include $<$limiter.\-h$>$}
+
+
+
+Inheritance diagram for Limiter\-All\-Joint\-Velocities\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=200pt]{classLimiterAllJointVelocities__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for Limiter\-All\-Joint\-Velocities\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=200pt]{classLimiterAllJointVelocities__coll__graph}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+virtual K\-D\-L\-::\-Jnt\-Array \hyperlink{classLimiterAllJointVelocities_aa068927c99f27d9616fe5bdd7fd7248d}{enforce\-Limits} (const K\-D\-L\-::\-Jnt\-Array \&q\-\_\-dot\-\_\-ik, const K\-D\-L\-::\-Jnt\-Array \&q) const 
+\item 
+\hypertarget{classLimiterAllJointVelocities_a623ed13f38a32d87cfaefa4b1e8be48c}{{\bfseries Limiter\-All\-Joint\-Velocities} (const \hyperlink{structTwistControllerParams}{Twist\-Controller\-Params} \&tc\-Params, const K\-D\-L\-::\-Chain \&chain)}\label{classLimiterAllJointVelocities_a623ed13f38a32d87cfaefa4b1e8be48c}
+
+\end{DoxyCompactItemize}
+\subsection*{Additional Inherited Members}
+
+
+\subsection{Detailed Description}
+Class for joint velocity limiter (all scaled to keep direction), implementing interface methods. 
+
+\subsection{Member Function Documentation}
+\hypertarget{classLimiterAllJointVelocities_aa068927c99f27d9616fe5bdd7fd7248d}{\index{Limiter\-All\-Joint\-Velocities@{Limiter\-All\-Joint\-Velocities}!enforce\-Limits@{enforce\-Limits}}
+\index{enforce\-Limits@{enforce\-Limits}!LimiterAllJointVelocities@{Limiter\-All\-Joint\-Velocities}}
+\subsubsection[{enforce\-Limits}]{\setlength{\rightskip}{0pt plus 5cm}K\-D\-L\-::\-Jnt\-Array Limiter\-All\-Joint\-Velocities\-::enforce\-Limits (
+\begin{DoxyParamCaption}
+\item[{const K\-D\-L\-::\-Jnt\-Array \&}]{q\-\_\-dot\-\_\-ik, }
+\item[{const K\-D\-L\-::\-Jnt\-Array \&}]{q}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [virtual]}}}\label{classLimiterAllJointVelocities_aa068927c99f27d9616fe5bdd7fd7248d}
+Specific implementation of enforce\-Limits-\/method. See base class \hyperlink{classLimiterBase}{Limiter\-Base} for more details on params and returns.
+
+Enforce limits on all joint velocities to keep direction (former known as normalize\-\_\-velocities). Limits all velocities according to the limits\-\_\-vel vector if necessary. 
+
+Implements \hyperlink{classLimiterBase_a1755edebc0cacfd79f945852ead8ae04}{Limiter\-Base}.
+
+
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+/home/fxm-\/cm/catkin\-\_\-ws/src/cob\-\_\-control/cob\-\_\-twist\-\_\-controller/include/cob\-\_\-twist\-\_\-controller/limiters/\hyperlink{limiter_8h}{limiter.\-h}\item 
+/home/fxm-\/cm/catkin\-\_\-ws/src/cob\-\_\-control/cob\-\_\-twist\-\_\-controller/src/limiters/\hyperlink{limiter_8cpp}{limiter.\-cpp}\end{DoxyCompactItemize}

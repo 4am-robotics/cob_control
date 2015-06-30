@@ -1,0 +1,86 @@
+\hypertarget{classLimiterBase}{\section{Limiter\-Base Class Reference}
+\label{classLimiterBase}\index{Limiter\-Base@{Limiter\-Base}}
+}
+
+
+Base class for limiters, defining interface methods.  
+
+
+
+
+{\ttfamily \#include $<$limiter\-\_\-base.\-h$>$}
+
+
+
+Inheritance diagram for Limiter\-Base\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=336pt]{classLimiterBase__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for Limiter\-Base\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=194pt]{classLimiterBase__coll__graph}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+virtual K\-D\-L\-::\-Jnt\-Array \hyperlink{classLimiterBase_a1755edebc0cacfd79f945852ead8ae04}{enforce\-Limits} (const K\-D\-L\-::\-Jnt\-Array \&q\-\_\-dot\-\_\-ik, const K\-D\-L\-::\-Jnt\-Array \&q) const =0
+\end{DoxyCompactItemize}
+\subsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classLimiterBase_abd32f319d44f38d5acdd40377c617ad9}{{\bfseries Limiter\-Base} (const \hyperlink{structTwistControllerParams}{Twist\-Controller\-Params} \&tc\-Params, const K\-D\-L\-::\-Chain \&chain)}\label{classLimiterBase_abd32f319d44f38d5acdd40377c617ad9}
+
+\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classLimiterBase_abc79fc6f46bd2d624434bff0f774c442}{const \hyperlink{structTwistControllerParams}{Twist\-Controller\-Params} \& {\bfseries tc\-Params\-\_\-}}\label{classLimiterBase_abc79fc6f46bd2d624434bff0f774c442}
+
+\item 
+\hypertarget{classLimiterBase_aa302d4220e371999c2e94cb020358cbd}{const K\-D\-L\-::\-Chain \& {\bfseries chain\-\_\-}}\label{classLimiterBase_aa302d4220e371999c2e94cb020358cbd}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Base class for limiters, defining interface methods. 
+
+\subsection{Member Function Documentation}
+\hypertarget{classLimiterBase_a1755edebc0cacfd79f945852ead8ae04}{\index{Limiter\-Base@{Limiter\-Base}!enforce\-Limits@{enforce\-Limits}}
+\index{enforce\-Limits@{enforce\-Limits}!LimiterBase@{Limiter\-Base}}
+\subsubsection[{enforce\-Limits}]{\setlength{\rightskip}{0pt plus 5cm}virtual K\-D\-L\-::\-Jnt\-Array Limiter\-Base\-::enforce\-Limits (
+\begin{DoxyParamCaption}
+\item[{const K\-D\-L\-::\-Jnt\-Array \&}]{q\-\_\-dot\-\_\-ik, }
+\item[{const K\-D\-L\-::\-Jnt\-Array \&}]{q}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [pure virtual]}}}\label{classLimiterBase_a1755edebc0cacfd79f945852ead8ae04}
+Pure virtual method to mark as interface method which has to be implemented in inherited classes. The intention is to implement a method which enforces limits to the q\-\_\-dot\-\_\-out vector according to the calculated joint velocities and / or joint positions. 
+\begin{DoxyParams}{Parameters}
+{\em q\-\_\-dot\-\_\-ik} & The calculated joint velocities vector which has to be checked for limits. \\
+\hline
+{\em q} & The last known joint positions. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Scaled joint velocities vector. 
+\end{DoxyReturn}
+
+
+Implemented in \hyperlink{classLimiterIndividualJointVelocities_a298fddd7c5f1c806eb7efeb9a18a0cf8}{Limiter\-Individual\-Joint\-Velocities}, \hyperlink{classLimiterIndividualJointPositions_aa5a977c62d490397ae7e685a4d7f1f94}{Limiter\-Individual\-Joint\-Positions}, \hyperlink{classLimiterAllJointVelocities_aa068927c99f27d9616fe5bdd7fd7248d}{Limiter\-All\-Joint\-Velocities}, \hyperlink{classLimiterAllJointPositions_af4dc11b0adfe3eea38d1291b09a2a693}{Limiter\-All\-Joint\-Positions}, and \hyperlink{classLimiterContainer_a4df93d61aeb9e44c30127a1a2c8d0bd9}{Limiter\-Container}.
+
+
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+/home/fxm-\/cm/catkin\-\_\-ws/src/cob\-\_\-control/cob\-\_\-twist\-\_\-controller/include/cob\-\_\-twist\-\_\-controller/limiters/\hyperlink{limiter__base_8h}{limiter\-\_\-base.\-h}\item 
+/home/fxm-\/cm/catkin\-\_\-ws/src/cob\-\_\-control/cob\-\_\-twist\-\_\-controller/src/limiters/\hyperlink{limiter__base_8cpp}{limiter\-\_\-base.\-cpp}\end{DoxyCompactItemize}

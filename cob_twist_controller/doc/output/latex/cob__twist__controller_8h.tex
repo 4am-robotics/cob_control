@@ -1,0 +1,72 @@
+\hypertarget{cob__twist__controller_8h}{\section{/home/fxm-\/cm/catkin\-\_\-ws/src/cob\-\_\-control/cob\-\_\-twist\-\_\-controller/include/cob\-\_\-twist\-\_\-controller/cob\-\_\-twist\-\_\-controller.h File Reference}
+\label{cob__twist__controller_8h}\index{/home/fxm-\/cm/catkin\-\_\-ws/src/cob\-\_\-control/cob\-\_\-twist\-\_\-controller/include/cob\-\_\-twist\-\_\-controller/cob\-\_\-twist\-\_\-controller.\-h@{/home/fxm-\/cm/catkin\-\_\-ws/src/cob\-\_\-control/cob\-\_\-twist\-\_\-controller/include/cob\-\_\-twist\-\_\-controller/cob\-\_\-twist\-\_\-controller.\-h}}
+}
+
+
+This package provides a generic Twist controller for the Care-\/\-O-\/bot.  
+
+
+{\ttfamily \#include $<$ros/ros.\-h$>$}\\*
+{\ttfamily \#include $<$std\-\_\-msgs/\-Float64.\-h$>$}\\*
+{\ttfamily \#include $<$std\-\_\-msgs/\-Float64\-Multi\-Array.\-h$>$}\\*
+{\ttfamily \#include $<$sensor\-\_\-msgs/\-Joint\-State.\-h$>$}\\*
+{\ttfamily \#include $<$geometry\-\_\-msgs/\-Twist.\-h$>$}\\*
+{\ttfamily \#include $<$nav\-\_\-msgs/\-Odometry.\-h$>$}\\*
+{\ttfamily \#include $<$urdf/model.\-h$>$}\\*
+{\ttfamily \#include $<$kdl\-\_\-parser/kdl\-\_\-parser.\-hpp$>$}\\*
+{\ttfamily \#include $<$kdl/chainfksolvervel\-\_\-recursive.\-hpp$>$}\\*
+{\ttfamily \#include $<$kdl/chainiksolvervel\-\_\-pinv.\-hpp$>$}\\*
+{\ttfamily \#include $<$kdl/jntarray.\-hpp$>$}\\*
+{\ttfamily \#include $<$kdl/jntarrayvel.\-hpp$>$}\\*
+{\ttfamily \#include $<$kdl/frames.\-hpp$>$}\\*
+{\ttfamily \#include $<$tf/transform\-\_\-listener.\-h$>$}\\*
+{\ttfamily \#include $<$tf/tf.\-h$>$}\\*
+{\ttfamily \#include $<$boost/thread/mutex.\-hpp$>$}\\*
+{\ttfamily \#include $<$boost/shared\-\_\-ptr.\-hpp$>$}\\*
+{\ttfamily \#include $<$dynamic\-\_\-reconfigure/server.\-h$>$}\\*
+{\ttfamily \#include $<$cob\-\_\-twist\-\_\-controller/augmented\-\_\-solver.\-h$>$}\\*
+{\ttfamily \#include $<$cob\-\_\-twist\-\_\-controller/\-Twist\-Controller\-Config.\-h$>$}\\*
+{\ttfamily \#include \char`\"{}cob\-\_\-twist\-\_\-controller/cob\-\_\-twist\-\_\-controller\-\_\-data\-\_\-types.\-h\char`\"{}}\\*
+{\ttfamily \#include \char`\"{}cob\-\_\-twist\-\_\-controller/limiters/limiter.\-h\char`\"{}}\\*
+Include dependency graph for cob\-\_\-twist\-\_\-controller.\-h\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{cob__twist__controller_8h__incl}
+\end{center}
+\end{figure}
+This graph shows which files directly or indirectly include this file\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=222pt]{cob__twist__controller_8h__dep__incl}
+\end{center}
+\end{figure}
+\subsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \hyperlink{classCobTwistController}{Cob\-Twist\-Controller}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+This package provides a generic Twist controller for the Care-\/\-O-\/bot. \begin{DoxyNote}{Note}
+Copyright (c) 2014 \par
+ Fraunhofer Institute for Manufacturing Engineering and Automation (I\-P\-A) \par
+\par
+
+
+Project name\-: care-\/o-\/bot 
+
+R\-O\-S stack name\-: cob\-\_\-driver 
+
+R\-O\-S package name\-: cob\-\_\-twist\-\_\-controller
+\end{DoxyNote}
+\begin{DoxyAuthor}{Author}
+Author\-: Felix Messmer, email\-: \href{mailto:Felix.Messmer@ipa.fraunhofer.de}{\tt Felix.\-Messmer@ipa.\-fraunhofer.\-de}
+\end{DoxyAuthor}
+\begin{DoxyDate}{Date}
+Date of creation\-: April, 2014 
+\end{DoxyDate}

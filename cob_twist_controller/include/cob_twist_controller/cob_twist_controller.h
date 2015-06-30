@@ -58,76 +58,8 @@
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/limiters/limiter.h"
 #include "cob_twist_controller/callback_data_mediator.h"
-
-#include <deque>
-
-class MovingAverage{
-    private:
-        std::deque<double> s_;
-        std::deque<double> weighting_,temp_;
-
-        int size_;
-    public:
-            MovingAverage(){
-                size_=3;
-                calculate_weighting();
-            }
-            void add_element(double element){
-                if(s_.size()<size_){
-                    s_.push_front(element);
-                }
-                else
-                {
-                    // Drops the first element
-                    s_.pop_back();
-                    s_.push_front(element);
-                }
-            }
-
-            double calc_moving_average(){
-                double sum = 0;
-                for(std::deque<double>::const_iterator i = s_.begin(); i != s_.end(); ++i)
-                    sum += *i;
-
-                return sum/s_.size();
-            }
-
-            double calc_weighted_moving_average(){
-                double sum = 0;
-                for(int i = 0; i< s_.size(); i++)
-                    sum+=s_[i] * weighting_[i];
-
-                return sum;
-            }
-
-            void calculate_weighting(){
-                double sum=0;
-                double err=0;
-                double j=0.0;
-
-                for(int i = 0; i < size_; i++)
-                {
-                    weighting_.push_back((pow(log(2),j+1) / fakultaet(j+1)));
-                    sum += weighting_[i];
-                    j += 1.0;
-                }
-                ROS_WARN("Before: %f",weighting_[0]);
-                err = 1 - sum;
-                std::deque<double>::iterator i = weighting_.begin();
-                *i+=err;
-                ROS_WARN("Before: %f",*i);
-            }
-
-            double fakultaet(int n)
-            {
-              if ( n <= 1 )
-                return  1;
-              else
-                return  (double)(n * fakultaet(n-1));
-            }
-
-};
-
+#include <cob_twist_controller/moving_average.h>
+#include "cob_twist_controller/interface_types/interface_type.h"
 class CobTwistController
 {
 private:
@@ -160,14 +92,13 @@ private:
     std::string chain_tip_link_;
     std::vector<std::string> joints_;
 
-    Eigen::VectorXd tracking_err_;
-
     bool reset_markers_;
 
     TwistControllerParams twist_controller_params_;
 
     boost::shared_ptr<InverseDifferentialKinematicsSolver> p_inv_diff_kin_solver_;
     boost::shared_ptr<LimiterContainer> limiters_;
+    boost::shared_ptr<InterfaceBase> interface_;
     boost::shared_ptr<KDL::ChainFkSolverVel_recursive> jntToCartSolver_vel_;
 
     tf::TransformListener tf_listener_;
@@ -190,21 +121,15 @@ private:
                bl_frame_ct,
                cb_frame_bl;
 
-    bool firstIteration_;
-    ros::Duration integration_period_;
-    ros::Time time_now_;
-    ros::Time last_update_time_;
-
-    std::vector<MovingAverage> ma_;
-    std::vector<double> old_vel_,old_pos_,initial_pos_,old_vel_2_;
-    int iteration_counter_;
+    std::vector<MovingAverage> ma_base_vel_smoother_;
+    std::vector<double> old_vel_, old_pos_, initial_pos_, old_vel_2_;
 
     void initInvDiffKinSolverParams();
 
 
 public:
     CobTwistController():
-        reset_markers_(false),firstIteration_(true),iteration_counter_(0)
+        reset_markers_(false)
     {
         this->twist_controller_params_.keep_direction = true;
         this->twist_controller_params_.enforce_pos_limits = true;

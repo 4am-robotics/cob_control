@@ -1,0 +1,80 @@
+\hypertarget{classWeightedLeastNormSolver}{\section{Weighted\-Least\-Norm\-Solver Class Reference}
+\label{classWeightedLeastNormSolver}\index{Weighted\-Least\-Norm\-Solver@{Weighted\-Least\-Norm\-Solver}}
+}
+
+
+Implementation of \hyperlink{classConstraintSolver}{Constraint\-Solver} to solve inverse kinematics by using a weighted least norm.  
+
+
+
+
+{\ttfamily \#include $<$weighted\-\_\-least\-\_\-norm\-\_\-solver.\-h$>$}
+
+
+
+Inheritance diagram for Weighted\-Least\-Norm\-Solver\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=240pt]{classWeightedLeastNormSolver__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for Weighted\-Least\-Norm\-Solver\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=214pt]{classWeightedLeastNormSolver__coll__graph}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+virtual Eigen\-::\-Matrix\-Xd \hyperlink{classWeightedLeastNormSolver_a0868fb81e9e75999037d96b4a6407ce7}{solve} (const Eigen\-::\-Vector\-Xd \&in\-Cart\-Velocities, const K\-D\-L\-::\-Jnt\-Array \&q, const K\-D\-L\-::\-Jnt\-Array \&last\-\_\-q\-\_\-dot) const 
+\item 
+\hypertarget{classWeightedLeastNormSolver_aa5eeee99709044b47bc32a4cc1ca72dd}{{\bfseries Weighted\-Least\-Norm\-Solver} (\hyperlink{structAugmentedSolverParams}{Augmented\-Solver\-Params} \&as\-Params, Matrix6\-Xd \&jacobian\-Data)}\label{classWeightedLeastNormSolver_aa5eeee99709044b47bc32a4cc1ca72dd}
+
+\end{DoxyCompactItemize}
+\subsection*{Additional Inherited Members}
+
+
+\subsection{Detailed Description}
+Implementation of \hyperlink{classConstraintSolver}{Constraint\-Solver} to solve inverse kinematics by using a weighted least norm. 
+
+\subsection{Member Function Documentation}
+\hypertarget{classWeightedLeastNormSolver_a0868fb81e9e75999037d96b4a6407ce7}{\index{Weighted\-Least\-Norm\-Solver@{Weighted\-Least\-Norm\-Solver}!solve@{solve}}
+\index{solve@{solve}!WeightedLeastNormSolver@{Weighted\-Least\-Norm\-Solver}}
+\subsubsection[{solve}]{\setlength{\rightskip}{0pt plus 5cm}Eigen\-::\-Matrix\-Xd Weighted\-Least\-Norm\-Solver\-::solve (
+\begin{DoxyParamCaption}
+\item[{const Eigen\-::\-Vector\-Xd \&}]{in\-Cart\-Velocities, }
+\item[{const K\-D\-L\-::\-Jnt\-Array \&}]{q, }
+\item[{const K\-D\-L\-::\-Jnt\-Array \&}]{last\-\_\-q\-\_\-dot}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [virtual]}}}\label{classWeightedLeastNormSolver_a0868fb81e9e75999037d96b4a6407ce7}
+Specific implementation of solve-\/method to solve I\-K problem with joint limit avoidance. See base class \hyperlink{classConstraintSolver}{Constraint\-Solver} for more details on params and returns.
+
+Specific implementation of the solve method using a weighted least norm. This is done by calculation of a weighting which is dependent on inherited classes for the Jacobian. Uses the base implementation of calculate\-Pinv\-Jacobian\-By\-S\-V\-D to calculate the pseudo-\/inverse (weighted) Jacobian. 
+
+Implements \hyperlink{classConstraintSolver_a6208240cb2dc47fdd9adfc3a069408cd}{Constraint\-Solver}.
+
+
+
+Here is the call graph for this function\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classWeightedLeastNormSolver_a0868fb81e9e75999037d96b4a6407ce7_cgraph}
+\end{center}
+\end{figure}
+
+
+
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+/home/fxm-\/cm/catkin\-\_\-ws/src/cob\-\_\-control/cob\-\_\-twist\-\_\-controller/include/cob\-\_\-twist\-\_\-controller/constraint\-\_\-solvers/solvers/\hyperlink{weighted__least__norm__solver_8h}{weighted\-\_\-least\-\_\-norm\-\_\-solver.\-h}\item 
+/home/fxm-\/cm/catkin\-\_\-ws/src/cob\-\_\-control/cob\-\_\-twist\-\_\-controller/src/constraint\-\_\-solvers/solvers/\hyperlink{weighted__least__norm__solver_8cpp}{weighted\-\_\-least\-\_\-norm\-\_\-solver.\-cpp}\end{DoxyCompactItemize}

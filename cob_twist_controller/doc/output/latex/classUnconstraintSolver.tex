@@ -1,0 +1,68 @@
+\hypertarget{classUnconstraintSolver}{\section{Unconstraint\-Solver Class Reference}
+\label{classUnconstraintSolver}\index{Unconstraint\-Solver@{Unconstraint\-Solver}}
+}
+
+
+Inheritance diagram for Unconstraint\-Solver\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=180pt]{classUnconstraintSolver__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for Unconstraint\-Solver\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=208pt]{classUnconstraintSolver__coll__graph}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+virtual Eigen\-::\-Matrix\-Xd \hyperlink{classUnconstraintSolver_a72e63efba891d2a55f4c95746b8d7b33}{solve} (const Eigen\-::\-Vector\-Xd \&in\-Cart\-Velocities, const K\-D\-L\-::\-Jnt\-Array \&q, const K\-D\-L\-::\-Jnt\-Array \&last\-\_\-q\-\_\-dot) const 
+\item 
+\hypertarget{classUnconstraintSolver_a3018879def8a39783ba4de35e27198d9}{{\bfseries Unconstraint\-Solver} (\hyperlink{structAugmentedSolverParams}{Augmented\-Solver\-Params} \&as\-Params, Matrix6\-Xd \&jacobian\-Data)}\label{classUnconstraintSolver_a3018879def8a39783ba4de35e27198d9}
+
+\end{DoxyCompactItemize}
+\subsection*{Additional Inherited Members}
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classUnconstraintSolver_a72e63efba891d2a55f4c95746b8d7b33}{\index{Unconstraint\-Solver@{Unconstraint\-Solver}!solve@{solve}}
+\index{solve@{solve}!UnconstraintSolver@{Unconstraint\-Solver}}
+\subsubsection[{solve}]{\setlength{\rightskip}{0pt plus 5cm}Eigen\-::\-Matrix\-Xd Unconstraint\-Solver\-::solve (
+\begin{DoxyParamCaption}
+\item[{const Eigen\-::\-Vector\-Xd \&}]{in\-Cart\-Velocities, }
+\item[{const K\-D\-L\-::\-Jnt\-Array \&}]{q, }
+\item[{const K\-D\-L\-::\-Jnt\-Array \&}]{last\-\_\-q\-\_\-dot}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [virtual]}}}\label{classUnconstraintSolver_a72e63efba891d2a55f4c95746b8d7b33}
+Specific implementation of solve-\/method to solve I\-K problem without any constraints. See base class \hyperlink{classConstraintSolver}{Constraint\-Solver} for more details on params and returns.
+
+Implementation of a default solve-\/method for the inverse kinematics problem. It calculates the pseudo-\/inverse of the Jacobian via the base implementation of calculate\-Pinv\-Jacobian\-By\-S\-V\-D. With the pseudo-\/inverse the joint velocity vector is calculated. 
+
+Implements \hyperlink{classConstraintSolver_a6208240cb2dc47fdd9adfc3a069408cd}{Constraint\-Solver}.
+
+
+
+Here is the call graph for this function\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classUnconstraintSolver_a72e63efba891d2a55f4c95746b8d7b33_cgraph}
+\end{center}
+\end{figure}
+
+
+
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+/home/fxm-\/cm/catkin\-\_\-ws/src/cob\-\_\-control/cob\-\_\-twist\-\_\-controller/include/cob\-\_\-twist\-\_\-controller/constraint\-\_\-solvers/solvers/\hyperlink{unconstraint__solver_8h}{unconstraint\-\_\-solver.\-h}\item 
+/home/fxm-\/cm/catkin\-\_\-ws/src/cob\-\_\-control/cob\-\_\-twist\-\_\-controller/src/constraint\-\_\-solvers/solvers/\hyperlink{unconstraint__solver_8cpp}{unconstraint\-\_\-solver.\-cpp}\end{DoxyCompactItemize}

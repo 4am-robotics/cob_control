@@ -64,6 +64,16 @@ enum ContraintTypes {
     GPM_JLA_MID = 4,
     GPM_CA = 5,
 };
+struct ExtendedJacobianDimension {
+        ExtendedJacobianDimension():
+            lin_x(0),lin_y(0),lin_z(0),rot_x(0),rot_y(0),rot_z(0){}
+    double lin_x;
+    double lin_y;
+    double lin_z;
+    double rot_x;
+    double rot_y;
+    double rot_z;
+};
 
 struct InvDiffKinSolverParams {
     DampingMethodTypes damping_method;

@@ -31,6 +31,8 @@ set(SRC_CS_DIR "${SRC_C_DIR}/solvers")
 add_library(damping_methods src/damping_methods/damping.cpp)
 add_library(constraint_solvers ${SRC_CS_DIR}/unconstraint_solver.cpp ${SRC_CS_DIR}/wln_joint_limit_avoidance_solver.cpp ${SRC_CS_DIR}/weighted_least_norm_solver.cpp ${SRC_CS_DIR}/gradient_projection_method_solver.cpp ${SRC_C_DIR}/constraint_solver_factory_builder.cpp)
 add_library(limiters src/limiters/limiter.cpp)
+add_library(interface_types src/interface_types/interface_type.cpp)
+
 add_library(inv_calculations src/inverse_jacobian_calculations/inverse_jacobian_calculation.cpp)
 target_link_libraries(constraint_solvers damping_methods inv_calculations)
 add_dependencies(constraint_solvers cob_obstacle_distance_gencpp)
@@ -41,7 +43,7 @@ target_link_libraries(inverse_differential_kinematics_solver constraint_solvers 
 
 add_library(twist_controller src/cob_twist_controller.cpp)
 add_dependencies(inverse_differential_kinematics_solver cob_twist_controller_gencfg)
-target_link_libraries(twist_controller inverse_differential_kinematics_solver limiters ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
+target_link_libraries(twist_controller inverse_differential_kinematics_solver limiters interface_types ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 
 ## Declare a cpp executable
 add_executable(cob_twist_controller_node src/cob_twist_controller_node.cpp)
@@ -49,7 +51,7 @@ target_link_libraries(cob_twist_controller_node twist_controller ${catkin_LIBRAR
 
 ## Install
 # Mark executables and/or libraries for installation
-install(TARGETS cob_twist_controller_node twist_controller inverse_differential_kinematics_solver constraint_solvers damping_methods limiters inv_calculations
+install(TARGETS cob_twist_controller_node twist_controller inverse_differential_kinematics_solver constraint_solvers damping_methods limiters interface_types inv_calculations
  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

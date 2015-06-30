@@ -1,0 +1,67 @@
+\hypertarget{classLimiterAllJointPositions}{\section{Limiter\-All\-Joint\-Positions Class Reference}
+\label{classLimiterAllJointPositions}\index{Limiter\-All\-Joint\-Positions@{Limiter\-All\-Joint\-Positions}}
+}
+
+
+Class for limiters, declaring the method to limit all joint positions.  
+
+
+
+
+{\ttfamily \#include $<$limiter.\-h$>$}
+
+
+
+Inheritance diagram for Limiter\-All\-Joint\-Positions\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=198pt]{classLimiterAllJointPositions__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for Limiter\-All\-Joint\-Positions\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=198pt]{classLimiterAllJointPositions__coll__graph}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+virtual K\-D\-L\-::\-Jnt\-Array \hyperlink{classLimiterAllJointPositions_af4dc11b0adfe3eea38d1291b09a2a693}{enforce\-Limits} (const K\-D\-L\-::\-Jnt\-Array \&q\-\_\-dot\-\_\-ik, const K\-D\-L\-::\-Jnt\-Array \&q) const 
+\item 
+\hypertarget{classLimiterAllJointPositions_a19ad99c1ca465381ec7b9c5264559513}{{\bfseries Limiter\-All\-Joint\-Positions} (const \hyperlink{structTwistControllerParams}{Twist\-Controller\-Params} \&tc\-Params, const K\-D\-L\-::\-Chain \&chain)}\label{classLimiterAllJointPositions_a19ad99c1ca465381ec7b9c5264559513}
+
+\end{DoxyCompactItemize}
+\subsection*{Additional Inherited Members}
+
+
+\subsection{Detailed Description}
+Class for limiters, declaring the method to limit all joint positions. 
+
+\subsection{Member Function Documentation}
+\hypertarget{classLimiterAllJointPositions_af4dc11b0adfe3eea38d1291b09a2a693}{\index{Limiter\-All\-Joint\-Positions@{Limiter\-All\-Joint\-Positions}!enforce\-Limits@{enforce\-Limits}}
+\index{enforce\-Limits@{enforce\-Limits}!LimiterAllJointPositions@{Limiter\-All\-Joint\-Positions}}
+\subsubsection[{enforce\-Limits}]{\setlength{\rightskip}{0pt plus 5cm}K\-D\-L\-::\-Jnt\-Array Limiter\-All\-Joint\-Positions\-::enforce\-Limits (
+\begin{DoxyParamCaption}
+\item[{const K\-D\-L\-::\-Jnt\-Array \&}]{q\-\_\-dot\-\_\-ik, }
+\item[{const K\-D\-L\-::\-Jnt\-Array \&}]{q}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [virtual]}}}\label{classLimiterAllJointPositions_af4dc11b0adfe3eea38d1291b09a2a693}
+Specific implementation of enforce\-Limits-\/method. See base class \hyperlink{classLimiterBase}{Limiter\-Base} for more details on params and returns.
+
+Checks the positions of the joints whether the are in tolerance or not. If not the corresponding velocities vector is scaled. This function multiplies the velocities that result from the I\-K with a limits-\/dependent factor in case the joint positions violate the specified tolerance. The factor is calculated by using the cosine function to provide a smooth transition from 1 to zero. Factor is applied on all joint velocities (although only one joint has exceeded its limits), so that the direction of the desired twist is not changed. -\/$>$ Important for the Use-\/\-Case to follow a trajectory exactly! 
+
+Implements \hyperlink{classLimiterBase_a1755edebc0cacfd79f945852ead8ae04}{Limiter\-Base}.
+
+
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+/home/fxm-\/cm/catkin\-\_\-ws/src/cob\-\_\-control/cob\-\_\-twist\-\_\-controller/include/cob\-\_\-twist\-\_\-controller/limiters/\hyperlink{limiter_8h}{limiter.\-h}\item 
+/home/fxm-\/cm/catkin\-\_\-ws/src/cob\-\_\-control/cob\-\_\-twist\-\_\-controller/src/limiters/\hyperlink{limiter_8cpp}{limiter.\-cpp}\end{DoxyCompactItemize}

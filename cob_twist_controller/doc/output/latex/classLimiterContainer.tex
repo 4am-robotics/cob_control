@@ -1,0 +1,179 @@
+\hypertarget{classLimiterContainer}{\section{Limiter\-Container Class Reference}
+\label{classLimiterContainer}\index{Limiter\-Container@{Limiter\-Container}}
+}
+
+
+Container for limiters, implementing interface methods.  
+
+
+
+
+{\ttfamily \#include $<$limiter.\-h$>$}
+
+
+
+Inheritance diagram for Limiter\-Container\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=166pt]{classLimiterContainer__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for Limiter\-Container\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=194pt]{classLimiterContainer__coll__graph}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+virtual K\-D\-L\-::\-Jnt\-Array \hyperlink{classLimiterContainer_a4df93d61aeb9e44c30127a1a2c8d0bd9}{enforce\-Limits} (const K\-D\-L\-::\-Jnt\-Array \&q\-\_\-dot\-\_\-ik, const K\-D\-L\-::\-Jnt\-Array \&q) const 
+\item 
+void \hyperlink{classLimiterContainer_a28eac48f36b165d02c86449189aacea2}{init} ()
+\item 
+virtual \hyperlink{classLimiterContainer_a4284c7a1f5094fbe24e0cd51f7bda6ab}{$\sim$\-Limiter\-Container} ()
+\item 
+\hypertarget{classLimiterContainer_a0aac7f3db0d1639b8bf38365e6e4a34c}{{\bfseries Limiter\-Container} (const \hyperlink{structTwistControllerParams}{Twist\-Controller\-Params} \&tc\-Params, const K\-D\-L\-::\-Chain \&chain)}\label{classLimiterContainer_a0aac7f3db0d1639b8bf38365e6e4a34c}
+
+\end{DoxyCompactItemize}
+\subsection*{Protected Types}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classLimiterContainer_a32daab69a85e6f3ec090c9be462a88e0}{typedef std\-::vector$<$ const \\*
+\hyperlink{classLimiterBase}{Limiter\-Base} $\ast$ $>$\\*
+\-::const\-\_\-iterator {\bfseries lim\-Iter}}\label{classLimiterContainer_a32daab69a85e6f3ec090c9be462a88e0}
+
+\end{DoxyCompactItemize}
+\subsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+void \hyperlink{classLimiterContainer_aef4914ff51be7ed8c563d47de9f316e8}{add} (const \hyperlink{classLimiterBase}{Limiter\-Base} $\ast$lb)
+\item 
+void \hyperlink{classLimiterContainer_a62b339d250d1d68fda7404d6fe89468b}{erase\-All} ()
+\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classLimiterContainer_a6fefcd7cc1cb4b8f029ce02013d2f5de}{std\-::vector$<$ const \hyperlink{classLimiterBase}{Limiter\-Base} $\ast$ $>$ {\bfseries limiters}}\label{classLimiterContainer_a6fefcd7cc1cb4b8f029ce02013d2f5de}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Container for limiters, implementing interface methods. 
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classLimiterContainer_a4284c7a1f5094fbe24e0cd51f7bda6ab}{\index{Limiter\-Container@{Limiter\-Container}!$\sim$\-Limiter\-Container@{$\sim$\-Limiter\-Container}}
+\index{$\sim$\-Limiter\-Container@{$\sim$\-Limiter\-Container}!LimiterContainer@{Limiter\-Container}}
+\subsubsection[{$\sim$\-Limiter\-Container}]{\setlength{\rightskip}{0pt plus 5cm}Limiter\-Container\-::$\sim$\-Limiter\-Container (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [virtual]}}}\label{classLimiterContainer_a4284c7a1f5094fbe24e0cd51f7bda6ab}
+Destruction of the whole container 
+
+Here is the call graph for this function\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=340pt]{classLimiterContainer_a4284c7a1f5094fbe24e0cd51f7bda6ab_cgraph}
+\end{center}
+\end{figure}
+
+
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classLimiterContainer_aef4914ff51be7ed8c563d47de9f316e8}{\index{Limiter\-Container@{Limiter\-Container}!add@{add}}
+\index{add@{add}!LimiterContainer@{Limiter\-Container}}
+\subsubsection[{add}]{\setlength{\rightskip}{0pt plus 5cm}void Limiter\-Container\-::add (
+\begin{DoxyParamCaption}
+\item[{const {\bf Limiter\-Base} $\ast$}]{lb}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [protected]}}}\label{classLimiterContainer_aef4914ff51be7ed8c563d47de9f316e8}
+Add method 
+\begin{DoxyParams}{Parameters}
+{\em lb} & An implementation of a limiter.\\
+\hline
+\end{DoxyParams}
+Adding new limiters to the vector. 
+
+Here is the caller graph for this function\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=334pt]{classLimiterContainer_aef4914ff51be7ed8c563d47de9f316e8_icgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{classLimiterContainer_a4df93d61aeb9e44c30127a1a2c8d0bd9}{\index{Limiter\-Container@{Limiter\-Container}!enforce\-Limits@{enforce\-Limits}}
+\index{enforce\-Limits@{enforce\-Limits}!LimiterContainer@{Limiter\-Container}}
+\subsubsection[{enforce\-Limits}]{\setlength{\rightskip}{0pt plus 5cm}K\-D\-L\-::\-Jnt\-Array Limiter\-Container\-::enforce\-Limits (
+\begin{DoxyParamCaption}
+\item[{const K\-D\-L\-::\-Jnt\-Array \&}]{q\-\_\-dot\-\_\-ik, }
+\item[{const K\-D\-L\-::\-Jnt\-Array \&}]{q}
+\end{DoxyParamCaption}
+) const\hspace{0.3cm}{\ttfamily [virtual]}}}\label{classLimiterContainer_a4df93d61aeb9e44c30127a1a2c8d0bd9}
+Specific implementation of enforce\-Limits-\/method. See base class \hyperlink{classLimiterBase}{Limiter\-Base} for more details on params and returns.
+
+This implementation calls enforce limits on all registered Limiters in the limiters vector. The method is based on the last calculation of q\-\_\-dot. 
+
+Implements \hyperlink{classLimiterBase_a1755edebc0cacfd79f945852ead8ae04}{Limiter\-Base}.
+
+\hypertarget{classLimiterContainer_a62b339d250d1d68fda7404d6fe89468b}{\index{Limiter\-Container@{Limiter\-Container}!erase\-All@{erase\-All}}
+\index{erase\-All@{erase\-All}!LimiterContainer@{Limiter\-Container}}
+\subsubsection[{erase\-All}]{\setlength{\rightskip}{0pt plus 5cm}void Limiter\-Container\-::erase\-All (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)\hspace{0.3cm}{\ttfamily [protected]}}}\label{classLimiterContainer_a62b339d250d1d68fda7404d6fe89468b}
+Erase all
+
+Deletes all limiters and clears the vector holding them. 
+
+Here is the caller graph for this function\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classLimiterContainer_a62b339d250d1d68fda7404d6fe89468b_icgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{classLimiterContainer_a28eac48f36b165d02c86449189aacea2}{\index{Limiter\-Container@{Limiter\-Container}!init@{init}}
+\index{init@{init}!LimiterContainer@{Limiter\-Container}}
+\subsubsection[{init}]{\setlength{\rightskip}{0pt plus 5cm}void Limiter\-Container\-::init (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classLimiterContainer_a28eac48f36b165d02c86449189aacea2}
+Initialization for the container.
+
+Building the limiters vector according the the chosen parameters. 
+
+Here is the call graph for this function\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classLimiterContainer_a28eac48f36b165d02c86449189aacea2_cgraph}
+\end{center}
+\end{figure}
+
+
+
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+/home/fxm-\/cm/catkin\-\_\-ws/src/cob\-\_\-control/cob\-\_\-twist\-\_\-controller/include/cob\-\_\-twist\-\_\-controller/limiters/\hyperlink{limiter_8h}{limiter.\-h}\item 
+/home/fxm-\/cm/catkin\-\_\-ws/src/cob\-\_\-control/cob\-\_\-twist\-\_\-controller/src/limiters/\hyperlink{limiter_8cpp}{limiter.\-cpp}\end{DoxyCompactItemize}

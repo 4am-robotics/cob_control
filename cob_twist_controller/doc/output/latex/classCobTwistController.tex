@@ -1,0 +1,125 @@
+\hypertarget{classCobTwistController}{\section{Cob\-Twist\-Controller Class Reference}
+\label{classCobTwistController}\index{Cob\-Twist\-Controller@{Cob\-Twist\-Controller}}
+}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+bool \hyperlink{classCobTwistController_a9090539c07c0bfaef7d3e9c636cd1227}{initialize} ()
+\item 
+\hypertarget{classCobTwistController_a1aa93e5ae864cd5dba15f7f05069bb83}{void {\bfseries run} ()}\label{classCobTwistController_a1aa93e5ae864cd5dba15f7f05069bb83}
+
+\item 
+\hypertarget{classCobTwistController_a64f00b4e38aaa997b54c8c7cf2d2e56a}{void {\bfseries reconfigure\-\_\-callback} (cob\-\_\-twist\-\_\-controller\-::\-Twist\-Controller\-Config \&config, uint32\-\_\-t level)}\label{classCobTwistController_a64f00b4e38aaa997b54c8c7cf2d2e56a}
+
+\item 
+\hypertarget{classCobTwistController_a96e485efeff236806d5ce5ff163920cb}{void {\bfseries jointstate\-\_\-cb} (const sensor\-\_\-msgs\-::\-Joint\-State\-::\-Const\-Ptr \&msg)}\label{classCobTwistController_a96e485efeff236806d5ce5ff163920cb}
+
+\item 
+\hypertarget{classCobTwistController_af0cec45004d2902486cd54645fc29ca3}{void {\bfseries odometry\-\_\-cb} (const nav\-\_\-msgs\-::\-Odometry\-::\-Const\-Ptr \&msg)}\label{classCobTwistController_af0cec45004d2902486cd54645fc29ca3}
+
+\item 
+\hypertarget{classCobTwistController_a92c9f22fcbf87555371729c19ae87f91}{void \hyperlink{classCobTwistController_a92c9f22fcbf87555371729c19ae87f91}{twist\-\_\-cb} (const geometry\-\_\-msgs\-::\-Twist\-::\-Const\-Ptr \&msg)}\label{classCobTwistController_a92c9f22fcbf87555371729c19ae87f91}
+
+\begin{DoxyCompactList}\small\item\em Orientation of twist\-\_\-msg is with respect to chain\-\_\-base coordinate system. \end{DoxyCompactList}\item 
+\hypertarget{classCobTwistController_a7007a6628741fdbd97c840aedeb73617}{void {\bfseries base\-\_\-twist\-\_\-cb} (const geometry\-\_\-msgs\-::\-Twist\-::\-Const\-Ptr \&msg)}\label{classCobTwistController_a7007a6628741fdbd97c840aedeb73617}
+
+\item 
+\hypertarget{classCobTwistController_a5b769ea386acb685f2c553d09b6c2636}{void \hyperlink{classCobTwistController_a5b769ea386acb685f2c553d09b6c2636}{twist\-\_\-stamped\-\_\-cb} (const geometry\-\_\-msgs\-::\-Twist\-Stamped\-::\-Const\-Ptr \&msg)}\label{classCobTwistController_a5b769ea386acb685f2c553d09b6c2636}
+
+\begin{DoxyCompactList}\small\item\em Orientation of twist\-\_\-stamped\-\_\-msg is with respect to coordinate system given in header.\-frame\-\_\-id. \end{DoxyCompactList}\item 
+void \hyperlink{classCobTwistController_afe4ebcf7b22d5fb22c679e174fb61f25}{solve\-\_\-twist} (K\-D\-L\-::\-Twist twist)
+\begin{DoxyCompactList}\small\item\em Orientation of twist is with respect to chain\-\_\-base coordinate system. \end{DoxyCompactList}\item 
+\hypertarget{classCobTwistController_a0d04426df5a09a421510f65fd2a46e9d}{void \hyperlink{classCobTwistController_a0d04426df5a09a421510f65fd2a46e9d}{show\-Marker} (int marker\-\_\-id, double red, double green, double blue, std\-::string ns, ros\-::\-Publisher pub, std\-::vector$<$ geometry\-\_\-msgs\-::\-Point $>$ \&pos\-\_\-v)}\label{classCobTwistController_a0d04426df5a09a421510f65fd2a46e9d}
+
+\begin{DoxyCompactList}\small\item\em Debug. \end{DoxyCompactList}\item 
+\hypertarget{classCobTwistController_a48ef3bf6fc622a82f7ea7bf2f7f90464}{void {\bfseries debug} ()}\label{classCobTwistController_a48ef3bf6fc622a82f7ea7bf2f7f90464}
+
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\hypertarget{classCobTwistController_a1475837c311c21829eff6295d090a4d5}{boost\-::recursive\-\_\-mutex {\bfseries reconfig\-\_\-mutex\-\_\-}}\label{classCobTwistController_a1475837c311c21829eff6295d090a4d5}
+
+\item 
+\hypertarget{classCobTwistController_aeddd744f215a7cc1b0a097755ee22e4a}{boost\-::shared\-\_\-ptr\\*
+$<$ dynamic\-\_\-reconfigure\-::\-Server\\*
+$<$ cob\-\_\-twist\-\_\-controller\-::\-Twist\-Controller\-Config $>$ $>$ {\bfseries reconfigure\-\_\-server\-\_\-}}\label{classCobTwistController_aeddd744f215a7cc1b0a097755ee22e4a}
+
+\end{DoxyCompactItemize}
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classCobTwistController_a9090539c07c0bfaef7d3e9c636cd1227}{\index{Cob\-Twist\-Controller@{Cob\-Twist\-Controller}!initialize@{initialize}}
+\index{initialize@{initialize}!CobTwistController@{Cob\-Twist\-Controller}}
+\subsubsection[{initialize}]{\setlength{\rightskip}{0pt plus 5cm}bool Cob\-Twist\-Controller\-::initialize (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}\label{classCobTwistController_a9090539c07c0bfaef7d3e9c636cd1227}
+parse robot\-\_\-description and generate K\-D\-L chains
+
+parse robot\-\_\-description and set velocity limits
+
+initialize configuration control solver
+
+Setting up dynamic\-\_\-reconfigure server for the \hyperlink{structAugmentedSolverParams}{Augmented\-Solver\-Params}
+
+initialize variables and current joint values and velocities
+
+give tf\-\_\-listener some time to fill tf-\/cache
+
+initialize R\-O\-S interfaces
+
+Debug 
+
+Here is the call graph for this function\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCobTwistController_a9090539c07c0bfaef7d3e9c636cd1227_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{classCobTwistController_afe4ebcf7b22d5fb22c679e174fb61f25}{\index{Cob\-Twist\-Controller@{Cob\-Twist\-Controller}!solve\-\_\-twist@{solve\-\_\-twist}}
+\index{solve\-\_\-twist@{solve\-\_\-twist}!CobTwistController@{Cob\-Twist\-Controller}}
+\subsubsection[{solve\-\_\-twist}]{\setlength{\rightskip}{0pt plus 5cm}void Cob\-Twist\-Controller\-::solve\-\_\-twist (
+\begin{DoxyParamCaption}
+\item[{K\-D\-L\-::\-Twist}]{twist}
+\end{DoxyParamCaption}
+)}}\label{classCobTwistController_afe4ebcf7b22d5fb22c679e174fb61f25}
+
+
+Orientation of twist is with respect to chain\-\_\-base coordinate system. 
+
+Base Velocities with respect to base\-\_\-link 
+
+Here is the call graph for this function\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=320pt]{classCobTwistController_afe4ebcf7b22d5fb22c679e174fb61f25_cgraph}
+\end{center}
+\end{figure}
+
+
+
+
+Here is the caller graph for this function\-:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{classCobTwistController_afe4ebcf7b22d5fb22c679e174fb61f25_icgraph}
+\end{center}
+\end{figure}
+
+
+
+
+The documentation for this class was generated from the following files\-:\begin{DoxyCompactItemize}
+\item 
+/home/fxm-\/cm/catkin\-\_\-ws/src/cob\-\_\-control/cob\-\_\-twist\-\_\-controller/include/cob\-\_\-twist\-\_\-controller/\hyperlink{cob__twist__controller_8h}{cob\-\_\-twist\-\_\-controller.\-h}\item 
+/home/fxm-\/cm/catkin\-\_\-ws/src/cob\-\_\-control/cob\-\_\-twist\-\_\-controller/src/\hyperlink{cob__twist__controller_8cpp}{cob\-\_\-twist\-\_\-controller.\-cpp}\end{DoxyCompactItemize}
