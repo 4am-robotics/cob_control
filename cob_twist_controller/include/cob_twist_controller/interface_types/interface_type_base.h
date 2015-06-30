@@ -30,9 +30,10 @@
 #define COB_CONTROL_COB_TWIST_CONTROLLER_INCLUDE_INTERFACE_TYPES_INTERFACE_TYPE_BASE_H_
 
 #include "ros/ros.h"
-#include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include <std_msgs/Float64MultiArray.h>
-#include "cob_twist_controller/moving_average.h"
+
+#include "cob_twist_controller/cob_twist_controller_data_types.h"
+#include "cob_twist_controller/utils/moving_average.h"
 
 /// Base class for interfaces types.
 class InterfaceBase
@@ -54,7 +55,6 @@ class InterfaceBase
         ros::NodeHandle& nh_;
         ros::Publisher pub_;
 };
-
 
 
 #endif /* COB_CONTROL_COB_TWIST_CONTROLLER_INCLUDE_INTERFACE_TYPES_INTERFACE_TYPE_BASE_H_ */

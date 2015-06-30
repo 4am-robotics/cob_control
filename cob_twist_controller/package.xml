@@ -25,6 +25,7 @@
   <build_depend>tf_conversions</build_depend>
   <build_depend>dynamic_reconfigure</build_depend>
   <build_depend>cob_obstacle_distance</build_depend>
+  <build_depend>eigen</build_depend>
   
   <run_depend>roscpp</run_depend>
   <run_depend>rospy</run_depend>
@@ -40,6 +41,7 @@
   <run_depend>tf_conversions</run_depend>
   <run_depend>dynamic_reconfigure</run_depend>
   <run_depend>cob_obstacle_distance</run_depend>
+  <run_depend>eigen</run_depend>
 
   <export>
   </export>

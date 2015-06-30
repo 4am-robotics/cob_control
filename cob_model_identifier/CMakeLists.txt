@@ -13,7 +13,6 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES input_generator output_recorder
   CATKIN_DEPENDS roscpp std_msgs geometry_msgs tf std_srvs
-  DEPENDS eigen
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${orocos_kdl_INCLUDE_DIRS} )

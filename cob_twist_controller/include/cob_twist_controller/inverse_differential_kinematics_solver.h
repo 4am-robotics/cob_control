@@ -82,8 +82,8 @@ public:
                                  KDL::JntArray& qdot_out)
     {
         KDL::Frame dummy;
-        dummy.p = KDL::Vector(0,0,0);
-        dummy.M = KDL::Rotation::Quaternion(0,0,0,0);
+        dummy.p = KDL::Vector(0.0, 0.0, 0.0);
+        dummy.M = KDL::Rotation::Quaternion(0.0, 0.0, 0.0, 1.0);
 
         ExtendedJacobianDimension dummy_dim;
 

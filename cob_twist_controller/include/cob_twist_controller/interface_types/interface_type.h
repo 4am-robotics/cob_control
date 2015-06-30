@@ -47,37 +47,37 @@ class InterfaceBuilder
 
 
 
-/* BEGIN Interface_Velocity ****************************************************************************************/
-class Interface_Velocity : public InterfaceBase
+/* BEGIN InterfaceVelocity ****************************************************************************************/
+class InterfaceVelocity : public InterfaceBase
 {
     public:
-        Interface_Velocity(ros::NodeHandle& nh, const TwistControllerParams &params)
-        : InterfaceBase(nh,params)
+        InterfaceVelocity(ros::NodeHandle& nh, const TwistControllerParams &params)
+        : InterfaceBase(nh, params)
         {
             pub_ = nh.advertise<std_msgs::Float64MultiArray>("joint_group_velocity_controller/command", 1);
         }
 
-        ~Interface_Velocity() {}
+        ~InterfaceVelocity() {}
 
         virtual void process_result(const KDL::JntArray &q_dot_ik,
                                     std::vector<double> &initial_position);
 };
-/* END Interface_Velocity **********************************************************************************************/
+/* END InterfaceVelocity **********************************************************************************************/
 
 
-/* BEGIN Interface_Position ****************************************************************************************/
-class Interface_Position : public InterfaceBase
+/* BEGIN InterfacePosition ****************************************************************************************/
+class InterfacePosition : public InterfaceBase
 {
     public:
-        Interface_Position(ros::NodeHandle& nh, const TwistControllerParams &params)
-        : InterfaceBase(nh,params),
+        InterfacePosition(ros::NodeHandle& nh, const TwistControllerParams &params)
+        : InterfaceBase(nh, params),
           iteration_counter_(0)
         {
             for(int i = 0; i < params.dof; i++)
             {
                 ma_.push_back(MovingAverage());
-                vel_support_integration_point_.push_back(0);
-                vel_first_integration_point_.push_back(0);
+                vel_support_integration_point_.push_back(0.0);
+                vel_first_integration_point_.push_back(0.0);
             }
             time_now_ = ros::Time::now();
             last_update_time_ = time_now_;
@@ -85,7 +85,7 @@ class Interface_Position : public InterfaceBase
             pub_ = nh.advertise<std_msgs::Float64MultiArray>("joint_group_position_controller/command", 1);
         }
 
-        ~Interface_Position() {}
+        ~InterfacePosition() {}
 
         virtual void process_result(const KDL::JntArray &q_dot_ik,
                                     std::vector<double> &initial_position);
@@ -99,7 +99,7 @@ class Interface_Position : public InterfaceBase
         ros::Time last_update_time_;
 
 };
-/* END Interface_Position **********************************************************************************************/
+/* END InterfacePosition **********************************************************************************************/
 
 
 

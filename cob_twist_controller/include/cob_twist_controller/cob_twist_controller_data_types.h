@@ -65,8 +65,9 @@ enum ContraintTypes {
     GPM_CA = 5,
 };
 struct ExtendedJacobianDimension {
-        ExtendedJacobianDimension():
-            lin_x(0),lin_y(0),lin_z(0),rot_x(0),rot_y(0),rot_z(0){}
+    ExtendedJacobianDimension():
+        lin_x(0), lin_y(0), lin_z(0), rot_x(0), rot_y(0), rot_z(0) {}
+    
     double lin_x;
     double lin_y;
     double lin_z;
@@ -120,7 +121,6 @@ struct TwistControllerParams {
     bool enforce_vel_limits;
 
     InterfaceType interface_type;
-
 
     // added limits from URDF file
     std::vector<double> limits_vel;

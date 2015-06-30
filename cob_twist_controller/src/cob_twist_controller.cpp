@@ -38,7 +38,7 @@
 #include "cob_obstacle_distance/Registration.h"
 
 #define DEBUG_BASE_ACTIVE    0
-#define DEBUG_BASE_COMP     0
+#define DEBUG_BASE_COMP      0
 
 bool CobTwistController::initialize()
 {
@@ -63,8 +63,6 @@ bool CobTwistController::initialize()
         ROS_ERROR("Parameter 'chain_tip_link' not set");
         return false;
     }
-
-    // Multi-Chain Support
 
     // Cartesian VelLimits
     if (!nh_twist.getParam("max_vel_lin", twist_controller_params_.max_vel_lin))
@@ -147,9 +145,6 @@ bool CobTwistController::initialize()
     twist_sub = nh_twist.subscribe("command_twist", 1, &CobTwistController::twistCallback, this);
     twist_stamped_sub = nh_twist.subscribe("command_twist_stamped", 1, &CobTwistController::twistStampedCallback, this);
 
-//    vel_pub = nh_.advertise<std_msgs::Float64MultiArray>("joint_group_velocity_controller/command", 1);
-//    pos_pub = nh_.advertise<std_msgs::Float64MultiArray>("joint_group_position_controller/command", 1);
-
     odometry_sub = nh_.subscribe("/base/odometry_controller/odometry", 1, &CobTwistController::odometryCallback, this);
     base_vel_pub = nh_.advertise<geometry_msgs::Twist>("/base/twist_controller/command", 1);
 
@@ -182,10 +177,6 @@ bool CobTwistController::initialize()
 
     this->interface_.reset(InterfaceBuilder::create_interface(this->nh_, this->twist_controller_params_));
 
-    for(int i = 0; i < 6; i++)
-    {
-        ma_base_vel_smoother_.push_back(MovingAverage(10));
-    }
     ROS_INFO("...initialized!");
     return true;
 }
@@ -255,7 +246,6 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     this->limiters_->init();
 
     this->interface_.reset(InterfaceBuilder::create_interface(this->nh_, this->twist_controller_params_));
-
 
     if(twist_controller_params_.base_active && twist_controller_params_.base_compensation)
     {
@@ -362,8 +352,8 @@ void CobTwistController::solveTwist(KDL::Twist twist)
                 double id1 = 0;
                 double id2 = 1;
 
-                showMarker(id1,1,0,0,"m",debug_base_compensation_visual_tip_pub_,point_ee_vec_);
-                showMarker(id2,0,1,0,"m",debug_base_compensation_visual_base_pub_,point_base_vec_);
+                showMarker(id1, std_msgs::ColorRGBA(1,0,0,1), "marker_tip", debug_base_compensation_visual_tip_pub_, point_ee_vec_);
+                showMarker(id2, std_msgs::ColorRGBA(0,1,0,1), "marker_base", debug_base_compensation_visual_base_pub_, point_base_vec_);
             }
 
             if(reset_markers_){
@@ -425,7 +415,7 @@ void CobTwistController::solveTwist(KDL::Twist twist)
             geometry_msgs::Twist twist_manipulator_bl;
 
             ////Twist Manipulator in base_link
-            tf::twistKDLToMsg(bl_frame_cb*twist,twist_manipulator_bl);
+            tf::twistKDLToMsg(bl_frame_cb * twist,twist_manipulator_bl);
 
             //Debug publisher
             debug_base_compensation_pose_base_pub_.publish(pose_base);
@@ -464,23 +454,23 @@ void CobTwistController::solveTwist(KDL::Twist twist)
             base_vel_pub.publish(base_vel_msg);
 
             #if DEBUG_BASE_ACTIVE == 1
-                KDL::Twist twist_base_bl,twist_manipulator_cb,twist_manipulator_bl;
+                KDL::Twist twist_base_bl, twist_manipulator_cb, twist_manipulator_bl;
                 KDL::FrameVel FrameVel_cb;
 
-                geometry_msgs::Twist twist_manipulator_msg,twist_combined_msg;
+                geometry_msgs::Twist twist_manipulator_msg, twist_combined_msg;
 
                 tf::twistMsgToKDL(base_vel_msg, twist_base_bl);
                 debug_twistControllerParams_.base_activetwist_base_pub_.publish(base_vel_msg);    // Base twist in base_link
 
                 /////calculate current Manipulator-Twists
-                KDL::JntArrayVel jntArrayVel = KDL::JntArrayVel(last_q_,last_q_dot_);
+                KDL::JntArrayVel jntArrayVel = KDL::JntArrayVel(last_q_, last_q_dot_);
                 jntToCartSolver_vel_.reset(new KDL::ChainFkSolverVel_recursive(chain_));
-                int ret = jntToCartSolver_vel_->JntToCart(jntArrayVel,FrameVel_cb,-1);
+                int ret = jntToCartSolver_vel_->JntToCart(jntArrayVel, FrameVel_cb, -1);
 
                 if(ret>=0){
                     twist_manipulator_cb = FrameVel_cb.GetTwist();
                     twist_manipulator_bl = bl_frame_cb * twist_manipulator_cb;
-                    tf::twistKDLToMsg(twist_manipulator_bl,twist_manipulator_msg);    // Manipulator twist in base_link
+                    tf::twistKDLToMsg(twist_manipulator_bl, twist_manipulator_msg);    // Manipulator twist in base_link
                 }
                 else{
                     ROS_WARN("ChainFkSolverVel failed!");
@@ -520,11 +510,11 @@ void CobTwistController::jointstateCallback(const sensor_msgs::JointState::Const
         last_q_ = q_temp;
         last_q_dot_ = q_dot_temp;
     }
+    
     initial_pos_.clear();
-
-    for(int i = 0; i< msg->position.size();i++)
+    for(int i = 0; i< last_q_.rows();i++)
     {
-        initial_pos_.push_back(msg->position[i]);
+        initial_pos_.push_back(last_q_(i));
     }
 }
 
@@ -549,10 +539,10 @@ void CobTwistController::odometryCallback(const nav_msgs::Odometry::ConstPtr& ms
     try
     {
         // Calculate tangential twist for angular base movements v = w x r
-        Eigen::Vector3d r(bl_transform_ct.getOrigin().x(),bl_transform_ct.getOrigin().y(),bl_transform_ct.getOrigin().z());
+        Eigen::Vector3d r(bl_transform_ct.getOrigin().x(), bl_transform_ct.getOrigin().y(), bl_transform_ct.getOrigin().z());
         Eigen::Vector3d w(0,0,msg->twist.twist.angular.z);
         Eigen::Vector3d res = w.cross(r);
-        tangential_twist_bl.vel = KDL::Vector(res(0),res(1),res(2));
+        tangential_twist_bl.vel = KDL::Vector(res(0), res(1), res(2));
         tangential_twist_bl.rot = KDL::Vector(0,0,0);
     }
     catch(...)
@@ -567,13 +557,13 @@ void CobTwistController::odometryCallback(const nav_msgs::Odometry::ConstPtr& ms
     tf::twistMsgToKDL(msg->twist.twist, twist_odometry_bl);    // Base Twist
 
     // transform into chain_base
-    twist_odometry_transformed_cb = cb_frame_bl * (twist_odometry_bl+tangential_twist_bl);
+    twist_odometry_transformed_cb = cb_frame_bl * (twist_odometry_bl + tangential_twist_bl);
 
     twist_odometry_cb_ = twist_odometry_transformed_cb;
 }
 
 
-void CobTwistController::showMarker(int marker_id,double red, double green, double blue, std::string ns, ros::Publisher pub, std::vector<geometry_msgs::Point> &pos_v)
+void CobTwistController::showMarker(int marker_id, std_msgs::ColorRGBA color_rgba, std::string ns, ros::Publisher pub, std::vector<geometry_msgs::Point> &pos_v)
 {
     visualization_msgs::Marker marker;
     marker.header.frame_id = "odom_combined";
@@ -584,16 +574,12 @@ void CobTwistController::showMarker(int marker_id,double red, double green, doub
     marker.action = visualization_msgs::Marker::ADD;
 
     marker.pose.orientation.w = 1.0;
-
     marker.scale.x = 0.01;
 
-    marker.color.r = red;
-    marker.color.g = green;
-    marker.color.b = blue;
-
+    marker.color = color_rgba;
+    
     marker.points.insert(marker.points.begin(), pos_v.begin(), pos_v.end());
-
-    marker.color.a = 1.0;
+    
     pub.publish( marker );
 }
 

@@ -161,7 +161,7 @@ void InverseDifferentialKinematicsSolver::adjustJac(const KDL::JntArray& q_in,
         jac_.resize(chain_.getNrOfJoints() + jac_b.cols());
         jac_.data << jac_full;
 
-        ROS_INFO_STREAM("test" << std::endl << jac_full);
+        //ROS_DEBUG_STREAM("ExtendedJacobian" << std::endl << jac_full);
     }
     else
     {
