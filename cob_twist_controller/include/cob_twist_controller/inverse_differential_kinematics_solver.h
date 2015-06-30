@@ -31,6 +31,7 @@
 #include <kdl/chainiksolver.hpp>
 #include <kdl/chainjnttojacsolver.hpp>
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/callback_data_mediator.h"
@@ -101,7 +102,6 @@ public:
 
 private:
     const KDL::Chain chain_;
-    const KDL::Chain from_base_link_chain_;
     KDL::Jacobian jac_, jac_base_;
     KDL::ChainJntToJacSolver jnt2jac_;
     InvDiffKinSolverParams params_;

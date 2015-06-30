@@ -112,7 +112,6 @@ void InverseDifferentialKinematicsSolver::adjustJac(const KDL::JntArray& q_in,
 
         r_chain_base = chain_base_quat*r_base_link;
 
-
         //Calculate tangential velocity
         tangential_vel_x = w_x_chain_base.cross(r_chain_base);
         tangential_vel_y = w_y_chain_base.cross(r_chain_base);

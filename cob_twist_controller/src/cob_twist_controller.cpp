@@ -43,8 +43,6 @@
 bool CobTwistController::initialize()
 {
     ros::NodeHandle nh_twist("twist_controller");
-    std::string robo_namespace = nh_.getNamespace();
-    robo_namespace.erase(0, 2); // delete "//" to get "arm_right" or "arm_left" ...
 
     // JointNames
     if(!nh_.getParam("joint_names", joints_))
@@ -55,17 +53,16 @@ bool CobTwistController::initialize()
     twist_controller_params_.dof = joints_.size();
 
     // Chain
-    if(!nh_twist.getParam("chain_base_link", chain_base_link_))
+    if(!nh_.getParam("chain_base_link", chain_base_link_))
     {
         ROS_ERROR("Parameter 'chain_base_link' not set");
         return false;
     }
-    if (!nh_twist.getParam("chain_tip_link", chain_tip_link_))
+    if (!nh_.getParam("chain_tip_link", chain_tip_link_))
     {
         ROS_ERROR("Parameter 'chain_tip_link' not set");
         return false;
     }
-
 
     // Multi-Chain Support
 
@@ -94,9 +91,8 @@ bool CobTwistController::initialize()
     // Frames of Interest
     if(!nh_twist.getParam("collision_check_frames", twist_controller_params_.collision_check_frames))
     {
-        ROS_WARN_STREAM("Parameter vector 'collision_check_frames' not set. Using default: 3rd link and 5th link of manipulator.");
-        twist_controller_params_.collision_check_frames.push_back(robo_namespace + "_3_link");
-        twist_controller_params_.collision_check_frames.push_back(robo_namespace + "_5_link");
+        ROS_ERROR_STREAM("Parameter vector 'collision_check_frames' not set.");
+        return false;
     }
 
     ///parse robot_description and generate KDL chains
@@ -197,10 +193,8 @@ bool CobTwistController::initialize()
 void CobTwistController::reinitServiceRegistration()
 {
     ROS_INFO("Reinit of Service registration!");
-    std::string robo_namespace = nh_.getNamespace();
-    robo_namespace.erase(0, 1); // delete "/"
-    ros::ServiceClient client = nh_.serviceClient<cob_obstacle_distance::Registration>(robo_namespace + "/obstacle_distance/registerPointOfInterest");
-    ROS_INFO_STREAM("Created service client for service " << robo_namespace << "/obstacle_distance/registerPointOfInterest");
+    ros::ServiceClient client = nh_.serviceClient<cob_obstacle_distance::Registration>("obstacle_distance/registerPointOfInterest");
+    ROS_INFO_STREAM("Created service client for service " << nh_.getNamespace() << "/obstacle_distance/registerPointOfInterest");
 
     for(std::vector<std::string>::const_iterator it = twist_controller_params_.collision_check_frames.begin();
             it != twist_controller_params_.collision_check_frames.end();
@@ -215,7 +209,7 @@ void CobTwistController::reinitServiceRegistration()
         }
         else
         {
-            ROS_WARN_STREAM("Failed to call registration service for robo_namespace: " << robo_namespace);
+            ROS_WARN_STREAM("Failed to call registration service for namespace: " << nh_.getNamespace());
             break;
         }
     }

@@ -2,6 +2,19 @@
 Changelog for package cob_control_mode_adapter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
+0.6.8 (2015-06-17)
+------------------
+
+0.6.7 (2015-06-17)
+------------------
+* beautify CMakeLists
+* reduce output
+* check which controllers are available
+* Contributors: ipa-fxm
+
 0.6.6 (2014-12-18)
 ------------------
 

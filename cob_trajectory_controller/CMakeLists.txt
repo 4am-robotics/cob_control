@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(cob_trajectory_controller)
 
-find_package(catkin REQUIRED COMPONENTS cmake_modules roscpp cob_srvs brics_actuator sensor_msgs std_msgs  actionlib control_msgs dynamic_reconfigure)
+find_package(catkin REQUIRED COMPONENTS cmake_modules roscpp std_srvs cob_srvs sensor_msgs std_msgs  actionlib control_msgs dynamic_reconfigure)
 find_package(orocos_kdl REQUIRED)
 find_package(Eigen REQUIRED)
 #######################################
@@ -19,7 +19,7 @@ generate_dynamic_reconfigure_options(
 
 catkin_package(
     DEPENDS orocos_kdl
-    CATKIN_DEPENDS roscpp std_msgs cob_srvs brics_actuator sensor_msgs actionlib control_msgs dynamic_reconfigure
+    CATKIN_DEPENDS roscpp std_msgs std_srvs cob_srvs sensor_msgs actionlib control_msgs dynamic_reconfigure
     INCLUDE_DIRS # TODO include
     LIBRARIES # TODO
 )

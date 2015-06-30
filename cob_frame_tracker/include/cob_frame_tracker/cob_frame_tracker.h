@@ -128,7 +128,6 @@ private:
 	KDL::Vector vector_vel_,vector_rot_;
 	std::string chain_base_;
 	std::string chain_tip_;
-	KDL::Tree my_tree;
 	std::string robot_desc_string;
 	
 	/// ROS interface

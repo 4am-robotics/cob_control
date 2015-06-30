@@ -67,6 +67,7 @@ class DistanceManager
         typedef std::unordered_map<std::string, ObstacleDistance>::iterator t_map_ObstacleDistance_iter;
         typedef std::unordered_map<std::string, ObstacleDistance>::const_iterator t_map_ObstacleDistance_citer;
 
+        std::string root_frame_;
         std::string chain_base_link_;
         std::string chain_tip_link_;
 
@@ -147,7 +148,7 @@ class DistanceManager
         int init();
 
         /**
-         * tf Transformation between chain_base_link (arm_right_base_link or arm_left_base_link) and the base_link).
+         * tf Transformation between chain_base_link (arm_right_base_link or arm_left_base_link) and the root frame (e.g. base_link)).
          * @return True if transformation was successfull.
          */
         bool transform();

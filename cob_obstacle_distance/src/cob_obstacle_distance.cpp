@@ -37,8 +37,7 @@
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "cob_obstacle_distance");
-    ros::NodeHandle global_nh;
-    ros::NodeHandle nh("obstacle_distance");
+    ros::NodeHandle nh;
     ros::Rate r(1.0);
     DistanceManager sm(nh);
 
@@ -48,11 +47,8 @@ int main(int argc, char **argv)
         return -4;
     }
 
-    // subscribe to /arm_right/joint_states or /arm_left/joint_states or ...
-    ros::Subscriber jointstate_sub = global_nh.subscribe("joint_states", 1, &DistanceManager::jointstateCb, &sm);
-
-    // provide a service at /arm_right/cob_obstacle_distance/registerPointOfInterest or ...
-    ros::ServiceServer registration_srv = nh.advertiseService("registerPointOfInterest" , &DistanceManager::registerPointOfInterest, &sm);
+    ros::Subscriber jointstate_sub = nh.subscribe("joint_states", 1, &DistanceManager::jointstateCb, &sm);
+    ros::ServiceServer registration_srv = nh.advertiseService("obstacle_distance/registerPointOfInterest" , &DistanceManager::registerPointOfInterest, &sm);
 
     ROS_INFO("Starting basic_shapes ...\r\n");
     fcl::Box b(0.3, 0.3, 0.3);
@@ -64,11 +60,6 @@ int main(int argc, char **argv)
     sm.addObstacle(sptr_Cube);
     // sm.addObstacle(sptr_Sphere);
     // sm.addObstacle(sptr_Cyl);
-
-    if(!sm.waitForMarkerSubscriber())
-    {
-        return -1;
-    }
 
     ROS_INFO_ONCE("Subscriber to the marker has been created");
     sm.drawObstacles();
