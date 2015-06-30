@@ -43,12 +43,10 @@ class WeightedLeastNormSolver : public ConstraintSolver<>
          * See base class ConstraintSolver for more details on params and returns.
          */
         virtual Eigen::MatrixXd solve(const t_Vector6d &in_cart_velocities,
-                                      const JointStates& joint_states) const;
+                                      const JointStates& joint_states);
 
-        WeightedLeastNormSolver(InvDiffKinSolverParams &params,
-                                  t_Matrix6Xd &jacobian_data)
-                                  : ConstraintSolver(params,
-                                                     jacobian_data)
+        WeightedLeastNormSolver(const InvDiffKinSolverParams &params)
+                                  : ConstraintSolver(params)
         {
 
         }

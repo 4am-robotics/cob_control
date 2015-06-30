@@ -38,7 +38,7 @@
 #include "cob_twist_controller/callback_data_mediator.h"
 
 /// Static class providing a single method for creation of damping method, solver and starting the solving of the IK problem.
-class ConstraintSolverFactoryBuilder
+class ConstraintSolverFactory
 {
     public:
 
@@ -47,13 +47,18 @@ class ConstraintSolverFactoryBuilder
          * @param data_mediator: Reference to an callback data mediator.
          * @param jnt_to_jac: Reference to an joint to Jacobian solver.
          */
-        ConstraintSolverFactoryBuilder(CallbackDataMediator& data_mediator, KDL::ChainJntToJacSolver& jnt_to_jac) :
+        ConstraintSolverFactory(CallbackDataMediator& data_mediator, KDL::ChainJntToJacSolver& jnt_to_jac) :
             data_mediator_(data_mediator), jnt_to_jac_(jnt_to_jac)
         {
-
+            this->solver_factory_.reset();
+            this->damping_method_.reset();
         }
 
-        ~ConstraintSolverFactoryBuilder() {}
+        ~ConstraintSolverFactory()
+        {
+            this->solver_factory_.reset();
+            this->damping_method_.reset();
+        }
 
         /**
          * Calculation of new joint velocities according to current joint positions and cartesian velocities.
@@ -64,8 +69,7 @@ class ConstraintSolverFactoryBuilder
          * @param out_jnt_velocities The calculated joint velocities as output reference.
          * @return The calculated new joint velocities in (m x 1)-Matrix.
          */
-        int8_t calculateJointVelocities(InvDiffKinSolverParams &params,
-                                        t_Matrix6Xd &jacobian_data,
+        int8_t calculateJointVelocities(t_Matrix6Xd &jacobian_data,
                                         const t_Vector6d &in_cart_velocities,
                                         const JointStates& joint_states,
                                         Eigen::MatrixXd &out_jnt_velocities);
@@ -76,12 +80,17 @@ class ConstraintSolverFactoryBuilder
          * @param constraint_type: Enum value of the constraint.
          * @param solver_factory: Reference of a shared pointer to be filled.
          */
-        static bool getSolverFactory(uint32_t constraint_type,
+        static bool getSolverFactory(const InvDiffKinSolverParams &params,
                                      boost::shared_ptr<ISolverFactory>& solver_factory);
+
+        int8_t resetAll(const InvDiffKinSolverParams &params);
 
     private:
         CallbackDataMediator& data_mediator_;
         KDL::ChainJntToJacSolver& jnt_to_jac_;
+        boost::shared_ptr<ISolverFactory> solver_factory_;
+        boost::shared_ptr<DampingBase> damping_method_;
+        std::set<tConstraintBase> constraints_;
 };
 
 #endif /* CONSTRAINT_SOLVER_FACTORY_BUILDER_H_ */

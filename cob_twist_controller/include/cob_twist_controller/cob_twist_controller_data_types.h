@@ -39,6 +39,7 @@
 
 #define MAX_CRIT true
 #define MIN_CRIT false
+#define MAIN_TASK_PRIO 200
 
 const double DAMPING_LIMIT = 1.0e-12; ///< const. value for zero comparison with damping factor
 const double ZERO_LIMIT = 1.0e-9;
@@ -92,9 +93,6 @@ struct InvDiffKinSolverParams {
     double base_ratio;
 
     double mu;
-    double conv_speed;
-    t_Vector6d delta_p_vec;
-
 
     // added limits from URDF file
     std::vector<double> limits_max;

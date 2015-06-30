@@ -42,11 +42,15 @@
 class StackOfTasksSolver2nd : public ConstraintSolver<>
 {
     public:
-        StackOfTasksSolver2nd(InvDiffKinSolverParams &params,
-                           t_Matrix6Xd &jacobian_data)
-                           : ConstraintSolver(params,
-                                              jacobian_data)
+        StackOfTasksSolver2nd(const InvDiffKinSolverParams &params)
+                           : ConstraintSolver(params),
+                             last_min_distance_(-1.0),
+                             last_cycle_time_(-1.0)
         {
+            last_in_cart_velocities_ = t_Vector6d::Zero();
+            last_jac_ = t_Matrix76d::Zero();
+
+            ROS_INFO_STREAM("StackOfTasksSolver2nd created!!!");
         }
 
         virtual ~StackOfTasksSolver2nd()
@@ -59,7 +63,7 @@ class StackOfTasksSolver2nd : public ConstraintSolver<>
          * See base class ConstraintSolver for more details on params and returns.
          */
         virtual Eigen::MatrixXd solve(const t_Vector6d &in_cart_velocities,
-                                      const JointStates& joint_states) const;
+                                      const JointStates& joint_states);
 
         /**
          * Set all created constraints in a (priorized) set.
@@ -79,6 +83,10 @@ class StackOfTasksSolver2nd : public ConstraintSolver<>
         }
 
     protected:
+        double last_min_distance_;
+        double last_cycle_time_;
+        t_Vector6d last_in_cart_velocities_;
+        t_Matrix76d last_jac_;
 
         /// set inserts sorted (default less operator); if element has already been added it returns an iterator on it.
         std::set<tConstraintBase> constraints_;

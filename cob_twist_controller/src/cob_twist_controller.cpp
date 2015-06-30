@@ -227,7 +227,6 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
 
 
     params.mu = config.mu;
-    params.conv_speed = config.conv_speed;
 
 
     params.limits_min = twist_controller_params_.limits_min; // from cob_twist_controller init
@@ -258,7 +257,7 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
         ROS_ERROR("base_active and base_compensation cannot be enabled at the same time");
     }
 
-    p_inv_diff_kin_solver_->SetInvDiffKinSolverParams(params);
+    p_inv_diff_kin_solver_->resetAll(params);
 
     this->reinitServiceRegistration();
 }
@@ -292,7 +291,7 @@ void CobTwistController::initInvDiffKinSolverParams()
         params.frame_names.push_back(chain_.getSegment(i).getName());
     }
 
-    p_inv_diff_kin_solver_->SetInvDiffKinSolverParams(params);
+    p_inv_diff_kin_solver_->resetAll(params);
 }
 
 

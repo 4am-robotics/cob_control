@@ -44,7 +44,7 @@ Eigen::MatrixXd PInvBySVD::calculate(const InvDiffKinSolverParams& params,
     Eigen::VectorXd singularValuesInv = Eigen::VectorXd::Zero(singularValues.rows());
     Eigen::MatrixXd pseudoInverseJacobian;
     uint32_t i = 0;
-    double lambda = db->get_damping_factor(singularValues);
+    double lambda = db->get_damping_factor(singularValues, jacobian);
 
     if(params.numerical_filtering)
     {

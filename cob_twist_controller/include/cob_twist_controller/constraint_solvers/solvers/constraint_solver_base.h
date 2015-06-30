@@ -49,7 +49,7 @@ class ConstraintSolver
          * @return The calculated new joint velocities.
          */
         virtual Eigen::MatrixXd solve(const t_Vector6d &in_cart_velocities,
-                                      const JointStates& joint_states) const = 0;
+                                      const JointStates& joint_states) = 0;
 
         /**
          * Inline method to set the damping
@@ -68,19 +68,25 @@ class ConstraintSolver
 
         }
 
+        /**
+         * Method to initialize the solver if necessary
+         */
+        virtual void setJacobianData(const t_Matrix6Xd& jacobian_data)
+        {
+            this->jacobian_data_ = jacobian_data;
+        }
+
         virtual ~ConstraintSolver() {}
 
     protected:
 
-        ConstraintSolver(InvDiffKinSolverParams &params,
-                         t_Matrix6Xd &jacobian_data)
-                         : params_(params),
-                           jacobian_data_(jacobian_data)
+        ConstraintSolver(const InvDiffKinSolverParams &params)
+                         : params_(params)
         {
         }
 
         const InvDiffKinSolverParams& params_; ///< References the inv. diff. kin. solver parameters.
-        const t_Matrix6Xd& jacobian_data_; ///< References the current Jacobian (matrix data only).
+        t_Matrix6Xd jacobian_data_; ///< References the current Jacobian (matrix data only).
         boost::shared_ptr<DampingBase> damping_; ///< The currently set damping method.
         PINV pinv_calc_; ///< An instance that helps solving the inverse of the Jacobian.
 };

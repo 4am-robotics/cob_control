@@ -33,130 +33,57 @@
  */
 //
 Eigen::MatrixXd TaskPrioritySolver::solve(const t_Vector6d &in_cart_velocities,
-                                          const JointStates& joint_states) const
+                                          const JointStates& joint_states)
 {
+    double derivative_cost_func_value;
+    double current_cost_func_value;
+    double activation_gain;
+    double magnitude;
 
     Eigen::MatrixXd qdots_out = Eigen::MatrixXd::Zero(joint_states.current_q_.rows(), 1);
-
-    double k_H;
-    double crit_distance;
-    Eigen::VectorXd q_dot_0 = Eigen::VectorXd::Zero(joint_states.current_q_.rows());
-    Eigen::Vector3d distance;
-    double min_dist;
-
-    Eigen::MatrixXd obst_dist_pnt_jac;
+    Eigen::VectorXd partial_cost_func = Eigen::VectorXd::Zero(joint_states.current_q_.rows());
     Eigen::MatrixXd jacobianPseudoInverse = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
     Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(jacobianPseudoInverse.rows(), this->jacobian_data_.cols());
     Eigen::MatrixXd projector = ident - jacobianPseudoInverse * this->jacobian_data_;
-    Eigen::MatrixXd partialSolution = jacobianPseudoInverse * in_cart_velocities;
+    Eigen::MatrixXd particular_solution = jacobianPseudoInverse * in_cart_velocities;
 
     if (this->constraints_.size() > 0)
     {
         for (std::set<tConstraintBase>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
         {
-            //ROS_INFO_STREAM("Found constraint");
-            q_dot_0 = (*it)->getPartialValues();
-            distance = (*it)->getDistanceVector();
-            obst_dist_pnt_jac = (*it)->getObstacleAvoidancePointJac();
-            crit_distance = (*it)->getActivationThreshold();
-            min_dist = (*it)->getValue();
+            (*it)->update(joint_states);
+            partial_cost_func = (*it)->getPartialValues(); // Equal to (partial g) / (partial q) = J_g
+            current_cost_func_value = (*it)->getValue();
+            derivative_cost_func_value = (*it)->getDerivativeValue();
+            activation_gain = (*it)->getActivationGain();
+            magnitude = (*it)->getSelfMotionMagnitude(Eigen::MatrixXd::Zero(1,1), Eigen::MatrixXd::Zero(1,1)); // not necessary to pass valid values here.
 
+            ROS_INFO_STREAM("activation_gain: " << activation_gain);
+            ROS_INFO_STREAM("smm: " << magnitude);
         }
 
-//        t_Vector6d ext_distance;
-        Eigen::Vector3d ext_distance;
-
-        //ROS_INFO_STREAM("q_dot_0: " << q_dot_0);
-        //ROS_INFO_STREAM("distance: " << distance);
-
-        for (int i = 0; i < distance.rows(); ++i)
+        Eigen::MatrixXd jac_inv_2nd_term = Eigen::MatrixXd::Zero(projector.cols(), partial_cost_func.cols());
+        if(activation_gain > 0.0)
         {
-            ext_distance(i) = distance(i);
-            //ext_distance(i+3, 0) = 0.0;
+            Eigen::MatrixXd tmp_matrix = partial_cost_func.transpose() * projector;
+            //boost::shared_ptr<DampingConstant> dbc(new DampingConstant(this->params_));
+            jac_inv_2nd_term = pinv_calc_.calculate(this->params_, this->damping_, tmp_matrix);
+            ROS_INFO_STREAM("jac_inv_2nd_term: " << jac_inv_2nd_term);
+            //dbc.reset();
         }
 
-        //ROS_INFO_STREAM("Ext distance: " << ext_distance);
-
-        double norm_ext_dist = ext_distance.norm();
-        double magnitude = 0.0;
-        double activation = 0.0;
-
-        //ROS_INFO_STREAM("norm_ext_dist: " << norm_ext_dist);
-        //ROS_INFO_STREAM("crit_distance: " << crit_distance);
-        if(min_dist <= crit_distance)
-        //if(false)
-        {
-            ROS_INFO_STREAM("Crit distance detected...");
-            //Eigen::MatrixXd tmp_matrix = m * projector;
-            Eigen::MatrixXd tmp_matrix = obst_dist_pnt_jac * projector;
-
-            //ROS_INFO_STREAM("tmp_matrix: " << tmp_matrix);
-            Eigen::MatrixXd jac_inv_2nd_term = pinv_calc_.calculate(this->params_, this->damping_, tmp_matrix);
-
-            //ROS_INFO_STREAM("jac_inv_2nd_term: " << jac_inv_2nd_term);
-
-
-
-
-//            if (min_dist > 0.015)
-//            {
-
-                //t_Vector6d unit_direction = ext_distance / norm_ext_dist;
-                Eigen::Vector3d unit_direction = distance / norm_ext_dist;
-
-                ROS_INFO_STREAM("unit_direction: " << unit_direction.transpose());
-
-                magnitude = pow(2 * crit_distance / min_dist, 2.0) - 1.0;
-                activation = 1.0;
-
-                //ROS_INFO_STREAM("magnitude: " << std::endl << magnitude);
-                //ROS_INFO_STREAM("norm_ext_dist: " << std::endl << norm_ext_dist);
-                //ROS_INFO_STREAM("jacobianPseudoInverse: " << std::endl << jacobianPseudoInverse);
-                //ROS_INFO_STREAM("this->jacobianData_: " << std::endl << this->jacobian_data_);
-                //ROS_INFO_STREAM("projector: " << std::endl << projector);
-                // ROS_INFO_STREAM("Last k_H: " << std::endl << k_H);
-                //ROS_INFO_STREAM("partialSolution: " << std::endl << partialSolution);
-                //ROS_INFO_STREAM("obst_dist_pnt_jac: " << std::endl << obst_dist_pnt_jac);
-                //ROS_INFO_STREAM("tmp_matrix: " << std::endl << tmp_matrix);
-                //ROS_INFO_STREAM("jac_inv_2nd_term: " << std::endl << jac_inv_2nd_term);
-
-                //Eigen::MatrixXd tmp2 = m * partialSolution;
-                qdots_out = partialSolution + activation * jac_inv_2nd_term * (magnitude * unit_direction - obst_dist_pnt_jac * partialSolution);
-
-
-
-                ROS_INFO_STREAM("[min_dist > 0.015] qdots_out: " << std::endl << qdots_out);
-//            }
-//            else
-//            {
-//                //t_Vector6d unit_direction = ext_distance;
-//                Eigen::Vector3d unit_direction = distance;
-//                qdots_out = jac_inv_2nd_term * (10.0 * unit_direction - obst_dist_pnt_jac * partialSolution);
-//
-//
-//                ROS_WARN_STREAM("[min_dist < 0.015] qdots_out: " << std::endl << qdots_out);
-//            }
-
-
-        }
-        else
-        {
-            qdots_out = partialSolution;
-            ROS_INFO_STREAM("Normal Solution: " << std::endl << qdots_out);
-        }
+        Eigen::MatrixXd m_derivative_cost_func_value = derivative_cost_func_value * Eigen::MatrixXd::Identity(1,1);
+        qdots_out = particular_solution + activation_gain * jac_inv_2nd_term * (magnitude * m_derivative_cost_func_value - partial_cost_func.transpose() * particular_solution);
+        ROS_INFO_STREAM("qdots_out: " << std::endl << qdots_out);
     }
     else
     {
 
-        qdots_out = partialSolution;
+        qdots_out = particular_solution;
         ROS_ERROR_STREAM("Should not occur solution: " << std::endl << qdots_out);
     }
 
-
-
-
-
-//    Eigen::MatrixXd qdots_out = partialSolution + homogeneousSolution; // weighting with k_H is done in loop
+//    Eigen::MatrixXd qdots_out = particular_solution + homogeneousSolution; // weighting with k_H is done in loop
     return qdots_out;
 }
 

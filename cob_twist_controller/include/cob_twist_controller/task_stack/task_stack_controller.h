@@ -94,6 +94,8 @@ class TaskStackController
             this->active_task_iter_ = this->tasks_.begin();
         }
 
+        void clearAllTasks();
+
         void addTask(Task<PRIO> t);
 
         void deactivateTask(typename std::vector<Task<PRIO> >::iterator it);
@@ -259,6 +261,13 @@ typename std::vector<Task<PRIO> >::iterator TaskStackController<PRIO>::beginTask
 {
     this->active_task_iter_ = this->tasks_.begin();
     return this->active_task_iter_;
+}
+
+template <typename PRIO>
+void TaskStackController<PRIO>::clearAllTasks()
+{
+    this->tasks_.clear();
+    this->active_task_iter_ = this->tasks_.end();
 }
 
 

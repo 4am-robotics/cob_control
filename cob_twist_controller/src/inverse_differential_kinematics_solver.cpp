@@ -46,26 +46,10 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const JointStates& joint_stat
     t_Vector6d v_in_vec;
     tf::twistKDLToEigen(v_in, v_in_vec);
 
-    KDL::ChainFkSolverPos_recursive fk_solver(this->chain_);
-    KDL::Frame cartpos;
-    fk_solver.JntToCart(joint_states.current_q_, cartpos);
-
-    double rot_x, rot_y, rot_z, rot_w;
-    cartpos.M.GetQuaternion(rot_x, rot_y, rot_z, rot_w); // Similar to frametracker
-    //cartpos.p.x()
-    t_Vector6d p_in_vec;
-    p_in_vec << cartpos.p.x(), cartpos.p.y(), cartpos.p.z(), rot_x, rot_y, rot_z;
-
-    this->params_.delta_p_vec = p_in_vec - last_p_in_vec_;
-
-
     this->params_.task_stack_controller = &this->task_stack_controller_;
 
-
-
     Eigen::MatrixXd qdot_out_vec;
-    retStat = constraint_solver_factory_.calculateJointVelocities(this->params_,
-                                                                  this->jac_.data,
+    retStat = constraint_solver_factory_.calculateJointVelocities(this->jac_.data,
                                                                   v_in_vec,
                                                                   joint_states,
                                                                   qdot_out_vec);
@@ -76,9 +60,17 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const JointStates& joint_stat
         qdot_out(i) = qdot_out_vec(i);
     }
 
-    last_p_in_vec_ = p_in_vec;
-
     return retStat;
+}
+
+void InverseDifferentialKinematicsSolver::resetAll(InvDiffKinSolverParams params)
+{
+    this->task_stack_controller_.clearAllTasks();
+    this->params_ = params;
+    if(0 != this->constraint_solver_factory_.resetAll(this->params_)) // params member as reference!!! else process will die!
+    {
+        ROS_ERROR("Failed to reset IDK constraint solver after dynamic_reconfigure.");
+    }
 }
 
 /**

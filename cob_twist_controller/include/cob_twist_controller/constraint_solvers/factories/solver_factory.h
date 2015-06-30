@@ -39,8 +39,7 @@
 class ISolverFactory
 {
     public:
-        virtual Eigen::MatrixXd calculateJointVelocities(InvDiffKinSolverParams &params,
-                                                         t_Matrix6Xd &jacobian_data,
+        virtual Eigen::MatrixXd calculateJointVelocities(t_Matrix6Xd &jacobian_data,
                                                          const t_Vector6d &in_cart_velocities,
                                                          const JointStates& joint_states,
                                                          boost::shared_ptr<DampingBase>& damping_method,
@@ -55,6 +54,16 @@ class SolverFactory : public ISolverFactory
 {
     public:
 
+        SolverFactory(const InvDiffKinSolverParams &params)
+        {
+            constraint_solver_.reset(new T(params));
+        }
+
+        ~SolverFactory()
+        {
+            constraint_solver_.reset();
+        }
+
         /**
          * The base calculation method to calculate joint velocities out of input velocities (cartesian space).
          * Creates a solver according to implemented createSolver-method (in subclass).
@@ -66,36 +75,21 @@ class SolverFactory : public ISolverFactory
          * @param damping_method The damping method.
          * @return Joint velocities in a (m x 1)-Matrix.
          */
-        Eigen::MatrixXd calculateJointVelocities(InvDiffKinSolverParams &params,
-                                                 t_Matrix6Xd &jacobian_data,
+        Eigen::MatrixXd calculateJointVelocities(t_Matrix6Xd &jacobian_data,
                                                  const t_Vector6d &in_cart_velocities,
                                                  const JointStates& joint_states,
                                                  boost::shared_ptr<DampingBase>& damping_method,
                                                  std::set<tConstraintBase>& constraints) const
         {
-            T* cs = this->createSolver(params, jacobian_data);
-            cs->setConstraints(constraints);
-            cs->setDamping(damping_method);
-            Eigen::MatrixXd new_q_dot = cs->solve(in_cart_velocities, joint_states);
-            delete cs;
-            cs = NULL;
+            constraint_solver_->setJacobianData(jacobian_data);
+            constraint_solver_->setConstraints(constraints);
+            constraint_solver_->setDamping(damping_method);
+            Eigen::MatrixXd new_q_dot = constraint_solver_->solve(in_cart_velocities, joint_states);
             return new_q_dot;
         }
 
-    protected:
-
-        /**
-         * The interface method to create a specific solver to solve the inverse kinematics problem.
-         * @param params References the inv. diff. kin. solver parameters.
-         * @param jacobian_data References the current Jacobian (matrix data only).
-         * @return A specific solver.
-         */
-        T* createSolver(InvDiffKinSolverParams &params,
-                        t_Matrix6Xd &jacobian_data) const
-        {
-            return new T(params, jacobian_data);
-        }
-
+    private:
+        boost::shared_ptr<T> constraint_solver_;
 };
 
 #endif /* SOLVER_FACTORY_H_ */

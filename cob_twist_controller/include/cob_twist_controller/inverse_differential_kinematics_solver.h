@@ -28,6 +28,7 @@
 #ifndef INVERSE_DIFFERENTIAL_KINEMATICS_SOLVER_H
 #define INVERSE_DIFFERENTIAL_KINEMATICS_SOLVER_H
 
+#include <cob_twist_controller/constraint_solvers/constraint_solver_factory.h>
 #include <kdl/chainiksolver.hpp>
 #include <kdl/chainjnttojacsolver.hpp>
 #include <Eigen/Core>
@@ -35,7 +36,6 @@
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/callback_data_mediator.h"
-#include "cob_twist_controller/constraint_solvers/constraint_solver_factory_builder.h"
 #include "cob_twist_controller/task_stack/task_stack_controller.h"
 
 
@@ -87,15 +87,12 @@ public:
         return CartToJnt(joint_states, v_in, dummy, dummy, qdot_out);
     }
 
-    inline void SetInvDiffKinSolverParams(InvDiffKinSolverParams params)
-    {
-        params_ = params;
-    }
-
     inline InvDiffKinSolverParams GetInvDiffKinSolverParams() const
     {
         return params_;
     }
+
+    void resetAll(InvDiffKinSolverParams params);
 
 private:
     const KDL::Chain chain_;
@@ -103,7 +100,7 @@ private:
     KDL::ChainJntToJacSolver jnt2jac_;
     InvDiffKinSolverParams params_;
     CallbackDataMediator& callback_data_mediator_;
-    ConstraintSolverFactoryBuilder constraint_solver_factory_;
+    ConstraintSolverFactory constraint_solver_factory_;
 
     TaskStackController_t task_stack_controller_;
 
