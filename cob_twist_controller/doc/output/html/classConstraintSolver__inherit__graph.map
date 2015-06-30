@@ -1,5 +1,0 @@
-<map id="ConstraintSolver" name="ConstraintSolver">
-<area shape="rect" id="node2" href="$classUnconstraintSolver.html" title="UnconstraintSolver" alt="" coords="5,80,139,107"/>
-<area shape="rect" id="node3" href="$classWeightedLeastNormSolver.html" title="Implementation of ConstraintSolver to solve inverse kinematics by using a weighted least norm..." alt="" coords="163,80,341,107"/>
-<area shape="rect" id="node4" href="$classWLN__JointLimitAvoidanceSolver.html" title="WLN_JointLimitAvoidanceSolver" alt="" coords="145,155,359,181"/>
-</map>

@@ -1,5 +1,0 @@
-<map id="CobTwistController::solve_twist" name="CobTwistController::solve_twist">
-<area shape="rect" id="node2" href="$classCobTwistController.html#a5b769ea386acb685f2c553d09b6c2636" title="Orientation of twist_stamped_msg is with respect to coordinate system given in header.frame_id. " alt="" coords="189,5,325,46"/>
-<area shape="rect" id="node4" href="$classCobTwistController.html#a92c9f22fcbf87555371729c19ae87f91" title="Orientation of twist_msg is with respect to chain_base coordinate system. " alt="" coords="190,70,325,111"/>
-<area shape="rect" id="node3" href="$classCobTwistController.html#a9090539c07c0bfaef7d3e9c636cd1227" title="CobTwistController\l::initialize" alt="" coords="374,38,509,79"/>
-</map>

@@ -1,7 +1,0 @@
-<map id="LimiterBase" name="LimiterBase">
-<area shape="rect" id="node2" href="$classLimiterAllJointPositions.html" title="Class for limiters, declaring the method to limit all joint positions. " alt="" coords="166,5,325,32"/>
-<area shape="rect" id="node3" href="$classLimiterAllJointVelocities.html" title="Class for joint velocity limiter (all scaled to keep direction), implementing interface methods..." alt="" coords="165,56,326,83"/>
-<area shape="rect" id="node4" href="$classLimiterContainer.html" title="Container for limiters, implementing interface methods. " alt="" coords="187,107,304,133"/>
-<area shape="rect" id="node5" href="$classLimiterIndividualJointPositions.html" title="Class for a limiter, declaring a method to limit joint positions individually. " alt="" coords="146,157,345,184"/>
-<area shape="rect" id="node6" href="$classLimiterIndividualJointVelocities.html" title="Class for joint velocity limiter (individually scaled &#45;&gt; changes direction), implementing interface m..." alt="" coords="145,208,346,235"/>
-</map>

@@ -1,4 +1,0 @@
-<map id="LimiterIndividualJointVelocities" name="LimiterIndividualJointVelocities">
-<area shape="rect" id="node2" href="$classLimiterBase.html" title="Base class for limiters, defining interface methods. " alt="" coords="60,96,151,123"/>
-<area shape="rect" id="node3" href="$structTwistControllerParams.html" title="TwistControllerParams" alt="" coords="28,5,181,32"/>
-</map>

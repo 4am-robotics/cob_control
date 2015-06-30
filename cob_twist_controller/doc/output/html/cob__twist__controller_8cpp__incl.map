@@ -1,8 +1,0 @@
-<map id="/home/fxm&#45;cm/catkin_ws/src/cob_control/cob_twist_controller/src/cob_twist_controller.cpp" name="/home/fxm&#45;cm/catkin_ws/src/cob_control/cob_twist_controller/src/cob_twist_controller.cpp">
-<area shape="rect" id="node3" href="$cob__twist__controller_8h.html" title="This package provides a generic Twist controller for the Care&#45;O&#45;bot. " alt="" coords="1525,126,1677,167"/>
-<area shape="rect" id="node21" href="$augmented__solver_8h.html" title="This package provides the definitions of an inverse kinematics solver. " alt="" coords="1831,307,1973,349"/>
-<area shape="rect" id="node30" href="$cob__twist__controller__data__types_8h.html" title="Different data types for CobTwistController to be used in other modules. " alt="" coords="2306,397,2448,453"/>
-<area shape="rect" id="node31" href="$limiter_8h.html" title="This header contains the class definitions of all limiter implementations. " alt="" coords="2399,217,2537,258"/>
-<area shape="rect" id="node25" href="$augmented__solver__data__types_8h.html" title="Different data types for AugmentedSolver to be used in other modules. " alt="" coords="1626,397,1789,453"/>
-<area shape="rect" id="node32" href="$limiter__base_8h.html" title="This header contains the interface description of limiters. " alt="" coords="2155,307,2308,349"/>
-</map>
