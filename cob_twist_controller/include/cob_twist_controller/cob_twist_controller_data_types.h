@@ -113,6 +113,8 @@ struct ObstacleDistanceInfo
 
 struct TwistControllerParams {
     uint8_t dof;
+    std::string chain_base_link;
+    std::string chain_tip_link;
     
     HardwareInterfaceTypes hardware_interface_type;
     

@@ -53,12 +53,12 @@ bool CobTwistController::initialize()
     twist_controller_params_.dof = joints_.size();
 
     // Chain
-    if(!nh_.getParam("chain_base_link", chain_base_link_))
+    if(!nh_.getParam("chain_base_link", twist_controller_params_.chain_base_link))
     {
         ROS_ERROR("Parameter 'chain_base_link' not set");
         return false;
     }
-    if (!nh_.getParam("chain_tip_link", chain_tip_link_))
+    if (!nh_.getParam("chain_tip_link", twist_controller_params_.chain_tip_link))
     {
         ROS_ERROR("Parameter 'chain_tip_link' not set");
         return false;
@@ -100,7 +100,7 @@ bool CobTwistController::initialize()
         return false;
     }
 
-    my_tree.getChain(chain_base_link_, chain_tip_link_, chain_);
+    my_tree.getChain(twist_controller_params_.chain_base_link, twist_controller_params_.chain_tip_link, chain_);
     if(chain_.getNrOfJoints() == 0)
     {
         ROS_ERROR("Failed to initialize kinematic chain");
@@ -192,59 +192,35 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     }
     
     
-    TwistControllerParams params;
+    twist_controller_params_.hardware_interface_type = static_cast<HardwareInterfaceTypes>(config.hardware_interface_type);
     
-    params.dof = twist_controller_params_.dof;
-    params.hardware_interface_type = static_cast<HardwareInterfaceTypes>(config.hardware_interface_type);
+    twist_controller_params_.numerical_filtering = config.numerical_filtering;
+    twist_controller_params_.damping_method = static_cast<DampingMethodTypes>(config.damping_method);
+    twist_controller_params_.damping_factor = config.damping_factor;
+    twist_controller_params_.lambda_max = config.lambda_max;
+    twist_controller_params_.w_threshold = config.w_threshold;
+    twist_controller_params_.beta = config.beta;
+    twist_controller_params_.eps_damping = config.eps_damping;
     
-    params.numerical_filtering = config.numerical_filtering;
-    params.damping_method = static_cast<DampingMethodTypes>(config.damping_method);
-    params.damping_factor = config.damping_factor;
-    params.lambda_max = config.lambda_max;
-    params.w_threshold = config.w_threshold;
-    params.beta = config.beta;
-    params.eps_damping = config.eps_damping;
+    twist_controller_params_.constraint = static_cast<ContraintTypes>(config.constraint);
+    twist_controller_params_.mu = config.mu;
+    twist_controller_params_.k_H = config.k_H;
     
-    params.constraint = static_cast<ContraintTypes>(config.constraint);
-    params.mu = config.mu;
-    params.k_H = config.k_H;
+    twist_controller_params_.eps_truncation = config.eps_truncation;
     
-    params.eps_truncation = config.eps_truncation;
+    twist_controller_params_.keep_direction = config.keep_direction;
+    twist_controller_params_.enforce_pos_limits = config.enforce_pos_limits;
+    twist_controller_params_.enforce_vel_limits = config.enforce_vel_limits;
+    twist_controller_params_.tolerance = config.tolerance;
     
-    params.keep_direction = config.keep_direction;
-    params.enforce_pos_limits = config.enforce_pos_limits;
-    params.enforce_vel_limits = config.enforce_vel_limits;
-    params.tolerance = config.tolerance;
-    
-    // added limits from URDF file
-    params.limits_max = twist_controller_params_.limits_max; // from cob_twist_controller init
-    params.limits_min = twist_controller_params_.limits_min; // from cob_twist_controller init
-    params.limits_vel = twist_controller_params_.limits_vel; // from cob_twist_controller init
-    
-    params.max_vel_lin = twist_controller_params_.max_vel_lin;
-    params.max_vel_rot = twist_controller_params_.max_vel_rot;
-    params.max_vel_lin_base = twist_controller_params_.max_vel_lin_base;
-    params.max_vel_rot_base = twist_controller_params_.max_vel_rot_base;
-    
-    params.base_compensation = config.base_compensation;
-    params.kinematic_extension = static_cast<KinematicExtensionTypes>(config.kinematic_extension);
-    params.base_ratio = config.base_ratio;
-
-
-    params.frame_names.clear();
-    for (uint16_t i = 0; i < chain_.getNrOfSegments(); ++i)
-    {
-        params.frame_names.push_back(chain_.getSegment(i).getName());
-    }
-    
-    // TODO: initialization
-    //params.collision_check_frames.clear();
-    //params.task_stack_controller = NULL;
+    twist_controller_params_.base_compensation = config.base_compensation;
+    twist_controller_params_.kinematic_extension = static_cast<KinematicExtensionTypes>(config.kinematic_extension);
+    twist_controller_params_.base_ratio = config.base_ratio;
     
 
     this->hardware_interface_.reset(HardwareInterfaceBuilder::createHardwareInterface(this->nh_, this->twist_controller_params_));
 
-    p_inv_diff_kin_solver_->resetAll(params);
+    p_inv_diff_kin_solver_->resetAll(this->twist_controller_params_);
 
     this->reinitServiceRegistration();
 }
@@ -260,6 +236,8 @@ void CobTwistController::initParams()
     TwistControllerParams params;
     
     params.dof = twist_controller_params_.dof;
+    params.chain_base_link = twist_controller_params_.chain_base_link;
+    params.chain_tip_link = twist_controller_params_.chain_tip_link;
     params.hardware_interface_type = VELOCITY_INTERFACE;
     
     params.numerical_filtering = false;
@@ -295,7 +273,6 @@ void CobTwistController::initParams()
     params.kinematic_extension = NO_EXTENSION;
     params.base_ratio = 0.0;
 
-
     params.frame_names.clear();
     for (uint16_t i = 0; i < chain_.getNrOfSegments(); ++i)
     {
@@ -307,6 +284,7 @@ void CobTwistController::initParams()
     //params.task_stack_controller = NULL;
     
     
+    twist_controller_params_ = params;
     p_inv_diff_kin_solver_->resetAll(params);
 }
 
@@ -324,7 +302,7 @@ void CobTwistController::twistStampedCallback(const geometry_msgs::TwistStamped:
     KDL::Twist twist, twist_transformed;
 
     try{
-        tf_listener_.lookupTransform(chain_base_link_, msg->header.frame_id, ros::Time(0), transform_tf);
+        tf_listener_.lookupTransform(twist_controller_params_.chain_base_link, msg->header.frame_id, ros::Time(0), transform_tf);
         frame.M = KDL::Rotation::Quaternion(transform_tf.getRotation().x(), transform_tf.getRotation().y(), transform_tf.getRotation().z(), transform_tf.getRotation().w());
     }
     catch (tf::TransformException& ex){
@@ -414,11 +392,11 @@ void CobTwistController::odometryCallback(const nav_msgs::Odometry::ConstPtr& ms
     tf::StampedTransform cb_transform_bl, bl_transform_ct;
 
     try{
-        tf_listener_.waitForTransform(chain_base_link_, "base_link", ros::Time(0), ros::Duration(0.5));
-        tf_listener_.lookupTransform(chain_base_link_, "base_link", ros::Time(0), cb_transform_bl);
+        tf_listener_.waitForTransform(twist_controller_params_.chain_base_link, "base_link", ros::Time(0), ros::Duration(0.5));
+        tf_listener_.lookupTransform(twist_controller_params_.chain_base_link, "base_link", ros::Time(0), cb_transform_bl);
 
-        tf_listener_.waitForTransform("base_link", chain_tip_link_, ros::Time(0), ros::Duration(0.5));
-        tf_listener_.lookupTransform("base_link", chain_tip_link_, ros::Time(0), bl_transform_ct);
+        tf_listener_.waitForTransform("base_link", twist_controller_params_.chain_tip_link, ros::Time(0), ros::Duration(0.5));
+        tf_listener_.lookupTransform("base_link", twist_controller_params_.chain_tip_link, ros::Time(0), bl_transform_ct);
 
         cb_frame_bl.p = KDL::Vector(cb_transform_bl.getOrigin().x(), cb_transform_bl.getOrigin().y(), cb_transform_bl.getOrigin().z());
         cb_frame_bl.M = KDL::Rotation::Quaternion(cb_transform_bl.getRotation().x(), cb_transform_bl.getRotation().y(), cb_transform_bl.getRotation().z(), cb_transform_bl.getRotation().w());

@@ -180,26 +180,15 @@ KDL::Jacobian KinematicExtensionBaseActive::adjustJacobian(const KDL::Jacobian& 
     KDL::Frame bl_frame_ct, cb_frame_bl;
     ActiveCartesianDimension active_dim;
     
-    //ToDo: I don't like this hack - can we pass the parameter somehow? maybe from the chain_.segments-vector?
-    std::string chain_base_link, chain_tip_link;
-    if(!nh_.getParam("chain_base_link", chain_base_link))
-    {
-        ROS_ERROR_STREAM("Parameter 'chain_base_link' not found in Namespace: " << nh_.getNamespace());
-    }
-    if (!nh_.getParam("chain_tip_link", chain_tip_link))
-    {
-        ROS_ERROR_STREAM("Parameter 'chain_tip_link' not found in Namespace: " << nh_.getNamespace());
-    }
-    
     ///get required transformations
     try
     {
         ros::Time now = ros::Time(0);
-        tf_listener_.waitForTransform("base_link", chain_tip_link, now, ros::Duration(0.5));
-        tf_listener_.lookupTransform("base_link", chain_tip_link,  now, bl_transform_ct);
+        tf_listener_.waitForTransform("base_link", params_.chain_tip_link, now, ros::Duration(0.5));
+        tf_listener_.lookupTransform("base_link", params_.chain_tip_link,  now, bl_transform_ct);
         
-        tf_listener_.waitForTransform(chain_base_link, "base_link", now, ros::Duration(0.5));
-        tf_listener_.lookupTransform(chain_base_link, "base_link", now, cb_transform_bl);
+        tf_listener_.waitForTransform(params_.chain_base_link, "base_link", now, ros::Duration(0.5));
+        tf_listener_.lookupTransform(params_.chain_base_link, "base_link", now, cb_transform_bl);
     }
     catch (tf::TransformException &ex)
     {
@@ -229,14 +218,12 @@ void KinematicExtensionBaseActive::processResultExtension(const KDL::JntArray &q
 {
     geometry_msgs::Twist base_vel_msg;
     
-    //ToDo: I don't like this hack - is this the best way to access the elements?
-    unsigned int dof = q_dot_ik.rows();
-    base_vel_msg.linear.x = q_dot_ik(dof-6);
-    base_vel_msg.linear.y = q_dot_ik(dof-5);
-    base_vel_msg.linear.z = q_dot_ik(dof-4);
-    base_vel_msg.angular.x = q_dot_ik(dof-3);
-    base_vel_msg.angular.y = q_dot_ik(dof-2);
-    base_vel_msg.angular.z = q_dot_ik(dof-1);
+    base_vel_msg.linear.x = q_dot_ik(params_.dof);
+    base_vel_msg.linear.y = q_dot_ik(params_.dof+1);
+    base_vel_msg.linear.z = q_dot_ik(params_.dof+2);
+    base_vel_msg.angular.x = q_dot_ik(params_.dof+3);
+    base_vel_msg.angular.y = q_dot_ik(params_.dof+4);
+    base_vel_msg.angular.z = q_dot_ik(params_.dof+5);
     
     base_vel_pub_.publish(base_vel_msg);
 }

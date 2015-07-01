@@ -74,9 +74,6 @@ private:
     KDL::Chain chain_;
     JointStates joint_states_;
     KDL::Twist twist_odometry_cb_;
-
-    std::string chain_base_link_;
-    std::string chain_tip_link_;
     std::vector<std::string> joints_;
 
     TwistControllerParams twist_controller_params_;
@@ -95,11 +92,6 @@ private:
 public:
     CobTwistController()
     {
-        this->twist_controller_params_.keep_direction = true;
-        this->twist_controller_params_.enforce_pos_limits = true;
-        this->twist_controller_params_.enforce_vel_limits = true;
-        this->twist_controller_params_.kinematic_extension = NO_EXTENSION;
-        this->twist_controller_params_.base_compensation = false;
     }
 
     ~CobTwistController()
