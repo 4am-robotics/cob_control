@@ -26,31 +26,31 @@
  *
  ****************************************************************/
 
-#include "cob_twist_controller/interface_types/interface_type.h"
+#include "cob_twist_controller/hardware_interface_types/hardware_interface_type.h"
 
 
-InterfaceBase* InterfaceBuilder::create_interface(ros::NodeHandle& nh,
+HardwareInterfaceBase* HardwareInterfaceBuilder::create_interface(ros::NodeHandle& nh,
                                                   const TwistControllerParams &params)
 {
-    InterfaceBase *ib = NULL;
-    switch(params.interface_type)
+    HardwareInterfaceBase *ib = NULL;
+    switch(params.hardware_interface_type)
     {
         case VELOCITY:
-            ib = new InterfaceVelocity(nh, params);
+            ib = new HardwareInterfaceVelocity(nh, params);
             break;
         case POSITION:
-            ib = new InterfacePosition(nh, params);
+            ib = new HardwareInterfacePosition(nh, params);
             break;
         default:
-            ib = new InterfaceVelocity(nh, params);
+            ib = new HardwareInterfaceVelocity(nh, params);
             break;
     }
 
     return ib;
 }
 
-/* BEGIN InterfaceVelocity ********************************************************************************************/
-inline void InterfaceVelocity::process_result(const KDL::JntArray &q_dot_ik,
+/* BEGIN HardwareInterfaceVelocity ********************************************************************************************/
+inline void HardwareInterfaceVelocity::process_result(const KDL::JntArray &q_dot_ik,
                                               std::vector<double> &initial_position)
 {
     std_msgs::Float64MultiArray vel_msg;
@@ -63,12 +63,12 @@ inline void InterfaceVelocity::process_result(const KDL::JntArray &q_dot_ik,
     pub_.publish(vel_msg);
 }
 
-/* END InterfaceVelocity **********************************************************************************************/
+/* END HardwareInterfaceVelocity **********************************************************************************************/
 
 
 
-/* BEGIN InterfacePosition ****************************************************************************************/
-inline void InterfacePosition::process_result(const KDL::JntArray &q_dot_ik,
+/* BEGIN HardwareInterfacePosition ****************************************************************************************/
+inline void HardwareInterfacePosition::process_result(const KDL::JntArray &q_dot_ik,
                                               std::vector<double> &initial_position)
 {
     std_msgs::Float64MultiArray vel_msg, pos_msg;
@@ -135,4 +135,4 @@ inline void InterfacePosition::process_result(const KDL::JntArray &q_dot_ik,
     }
 }
 
-/* END InterfacePosition ******************************************************************************************/
+/* END HardwareInterfacePosition ******************************************************************************************/

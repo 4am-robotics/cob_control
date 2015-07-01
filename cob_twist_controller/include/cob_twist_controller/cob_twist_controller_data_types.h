@@ -57,7 +57,7 @@ enum DampingMethodTypes {
     LSV = 3,
 };
 
-enum InterfaceType {
+enum HardwareInterfaceTypes {
     VELOCITY = 0,
     POSITION = 1,
 };
@@ -108,7 +108,7 @@ struct ObstacleDistanceInfo
 struct TwistControllerParams {
     uint8_t dof;
     
-    InterfaceType interface_type;
+    HardwareInterfaceTypes hardware_interface_type;
     
     bool numerical_filtering;
     DampingMethodTypes damping_method;

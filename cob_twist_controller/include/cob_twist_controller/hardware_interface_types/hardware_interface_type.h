@@ -22,55 +22,55 @@
  * \date Date of creation: June, 2015
  *
  * \brief
- *   This header contains the class and method definitions of
- *   all interface types (position/velocity).
+ *   This header contains the interface description of all available
+ *   hardware interface types (position/velocity).
  *
  ****************************************************************/
 #ifndef COB_CONTROL_COB_TWIST_CONTROLLER_INCLUDE_INTERFACE_TYPES_INTERFACE_TYPE_H_
 #define COB_CONTROL_COB_TWIST_CONTROLLER_INCLUDE_INTERFACE_TYPES_INTERFACE_TYPE_H_
 
-#include "cob_twist_controller/interface_types/interface_type_base.h"
+#include "cob_twist_controller/hardware_interface_types/hardware_interface_type_base.h"
 
-/* BEGIN InterfaceBuilder *****************************************************************************************/
-/// Class providing a static method to create damping method objects.
-class InterfaceBuilder
+/* BEGIN HardwareInterfaceBuilder *****************************************************************************************/
+/// Class providing a static method to create hardware interface objects.
+class HardwareInterfaceBuilder
 {
     public:
-        InterfaceBuilder() {}
-        ~InterfaceBuilder() {}
+        HardwareInterfaceBuilder() {}
+        ~HardwareInterfaceBuilder() {}
         
-        static InterfaceBase* create_interface(ros::NodeHandle& nh,
+        static HardwareInterfaceBase* create_interface(ros::NodeHandle& nh,
                                                const TwistControllerParams &params);
 };
-/* END InterfaceBuilder *******************************************************************************************/
+/* END HardwareInterfaceBuilder *******************************************************************************************/
 
 
 
 
-/* BEGIN InterfaceVelocity ****************************************************************************************/
-class InterfaceVelocity : public InterfaceBase
+/* BEGIN HardwareInterfaceVelocity ****************************************************************************************/
+class HardwareInterfaceVelocity : public HardwareInterfaceBase
 {
     public:
-        InterfaceVelocity(ros::NodeHandle& nh, const TwistControllerParams &params)
-        : InterfaceBase(nh, params)
+        HardwareInterfaceVelocity(ros::NodeHandle& nh, const TwistControllerParams &params)
+        : HardwareInterfaceBase(nh, params)
         {
             pub_ = nh.advertise<std_msgs::Float64MultiArray>("joint_group_velocity_controller/command", 1);
         }
 
-        ~InterfaceVelocity() {}
+        ~HardwareInterfaceVelocity() {}
 
         virtual void process_result(const KDL::JntArray &q_dot_ik,
                                     std::vector<double> &initial_position);
 };
-/* END InterfaceVelocity **********************************************************************************************/
+/* END HardwareInterfaceVelocity **********************************************************************************************/
 
 
-/* BEGIN InterfacePosition ****************************************************************************************/
-class InterfacePosition : public InterfaceBase
+/* BEGIN HardwareInterfacePosition ****************************************************************************************/
+class HardwareInterfacePosition : public HardwareInterfaceBase
 {
     public:
-        InterfacePosition(ros::NodeHandle& nh, const TwistControllerParams &params)
-        : InterfaceBase(nh, params),
+        HardwareInterfacePosition(ros::NodeHandle& nh, const TwistControllerParams &params)
+        : HardwareInterfaceBase(nh, params),
           iteration_counter_(0)
         {
             for(int i = 0; i < params.dof; i++)
@@ -85,7 +85,7 @@ class InterfacePosition : public InterfaceBase
             pub_ = nh.advertise<std_msgs::Float64MultiArray>("joint_group_position_controller/command", 1);
         }
 
-        ~InterfacePosition() {}
+        ~HardwareInterfacePosition() {}
 
         virtual void process_result(const KDL::JntArray &q_dot_ik,
                                     std::vector<double> &initial_position);
@@ -99,7 +99,7 @@ class InterfacePosition : public InterfaceBase
         ros::Time last_update_time_;
 
 };
-/* END InterfacePosition **********************************************************************************************/
+/* END HardwareInterfacePosition **********************************************************************************************/
 
 
 

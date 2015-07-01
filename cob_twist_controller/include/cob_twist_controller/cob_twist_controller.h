@@ -55,7 +55,7 @@
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include <cob_twist_controller/inverse_differential_kinematics_solver.h>
 #include "cob_twist_controller/limiters/limiter.h"
-#include "cob_twist_controller/interface_types/interface_type.h"
+#include "cob_twist_controller/hardware_interface_types/hardware_interface_type.h"
 #include "cob_twist_controller/callback_data_mediator.h"
 
 class CobTwistController
@@ -86,7 +86,7 @@ private:
     boost::shared_ptr<KDL::ChainFkSolverVel_recursive> jntToCartSolver_vel_;
     boost::shared_ptr<InverseDifferentialKinematicsSolver> p_inv_diff_kin_solver_;
     boost::shared_ptr<LimiterContainer> limiters_;
-    boost::shared_ptr<InterfaceBase> interface_;
+    boost::shared_ptr<HardwareInterfaceBase> hardware_interface_;
     
     CallbackDataMediator callback_data_mediator_;
 

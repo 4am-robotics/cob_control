@@ -16,7 +16,7 @@ generate_dynamic_reconfigure_options(
 # Declare catkin package
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES damping_methods inv_calculations constraint_solvers limiters interface_types kinematic_extensions inverse_differential_kinematics_solver twist_controller
+  LIBRARIES damping_methods inv_calculations constraint_solvers limiters hardware_interfaces kinematic_extensions inverse_differential_kinematics_solver twist_controller
   CATKIN_DEPENDS roscpp sensor_msgs geometry_msgs nav_msgs visualization_msgs cob_obstacle_distance
 )
 
@@ -37,8 +37,8 @@ target_link_libraries(constraint_solvers damping_methods inv_calculations)
 add_library(limiters src/limiters/limiter.cpp)
 target_link_libraries(limiters ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 
-add_library(interface_types src/interface_types/interface_type.cpp)
-target_link_libraries(interface_types ${catkin_LIBRARIES})
+add_library(hardware_interfaces src/hardware_interface_types/hardware_interface_type.cpp)
+target_link_libraries(hardware_interfaces ${catkin_LIBRARIES})
 
 add_library(kinematic_extensions src/kinematic_extensions/kinematic_extension.cpp)
 target_link_libraries(kinematic_extensions ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
@@ -48,7 +48,7 @@ target_link_libraries(inverse_differential_kinematics_solver constraint_solvers 
 
 add_library(twist_controller src/cob_twist_controller.cpp)
 add_dependencies(inverse_differential_kinematics_solver cob_twist_controller_gencfg)
-target_link_libraries(twist_controller inverse_differential_kinematics_solver limiters interface_types ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
+target_link_libraries(twist_controller inverse_differential_kinematics_solver limiters hardware_interfaces ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 
 ## Declare a cpp executable
 add_executable(cob_twist_controller_node src/cob_twist_controller_node.cpp)
@@ -56,7 +56,7 @@ target_link_libraries(cob_twist_controller_node twist_controller ${catkin_LIBRAR
 
 ## Install
 # Mark executables and/or libraries for installation
-install(TARGETS cob_twist_controller_node damping_methods inv_calculations constraint_solvers limiters interface_types kinematic_extensions inverse_differential_kinematics_solver twist_controller
+install(TARGETS cob_twist_controller_node damping_methods inv_calculations constraint_solvers limiters hardware_interfaces kinematic_extensions inverse_differential_kinematics_solver twist_controller
  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

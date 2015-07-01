@@ -23,7 +23,7 @@
  *
  * \brief
  *   This header contains the interface description of all available
- *   interface types (position/velocity).
+ *   hardware interface types (position/velocity).
  *
  ****************************************************************/
 #ifndef COB_CONTROL_COB_TWIST_CONTROLLER_INCLUDE_INTERFACE_TYPES_INTERFACE_TYPE_BASE_H_
@@ -35,16 +35,16 @@
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/utils/moving_average.h"
 
-/// Base class for interfaces types.
-class InterfaceBase
+/// Base class for hardware interfaces types.
+class HardwareInterfaceBase
 {
     public:
-        InterfaceBase(ros::NodeHandle& nh, const TwistControllerParams &params):
+        HardwareInterfaceBase(ros::NodeHandle& nh, const TwistControllerParams &params):
             nh_(nh),
             params_(params)
         {}
 
-        virtual ~InterfaceBase() {}
+        virtual ~HardwareInterfaceBase() {}
 
         virtual void process_result(const KDL::JntArray &q_dot_ik,
                                     std::vector<double> &initial_position) = 0;

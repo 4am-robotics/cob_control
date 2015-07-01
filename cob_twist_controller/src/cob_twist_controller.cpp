@@ -156,7 +156,7 @@ bool CobTwistController::initialize()
     this->limiters_.reset(new LimiterContainer(this->twist_controller_params_, this->chain_));
     this->limiters_->init();
 
-    this->interface_.reset(InterfaceBuilder::create_interface(this->nh_, this->twist_controller_params_));
+    this->hardware_interface_.reset(HardwareInterfaceBuilder::create_interface(this->nh_, this->twist_controller_params_));
 
     ROS_INFO("...initialized!");
     return true;
@@ -198,7 +198,7 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     TwistControllerParams params;
     
     params.dof = twist_controller_params_.dof;
-    params.interface_type = static_cast<InterfaceType>(config.interface_type);
+    params.hardware_interface_type = static_cast<HardwareInterfaceTypes>(config.hardware_interface_type);
     
     params.numerical_filtering = config.numerical_filtering;
     params.damping_method = static_cast<DampingMethodTypes>(config.damping_method);
@@ -248,7 +248,7 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     this->limiters_.reset(new LimiterContainer(this->twist_controller_params_, this->chain_));
     this->limiters_->init();
 
-    this->interface_.reset(InterfaceBuilder::create_interface(this->nh_, this->twist_controller_params_));
+    this->hardware_interface_.reset(HardwareInterfaceBuilder::create_interface(this->nh_, this->twist_controller_params_));
 
     p_inv_diff_kin_solver_->resetAll(params);
 
@@ -266,7 +266,7 @@ void CobTwistController::initParams()
     TwistControllerParams params;
     
     params.dof = twist_controller_params_.dof;
-    params.interface_type = VELOCITY;
+    params.hardware_interface_type = VELOCITY;
     
     params.numerical_filtering = false;
     params.damping_method = MANIPULABILITY;
@@ -375,7 +375,7 @@ void CobTwistController::solveTwist(KDL::Twist twist)
         q_dot_ik = this->limiters_->enforceLimits(q_dot_ik, this->joint_states_.current_q_);
 
         // Change between velocity and position interface
-        this->interface_->process_result(q_dot_ik, initial_pos_);
+        this->hardware_interface_->process_result(q_dot_ik, initial_pos_);
     }
 }
 
