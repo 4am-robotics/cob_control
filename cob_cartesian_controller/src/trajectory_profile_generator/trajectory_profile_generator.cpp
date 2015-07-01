@@ -1,9 +1,31 @@
-/*
- * trajectory_profile_generator.cpp
+/*!
+ *****************************************************************
+ * \file
  *
- *  Created on: Jun 30, 2015
- *      Author: fxm-cm
- */
+ * \note
+ *   Copyright (c) 2015 \n
+ *   Fraunhofer Institute for Manufacturing Engineering
+ *   and Automation (IPA) \n\n
+ *
+ *****************************************************************
+ *
+ * \note
+ *   Project name: care-o-bot
+ * \note
+ *   ROS stack name: cob_control
+ * \note
+ *   ROS package name: cob_cartesian_controller
+ *
+ * \author
+ *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de / christoph.mark@gmail.com
+ *
+ * \date Date of creation: July, 2015
+ *
+ * \brief
+ *   ...
+ *
+ ****************************************************************/
+
 #include <cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator.h>
 
 void TrajectoryProfileGenerator::calculateProfile(std::vector<double> &pathArray, double Se, double VelMax,

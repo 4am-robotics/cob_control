@@ -1,10 +1,9 @@
-
 /*!
  *****************************************************************
  * \file
  *
  * \note
- *   Copyright (c) 2014 \n
+ *   Copyright (c) 2015 \n
  *   Fraunhofer Institute for Manufacturing Engineering
  *   and Automation (IPA) \n\n
  *
@@ -18,14 +17,15 @@
  *   ROS package name: cob_cartesian_controller
  *
  * \author
- *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de
+ *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de / christoph.mark@gmail.com
  *
- * \date Date of creation: August, 2014
+ * \date Date of creation: July, 2015
  *
  * \brief
  *   ...
  *
  ****************************************************************/
+
 #ifndef CARTESIAN_CONTROLLER_H
 #define CARTESIAN_CONTROLLER_H
 

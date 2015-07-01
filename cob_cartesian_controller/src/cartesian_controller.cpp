@@ -3,7 +3,7 @@
  * \file
  *
  * \note
- *   Copyright (c) 2014 \n
+ *   Copyright (c) 2015 \n
  *   Fraunhofer Institute for Manufacturing Engineering
  *   and Automation (IPA) \n\n
  *
@@ -19,12 +19,13 @@
  * \author
  *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de / christoph.mark@gmail.com
  *
- * \date Date of creation: August, 2014
+ * \date Date of creation: July, 2015
  *
  * \brief
  *   ...
  *
  ****************************************************************/
+
 
 #include <math.h>
 #include <algorithm>
