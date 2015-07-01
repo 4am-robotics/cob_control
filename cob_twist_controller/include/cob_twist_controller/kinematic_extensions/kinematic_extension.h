@@ -36,6 +36,11 @@
 
 #include <geometry_msgs/Twist.h>
 
+#include <tf/transform_listener.h>
+#include <tf/tf.h>
+
+#include <Eigen/Geometry>
+
 
 
 /* BEGIN KinematicExtensionBuilder *****************************************************************************************/
@@ -84,7 +89,7 @@ class KinematicExtension6D : public KinematicExtensionBase
         virtual KDL::Jacobian adjust_jacobian(const KDL::Jacobian& jac_chain);
         virtual void process_result_extension(const KDL::JntArray &q_dot_ik) = 0;
         
-        virtual KDL::Jacobian adjust_jacobian_6d(const KDL::Jacobian& jac_chain);
+        KDL::Jacobian adjust_jacobian_6d(const KDL::Jacobian& jac_chain, const KDL::Frame full_frame, const KDL::Frame partial_frame, const ActiveCartesianDimension active_dim);
 };
 /* END KinematicExtension6D **********************************************************************************************/
 
@@ -97,6 +102,10 @@ class KinematicExtensionBaseActive : public KinematicExtension6D
         : KinematicExtension6D(params)
         {
             base_vel_pub = nh_.advertise<geometry_msgs::Twist>("/base/twist_controller/command", 1);
+            
+            //ToDo: I don't like this hack! Can we pass the tf_listner_ somehow?
+            ///give tf_listener_ some time to fill buffer
+            ros::Duration(0.5).sleep();
         }
 
         ~KinematicExtensionBaseActive() {}
@@ -105,12 +114,13 @@ class KinematicExtensionBaseActive : public KinematicExtension6D
         virtual void process_result_extension(const KDL::JntArray &q_dot_ik);
         
         
-        ros::NodeHandle nh_;
-        
         void baseTwistCallback(const geometry_msgs::Twist::ConstPtr& msg);
         
     
     private:
+        ros::NodeHandle nh_;
+        tf::TransformListener tf_listener_;
+    
         ros::Publisher base_vel_pub;
 };
 /* END KinematicExtensionBaseActive **********************************************************************************************/

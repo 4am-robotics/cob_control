@@ -46,6 +46,7 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const KDL::JntArray& q_in,
     
     ///append columns to Jacobian in order to reflect additional DoFs of kinematical extension
     this->jac_ = this->kinematic_extension_->adjust_jacobian(jac_chain);
+    ROS_DEBUG_STREAM("Jacobian:" << std::endl << this->jac_.data);
 
     t_Vector6d v_in_vec;
     tf::twistKDLToEigen(v_in, v_in_vec);
@@ -59,9 +60,10 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const KDL::JntArray& q_in,
                                                                   qdot_out_vec);
     
     ///convert output
+    KDL::JntArray qdot_out_full(jac_.columns());
     for(int i = 0; i < jac_.columns(); i++)
     {
-        qdot_out(i) = qdot_out_vec(i);
+        qdot_out_full(i) = qdot_out_vec(i);
     }
     
     //ToDo:
@@ -69,12 +71,14 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const KDL::JntArray& q_in,
     
     
     ///process result for kinematical extension
-    this->kinematic_extension_->process_result_extension(qdot_out);
+    this->kinematic_extension_->process_result_extension(qdot_out_full);
     
     
-    //ToDo:
     ///then qdot_out shut be resized to contain only the chain_qdot_out's again
-    
+    for(int i = 0; i < jac_chain.columns(); i++)
+    {
+        qdot_out(i) = qdot_out_full(i);
+    }
 
     return retStat;
 }

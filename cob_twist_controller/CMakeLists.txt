@@ -41,7 +41,7 @@ add_library(interface_types src/interface_types/interface_type.cpp)
 target_link_libraries(interface_types ${catkin_LIBRARIES})
 
 add_library(kinematic_extensions src/kinematic_extensions/kinematic_extension.cpp)
-target_link_libraries(kinematic_extensions ${catkin_LIBRARIES})
+target_link_libraries(kinematic_extensions ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 
 add_library(inverse_differential_kinematics_solver src/inverse_differential_kinematics_solver.cpp src/callback_data_mediator.cpp)
 target_link_libraries(inverse_differential_kinematics_solver constraint_solvers kinematic_extensions ${orocos_kdl_LIBRARIES})

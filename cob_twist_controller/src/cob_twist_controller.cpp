@@ -38,6 +38,8 @@
 #include "cob_obstacle_distance/Registration.h"
 
 
+//ToDo: Should we re-add DEBUG_BASE_COMPENSATION stuff?
+
 bool CobTwistController::initialize()
 {
     ros::NodeHandle nh_twist("twist_controller");
@@ -309,7 +311,7 @@ void CobTwistController::solveTwist(KDL::Twist twist)
     {
         twist = twist - twist_odometry_cb_;
     }
-
+    
     ret_ik = p_inv_diff_kin_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik);
 
     if(0 != ret_ik)
@@ -363,8 +365,7 @@ void CobTwistController::odometryCallback(const nav_msgs::Odometry::ConstPtr& ms
 {
     KDL::Twist twist_odometry_bl, tangential_twist_bl, twist_odometry_transformed_cb;
     KDL::Frame cb_frame_bl;
-    tf::StampedTransform cb_transform_bl,
-                         bl_transform_ct;
+    tf::StampedTransform cb_transform_bl, bl_transform_ct;
 
     try{
         tf_listener_.waitForTransform(chain_base_link_, "base_link", ros::Time(0), ros::Duration(0.5));

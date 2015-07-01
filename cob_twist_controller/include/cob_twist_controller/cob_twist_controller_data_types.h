@@ -64,8 +64,9 @@ enum ContraintTypes {
     GPM_JLA_MID = 4,
     GPM_CA = 5,
 };
-struct ExtendedJacobianDimension {
-    ExtendedJacobianDimension():
+
+struct ActiveCartesianDimension {
+    ActiveCartesianDimension():
         lin_x(0), lin_y(0), lin_z(0), rot_x(0), rot_y(0), rot_z(0) {}
     
     double lin_x;

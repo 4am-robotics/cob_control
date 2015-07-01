@@ -40,8 +40,8 @@ class InterfaceBase
 {
     public:
         InterfaceBase(ros::NodeHandle& nh, const TwistControllerParams &params):
-            params_(params),
-            nh_(nh)
+            nh_(nh),
+            params_(params)
         {}
 
         virtual ~InterfaceBase() {}
