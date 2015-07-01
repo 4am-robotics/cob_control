@@ -81,7 +81,7 @@ private:
     std::vector<std::string> joints_;
 
     TwistControllerParams twist_controller_params_;
-    void initInvDiffKinSolverParams();
+    void initParams();
 
     boost::shared_ptr<KDL::ChainFkSolverVel_recursive> jntToCartSolver_vel_;
     boost::shared_ptr<InverseDifferentialKinematicsSolver> p_inv_diff_kin_solver_;

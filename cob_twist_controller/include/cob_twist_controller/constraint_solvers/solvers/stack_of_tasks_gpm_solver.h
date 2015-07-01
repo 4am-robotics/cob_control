@@ -42,7 +42,7 @@
 class StackOfTasksSolver2nd : public ConstraintSolver<>
 {
     public:
-        StackOfTasksSolver2nd(const InvDiffKinSolverParams &params)
+        StackOfTasksSolver2nd(const TwistControllerParams &params)
                            : ConstraintSolver(params),
                              last_min_distance_(-1.0),
                              last_cycle_time_(-1.0)

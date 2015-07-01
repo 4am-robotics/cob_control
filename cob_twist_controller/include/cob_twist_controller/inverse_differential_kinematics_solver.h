@@ -76,23 +76,23 @@ public:
                           const KDL::Twist& v_in,
                           KDL::JntArray& qdot_out);
 
-    inline void SetInvDiffKinSolverParams(InvDiffKinSolverParams params)
+    inline void SetParams(TwistControllerParams params)
     {
         params_ = params;
     }
 
-    inline InvDiffKinSolverParams GetInvDiffKinSolverParams() const
+    inline TwistControllerParams GetParams() const
     {
         return params_;
     }
 
-    void resetAll(InvDiffKinSolverParams params);
+    void resetAll(TwistControllerParams params);
 
 private:
     const KDL::Chain chain_;
     KDL::Jacobian jac_;
     KDL::ChainJntToJacSolver jnt2jac_;
-    InvDiffKinSolverParams params_;
+    TwistControllerParams params_;
     CallbackDataMediator& callback_data_mediator_;
     boost::shared_ptr<KinematicExtensionBase> kinematic_extension_;
     ConstraintSolverFactory constraint_solver_factory_;

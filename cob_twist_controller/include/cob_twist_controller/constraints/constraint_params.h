@@ -41,19 +41,19 @@ class ConstraintParamsBase
 {
     public:
 
-        ConstraintParamsBase(const InvDiffKinSolverParams& params) : params_(params)
+        ConstraintParamsBase(const TwistControllerParams& params) : params_(params)
         {}
 
         ~ConstraintParamsBase()
         {}
 
-        const InvDiffKinSolverParams& getInvDiffKinSolverParams() const
+        const TwistControllerParams& getParams() const
         {
             return this->params_;
         }
 
     protected:
-        const InvDiffKinSolverParams& params_;
+        const TwistControllerParams& params_;
 };
 /* END ConstraintParamsBase *************************************************************************************/
 
@@ -65,7 +65,7 @@ class ConstraintParamsCA : public ConstraintParamsBase
 
         ObstacleDistanceInfo current_distance_;
 
-        ConstraintParamsCA(const InvDiffKinSolverParams& params)
+        ConstraintParamsCA(const TwistControllerParams& params)
         : ConstraintParamsBase(params)
         {}
 
@@ -87,7 +87,7 @@ class ConstraintParamsJLA : public ConstraintParamsBase
 {
     public:
 
-        ConstraintParamsJLA(const InvDiffKinSolverParams& params)
+        ConstraintParamsJLA(const TwistControllerParams& params)
         : ConstraintParamsBase(params)
         {}
 

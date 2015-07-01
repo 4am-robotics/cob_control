@@ -35,7 +35,6 @@
 
 
 #include "cob_obstacle_distance/PredictDistance.h"
-#include "cob_obstacle_distance/FrameWithJntPos.h"
 
 #include "cob_twist_controller/constraints/self_motion_magnitude.h"
 

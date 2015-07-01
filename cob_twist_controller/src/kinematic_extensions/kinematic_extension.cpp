@@ -35,7 +35,7 @@
 //ToDo: Should we re-add DEBUG_BASE_ACTIVE stuff in KinematicExtensionBaseActive class?
 
 
-KinematicExtensionBase* KinematicExtensionBuilder::create_extension(const InvDiffKinSolverParams &params)
+KinematicExtensionBase* KinematicExtensionBuilder::create_extension(const TwistControllerParams &params)
 {
     KinematicExtensionBase *keb = NULL;
     if(params.base_active)

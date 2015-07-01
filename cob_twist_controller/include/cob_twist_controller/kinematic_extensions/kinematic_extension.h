@@ -51,7 +51,7 @@ class KinematicExtensionBuilder
         KinematicExtensionBuilder() {}
         ~KinematicExtensionBuilder() {}
         
-        static KinematicExtensionBase* create_extension(const InvDiffKinSolverParams &params);
+        static KinematicExtensionBase* create_extension(const TwistControllerParams &params);
 };
 /* END KinematicExtensionBuilder *******************************************************************************************/
 
@@ -60,7 +60,7 @@ class KinematicExtensionBuilder
 class KinematicExtensionNone : public KinematicExtensionBase
 {
     public:
-        KinematicExtensionNone(const InvDiffKinSolverParams &params)
+        KinematicExtensionNone(const TwistControllerParams &params)
         : KinematicExtensionBase(params)
         {
             //nothing to do
@@ -78,7 +78,7 @@ class KinematicExtensionNone : public KinematicExtensionBase
 class KinematicExtension6D : public KinematicExtensionBase
 {
     public:
-        KinematicExtension6D(const InvDiffKinSolverParams &params)
+        KinematicExtension6D(const TwistControllerParams &params)
         : KinematicExtensionBase(params)
         {
             //nothing to do here
@@ -98,7 +98,7 @@ class KinematicExtension6D : public KinematicExtensionBase
 class KinematicExtensionBaseActive : public KinematicExtension6D
 {
     public:
-        KinematicExtensionBaseActive(const InvDiffKinSolverParams &params)
+        KinematicExtensionBaseActive(const TwistControllerParams &params)
         : KinematicExtension6D(params)
         {
             base_vel_pub = nh_.advertise<geometry_msgs::Twist>("/base/twist_controller/command", 1);

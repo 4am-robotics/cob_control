@@ -37,7 +37,7 @@
 class KinematicExtensionBase
 {
     public:
-        KinematicExtensionBase(const InvDiffKinSolverParams &params):
+        KinematicExtensionBase(const TwistControllerParams &params):
             params_(params)
         {}
         
@@ -47,7 +47,7 @@ class KinematicExtensionBase
         virtual void process_result_extension(const KDL::JntArray &q_dot_ik) = 0;
     
     protected:
-        const InvDiffKinSolverParams &params_;
+        const TwistControllerParams &params_;
 
 };
 

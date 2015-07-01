@@ -54,40 +54,40 @@
  * Static builder method to create damping methods dependent on parameterization.
  */
 template <typename PRIO>
-std::set<tConstraintBase> ConstraintsBuilder<PRIO>::createConstraints(const InvDiffKinSolverParams &inv_diff_kin_solver_params,
+std::set<tConstraintBase> ConstraintsBuilder<PRIO>::createConstraints(const TwistControllerParams &twist_controller_params,
                                                                        KDL::ChainJntToJacSolver& jnt_to_jac,
                                                                        CallbackDataMediator& data_mediator)
 {
     std::set<tConstraintBase> constraints;
-    if (GPM_JLA == inv_diff_kin_solver_params.constraint)
+    if (GPM_JLA == twist_controller_params.constraint)
     {
         typedef JointLimitAvoidance<ConstraintParamsJLA, PRIO> tJla;
-        ConstraintParamsJLA params = ConstraintParamFactory<ConstraintParamsJLA>::createConstraintParams(inv_diff_kin_solver_params, data_mediator);
+        ConstraintParamsJLA params = ConstraintParamFactory<ConstraintParamsJLA>::createConstraintParams(twist_controller_params, data_mediator);
         // TODO: take care PRIO could be of different type than UINT32
         boost::shared_ptr<tJla > jla(new tJla(100, params, data_mediator));
         constraints.insert(boost::static_pointer_cast<PriorityBase<PRIO> >(jla));
     }
-    else if(GPM_JLA_MID == inv_diff_kin_solver_params.constraint)
+    else if(GPM_JLA_MID == twist_controller_params.constraint)
     {
         typedef JointLimitAvoidanceMid<ConstraintParamsJLA, PRIO> tJlaMid;
         // same params as for normal JLA
-        ConstraintParamsJLA params = ConstraintParamFactory<ConstraintParamsJLA>::createConstraintParams(inv_diff_kin_solver_params, data_mediator);
+        ConstraintParamsJLA params = ConstraintParamFactory<ConstraintParamsJLA>::createConstraintParams(twist_controller_params, data_mediator);
         // TODO: take care PRIO could be of different type than UINT32
         boost::shared_ptr<tJlaMid > jla(new tJlaMid(100, params, data_mediator));
         constraints.insert(boost::static_pointer_cast<PriorityBase<PRIO> >(jla));
     }
-    else if(GPM_CA == inv_diff_kin_solver_params.constraint ||
-            TASK_STACK_NO_GPM == inv_diff_kin_solver_params.constraint ||
-            TASK_STACK_GPM == inv_diff_kin_solver_params.constraint ||
-            TASK_2ND_PRIO == inv_diff_kin_solver_params.constraint ||
-            DYN_TASKS_READJ == inv_diff_kin_solver_params.constraint)
+    else if(GPM_CA == twist_controller_params.constraint ||
+            TASK_STACK_NO_GPM == twist_controller_params.constraint ||
+            TASK_STACK_GPM == twist_controller_params.constraint ||
+            TASK_2ND_PRIO == twist_controller_params.constraint ||
+            DYN_TASKS_READJ == twist_controller_params.constraint)
     {
         typedef CollisionAvoidance<ConstraintParamsCA, PRIO> tCollisionAvoidance;
         uint32_t available_dists = data_mediator.obstacleDistancesCnt();
         uint32_t startPrio = 100;
         for (uint32_t i = 0; i < available_dists; ++i)
         {
-            ConstraintParamsCA params = ConstraintParamFactory<ConstraintParamsCA>::createConstraintParams(inv_diff_kin_solver_params, data_mediator);
+            ConstraintParamsCA params = ConstraintParamFactory<ConstraintParamsCA>::createConstraintParams(twist_controller_params, data_mediator);
             // TODO: take care PRIO could be of different type than UINT32
             boost::shared_ptr<tCollisionAvoidance > ca(new tCollisionAvoidance(startPrio--, params, data_mediator, jnt_to_jac));
             constraints.insert(boost::static_pointer_cast<PriorityBase<PRIO> >(ca));
@@ -205,7 +205,7 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
 {
     uint8_t vecRows = static_cast<uint8_t>(this->joint_states_.current_q_.rows());
     Eigen::VectorXd partial_values = Eigen::VectorXd::Zero(vecRows);
-    const InvDiffKinSolverParams& params = this->constraint_params_.getInvDiffKinSolverParams();
+    const TwistControllerParams& params = this->constraint_params_.getParams();
     int size_of_frames = params.frame_names.size();
     ObstacleDistanceInfo d = this->constraint_params_.current_distance_;
     if (this->getActivationThreshold() > d.min_distance)
@@ -321,7 +321,7 @@ void JointLimitAvoidance<T_PARAMS, PRIO>::calculate()
 template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidance<T_PARAMS, PRIO>::calcValue()
 {
-    const InvDiffKinSolverParams &params = this->constraint_params_.getInvDiffKinSolverParams();
+    const TwistControllerParams &params = this->constraint_params_.getParams();
     std::vector<double> limits_min = params.limits_min;
     std::vector<double> limits_max = params.limits_max;
     const KDL::JntArray joint_pos = this->joint_states_.current_q_;
@@ -361,7 +361,7 @@ double JointLimitAvoidance<T_PARAMS, PRIO>::calcDerivativeValue()
 template <typename T_PARAMS, typename PRIO>
 Eigen::VectorXd JointLimitAvoidance<T_PARAMS, PRIO>::calcPartialValues()
 {
-    const InvDiffKinSolverParams &params = this->constraint_params_.getInvDiffKinSolverParams();
+    const TwistControllerParams &params = this->constraint_params_.getParams();
     const KDL::JntArray joint_pos = this->joint_states_.current_q_;
     std::vector<double> limits_min = params.limits_min;
     std::vector<double> limits_max = params.limits_max;
@@ -396,7 +396,7 @@ double JointLimitAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::
 {
     // k_H by Armijo-Rule
     double t;
-    const InvDiffKinSolverParams &params = this->constraint_params_.getInvDiffKinSolverParams();
+    const TwistControllerParams &params = this->constraint_params_.getParams();
     t = SelfMotionMagnitudeFactory< SmmDeterminatorVelocityBounds<MIN_CRIT> >::calculate(params, particular_solution, homogeneous_solution);
     return t;
 }
@@ -433,7 +433,7 @@ void JointLimitAvoidanceMid<T_PARAMS, PRIO>::calculate()
 template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidanceMid<T_PARAMS, PRIO>::calcValue()
 {
-    const InvDiffKinSolverParams &params = this->constraint_params_.getInvDiffKinSolverParams();
+    const TwistControllerParams &params = this->constraint_params_.getParams();
     std::vector<double> limits_min = params.limits_min;
     std::vector<double> limits_max = params.limits_max;
     const KDL::JntArray joint_pos = this->joint_states_.current_q_;
@@ -473,7 +473,7 @@ double JointLimitAvoidanceMid<T_PARAMS, PRIO>::calcDerivativeValue()
 template <typename T_PARAMS, typename PRIO>
 Eigen::VectorXd JointLimitAvoidanceMid<T_PARAMS, PRIO>::calcPartialValues()
 {
-    const InvDiffKinSolverParams &params = this->constraint_params_.getInvDiffKinSolverParams();
+    const TwistControllerParams &params = this->constraint_params_.getParams();
     const KDL::JntArray joint_pos = this->joint_states_.current_q_;
     std::vector<double> limits_min = params.limits_min;
     std::vector<double> limits_max = params.limits_max;
@@ -514,7 +514,7 @@ double JointLimitAvoidanceMid<T_PARAMS, PRIO>::getActivationThreshold() const
 template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidanceMid<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const
 {
-    const InvDiffKinSolverParams &params = this->constraint_params_.getInvDiffKinSolverParams();
+    const TwistControllerParams &params = this->constraint_params_.getParams();
     return SelfMotionMagnitudeFactory<SmmDeterminatorVelocityBounds<MAX_CRIT> >::calculate(params, particular_solution, homogeneous_solution);
 }
 /* END 2nd JointLimitAvoidance **************************************************************************************/

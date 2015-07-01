@@ -39,7 +39,7 @@ class WLN_JointLimitAvoidanceSolver : public WeightedLeastNormSolver
 {
     public:
 
-        WLN_JointLimitAvoidanceSolver(const InvDiffKinSolverParams &params)
+        WLN_JointLimitAvoidanceSolver(const TwistControllerParams &params)
                                   : WeightedLeastNormSolver(params)
         {
 

@@ -125,10 +125,10 @@ bool CobTwistController::initialize()
     ///initialize configuration control solver
     p_inv_diff_kin_solver_.reset(new InverseDifferentialKinematicsSolver(chain_, callback_data_mediator_));
 
-    // Before setting up dynamic_reconfigure server: init AugmentedSolverParams with default values
-    this->initInvDiffKinSolverParams();
+    // Before setting up dynamic_reconfigure server: initParams with default values
+    this->initParams();
 
-    ///Setting up dynamic_reconfigure server for the AugmentedSolverParams
+    ///Setting up dynamic_reconfigure server for the TwistControlerConfig parameters
     reconfigure_server_.reset(new dynamic_reconfigure::Server<cob_twist_controller::TwistControllerConfig>(reconfig_mutex_, nh_twist));
     reconfigure_server_->setCallback(boost::bind(&CobTwistController::reconfigureCallback,   this, _1, _2));
 
@@ -189,59 +189,73 @@ void CobTwistController::reinitServiceRegistration()
 
 void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControllerConfig &config, uint32_t level)
 {
-    InvDiffKinSolverParams params;
-    params.damping_method = static_cast<DampingMethodTypes>(config.damping_method);
+    if(config.base_active && config.base_compensation)
+    {
+        ROS_ERROR("base_active and base_compensation cannot be enabled at the same time");
+    }
+    
+    
+    TwistControllerParams params;
+    
+    params.dof = twist_controller_params_.dof;
+    params.interface_type = static_cast<InterfaceType>(config.interface_type);
+    
     params.numerical_filtering = config.numerical_filtering;
+    params.damping_method = static_cast<DampingMethodTypes>(config.damping_method);
     params.damping_factor = config.damping_factor;
     params.lambda_max = config.lambda_max;
     params.w_threshold = config.w_threshold;
     params.beta = config.beta;
     params.eps_damping = config.eps_damping;
+    
     params.constraint = static_cast<ContraintTypes>(config.constraint);
+    params.mu = config.mu;
+    params.k_H = config.k_H;
+    
     params.eps_truncation = config.eps_truncation;
+    
+    params.keep_direction = config.keep_direction;
+    params.enforce_pos_limits = config.enforce_pos_limits;
+    params.enforce_vel_limits = config.enforce_vel_limits;
+    params.tolerance = config.tolerance;
+    
+    // added limits from URDF file
+    params.limits_max = twist_controller_params_.limits_max; // from cob_twist_controller init
+    params.limits_min = twist_controller_params_.limits_min; // from cob_twist_controller init
+    params.limits_vel = twist_controller_params_.limits_vel; // from cob_twist_controller init
+    
+    params.max_vel_lin = twist_controller_params_.max_vel_lin;
+    params.max_vel_rot = twist_controller_params_.max_vel_rot;
+    params.max_vel_lin_base = twist_controller_params_.max_vel_lin_base;
+    params.max_vel_rot_base = twist_controller_params_.max_vel_rot_base;
+    
     params.base_compensation = config.base_compensation;
     params.base_active = config.base_active;
     params.base_ratio = config.base_ratio;
 
 
-    params.mu = config.mu;
-
-
-    params.limits_min = twist_controller_params_.limits_min; // from cob_twist_controller init
-    params.limits_max = twist_controller_params_.limits_max; // from cob_twist_controller init
-    params.limits_vel = twist_controller_params_.limits_vel; // from cob_twist_controller init
     params.frame_names.clear();
     for (uint16_t i = 0; i < chain_.getNrOfSegments(); ++i)
     {
         params.frame_names.push_back(chain_.getSegment(i).getName());
     }
-
-    params.k_H = config.k_H;
-
-    twist_controller_params_.interface_type = static_cast<InterfaceType>(config.interface_type);
-    twist_controller_params_.enforce_pos_limits = config.enforce_pos_limits;
-    twist_controller_params_.enforce_vel_limits = config.enforce_vel_limits;
-    twist_controller_params_.base_active = config.base_active;
-    twist_controller_params_.base_compensation = config.base_compensation;
-    twist_controller_params_.tolerance = config.tolerance;
-    twist_controller_params_.keep_direction = config.keep_direction;
+    
+    // TODO: initialization
+    //params.collision_check_frames.clear();
+    //params.task_stack_controller = NULL;
+    
 
     this->limiters_.reset(new LimiterContainer(this->twist_controller_params_, this->chain_));
     this->limiters_->init();
 
     this->interface_.reset(InterfaceBuilder::create_interface(this->nh_, this->twist_controller_params_));
 
-    if(twist_controller_params_.base_active && twist_controller_params_.base_compensation)
-    {
-        ROS_ERROR("base_active and base_compensation cannot be enabled at the same time");
-    }
-
     p_inv_diff_kin_solver_->resetAll(params);
 
     this->reinitServiceRegistration();
 }
 
-void CobTwistController::initInvDiffKinSolverParams()
+void CobTwistController::initParams()
 {
     if(NULL == this->p_inv_diff_kin_solver_)
     {
@@ -249,27 +263,56 @@ void CobTwistController::initInvDiffKinSolverParams()
         return;
     }
 
-    InvDiffKinSolverParams params;
+    TwistControllerParams params;
+    
+    params.dof = twist_controller_params_.dof;
+    params.interface_type = VELOCITY;
+    
+    params.numerical_filtering = false;
     params.damping_method = MANIPULABILITY;
-    params.constraint = WLN_JLA;
-    params.eps_truncation = 0.001;
     params.damping_factor = 0.2;
     params.lambda_max = 0.1;
     params.w_threshold = 0.005;
+    params.beta = 0.005;
+    params.eps_damping = 0.003;
+    
+    params.constraint = WLN_JLA;
+    params.mu = -2.0;
+    params.k_H = 1.0;
+    
+    params.eps_truncation = 0.001;
+    
+    params.keep_direction = true;
+    params.enforce_pos_limits = true;
+    params.enforce_vel_limits = true;
+    params.tolerance = 5.0;
+    
+    // added limits from URDF file
+    params.limits_max = twist_controller_params_.limits_max;
+    params.limits_min = twist_controller_params_.limits_min;
+    params.limits_vel = twist_controller_params_.limits_vel;
+    
+    params.max_vel_lin = twist_controller_params_.max_vel_lin;
+    params.max_vel_rot = twist_controller_params_.max_vel_rot;
+    params.max_vel_lin_base = twist_controller_params_.max_vel_lin_base;
+    params.max_vel_rot_base = twist_controller_params_.max_vel_rot_base;
+    
     params.base_compensation = false;
     params.base_active = false;
     params.base_ratio = 0.0;
-    params.limits_min = twist_controller_params_.limits_min;
-    params.limits_max = twist_controller_params_.limits_max;
-    params.limits_vel = twist_controller_params_.limits_vel;
-    params.k_H = 1.0;
+
 
     params.frame_names.clear();
     for (uint16_t i = 0; i < chain_.getNrOfSegments(); ++i)
     {
         params.frame_names.push_back(chain_.getSegment(i).getName());
     }
-
+    
+    // TODO: initialization
+    //params.collision_check_frames.clear();
+    //params.task_stack_controller = NULL;
+    
+    
     p_inv_diff_kin_solver_->resetAll(params);
 }
 

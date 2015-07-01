@@ -36,7 +36,7 @@
 class DampingBuilder
 {
     public:
-        static DampingBase* create_damping(const InvDiffKinSolverParams &params);
+        static DampingBase* create_damping(const TwistControllerParams &params);
 
     private:
         DampingBuilder() {}
@@ -49,7 +49,7 @@ class DampingBuilder
 class DampingNone : public DampingBase
 {
     public:
-        DampingNone(const InvDiffKinSolverParams &params)
+        DampingNone(const TwistControllerParams &params)
         : DampingBase(params)
         {}
 
@@ -65,7 +65,7 @@ class DampingNone : public DampingBase
 class DampingConstant : public DampingBase
 {
     public:
-        DampingConstant(const InvDiffKinSolverParams &params)
+        DampingConstant(const TwistControllerParams &params)
         : DampingBase(params)
         {}
 
@@ -81,7 +81,7 @@ class DampingConstant : public DampingBase
 class DampingManipulability : public DampingBase
 {
     public:
-        DampingManipulability(const InvDiffKinSolverParams &params)
+        DampingManipulability(const TwistControllerParams &params)
         : DampingBase(params)
         {}
 
@@ -97,7 +97,7 @@ class DampingManipulability : public DampingBase
 class DampingLeastSingularValues : public DampingBase
 {
     public:
-        DampingLeastSingularValues(const InvDiffKinSolverParams &params)
+        DampingLeastSingularValues(const TwistControllerParams &params)
         : DampingBase(params)
         {}
 

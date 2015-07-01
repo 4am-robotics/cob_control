@@ -82,7 +82,7 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const JointStates& joint_stat
     return retStat;
 }
 
-void InverseDifferentialKinematicsSolver::resetAll(InvDiffKinSolverParams params)
+void InverseDifferentialKinematicsSolver::resetAll(TwistControllerParams params)
 {   
     this->task_stack_controller_.clearAllTasks();
     this->params_ = params;

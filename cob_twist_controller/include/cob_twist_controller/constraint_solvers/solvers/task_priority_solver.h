@@ -42,7 +42,7 @@
 class TaskPrioritySolver : public ConstraintSolver<>
 {
     public:
-        TaskPrioritySolver(const InvDiffKinSolverParams &params)
+        TaskPrioritySolver(const TwistControllerParams &params)
                            : ConstraintSolver(params)
         {
         }

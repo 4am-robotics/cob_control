@@ -33,7 +33,7 @@
 /**
  * Static builder method to create damping methods dependent on parameterization.
  */
-DampingBase* DampingBuilder::create_damping(const InvDiffKinSolverParams &params)
+DampingBase* DampingBuilder::create_damping(const TwistControllerParams &params)
 {
     DampingBase *db = NULL;
     switch(params.damping_method)

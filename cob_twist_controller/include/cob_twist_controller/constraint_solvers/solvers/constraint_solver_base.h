@@ -80,12 +80,12 @@ class ConstraintSolver
 
     protected:
 
-        ConstraintSolver(const InvDiffKinSolverParams &params)
+        ConstraintSolver(const TwistControllerParams &params)
                          : params_(params)
         {
         }
 
-        const InvDiffKinSolverParams& params_; ///< References the inv. diff. kin. solver parameters.
+        const TwistControllerParams& params_; ///< References the inv. diff. kin. solver parameters.
         t_Matrix6Xd jacobian_data_; ///< References the current Jacobian (matrix data only).
         boost::shared_ptr<DampingBase> damping_; ///< The currently set damping method.
         PINV pinv_calc_; ///< An instance that helps solving the inverse of the Jacobian.

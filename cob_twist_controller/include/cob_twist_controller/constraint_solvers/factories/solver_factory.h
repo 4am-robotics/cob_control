@@ -54,7 +54,7 @@ class SolverFactory : public ISolverFactory
 {
     public:
 
-        SolverFactory(const InvDiffKinSolverParams &params)
+        SolverFactory(const TwistControllerParams &params)
         {
             constraint_solver_.reset(new T(params));
         }

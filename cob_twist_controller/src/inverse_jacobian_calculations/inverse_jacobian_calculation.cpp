@@ -34,9 +34,9 @@
  * Calculates the pseudoinverse of the Jacobian by using SVD technique.
  * This allows to get information about singular values and evaluate them.
  */
-Eigen::MatrixXd PInvBySVD::calculate(const InvDiffKinSolverParams& params,
-                                                 boost::shared_ptr<DampingBase> db,
-                                                 const Eigen::MatrixXd& jacobian) const
+Eigen::MatrixXd PInvBySVD::calculate(const TwistControllerParams& params,
+                                     boost::shared_ptr<DampingBase> db,
+                                     const Eigen::MatrixXd& jacobian) const
 {
     Eigen::JacobiSVD<Eigen::MatrixXd> svd(jacobian, Eigen::ComputeThinU | Eigen::ComputeThinV);
     double eps_truncation = params.eps_truncation;

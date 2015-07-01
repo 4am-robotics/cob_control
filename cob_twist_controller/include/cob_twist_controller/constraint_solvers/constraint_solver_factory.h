@@ -80,10 +80,10 @@ class ConstraintSolverFactory
          * @param constraint_type: Enum value of the constraint.
          * @param solver_factory: Reference of a shared pointer to be filled.
          */
-        static bool getSolverFactory(const InvDiffKinSolverParams &params,
+        static bool getSolverFactory(const TwistControllerParams &params,
                                      boost::shared_ptr<ISolverFactory>& solver_factory);
 
-        int8_t resetAll(const InvDiffKinSolverParams &params);
+        int8_t resetAll(const TwistControllerParams &params);
 
     private:
         CallbackDataMediator& data_mediator_;

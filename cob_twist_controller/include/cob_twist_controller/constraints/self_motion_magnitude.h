@@ -58,7 +58,8 @@ class SelfMotionMagnitudeDeterminatorBase
 
         }
 
-        virtual double calculate(const InvDiffKinSolverParams& params, const Eigen::MatrixXd& particular_solution,
+        virtual double calculate(const TwistControllerParams& params,
+                                 const Eigen::MatrixXd& particular_solution,
                                  const Eigen::MatrixXd& homogeneous_solution) const = 0;
 };
 
@@ -75,7 +76,7 @@ class SmmDeterminatorVelocityBounds : public SelfMotionMagnitudeDeterminatorBase
         virtual ~SmmDeterminatorVelocityBounds() {}
 
         /// Implementation of SMM. Formula: See header comment!
-        virtual double calculate(const InvDiffKinSolverParams& params, const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const
+        virtual double calculate(const TwistControllerParams& params, const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const
         {
             std::vector<double> velLim = params.limits_vel;
             uint16_t cntRows = particular_solution.rows();
@@ -150,7 +151,9 @@ class SmmDeterminatorConstant : public SelfMotionMagnitudeDeterminatorBase
 
         virtual ~SmmDeterminatorConstant() {}
 
-        virtual double calculate(const InvDiffKinSolverParams& params, const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const
+        virtual double calculate(const TwistControllerParams& params,
+                                 const Eigen::MatrixXd& particular_solution,
+                                 const Eigen::MatrixXd& homogeneous_solution) const
         {
             return params.k_H;
         }
@@ -163,7 +166,7 @@ class SelfMotionMagnitudeFactory
 {
     public:
 
-        static double calculate(const InvDiffKinSolverParams& params,
+        static double calculate(const TwistControllerParams& params,
                                 const Eigen::MatrixXd& particular_solution,
                                 const Eigen::MatrixXd& homogeneous_solution)
         {

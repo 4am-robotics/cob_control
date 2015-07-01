@@ -38,7 +38,7 @@ class PInvBySVD : public IPseudoinverseCalculator
         /** Implementation of calculate member
          * See base for more information on parameters
          */
-        virtual Eigen::MatrixXd calculate(const InvDiffKinSolverParams& params,
+        virtual Eigen::MatrixXd calculate(const TwistControllerParams& params,
                                           boost::shared_ptr<DampingBase> db,
                                           const Eigen::MatrixXd& jacobian) const;
 

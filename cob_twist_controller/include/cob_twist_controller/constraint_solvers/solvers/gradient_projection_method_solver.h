@@ -42,7 +42,7 @@
 class GradientProjectionMethodSolver : public ConstraintSolver<>
 {
     public:
-        GradientProjectionMethodSolver(const InvDiffKinSolverParams &params)
+        GradientProjectionMethodSolver(const TwistControllerParams &params)
                            : ConstraintSolver(params)
         {
         }

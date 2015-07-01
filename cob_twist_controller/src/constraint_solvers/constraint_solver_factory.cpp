@@ -81,7 +81,7 @@ int8_t ConstraintSolverFactory::calculateJointVelocities(t_Matrix6Xd &jacobian_d
 /**
  * Given a proper constraint_type a corresponding SolverFactory is generated and returned.
  */
-bool ConstraintSolverFactory::getSolverFactory(const InvDiffKinSolverParams &params,
+bool ConstraintSolverFactory::getSolverFactory(const TwistControllerParams &params,
                                                boost::shared_ptr<ISolverFactory>& solver_factory)
 {
     ROS_INFO_STREAM("Called ConstraintSolverFactory::getSolverFactory");
@@ -122,7 +122,7 @@ bool ConstraintSolverFactory::getSolverFactory(const InvDiffKinSolverParams &par
     return true;
 }
 
-int8_t ConstraintSolverFactory::resetAll(const InvDiffKinSolverParams &params)
+int8_t ConstraintSolverFactory::resetAll(const TwistControllerParams &params)
 {
     ROS_INFO_STREAM("Called ConstraintSolverFactory::resetAll");
 

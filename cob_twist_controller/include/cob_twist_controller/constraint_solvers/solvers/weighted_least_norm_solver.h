@@ -45,7 +45,7 @@ class WeightedLeastNormSolver : public ConstraintSolver<>
         virtual Eigen::MatrixXd solve(const t_Vector6d &in_cart_velocities,
                                       const JointStates& joint_states);
 
-        WeightedLeastNormSolver(const InvDiffKinSolverParams &params)
+        WeightedLeastNormSolver(const TwistControllerParams &params)
                                   : ConstraintSolver(params)
         {
 

@@ -41,7 +41,7 @@
 class DynamicTasksReadjustSolver : public ConstraintSolver<>
 {
     public:
-        DynamicTasksReadjustSolver(const InvDiffKinSolverParams &params)
+        DynamicTasksReadjustSolver(const TwistControllerParams &params)
                            : ConstraintSolver(params)
         {
         }

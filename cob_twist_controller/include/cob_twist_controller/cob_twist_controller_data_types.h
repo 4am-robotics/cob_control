@@ -95,34 +95,6 @@ struct ActiveCartesianDimension {
     double rot_z;
 };
 
-struct InvDiffKinSolverParams {
-    DampingMethodTypes damping_method;
-    bool numerical_filtering;
-    double damping_factor;
-    double lambda_max;
-    double w_threshold;
-    double beta;
-    double eps_damping;
-    ContraintTypes constraint;
-    double k_H;
-    double eps_truncation;
-    bool base_compensation;
-    bool base_active;
-    double base_ratio;
-
-    double mu;
-
-    // added limits from URDF file
-    std::vector<double> limits_max;
-    std::vector<double> limits_min;
-    std::vector<double> limits_vel;
-    std::vector<std::string> frame_names;
-
-
-    // TODO: Check for better place
-    TaskStackController_t *task_stack_controller;
-};
-
 struct ObstacleDistanceInfo
 {
     double min_distance;
@@ -135,27 +107,50 @@ struct ObstacleDistanceInfo
 
 struct TwistControllerParams {
     uint8_t dof;
-    bool base_active;
-    bool base_compensation;
+    
+    InterfaceType interface_type;
+    
+    bool numerical_filtering;
+    DampingMethodTypes damping_method;
+    double damping_factor;
+    double lambda_max;
+    double w_threshold;
+    double beta;
+    double eps_damping;
+    
+    ContraintTypes constraint;
+    double mu;
+    double k_H;
+    
+    double eps_truncation;
+    
+    bool keep_direction;
+    bool enforce_pos_limits;
+    bool enforce_vel_limits;
+    double tolerance;
+    
+    // added limits from URDF file
+    std::vector<double> limits_max;
+    std::vector<double> limits_min;
+    std::vector<double> limits_vel;
+    
     double max_vel_lin;
     double max_vel_rot;
     double max_vel_lin_base;
     double max_vel_rot_base;
-    double tolerance;
+    
+    bool base_compensation;
+    bool base_active;
+    double base_ratio;
 
-    bool keep_direction;
-    bool enforce_pos_limits;
-    bool enforce_vel_limits;
 
-    InterfaceType interface_type;
-
-    // added limits from URDF file
-    std::vector<double> limits_vel;
-    std::vector<double> limits_min;
-    std::vector<double> limits_max;
-
+    std::vector<std::string> frame_names;
     // added a vector to contain all frames of interest for collision checking.
     std::vector<std::string> collision_check_frames;
+
+
+    // TODO: Check for better place
+    TaskStackController_t *task_stack_controller;
 };
 
 enum EN_ConstraintStates

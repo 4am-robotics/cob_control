@@ -42,7 +42,7 @@
 class StackOfTasksSolver : public ConstraintSolver<>
 {
     public:
-        StackOfTasksSolver(const InvDiffKinSolverParams &params)
+        StackOfTasksSolver(const TwistControllerParams &params)
                            : ConstraintSolver(params)
         {
         }

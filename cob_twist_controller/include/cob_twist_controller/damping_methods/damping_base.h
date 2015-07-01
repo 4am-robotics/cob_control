@@ -40,9 +40,9 @@ class DampingBase
         virtual ~DampingBase() {}
 
     protected:
-        DampingBase(const InvDiffKinSolverParams &params) : params_(params) { }
+        DampingBase(const TwistControllerParams &params) : params_(params) { }
 
-        const InvDiffKinSolverParams &params_;
+        const TwistControllerParams &params_;
 };
 
 #endif /* DAMPING_METHOD_INTERFACE_H_ */
