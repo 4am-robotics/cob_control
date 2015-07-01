@@ -43,7 +43,7 @@
  * If conflicted with GPM then remove the task from processing.
  * With a prediction the deactivated task will be reactivated again.
  */
-Eigen::MatrixXd StackOfTasksSolver2nd::solve(const t_Vector6d &in_cart_velocities,
+Eigen::MatrixXd StackOfTasksSolver2nd::solve(const t_Vector6d& in_cart_velocities,
                                              const JointStates& joint_states)
 {
     double magnitude;
@@ -104,7 +104,7 @@ Eigen::MatrixXd StackOfTasksSolver2nd::solve(const t_Vector6d &in_cart_velocitie
         V_q = (*it)->getValue();
     }
 
-    TaskStackController_t *tsc = this->params_.task_stack_controller;
+    TaskStackController_t* tsc = this->params_.task_stack_controller;
     for(int32_t taskNr = 0; taskNr < in_cart_velocities.rows(); ++taskNr) // TODO: where to get max number of tasks?
     {
         Eigen::MatrixXd J_task = this->jacobian_data_.row(taskNr);

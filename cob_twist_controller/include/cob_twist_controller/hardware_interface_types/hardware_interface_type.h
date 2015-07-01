@@ -66,7 +66,7 @@ class HardwareInterfaceVelocity : public HardwareInterfaceBase
         ~HardwareInterfaceVelocity() {}
 
         virtual void processResult(const KDL::JntArray& q_dot_ik,
-                                   std::vector<double>& initial_position);
+                                   const KDL::JntArray& current_q);
 };
 /* END HardwareInterfaceVelocity **********************************************************************************************/
 
@@ -96,7 +96,7 @@ class HardwareInterfacePosition : public HardwareInterfaceBase
         ~HardwareInterfacePosition() {}
 
         virtual void processResult(const KDL::JntArray& q_dot_ik,
-                                   std::vector<double>& initial_position);
+                                   const KDL::JntArray& current_q);
 
     private:
         std::vector<MovingAverage> ma_;

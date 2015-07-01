@@ -158,7 +158,7 @@ struct TwistControllerParams {
 
 
     // TODO: Check for better place
-    TaskStackController_t *task_stack_controller;
+    TaskStackController_t* task_stack_controller;
 };
 
 enum EN_ConstraintStates

@@ -63,7 +63,7 @@ class LimiterContainer : public LimiterBase
          * Add method
          * @param lb An implementation of a limiter.
          */
-        void add(const LimiterBase *lb);
+        void add(const LimiterBase* lb);
 
         /**
          * Erase all

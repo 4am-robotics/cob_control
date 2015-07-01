@@ -32,7 +32,7 @@
  * Maciejewski A., Obstacle Avoidance for Kinematically Redundant Manipulators in Dyn Varying Environments.
  */
 //
-Eigen::MatrixXd TaskPrioritySolver::solve(const t_Vector6d &in_cart_velocities,
+Eigen::MatrixXd TaskPrioritySolver::solve(const t_Vector6d& in_cart_velocities,
                                           const JointStates& joint_states)
 {
     double derivative_cost_func_value;

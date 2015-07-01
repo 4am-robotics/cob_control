@@ -86,7 +86,6 @@ private:
     CallbackDataMediator callback_data_mediator_;
 
     tf::TransformListener tf_listener_;
-    std::vector<double> initial_pos_;
 
 
 public:

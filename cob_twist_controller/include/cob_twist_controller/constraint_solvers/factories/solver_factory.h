@@ -39,8 +39,8 @@
 class ISolverFactory
 {
     public:
-        virtual Eigen::MatrixXd calculateJointVelocities(t_Matrix6Xd &jacobian_data,
-                                                         const t_Vector6d &in_cart_velocities,
+        virtual Eigen::MatrixXd calculateJointVelocities(t_Matrix6Xd& jacobian_data,
+                                                         const t_Vector6d& in_cart_velocities,
                                                          const JointStates& joint_states,
                                                          boost::shared_ptr<DampingBase>& damping_method,
                                                          std::set<tConstraintBase>& constraints) const = 0;
@@ -54,7 +54,7 @@ class SolverFactory : public ISolverFactory
 {
     public:
 
-        SolverFactory(const TwistControllerParams &params)
+        SolverFactory(const TwistControllerParams& params)
         {
             constraint_solver_.reset(new T(params));
         }
@@ -75,8 +75,8 @@ class SolverFactory : public ISolverFactory
          * @param damping_method The damping method.
          * @return Joint velocities in a (m x 1)-Matrix.
          */
-        Eigen::MatrixXd calculateJointVelocities(t_Matrix6Xd &jacobian_data,
-                                                 const t_Vector6d &in_cart_velocities,
+        Eigen::MatrixXd calculateJointVelocities(t_Matrix6Xd& jacobian_data,
+                                                 const t_Vector6d& in_cart_velocities,
                                                  const JointStates& joint_states,
                                                  boost::shared_ptr<DampingBase>& damping_method,
                                                  std::set<tConstraintBase>& constraints) const

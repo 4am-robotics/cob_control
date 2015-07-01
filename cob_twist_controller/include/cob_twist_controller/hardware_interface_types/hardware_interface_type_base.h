@@ -46,7 +46,7 @@ class HardwareInterfaceBase
         virtual ~HardwareInterfaceBase() {}
 
         virtual void processResult(const KDL::JntArray& q_dot_ik,
-                                   std::vector<double>& initial_position) = 0;
+                                   const KDL::JntArray& current_q) = 0;
 
 
     protected:

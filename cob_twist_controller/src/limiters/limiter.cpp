@@ -98,7 +98,7 @@ void LimiterContainer::eraseAll()
 /**
  * Adding new limiters to the vector.
  */
-void LimiterContainer::add(const LimiterBase *lb)
+void LimiterContainer::add(const LimiterBase* lb)
 {
     this->limiters_.push_back(lb);
 }

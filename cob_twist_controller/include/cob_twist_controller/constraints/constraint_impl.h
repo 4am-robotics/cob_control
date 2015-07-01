@@ -54,7 +54,7 @@
  * Static builder method to create damping methods dependent on parameterization.
  */
 template <typename PRIO>
-std::set<tConstraintBase> ConstraintsBuilder<PRIO>::createConstraints(const TwistControllerParams &twist_controller_params,
+std::set<tConstraintBase> ConstraintsBuilder<PRIO>::createConstraints(const TwistControllerParams& twist_controller_params,
                                                                        KDL::ChainJntToJacSolver& jnt_to_jac,
                                                                        CallbackDataMediator& data_mediator)
 {
@@ -321,7 +321,7 @@ void JointLimitAvoidance<T_PARAMS, PRIO>::calculate()
 template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidance<T_PARAMS, PRIO>::calcValue()
 {
-    const TwistControllerParams &params = this->constraint_params_.getParams();
+    const TwistControllerParams& params = this->constraint_params_.getParams();
     std::vector<double> limits_min = params.limits_min;
     std::vector<double> limits_max = params.limits_max;
     const KDL::JntArray joint_pos = this->joint_states_.current_q_;
@@ -361,7 +361,7 @@ double JointLimitAvoidance<T_PARAMS, PRIO>::calcDerivativeValue()
 template <typename T_PARAMS, typename PRIO>
 Eigen::VectorXd JointLimitAvoidance<T_PARAMS, PRIO>::calcPartialValues()
 {
-    const TwistControllerParams &params = this->constraint_params_.getParams();
+    const TwistControllerParams& params = this->constraint_params_.getParams();
     const KDL::JntArray joint_pos = this->joint_states_.current_q_;
     std::vector<double> limits_min = params.limits_min;
     std::vector<double> limits_max = params.limits_max;
@@ -396,7 +396,7 @@ double JointLimitAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::
 {
     // k_H by Armijo-Rule
     double t;
-    const TwistControllerParams &params = this->constraint_params_.getParams();
+    const TwistControllerParams& params = this->constraint_params_.getParams();
     t = SelfMotionMagnitudeFactory< SmmDeterminatorVelocityBounds<MIN_CRIT> >::calculate(params, particular_solution, homogeneous_solution);
     return t;
 }
@@ -433,7 +433,7 @@ void JointLimitAvoidanceMid<T_PARAMS, PRIO>::calculate()
 template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidanceMid<T_PARAMS, PRIO>::calcValue()
 {
-    const TwistControllerParams &params = this->constraint_params_.getParams();
+    const TwistControllerParams& params = this->constraint_params_.getParams();
     std::vector<double> limits_min = params.limits_min;
     std::vector<double> limits_max = params.limits_max;
     const KDL::JntArray joint_pos = this->joint_states_.current_q_;
@@ -473,7 +473,7 @@ double JointLimitAvoidanceMid<T_PARAMS, PRIO>::calcDerivativeValue()
 template <typename T_PARAMS, typename PRIO>
 Eigen::VectorXd JointLimitAvoidanceMid<T_PARAMS, PRIO>::calcPartialValues()
 {
-    const TwistControllerParams &params = this->constraint_params_.getParams();
+    const TwistControllerParams& params = this->constraint_params_.getParams();
     const KDL::JntArray joint_pos = this->joint_states_.current_q_;
     std::vector<double> limits_min = params.limits_min;
     std::vector<double> limits_max = params.limits_max;
@@ -514,7 +514,7 @@ double JointLimitAvoidanceMid<T_PARAMS, PRIO>::getActivationThreshold() const
 template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidanceMid<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const
 {
-    const TwistControllerParams &params = this->constraint_params_.getParams();
+    const TwistControllerParams& params = this->constraint_params_.getParams();
     return SelfMotionMagnitudeFactory<SmmDeterminatorVelocityBounds<MAX_CRIT> >::calculate(params, particular_solution, homogeneous_solution);
 }
 /* END 2nd JointLimitAvoidance **************************************************************************************/

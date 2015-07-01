@@ -42,7 +42,7 @@
 class StackOfTasksSolver2nd : public ConstraintSolver<>
 {
     public:
-        StackOfTasksSolver2nd(const TwistControllerParams &params)
+        StackOfTasksSolver2nd(const TwistControllerParams& params)
                            : ConstraintSolver(params),
                              last_min_distance_(-1.0),
                              last_cycle_time_(-1.0)
@@ -62,7 +62,7 @@ class StackOfTasksSolver2nd : public ConstraintSolver<>
          * Specific implementation of solve-method to solve IK problem with constraints by using the GPM.
          * See base class ConstraintSolver for more details on params and returns.
          */
-        virtual Eigen::MatrixXd solve(const t_Vector6d &in_cart_velocities,
+        virtual Eigen::MatrixXd solve(const t_Vector6d& in_cart_velocities,
                                       const JointStates& joint_states);
 
         /**

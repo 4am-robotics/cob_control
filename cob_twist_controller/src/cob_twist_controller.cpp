@@ -345,7 +345,7 @@ void CobTwistController::solveTwist(KDL::Twist twist)
     else
     {
         // Change between velocity and position interface
-        this->hardware_interface_->processResult(q_dot_ik, initial_pos_);
+        this->hardware_interface_->processResult(q_dot_ik, this->joint_states_.current_q_);
     }
 }
 
@@ -376,12 +376,6 @@ void CobTwistController::jointstateCallback(const sensor_msgs::JointState::Const
         this->joint_states_.last_q_dot_ = joint_states_.current_q_dot_;
         this->joint_states_.current_q_ = q_temp;
         this->joint_states_.current_q_dot_ = q_dot_temp;
-    }
-    
-    initial_pos_.clear();
-    for(int i = 0; i< this->joint_states_.current_q_.rows();i++)
-    {
-        initial_pos_.push_back(this->joint_states_.current_q_(i));
     }
 }
 

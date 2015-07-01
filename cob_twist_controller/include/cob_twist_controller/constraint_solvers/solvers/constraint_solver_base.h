@@ -48,7 +48,7 @@ class ConstraintSolver
          * @param joint_states The joint states with history.
          * @return The calculated new joint velocities.
          */
-        virtual Eigen::MatrixXd solve(const t_Vector6d &in_cart_velocities,
+        virtual Eigen::MatrixXd solve(const t_Vector6d& in_cart_velocities,
                                       const JointStates& joint_states) = 0;
 
         /**
@@ -80,7 +80,7 @@ class ConstraintSolver
 
     protected:
 
-        ConstraintSolver(const TwistControllerParams &params)
+        ConstraintSolver(const TwistControllerParams& params)
                          : params_(params)
         {
         }

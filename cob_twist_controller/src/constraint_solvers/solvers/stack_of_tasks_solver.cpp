@@ -48,7 +48,7 @@
  *
  *
  */
-Eigen::MatrixXd StackOfTasksSolver::solve(const t_Vector6d &in_cart_velocities,
+Eigen::MatrixXd StackOfTasksSolver::solve(const t_Vector6d& in_cart_velocities,
                                           const JointStates& joint_states)
 {
     double now_time = ros::Time::now().toSec();
@@ -68,7 +68,7 @@ Eigen::MatrixXd StackOfTasksSolver::solve(const t_Vector6d &in_cart_velocities,
 //    Eigen::ColPivHouseholderQR<Eigen::Matrix<double,7,7> > qr1(projector);
 //    qr1.setThreshold(1e-5);
 //    ROS_INFO_STREAM("Rank of the Null-Space Projector: " <<  int(qr1.rank()));
-    TaskStackController_t *tsc = this->params_.task_stack_controller;
+    TaskStackController_t* tsc = this->params_.task_stack_controller;
     for (std::set<tConstraintBase>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
     {
         (*it)->update(joint_states);

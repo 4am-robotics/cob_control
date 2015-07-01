@@ -35,7 +35,7 @@
 //ToDo: Should we re-add DEBUG_BASE_ACTIVE stuff in KinematicExtensionBaseActive class?
 
 
-KinematicExtensionBase* KinematicExtensionBuilder::createKinematicExtension(const TwistControllerParams &params)
+KinematicExtensionBase* KinematicExtensionBuilder::createKinematicExtension(const TwistControllerParams& params)
 {
     KinematicExtensionBase* keb = NULL;
     
@@ -62,7 +62,7 @@ KDL::Jacobian KinematicExtensionNone::adjustJacobian(const KDL::Jacobian& jac_ch
     return jac_chain;
 }
 
-void KinematicExtensionNone::processResultExtension(const KDL::JntArray &q_dot_ik)
+void KinematicExtensionNone::processResultExtension(const KDL::JntArray& q_dot_ik)
 {
     return;
 }
@@ -190,7 +190,7 @@ KDL::Jacobian KinematicExtensionBaseActive::adjustJacobian(const KDL::Jacobian& 
         tf_listener_.waitForTransform(params_.chain_base_link, "base_link", now, ros::Duration(0.5));
         tf_listener_.lookupTransform(params_.chain_base_link, "base_link", now, cb_transform_bl);
     }
-    catch (tf::TransformException &ex)
+    catch (tf::TransformException& ex)
     {
         ROS_ERROR("%s",ex.what());
     }
@@ -214,7 +214,7 @@ KDL::Jacobian KinematicExtensionBaseActive::adjustJacobian(const KDL::Jacobian& 
     return adjustJacobian6d(jac_chain, bl_frame_ct, cb_frame_bl, active_dim);
 }
 
-void KinematicExtensionBaseActive::processResultExtension(const KDL::JntArray &q_dot_ik)
+void KinematicExtensionBaseActive::processResultExtension(const KDL::JntArray& q_dot_ik)
 {
     geometry_msgs::Twist base_vel_msg;
     

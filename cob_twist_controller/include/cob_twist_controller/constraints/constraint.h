@@ -40,7 +40,7 @@ template
 class ConstraintParamFactory
 {
     public:
-        static T createConstraintParams(const TwistControllerParams &twist_controller_params,
+        static T createConstraintParams(const TwistControllerParams& twist_controller_params,
                                         CallbackDataMediator& data_mediator)
         {
             T params(twist_controller_params);
@@ -60,7 +60,7 @@ template <typename PRIO = uint32_t>
 class ConstraintsBuilder
 {
     public:
-        static std::set<tConstraintBase> createConstraints(const TwistControllerParams &params,
+        static std::set<tConstraintBase> createConstraints(const TwistControllerParams& params,
                                                            KDL::ChainJntToJacSolver& jnt_to_jac_,
                                                            CallbackDataMediator& data_mediator);
 

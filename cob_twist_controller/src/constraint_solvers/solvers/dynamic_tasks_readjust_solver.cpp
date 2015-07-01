@@ -30,8 +30,8 @@
 #include "cob_twist_controller/task_stack/task_stack_controller.h"
 #include "cob_twist_controller/constraints/self_motion_magnitude.h"
 
-Eigen::MatrixXd DynamicTasksReadjustSolver::solve(const t_Vector6d &in_cart_velocities,
-                                          const JointStates& joint_states)
+Eigen::MatrixXd DynamicTasksReadjustSolver::solve(const t_Vector6d& in_cart_velocities,
+                                                  const JointStates& joint_states)
 {
     Eigen::MatrixXd jacobianPseudoInverse = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
     Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(jacobianPseudoInverse.rows(), this->jacobian_data_.cols());
@@ -44,7 +44,7 @@ Eigen::MatrixXd DynamicTasksReadjustSolver::solve(const t_Vector6d &in_cart_velo
 
     Eigen::VectorXd sum_of_gradient = Eigen::VectorXd::Zero(joint_states.current_q_.rows());
 
-    TaskStackController_t *tsc = this->params_.task_stack_controller;
+    TaskStackController_t* tsc = this->params_.task_stack_controller;
     for (std::set<tConstraintBase>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
     {
         (*it)->update(joint_states);
@@ -76,7 +76,7 @@ void DynamicTasksReadjustSolver::processState(std::set<tConstraintBase>::iterato
                                               const Eigen::MatrixXd& particular_solution,
                                               Eigen::VectorXd& sum_of_gradient)
 {
-    TaskStackController_t *tsc = this->params_.task_stack_controller;
+    TaskStackController_t* tsc = this->params_.task_stack_controller;
     Eigen::VectorXd q_dot_0 = (*it)->getPartialValues();
     double activation_gain = (*it)->getActivationGain();
     Eigen::MatrixXd tmpHomogeneousSolution = projector * q_dot_0;

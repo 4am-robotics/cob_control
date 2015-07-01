@@ -40,10 +40,10 @@ class UnconstraintSolver : public ConstraintSolver<>
          * Specific implementation of solve-method to solve IK problem without any constraints.
          * See base class ConstraintSolver for more details on params and returns.
          */
-        virtual Eigen::MatrixXd solve(const t_Vector6d &in_cart_velocities,
+        virtual Eigen::MatrixXd solve(const t_Vector6d& in_cart_velocities,
                                       const JointStates& joint_states);
 
-        UnconstraintSolver(const TwistControllerParams &params)
+        UnconstraintSolver(const TwistControllerParams& params)
                            : ConstraintSolver(params)
         {}
 
