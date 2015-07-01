@@ -35,8 +35,9 @@
 #include "cob_twist_controller/constraint_solvers/solvers/weighted_least_norm_solver.h"
 #include "cob_twist_controller/constraint_solvers/solvers/gradient_projection_method_solver.h"
 #include "cob_twist_controller/constraint_solvers/solvers/stack_of_tasks_solver.h"
-#include "cob_twist_controller/constraint_solvers/solvers/stack_of_tasks_solver_2nd.h"
+#include "cob_twist_controller/constraint_solvers/solvers/stack_of_tasks_gpm_solver.h"
 #include "cob_twist_controller/constraint_solvers/solvers/task_priority_solver.h"
+#include "cob_twist_controller/constraint_solvers/solvers/dynamic_tasks_readjust_solver.h"
 
 #include "cob_twist_controller/damping_methods/damping.h"
 
@@ -100,14 +101,17 @@ bool ConstraintSolverFactory::getSolverFactory(const InvDiffKinSolverParams &par
         case GPM_CA:
             solver_factory.reset(new SolverFactory<GradientProjectionMethodSolver>(params));
             break;
-        case TASK_STACK:
+        case TASK_STACK_NO_GPM:
             solver_factory.reset(new SolverFactory<StackOfTasksSolver>(params));
             break;
-        case TASK_STACK_2ND:
+        case TASK_STACK_GPM:
             solver_factory.reset(new SolverFactory<StackOfTasksSolver2nd>(params));
             break;
-        case TASK_PRIO:
+        case TASK_2ND_PRIO:
             solver_factory.reset(new SolverFactory<TaskPrioritySolver>(params));
+            break;
+        case DYN_TASKS_READJ:
+            solver_factory.reset(new SolverFactory<DynamicTasksReadjustSolver>(params));
             break;
         default:
             ROS_ERROR("Returning NULL factory due to constraint solver creation error. There is no solver method for %d implemented.",

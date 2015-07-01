@@ -400,8 +400,6 @@ bool DistanceManager::predictDistance(cob_obstacle_distance::PredictDistance::Re
 {
     // Transform needs to be calculated only once for robot structure
     // and is same for all obstacles.
-    response.min_dist = -1.0;
-
     if (!this->transform())
     {
         ROS_ERROR("Failed to transform Return with no publish!");
@@ -412,51 +410,57 @@ bool DistanceManager::predictDistance(cob_obstacle_distance::PredictDistance::Re
     KDL::JntArrayVel jnt_arr(last_q_, last_q_dot_);
     adv_chn_fk_solver_vel_->JntToCart(jnt_arr, p_dot_out);
 
-    KDL::JntArray joint_pos(request.joint_pos.size());
-    for(uint32_t lv = 0; lv < request.joint_pos.size(); ++lv)
+    for(uint32_t frame_idx = 0; frame_idx < request.frame_id.size(); ++frame_idx)
     {
-        joint_pos(lv) = request.joint_pos.at(lv);
-    }
-
-    std::vector<std::string>::const_iterator str_it = std::find(this->segments_.begin(),
-                                                                this->segments_.end(),
-                                                                request.frame_id);
-    uint16_t idx = str_it - this->segments_.begin();
-
-    /* ******* Start Transformation part ************** */
-    KDL::FrameVel frame_vel = adv_chn_fk_solver_vel_->getFrameVelAtSegment(idx);
-    KDL::Frame frame_pos = frame_vel.GetFrame();
-    Eigen::Vector3d chainbase2frame_pos(frame_pos.p.x(),
-                                        frame_pos.p.y(),
-                                        frame_pos.p.z());
-    Eigen::Vector3d abs_jnt_pos = tf_cb_frame_bl_.inverse() * chainbase2frame_pos;
-    Eigen::Quaterniond q;
-    tf::quaternionKDLToEigen (frame_pos.M, q);
-    /* ******* End Transformation part ************** */
-
-    // Representation of segment_of_interest as specific shape
-    t_ptr_IMarkerShape ooi;
-    if(!DistanceManager::getMarkerShape(visualization_msgs::Marker::SPHERE, abs_jnt_pos, q, ooi))
-    {
-        return true;
-    }
-
-    fcl::CollisionObject ooi_co = ooi->getCollisionObject();
-    ooi.reset();
-    fcl::CollisionObject result_collision_obj = ooi_co;
-    fcl::FCL_REAL last_dist = std::numeric_limits<fcl::FCL_REAL>::max();
-    for(ShapesManager::t_iter it = this->obstacle_mgr_->begin(); it != this->obstacle_mgr_->end(); ++it)
-    {
-        fcl::CollisionObject collision_obj = (*it)->getCollisionObject();
-        fcl::DistanceResult tmpResult;
-        fcl::DistanceRequest distRequest(true);
-        fcl::FCL_REAL dist = fcl::distance(&ooi_co, &collision_obj, distRequest, tmpResult);
-        if (dist < last_dist)
+        KDL::JntArray joint_pos(request.joint_pos.size());
+        std::string frame_id = request.frame_id.at(frame_idx);
+        for(uint32_t lv = 0; lv < request.joint_pos.size(); ++lv)
         {
-            result_collision_obj = collision_obj;
-            last_dist = dist;
-            response.min_dist = dist;
+            joint_pos(lv) = request.joint_pos.at(lv);
         }
+
+        std::vector<std::string>::const_iterator str_it = std::find(this->segments_.begin(),
+                                                                    this->segments_.end(),
+                                                                    frame_id);
+        uint16_t idx = str_it - this->segments_.begin();
+
+        /* ******* Start Transformation part ************** */
+        KDL::FrameVel frame_vel = adv_chn_fk_solver_vel_->getFrameVelAtSegment(idx);
+        KDL::Frame frame_pos = frame_vel.GetFrame();
+        Eigen::Vector3d chainbase2frame_pos(frame_pos.p.x(),
+                                            frame_pos.p.y(),
+                                            frame_pos.p.z());
+        Eigen::Vector3d abs_jnt_pos = tf_cb_frame_bl_.inverse() * chainbase2frame_pos;
+        Eigen::Quaterniond q;
+        tf::quaternionKDLToEigen (frame_pos.M, q);
+        /* ******* End Transformation part ************** */
+
+        // Representation of segment_of_interest as specific shape
+        t_ptr_IMarkerShape ooi;
+        if(!DistanceManager::getMarkerShape(visualization_msgs::Marker::SPHERE, abs_jnt_pos, q, ooi))
+        {
+            return true;
+        }
+
+        fcl::CollisionObject ooi_co = ooi->getCollisionObject();
+        ooi.reset();
+        fcl::CollisionObject result_collision_obj = ooi_co;
+        fcl::FCL_REAL last_dist = std::numeric_limits<fcl::FCL_REAL>::max();
+        fcl::FCL_REAL dist;
+        for(ShapesManager::t_iter it = this->obstacle_mgr_->begin(); it != this->obstacle_mgr_->end(); ++it)
+        {
+            fcl::CollisionObject collision_obj = (*it)->getCollisionObject();
+            fcl::DistanceResult tmpResult;
+            fcl::DistanceRequest distRequest(true);
+            dist = fcl::distance(&ooi_co, &collision_obj, distRequest, tmpResult);
+            if (dist < last_dist)
+            {
+                result_collision_obj = collision_obj;
+                last_dist = dist;
+            }
+        }
+
+        response.min_distances.push_back(dist);
     }
 
     return true;

@@ -77,9 +77,10 @@ std::set<tConstraintBase> ConstraintsBuilder<PRIO>::createConstraints(const InvD
         constraints.insert(boost::static_pointer_cast<PriorityBase<PRIO> >(jla));
     }
     else if(GPM_CA == inv_diff_kin_solver_params.constraint ||
-            TASK_STACK == inv_diff_kin_solver_params.constraint ||
-            TASK_STACK_2ND == inv_diff_kin_solver_params.constraint ||
-            TASK_PRIO == inv_diff_kin_solver_params.constraint)
+            TASK_STACK_NO_GPM == inv_diff_kin_solver_params.constraint ||
+            TASK_STACK_GPM == inv_diff_kin_solver_params.constraint ||
+            TASK_2ND_PRIO == inv_diff_kin_solver_params.constraint ||
+            DYN_TASKS_READJ == inv_diff_kin_solver_params.constraint)
     {
         typedef CollisionAvoidance<ConstraintParamsCA, PRIO> tCollisionAvoidance;
         uint32_t available_dists = data_mediator.obstacleDistancesCnt();
@@ -108,7 +109,7 @@ template <typename T_PARAMS, typename PRIO>
 std::string CollisionAvoidance<T_PARAMS, PRIO>::getTaskId() const
 {
     std::ostringstream oss;
-    oss << ConstraintBase<T_PARAMS, PRIO>::instance_ctr_;
+    oss << this->member_inst_cnt_;
     oss << "_";
     oss << this->priority_;
     std::string taskid = "CollisionAvoidance_" + oss.str();
@@ -149,9 +150,26 @@ double CollisionAvoidance<T_PARAMS, PRIO>::getActivationGain() const
 template <typename T_PARAMS, typename PRIO>
 void CollisionAvoidance<T_PARAMS, PRIO>::calculate()
 {
+    ObstacleDistanceInfo d = this->constraint_params_.current_distance_;
     this->calcValue();
     this->calcDerivativeValue();
     this->calcPartialValues();
+
+    double activation = this->getActivationThreshold();
+    double critical = 0.5 * activation;
+
+    if(d.min_distance < critical)
+    {
+        this->state_.setState(CRITICAL);
+    }
+    else if(d.min_distance < activation)
+    {
+        this->state_.setState(DANGER);
+    }
+    else
+    {
+        this->state_.setState(NORMAL);
+    }
 }
 
 template <typename T_PARAMS, typename PRIO>
@@ -278,7 +296,7 @@ template <typename T_PARAMS, typename PRIO>
 std::string JointLimitAvoidance<T_PARAMS, PRIO>::getTaskId() const
 {
     std::ostringstream oss;
-    oss << ConstraintBase<T_PARAMS, PRIO>::instance_ctr_;
+    oss << this->member_inst_cnt_;
     oss << "_";
     oss << this->priority_;
     std::string taskid = "JointLimitAvoidance_" + oss.str();
@@ -390,7 +408,7 @@ template <typename T_PARAMS, typename PRIO>
 std::string JointLimitAvoidanceMid<T_PARAMS, PRIO>::getTaskId() const
 {
     std::ostringstream oss;
-    oss << ConstraintBase<T_PARAMS, PRIO>::instance_ctr_;
+    oss << this->member_inst_cnt_;
     oss << "_";
     oss << this->priority_;
     std::string taskid = "JointLimitAvoidanceMid_" + oss.str();
