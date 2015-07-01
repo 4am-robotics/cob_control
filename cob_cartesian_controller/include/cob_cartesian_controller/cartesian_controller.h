@@ -39,6 +39,18 @@
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
 
+#include <cob_cartesian_controller/CartesianControllerAction.h>
+#include <actionlib/server/simple_action_server.h>
+#include <string.h>
+
+typedef actionlib::SimpleActionServer<cob_cartesian_controller::CartesianControllerAction> tSAS_CartesianControllerAction;
+
+struct action_type{
+        std::string name;
+        bool rotateOnly;
+        std::string profile;
+        double x, y, z, roll, pitch, yaw, vel, accl;
+};
 
 class CartesianController
 {
@@ -48,8 +60,6 @@ public:
 	
 	// Main functions
 	void pose_path_broadcaster(std::vector <geometry_msgs::Pose> *poseVector);
-	void linear_interpolation(std::vector <geometry_msgs::Pose> *poseVector,geometry_msgs::Pose, geometry_msgs::Pose,double,double,std::string,bool); 
-	void circular_interpolation(std::vector<geometry_msgs::Pose> *poseVector,double,double,double,double,double,double,double,double,double,double,double,std::string);
 	void move_ptp(geometry_msgs::Pose targetPose, double epsilon);
 	void hold_position(geometry_msgs::Pose);
 	
@@ -60,13 +70,14 @@ public:
 	void showDot(double,double,double,int,double,double,double,std::string);
 	void showLevel(tf::Transform,int,double,double,double,std::string);
 	void timerCallback(const ros::TimerEvent&);
-	void calculateProfile(std::vector<double>*,double,double,double,std::string);
-	void calculateProfileForAngularMovements(std::vector<double> *pathMatrix,double,double,double,double,double,double,double,double,double,std::string,bool);	
-	void generatePath(std::vector<double>*,double,double,double,double,int,std::string);
-	void generatePathWithTe(std::vector<double> *pathArray,double T_IPO, double te, double AcclMax,double Se_max, int steps_max,double start_angle,std::string profile);
+
 	void start_tracking();
 	void stop_tracking();
 	void PoseToRPY(geometry_msgs::Pose pose,double &roll, double &pitch, double &yaw);
+
+    /// Action interface
+    void goalCB();
+    void preemptCB();
 
 private:
 	ros::NodeHandle nh_;
@@ -98,6 +109,15 @@ private:
 	const char* charPath_;
 	
 	int marker1_;
+
+    /// Action interface
+    std::string action_name_;
+    boost::shared_ptr<tSAS_CartesianControllerAction> as_;
+    cob_cartesian_controller::CartesianControllerFeedback action_feedback_;
+    cob_cartesian_controller::CartesianControllerResult action_result_;
+
+    action_type at_;
+
 };
 
 #endif

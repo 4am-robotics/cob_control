@@ -95,9 +95,14 @@ bool CartesianController::initialize()
 	stopTracking_ = nh_.serviceClient<std_srvs::Empty>("frame_tracker/stop_tracking");
 	startTracking_.waitForExistence();
 	stopTracking_.waitForExistence();
-	ROS_INFO("...done!");
-	
 
+    action_name_ = "tracking_action";
+    as_.reset(new tSAS_CartesianControllerAction(nh_, action_name_, false));
+    as_->registerGoalCallback(boost::bind(&CartesianController::goalCB, this));
+    as_->registerPreemptCallback(boost::bind(&CartesianController::preemptCB, this));
+    as_->start();
+
+	ROS_INFO("...done!");
 	return true;
 }
 
@@ -185,12 +190,12 @@ void CartesianController::load()
 				// Interpolate the path
 				TIP.linear_interpolation(posVec,actualTcpPose,end,vel,accl,profile,justRotate);
 				
-//				 Broadcast the linearpath
+				//Broadcast the linearpath
 				pose_path_broadcaster(&posVec);
 				
 				actualTcpPose=end;
 				PoseToRPY(end,roll,pitch,yaw);
-//				ROS_INFO("Endpose roll: %f pitch: %f yaw: %f",roll,pitch,yaw);
+				//ROS_INFO("Endpose roll: %f pitch: %f yaw: %f",roll,pitch,yaw);
 			}
 			
 			if("move_ptp" == movement){
@@ -567,10 +572,85 @@ void CartesianController::stop_tracking()
 	}
 }
 
-
-
 void CartesianController::PoseToRPY(geometry_msgs::Pose pose,double &roll, double &pitch, double &yaw)
 {
 	tf::Quaternion q = tf::Quaternion(pose.orientation.x,pose.orientation.y,pose.orientation.z,pose.orientation.w);
 	tf::Matrix3x3(q).getRPY(roll,pitch,yaw);
 }
+
+
+
+void CartesianController::goalCB()
+{
+    TrajectoryInterpolator TIP(update_rate_);
+    std::vector <geometry_msgs::Pose> posVec;
+    geometry_msgs::Pose pose,actualTcpPose,start,end;
+    tf::Quaternion q,q_start,q_end, q_rel;
+    double roll, pitch, yaw;
+
+    ROS_INFO("Received a new goal");
+
+    if (as_->isNewGoalAvailable())
+    {
+        boost::shared_ptr<const cob_cartesian_controller::CartesianControllerGoal> goal_= as_->acceptNewGoal();
+        at_.name = goal_->trajectory_type.name;
+        at_.x = goal_->trajectory_type.x;
+        at_.y = goal_->trajectory_type.y;
+        at_.z = goal_->trajectory_type.z;
+        at_.roll = goal_->trajectory_type.roll;
+        at_.pitch = goal_->trajectory_type.pitch;
+        at_.yaw = goal_->trajectory_type.yaw;
+
+        at_.vel = goal_->trajectory_type.vel;
+        at_.accl = goal_->trajectory_type.accl;
+        at_.rotateOnly = goal_->trajectory_type.rotateOnly;
+        at_.profile = goal_->trajectory_type.profile;
+
+        if(at_.name == "move_lin")
+        {
+            at_.roll    *=M_PI/180;
+            at_. pitch  *=M_PI/180;
+            at_.yaw     *=M_PI/180;
+
+            actualTcpPose = getEndeffectorPose();
+
+            // Transform RPY to Quaternion
+            q_rel.setRPY(roll,pitch,yaw);
+
+            q_start = tf::Quaternion(actualTcpPose.orientation.x,
+                                     actualTcpPose.orientation.y,
+                                     actualTcpPose.orientation.z,
+                                     actualTcpPose.orientation.w);
+
+            q_end = q_start * q_rel;
+
+            // Define End Pose
+            end.position.x = actualTcpPose.position.x + at_.x;
+            end.position.y = actualTcpPose.position.y + at_.y;
+            end.position.z = actualTcpPose.position.z + at_.z;
+            end.orientation.x = q_end.getX();
+            end.orientation.y = q_end.getY();
+            end.orientation.z = q_end.getZ();
+            end.orientation.w = q_end.getW();
+
+            actualTcpPose = getEndeffectorPose();
+            PoseToRPY(actualTcpPose,roll,pitch,yaw);
+
+            // Interpolate the path
+            TIP.linear_interpolation(posVec,actualTcpPose,end,at_.vel,at_.accl,at_.profile,at_.rotateOnly);
+
+            //Broadcast the linearpath
+            pose_path_broadcaster(&posVec);
+        }
+    }
+}
+
+void CartesianController::preemptCB()
+{
+//    ROS_INFO("Received a preemption request");
+//    action_result_.success = true;
+//    action_result_.message = "Action has been preempted";
+//    as_->setPreempted(action_result_);
+
+}
+
