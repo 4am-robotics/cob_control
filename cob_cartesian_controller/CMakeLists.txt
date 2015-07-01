@@ -11,7 +11,7 @@ find_package(orocos_kdl REQUIRED)
 # Declare catkin package
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES 
+  LIBRARIES profile_generator trajectory_interpolator cartesian_controller
   CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs visualization_msgs std_srvs cob_srvs tf kdl_conversions
 )
 
@@ -37,7 +37,7 @@ target_link_libraries(cartesian_controller_node cartesian_controller ${catkin_LI
 
 ## Install
 # Mark executables and/or libraries for installation
-install(TARGETS  cartesian_controller_node
+install(TARGETS profile_generator trajectory_interpolator cartesian_controller cartesian_controller_node
  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
