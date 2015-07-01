@@ -38,12 +38,12 @@
 
 #include <kdl_conversions/kdl_msg.h>
 #include <cob_cartesian_controller/cartesian_controller.h>
+#include <cob_cartesian_controller/trajectory_interpolator/trajectory_interpolator.h>
 
 
 bool CartesianController::initialize()
 {
 	ros::NodeHandle nh_private("~");
-	ros::NodeHandle nh_tracker("frame_tracker");
 	
 	///get params articulation Nodehandle
 	if(!nh_private.getParam("file_name", fileName_))
@@ -64,18 +64,20 @@ bool CartesianController::initialize()
 		return false;
 	}
 	
+	if (nh_private.hasParam("update_rate"))
+	{	nh_private.getParam("update_rate", update_rate_);	}
+	else
+	{	update_rate_ = 68.0;	}	//hz
+
+
 	/// Cartesian Nodehandle
-	if (!nh_tracker.getParam("chain_tip_link", chain_tip_link_))
+	if (!nh_.getParam("chain_tip_link", chain_tip_link_))
 	{
 		ROS_ERROR("Parameter 'chain_tip_link' not set");
 		return false;
 	}
 	
-	if (nh_tracker.hasParam("update_rate"))
-	{	nh_tracker.getParam("update_rate", update_rate_);	}
-	else
-	{	update_rate_ = 68.0;	}	//hz
-	
+
 	stringPath_ = ros::package::getPath("cob_cartesian_controller"); 
 	stringPath_ = stringPath_+"/movement/"+fileName_;
 	charPath_ = stringPath_.c_str();
@@ -89,12 +91,13 @@ bool CartesianController::initialize()
 	jerk_pub_ = nh_private.advertise<std_msgs::Float64> ("debug/linear_jerk", 1);
 	
 	ROS_WARN("Waiting for Services...");
-	startTracking_ = nh_tracker.serviceClient<cob_srvs::SetString>("start_tracking");
-	stopTracking_ = nh_tracker.serviceClient<std_srvs::Empty>("stop_tracking");
+	startTracking_ = nh_.serviceClient<cob_srvs::SetString>("frame_tracker/start_tracking");
+	stopTracking_ = nh_.serviceClient<std_srvs::Empty>("frame_tracker/stop_tracking");
 	startTracking_.waitForExistence();
 	stopTracking_.waitForExistence();
 	ROS_INFO("...done!");
 	
+
 	return true;
 }
 
@@ -104,7 +107,7 @@ void CartesianController::load()
 	ROS_INFO("Stopping current tracking");
 	std::vector <geometry_msgs::Pose> posVec;
 	geometry_msgs::Pose pose,actualTcpPose,start,end;
-	tf::Quaternion q,q_start,q_end;
+	tf::Quaternion q,q_start,q_end, q_rel;
 	tf::Transform trans,relative_diff;
 	double roll_actual,pitch_actual,yaw_actual,roll,pitch,yaw,quat_x,quat_y,quat_z,quat_w;
 	double x,y,z,x_new,y_new,z_new,x_center,y_center,z_center;
@@ -112,6 +115,9 @@ void CartesianController::load()
 	std::string profile,rotateOnly;
 	bool justRotate;
 	
+    TrajectoryInterpolator TIP(update_rate_);
+
+
 	TiXmlDocument doc(charPath_);
 	bool loadOkay = doc.LoadFile();
 	if (loadOkay)
@@ -155,39 +161,36 @@ void CartesianController::load()
 				actualTcpPose = getEndeffectorPose();
 				
 				// Transform RPY to Quaternion
-				q.setRPY(roll,pitch,yaw);
-				trans.setRotation(q);
+				q_rel.setRPY(roll,pitch,yaw);
 				
-				q_start = q;
-				q_end = tf::Quaternion(actualTcpPose.orientation.x,actualTcpPose.orientation.y,actualTcpPose.orientation.z,actualTcpPose.orientation.w);
-				q = q_start*q_end.inverse();
-				
-				relative_diff.setRotation(q);
-				
-				
+				q_start = tf::Quaternion(actualTcpPose.orientation.x,
+				                         actualTcpPose.orientation.y,
+				                         actualTcpPose.orientation.z,
+				                         actualTcpPose.orientation.w);
+
+				q_end = q_start * q_rel;
+
 				// Define End Pose
 				end.position.x = actualTcpPose.position.x + x_new;
 				end.position.y = actualTcpPose.position.y + y_new;
 				end.position.z = actualTcpPose.position.z + z_new;
-				end.orientation.x = relative_diff.getRotation()[0];
-				end.orientation.y = relative_diff.getRotation()[1];
-				end.orientation.z = relative_diff.getRotation()[2];
-				end.orientation.w = relative_diff.getRotation()[3];
-				
-				
+	            end.orientation.x = q_end.getX();
+                end.orientation.y = q_end.getY();
+                end.orientation.z = q_end.getZ();
+                end.orientation.w = q_end.getW();
+
 				actualTcpPose = getEndeffectorPose();
 				PoseToRPY(actualTcpPose,roll,pitch,yaw);
-				ROS_INFO("actualTcpPose roll: %f pitch: %f yaw: %f",roll,pitch,yaw);
+
 				// Interpolate the path
-				linear_interpolation(&posVec,actualTcpPose,end,vel,accl,profile,justRotate);
+				TIP.linear_interpolation(posVec,actualTcpPose,end,vel,accl,profile,justRotate);
 				
-				// Broadcast the linearpath
+//				 Broadcast the linearpath
 				pose_path_broadcaster(&posVec);
 				
 				actualTcpPose=end;
 				PoseToRPY(end,roll,pitch,yaw);
-				ROS_INFO("Endpose roll: %f pitch: %f yaw: %f",roll,pitch,yaw);
-				
+//				ROS_INFO("Endpose roll: %f pitch: %f yaw: %f",roll,pitch,yaw);
 			}
 			
 			if("move_ptp" == movement){
@@ -246,7 +249,7 @@ void CartesianController::load()
 				int marker3=0;
 				
 				showDot(x_center,y_center,z_center,marker3,1.0,0,0,"Center_point");
-				circular_interpolation(&posVec,x_center,y_center,z_center,roll,pitch,yaw,startAngle,endAngle,r,vel,accl,profile);
+                TIP.circular_interpolation(posVec,x_center,y_center,z_center,roll,pitch,yaw,startAngle,endAngle,r,vel,accl,profile);
 				
 				move_ptp(posVec.at(0),0.03);
 				pose_path_broadcaster(&posVec);	
@@ -381,324 +384,11 @@ void CartesianController::hold_position(geometry_msgs::Pose holdPose)
 
 // Helper Functions 
 //--------------------------------------------------------------------------------------------------------------
-void CartesianController::linear_interpolation(	std::vector <geometry_msgs::Pose> *poseVector,
-											geometry_msgs::Pose start, geometry_msgs::Pose end,
-											double VelMax, double AcclMax, std::string profile,bool justRotate) 
-{
-	geometry_msgs::Pose pose;
-	tf::Quaternion q;
-	tf::Transform transform;
-	std::vector<double> pathMatrix[4];
-	std::vector<double> linearPath,rollPath,pitchPath,yawPath;
-	double start_roll, start_pitch, start_yaw;
-	double end_roll, end_pitch, end_yaw;
-	double Se = sqrt(pow((end.position.x-start.position.x),2)+pow((end.position.y-start.position.y),2)+pow((end.position.z-start.position.z),2));
-	
-	// Convert Quaternions into RPY Angles for start and end pose
-	q = tf::Quaternion(start.orientation.x, start.orientation.y, start.orientation.z, start.orientation.w);
-	tf::Matrix3x3(q).getRPY(start_roll,start_pitch,start_yaw);
-	q = tf::Quaternion(end.orientation.x, end.orientation.y, end.orientation.z, end.orientation.w);
-	tf::Matrix3x3(q).getRPY(end_roll,end_pitch,end_yaw);
-	
-	// Calculate path length for the angular movement
-	double Se_roll,Se_pitch,Se_yaw;
-	Se_roll = end_roll - start_roll;
-	Se_pitch = end_pitch - start_pitch;
-	Se_yaw = end_yaw - start_yaw;
-	
-	// Calculate path for each Angle
-	calculateProfileForAngularMovements(pathMatrix,Se,Se_roll,Se_pitch,Se_yaw,start_roll,start_pitch,start_yaw,VelMax,AcclMax,profile,justRotate);
-	
-	linearPath=pathMatrix[0];
-	rollPath=pathMatrix[1];
-	pitchPath=pathMatrix[2];
-	yawPath=pathMatrix[3];
-	
-	// Interpolate the linear path
-	for(int i=0;i<pathMatrix[0].size();i++){
-		if(!justRotate){
-			pose.position.x = start.position.x + linearPath.at(i) * (end.position.x-start.position.x)/Se;
-			pose.position.y = start.position.y + linearPath.at(i) * (end.position.y-start.position.y)/Se;
-			pose.position.z = start.position.z + linearPath.at(i) * (end.position.z-start.position.z)/Se;
-		}
-		else{
-			pose.position.x = start.position.x;
-			pose.position.y = start.position.y;
-			pose.position.z = start.position.z;	
-		}
-		
-		// Transform RPY to Quaternion
-		q.setRPY(rollPath.at(i),pitchPath.at(i),yawPath.at(i));
-		transform.setRotation(q);
-		
-		// Get Quaternion Values
-		pose.orientation.x = transform.getRotation()[0];
-		pose.orientation.y = transform.getRotation()[1];
-		pose.orientation.z = transform.getRotation()[2];
-		pose.orientation.w = transform.getRotation()[3];
-		poseVector->push_back(pose);
-	}
-}
 
-void CartesianController::circular_interpolation(	std::vector<geometry_msgs::Pose>* poseVector,
-												double M_x,double M_y,double M_z,
-												double M_roll,double M_pitch,double M_yaw,
-												double startAngle, double endAngle,double r, double VelMax, double AcclMax,
-												std::string profile)  
-{
-	tf::Transform C,P,T;
-	tf::Quaternion q;
-	geometry_msgs::Pose pose,pos;
-	std::vector<double> pathArray;
-	
-	// Convert RPY angles into [RAD]
-	startAngle=startAngle*M_PI/180;
-	endAngle=endAngle*M_PI/180;
-	M_roll = M_roll*M_PI/180;
-	M_pitch = M_pitch*M_PI/180;
-	M_yaw = M_yaw*M_PI/180;
-	
-	double Se = endAngle-startAngle;
-	bool forward;
-	
-	if(Se < 0)
-		forward=false;
-	else
-		forward=true;
-	
-	Se = std::fabs(Se);
-	
-	// Calculates the Path with Ramp - or Sinoidprofile
-	calculateProfile(&pathArray,Se,VelMax,AcclMax,profile);
-	
-	// Define Center Pose
-	C.setOrigin( tf::Vector3(M_x,M_y,M_z) );
-	q.setRPY(M_roll,M_pitch,M_yaw);
-	C.setRotation(q);
 
-	// Interpolate the circular path
-	for(int i=0;i<pathArray.size();i++){
-		// Rotate T
-		T.setOrigin(tf::Vector3(cos(pathArray.at(i))*r,0,sin(pathArray.at(i))*r));
-		
-		if(forward){
-				T.setOrigin(tf::Vector3(cos(pathArray.at(i))*r,0,sin(pathArray.at(i))*r));
-				q.setRPY(0,-pathArray.at(i),0);
-		}else{
-				T.setOrigin(tf::Vector3(cos(startAngle-pathArray.at(i))*r,0,sin(startAngle-pathArray.at(i))*r));
-				q.setRPY(0,pathArray.at(i),0);
-		}	
-		
-		T.setRotation(q);
-		
-		// Calculate TCP Position
-		P = C * T;
-		
-		// Fill the Pose
-		pose.position.x = P.getOrigin().x();
-		pose.position.y = P.getOrigin().y();
-		pose.position.z = P.getOrigin().z();
-		
-		pose.orientation.x = P.getRotation()[0];
-		pose.orientation.y = P.getRotation()[1];
-		pose.orientation.z = P.getRotation()[2];
-		pose.orientation.w = P.getRotation()[3];
-		
-		// Put the pose into the pose Vector
-		poseVector->push_back(pose);
-		
-	}
-	// Visualize center point 
-	int marker4=0;
-	q.setRPY(M_roll+(M_PI/2),M_pitch,M_yaw);
-    C.setRotation(q);
-	showLevel(C,marker4,1.0,0,0,"level");
-}
 
-void CartesianController::calculateProfile(std::vector<double> *pathArray,double Se, double VelMax, double AcclMax, std::string profile)
-{	
-	int steps_te,steps_tv,steps_tb=0;
-	double tv,tb,te=0;
-	double T_IPO=pow(update_rate_,-1);
 
-	if(profile == "ramp"){
-		// Calculate the Ramp Profile Parameters
-		if (VelMax > sqrt(Se*AcclMax)){
-			VelMax = sqrt(Se*AcclMax);
-		}
-		tb = VelMax/AcclMax;
-		te = (Se / VelMax) + tb;
-		tv = te - tb;
-	}
-	else{
-		// Calculate the Sinoide Profile Parameters
-		if (VelMax > sqrt(Se*AcclMax/2)){
-			VelMax = sqrt(Se*AcclMax/2);
-		}
-		tb = 2*VelMax/AcclMax;
-		te = (Se / VelMax) + tb;
-		tv = te - tb;
-	}
-	
-	// Interpolationsteps for every timesequence
-	steps_tb = (double)tb / T_IPO;
-	steps_tv = (double)(tv-tb) / T_IPO;
-	steps_te = (double)(te-tv) / T_IPO;
-	
-	// Reconfigure timings wtih T_IPO
-	tb=steps_tb*T_IPO;
-	tv=(steps_tb+steps_tv)*T_IPO;
-	te=(steps_tb+steps_tv+steps_te)*T_IPO;
-	
-	ROS_INFO("Vm: %f m/s",VelMax);
-	ROS_INFO("Bm: %f m/s²",AcclMax);
-	ROS_INFO("Se: %f ",Se);
-	ROS_INFO("tb: %f s",tb);
-	ROS_INFO("tv: %f s",tv);
-	ROS_INFO("te: %f s",te);
-	
-	if(profile == "ramp"){
-		ROS_INFO("Ramp Profile");
-		// Calculate the ramp profile path
-		// 0 <= t <= tb
-		for(int i=0;i<=steps_tb-1;i++){
-			pathArray->push_back(0.5*AcclMax*pow((T_IPO*i),2));
-		}
-		// tb <= t <= tv
-		for(int i=steps_tb;i<=(steps_tb+steps_tv-1);i++){
-			pathArray->push_back(VelMax*(T_IPO*i)-0.5*pow(VelMax,2)/AcclMax);
-		}
-		// tv <= t <= te
-		for(int i=(steps_tb+steps_tv);i<(steps_tv+steps_tb+steps_te-1);i++){
-			pathArray->push_back(VelMax * (te-tb) - 0.5*AcclMax* pow(te-(i*T_IPO),2));
-		}
-	}
-	else{
-		ROS_INFO("Sinoide Profile");
-		// Calculate the sinoide profile path
-		// 0 <= t <= tb
-		for(int i=0;i<=steps_tb-1;i++){
-			pathArray->push_back(  AcclMax*(0.25*pow(i*T_IPO,2) + pow(tb,2)/(8*pow(M_PI,2)) *(cos(2*M_PI/tb * (i*T_IPO))-1)));
-		}
-		// tb <= t <= tv
-		for(int i=steps_tb;i<=(steps_tb+steps_tv-1);i++){
-			pathArray->push_back(VelMax*(i*T_IPO-0.5*tb));
-		}
-		// tv <= t <= te
-		for(int i=(steps_tb+steps_tv);i<(steps_tv+steps_tb+steps_te-1);i++){
-			pathArray->push_back(0.5*AcclMax*( te*(i*T_IPO + tb)  -  0.5*(pow(i*T_IPO,2)+pow(te,2)+2*pow(tb,2))  + (pow(tb,2)/(4*pow(M_PI,2))) * (1-cos( ((2*M_PI)/tb) * (i*T_IPO-tv)))));
-		}
-	}
-}
 
-void CartesianController::calculateProfileForAngularMovements(std::vector<double> *pathMatrix,
-										 				 double Se, double Se_roll, double Se_pitch, double Se_yaw,
-										 				 double start_angle_roll, double start_angle_pitch, double start_angle_yaw,
-														 double VelMax, double AcclMax,std::string profile, bool justRotate)
-{
-	std::vector<double> linearPath,rollPath,pitchPath,yawPath;
-	int steps_te,steps_tv,steps_tb=0;
-	double tv,tb,te=0;
-	double T_IPO=pow(update_rate_,-1);
-	double params[4][2];
-	double Se_max,temp=0;
-
-	double Se_array[4] = {Se,Se_roll,Se_pitch,Se_yaw};
-	
-	for(int i=0;i<sizeof(Se_array);i++){
-		if(temp<std::fabs(Se_array[i]))
-			temp=std::fabs(Se_array[i]);
-	}
-	
-	// If justRoate == true, then set the largest angular difference as Se_max.
-	if(justRotate){
-		Se_max=temp;
-	}
-	else{	// Otherwise set the linear-path as Se_max
-		Se_max = Se;
-	}
-	
-	// Calculate the Profile Timings for the linear-path
-	if(profile == "ramp"){
-		// Calculate the Ramp Profile Parameters
-		if (VelMax > sqrt(std::fabs(Se_max)*AcclMax)){
-			VelMax = sqrt(std::fabs(Se_max)*AcclMax);
-		}
-		tb = VelMax/AcclMax;
-		te = (std::fabs(Se_max) / VelMax) + tb;
-		tv = te - tb;
-	}
-	else{
-		// Calculate the Sinoide Profile Parameters
-		if (VelMax > sqrt(std::fabs(Se_max)*AcclMax/2)){
-			VelMax = sqrt(std::fabs(Se_max)*AcclMax/2);
-		}
-		tb = 2*VelMax/AcclMax;
-		te = (std::fabs(Se_max) / VelMax) + tb;
-		tv = te - tb;
-	}
-	// Interpolationsteps for every timesequence
-	steps_tb = (double)tb / T_IPO;
-	steps_tv = (double)(tv-tb) / T_IPO;
-	steps_te = (double)(te-tv) / T_IPO;
-	
-	// Reconfigure timings wtih T_IPO
-	tb=steps_tb*T_IPO;
-	tv=(steps_tb+steps_tv)*T_IPO;
-	te=(steps_tb+steps_tv+steps_te)*T_IPO;
-		
-	// Calculate the paths
-	generatePath(&linearPath,	T_IPO,VelMax,AcclMax,Se_max,(steps_tb+steps_tv+steps_te),profile);
-	generatePathWithTe(&rollPath, T_IPO, te, AcclMax, Se_roll, (steps_tb+steps_tv+steps_te),start_angle_roll,profile);
-	generatePathWithTe(&pitchPath, T_IPO, te, AcclMax, Se_pitch, (steps_tb+steps_tv+steps_te),start_angle_pitch,profile);
-	generatePathWithTe(&yawPath, T_IPO, te, AcclMax, Se_yaw, (steps_tb+steps_tv+steps_te),start_angle_yaw,profile);
-	
-	// Get the Vecotr sizes of each path-vector
-	int MaxStepArray[4],maxSteps;
-	MaxStepArray[0] = linearPath.size();
-	MaxStepArray[1] = rollPath.size();
-	MaxStepArray[2] = pitchPath.size();
-	MaxStepArray[3] = yawPath.size();
-	
-	// Get the largest one
-	maxSteps = 0;
-	for(int i=0;i<4;i++){
-		if(maxSteps<MaxStepArray[i])
-			maxSteps=MaxStepArray[i];
-	}
-	
-	
-	bool linearOkay,rollOkay,pitchOkay,yawOkay=false;
-	
-	// Check if every vector has the same length than the largest one.
-	while(true){
-		if(linearPath.size() < maxSteps){
-		linearPath.push_back(linearPath.at(linearPath.size()-1));
- 		}else{linearOkay=true;}
-		
-		if(rollPath.size() < maxSteps){
-			rollPath.push_back(rollPath.at(rollPath.size()-1));
-		}else{rollOkay=true;}
-		
-		if(pitchPath.size() < maxSteps){
-			pitchPath.push_back(pitchPath.at(pitchPath.size()-1));
-		}else{pitchOkay=true;}
-		
-		if(yawPath.size() < maxSteps){
-			yawPath.push_back(yawPath.at(yawPath.size()-1));
-		}else{yawOkay=true;}
-		
-		if(linearOkay && rollOkay && pitchOkay && yawOkay){
-			break;
-		}
-	}
-	
-	// Put the interpolated paths into the pathMatrix
-	pathMatrix[0]=linearPath;
-	pathMatrix[1]=rollPath;
-	pathMatrix[2]=pitchPath;
-	pathMatrix[3]=yawPath;
-}
 
 geometry_msgs::Pose CartesianController::getEndeffectorPose()
 {
@@ -877,162 +567,7 @@ void CartesianController::stop_tracking()
 	}
 }
 
-void CartesianController::generatePath(std::vector<double> *pathArray,double T_IPO, double VelMax, double AcclMax,double Se_max, int steps_max, std::string profile)
-{
-	double tv,tb,te=0;
-	int steps_te,steps_tv,steps_tb=0;
-	
-	// Reconfigure the timings and parameters with T_IPO
-	tb = (VelMax/(AcclMax*T_IPO)) * T_IPO;
-	tv = (std::fabs(Se_max)/(VelMax*T_IPO)) * T_IPO;
-	te=tv+tb;
-	VelMax = std::fabs(Se_max) / tv;
-	AcclMax = VelMax / tb;
-	
-	// Calculate the Profile Timings for the longest path
-	if(profile == "ramp")
-	{
-		tb = VelMax/AcclMax;
-		te = (std::fabs(Se_max) / VelMax) + tb;
-		tv = te - tb;
-	}
-	else
-	{
-		tb = 2*VelMax/AcclMax;
-		te = (std::fabs(Se_max) / VelMax) + tb;
-		tv = te - tb;
-	}
-	
-	// Interpolationsteps for every timesequence
-	steps_tb = (double)tb / T_IPO;
-	steps_tv = (double)(tv-tb) / T_IPO;
-	steps_te = (double)(te-tv) / T_IPO;
-	
-	// Reconfigure timings wtih T_IPO
-	tb=steps_tb*T_IPO;
-	tv=(steps_tb+steps_tv)*T_IPO;
-	te=(steps_tb+steps_tv+steps_te)*T_IPO;
-	
-	if(profile == "ramp")
-	{
-		// Calculate the ramp profile path
-		// 0 <= t <= tb
-		for(int i=0;i<=steps_tb-1;i++){
-			pathArray->push_back( Se_max/std::fabs(Se_max)*(0.5*AcclMax*pow((T_IPO*i),2)));
-		}
-		// tb <= t <= tv
-		for(int i=steps_tb;i<=(steps_tb+steps_tv-1);i++){
-			pathArray->push_back(Se_max/std::fabs(Se_max)*(VelMax*(T_IPO*i)-0.5*pow(VelMax,2)/AcclMax));
-		}
-		// tv <= t <= te
-		for(int i=(steps_tb+steps_tv);i<(steps_tv+steps_tb+steps_te-1);i++){
-			pathArray->push_back(Se_max/std::fabs(Se_max)*(VelMax * (te-tb) - 0.5*AcclMax* pow(te-(i*T_IPO),2)));
-		}
-	}
-	else
-	{
-		// Calculate the sinoide profile path
-		// 0 <= t <= tb
-		for(int i=0;i<=steps_tb-1;i++)
-		{
-			pathArray->push_back( Se_max/std::fabs(Se_max)*( AcclMax*(0.25*pow(i*T_IPO,2) + pow(tb,2)/(8*pow(M_PI,2)) *(cos(2*M_PI/tb * (i*T_IPO))-1))));
-		}
-		// tb <= t <= tv
-		for(int i=steps_tb;i<=(steps_tb+steps_tv-1);i++)
-		{
-			pathArray->push_back(Se_max/std::fabs(Se_max)*(VelMax*(i*T_IPO-0.5*tb)));
-		}
-		// tv <= t <= te
-		for(int i=(steps_tb+steps_tv);i<(steps_tv+steps_tb+steps_te-1);i++)
-		{
-			pathArray->push_back(Se_max/std::fabs(Se_max)*(0.5*AcclMax*( te*(i*T_IPO + tb) - 0.5*(pow(i*T_IPO,2)+pow(te,2)+2*pow(tb,2)) + (pow(tb,2)/(4*pow(M_PI,2))) * (1-cos( ((2*M_PI)/tb) * (i*T_IPO-tv))))));
-		}
-	}
-	//ToDo: we should use the final else-case for "unknown profile" in which we return failure
-}
 
-void CartesianController::generatePathWithTe(std::vector<double> *pathArray,double T_IPO, double te, double AcclMax,double Se_max, int steps_max,double start_angle,std::string profile)
-{
-	double tv,tb=0;
-	int steps_te,steps_tv,steps_tb=0;
-	double VelMax;
-	
-	// Calculate the Profile Timings
-	if(profile == "ramp")
-	{
-		// Reconfigure AcclMax and Velmax
-		while(te< 2*sqrt(std::fabs(Se_max)/AcclMax))
-		{
-			AcclMax+=0.001;
-		}
-		VelMax = AcclMax * te / 2 - sqrt((pow(AcclMax,2)*pow(te,2)/4) - std::fabs(Se_max) * AcclMax );
-		
-		// Calculate profile timings, te is known
-		tb = VelMax/AcclMax;
-		tv = te - tb;
-	}
-	else
-	{
-		// Reconfigure AcclMax and Velmax
-		while(te< sqrt(std::fabs(Se_max)*8/AcclMax))
-		{
-			AcclMax+=0.001;
-		}
-		VelMax = AcclMax * te / 4 - sqrt((pow(AcclMax,2)*pow(te,2)/16) - std::fabs(Se_max) * AcclMax/2 );
-		
-		// Calculate profile timings, te is known
-		tb = 2*VelMax/AcclMax;
-		tv = te - tb;
-	}
-	
-	// Interpolationsteps for every timesequence
-	steps_tb = (double)tb / T_IPO;
-	steps_tv = (double)(tv-tb) / T_IPO;
-	steps_te = (double)(te-tv) / T_IPO;
-	
-	// Reconfigure timings wtih T_IPO
-	tb=steps_tb*T_IPO;
-	tv=(steps_tb+steps_tv)*T_IPO;
-	te=(steps_tb+steps_tv+steps_te)*T_IPO;
-	
-	if(profile == "ramp")
-	{
-		// Calculate the ramp profile path
-		// 0 <= t <= tb
-		for(int i=0;i<=steps_tb-1;i++)
-		{
-			pathArray->push_back( start_angle + Se_max/std::fabs(Se_max)*(0.5*AcclMax*pow((T_IPO*i),2)));
-		}
-		// tb <= t <= tv
-		for(int i=steps_tb;i<=(steps_tb+steps_tv-1);i++)
-		{
-			pathArray->push_back(start_angle + Se_max/std::fabs(Se_max)*(VelMax*(T_IPO*i)-0.5*pow(VelMax,2)/AcclMax));
-		}
-		// tv <= t <= te
-		for(int i=(steps_tb+steps_tv);i<(steps_tv+steps_tb+steps_te-1);i++)
-		{
-			pathArray->push_back(start_angle + Se_max/std::fabs(Se_max)*(VelMax * (te-tb) - 0.5*AcclMax* pow(te-(i*T_IPO),2)));
-		}
-	}
-	else
-	{
-		// Calculate the sinoide profile path
-		// 0 <= t <= tb
-		for(int i=0;i<=steps_tb-1;i++)
-		{
-			pathArray->push_back(start_angle + Se_max/std::fabs(Se_max)*( AcclMax*(0.25*pow(i*T_IPO,2) + pow(tb,2)/(8*pow(M_PI,2)) *(cos(2*M_PI/tb * (i*T_IPO))-1))));
-		}
-		// tb <= t <= tv
-		for(int i=steps_tb;i<=(steps_tb+steps_tv-1);i++)
-		{
-			pathArray->push_back(start_angle + Se_max/std::fabs(Se_max)*(VelMax*(i*T_IPO-0.5*tb)));
-		}
-		// tv <= t <= te
-		for(int i=(steps_tb+steps_tv);i<(steps_tv+steps_tb+steps_te-1);i++){
-			pathArray->push_back(start_angle + Se_max/std::fabs(Se_max)*(0.5*AcclMax*( te*(i*T_IPO + tb) - 0.5*(pow(i*T_IPO,2)+pow(te,2)+2*pow(tb,2))  + (pow(tb,2)/(4*pow(M_PI,2))) * (1-cos( ((2*M_PI)/tb) * (i*T_IPO-tv))))));
-		}
-	}
-}
 
 void CartesianController::PoseToRPY(geometry_msgs::Pose pose,double &roll, double &pitch, double &yaw)
 {
