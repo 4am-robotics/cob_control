@@ -36,7 +36,7 @@
 class DampingBuilder
 {
     public:
-        static DampingBase* create_damping(const TwistControllerParams &params);
+        static DampingBase* createDamping(const TwistControllerParams& params);
 
     private:
         DampingBuilder() {}
@@ -49,14 +49,14 @@ class DampingBuilder
 class DampingNone : public DampingBase
 {
     public:
-        DampingNone(const TwistControllerParams &params)
+        DampingNone(const TwistControllerParams& params)
         : DampingBase(params)
         {}
 
         ~DampingNone() {}
 
-        virtual double get_damping_factor(const Eigen::VectorXd &sorted_singular_values,
-                                          const Eigen::MatrixXd &jacobian_data) const;
+        virtual double getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
+                                        const Eigen::MatrixXd& jacobian_data) const;
 };
 /* END DampingNone **********************************************************************************************/
 
@@ -65,14 +65,14 @@ class DampingNone : public DampingBase
 class DampingConstant : public DampingBase
 {
     public:
-        DampingConstant(const TwistControllerParams &params)
+        DampingConstant(const TwistControllerParams& params)
         : DampingBase(params)
         {}
 
         ~DampingConstant() {}
 
-        virtual double get_damping_factor(const Eigen::VectorXd &sorted_singular_values,
-                                          const Eigen::MatrixXd &jacobian_data) const;
+        virtual double getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
+                                        const Eigen::MatrixXd& jacobian_data) const;
 };
 /* END DampingConstant ******************************************************************************************/
 
@@ -81,14 +81,14 @@ class DampingConstant : public DampingBase
 class DampingManipulability : public DampingBase
 {
     public:
-        DampingManipulability(const TwistControllerParams &params)
+        DampingManipulability(const TwistControllerParams& params)
         : DampingBase(params)
         {}
 
         ~DampingManipulability() {}
 
-        virtual double get_damping_factor(const Eigen::VectorXd &sorted_singular_values,
-                                          const Eigen::MatrixXd &jacobian_data) const;
+        virtual double getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
+                                        const Eigen::MatrixXd& jacobian_data) const;
 };
 /* END DampingManipulability ************************************************************************************/
 
@@ -97,14 +97,14 @@ class DampingManipulability : public DampingBase
 class DampingLeastSingularValues : public DampingBase
 {
     public:
-        DampingLeastSingularValues(const TwistControllerParams &params)
+        DampingLeastSingularValues(const TwistControllerParams& params)
         : DampingBase(params)
         {}
 
         ~DampingLeastSingularValues() {}
 
-        virtual double get_damping_factor(const Eigen::VectorXd &sorted_singular_values,
-                                          const Eigen::MatrixXd &jacobian_data) const;
+        virtual double getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
+                                        const Eigen::MatrixXd& jacobian_data) const;
 };
 /* END DampingLeastSingularValues ************************************************************************************/
 

@@ -126,7 +126,7 @@ int8_t ConstraintSolverFactory::resetAll(const TwistControllerParams &params)
 {
     ROS_INFO_STREAM("Called ConstraintSolverFactory::resetAll");
 
-    this->damping_method_.reset(DampingBuilder::create_damping(params));
+    this->damping_method_.reset(DampingBuilder::createDamping(params));
     if(NULL == this->damping_method_)
     {
         ROS_ERROR("Returning NULL due to damping creation error.");

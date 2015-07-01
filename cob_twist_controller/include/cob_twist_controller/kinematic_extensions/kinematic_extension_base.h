@@ -22,12 +22,12 @@
  * \date Date of creation: June, 2015
  *
  * \brief
- *   This header contains the interface description for extening the 
+ *   This header contains the interface description for extending the 
  *   kinematic chain with additional degrees of freedom, e.g. base_active or lookat
  *
  ****************************************************************/
-#ifndef KINEMATIC_EXTENSION_INTERFACE_H
-#define KINEMATIC_EXTENSION_INTERFACE_H
+#ifndef KINEMATIC_EXTENSION_BASE_H_
+#define KINEMATIC_EXTENSION_BASE_H_
 
 #include "ros/ros.h"
 
@@ -37,19 +37,18 @@
 class KinematicExtensionBase
 {
     public:
-        KinematicExtensionBase(const TwistControllerParams &params):
+        KinematicExtensionBase(const TwistControllerParams& params):
             params_(params)
         {}
         
         virtual ~KinematicExtensionBase() {}
         
-        virtual KDL::Jacobian adjust_jacobian(const KDL::Jacobian& jac_chain) = 0;
-        virtual void process_result_extension(const KDL::JntArray &q_dot_ik) = 0;
+        virtual KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain) = 0;
+        virtual void processResultExtension(const KDL::JntArray& q_dot_ik) = 0;
     
     protected:
-        const TwistControllerParams &params_;
+        const TwistControllerParams& params_;
 
 };
 
-
-#endif /* KINEMATIC_EXTENSION_INTERFACE_H */
+#endif /* KINEMATIC_EXTENSION_BASE_H_ */

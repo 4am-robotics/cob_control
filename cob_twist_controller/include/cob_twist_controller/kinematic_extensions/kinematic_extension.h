@@ -22,12 +22,12 @@
  * \date Date of creation: June, 2015
  *
  * \brief
- *   This header contains the interface description for extening the 
+ *   This header contains the interface description for extending the 
  *   kinematic chain with additional degrees of freedom, e.g. base_active or lookat
  *
  ****************************************************************/
-#ifndef KINEMATIC_EXTENSIONS_H
-#define KINEMATIC_EXTENSIONS_H
+#ifndef KINEMATIC_EXTENSION_H_
+#define KINEMATIC_EXTENSION_H_
 
 #include "cob_twist_controller/kinematic_extensions/kinematic_extension_base.h"
 
@@ -51,7 +51,7 @@ class KinematicExtensionBuilder
         KinematicExtensionBuilder() {}
         ~KinematicExtensionBuilder() {}
         
-        static KinematicExtensionBase* create_extension(const TwistControllerParams &params);
+        static KinematicExtensionBase* createKinematicExtension(const TwistControllerParams& params);
 };
 /* END KinematicExtensionBuilder *******************************************************************************************/
 
@@ -60,7 +60,7 @@ class KinematicExtensionBuilder
 class KinematicExtensionNone : public KinematicExtensionBase
 {
     public:
-        KinematicExtensionNone(const TwistControllerParams &params)
+        KinematicExtensionNone(const TwistControllerParams& params)
         : KinematicExtensionBase(params)
         {
             //nothing to do
@@ -68,8 +68,8 @@ class KinematicExtensionNone : public KinematicExtensionBase
 
         ~KinematicExtensionNone() {}
 
-        virtual KDL::Jacobian adjust_jacobian(const KDL::Jacobian& jac_chain);
-        virtual void process_result_extension(const KDL::JntArray &q_dot_ik);
+        virtual KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain);
+        virtual void processResultExtension(const KDL::JntArray& q_dot_ik);
 };
 /* END KinematicExtensionNone **********************************************************************************************/
 
@@ -78,7 +78,7 @@ class KinematicExtensionNone : public KinematicExtensionBase
 class KinematicExtension6D : public KinematicExtensionBase
 {
     public:
-        KinematicExtension6D(const TwistControllerParams &params)
+        KinematicExtension6D(const TwistControllerParams& params)
         : KinematicExtensionBase(params)
         {
             //nothing to do here
@@ -86,10 +86,10 @@ class KinematicExtension6D : public KinematicExtensionBase
 
         ~KinematicExtension6D() {}
 
-        virtual KDL::Jacobian adjust_jacobian(const KDL::Jacobian& jac_chain);
-        virtual void process_result_extension(const KDL::JntArray &q_dot_ik) = 0;
+        virtual KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain);
+        virtual void processResultExtension(const KDL::JntArray& q_dot_ik) = 0;
         
-        KDL::Jacobian adjust_jacobian_6d(const KDL::Jacobian& jac_chain, const KDL::Frame full_frame, const KDL::Frame partial_frame, const ActiveCartesianDimension active_dim);
+        KDL::Jacobian adjustJacobian6d(const KDL::Jacobian& jac_chain, const KDL::Frame full_frame, const KDL::Frame partial_frame, const ActiveCartesianDimension active_dim);
 };
 /* END KinematicExtension6D **********************************************************************************************/
 
@@ -98,10 +98,10 @@ class KinematicExtension6D : public KinematicExtensionBase
 class KinematicExtensionBaseActive : public KinematicExtension6D
 {
     public:
-        KinematicExtensionBaseActive(const TwistControllerParams &params)
+        KinematicExtensionBaseActive(const TwistControllerParams& params)
         : KinematicExtension6D(params)
         {
-            base_vel_pub = nh_.advertise<geometry_msgs::Twist>("/base/twist_controller/command", 1);
+            base_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("/base/twist_controller/command", 1);
             
             //ToDo: I don't like this hack! Can we pass the tf_listner_ somehow?
             ///give tf_listener_ some time to fill buffer
@@ -110,8 +110,8 @@ class KinematicExtensionBaseActive : public KinematicExtension6D
 
         ~KinematicExtensionBaseActive() {}
 
-        virtual KDL::Jacobian adjust_jacobian(const KDL::Jacobian& jac_chain);
-        virtual void process_result_extension(const KDL::JntArray &q_dot_ik);
+        virtual KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain);
+        virtual void processResultExtension(const KDL::JntArray& q_dot_ik);
         
         
         void baseTwistCallback(const geometry_msgs::Twist::ConstPtr& msg);
@@ -121,8 +121,8 @@ class KinematicExtensionBaseActive : public KinematicExtension6D
         ros::NodeHandle nh_;
         tf::TransformListener tf_listener_;
     
-        ros::Publisher base_vel_pub;
+        ros::Publisher base_vel_pub_;
 };
 /* END KinematicExtensionBaseActive **********************************************************************************************/
 
-#endif
+#endif /* KINEMATIC_EXTENSION_H_ */

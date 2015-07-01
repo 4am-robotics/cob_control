@@ -35,7 +35,7 @@
 //ToDo: Should we re-add DEBUG_BASE_ACTIVE stuff in KinematicExtensionBaseActive class?
 
 
-KinematicExtensionBase* KinematicExtensionBuilder::create_extension(const TwistControllerParams &params)
+KinematicExtensionBase* KinematicExtensionBuilder::createKinematicExtension(const TwistControllerParams &params)
 {
     KinematicExtensionBase *keb = NULL;
     if(params.base_active)
@@ -51,12 +51,12 @@ KinematicExtensionBase* KinematicExtensionBuilder::create_extension(const TwistC
 }
 
 /* BEGIN KinematicExtensionNone ********************************************************************************************/
-KDL::Jacobian KinematicExtensionNone::adjust_jacobian(const KDL::Jacobian& jac_chain)
+KDL::Jacobian KinematicExtensionNone::adjustJacobian(const KDL::Jacobian& jac_chain)
 {
     return jac_chain;
 }
 
-void KinematicExtensionNone::process_result_extension(const KDL::JntArray &q_dot_ik)
+void KinematicExtensionNone::processResultExtension(const KDL::JntArray &q_dot_ik)
 {
     return;
 }
@@ -65,16 +65,16 @@ void KinematicExtensionNone::process_result_extension(const KDL::JntArray &q_dot
 
 
 /* BEGIN KinematicExtension6D ********************************************************************************************/
-KDL::Jacobian KinematicExtension6D::adjust_jacobian(const KDL::Jacobian& jac_chain)
+KDL::Jacobian KinematicExtension6D::adjustJacobian(const KDL::Jacobian& jac_chain)
 {
     KDL::Frame dummy;
     ActiveCartesianDimension active_dim;
     
-    return adjust_jacobian_6d(jac_chain, dummy, dummy, active_dim);
+    return adjustJacobian6d(jac_chain, dummy, dummy, active_dim);
 }
 
 
-KDL::Jacobian KinematicExtension6D::adjust_jacobian_6d(const KDL::Jacobian& jac_chain, const KDL::Frame full_frame, const KDL::Frame partial_frame, const ActiveCartesianDimension active_dim)
+KDL::Jacobian KinematicExtension6D::adjustJacobian6d(const KDL::Jacobian& jac_chain, const KDL::Frame full_frame, const KDL::Frame partial_frame, const ActiveCartesianDimension active_dim)
 {
     ///compose jac_full considering kinematical extension for base_active
     KDL::Jacobian jac_full;
@@ -168,7 +168,7 @@ KDL::Jacobian KinematicExtension6D::adjust_jacobian_6d(const KDL::Jacobian& jac_
 
 
 /* BEGIN KinematicExtensionBaseActive ********************************************************************************************/
-KDL::Jacobian KinematicExtensionBaseActive::adjust_jacobian(const KDL::Jacobian& jac_chain)
+KDL::Jacobian KinematicExtensionBaseActive::adjustJacobian(const KDL::Jacobian& jac_chain)
 {
     tf::StampedTransform bl_transform_ct, cb_transform_bl;
     KDL::Frame bl_frame_ct, cb_frame_bl;
@@ -216,10 +216,10 @@ KDL::Jacobian KinematicExtensionBaseActive::adjust_jacobian(const KDL::Jacobian&
     active_dim.rot_y=0;
     active_dim.rot_z=1;
 
-    return adjust_jacobian_6d(jac_chain, bl_frame_ct, cb_frame_bl, active_dim);
+    return adjustJacobian6d(jac_chain, bl_frame_ct, cb_frame_bl, active_dim);
 }
 
-void KinematicExtensionBaseActive::process_result_extension(const KDL::JntArray &q_dot_ik)
+void KinematicExtensionBaseActive::processResultExtension(const KDL::JntArray &q_dot_ik)
 {
     geometry_msgs::Twist base_vel_msg;
     
@@ -232,7 +232,7 @@ void KinematicExtensionBaseActive::process_result_extension(const KDL::JntArray 
     base_vel_msg.angular.y = q_dot_ik(dof-2);
     base_vel_msg.angular.z = q_dot_ik(dof-1);
     
-    base_vel_pub.publish(base_vel_msg);
+    base_vel_pub_.publish(base_vel_msg);
 }
 
 /* END KinematicExtensionBaseActive **********************************************************************************************/

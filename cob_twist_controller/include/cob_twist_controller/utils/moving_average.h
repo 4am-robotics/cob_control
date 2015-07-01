@@ -25,8 +25,8 @@
  *   This Class contains an moving average filter with exponential and normal weighting
  *
  ****************************************************************/
-#ifndef COB_CONTROL_COB_TWIST_CONTROLLER_INCLUDE_COB_TWIST_CONTROLLER_MOVING_AVERAGE_H_
-#define COB_CONTROL_COB_TWIST_CONTROLLER_INCLUDE_COB_TWIST_CONTROLLER_MOVING_AVERAGE_H_
+#ifndef MOVING_AVERAGE_H_
+#define MOVING_AVERAGE_H_
 
 #include <ros/ros.h>
 #include <deque>
@@ -43,10 +43,10 @@ class MovingAverage
         MovingAverage(int size=3)
         {
             size_ = size;
-            calculate_weighting();
+            calculateWeighting();
         }
         
-        void add_element(double element)
+        void addElement(double element)
         {
             if(s_.size() < size_)
             {
@@ -60,7 +60,7 @@ class MovingAverage
             }
         }
 
-        double calc_moving_average()
+        double calcMovingAverage()
         {
             double sum = 0;
             for(std::deque<double>::const_iterator i = s_.begin(); i != s_.end(); ++i)
@@ -71,7 +71,7 @@ class MovingAverage
             return sum / s_.size();
         }
 
-        double calc_weighted_moving_average()
+        double calcWeightedMovingAverage()
         {
             double sum = 0;
             for(int i = 0; i < s_.size(); i++)
@@ -82,7 +82,7 @@ class MovingAverage
             return sum;
         }
 
-        void calculate_weighting()
+        void calculateWeighting()
         {
             double sum = 0;
             double err = 0;
@@ -113,7 +113,6 @@ class MovingAverage
                 return  (double)(n * factorial(n-1));
             }
         }
-
 };
 
-#endif /* COB_CONTROL_COB_TWIST_CONTROLLER_INCLUDE_COB_TWIST_CONTROLLER_MOVING_AVERAGE_H_ */
+#endif /* MOVING_AVERAGE_H_ */

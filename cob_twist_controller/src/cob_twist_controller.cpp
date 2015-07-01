@@ -143,11 +143,11 @@ bool CobTwistController::initialize()
 
     ///initialize ROS interfaces
     obstacle_distance_sub_ = nh_.subscribe("obstacle_distance", 1, &CallbackDataMediator::distancesToObstaclesCallback, &callback_data_mediator_);
-    jointstate_sub = nh_.subscribe("joint_states", 1, &CobTwistController::jointstateCallback, this);
-    twist_sub = nh_twist.subscribe("command_twist", 1, &CobTwistController::twistCallback, this);
-    twist_stamped_sub = nh_twist.subscribe("command_twist_stamped", 1, &CobTwistController::twistStampedCallback, this);
+    jointstate_sub_ = nh_.subscribe("joint_states", 1, &CobTwistController::jointstateCallback, this);
+    twist_sub_ = nh_twist.subscribe("command_twist", 1, &CobTwistController::twistCallback, this);
+    twist_stamped_sub_ = nh_twist.subscribe("command_twist_stamped", 1, &CobTwistController::twistStampedCallback, this);
 
-    odometry_sub = nh_.subscribe("/base/odometry_controller/odometry", 1, &CobTwistController::odometryCallback, this);
+    odometry_sub_ = nh_.subscribe("/base/odometry_controller/odometry", 1, &CobTwistController::odometryCallback, this);
 
     this->twist_controller_params_.keep_direction = true;
     this->twist_controller_params_.enforce_pos_limits = true;
@@ -156,7 +156,7 @@ bool CobTwistController::initialize()
     this->limiters_.reset(new LimiterContainer(this->twist_controller_params_, this->chain_));
     this->limiters_->init();
 
-    this->hardware_interface_.reset(HardwareInterfaceBuilder::create_interface(this->nh_, this->twist_controller_params_));
+    this->hardware_interface_.reset(HardwareInterfaceBuilder::createHardwareInterface(this->nh_, this->twist_controller_params_));
 
     ROS_INFO("...initialized!");
     return true;
@@ -187,7 +187,7 @@ void CobTwistController::reinitServiceRegistration()
     }
 }
 
-void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControllerConfig &config, uint32_t level)
+void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControllerConfig& config, uint32_t level)
 {
     if(config.base_active && config.base_compensation)
     {
@@ -248,7 +248,7 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     this->limiters_.reset(new LimiterContainer(this->twist_controller_params_, this->chain_));
     this->limiters_->init();
 
-    this->hardware_interface_.reset(HardwareInterfaceBuilder::create_interface(this->nh_, this->twist_controller_params_));
+    this->hardware_interface_.reset(HardwareInterfaceBuilder::createHardwareInterface(this->nh_, this->twist_controller_params_));
 
     p_inv_diff_kin_solver_->resetAll(params);
 
@@ -333,7 +333,7 @@ void CobTwistController::twistStampedCallback(const geometry_msgs::TwistStamped:
         tf_listener_.lookupTransform(chain_base_link_, msg->header.frame_id, ros::Time(0), transform_tf);
         frame.M = KDL::Rotation::Quaternion(transform_tf.getRotation().x(), transform_tf.getRotation().y(), transform_tf.getRotation().z(), transform_tf.getRotation().w());
     }
-    catch (tf::TransformException &ex){
+    catch (tf::TransformException& ex){
         ROS_ERROR("%s",ex.what());
         return;
     }
@@ -375,7 +375,7 @@ void CobTwistController::solveTwist(KDL::Twist twist)
         q_dot_ik = this->limiters_->enforceLimits(q_dot_ik, this->joint_states_.current_q_);
 
         // Change between velocity and position interface
-        this->hardware_interface_->process_result(q_dot_ik, initial_pos_);
+        this->hardware_interface_->processResult(q_dot_ik, initial_pos_);
     }
 }
 
@@ -431,7 +431,7 @@ void CobTwistController::odometryCallback(const nav_msgs::Odometry::ConstPtr& ms
         cb_frame_bl.p = KDL::Vector(cb_transform_bl.getOrigin().x(), cb_transform_bl.getOrigin().y(), cb_transform_bl.getOrigin().z());
         cb_frame_bl.M = KDL::Rotation::Quaternion(cb_transform_bl.getRotation().x(), cb_transform_bl.getRotation().y(), cb_transform_bl.getRotation().z(), cb_transform_bl.getRotation().w());
     }
-    catch (tf::TransformException &ex)
+    catch (tf::TransformException& ex)
     {
         ROS_ERROR("%s",ex.what());
         return;

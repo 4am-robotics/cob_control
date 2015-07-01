@@ -85,7 +85,7 @@ struct JointStates
 
 struct ActiveCartesianDimension {
     ActiveCartesianDimension():
-        lin_x(0), lin_y(0), lin_z(0), rot_x(0), rot_y(0), rot_z(0) {}
+        lin_x(0.0), lin_y(0.0), lin_z(0.0), rot_x(0.0), rot_y(0.0), rot_z(0.0) {}
     
     double lin_x;
     double lin_y;

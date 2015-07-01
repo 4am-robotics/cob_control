@@ -63,12 +63,12 @@ class CobTwistController
 private:
     ros::NodeHandle nh_;
     
-    ros::Subscriber jointstate_sub;
+    ros::Subscriber jointstate_sub_;
     
-    ros::Subscriber twist_sub;
-    ros::Subscriber twist_stamped_sub;
+    ros::Subscriber twist_sub_;
+    ros::Subscriber twist_stamped_sub_;
 
-    ros::Subscriber odometry_sub;
+    ros::Subscriber odometry_sub_;
 
     ros::Subscriber obstacle_distance_sub_;
 
@@ -106,8 +106,11 @@ public:
 
     ~CobTwistController()
     {
+        this->jntToCartSolver_vel_.reset();
         this->p_inv_diff_kin_solver_.reset();
         this->limiters_.reset();
+        this->hardware_interface_.reset();
+        this->reconfigure_server_.reset();
     }
 
     bool initialize();
@@ -115,7 +118,7 @@ public:
 
     void reinitServiceRegistration();
 
-    void reconfigureCallback(cob_twist_controller::TwistControllerConfig &config, uint32_t level);
+    void reconfigureCallback(cob_twist_controller::TwistControllerConfig& config, uint32_t level);
     void jointstateCallback(const sensor_msgs::JointState::ConstPtr& msg);
     void odometryCallback(const nav_msgs::Odometry::ConstPtr& msg);
     

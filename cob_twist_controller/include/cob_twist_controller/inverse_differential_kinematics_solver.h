@@ -65,26 +65,18 @@ public:
         callback_data_mediator_(data_mediator),
         constraint_solver_factory_(data_mediator, jnt2jac_)
     {
-        last_p_in_vec_ = t_Vector6d::Zero();
-        this->kinematic_extension_.reset(KinematicExtensionBuilder::create_extension(this->params_));
+        this->kinematic_extension_.reset(KinematicExtensionBuilder::createKinematicExtension(this->params_));
     }
 
-    virtual ~InverseDifferentialKinematicsSolver() {};
+    virtual ~InverseDifferentialKinematicsSolver()
+    {
+        this->kinematic_extension_.reset();
+    };
     
     /** CartToJnt for chain using SVD considering KinematicExtensions and various DampingMethods **/
     virtual int CartToJnt(const JointStates& joint_states,
                           const KDL::Twist& v_in,
                           KDL::JntArray& qdot_out);
-
-    inline void SetParams(TwistControllerParams params)
-    {
-        params_ = params;
-    }
-
-    inline TwistControllerParams GetParams() const
-    {
-        return params_;
-    }
 
     void resetAll(TwistControllerParams params);
 
@@ -98,8 +90,6 @@ private:
     ConstraintSolverFactory constraint_solver_factory_;
 
     TaskStackController_t task_stack_controller_;
-
-    t_Vector6d last_p_in_vec_;
 
 };
 #endif // INVERSE_DIFFERENTIAL_KINEMATICS_SOLVER_H

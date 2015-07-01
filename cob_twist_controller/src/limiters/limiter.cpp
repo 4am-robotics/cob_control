@@ -40,7 +40,7 @@ KDL::JntArray LimiterContainer::enforceLimits(const KDL::JntArray& q_dot_ik, con
 {
     // If nothing to do just return q_dot.
     KDL::JntArray tmp_q_dots(q_dot_ik);
-    for (t_lim_iter it = this->limiters.begin(); it != this->limiters.end(); it++)
+    for (t_lim_iter it = this->limiters_.begin(); it != this->limiters_.end(); it++)
     {
         tmp_q_dots = (*it)->enforceLimits(tmp_q_dots, q);
     }
@@ -86,13 +86,13 @@ void LimiterContainer::init()
  */
 void LimiterContainer::eraseAll()
 {
-    for (uint32_t cnt = 0; cnt < this->limiters.capacity(); ++cnt)
+    for (uint32_t cnt = 0; cnt < this->limiters_.capacity(); ++cnt)
     {
-        const LimiterBase* lb = this->limiters[cnt];
+        const LimiterBase* lb = this->limiters_[cnt];
         delete(lb);
     }
 
-    this->limiters.clear();
+    this->limiters_.clear();
 }
 
 /**
@@ -100,7 +100,7 @@ void LimiterContainer::eraseAll()
  */
 void LimiterContainer::add(const LimiterBase *lb)
 {
-    this->limiters.push_back(lb);
+    this->limiters_.push_back(lb);
 }
 
 /**

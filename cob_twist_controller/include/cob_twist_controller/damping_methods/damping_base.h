@@ -34,15 +34,15 @@
 class DampingBase
 {
     public:
-        virtual double get_damping_factor(const Eigen::VectorXd &sorted_singular_values,
-                                          const Eigen::MatrixXd &jacobian_data) const = 0;
-
         virtual ~DampingBase() {}
+    
+        virtual double getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
+                                          const Eigen::MatrixXd& jacobian_data) const = 0;
 
     protected:
-        DampingBase(const TwistControllerParams &params) : params_(params) { }
+        DampingBase(const TwistControllerParams& params) : params_(params) { }
 
-        const TwistControllerParams &params_;
+        const TwistControllerParams& params_;
 };
 
 #endif /* DAMPING_METHOD_INTERFACE_H_ */

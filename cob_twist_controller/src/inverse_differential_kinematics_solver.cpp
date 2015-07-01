@@ -44,7 +44,7 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const JointStates& joint_stat
     jnt2jac_.JntToJac(joint_states.current_q_, jac_chain);
     
     ///append columns to Jacobian in order to reflect additional DoFs of kinematical extension
-    this->jac_ = this->kinematic_extension_->adjust_jacobian(jac_chain);
+    this->jac_ = this->kinematic_extension_->adjustJacobian(jac_chain);
     ROS_DEBUG_STREAM("Jacobian:" << std::endl << this->jac_.data);
 
     t_Vector6d v_in_vec;
@@ -70,7 +70,7 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const JointStates& joint_stat
     
     
     ///process result for kinematical extension
-    this->kinematic_extension_->process_result_extension(qdot_out_full);
+    this->kinematic_extension_->processResultExtension(qdot_out_full);
     
     
     ///then qdot_out shut be resized to contain only the chain_qdot_out's again
@@ -91,5 +91,5 @@ void InverseDifferentialKinematicsSolver::resetAll(TwistControllerParams params)
         ROS_ERROR("Failed to reset IDK constraint solver after dynamic_reconfigure.");
     }
     
-    this->kinematic_extension_.reset(KinematicExtensionBuilder::create_extension(this->params_));
+    this->kinematic_extension_.reset(KinematicExtensionBuilder::createKinematicExtension(this->params_));
 }

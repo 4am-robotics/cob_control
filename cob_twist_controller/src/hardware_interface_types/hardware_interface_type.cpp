@@ -29,8 +29,8 @@
 #include "cob_twist_controller/hardware_interface_types/hardware_interface_type.h"
 
 
-HardwareInterfaceBase* HardwareInterfaceBuilder::create_interface(ros::NodeHandle& nh,
-                                                  const TwistControllerParams &params)
+HardwareInterfaceBase* HardwareInterfaceBuilder::createHardwareInterface(ros::NodeHandle& nh,
+                                                                         const TwistControllerParams &params)
 {
     HardwareInterfaceBase *ib = NULL;
     switch(params.hardware_interface_type)
@@ -50,8 +50,8 @@ HardwareInterfaceBase* HardwareInterfaceBuilder::create_interface(ros::NodeHandl
 }
 
 /* BEGIN HardwareInterfaceVelocity ********************************************************************************************/
-inline void HardwareInterfaceVelocity::process_result(const KDL::JntArray &q_dot_ik,
-                                              std::vector<double> &initial_position)
+inline void HardwareInterfaceVelocity::processResult(const KDL::JntArray &q_dot_ik,
+                                                     std::vector<double> &initial_position)
 {
     std_msgs::Float64MultiArray vel_msg;
 
@@ -68,8 +68,8 @@ inline void HardwareInterfaceVelocity::process_result(const KDL::JntArray &q_dot
 
 
 /* BEGIN HardwareInterfacePosition ****************************************************************************************/
-inline void HardwareInterfacePosition::process_result(const KDL::JntArray &q_dot_ik,
-                                              std::vector<double> &initial_position)
+inline void HardwareInterfacePosition::processResult(const KDL::JntArray &q_dot_ik,
+                                                     std::vector<double> &initial_position)
 {
     std_msgs::Float64MultiArray vel_msg, pos_msg;
 
@@ -84,8 +84,8 @@ inline void HardwareInterfacePosition::process_result(const KDL::JntArray &q_dot
         if(iteration_counter_ > 1)
         {
             double integration_value = static_cast<double>(integration_period_.toSec() / 6.0 * (vel_first_integration_point_[i] + 4.0 * (vel_first_integration_point_[i] + vel_support_integration_point_[i]) + vel_first_integration_point_[i] + vel_support_integration_point_[i] + vel_msg.data[i]) + initial_position[i]);
-            ma_[i].add_element(integration_value);
-            pos_msg.data.push_back(ma_[i].calc_weighted_moving_average());
+            ma_[i].addElement(integration_value);
+            pos_msg.data.push_back(ma_[i].calcWeightedMovingAverage());
         }
     }
     last_update_time_ = time_now_;

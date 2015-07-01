@@ -44,7 +44,7 @@ Eigen::MatrixXd PInvBySVD::calculate(const TwistControllerParams& params,
     Eigen::VectorXd singularValuesInv = Eigen::VectorXd::Zero(singularValues.rows());
     Eigen::MatrixXd pseudoInverseJacobian;
     uint32_t i = 0;
-    double lambda = db->get_damping_factor(singularValues, jacobian);
+    double lambda = db->getDampingFactor(singularValues, jacobian);
 
     if(params.numerical_filtering)
     {

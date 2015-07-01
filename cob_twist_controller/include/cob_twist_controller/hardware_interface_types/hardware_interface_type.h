@@ -26,8 +26,13 @@
  *   hardware interface types (position/velocity).
  *
  ****************************************************************/
-#ifndef COB_CONTROL_COB_TWIST_CONTROLLER_INCLUDE_INTERFACE_TYPES_INTERFACE_TYPE_H_
-#define COB_CONTROL_COB_TWIST_CONTROLLER_INCLUDE_INTERFACE_TYPES_INTERFACE_TYPE_H_
+#ifndef HARDWARE_INTERFACE_TYPE_H_
+#define HARDWARE_INTERFACE_TYPE_H_
+
+#include <std_msgs/Float64MultiArray.h>
+
+#include "cob_twist_controller/cob_twist_controller_data_types.h"
+#include "cob_twist_controller/utils/moving_average.h"
 
 #include "cob_twist_controller/hardware_interface_types/hardware_interface_type_base.h"
 
@@ -39,8 +44,8 @@ class HardwareInterfaceBuilder
         HardwareInterfaceBuilder() {}
         ~HardwareInterfaceBuilder() {}
         
-        static HardwareInterfaceBase* create_interface(ros::NodeHandle& nh,
-                                               const TwistControllerParams &params);
+        static HardwareInterfaceBase* createHardwareInterface(ros::NodeHandle& nh,
+                                               const TwistControllerParams& params);
 };
 /* END HardwareInterfaceBuilder *******************************************************************************************/
 
@@ -51,7 +56,8 @@ class HardwareInterfaceBuilder
 class HardwareInterfaceVelocity : public HardwareInterfaceBase
 {
     public:
-        HardwareInterfaceVelocity(ros::NodeHandle& nh, const TwistControllerParams &params)
+        HardwareInterfaceVelocity(ros::NodeHandle& nh,
+                                  const TwistControllerParams& params)
         : HardwareInterfaceBase(nh, params)
         {
             pub_ = nh.advertise<std_msgs::Float64MultiArray>("joint_group_velocity_controller/command", 1);
@@ -59,8 +65,8 @@ class HardwareInterfaceVelocity : public HardwareInterfaceBase
 
         ~HardwareInterfaceVelocity() {}
 
-        virtual void process_result(const KDL::JntArray &q_dot_ik,
-                                    std::vector<double> &initial_position);
+        virtual void processResult(const KDL::JntArray& q_dot_ik,
+                                   std::vector<double>& initial_position);
 };
 /* END HardwareInterfaceVelocity **********************************************************************************************/
 
@@ -69,7 +75,8 @@ class HardwareInterfaceVelocity : public HardwareInterfaceBase
 class HardwareInterfacePosition : public HardwareInterfaceBase
 {
     public:
-        HardwareInterfacePosition(ros::NodeHandle& nh, const TwistControllerParams &params)
+        HardwareInterfacePosition(ros::NodeHandle& nh,
+                                  const TwistControllerParams& params)
         : HardwareInterfaceBase(nh, params),
           iteration_counter_(0)
         {
@@ -79,6 +86,7 @@ class HardwareInterfacePosition : public HardwareInterfaceBase
                 vel_support_integration_point_.push_back(0.0);
                 vel_first_integration_point_.push_back(0.0);
             }
+            
             time_now_ = ros::Time::now();
             last_update_time_ = time_now_;
             integration_period_ = time_now_ - last_update_time_;
@@ -87,8 +95,8 @@ class HardwareInterfacePosition : public HardwareInterfaceBase
 
         ~HardwareInterfacePosition() {}
 
-        virtual void process_result(const KDL::JntArray &q_dot_ik,
-                                    std::vector<double> &initial_position);
+        virtual void processResult(const KDL::JntArray& q_dot_ik,
+                                   std::vector<double>& initial_position);
 
     private:
         std::vector<MovingAverage> ma_;
@@ -103,4 +111,4 @@ class HardwareInterfacePosition : public HardwareInterfaceBase
 
 
 
-#endif /* COB_CONTROL_COB_TWIST_CONTROLLER_INCLUDE_INTERFACE_TYPES_INTERFACE_TYPE_H_ */
+#endif /* HARDWARE_INTERFACE_TYPE_H_ */

@@ -33,7 +33,7 @@
 /**
  * Static builder method to create damping methods dependent on parameterization.
  */
-DampingBase* DampingBuilder::create_damping(const TwistControllerParams &params)
+DampingBase* DampingBuilder::createDamping(const TwistControllerParams &params)
 {
     DampingBase *db = NULL;
     switch(params.damping_method)
@@ -63,8 +63,8 @@ DampingBase* DampingBuilder::create_damping(const TwistControllerParams &params)
 /**
  * Method just returns the damping factor from ros parameter server.
  */
-inline double DampingNone::get_damping_factor(const Eigen::VectorXd &sorted_singular_values,
-                                              const Eigen::MatrixXd &jacobian_data) const
+inline double DampingNone::getDampingFactor(const Eigen::VectorXd &sorted_singular_values,
+                                            const Eigen::MatrixXd &jacobian_data) const
 {
     return 0.0;
 }
@@ -75,8 +75,8 @@ inline double DampingNone::get_damping_factor(const Eigen::VectorXd &sorted_sing
 /**
  * Method just returns the damping factor from ros parameter server.
  */
-inline double DampingConstant::get_damping_factor(const Eigen::VectorXd &sorted_singular_values,
-                                                  const Eigen::MatrixXd &jacobian_data) const
+inline double DampingConstant::getDampingFactor(const Eigen::VectorXd &sorted_singular_values,
+                                                const Eigen::MatrixXd &jacobian_data) const
 {
     return this->params_.damping_factor;
 }
@@ -87,8 +87,8 @@ inline double DampingConstant::get_damping_factor(const Eigen::VectorXd &sorted_
  * Method returns the damping factor according to the manipulability measure.
  * [Nakamura, "Advanced Robotics Redundancy and Optimization", ISBN: 0-201-15198-7, Page 268]
  */
-double DampingManipulability::get_damping_factor(const Eigen::VectorXd &sorted_singular_values,
-                                                 const Eigen::MatrixXd &jacobian_data) const
+double DampingManipulability::getDampingFactor(const Eigen::VectorXd &sorted_singular_values,
+                                               const Eigen::MatrixXd &jacobian_data) const
 {
     double w_threshold = this->params_.w_threshold;
     double lambda_max = this->params_.lambda_max;
@@ -96,6 +96,7 @@ double DampingManipulability::get_damping_factor(const Eigen::VectorXd &sorted_s
     double d = prod.determinant();
     double w = std::sqrt(std::abs(d));
     double damping_factor;
+    
     if (w < w_threshold)
     {
         double tmp_w = (1 - w / w_threshold);
@@ -113,8 +114,8 @@ double DampingManipulability::get_damping_factor(const Eigen::VectorXd &sorted_s
 
 /* BEGIN DampingLeastSingularValues **********************************************************************************/
 
-double DampingLeastSingularValues::get_damping_factor(const Eigen::VectorXd &sorted_singular_values,
-                                                      const Eigen::MatrixXd &jacobian_data) const
+double DampingLeastSingularValues::getDampingFactor(const Eigen::VectorXd &sorted_singular_values,
+                                                    const Eigen::MatrixXd &jacobian_data) const
 {
     // Formula 15 Singularity-robust Task-priority Redundandancy Resolution
     if((double)sorted_singular_values(sorted_singular_values.rows()-1) < this->params_.eps_damping)
