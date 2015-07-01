@@ -1,4 +1,4 @@
-string frame_id
+string[] frame_id
 float64[] joint_pos
 ---
-float64 min_dist
+float64[] min_distances

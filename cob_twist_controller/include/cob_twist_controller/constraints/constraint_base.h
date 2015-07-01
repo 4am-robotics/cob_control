@@ -92,6 +92,7 @@ class PriorityBase
                                               const Eigen::MatrixXd& homogeneous_solution) const = 0;
         virtual void update(const JointStates& joint_states) = 0;
         virtual std::string getTaskId() const = 0;
+        virtual ConstraintState getState() const = 0;
 
     protected:
         PRIO priority_;
@@ -125,7 +126,7 @@ class ConstraintBase : public PriorityBase<PRIO>
           last_value_(0.0),
           last_time_(0.0)
         {
-            instance_ctr_++;
+            this->member_inst_cnt_ = instance_ctr_++;
         }
 
         virtual ~ConstraintBase()
@@ -163,17 +164,25 @@ class ConstraintBase : public PriorityBase<PRIO>
             this->calculate();
         }
 
+        virtual ConstraintState getState() const
+        {
+            return this->state_;
+        }
+
+
     protected:
+        ConstraintState state_;
         JointStates joint_states_;
         T_PARAMS constraint_params_;
         CallbackDataMediator& callback_data_mediator_;
+        Eigen::VectorXd partial_values_;
 
         double derivative_value_;
         double value_;
         double last_value_;
         double last_time_;
-        Eigen::VectorXd partial_values_;
 
+        uint32_t member_inst_cnt_;
         static uint32_t instance_ctr_;
 };
 

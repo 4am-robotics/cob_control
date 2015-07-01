@@ -69,9 +69,10 @@ enum ContraintTypes {
     GPM_JLA = 3,
     GPM_JLA_MID = 4,
     GPM_CA = 5,
-    TASK_STACK = 6,
-    TASK_STACK_2ND = 7,
-    TASK_PRIO = 8,
+    TASK_STACK_NO_GPM = 6,
+    TASK_STACK_GPM = 7,
+    TASK_2ND_PRIO = 8,
+    DYN_TASKS_READJ = 9,
 };
 
 struct JointStates
@@ -155,6 +156,51 @@ struct TwistControllerParams {
 
     // added a vector to contain all frames of interest for collision checking.
     std::vector<std::string> collision_check_frames;
+};
+
+enum EN_ConstraintStates
+{
+    NORMAL,
+    DANGER,
+    CRITICAL,
+};
+
+
+class ConstraintState {
+    public:
+
+        ConstraintState()
+        : current_(NORMAL), previous_(NORMAL), transition_(false)
+        {
+
+        }
+
+        inline void setState(EN_ConstraintStates next_state)
+        {
+            this->transition_ = this->current_ != next_state;
+            this->previous_ = this->current_;
+            this->current_ = next_state;
+        }
+
+        inline EN_ConstraintStates getCurrent() const
+        {
+            return this->current_;
+        }
+
+        inline EN_ConstraintStates getPrevious() const
+        {
+            return this->previous_;
+        }
+
+        inline bool isTransition() const
+        {
+            return this->transition_;
+        }
+
+    private:
+        EN_ConstraintStates current_;
+        EN_ConstraintStates previous_;
+        bool transition_;
 };
 
 #endif /* COB_TWIST_CONTROLLER_DATA_TYPES_H_ */

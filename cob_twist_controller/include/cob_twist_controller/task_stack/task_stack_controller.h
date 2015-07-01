@@ -100,6 +100,7 @@ class TaskStackController
 
         void deactivateTask(typename std::vector<Task<PRIO> >::iterator it);
         void deactivateTask(std::string task_id);
+        void activateTask(std::string task_id);
         void deactivateAllTasks();
 
         void activateAllTasks();
@@ -197,6 +198,19 @@ typename std::vector<Task<PRIO> >::iterator TaskStackController<PRIO>::getTasksE
     return this->tasks_.end();
 }
 
+template <typename PRIO>
+void TaskStackController<PRIO>::activateTask(std::string task_id)
+{
+    for (TypedIter_t it = this->tasks_.begin(); it != this->tasks_.end(); it++)
+    {
+        if(it->id_ == task_id)
+        {
+            ROS_INFO_STREAM("activateTask: " << task_id);
+            it->is_active_ = true;
+            break;
+        }
+    }
+}
 
 template <typename PRIO>
 void TaskStackController<PRIO>::deactivateTask(typename std::vector<Task<PRIO> >::iterator it)
@@ -210,15 +224,12 @@ void TaskStackController<PRIO>::deactivateTask(typename std::vector<Task<PRIO> >
 template <typename PRIO>
 void TaskStackController<PRIO>::deactivateTask(std::string task_id)
 {
-//    if(this->tasks_.size() <= 1)
-//    {
-//        return; // already all deactivated. One task must be left.
-//    }
 
     for (TypedIter_t it = this->tasks_.begin(); it != this->tasks_.end(); it++)
     {
         if(it->id_ == task_id)
         {
+            ROS_INFO_STREAM("deactivateTask: " << task_id);
             it->is_active_ = false;
             break;
         }
