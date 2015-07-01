@@ -35,10 +35,10 @@
  */
 DampingBase* DampingBuilder::createDamping(const TwistControllerParams &params)
 {
-    DampingBase *db = NULL;
+    DampingBase* db = NULL;
     switch(params.damping_method)
     {
-        case NONE:
+        case NO_DAMPING:
             db = new DampingNone(params);
             break;
         case CONSTANT:
@@ -47,7 +47,7 @@ DampingBase* DampingBuilder::createDamping(const TwistControllerParams &params)
         case MANIPULABILITY:
             db = new DampingManipulability(params);
             break;
-        case LSV:
+        case LEAST_SINGULAR_VALUE:
             db = new DampingLeastSingularValues(params);
             break;
         default:

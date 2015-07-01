@@ -37,14 +37,20 @@
 
 KinematicExtensionBase* KinematicExtensionBuilder::createKinematicExtension(const TwistControllerParams &params)
 {
-    KinematicExtensionBase *keb = NULL;
-    if(params.base_active)
+    KinematicExtensionBase* keb = NULL;
+    
+    switch(params.kinematic_extension)
     {
-        keb = new KinematicExtensionBaseActive(params);
-    }
-    else
-    {
-        keb = new KinematicExtensionNone(params);
+        case NO_EXTENSION:
+            keb = new KinematicExtensionNone(params);
+            break;
+        case BASE_ACTIVE:
+            keb = new KinematicExtensionBaseActive(params);
+            break;
+        default:
+            ROS_ERROR("KinematicExtension %d not defined! Using default: 'NO_EXTENSION'!", params.kinematic_extension);
+            keb = new KinematicExtensionNone(params);
+            break;
     }
     
     return keb;
@@ -76,7 +82,7 @@ KDL::Jacobian KinematicExtension6D::adjustJacobian(const KDL::Jacobian& jac_chai
 
 KDL::Jacobian KinematicExtension6D::adjustJacobian6d(const KDL::Jacobian& jac_chain, const KDL::Frame full_frame, const KDL::Frame partial_frame, const ActiveCartesianDimension active_dim)
 {
-    ///compose jac_full considering kinematical extension for base_active
+    ///compose jac_full considering kinematical extension
     KDL::Jacobian jac_full;
     
     //ToDo: some of the variable names are not generic enough

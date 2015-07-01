@@ -100,7 +100,7 @@ public:
         this->twist_controller_params_.keep_direction = true;
         this->twist_controller_params_.enforce_pos_limits = true;
         this->twist_controller_params_.enforce_vel_limits = true;
-        this->twist_controller_params_.base_active = false;
+        this->twist_controller_params_.kinematic_extension = NO_EXTENSION;
         this->twist_controller_params_.base_compensation = false;
     }
 

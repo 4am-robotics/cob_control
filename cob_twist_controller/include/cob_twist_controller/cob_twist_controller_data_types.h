@@ -51,19 +51,25 @@ typedef Eigen::Matrix<double,7,1> t_Vector7d;
 typedef Eigen::Matrix<double,7,6> t_Matrix76d;
 
 enum DampingMethodTypes {
-    NONE = 0,
+    NO_DAMPING = 0,
     CONSTANT = 1,
     MANIPULABILITY = 2,
-    LSV = 3,
+    LEAST_SINGULAR_VALUE = 3,
 };
 
 enum HardwareInterfaceTypes {
-    VELOCITY = 0,
-    POSITION = 1,
+    VELOCITY_INTERFACE = 0,
+    POSITION_INTERFACE = 1,
 };
 
+enum KinematicExtensionTypes {
+    NO_EXTENSION = 0,
+    BASE_ACTIVE = 1,
+};
+
+
 enum ContraintTypes {
-    None = 0,
+    NO_CONSTRAINT = 0,
     WLN = 1,
     WLN_JLA = 2,
     GPM_JLA = 3,
@@ -140,7 +146,7 @@ struct TwistControllerParams {
     double max_vel_rot_base;
     
     bool base_compensation;
-    bool base_active;
+    KinematicExtensionTypes kinematic_extension;
     double base_ratio;
 
 

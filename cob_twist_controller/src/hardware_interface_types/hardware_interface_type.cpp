@@ -32,16 +32,17 @@
 HardwareInterfaceBase* HardwareInterfaceBuilder::createHardwareInterface(ros::NodeHandle& nh,
                                                                          const TwistControllerParams &params)
 {
-    HardwareInterfaceBase *ib = NULL;
+    HardwareInterfaceBase* ib = NULL;
     switch(params.hardware_interface_type)
     {
-        case VELOCITY:
+        case VELOCITY_INTERFACE:
             ib = new HardwareInterfaceVelocity(nh, params);
             break;
-        case POSITION:
+        case POSITION_INTERFACE:
             ib = new HardwareInterfacePosition(nh, params);
             break;
         default:
+            ROS_ERROR("HardwareInterface %d not defined! Using default: 'VELOCITY_INTERFACE'!", params.hardware_interface_type);
             ib = new HardwareInterfaceVelocity(nh, params);
             break;
     }

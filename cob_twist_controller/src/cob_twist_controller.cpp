@@ -189,7 +189,7 @@ void CobTwistController::reinitServiceRegistration()
 
 void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControllerConfig& config, uint32_t level)
 {
-    if(config.base_active && config.base_compensation)
+    if((config.kinematic_extension == BASE_ACTIVE) && config.base_compensation)
     {
         ROS_ERROR("base_active and base_compensation cannot be enabled at the same time");
     }
@@ -230,7 +230,7 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     params.max_vel_rot_base = twist_controller_params_.max_vel_rot_base;
     
     params.base_compensation = config.base_compensation;
-    params.base_active = config.base_active;
+    params.kinematic_extension = static_cast<KinematicExtensionTypes>(config.kinematic_extension);
     params.base_ratio = config.base_ratio;
 
 
@@ -266,7 +266,7 @@ void CobTwistController::initParams()
     TwistControllerParams params;
     
     params.dof = twist_controller_params_.dof;
-    params.hardware_interface_type = VELOCITY;
+    params.hardware_interface_type = VELOCITY_INTERFACE;
     
     params.numerical_filtering = false;
     params.damping_method = MANIPULABILITY;
@@ -298,7 +298,7 @@ void CobTwistController::initParams()
     params.max_vel_rot_base = twist_controller_params_.max_vel_rot_base;
     
     params.base_compensation = false;
-    params.base_active = false;
+    params.kinematic_extension = NO_EXTENSION;
     params.base_ratio = 0.0;
 
 

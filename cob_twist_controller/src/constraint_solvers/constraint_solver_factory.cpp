@@ -87,7 +87,7 @@ bool ConstraintSolverFactory::getSolverFactory(const TwistControllerParams &para
     ROS_INFO_STREAM("Called ConstraintSolverFactory::getSolverFactory");
     switch(params.constraint)
     {
-        case None:
+        case NO_CONSTRAINT:
             solver_factory.reset(new SolverFactory<UnconstraintSolver>(params));
             break;
         case WLN:
