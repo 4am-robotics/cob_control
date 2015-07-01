@@ -44,6 +44,7 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const KDL::JntArray& q_in,
     KDL::Jacobian jac_chain(chain_.getNrOfJoints());
     jnt2jac_.JntToJac(q_in, jac_chain);
     
+    ///append columns to Jacobian in order to reflect additional DoFs of kinematical extension
     this->jac_ = this->kinematic_extension_->adjust_jacobian(jac_chain);
 
     t_Vector6d v_in_vec;
@@ -63,8 +64,17 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const KDL::JntArray& q_in,
         qdot_out(i) = qdot_out_vec(i);
     }
     
+    //ToDo:
+    ///limiters shut be applied here in order to be able to consider the additional DoFs within "AllLimit", too
+    
+    
     ///process result for kinematical extension
     this->kinematic_extension_->process_result_extension(qdot_out);
+    
+    
+    //ToDo:
+    ///then qdot_out shut be resized to contain only the chain_qdot_out's again
+    
 
     return retStat;
 }

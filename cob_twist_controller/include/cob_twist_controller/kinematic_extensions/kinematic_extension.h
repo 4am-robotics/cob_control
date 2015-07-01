@@ -69,12 +69,32 @@ class KinematicExtensionNone : public KinematicExtensionBase
 /* END KinematicExtensionNone **********************************************************************************************/
 
 
+/* BEGIN KinematicExtension6D ****************************************************************************************/
+class KinematicExtension6D : public KinematicExtensionBase
+{
+    public:
+        KinematicExtension6D(const InvDiffKinSolverParams &params)
+        : KinematicExtensionBase(params)
+        {
+            //nothing to do here
+        }
+
+        ~KinematicExtension6D() {}
+
+        virtual KDL::Jacobian adjust_jacobian(const KDL::Jacobian& jac_chain);
+        virtual void process_result_extension(const KDL::JntArray &q_dot_ik) = 0;
+        
+        virtual KDL::Jacobian adjust_jacobian_6d(const KDL::Jacobian& jac_chain);
+};
+/* END KinematicExtension6D **********************************************************************************************/
+
+
 /* BEGIN KinematicExtensionBaseActive ****************************************************************************************/
-class KinematicExtensionBaseActive : public KinematicExtensionBase
+class KinematicExtensionBaseActive : public KinematicExtension6D
 {
     public:
         KinematicExtensionBaseActive(const InvDiffKinSolverParams &params)
-        : KinematicExtensionBase(params)
+        : KinematicExtension6D(params)
         {
             base_vel_pub = nh_.advertise<geometry_msgs::Twist>("/base/twist_controller/command", 1);
         }
@@ -84,8 +104,11 @@ class KinematicExtensionBaseActive : public KinematicExtensionBase
         virtual KDL::Jacobian adjust_jacobian(const KDL::Jacobian& jac_chain);
         virtual void process_result_extension(const KDL::JntArray &q_dot_ik);
         
+        
         ros::NodeHandle nh_;
-    
+        
+        void baseTwistCallback(const geometry_msgs::Twist::ConstPtr& msg);
+        
     
     private:
         ros::Publisher base_vel_pub;

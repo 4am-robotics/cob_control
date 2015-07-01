@@ -145,10 +145,6 @@ bool CobTwistController::initialize()
 
     odometry_sub = nh_.subscribe("/base/odometry_controller/odometry", 1, &CobTwistController::odometryCallback, this);
 
-    ros::Time time_ = ros::Time::now();
-    ros::Time last_update_time_ = time_;
-    ros::Duration period_ = time_ - last_update_time_;
-
     this->twist_controller_params_.keep_direction = true;
     this->twist_controller_params_.enforce_pos_limits = true;
     this->twist_controller_params_.enforce_vel_limits = true;
@@ -306,9 +302,6 @@ void CobTwistController::twistCallback(const geometry_msgs::Twist::ConstPtr& msg
 /// Orientation of twist is with respect to chain_base coordinate system
 void CobTwistController::solveTwist(KDL::Twist twist)
 {
-    geometry_msgs::Pose pose_tip, pose_base;
-    geometry_msgs::Point point_base, point_ee;
-
     int ret_ik;
     KDL::JntArray q_dot_ik(chain_.getNrOfJoints());
 
@@ -369,21 +362,26 @@ void CobTwistController::jointstateCallback(const sensor_msgs::JointState::Const
 void CobTwistController::odometryCallback(const nav_msgs::Odometry::ConstPtr& msg)
 {
     KDL::Twist twist_odometry_bl, tangential_twist_bl, twist_odometry_transformed_cb;
+    KDL::Frame cb_frame_bl;
+    tf::StampedTransform cb_transform_bl,
+                         bl_transform_ct;
 
     try{
-        tf_listener_.waitForTransform(chain_base_link_,"base_link", ros::Time(0), ros::Duration(0.5));
-        tf_listener_.lookupTransform(chain_base_link_,"base_link", ros::Time(0), cb_transform_bl);
+        tf_listener_.waitForTransform(chain_base_link_, "base_link", ros::Time(0), ros::Duration(0.5));
+        tf_listener_.lookupTransform(chain_base_link_, "base_link", ros::Time(0), cb_transform_bl);
 
-        tf_listener_.waitForTransform("base_link",chain_tip_link_, ros::Time(0), ros::Duration(0.5));
-        tf_listener_.lookupTransform("base_link",chain_tip_link_, ros::Time(0), bl_transform_ct);
+        tf_listener_.waitForTransform("base_link", chain_tip_link_, ros::Time(0), ros::Duration(0.5));
+        tf_listener_.lookupTransform("base_link", chain_tip_link_, ros::Time(0), bl_transform_ct);
 
         cb_frame_bl.p = KDL::Vector(cb_transform_bl.getOrigin().x(), cb_transform_bl.getOrigin().y(), cb_transform_bl.getOrigin().z());
         cb_frame_bl.M = KDL::Rotation::Quaternion(cb_transform_bl.getRotation().x(), cb_transform_bl.getRotation().y(), cb_transform_bl.getRotation().z(), cb_transform_bl.getRotation().w());
     }
-    catch (tf::TransformException &ex){
+    catch (tf::TransformException &ex)
+    {
         ROS_ERROR("%s",ex.what());
         return;
     }
+    
     try
     {
         // Calculate tangential twist for angular base movements v = w x r
@@ -399,8 +397,8 @@ void CobTwistController::odometryCallback(const nav_msgs::Odometry::ConstPtr& ms
         return;
     }
 
-    //ROS_INFO("Crossproduct : %f %f %f",res(0),res(1),res(2));
-    //ROS_INFO("TCP: %f %f %f",bl_transform_ct.getOrigin().x(),bl_transform_ct.getOrigin().y(),bl_transform_ct.getOrigin().z());
+    //ROS_INFO("Crossproduct : %f %f %f", res(0), res(1), res(2));
+    //ROS_INFO("TCP: %f %f %f", bl_transform_ct.getOrigin().x(), bl_transform_ct.getOrigin().y(), bl_transform_ct.getOrigin().z());
 
     tf::twistMsgToKDL(msg->twist.twist, twist_odometry_bl);    // Base Twist
 

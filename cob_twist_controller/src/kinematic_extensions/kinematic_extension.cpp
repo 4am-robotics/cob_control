@@ -58,11 +58,9 @@ void KinematicExtensionNone::process_result_extension(const KDL::JntArray &q_dot
 /* END KinematicExtensionNone **********************************************************************************************/
 
 
-/* BEGIN KinematicExtensionBaseActive ********************************************************************************************/
-KDL::Jacobian KinematicExtensionBaseActive::adjust_jacobian(const KDL::Jacobian& jac_chain)
+/* BEGIN KinematicExtension6D ********************************************************************************************/
+KDL::Jacobian KinematicExtension6D::adjust_jacobian(const KDL::Jacobian& jac_chain)
 {
-    return jac_chain;
-    
     //KDL::Jacobian jac_;
     
     /////get required transformations
@@ -98,6 +96,13 @@ KDL::Jacobian KinematicExtensionBaseActive::adjust_jacobian(const KDL::Jacobian&
     //dim.rot_y=0;
     //dim.rot_z=1;
     
+    return adjust_jacobian_6d(jac_chain);
+}
+
+
+KDL::Jacobian KinematicExtension6D::adjust_jacobian_6d(const KDL::Jacobian& jac_chain)
+{
+    return jac_chain;
     
     /////compose jac_full considering kinematical extension for base_active
     //Eigen::Vector3d w_x_chain_base, w_y_chain_base, w_z_chain_base;
@@ -182,6 +187,51 @@ KDL::Jacobian KinematicExtensionBaseActive::adjust_jacobian(const KDL::Jacobian&
     ////ROS_DEBUG_STREAM("ExtendedJacobian" << std::endl << jac_full);
 
     //return jac_;
+}
+
+/* END KinematicExtension6D **********************************************************************************************/
+
+
+
+/* BEGIN KinematicExtensionBaseActive ********************************************************************************************/
+KDL::Jacobian KinematicExtensionBaseActive::adjust_jacobian(const KDL::Jacobian& jac_chain)
+{
+    //KDL::Jacobian jac_;
+    
+    /////get required transformations
+    //try
+    //{
+        //ros::Time now = ros::Time::now();
+        //tf_listener_.waitForTransform("base_link", chain_tip_link_, now, ros::Duration(0.5));
+        //tf_listener_.lookupTransform("base_link", chain_tip_link_,  now, bl_transform_ct);
+        
+        //tf_listener_.waitForTransform(chain_base_link_, "base_link", now, ros::Duration(0.5));
+        //tf_listener_.lookupTransform(chain_base_link_, "base_link", now, cb_transform_bl);
+    //}
+    //catch (tf::TransformException &ex)
+    //{
+        //ROS_ERROR("%s",ex.what());
+        //return jac_chain;
+    //}
+
+    //bl_frame_ct.p = KDL::Vector(bl_transform_ct.getOrigin().x(), bl_transform_ct.getOrigin().y(), bl_transform_ct.getOrigin().z());
+    //bl_frame_ct.M = KDL::Rotation::Quaternion(bl_transform_ct.getRotation().x(), bl_transform_ct.getRotation().y(), bl_transform_ct.getRotation().z(), bl_transform_ct.getRotation().w());
+
+    //cb_frame_bl.p = KDL::Vector(cb_transform_bl.getOrigin().x(), cb_transform_bl.getOrigin().y(), cb_transform_bl.getOrigin().z());
+    //cb_frame_bl.M = KDL::Rotation::Quaternion(cb_transform_bl.getRotation().x(), cb_transform_bl.getRotation().y(), cb_transform_bl.getRotation().z(), cb_transform_bl.getRotation().w());
+    
+    
+    /////active base can move in lin_x, lin_y and rot_z
+    //ExtendedJacobianDimension dim;
+    //dim.lin_x=1;
+    //dim.lin_y=1;
+    //dim.lin_z=0;
+
+    //dim.rot_x=0;
+    //dim.rot_y=0;
+    //dim.rot_z=1;
+
+    return adjust_jacobian_6d(jac_chain);
 }
 
 void KinematicExtensionBaseActive::process_result_extension(const KDL::JntArray &q_dot_ik)

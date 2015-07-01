@@ -122,7 +122,7 @@ LimiterContainer::~LimiterContainer()
  */
 KDL::JntArray LimiterAllJointPositions::enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const
 {
-    KDL::JntArray scaled_q_dot(q_dot_ik.rows()); // according to KDL: all elements in data have 0 value; size depends on base_active (10) or not (7).
+    KDL::JntArray scaled_q_dot(q_dot_ik.rows()); // according to KDL: all elements in data have 0 value;
     double tolerance = this->tc_params_.tolerance / 180.0 * M_PI;
 
 
@@ -195,24 +195,24 @@ KDL::JntArray LimiterAllJointVelocities::enforceLimits(const KDL::JntArray& q_do
         }
     }
 
-    if(this->tc_params_.base_active)
-    {
-        if(max_factor < std::fabs((q_dot_ik(this->tc_params_.dof)/this->tc_params_.max_vel_lin_base)))
-        {
-            max_factor = std::fabs((q_dot_ik(this->tc_params_.dof) / this->tc_params_.max_vel_lin_base));
-            //ROS_WARN("BaseTransX exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_), max_vel_lin_base_, max_factor);
-        }
-        if(max_factor < std::fabs((q_dot_ik(this->tc_params_.dof + 1) / this->tc_params_.max_vel_lin_base)))
-        {
-            max_factor = std::fabs((q_dot_ik(this->tc_params_.dof + 1) / this->tc_params_.max_vel_lin_base));
-            //ROS_WARN("BaseTransY exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+1), max_vel_lin_base_, max_factor);
-        }
-        if(max_factor < std::fabs((q_dot_ik(this->tc_params_.dof + 2) / this->tc_params_.max_vel_rot_base)))
-        {
-            max_factor = std::fabs((q_dot_ik(this->tc_params_.dof + 2) / this->tc_params_.max_vel_rot_base));
-            //ROS_WARN("BaseRotZ exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+2), max_vel_rot_base_, max_factor);
-        }
-    }
+    //if(this->tc_params_.base_active)
+    //{
+        //if(max_factor < std::fabs((q_dot_ik(this->tc_params_.dof)/this->tc_params_.max_vel_lin_base)))
+        //{
+            //max_factor = std::fabs((q_dot_ik(this->tc_params_.dof) / this->tc_params_.max_vel_lin_base));
+            ////ROS_WARN("BaseTransX exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_), max_vel_lin_base_, max_factor);
+        //}
+        //if(max_factor < std::fabs((q_dot_ik(this->tc_params_.dof + 1) / this->tc_params_.max_vel_lin_base)))
+        //{
+            //max_factor = std::fabs((q_dot_ik(this->tc_params_.dof + 1) / this->tc_params_.max_vel_lin_base));
+            ////ROS_WARN("BaseTransY exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+1), max_vel_lin_base_, max_factor);
+        //}
+        //if(max_factor < std::fabs((q_dot_ik(this->tc_params_.dof + 2) / this->tc_params_.max_vel_rot_base)))
+        //{
+            //max_factor = std::fabs((q_dot_ik(this->tc_params_.dof + 2) / this->tc_params_.max_vel_rot_base));
+            ////ROS_WARN("BaseRotZ exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+2), max_vel_rot_base_, max_factor);
+        //}
+    //}
 
     if(max_factor > 1.0)
     {
@@ -223,12 +223,12 @@ KDL::JntArray LimiterAllJointVelocities::enforceLimits(const KDL::JntArray& q_do
             //ROS_WARN("Joint %d Normalized %f", i, q_dot_norm(i));
         }
 
-        if(this->tc_params_.base_active)
-        {
-            q_dot_norm(this->tc_params_.dof) = q_dot_ik(this->tc_params_.dof) / max_factor;
-            q_dot_norm(this->tc_params_.dof + 1) = q_dot_ik(this->tc_params_.dof + 1) / max_factor;
-            q_dot_norm(this->tc_params_.dof + 2) = q_dot_ik(this->tc_params_.dof + 2) / max_factor;
-        }
+        //if(this->tc_params_.base_active)
+        //{
+            //q_dot_norm(this->tc_params_.dof) = q_dot_ik(this->tc_params_.dof) / max_factor;
+            //q_dot_norm(this->tc_params_.dof + 1) = q_dot_ik(this->tc_params_.dof + 1) / max_factor;
+            //q_dot_norm(this->tc_params_.dof + 2) = q_dot_ik(this->tc_params_.dof + 2) / max_factor;
+        //}
     }
 
     return q_dot_norm;
@@ -288,13 +288,13 @@ KDL::JntArray LimiterIndividualJointVelocities::enforceLimits(const KDL::JntArra
 
     uint16_t maxDof = this->tc_params_.dof;
     std::vector<double> tmpLimits = this->tc_params_.limits_vel;
-    if(this->tc_params_.base_active)
-    {
-        maxDof += 3; // additional 3 DOF for the base (X, Y, Z)
-        tmpLimits.push_back(this->tc_params_.max_vel_lin_base); // BaseTransX limit
-        tmpLimits.push_back(this->tc_params_.max_vel_lin_base); // BaseTransY limit
-        tmpLimits.push_back(this->tc_params_.max_vel_rot_base); // BaseRotZ limit
-    }
+    //if(this->tc_params_.base_active)
+    //{
+        //maxDof += 3; // additional 3 DOF for the base (X, Y, Z)
+        //tmpLimits.push_back(this->tc_params_.max_vel_lin_base); // BaseTransX limit
+        //tmpLimits.push_back(this->tc_params_.max_vel_lin_base); // BaseTransY limit
+        //tmpLimits.push_back(this->tc_params_.max_vel_rot_base); // BaseRotZ limit
+    //}
 
     for(uint16_t i=0; i < maxDof; ++i)
     {
