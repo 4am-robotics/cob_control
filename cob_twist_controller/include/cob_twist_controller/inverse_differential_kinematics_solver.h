@@ -35,6 +35,7 @@
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/callback_data_mediator.h"
+#include "cob_twist_controller/limiters/limiter.h"
 #include "cob_twist_controller/kinematic_extensions/kinematic_extension.h"
 #include "cob_twist_controller/constraint_solvers/constraint_solver_factory.h"
 #include "cob_twist_controller/task_stack/task_stack_controller.h"
@@ -65,11 +66,15 @@ public:
         callback_data_mediator_(data_mediator),
         constraint_solver_factory_(data_mediator, jnt2jac_)
     {
+        this->limiters_.reset(new LimiterContainer(this->params_, this->chain_));
+        this->limiters_->init();
+        
         this->kinematic_extension_.reset(KinematicExtensionBuilder::createKinematicExtension(this->params_));
     }
 
     virtual ~InverseDifferentialKinematicsSolver()
     {
+        this->limiters_.reset();
         this->kinematic_extension_.reset();
     };
     
@@ -86,6 +91,7 @@ private:
     KDL::ChainJntToJacSolver jnt2jac_;
     TwistControllerParams params_;
     CallbackDataMediator& callback_data_mediator_;
+    boost::shared_ptr<LimiterContainer> limiters_;
     boost::shared_ptr<KinematicExtensionBase> kinematic_extension_;
     ConstraintSolverFactory constraint_solver_factory_;
 

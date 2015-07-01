@@ -153,9 +153,6 @@ bool CobTwistController::initialize()
     this->twist_controller_params_.enforce_pos_limits = true;
     this->twist_controller_params_.enforce_vel_limits = true;
 
-    this->limiters_.reset(new LimiterContainer(this->twist_controller_params_, this->chain_));
-    this->limiters_->init();
-
     this->hardware_interface_.reset(HardwareInterfaceBuilder::createHardwareInterface(this->nh_, this->twist_controller_params_));
 
     ROS_INFO("...initialized!");
@@ -244,9 +241,6 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     //params.collision_check_frames.clear();
     //params.task_stack_controller = NULL;
     
-
-    this->limiters_.reset(new LimiterContainer(this->twist_controller_params_, this->chain_));
-    this->limiters_->init();
 
     this->hardware_interface_.reset(HardwareInterfaceBuilder::createHardwareInterface(this->nh_, this->twist_controller_params_));
 
@@ -372,8 +366,6 @@ void CobTwistController::solveTwist(KDL::Twist twist)
     }
     else
     {
-        q_dot_ik = this->limiters_->enforceLimits(q_dot_ik, this->joint_states_.current_q_);
-
         // Change between velocity and position interface
         this->hardware_interface_->processResult(q_dot_ik, initial_pos_);
     }

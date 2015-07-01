@@ -195,24 +195,39 @@ KDL::JntArray LimiterAllJointVelocities::enforceLimits(const KDL::JntArray& q_do
         }
     }
 
-    //if(this->tc_params_.base_active)
-    //{
-        //if(max_factor < std::fabs((q_dot_ik(this->tc_params_.dof)/this->tc_params_.max_vel_lin_base)))
-        //{
-            //max_factor = std::fabs((q_dot_ik(this->tc_params_.dof) / this->tc_params_.max_vel_lin_base));
-            ////ROS_WARN("BaseTransX exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_), max_vel_lin_base_, max_factor);
-        //}
-        //if(max_factor < std::fabs((q_dot_ik(this->tc_params_.dof + 1) / this->tc_params_.max_vel_lin_base)))
-        //{
-            //max_factor = std::fabs((q_dot_ik(this->tc_params_.dof + 1) / this->tc_params_.max_vel_lin_base));
-            ////ROS_WARN("BaseTransY exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+1), max_vel_lin_base_, max_factor);
-        //}
-        //if(max_factor < std::fabs((q_dot_ik(this->tc_params_.dof + 2) / this->tc_params_.max_vel_rot_base)))
-        //{
-            //max_factor = std::fabs((q_dot_ik(this->tc_params_.dof + 2) / this->tc_params_.max_vel_rot_base));
-            ////ROS_WARN("BaseRotZ exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+2), max_vel_rot_base_, max_factor);
-        //}
-    //}
+    if(this->tc_params_.kinematic_extension == BASE_ACTIVE)
+    {
+        if(max_factor < std::fabs((q_dot_ik(this->tc_params_.dof)/this->tc_params_.max_vel_lin_base)))
+        {
+            max_factor = std::fabs((q_dot_ik(this->tc_params_.dof) / this->tc_params_.max_vel_lin_base));
+            //ROS_WARN("BaseTransX exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_), max_vel_lin_base_, max_factor);
+        }
+        if(max_factor < std::fabs((q_dot_ik(this->tc_params_.dof + 1) / this->tc_params_.max_vel_lin_base)))
+        {
+            max_factor = std::fabs((q_dot_ik(this->tc_params_.dof + 1) / this->tc_params_.max_vel_lin_base));
+            //ROS_WARN("BaseTransY exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+1), max_vel_lin_base_, max_factor);
+        }
+        if(max_factor < std::fabs((q_dot_ik(this->tc_params_.dof + 2) / this->tc_params_.max_vel_lin_base)))
+        {
+            max_factor = std::fabs((q_dot_ik(this->tc_params_.dof + 2) / this->tc_params_.max_vel_lin_base));
+            //ROS_WARN("BaseTransZ exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+2), max_vel_lin_base_, max_factor);
+        }
+        if(max_factor < std::fabs((q_dot_ik(this->tc_params_.dof + 3) / this->tc_params_.max_vel_rot_base)))
+        {
+            max_factor = std::fabs((q_dot_ik(this->tc_params_.dof + 3) / this->tc_params_.max_vel_rot_base));
+            //ROS_WARN("BaseRotX exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+3), max_vel_rot_base_, max_factor);
+        }
+        if(max_factor < std::fabs((q_dot_ik(this->tc_params_.dof + 4) / this->tc_params_.max_vel_rot_base)))
+        {
+            max_factor = std::fabs((q_dot_ik(this->tc_params_.dof + 4) / this->tc_params_.max_vel_rot_base));
+            //ROS_WARN("BaseRotY exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+4), max_vel_rot_base_, max_factor);
+        }
+        if(max_factor < std::fabs((q_dot_ik(this->tc_params_.dof + 5) / this->tc_params_.max_vel_rot_base)))
+        {
+            max_factor = std::fabs((q_dot_ik(this->tc_params_.dof + 5) / this->tc_params_.max_vel_rot_base));
+            //ROS_WARN("BaseRotZ exceeds limit: Desired %f, Limit %f, Factor %f", q_dot_ik(dof_+5), max_vel_rot_base_, max_factor);
+        }
+    }
 
     if(max_factor > 1.0)
     {
@@ -222,12 +237,15 @@ KDL::JntArray LimiterAllJointVelocities::enforceLimits(const KDL::JntArray& q_do
             q_dot_norm(i) = q_dot_ik(i) / max_factor;
         }
 
-        //if(this->tc_params_.base_active)
-        //{
-            //q_dot_norm(this->tc_params_.dof) = q_dot_ik(this->tc_params_.dof) / max_factor;
-            //q_dot_norm(this->tc_params_.dof + 1) = q_dot_ik(this->tc_params_.dof + 1) / max_factor;
-            //q_dot_norm(this->tc_params_.dof + 2) = q_dot_ik(this->tc_params_.dof + 2) / max_factor;
-        //}
+        if(this->tc_params_.kinematic_extension == BASE_ACTIVE)
+        {
+            q_dot_norm(this->tc_params_.dof)     = q_dot_ik(this->tc_params_.dof)     / max_factor;
+            q_dot_norm(this->tc_params_.dof + 1) = q_dot_ik(this->tc_params_.dof + 1) / max_factor;
+            q_dot_norm(this->tc_params_.dof + 2) = q_dot_ik(this->tc_params_.dof + 2) / max_factor;
+            q_dot_norm(this->tc_params_.dof + 3) = q_dot_ik(this->tc_params_.dof + 3) / max_factor;
+            q_dot_norm(this->tc_params_.dof + 4) = q_dot_ik(this->tc_params_.dof + 4) / max_factor;
+            q_dot_norm(this->tc_params_.dof + 5) = q_dot_ik(this->tc_params_.dof + 5) / max_factor;
+        }
     }
 
     return q_dot_norm;
@@ -287,13 +305,16 @@ KDL::JntArray LimiterIndividualJointVelocities::enforceLimits(const KDL::JntArra
 
     uint16_t maxDof = this->tc_params_.dof;
     std::vector<double> tmpLimits = this->tc_params_.limits_vel;
-    //if(this->tc_params_.base_active)
-    //{
-        //maxDof += 3; // additional 3 DOF for the base (X, Y, Z)
-        //tmpLimits.push_back(this->tc_params_.max_vel_lin_base); // BaseTransX limit
-        //tmpLimits.push_back(this->tc_params_.max_vel_lin_base); // BaseTransY limit
-        //tmpLimits.push_back(this->tc_params_.max_vel_rot_base); // BaseRotZ limit
-    //}
+    if(this->tc_params_.kinematic_extension == BASE_ACTIVE)
+    {
+        maxDof += 6; // additional 6 DOF kinematic extension
+        tmpLimits.push_back(this->tc_params_.max_vel_lin_base); // BaseTransX limit
+        tmpLimits.push_back(this->tc_params_.max_vel_lin_base); // BaseTransY limit
+        tmpLimits.push_back(this->tc_params_.max_vel_lin_base); // BaseTransZ limit
+        tmpLimits.push_back(this->tc_params_.max_vel_rot_base); // BaseRotX limit
+        tmpLimits.push_back(this->tc_params_.max_vel_rot_base); // BaseRotY limit
+        tmpLimits.push_back(this->tc_params_.max_vel_rot_base); // BaseRotZ limit
+    }
 
     for(uint16_t i=0; i < maxDof; ++i)
     {

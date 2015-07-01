@@ -65,9 +65,9 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const JointStates& joint_stat
         qdot_out_full(i) = qdot_out_vec(i);
     }
     
-    //ToDo:
-    ///limiters shut be applied here in order to be able to consider the additional DoFs within "AllLimit", too
     
+    ///limiters shut be applied here in order to be able to consider the additional DoFs within "AllLimit", too
+    qdot_out_full = this->limiters_->enforceLimits(qdot_out_full, joint_states.current_q_);
     
     ///process result for kinematical extension
     this->kinematic_extension_->processResultExtension(qdot_out_full);
@@ -90,6 +90,9 @@ void InverseDifferentialKinematicsSolver::resetAll(TwistControllerParams params)
     {
         ROS_ERROR("Failed to reset IDK constraint solver after dynamic_reconfigure.");
     }
+    
+    this->limiters_.reset(new LimiterContainer(this->params_, this->chain_));
+    this->limiters_->init();
     
     this->kinematic_extension_.reset(KinematicExtensionBuilder::createKinematicExtension(this->params_));
 }
