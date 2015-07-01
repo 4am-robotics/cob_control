@@ -49,11 +49,14 @@ int main(int argc, char **argv)
 
     ros::Subscriber jointstate_sub = nh.subscribe("joint_states", 1, &DistanceManager::jointstateCb, &sm);
     ros::ServiceServer registration_srv = nh.advertiseService("obstacle_distance/registerPointOfInterest" , &DistanceManager::registerPointOfInterest, &sm);
+    ros::ServiceServer distance_prediction_srv = nh.advertiseService("obstacle_distance/predictDistance" , &DistanceManager::predictDistance, &sm);
 
     ROS_INFO("Starting basic_shapes ...\r\n");
-    fcl::Box b(0.3, 0.3, 0.3);
+    fcl::Sphere s(0.1);
+    fcl::Box b(0.1, 0.1, 0.1); // Take care the nearest point for collision is one of the eight corners!!! This might lead to jittering
 
-    t_ptr_IMarkerShape sptr_Cube(new MarkerShape<fcl::Box>(b, 0.5, -0.5, 1.0));
+    //t_ptr_IMarkerShape sptr_Cube(new MarkerShape<fcl::Box>(b, 0.35, -0.35, 0.8));
+    t_ptr_IMarkerShape sptr_Cube(new MarkerShape<fcl::Sphere>(s, 0.35, -0.35, 0.8));
     // t_ptr_IMarkerShape sptr_Sphere(new MarkerShape<fcl::Sphere>(1.0, -1.0, -1.0));
     // t_ptr_IMarkerShape sptr_Cyl(new MarkerShape<fcl::Cylinder>(-1.0, 1.0, -1.0));
 
@@ -64,7 +67,7 @@ int main(int argc, char **argv)
     ROS_INFO_ONCE("Subscriber to the marker has been created");
     sm.drawObstacles();
 
-    ros::Rate loop_rate(20);
+    ros::Rate loop_rate(60);
     while(ros::ok())
     {
         sm.calculate();

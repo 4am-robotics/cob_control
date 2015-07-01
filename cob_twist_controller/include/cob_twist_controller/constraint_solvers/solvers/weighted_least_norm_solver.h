@@ -43,13 +43,10 @@ class WeightedLeastNormSolver : public ConstraintSolver<>
          * See base class ConstraintSolver for more details on params and returns.
          */
         virtual Eigen::MatrixXd solve(const t_Vector6d &in_cart_velocities,
-                                      const KDL::JntArray& q,
-                                      const KDL::JntArray& last_q_dot) const;
+                                      const JointStates& joint_states);
 
-        WeightedLeastNormSolver(InvDiffKinSolverParams &params,
-                                  t_Matrix6Xd &jacobian_data)
-                                  : ConstraintSolver(params,
-                                                     jacobian_data)
+        WeightedLeastNormSolver(const InvDiffKinSolverParams &params)
+                                  : ConstraintSolver(params)
         {
 
         }
@@ -68,7 +65,7 @@ class WeightedLeastNormSolver : public ConstraintSolver<>
          * @param q_dot The current joint velocities.
          * @return Diagonal weighting matrix that adapts the Jacobian.
          */
-        virtual Eigen::MatrixXd calculateWeighting(const KDL::JntArray& q, const KDL::JntArray& q_dot) const;
+        virtual Eigen::MatrixXd calculateWeighting(const JointStates& joint_states) const;
 };
 
 #endif /* WEIGHTED_LEAST_NORM_SOLVER_H_ */

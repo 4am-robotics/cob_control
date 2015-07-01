@@ -133,8 +133,10 @@ bool CobTwistController::initialize()
     reconfigure_server_->setCallback(boost::bind(&CobTwistController::reconfigureCallback,   this, _1, _2));
 
     ///initialize variables and current joint values and velocities
-    last_q_ = KDL::JntArray(chain_.getNrOfJoints());
-    last_q_dot_ = KDL::JntArray(chain_.getNrOfJoints());
+    this->joint_states_.current_q_ = KDL::JntArray(chain_.getNrOfJoints());
+    this->joint_states_.current_q_dot_ = KDL::JntArray(chain_.getNrOfJoints());
+    this->joint_states_.last_q_ = KDL::JntArray(chain_.getNrOfJoints());
+    this->joint_states_.last_q_dot_ = KDL::JntArray(chain_.getNrOfJoints());
 
     ///give tf_listener some time to fill tf-cache
     ros::Duration(1.0).sleep();
@@ -200,6 +202,11 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     params.base_compensation = config.base_compensation;
     params.base_active = config.base_active;
     params.base_ratio = config.base_ratio;
+
+
+    params.mu = config.mu;
+
+
     params.limits_min = twist_controller_params_.limits_min; // from cob_twist_controller init
     params.limits_max = twist_controller_params_.limits_max; // from cob_twist_controller init
     params.limits_vel = twist_controller_params_.limits_vel; // from cob_twist_controller init
@@ -229,7 +236,7 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
         ROS_ERROR("base_active and base_compensation cannot be enabled at the same time");
     }
 
-    p_inv_diff_kin_solver_->SetInvDiffKinSolverParams(params);
+    p_inv_diff_kin_solver_->resetAll(params);
 
     this->reinitServiceRegistration();
 }
@@ -263,7 +270,7 @@ void CobTwistController::initInvDiffKinSolverParams()
         params.frame_names.push_back(chain_.getSegment(i).getName());
     }
 
-    p_inv_diff_kin_solver_->SetInvDiffKinSolverParams(params);
+    p_inv_diff_kin_solver_->resetAll(params);
 }
 
 void CobTwistController::run()
@@ -312,7 +319,9 @@ void CobTwistController::solveTwist(KDL::Twist twist)
         twist = twist - twist_odometry_cb_;
     }
     
-    ret_ik = p_inv_diff_kin_solver_->CartToJnt(last_q_, last_q_dot_, twist, q_dot_ik);
+    ret_ik = p_inv_diff_kin_solver_->CartToJnt(this->joint_states_,
+                                               twist,
+                                               q_dot_ik);
 
     if(0 != ret_ik)
     {
@@ -320,7 +329,7 @@ void CobTwistController::solveTwist(KDL::Twist twist)
     }
     else
     {
-        q_dot_ik = this->limiters_->enforceLimits(q_dot_ik, last_q_);
+        q_dot_ik = this->limiters_->enforceLimits(q_dot_ik, this->joint_states_.current_q_);
 
         // Change between velocity and position interface
         this->interface_->process_result(q_dot_ik, initial_pos_);
@@ -330,8 +339,8 @@ void CobTwistController::solveTwist(KDL::Twist twist)
 
 void CobTwistController::jointstateCallback(const sensor_msgs::JointState::ConstPtr& msg)
 {
-    KDL::JntArray q_temp = last_q_;
-    KDL::JntArray q_dot_temp = last_q_dot_;
+    KDL::JntArray q_temp = this->joint_states_.current_q_;
+    KDL::JntArray q_dot_temp = this->joint_states_.current_q_dot_;
     int count = 0;
 
     for(unsigned int j = 0; j < twist_controller_params_.dof; j++)
@@ -350,14 +359,16 @@ void CobTwistController::jointstateCallback(const sensor_msgs::JointState::Const
 
     if(count == joints_.size())
     {
-        last_q_ = q_temp;
-        last_q_dot_ = q_dot_temp;
+        this->joint_states_.last_q_ = joint_states_.current_q_;
+        this->joint_states_.last_q_dot_ = joint_states_.current_q_dot_;
+        this->joint_states_.current_q_ = q_temp;
+        this->joint_states_.current_q_dot_ = q_dot_temp;
     }
     
     initial_pos_.clear();
-    for(int i = 0; i< last_q_.rows();i++)
+    for(int i = 0; i< this->joint_states_.current_q_.rows();i++)
     {
-        initial_pos_.push_back(last_q_(i));
+        initial_pos_.push_back(this->joint_states_.current_q_(i));
     }
 }
 

@@ -43,6 +43,7 @@
 
 #include <vector>
 #include <algorithm>
+#include <cmath>
 
 class SelfMotionMagnitudeDeterminatorBase
 {
@@ -85,13 +86,23 @@ class SmmDeterminatorVelocityBounds : public SelfMotionMagnitudeDeterminatorBase
                 return 0.0;
             }
 
-            double kMax;
-            double kMin;
+            if(homogeneous_solution.norm() <= ZERO_LIMIT)
+            {
+                return 0.0;
+            }
+
+            double kMax = -1.0;
+            double kMin = 1.0;
             double kResult = 0.0;
             for (uint16_t i = 0; i < cntRows; ++i)
             {
-                double upper = (velLim[i] - particular_solution(i)) / homogeneous_solution(i);
-                double lower = (-velLim[i] - particular_solution(i)) / homogeneous_solution(i);
+                double upper;
+                double lower;
+                if (std::abs(double(homogeneous_solution(i))) > ZERO_LIMIT)
+                {
+                    upper = (velLim[i] - particular_solution(i)) / homogeneous_solution(i);
+                    lower = (-velLim[i] - particular_solution(i)) / homogeneous_solution(i);
+                }
 
                 if (0 == i)
                 {
@@ -120,10 +131,9 @@ class SmmDeterminatorVelocityBounds : public SelfMotionMagnitudeDeterminatorBase
             }
             else
             {
-                ROS_ERROR("The requested end-effector velocity is too high. A proper k cannot be found! Assuming 0.0 for deactivation. ");
+                ROS_ERROR("The requested end-effector velocity is too high. A proper k cannot be found! Assuming MIN: -1.0 or MAX 1.0. ");
+                kResult = MAXIMIZE ? 1.0 : -1.0;
             }
-
-
 
             return kResult;
         }

@@ -73,8 +73,7 @@ private:
     ros::Subscriber obstacle_distance_sub_;
 
     KDL::Chain chain_;
-    KDL::JntArray last_q_;
-    KDL::JntArray last_q_dot_;
+    JointStates joint_states_;
     KDL::Twist twist_odometry_cb_;
 
     std::string chain_base_link_;

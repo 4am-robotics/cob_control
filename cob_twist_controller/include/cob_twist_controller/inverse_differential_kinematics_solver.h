@@ -36,7 +36,8 @@
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/callback_data_mediator.h"
 #include "cob_twist_controller/kinematic_extensions/kinematic_extension.h"
-#include "cob_twist_controller/constraint_solvers/constraint_solver_factory_builder.h"
+#include "cob_twist_controller/constraint_solvers/constraint_solver_factory.h"
+#include "cob_twist_controller/task_stack/task_stack_controller.h"
 
 /**
 * Implementation of a inverse velocity kinematics algorithm based
@@ -57,34 +58,35 @@ public:
      * kinematics for
      *
      */
-        InverseDifferentialKinematicsSolver(const KDL::Chain& chain, CallbackDataMediator& data_mediator) :
+    InverseDifferentialKinematicsSolver(const KDL::Chain& chain, CallbackDataMediator& data_mediator) :
         chain_(chain),
         jac_(chain_.getNrOfJoints()),
         jnt2jac_(chain_),
         callback_data_mediator_(data_mediator),
         constraint_solver_factory_(data_mediator, jnt2jac_)
     {
+        last_p_in_vec_ = t_Vector6d::Zero();
         this->kinematic_extension_.reset(KinematicExtensionBuilder::create_extension(this->params_));
     }
 
     virtual ~InverseDifferentialKinematicsSolver() {};
     
     /** CartToJnt for chain using SVD considering KinematicExtensions and various DampingMethods **/
-    virtual int CartToJnt(const KDL::JntArray& q_in,
-                          const KDL::JntArray& last_q_dot,
+    virtual int CartToJnt(const JointStates& joint_states,
                           const KDL::Twist& v_in,
                           KDL::JntArray& qdot_out);
 
     inline void SetInvDiffKinSolverParams(InvDiffKinSolverParams params)
     {
         params_ = params;
-        this->kinematic_extension_.reset(KinematicExtensionBuilder::create_extension(this->params_));
     }
 
     inline InvDiffKinSolverParams GetInvDiffKinSolverParams() const
     {
         return params_;
     }
+
+    void resetAll(InvDiffKinSolverParams params);
 
 private:
     const KDL::Chain chain_;
@@ -93,7 +95,11 @@ private:
     InvDiffKinSolverParams params_;
     CallbackDataMediator& callback_data_mediator_;
     boost::shared_ptr<KinematicExtensionBase> kinematic_extension_;
-    ConstraintSolverFactoryBuilder constraint_solver_factory_;
+    ConstraintSolverFactory constraint_solver_factory_;
+
+    TaskStackController_t task_stack_controller_;
+
+    t_Vector6d last_p_in_vec_;
 
 };
 #endif // INVERSE_DIFFERENTIAL_KINEMATICS_SOLVER_H

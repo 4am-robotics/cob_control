@@ -4,13 +4,12 @@ project(cob_obstacle_distance)
 set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 
 # Load catkin and all dependencies required for this package
-find_package(catkin REQUIRED COMPONENTS cmake_modules roscpp sensor_msgs geometry_msgs visualization_msgs tf tf_conversions dynamic_reconfigure message_generation kdl_parser kdl_conversions)
+find_package(catkin REQUIRED COMPONENTS cmake_modules roscpp sensor_msgs geometry_msgs visualization_msgs tf tf_conversions dynamic_reconfigure message_generation kdl_parser kdl_conversions eigen_conversions)
 
 find_package(Eigen REQUIRED)
 add_definitions(${EIGEN_DEFINITIONS})
 
-find_package(orocos_kdl REQUIRED)
-
+# find_package(orocos_kdl REQUIRED)
 find_package(fcl REQUIRED)
 
 add_message_files(
@@ -23,6 +22,7 @@ add_message_files(
 add_service_files(
   FILES
   Registration.srv
+  PredictDistance.srv
 )
 
 generate_messages(
@@ -41,7 +41,7 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${FCL_I
 
 ## Build
 ## Declare a cpp executable
-add_executable(cob_obstacle_distance src/cob_obstacle_distance.cpp src/marker_shapes_interface.cpp src/shapes_manager.cpp src/distance_manager.cpp src/chainfk_solvers/advanced_chainfksolverpos_recursive.cpp)
+add_executable(cob_obstacle_distance src/cob_obstacle_distance.cpp src/marker_shapes_interface.cpp src/shapes_manager.cpp src/distance_manager.cpp src/chainfk_solvers/advanced_chainfksolver_recursive.cpp)
 target_link_libraries(cob_obstacle_distance ${fcl_LIBRARIES} ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 add_dependencies(cob_obstacle_distance cob_obstacle_distance_gencpp)
 

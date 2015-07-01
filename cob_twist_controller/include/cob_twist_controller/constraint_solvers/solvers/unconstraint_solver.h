@@ -41,13 +41,10 @@ class UnconstraintSolver : public ConstraintSolver<>
          * See base class ConstraintSolver for more details on params and returns.
          */
         virtual Eigen::MatrixXd solve(const t_Vector6d &in_cart_velocities,
-                                      const KDL::JntArray& q,
-                                      const KDL::JntArray& last_q_dot) const;
+                                      const JointStates& joint_states);
 
-        UnconstraintSolver(InvDiffKinSolverParams &params,
-                           t_Matrix6Xd &jacobian_data)
-                           : ConstraintSolver(params,
-                                              jacobian_data)
+        UnconstraintSolver(const InvDiffKinSolverParams &params)
+                           : ConstraintSolver(params)
         {}
 
         virtual ~UnconstraintSolver()

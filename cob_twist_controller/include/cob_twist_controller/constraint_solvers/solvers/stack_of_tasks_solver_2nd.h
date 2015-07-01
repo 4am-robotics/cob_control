@@ -19,15 +19,15 @@
  * \author
  *   Author: Marco Bezzon, email: Marco.Bezzon@ipa.fraunhofer.de
  *
- * \date Date of creation: March, 2015
+ * \date Date of creation: June, 2015
  *
  * \brief
- *   This header contains the description of the unconstraint solver
+ *   This header contains the description of stack of tasks solver
  *   Implements methods from constraint_solver_base
  *
  ****************************************************************/
-#ifndef GRADIENT_PROJECTION_METHOD_SOLVER_H_
-#define GRADIENT_PROJECTION_METHOD_SOLVER_H_
+#ifndef STACK_OF_TASKS_SOLVER_2ND_H_
+#define STACK_OF_TASKS_SOLVER_2ND_H_
 
 #include <set>
 #include "ros/ros.h"
@@ -39,15 +39,21 @@
 #include "cob_twist_controller/constraints/constraint_base.h"
 #include "cob_twist_controller/constraints/constraint.h"
 
-class GradientProjectionMethodSolver : public ConstraintSolver<>
+class StackOfTasksSolver2nd : public ConstraintSolver<>
 {
     public:
-        GradientProjectionMethodSolver(const InvDiffKinSolverParams &params)
-                           : ConstraintSolver(params)
+        StackOfTasksSolver2nd(const InvDiffKinSolverParams &params)
+                           : ConstraintSolver(params),
+                             last_min_distance_(-1.0),
+                             last_cycle_time_(-1.0)
         {
+            last_in_cart_velocities_ = t_Vector6d::Zero();
+            last_jac_ = t_Matrix76d::Zero();
+
+            ROS_INFO_STREAM("StackOfTasksSolver2nd created!!!");
         }
 
-        virtual ~GradientProjectionMethodSolver()
+        virtual ~StackOfTasksSolver2nd()
         {
             this->clearConstraints();
         }
@@ -77,9 +83,13 @@ class GradientProjectionMethodSolver : public ConstraintSolver<>
         }
 
     protected:
+        double last_min_distance_;
+        double last_cycle_time_;
+        t_Vector6d last_in_cart_velocities_;
+        t_Matrix76d last_jac_;
 
         /// set inserts sorted (default less operator); if element has already been added it returns an iterator on it.
         std::set<tConstraintBase> constraints_;
 };
 
-#endif /* GRADIENT_PROJECTION_METHOD_SOLVER_H_ */
+#endif /* STACK_OF_TASKS_SOLVER_2ND_H_ */

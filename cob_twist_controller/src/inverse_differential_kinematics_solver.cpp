@@ -33,8 +33,7 @@
 /**
  * Solve the inverse kinematics problem at the first order differential level.
  */
-int InverseDifferentialKinematicsSolver::CartToJnt(const KDL::JntArray& q_in,
-                                                   const KDL::JntArray& last_q_dot,
+int InverseDifferentialKinematicsSolver::CartToJnt(const JointStates& joint_states,
                                                    const KDL::Twist& v_in,
                                                    KDL::JntArray& qdot_out)
 {
@@ -42,7 +41,7 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const KDL::JntArray& q_in,
     
     ///Let the ChainJntToJacSolver calculate the jacobian "jac_chain" for the current joint positions "q_in"
     KDL::Jacobian jac_chain(chain_.getNrOfJoints());
-    jnt2jac_.JntToJac(q_in, jac_chain);
+    jnt2jac_.JntToJac(joint_states.current_q_, jac_chain);
     
     ///append columns to Jacobian in order to reflect additional DoFs of kinematical extension
     this->jac_ = this->kinematic_extension_->adjust_jacobian(jac_chain);
@@ -51,12 +50,12 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const KDL::JntArray& q_in,
     t_Vector6d v_in_vec;
     tf::twistKDLToEigen(v_in, v_in_vec);
 
+    this->params_.task_stack_controller = &this->task_stack_controller_;
+
     Eigen::MatrixXd qdot_out_vec;
-    retStat = constraint_solver_factory_.calculateJointVelocities(this->params_,
-                                                                  this->jac_.data,
+    retStat = constraint_solver_factory_.calculateJointVelocities(this->jac_.data,
                                                                   v_in_vec,
-                                                                  q_in,
-                                                                  last_q_dot,
+                                                                  joint_states,
                                                                   qdot_out_vec);
     
     ///convert output
@@ -81,4 +80,16 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const KDL::JntArray& q_in,
     }
 
     return retStat;
+}
+
+void InverseDifferentialKinematicsSolver::resetAll(InvDiffKinSolverParams params)
+{   
+    this->task_stack_controller_.clearAllTasks();
+    this->params_ = params;
+    if(0 != this->constraint_solver_factory_.resetAll(this->params_)) // params member as reference!!! else process will die!
+    {
+        ROS_ERROR("Failed to reset IDK constraint solver after dynamic_reconfigure.");
+    }
+    
+    this->kinematic_extension_.reset(KinematicExtensionBuilder::create_extension(this->params_));
 }

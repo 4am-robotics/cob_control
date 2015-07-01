@@ -54,10 +54,12 @@
 
 #include "cob_obstacle_distance/marker_shapes.hpp"
 #include "cob_obstacle_distance/shapes_manager.hpp"
-#include "cob_obstacle_distance/chainfk_solvers/advanced_chainfksolverpos_recursive.h"
+#include "cob_obstacle_distance/chainfk_solvers/advanced_chainfksolver_recursive.hpp"
 #include "cob_obstacle_distance/obstacle_distance_data_types.hpp"
 #include "cob_obstacle_distance/Registration.h"
+#include "cob_obstacle_distance/PredictDistance.h"
 
+#include <kdl/chainfksolvervel_recursive.hpp>
 #include <ros/ros.h>
 
 class DistanceManager
@@ -75,14 +77,12 @@ class DistanceManager
         boost::scoped_ptr<ShapesManager> obstacle_mgr_;
         boost::scoped_ptr<ShapesManager> object_of_interest_mgr_;
 
-        boost::scoped_ptr<AdvancedChainFkSolverPos_recursive> adv_chn_fk_solver_pos_;
-        boost::scoped_ptr<KDL::ChainJntToJacSolver> jnt2jac_;
+        boost::scoped_ptr<AdvancedChainFkSolverVel_recursive> adv_chn_fk_solver_vel_;
         KDL::Chain chain_;
 
         ros::NodeHandle& nh_;
         ros::Publisher marker_pub_;
         ros::Publisher obstacle_distances_pub_;
-
         tf::TransformListener tf_listener_;
         Eigen::Affine3d tf_cb_frame_bl_;
 
@@ -90,6 +90,8 @@ class DistanceManager
         std::vector<std::string> segments_;
         KDL::JntArray last_q_;
         KDL::JntArray last_q_dot_;
+
+        static uint32_t seq_nr_;
 
     public:
         /**
@@ -174,12 +176,16 @@ class DistanceManager
         bool registerPointOfInterest(cob_obstacle_distance::Registration::Request& request,
                                      cob_obstacle_distance::Registration::Response& response);
 
+        bool predictDistance(cob_obstacle_distance::PredictDistance::Request& request,
+                             cob_obstacle_distance::PredictDistance::Response& response);
+
         /**
          * Given a proper shape_type and a absolute position vector a MarkerShape will be generated to represent the object of interest
          * (i.e. shape in reference frame of segment)
          */
         static bool getMarkerShape(uint32_t shape_type,
                                    const Eigen::Vector3d& abs_pos,
+                                   const Eigen::Quaterniond& quat_pos,
                                    t_ptr_IMarkerShape& segment_of_interest_marker_shape);
 };
 
