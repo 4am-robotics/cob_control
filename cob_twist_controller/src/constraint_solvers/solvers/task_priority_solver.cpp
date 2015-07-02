@@ -40,8 +40,8 @@ Eigen::MatrixXd TaskPrioritySolver::solve(const t_Vector6d& in_cart_velocities,
     double activation_gain;
     double magnitude;
 
-    Eigen::MatrixXd qdots_out = Eigen::MatrixXd::Zero(joint_states.current_q_.rows(), 1);
-    Eigen::VectorXd partial_cost_func = Eigen::VectorXd::Zero(joint_states.current_q_.rows());
+    Eigen::MatrixXd qdots_out = Eigen::MatrixXd::Zero(this->jacobian_data_.cols(), 1);
+    Eigen::VectorXd partial_cost_func = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
     Eigen::MatrixXd jacobianPseudoInverse = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
     Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(jacobianPseudoInverse.rows(), this->jacobian_data_.cols());
     Eigen::MatrixXd projector = ident - jacobianPseudoInverse * this->jacobian_data_;
@@ -51,7 +51,7 @@ Eigen::MatrixXd TaskPrioritySolver::solve(const t_Vector6d& in_cart_velocities,
     {
         for (std::set<tConstraintBase>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
         {
-            (*it)->update(joint_states);
+            (*it)->update(joint_states, this->jacobian_data_);
             partial_cost_func = (*it)->getPartialValues(); // Equal to (partial g) / (partial q) = J_g
             current_cost_func_value = (*it)->getValue();
             derivative_cost_func_value = (*it)->getDerivativeValue();
@@ -68,17 +68,14 @@ Eigen::MatrixXd TaskPrioritySolver::solve(const t_Vector6d& in_cart_velocities,
             Eigen::MatrixXd tmp_matrix = partial_cost_func.transpose() * projector;
             //boost::shared_ptr<DampingConstant> dbc(new DampingConstant(this->params_));
             jac_inv_2nd_term = pinv_calc_.calculate(this->params_, this->damping_, tmp_matrix);
-            ROS_INFO_STREAM("jac_inv_2nd_term: " << jac_inv_2nd_term);
             //dbc.reset();
         }
 
         Eigen::MatrixXd m_derivative_cost_func_value = derivative_cost_func_value * Eigen::MatrixXd::Identity(1,1);
         qdots_out = particular_solution + activation_gain * jac_inv_2nd_term * (magnitude * m_derivative_cost_func_value - partial_cost_func.transpose() * particular_solution);
-        ROS_INFO_STREAM("qdots_out: " << std::endl << qdots_out);
     }
     else
     {
-
         qdots_out = particular_solution;
         ROS_ERROR_STREAM("Should not occur solution: " << std::endl << qdots_out);
     }

@@ -39,21 +39,18 @@
 #include "cob_twist_controller/constraints/constraint_base.h"
 #include "cob_twist_controller/constraints/constraint.h"
 
-class StackOfTasksSolver2nd : public ConstraintSolver<>
+class StackOfTasksGPMSolver : public ConstraintSolver<>
 {
     public:
-        StackOfTasksSolver2nd(const TwistControllerParams& params)
+        StackOfTasksGPMSolver(const TwistControllerParams& params)
                            : ConstraintSolver(params),
                              last_min_distance_(-1.0),
                              last_cycle_time_(-1.0)
         {
             last_in_cart_velocities_ = t_Vector6d::Zero();
-            last_jac_ = t_Matrix76d::Zero();
-
-            ROS_INFO_STREAM("StackOfTasksSolver2nd created!!!");
         }
 
-        virtual ~StackOfTasksSolver2nd()
+        virtual ~StackOfTasksGPMSolver()
         {
             this->clearConstraints();
         }
@@ -86,7 +83,7 @@ class StackOfTasksSolver2nd : public ConstraintSolver<>
         double last_min_distance_;
         double last_cycle_time_;
         t_Vector6d last_in_cart_velocities_;
-        t_Matrix76d last_jac_;
+        Eigen::MatrixXd last_jac_;
 
         /// set inserts sorted (default less operator); if element has already been added it returns an iterator on it.
         std::set<tConstraintBase> constraints_;

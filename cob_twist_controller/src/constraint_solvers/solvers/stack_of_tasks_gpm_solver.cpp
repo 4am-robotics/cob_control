@@ -43,7 +43,7 @@
  * If conflicted with GPM then remove the task from processing.
  * With a prediction the deactivated task will be reactivated again.
  */
-Eigen::MatrixXd StackOfTasksSolver2nd::solve(const t_Vector6d& in_cart_velocities,
+Eigen::MatrixXd StackOfTasksGPMSolver::solve(const t_Vector6d& in_cart_velocities,
                                              const JointStates& joint_states)
 {
     double magnitude;
@@ -61,12 +61,23 @@ Eigen::MatrixXd StackOfTasksSolver2nd::solve(const t_Vector6d& in_cart_velocitie
     double crit_scalar = 0.0;
 
 
-    ROS_INFO_STREAM("last_cycle_time_: " << last_cycle_time_);
-
+    t_Vector6d tmp_in_cart_velocities = in_cart_velocities;
+    Eigen::VectorXd sum_of_gradient = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
+    // Eigen::VectorXd q_dot_0 = Eigen::VectorXd::Zero(joint_states.current_q_.rows());
+    Eigen::MatrixXd jacobianPseudoInverse = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
+    Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(jacobianPseudoInverse.rows(), this->jacobian_data_.cols());
+    Eigen::MatrixXd projector = ident - jacobianPseudoInverse * this->jacobian_data_;
+    Eigen::VectorXd partialSolution = jacobianPseudoInverse * in_cart_velocities;
+    Eigen::MatrixXd homogeneousSolution = Eigen::MatrixXd::Zero(partialSolution.rows(), partialSolution.cols());
 
     if(last_cycle_time_ > 0.0)
     {
         cycle_time = now_time - last_cycle_time_;
+    }
+    else
+    {
+        last_jac_.resize(jacobianPseudoInverse.rows(), jacobianPseudoInverse.cols());
+        last_jac_ = Eigen::MatrixXd::Zero(jacobianPseudoInverse.rows(), jacobianPseudoInverse.cols());
     }
 
     Eigen::VectorXd eigen_vec_last_q_dot = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
@@ -81,18 +92,9 @@ Eigen::MatrixXd StackOfTasksSolver2nd::solve(const t_Vector6d& in_cart_velocitie
         eigen_vec_last_q(i) = joint_states.current_q_(i);
     }
 
-    t_Vector6d tmp_in_cart_velocities = in_cart_velocities;
-    Eigen::VectorXd sum_of_gradient = Eigen::VectorXd::Zero(joint_states.current_q_.rows());
-    // Eigen::VectorXd q_dot_0 = Eigen::VectorXd::Zero(joint_states.current_q_.rows());
-    Eigen::MatrixXd jacobianPseudoInverse = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
-    Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(jacobianPseudoInverse.rows(), this->jacobian_data_.cols());
-    Eigen::MatrixXd projector = ident - jacobianPseudoInverse * this->jacobian_data_;
-    Eigen::VectorXd partialSolution = jacobianPseudoInverse * in_cart_velocities;
-    Eigen::MatrixXd homogeneousSolution = Eigen::MatrixXd::Zero(partialSolution.rows(), partialSolution.cols());
-
     for (std::set<tConstraintBase>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
     {
-        (*it)->update(joint_states);
+        (*it)->update(joint_states, this->jacobian_data_);
         activation_gain = (*it)->getActivationGain();
         min_dist = (*it)->getCriticalValue();
         crit_distance = (*it)->getActivationThreshold();
@@ -217,10 +219,15 @@ Eigen::MatrixXd StackOfTasksSolver2nd::solve(const t_Vector6d& in_cart_velocitie
     }
     else
     {
-        ROS_ERROR_STREAM(">>>>>>>>>>>>>>>> Deactivation of task AND constrain -> STOP ALL MOTIONS !!!");
+        ROS_ERROR_STREAM(">>>>>>>>>>>>>>>> Deactivation of task AND constraint -> STOP ALL MOTIONS !!!");
     }
 
     last_in_cart_velocities_ = in_cart_velocities;
+    if(last_jac_.rows() != jacobianPseudoInverse.rows() || last_jac_.cols() != jacobianPseudoInverse.cols())
+    {
+        last_jac_.resize(jacobianPseudoInverse.rows(), jacobianPseudoInverse.cols());
+    }
+
     last_jac_ = jacobianPseudoInverse;
     last_min_distance_ = min_dist;
     last_cycle_time_ = now_time;

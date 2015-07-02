@@ -64,17 +64,6 @@ bool CobTwistController::initialize()
         return false;
     }
 
-    // Cartesian VelLimits
-    if (!nh_twist.getParam("max_vel_lin", twist_controller_params_.max_vel_lin))
-    {
-        twist_controller_params_.max_vel_lin = 10.0;    //m/sec
-        ROS_WARN_STREAM("Parameter 'max_vel_lin' not set. Using default: " << twist_controller_params_.max_vel_lin);
-    }
-    if (!nh_twist.getParam("max_vel_rot", twist_controller_params_.max_vel_rot))
-    {
-        twist_controller_params_.max_vel_rot = 6.28;    //rad/sec
-        ROS_WARN_STREAM("Parameter 'max_vel_rot' not set. Using default: " << twist_controller_params_.max_vel_rot);
-    }
     if (!nh_twist.getParam("max_vel_lin_base", twist_controller_params_.max_vel_lin_base))
     {
         twist_controller_params_.max_vel_lin_base = 0.5;    //m/sec
@@ -92,6 +81,10 @@ bool CobTwistController::initialize()
         ROS_ERROR_STREAM("Parameter vector 'collision_check_frames' not set.");
         return false;
     }
+
+
+    ROS_INFO_STREAM("Size of collision_check_frames: " << twist_controller_params_.collision_check_frames.size());
+
 
     ///parse robot_description and generate KDL chains
     KDL::Tree my_tree;
@@ -149,10 +142,6 @@ bool CobTwistController::initialize()
 
     odometry_sub_ = nh_.subscribe("/base/odometry_controller/odometry", 1, &CobTwistController::odometryCallback, this);
 
-    this->twist_controller_params_.keep_direction = true;
-    this->twist_controller_params_.enforce_pos_limits = true;
-    this->twist_controller_params_.enforce_vel_limits = true;
-
     this->hardware_interface_.reset(HardwareInterfaceBuilder::createHardwareInterface(this->nh_, this->twist_controller_params_));
 
     ROS_INFO("...initialized!");
@@ -169,6 +158,8 @@ void CobTwistController::reinitServiceRegistration()
             it != twist_controller_params_.collision_check_frames.end();
             it++)
     {
+        ROS_INFO_STREAM("Trying to register for " << *it);
+
         cob_obstacle_distance::Registration r;
         r.request.frame_id = *it;
         r.request.shape_type = visualization_msgs::Marker::SPHERE;
@@ -233,59 +224,66 @@ void CobTwistController::initParams()
         return;
     }
 
-    TwistControllerParams params;
+    //TwistControllerParams params;
     
-    params.dof = twist_controller_params_.dof;
-    params.chain_base_link = twist_controller_params_.chain_base_link;
-    params.chain_tip_link = twist_controller_params_.chain_tip_link;
-    params.hardware_interface_type = VELOCITY_INTERFACE;
+//    params.dof = twist_controller_params_.dof;
+//    params.chain_base_link = twist_controller_params_.chain_base_link;
+//    params.chain_tip_link = twist_controller_params_.chain_tip_link;
+    twist_controller_params_.hardware_interface_type = VELOCITY_INTERFACE;
     
-    params.numerical_filtering = false;
-    params.damping_method = MANIPULABILITY;
-    params.damping_factor = 0.2;
-    params.lambda_max = 0.1;
-    params.w_threshold = 0.005;
-    params.beta = 0.005;
-    params.eps_damping = 0.003;
+    twist_controller_params_.numerical_filtering = false;
+    twist_controller_params_.damping_method = MANIPULABILITY;
+    twist_controller_params_.damping_factor = 0.2;
+    twist_controller_params_.lambda_max = 0.1;
+    twist_controller_params_.w_threshold = 0.005;
+    twist_controller_params_.beta = 0.005;
+    twist_controller_params_.eps_damping = 0.003;
     
-    params.constraint = WLN_JLA;
-    params.mu = -2.0;
-    params.k_H = 1.0;
+    twist_controller_params_.constraint = WLN_JLA;
+    twist_controller_params_.mu = -2.0;
+    twist_controller_params_.k_H = 1.0;
     
-    params.eps_truncation = 0.001;
+    twist_controller_params_.eps_truncation = 0.001;
     
-    params.keep_direction = true;
-    params.enforce_pos_limits = true;
-    params.enforce_vel_limits = true;
-    params.tolerance = 5.0;
+    twist_controller_params_.keep_direction = true;
+    twist_controller_params_.enforce_pos_limits = true;
+    twist_controller_params_.enforce_vel_limits = true;
+    twist_controller_params_.tolerance = 5.0;
     
     // added limits from URDF file
-    params.limits_max = twist_controller_params_.limits_max;
-    params.limits_min = twist_controller_params_.limits_min;
-    params.limits_vel = twist_controller_params_.limits_vel;
+//    params.limits_max = twist_controller_params_.limits_max;
+//    params.limits_min = twist_controller_params_.limits_min;
+//    params.limits_vel = twist_controller_params_.limits_vel;
+//
+//    params.max_vel_lin = twist_controller_params_.max_vel_lin;
+//    params.max_vel_rot = twist_controller_params_.max_vel_rot;
+//    params.max_vel_lin_base = twist_controller_params_.max_vel_lin_base;
+//    params.max_vel_rot_base = twist_controller_params_.max_vel_rot_base;
     
-    params.max_vel_lin = twist_controller_params_.max_vel_lin;
-    params.max_vel_rot = twist_controller_params_.max_vel_rot;
-    params.max_vel_lin_base = twist_controller_params_.max_vel_lin_base;
-    params.max_vel_rot_base = twist_controller_params_.max_vel_rot_base;
-    
-    params.base_compensation = false;
-    params.kinematic_extension = NO_EXTENSION;
-    params.base_ratio = 0.0;
+    twist_controller_params_.base_compensation = false;
+    twist_controller_params_.kinematic_extension = NO_EXTENSION;
+    twist_controller_params_.base_ratio = 0.0;
 
-    params.frame_names.clear();
+    twist_controller_params_.frame_names.clear();
     for (uint16_t i = 0; i < chain_.getNrOfSegments(); ++i)
     {
-        params.frame_names.push_back(chain_.getSegment(i).getName());
+        twist_controller_params_.frame_names.push_back(chain_.getSegment(i).getName());
     }
     
+//    params.collision_check_frames.clear();
+//    for(std::vector<std::string>::const_iterator it = twist_controller_params_.collision_check_frames.begin(); it != twist_controller_params_.collision_check_frames.end(); it++)
+//    {
+//        params.collision_check_frames.push_back(*it);
+//    }
+
     // TODO: initialization
-    //params.collision_check_frames.clear();
+
+
     //params.task_stack_controller = NULL;
     
     
-    twist_controller_params_ = params;
-    p_inv_diff_kin_solver_->resetAll(params);
+//    twist_controller_params_ = params;
+    p_inv_diff_kin_solver_->resetAll(twist_controller_params_);
 }
 
 void CobTwistController::run()

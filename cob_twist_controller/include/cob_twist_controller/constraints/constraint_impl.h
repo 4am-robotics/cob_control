@@ -55,8 +55,8 @@
  */
 template <typename PRIO>
 std::set<tConstraintBase> ConstraintsBuilder<PRIO>::createConstraints(const TwistControllerParams& twist_controller_params,
-                                                                       KDL::ChainJntToJacSolver& jnt_to_jac,
-                                                                       CallbackDataMediator& data_mediator)
+                                                                      KDL::ChainJntToJacSolver& jnt_to_jac,
+                                                                      CallbackDataMediator& data_mediator)
 {
     std::set<tConstraintBase> constraints;
     if (GPM_JLA == twist_controller_params.constraint)
@@ -203,8 +203,7 @@ double CollisionAvoidance<T_PARAMS, PRIO>::calcDerivativeValue()
 template <typename T_PARAMS, typename PRIO>
 Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
 {
-    uint8_t vecRows = static_cast<uint8_t>(this->joint_states_.current_q_.rows());
-    Eigen::VectorXd partial_values = Eigen::VectorXd::Zero(vecRows);
+    Eigen::VectorXd partial_values = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
     const TwistControllerParams& params = this->constraint_params_.getParams();
     int size_of_frames = params.frame_names.size();
     ObstacleDistanceInfo d = this->constraint_params_.current_distance_;
@@ -240,12 +239,13 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
                 return partial_values;
             }
 
-            t_Matrix6Xd crit_pnt_jac = T * new_jac_chain.data;
-
-            Eigen::Matrix3Xd m_transl = Eigen::Matrix3Xd::Zero(3, size_of_frames);
+            t_Matrix6Xd jac_extension = this->jacobian_data_;
+            jac_extension.block(0, 0, new_jac_chain.data.rows(), new_jac_chain.data.cols()) = new_jac_chain.data;
+            t_Matrix6Xd crit_pnt_jac = T * jac_extension;
+            Eigen::Matrix3Xd m_transl = Eigen::Matrix3Xd::Zero(3, crit_pnt_jac.cols());
             m_transl << crit_pnt_jac.row(0),
-                        crit_pnt_jac.row(1),
-                        crit_pnt_jac.row(2);
+                    crit_pnt_jac.row(1),
+                    crit_pnt_jac.row(2);
 
             Eigen::Vector3d vec;
             vec << d.distance_vec[0], d.distance_vec[1], d.distance_vec[2];
@@ -366,8 +366,8 @@ Eigen::VectorXd JointLimitAvoidance<T_PARAMS, PRIO>::calcPartialValues()
     std::vector<double> limits_min = params.limits_min;
     std::vector<double> limits_max = params.limits_max;
     uint8_t vec_rows = static_cast<uint8_t>(joint_pos.rows());
-    Eigen::VectorXd partial_values = Eigen::VectorXd::Zero(vec_rows);
-    for(uint8_t i = 0; i < joint_pos.rows() ; ++i)
+    Eigen::VectorXd partial_values = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
+    for(uint8_t i = 0; i < vec_rows; ++i)
     {
         partial_values(i) = 0.0; // in the else cases -> output always 0
         //See Chan paper ISSN 1042-296X [Page 288]
@@ -394,11 +394,14 @@ double JointLimitAvoidance<T_PARAMS, PRIO>::getActivationThreshold() const
 template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const
 {
-    // k_H by Armijo-Rule
-    double t;
     const TwistControllerParams& params = this->constraint_params_.getParams();
-    t = SelfMotionMagnitudeFactory< SmmDeterminatorVelocityBounds<MIN_CRIT> >::calculate(params, particular_solution, homogeneous_solution);
-    return t;
+//    double dmm = SelfMotionMagnitudeFactory<SmmDeterminatorVelocityBounds<MIN_CRIT> >::calculate(params, particular_solution, homogeneous_solution);
+//    if(std::abs(dmm) < ZERO_LIMIT)
+//    {
+//        dmm = -1.0;
+//    }
+
+    return params.k_H;
 }
 
 /* END JointLimitAvoidance **************************************************************************************/
@@ -479,9 +482,9 @@ Eigen::VectorXd JointLimitAvoidanceMid<T_PARAMS, PRIO>::calcPartialValues()
     std::vector<double> limits_max = params.limits_max;
 
     uint8_t vec_rows = static_cast<uint8_t>(joint_pos.rows());
-    Eigen::VectorXd partial_values = Eigen::VectorXd::Zero(vec_rows);
+    Eigen::VectorXd partial_values = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
 
-    for(uint8_t i = 0; i < vec_rows; ++i)
+    for(uint8_t i = 0; i < vec_rows; ++i) // max limiting the arm joints but not the extensions.
     {
         double min_delta = joint_pos(i) - limits_min[i];
         double max_delta = limits_max[i] - joint_pos(i);
@@ -494,7 +497,7 @@ Eigen::VectorXd JointLimitAvoidanceMid<T_PARAMS, PRIO>::calcPartialValues()
         //Liegeois method can also be found in Chan paper ISSN 1042-296X [Page 288]
         double limits_mid = 1.0 / 2.0 * (limits_max[i] + limits_min[i]);
         double nominator = joint_pos(i) - limits_mid;
-        double denom = limits_max[i] - limits_min[i];
+        double denom = pow(limits_max[i] - limits_min[i], 2.0);
         partial_values(i) = nominator / denom;
     }
 
@@ -515,7 +518,7 @@ template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidanceMid<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const
 {
     const TwistControllerParams& params = this->constraint_params_.getParams();
-    return SelfMotionMagnitudeFactory<SmmDeterminatorVelocityBounds<MAX_CRIT> >::calculate(params, particular_solution, homogeneous_solution);
+    return params.k_H;
 }
 /* END 2nd JointLimitAvoidance **************************************************************************************/
 

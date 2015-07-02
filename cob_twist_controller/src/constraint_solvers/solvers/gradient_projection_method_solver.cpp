@@ -49,7 +49,7 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const t_Vector6d& inCartVe
 
     for (std::set<tConstraintBase>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
     {
-        (*it)->update(joint_states);
+        (*it)->update(joint_states, this->jacobian_data_);
         Eigen::VectorXd q_dot_0 = (*it)->getPartialValues();
         Eigen::MatrixXd tmpHomogeneousSolution = projector * q_dot_0;
         activation_gain = (*it)->getActivationGain(); // contribution of the homo. solution to the part. solution
@@ -60,8 +60,6 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const t_Vector6d& inCartVe
         ROS_INFO_STREAM("smm: " << k_H);
 
         homogeneous_solution += (k_H * activation_gain * tmpHomogeneousSolution);
-
-        ROS_INFO_STREAM("homogeneous_solution: " << homogeneous_solution);
     }
 
     Eigen::MatrixXd qdots_out = particular_solution + homogeneous_solution; // weighting with k_H is done in loop

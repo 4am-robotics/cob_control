@@ -232,7 +232,7 @@ void DistanceManager::calculate()
         fcl::Cylinder c(0.1, 0.1);
         t_ptr_IMarkerShape ooi;
 
-        if(!DistanceManager::getMarkerShape(it->second.shape_type, abs_jnt_pos, q, ooi))
+        if(!this->getMarkerShape(it->second.shape_type, abs_jnt_pos, q, ooi))
         {
             return;
         }
@@ -243,7 +243,6 @@ void DistanceManager::calculate()
         bool setDistResult = false;
         fcl::CollisionObject result_collision_obj = ooi_co;
         fcl::FCL_REAL last_dist = std::numeric_limits<fcl::FCL_REAL>::max();
-        ROS_INFO_STREAM("Iteration over obstacles for segment of interest: " << frame_of_interest_name);
         for(ShapesManager::t_iter it = this->obstacle_mgr_->begin(); it != this->obstacle_mgr_->end(); ++it)
         {
             fcl::CollisionObject collision_obj = (*it)->getCollisionObject();
@@ -282,17 +281,7 @@ void DistanceManager::calculate()
 
             // vector from frame origin to collision point
             Eigen::Vector3d rel_frame_origin_to_collision_pnt = rel_base_link_frame_pos - chainbase2frame_pos;
-
-
-//            ROS_INFO_STREAM("rel_frame_origin_to_collision_pnt: " << rel_frame_origin_to_collision_pnt.transpose());
-            ROS_INFO_STREAM("Minimal distance: " << dist_result.min_distance);
-//            ROS_INFO_STREAM("Nearest Pnt on obstacle from FCL: " << dist_result.nearest_points[1]);
-//            ROS_INFO_STREAM("Nearest Pnt on obstacle (from root frame): " << abs_obst_vector.transpose());
-//            ROS_INFO_STREAM("Nearest Pnt on obstacle (from chain base link frame): " << obst_vector.transpose());
-//            ROS_INFO_STREAM("Nearest Pnt on robot: " << abs_jnt_pos_update.transpose());
-//            ROS_INFO_STREAM("Nearest Pnt on robot (from chain base link frame): " << (tf_cb_frame_bl_ * abs_jnt_pos_update).transpose());
-//            ROS_INFO_STREAM("Diff: " << (obst_vector - tmp_obst_vector).transpose());
-            ROS_INFO_STREAM("Distance Vector: " << dist_vector.transpose());
+            ROS_INFO_STREAM("Frame \"" << frame_of_interest_name << "\": Minimal distance: " << dist_result.min_distance);
 
             cob_obstacle_distance::ObstacleDistance od_msg;
             od_msg.distance = dist_result.min_distance;
@@ -371,6 +360,7 @@ void DistanceManager::jointstateCb(const sensor_msgs::JointState::ConstPtr& msg)
 bool DistanceManager::registerPointOfInterest(cob_obstacle_distance::Registration::Request& request,
                                               cob_obstacle_distance::Registration::Response& response)
 {
+    ROS_INFO_STREAM("Registering a point / frame of interest!");
     if (this->obstacle_distances_.count(request.frame_id))
     {
         response.success = true;
@@ -491,13 +481,13 @@ bool DistanceManager::getMarkerShape(uint32_t shape_type, const Eigen::Vector3d&
     switch(shape_type)
     {
         case visualization_msgs::Marker::CUBE:
-            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Box>(b, pose, col));
+            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Box>(this->root_frame_, b, pose, col));
             break;
         case visualization_msgs::Marker::SPHERE:
-            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Sphere>(s, pose, col));
+            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Sphere>(this->root_frame_, s, pose, col));
             break;
         case visualization_msgs::Marker::CYLINDER:
-            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Cylinder>(c, pose, col));
+            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Cylinder>(this->root_frame_, c, pose, col));
             break;
         default:
            ROS_ERROR("Failed to process request due to unknown shape type: %d", shape_type);

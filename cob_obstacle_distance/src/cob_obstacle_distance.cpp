@@ -56,7 +56,7 @@ int main(int argc, char **argv)
     fcl::Box b(0.1, 0.1, 0.1); // Take care the nearest point for collision is one of the eight corners!!! This might lead to jittering
 
     //t_ptr_IMarkerShape sptr_Cube(new MarkerShape<fcl::Box>(b, 0.35, -0.35, 0.8));
-    t_ptr_IMarkerShape sptr_Cube(new MarkerShape<fcl::Sphere>(s, 0.35, -0.35, 0.8));
+    t_ptr_IMarkerShape sptr_Cube(new MarkerShape<fcl::Sphere>(sm.getRootFrame(), s, 0.35, -0.35, 0.8));
     // t_ptr_IMarkerShape sptr_Sphere(new MarkerShape<fcl::Sphere>(1.0, -1.0, -1.0));
     // t_ptr_IMarkerShape sptr_Cyl(new MarkerShape<fcl::Cylinder>(-1.0, 1.0, -1.0));
 

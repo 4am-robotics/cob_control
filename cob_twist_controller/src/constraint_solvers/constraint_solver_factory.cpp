@@ -105,7 +105,7 @@ bool ConstraintSolverFactory::getSolverFactory(const TwistControllerParams& para
             solver_factory.reset(new SolverFactory<StackOfTasksSolver>(params));
             break;
         case TASK_STACK_GPM:
-            solver_factory.reset(new SolverFactory<StackOfTasksSolver2nd>(params));
+            solver_factory.reset(new SolverFactory<StackOfTasksGPMSolver>(params));
             break;
         case TASK_2ND_PRIO:
             solver_factory.reset(new SolverFactory<TaskPrioritySolver>(params));

@@ -101,6 +101,11 @@ class DistanceManager
 
         ~DistanceManager();
 
+        inline const std::string getRootFrame() const
+        {
+            return this->root_frame_;
+        }
+
         /**
          * Clears all managed obstacles and objects of interest.
          */
@@ -183,10 +188,10 @@ class DistanceManager
          * Given a proper shape_type and a absolute position vector a MarkerShape will be generated to represent the object of interest
          * (i.e. shape in reference frame of segment)
          */
-        static bool getMarkerShape(uint32_t shape_type,
-                                   const Eigen::Vector3d& abs_pos,
-                                   const Eigen::Quaterniond& quat_pos,
-                                   t_ptr_IMarkerShape& segment_of_interest_marker_shape);
+        bool getMarkerShape(uint32_t shape_type,
+                            const Eigen::Vector3d& abs_pos,
+                            const Eigen::Quaterniond& quat_pos,
+                            t_ptr_IMarkerShape& segment_of_interest_marker_shape);
 };
 
 #endif /* DISTANCE_MANAGER_HPP_ */

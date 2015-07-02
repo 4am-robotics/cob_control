@@ -42,12 +42,12 @@ Eigen::MatrixXd DynamicTasksReadjustSolver::solve(const t_Vector6d& in_cart_velo
     Eigen::VectorXd q_i = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
     Eigen::MatrixXd qdots_out = Eigen::MatrixXd::Zero(this->jacobian_data_.cols(), 1);
 
-    Eigen::VectorXd sum_of_gradient = Eigen::VectorXd::Zero(joint_states.current_q_.rows());
+    Eigen::VectorXd sum_of_gradient = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
 
     TaskStackController_t* tsc = this->params_.task_stack_controller;
     for (std::set<tConstraintBase>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
     {
-        (*it)->update(joint_states);
+        (*it)->update(joint_states, this->jacobian_data_);
         this->processState(it, projector, partialSolution, sum_of_gradient);
     }
 
@@ -78,6 +78,7 @@ void DynamicTasksReadjustSolver::processState(std::set<tConstraintBase>::iterato
 {
     TaskStackController_t* tsc = this->params_.task_stack_controller;
     Eigen::VectorXd q_dot_0 = (*it)->getPartialValues();
+
     double activation_gain = (*it)->getActivationGain();
     Eigen::MatrixXd tmpHomogeneousSolution = projector * q_dot_0;
     double magnitude = (*it)->getSelfMotionMagnitude(particular_solution, tmpHomogeneousSolution);

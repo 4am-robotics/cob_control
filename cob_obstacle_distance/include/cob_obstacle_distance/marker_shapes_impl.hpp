@@ -34,27 +34,27 @@
 
 /* BEGIN MarkerShape ********************************************************************************************/
 template <typename T>
-MarkerShape<T>::MarkerShape(T &fcl_object,
+MarkerShape<T>::MarkerShape(const std::string root_frame, T &fcl_object,
       double x, double y, double z,
       double quat_x, double quat_y, double quat_z, double quat_w,
       double color_r, double color_g, double color_b, double color_a) : fcl_marker_converter_(fcl_object), is_drawn_(false)
 {
-    this->init(x, y, z, quat_x, quat_y, quat_z, quat_w, color_r, color_g, color_b, color_a);
+    this->init(root_frame, x, y, z, quat_x, quat_y, quat_z, quat_w, color_r, color_g, color_b, color_a);
 }
 
 
 template <typename T>
-MarkerShape<T>::MarkerShape(double x, double y, double z,
+MarkerShape<T>::MarkerShape(const std::string root_frame, double x, double y, double z,
             double quat_x, double quat_y, double quat_z, double quat_w,
             double color_r, double color_g, double color_b, double color_a) : is_drawn_(false)
 {
-    this->init(x, y, z, quat_x, quat_y, quat_z, quat_w, color_r, color_g, color_b, color_a);
+    this->init(root_frame, x, y, z, quat_x, quat_y, quat_z, quat_w, color_r, color_g, color_b, color_a);
 }
 
 
 
 template <typename T>
-void MarkerShape<T>::init(double x, double y, double z,
+void MarkerShape<T>::init(const std::string root_frame, double x, double y, double z,
           double quat_x, double quat_y, double quat_z, double quat_w,
           double color_r, double color_g, double color_b, double color_a)
 {
@@ -71,7 +71,7 @@ void MarkerShape<T>::init(double x, double y, double z,
     marker_.color.b = color_b;
     marker_.color.a = color_a;
 
-    marker_.header.frame_id = g_frame_id;
+    marker_.header.frame_id = root_frame;
     marker_.header.stamp = ros::Time::now();
     marker_.ns = g_marker_namespace;
     marker_.action = visualization_msgs::Marker::ADD;

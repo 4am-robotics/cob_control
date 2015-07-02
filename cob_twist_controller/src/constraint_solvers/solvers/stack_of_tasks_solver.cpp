@@ -59,19 +59,16 @@ Eigen::MatrixXd StackOfTasksSolver::solve(const t_Vector6d& in_cart_velocities,
     Eigen::MatrixXd qdots_out = Eigen::MatrixXd::Zero(this->jacobian_data_.cols(), 1);
 
     t_Vector6d tmp_in_cart_velocities = in_cart_velocities;
-    Eigen::VectorXd q_dot_0 = Eigen::VectorXd::Zero(joint_states.current_q_.rows());
+    Eigen::VectorXd q_dot_0 = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
     Eigen::MatrixXd jacobianPseudoInverse = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
     Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(jacobianPseudoInverse.rows(), this->jacobian_data_.cols());
     Eigen::MatrixXd projector = ident - jacobianPseudoInverse * this->jacobian_data_;
     Eigen::MatrixXd partialSolution = jacobianPseudoInverse * in_cart_velocities;
 
-//    Eigen::ColPivHouseholderQR<Eigen::Matrix<double,7,7> > qr1(projector);
-//    qr1.setThreshold(1e-5);
-//    ROS_INFO_STREAM("Rank of the Null-Space Projector: " <<  int(qr1.rank()));
     TaskStackController_t* tsc = this->params_.task_stack_controller;
     for (std::set<tConstraintBase>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
     {
-        (*it)->update(joint_states);
+        (*it)->update(joint_states, this->jacobian_data_);
         q_dot_0 = (*it)->getPartialValues();
         activation_gain = (*it)->getActivationGain();
         Eigen::MatrixXd tmpHomogeneousSolution = projector * q_dot_0;
@@ -115,7 +112,6 @@ Eigen::MatrixXd StackOfTasksSolver::solve(const t_Vector6d& in_cart_velocities,
 //        tsc->addTask(t);
 //    }
 
-    unsigned int lv = 0;
     TaskSetIter_t it = tsc->beginTaskIter();
     while((it = tsc->nextActiveTask()) != tsc->getTasksEnd())
     {
@@ -126,7 +122,6 @@ Eigen::MatrixXd StackOfTasksSolver::solve(const t_Vector6d& in_cart_velocities,
         Eigen::VectorXd v_task = it->task_;
         q_i = q_i + J_temp_inv * (v_task - J_task * q_i);
         projector_i = projector_i - J_temp_inv * J_temp;
-        lv ++;
     }
 
     qdots_out.col(0) = q_i;

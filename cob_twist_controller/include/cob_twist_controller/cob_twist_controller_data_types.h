@@ -142,8 +142,6 @@ struct TwistControllerParams {
     std::vector<double> limits_min;
     std::vector<double> limits_vel;
     
-    double max_vel_lin;
-    double max_vel_rot;
     double max_vel_lin_base;
     double max_vel_rot_base;
     

@@ -80,6 +80,17 @@ class SmmDeterminatorVelocityBounds : public SelfMotionMagnitudeDeterminatorBase
         {
             std::vector<double> velLim = params.limits_vel;
             uint16_t cntRows = particular_solution.rows();
+            if(params.kinematic_extension == BASE_ACTIVE && (cntRows == (velLim.size() + 6)))
+            {
+                // Base active with extended 6 DOF
+                velLim.push_back(params.max_vel_lin_base);
+                velLim.push_back(params.max_vel_lin_base);
+                velLim.push_back(params.max_vel_lin_base);
+                velLim.push_back(params.max_vel_rot_base);
+                velLim.push_back(params.max_vel_rot_base);
+                velLim.push_back(params.max_vel_rot_base);
+            }
+
             if (cntRows != homogeneous_solution.rows() || cntRows != velLim.size())
             {
                 ROS_ERROR("Count of rows do not match for particular solution, homogeneous solution and vector limits.");

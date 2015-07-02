@@ -39,7 +39,6 @@
 #include "cob_obstacle_distance/marker_shapes_interface.hpp"
 
 static const std::string g_marker_namespace = "collision_object";
-static const std::string g_frame_id = "base_link";
 
 /* BEGIN MarkerShape ********************************************************************************************/
 /// Template class implementation for box, sphere and cylinder fcl::shapes. Creates visualization marker.
@@ -52,30 +51,30 @@ class MarkerShape : public IMarkerShape
         FclMarkerConverter<T> fcl_marker_converter_;
         visualization_msgs::Marker marker_;
 
-        void init(double x, double y, double z,
+        void init(const std::string root_frame, double x, double y, double z,
                   double quat_x, double quat_y, double quat_z, double quat_w,
                   double color_r, double color_g, double color_b, double color_a);
 
     public:
-        MarkerShape(T &fcl_object, geometry_msgs::Pose &pose, std_msgs::ColorRGBA &col)
-        : MarkerShape(fcl_object,
+        MarkerShape(const std::string root_frame, T& fcl_object, geometry_msgs::Pose& pose, std_msgs::ColorRGBA& col)
+        : MarkerShape(root_frame, fcl_object,
                 pose.position.x, pose.position.y, pose.position.z,
                 pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w,
                 col.r, col.g, col.b, col.a)
         {
         }
 
-        MarkerShape(T &fcl_object, geometry_msgs::Point &pos, geometry_msgs::Quaternion &quat, std_msgs::ColorRGBA &col)
-        : MarkerShape(fcl_object, pos.x, pos.y, pos.z, quat.x, quat.y, quat.z, quat.w, col.r, col.g, col.b, col.a)
+        MarkerShape(const std::string root_frame, T &fcl_object, geometry_msgs::Point &pos, geometry_msgs::Quaternion &quat, std_msgs::ColorRGBA &col)
+        : MarkerShape(root_frame, fcl_object, pos.x, pos.y, pos.z, quat.x, quat.y, quat.z, quat.w, col.r, col.g, col.b, col.a)
         {
         }
 
-        MarkerShape(T &fcl_object,
+        MarkerShape(const std::string root_frame, T &fcl_object,
               double x, double y, double z,
               double quat_x = 0.0, double quat_y = 0.0, double quat_z = 0.0, double quat_w = 1.0,
               double color_r = 0.0, double color_g = 0.0, double color_b = 0.0, double color_a = 1.0);
 
-        MarkerShape(double x, double y, double z,
+        MarkerShape(const std::string root_frame, double x, double y, double z,
                     double quat_x = 0.0, double quat_y = 0.0, double quat_z = 0.0, double quat_w = 1.0,
                     double color_r = 0.0, double color_g = 0.0, double color_b = 0.0, double color_a = 1.0);
 

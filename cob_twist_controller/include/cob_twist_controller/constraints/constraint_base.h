@@ -90,7 +90,7 @@ class PriorityBase
         virtual Eigen::VectorXd getPartialValues() const = 0;
         virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution,
                                               const Eigen::MatrixXd& homogeneous_solution) const = 0;
-        virtual void update(const JointStates& joint_states) = 0;
+        virtual void update(const JointStates& joint_states, const t_Matrix6Xd& jacobian_data) = 0;
         virtual std::string getTaskId() const = 0;
         virtual ConstraintState getState() const = 0;
 
@@ -156,9 +156,10 @@ class ConstraintBase : public PriorityBase<PRIO>
             return this->partial_values_;
         }
 
-        virtual void update(const JointStates& joint_states)
+        virtual void update(const JointStates& joint_states, const t_Matrix6Xd& jacobian_data)
         {
             this->joint_states_ = joint_states;
+            this->jacobian_data_ = jacobian_data;
             this->callback_data_mediator_.fill(this->constraint_params_);
 
             this->calculate();
@@ -173,6 +174,7 @@ class ConstraintBase : public PriorityBase<PRIO>
     protected:
         ConstraintState state_;
         JointStates joint_states_;
+        t_Matrix6Xd jacobian_data_;
         T_PARAMS constraint_params_;
         CallbackDataMediator& callback_data_mediator_;
         Eigen::VectorXd partial_values_;
