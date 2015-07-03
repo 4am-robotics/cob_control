@@ -31,7 +31,8 @@
 #define FCL_MARKER_CONVERTER_HPP_
 
 #include <boost/scoped_ptr.hpp>
-#include "fcl/shape/geometric_shapes.h"
+#include <fcl/shape/geometric_shapes.h>
+#include <fcl/BVH/BVH_model.h>
 
 template <typename T>
 class FclMarkerConverter
@@ -118,6 +119,5 @@ class FclMarkerConverter<fcl::Cylinder>
             return geo_shape_;
         }
 };
-
 
 #endif /* FCL_MARKER_CONVERTER_HPP_ */

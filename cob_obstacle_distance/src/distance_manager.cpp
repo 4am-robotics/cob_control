@@ -151,12 +151,12 @@ bool DistanceManager::waitForMarkerSubscriber()
     return true;
 }
 
-void DistanceManager::addObstacle(t_ptr_IMarkerShape s)
+void DistanceManager::addObstacle(Ptr_IMarkerShape_t s)
 {
     this->obstacle_mgr_->addShape(s);
 }
 
-void DistanceManager::addObjectOfInterest(t_ptr_IMarkerShape s)
+void DistanceManager::addObjectOfInterest(Ptr_IMarkerShape_t s)
 {
     this->object_of_interest_mgr_->addShape(s);
 }
@@ -171,7 +171,7 @@ void DistanceManager::drawObjectsOfInterest(bool enforceDraw)
     this->object_of_interest_mgr_->draw(enforceDraw);
 }
 
-bool DistanceManager::collide(t_ptr_IMarkerShape s1, t_ptr_IMarkerShape s2)
+bool DistanceManager::collide(Ptr_IMarkerShape_t s1, Ptr_IMarkerShape_t s2)
 {
     fcl::CollisionObject x = s1->getCollisionObject();
     fcl::CollisionObject y = s2->getCollisionObject();
@@ -200,7 +200,7 @@ void DistanceManager::calculate()
         adv_chn_fk_solver_vel_->JntToCart(jnt_arr, p_dot_out);
     }
 
-    for(t_map_ObstacleDistance_iter it = this->obstacle_distances_.begin(); it != this->obstacle_distances_.end(); ++it)
+    for(Map_ObstacleDistance_iter_t it = this->obstacle_distances_.begin(); it != this->obstacle_distances_.end(); ++it)
     {
         std::string frame_of_interest_name = it->first;
         std::vector<std::string>::const_iterator str_it = std::find(this->segments_.begin(),
@@ -230,7 +230,7 @@ void DistanceManager::calculate()
         fcl::Box b(0.1, 0.1, 0.1);
         fcl::Sphere s(0.1);
         fcl::Cylinder c(0.1, 0.1);
-        t_ptr_IMarkerShape ooi;
+        Ptr_IMarkerShape_t ooi;
 
         if(!this->getMarkerShape(it->second.shape_type, abs_jnt_pos, q, ooi))
         {
@@ -243,7 +243,7 @@ void DistanceManager::calculate()
         bool setDistResult = false;
         fcl::CollisionObject result_collision_obj = ooi_co;
         fcl::FCL_REAL last_dist = std::numeric_limits<fcl::FCL_REAL>::max();
-        for(ShapesManager::t_iter it = this->obstacle_mgr_->begin(); it != this->obstacle_mgr_->end(); ++it)
+        for(ShapesManager::Iter_t it = this->obstacle_mgr_->begin(); it != this->obstacle_mgr_->end(); ++it)
         {
             fcl::CollisionObject collision_obj = (*it)->getCollisionObject();
             fcl::DistanceResult tmpResult;
@@ -426,7 +426,7 @@ bool DistanceManager::predictDistance(cob_obstacle_distance::PredictDistance::Re
         /* ******* End Transformation part ************** */
 
         // Representation of segment_of_interest as specific shape
-        t_ptr_IMarkerShape ooi;
+        Ptr_IMarkerShape_t ooi;
         if(!DistanceManager::getMarkerShape(visualization_msgs::Marker::SPHERE, abs_jnt_pos, q, ooi))
         {
             return true;
@@ -437,7 +437,7 @@ bool DistanceManager::predictDistance(cob_obstacle_distance::PredictDistance::Re
         fcl::CollisionObject result_collision_obj = ooi_co;
         fcl::FCL_REAL last_dist = std::numeric_limits<fcl::FCL_REAL>::max();
         fcl::FCL_REAL dist;
-        for(ShapesManager::t_iter it = this->obstacle_mgr_->begin(); it != this->obstacle_mgr_->end(); ++it)
+        for(ShapesManager::Iter_t it = this->obstacle_mgr_->begin(); it != this->obstacle_mgr_->end(); ++it)
         {
             fcl::CollisionObject collision_obj = (*it)->getCollisionObject();
             fcl::DistanceResult tmpResult;
@@ -456,7 +456,7 @@ bool DistanceManager::predictDistance(cob_obstacle_distance::PredictDistance::Re
     return true;
 }
 
-bool DistanceManager::getMarkerShape(uint32_t shape_type, const Eigen::Vector3d& abs_pos, const Eigen::Quaterniond& quat_pos, t_ptr_IMarkerShape& segment_of_interest_marker_shape)
+bool DistanceManager::getMarkerShape(uint32_t shape_type, const Eigen::Vector3d& abs_pos, const Eigen::Quaterniond& quat_pos, Ptr_IMarkerShape_t& segment_of_interest_marker_shape)
 {
     // Representation of segment_of_interest as specific fcl::Shape
     fcl::Box b(0.1, 0.1, 0.1);

@@ -4,7 +4,7 @@ project(cob_obstacle_distance)
 set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 
 # Load catkin and all dependencies required for this package
-find_package(catkin REQUIRED COMPONENTS cmake_modules roscpp sensor_msgs geometry_msgs visualization_msgs tf tf_conversions dynamic_reconfigure message_generation kdl_parser kdl_conversions eigen_conversions)
+find_package(catkin REQUIRED COMPONENTS cmake_modules roscpp roslib sensor_msgs geometry_msgs visualization_msgs tf tf_conversions dynamic_reconfigure message_generation kdl_parser kdl_conversions eigen_conversions)
 
 find_package(Eigen REQUIRED)
 add_definitions(${EIGEN_DEFINITIONS})
@@ -40,11 +40,13 @@ catkin_package(
 include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${FCL_INCLUDE_DIRS} ${orocos_kdl_INCLUDE_DIRS})
 
 ## Build
-## Declare a cpp executable
-add_executable(cob_obstacle_distance src/cob_obstacle_distance.cpp src/marker_shapes_interface.cpp src/shapes_manager.cpp src/distance_manager.cpp src/chainfk_solvers/advanced_chainfksolver_recursive.cpp)
-add_dependencies(cob_obstacle_distance cob_obstacle_distance_gencpp)
-target_link_libraries(cob_obstacle_distance ${fcl_LIBRARIES} ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
+add_library(parsers src/parsers/stl_parser.cpp)
+target_link_libraries(parsers ${fcl_LIBRARIES} ${catkin_LIBRARIES})
 
+## Declare a cpp executable
+add_executable(cob_obstacle_distance src/cob_obstacle_distance.cpp src/helpers/helper_functions src/marker_shapes_impl.cpp src/marker_shapes_interface.cpp src/shapes_manager.cpp src/distance_manager.cpp src/chainfk_solvers/advanced_chainfksolver_recursive.cpp)
+add_dependencies(cob_obstacle_distance cob_obstacle_distance_gencpp)
+target_link_libraries(cob_obstacle_distance parsers ${fcl_LIBRARIES} ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 
 ## Install
 # Mark executables and/or libraries for installation

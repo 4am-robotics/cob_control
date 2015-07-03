@@ -65,15 +65,15 @@
 class DistanceManager
 {
     private:
-        typedef std::unordered_map<std::string, ObstacleDistance> t_map_ObstacleDistance;
-        typedef std::unordered_map<std::string, ObstacleDistance>::iterator t_map_ObstacleDistance_iter;
-        typedef std::unordered_map<std::string, ObstacleDistance>::const_iterator t_map_ObstacleDistance_citer;
+        typedef std::unordered_map<std::string, ObstacleDistance> Map_ObstacleDistance_t;
+        typedef std::unordered_map<std::string, ObstacleDistance>::iterator Map_ObstacleDistance_iter_t;
+        typedef std::unordered_map<std::string, ObstacleDistance>::const_iterator Map_ObstacleDistance_citer_t;
 
         std::string root_frame_;
         std::string chain_base_link_;
         std::string chain_tip_link_;
 
-        t_map_ObstacleDistance obstacle_distances_;
+        Map_ObstacleDistance_t obstacle_distances_;
         boost::scoped_ptr<ShapesManager> obstacle_mgr_;
         boost::scoped_ptr<ShapesManager> object_of_interest_mgr_;
 
@@ -115,13 +115,13 @@ class DistanceManager
          * Add a new obstacle to the obstacles that shall be managed.
          * @param s Pointer to an already created MarkerShape that represent an obstacle.
          */
-        void addObstacle(t_ptr_IMarkerShape s);
+        void addObstacle(Ptr_IMarkerShape_t s);
 
         /**
          * Add a new object of interest that shall be investigated for collisions.
          * @param s Pointer to an already created MarkerShape that represent the object of interest (i.e. shape in reference frame of segment).
          */
-        void addObjectOfInterest(t_ptr_IMarkerShape s);
+        void addObjectOfInterest(Ptr_IMarkerShape_t s);
 
         /**
          * Simply draw all obstacle markers in RVIZ.
@@ -140,7 +140,7 @@ class DistanceManager
          * @param s1 First shape to be checked against second shape.
          * @param s2 Second shape to be checked against first shape.
          */
-        bool collide(t_ptr_IMarkerShape s1, t_ptr_IMarkerShape s2);
+        bool collide(Ptr_IMarkerShape_t s1, Ptr_IMarkerShape_t s2);
 
         /**
          * Updates the joint states.
@@ -191,7 +191,7 @@ class DistanceManager
         bool getMarkerShape(uint32_t shape_type,
                             const Eigen::Vector3d& abs_pos,
                             const Eigen::Quaterniond& quat_pos,
-                            t_ptr_IMarkerShape& segment_of_interest_marker_shape);
+                            Ptr_IMarkerShape_t& segment_of_interest_marker_shape);
 };
 
 #endif /* DISTANCE_MANAGER_HPP_ */

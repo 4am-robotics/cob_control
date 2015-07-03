@@ -33,7 +33,8 @@
 #include <boost/shared_ptr.hpp>
 #include <stdint.h>
 #include <visualization_msgs/Marker.h>
-#include "fcl/collision_object.h"
+#include <fcl/collision_object.h>
+#include <fcl/BVH/BVH_model.h>
 
 /* BEGIN IMarkerShape *******************************************************************************************/
 /// Interface class marking methods that have to be implemented in derived classes.
@@ -54,7 +55,8 @@ class IMarkerShape
 };
 /* END IMarkerShape *********************************************************************************************/
 
-typedef boost::shared_ptr< IMarkerShape > t_ptr_IMarkerShape;
+typedef boost::shared_ptr< IMarkerShape > Ptr_IMarkerShape_t;
 
+typedef fcl::BVHModel<fcl::RSS> BVH_RSS_t;
 
 #endif /* MARKER_SHAPES_INTERFACE_HPP_ */

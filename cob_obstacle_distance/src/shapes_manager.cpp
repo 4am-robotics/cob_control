@@ -38,7 +38,7 @@ ShapesManager::~ShapesManager()
 }
 
 
-void ShapesManager::addShape(t_ptr_IMarkerShape s)
+void ShapesManager::addShape(Ptr_IMarkerShape_t s)
 {
     this->shapes_.push_back(s);
 }
@@ -46,7 +46,7 @@ void ShapesManager::addShape(t_ptr_IMarkerShape s)
 
 void ShapesManager::draw(bool enforce_draw)
 {
-    for(t_iter iter = shapes_.begin(); iter != shapes_.end(); ++iter)
+    for(Iter_t iter = shapes_.begin(); iter != shapes_.end(); ++iter)
     {
         if(!((*iter)->isDrawn()) || enforce_draw)
         {
@@ -54,6 +54,7 @@ void ShapesManager::draw(bool enforce_draw)
             visualization_msgs::Marker marker = (*iter)->getMarker();
             this->pub_.publish(marker);
             (*iter)->setDrawn();
+            sleep(1.5); // it takes some time for Rviz to compute and show the marker!
         }
     }
 }
