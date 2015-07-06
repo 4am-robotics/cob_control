@@ -34,12 +34,19 @@
 #include "cob_obstacle_distance/distance_manager.hpp"
 #include "cob_obstacle_distance/marker_shapes.hpp"
 
+
+#include <assimp/scene.h>
+
+
+
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "cob_obstacle_distance");
     ros::NodeHandle nh;
     ros::Rate r(1.0);
     DistanceManager sm(nh);
+
+    aiNode ainode;
 
     if (0 != sm.init())
     {

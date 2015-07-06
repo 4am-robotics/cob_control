@@ -25,15 +25,16 @@
  *   Source from http://www.sgh1.net/b4/cpp-read-stl-file
  *
  */
-
-#include "cob_obstacle_distance/parsers/stl_parser.hpp"
-
 #include <boost/filesystem.hpp>
 #include <ros/ros.h>
 #include <fstream>
 
+#include "cob_obstacle_distance/parsers/stl_parser.hpp"
 #include "cob_obstacle_distance/helpers/helper_functions.hpp"
 
+/**
+ * Hard coded STL file parsing according to binary file specification in https://en.wikipedia.org/wiki/STL_%28file_format%29.
+ */
 int8_t StlParser::read(std::vector<TriangleSupport>& tri_vec)
 {
     char header_info[80] = "";
@@ -71,11 +72,10 @@ int8_t StlParser::read(std::vector<TriangleSupport>& tri_vec)
         char facet[50];
         if(myFile)
         {
-
-        //read one 50-byte triangle
+            //read one 50-byte triangle
             myFile.read(facet, 50);
 
-        //populate each point of the triangle
+            //populate each point of the triangle
             //facet + 12 skips the triangle's unit normal
 
             TriangleSupport t;
@@ -84,7 +84,6 @@ int8_t StlParser::read(std::vector<TriangleSupport>& tri_vec)
             t.c = this->toVec3f(facet + 36);
 
             tri_vec.push_back(t);
-
         }
         else
         {
@@ -96,7 +95,11 @@ int8_t StlParser::read(std::vector<TriangleSupport>& tri_vec)
     return 0;
 }
 
-
+/**
+ * Converter method from position in file to a 3d vector.
+ * @param facet Pointer to the current face / triangle in file.
+ * @return An fcl::Vec3f containing the 3 vertices describing a triangle.
+ */
 fcl::Vec3f StlParser::toVec3f(char* facet)
 {
     double x = this->toDouble(facet, 0);
@@ -107,7 +110,12 @@ fcl::Vec3f StlParser::toVec3f(char* facet)
     return v3;
 }
 
-
+/**
+ * Conversion of a 32 bit binary value into double.
+ * @param facet Current face / triangle.
+ * @param start_idx Index in binary face description.
+ * @return Double value.
+ */
 double StlParser::toDouble(char* facet, uint8_t start_idx)
 {
     char f1[4] = {facet[start_idx],
@@ -116,7 +124,4 @@ double StlParser::toDouble(char* facet, uint8_t start_idx)
     double d_val = static_cast<double>(f_val);
     return d_val;
 }
-
-// int8_t StlParser::createBVH(fcl::BVHModel<fcl::RSS>& bvh)
-
 

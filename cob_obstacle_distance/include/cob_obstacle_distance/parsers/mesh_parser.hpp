@@ -21,30 +21,31 @@
  * \date Date of creation: July, 2015
  *
  * \brief
- *   Definition of a class for an STL file parser.
+ *   Definition of a class for a generic mesh file parser using the assimp library.
  *
  */
-#ifndef STL_PARSER_HPP_
-#define STL_PARSER_HPP_
+#ifndef MESH_PARSER_HPP_
+#define MESH_PARSER_HPP_
+
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 #include "cob_obstacle_distance/parsers/parser_base.hpp"
 
-class StlParser : public ParserBase
+class MeshParser : public ParserBase
 {
     private:
-
-        double toDouble(char* facet, uint8_t start_idx);
-
-        fcl::Vec3f toVec3f(char* facet);
+        int8_t toVec3f(uint32_t num_current_face, aiVector3D* vertex, fcl::Vec3f& out);
 
     public:
-        StlParser(const std::string& file_path)
+        MeshParser(const std::string& file_path)
         : ParserBase(file_path)
         {
 
         }
 
-        virtual ~StlParser()
+        virtual ~MeshParser()
         {
 
         }
@@ -52,4 +53,4 @@ class StlParser : public ParserBase
         int8_t read(std::vector<TriangleSupport>& tri_vec);
 };
 
-#endif /* STL_PARSER_HPP_ */
+#endif /* MESH_PARSER_HPP_ */

@@ -28,7 +28,7 @@
  ****************************************************************/
 
 #include "cob_obstacle_distance/marker_shapes.hpp"
-#include "cob_obstacle_distance/parsers/stl_parser.hpp"
+#include "cob_obstacle_distance/parsers/mesh_parser.hpp"
 
 /* BEGIN MarkerShape ********************************************************************************************/
 MarkerShape<BVH_RSS_t>::MarkerShape(const std::string root_frame, const std::string mesh_resource,
@@ -45,7 +45,7 @@ void MarkerShape<BVH_RSS_t>::init(const std::string mesh_resource, const std::st
           double quat_x, double quat_y, double quat_z, double quat_w,
           double color_r, double color_g, double color_b, double color_a)
 {
-    StlParser sp(mesh_resource);
+    MeshParser sp(mesh_resource);
     if(0 != sp.createBVH(this->fcl_bvh_))
     {
         ROS_ERROR("Could not create BVH model!");
