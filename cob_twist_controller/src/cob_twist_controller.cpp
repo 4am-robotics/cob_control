@@ -182,7 +182,7 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
         ROS_ERROR("base_active and base_compensation cannot be enabled at the same time");
     }
     
-    
+    this->checkSolverAndConstraints(config);
     twist_controller_params_.hardware_interface_type = static_cast<HardwareInterfaceTypes>(config.hardware_interface_type);
     
     twist_controller_params_.numerical_filtering = config.numerical_filtering;
@@ -193,7 +193,17 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     twist_controller_params_.beta = config.beta;
     twist_controller_params_.eps_damping = config.eps_damping;
     
-    twist_controller_params_.constraint = static_cast<ContraintTypes>(config.constraint);
+    twist_controller_params_.solver = static_cast<SolverTypes>(config.solver);
+    twist_controller_params_.priority_main = config.priority;
+
+    twist_controller_params_.constraint_jla = static_cast<ConstraintTypesJLA>(config.constraint_jla);
+    twist_controller_params_.priority_jla = config.priority_jla;
+    twist_controller_params_.k_H_jla = config.k_H_jla;
+
+    twist_controller_params_.constraint_ca = static_cast<ConstraintTypesCA>(config.constraint_ca);
+    twist_controller_params_.priority_ca = config.priority_ca;
+    twist_controller_params_.k_H_ca = config.k_H_ca;
+
     twist_controller_params_.mu = config.mu;
     twist_controller_params_.k_H = config.k_H;
     
@@ -215,6 +225,45 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
 
     this->reinitServiceRegistration();
 }
+
+
+void CobTwistController::checkSolverAndConstraints(const cob_twist_controller::TwistControllerConfig& config)
+{
+    bool warning = false;
+    SolverTypes solver = static_cast<SolverTypes>(config.solver);
+    ConstraintTypesJLA ct_jla = static_cast<ConstraintTypesJLA>(config.constraint_jla);
+    ConstraintTypesCA ct_ca = static_cast<ConstraintTypesCA>(config.constraint_ca);
+
+    if(solver == DEFAULT_SOLVER && (ct_jla != JLA_OFF || ct_ca != CA_OFF))
+    {
+        ROS_WARN("The selection of Default solver and a constraint doesn\'t make any sense. Constraints won\'t be recognized ...");
+        warning = true;
+    }
+
+    if(solver == WLN && ct_ca != CA_OFF)
+    {
+        ROS_WARN("The WLN solution doesn\'t support collision avoidance. Currently WLN is only implemented for Identity and JLA ...");
+        warning = true;
+    }
+
+    if(solver == GPM && ct_ca == CA_OFF && ct_jla == JLA_OFF)
+    {
+        ROS_WARN("You have chosen GPM but without constraints! The behaviour without constraints will be the same like for DEFAULT_SOLVER.");
+        warning = true;
+    }
+
+    if(solver == TASK_2ND_PRIO && (ct_jla == JLA || ct_ca == CA_OFF))
+    {
+        ROS_WARN("The projection of a task into the null space of the main EE task is currently only for the CA constraint support!");
+        warning = true;
+    }
+
+    if(!warning)
+    {
+        ROS_INFO("Selection of solver and constraints seems to be ok.");
+    }
+}
+
 
 void CobTwistController::initParams()
 {
@@ -239,7 +288,17 @@ void CobTwistController::initParams()
     twist_controller_params_.beta = 0.005;
     twist_controller_params_.eps_damping = 0.003;
     
-    twist_controller_params_.constraint = WLN_JLA;
+    twist_controller_params_.solver = WLN;
+    twist_controller_params_.priority_main = 500;
+
+    twist_controller_params_.constraint_jla = JLA;
+    twist_controller_params_.priority_jla = 50;
+    twist_controller_params_.k_H_jla = -10.0;
+
+    twist_controller_params_.constraint_ca = CA_OFF;
+    twist_controller_params_.priority_ca = 100;
+    twist_controller_params_.k_H_ca = 2.0;
+
     twist_controller_params_.mu = -2.0;
     twist_controller_params_.k_H = 1.0;
     

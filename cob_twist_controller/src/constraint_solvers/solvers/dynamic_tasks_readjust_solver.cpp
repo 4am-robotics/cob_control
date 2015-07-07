@@ -44,16 +44,21 @@ Eigen::MatrixXd DynamicTasksReadjustSolver::solve(const t_Vector6d& in_cart_velo
 
     Eigen::VectorXd sum_of_gradient = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
 
+    ROS_INFO_STREAM("============== Constraint output =============");
     TaskStackController_t* tsc = this->params_.task_stack_controller;
     for (std::set<tConstraintBase>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
     {
+        ROS_INFO_STREAM("constraint id: " << (*it)->getTaskId());
         (*it)->update(joint_states, this->jacobian_data_);
         this->processState(it, projector, partialSolution, sum_of_gradient);
     }
 
-    Task_t t(MAIN_TASK_PRIO, "Main task", this->jacobian_data_, in_cart_velocities);
+    sum_of_gradient = this->params_.k_H * sum_of_gradient; // "global" weighting for all constraints.
+
+    Task_t t(this->params_.priority_main, "Main task", this->jacobian_data_, in_cart_velocities);
     tsc->addTask(t);
 
+    ROS_INFO_STREAM("============== Task output =============");
     TaskSetIter_t it = tsc->beginTaskIter();
     while((it = tsc->nextActiveTask()) != tsc->getTasksEnd())
     {
@@ -89,6 +94,7 @@ void DynamicTasksReadjustSolver::processState(std::set<tConstraintBase>::iterato
         if(cstate.getCurrent() == CRITICAL)
         {
             Eigen::MatrixXd J_task0 = q_dot_0.transpose();
+            // "global" weighting k_H for all constraint tasks.
             Eigen::VectorXd task = this->params_.k_H * activation_gain * magnitude * derivative_value * Eigen::VectorXd::Identity(1, 1);
             Task_t t((*it)->getPriority(), (*it)->getTaskId(), J_task0, task);
             tsc->addTask(t);
@@ -98,7 +104,7 @@ void DynamicTasksReadjustSolver::processState(std::set<tConstraintBase>::iterato
         else if(cstate.getCurrent() == DANGER)
         {
             tsc->deactivateTask((*it)->getTaskId());
-            sum_of_gradient += this->params_.k_H * activation_gain * magnitude * q_dot_0; // smm adapted q_dot_0 vector
+            sum_of_gradient += activation_gain * magnitude * q_dot_0; // smm adapted q_dot_0 vector
         }
         else
         {
@@ -110,13 +116,14 @@ void DynamicTasksReadjustSolver::processState(std::set<tConstraintBase>::iterato
         if(cstate.getCurrent() == CRITICAL)
         {
             Eigen::MatrixXd J_task0 = q_dot_0.transpose();
+            // "global" weighting k_H for all constraint tasks.
             Eigen::VectorXd task = this->params_.k_H * activation_gain * magnitude * derivative_value * Eigen::VectorXd::Identity(1, 1);
             Task_t t((*it)->getPriority(), (*it)->getTaskId(), J_task0, task);
             tsc->addTask(t);
         }
         else if(cstate.getCurrent() == DANGER)
         {
-            sum_of_gradient += this->params_.k_H * activation_gain * magnitude * q_dot_0; // smm adapted q_dot_0 vector
+            sum_of_gradient += activation_gain * magnitude * q_dot_0; // smm adapted q_dot_0 vector
         }
         else
         {

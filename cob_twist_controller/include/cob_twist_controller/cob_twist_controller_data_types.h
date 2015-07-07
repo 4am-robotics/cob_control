@@ -67,18 +67,25 @@ enum KinematicExtensionTypes {
     BASE_ACTIVE = 1,
 };
 
+enum SolverTypes {
+    DEFAULT_SOLVER = 0,
+    WLN,
+    GPM,
+    TASK_STACK_NO_GPM,
+    TASK_STACK_GPM,
+    TASK_2ND_PRIO,
+    DYN_TASKS_READJ,
+};
 
-enum ContraintTypes {
-    NO_CONSTRAINT = 0,
-    WLN = 1,
-    WLN_JLA = 2,
-    GPM_JLA = 3,
-    GPM_JLA_MID = 4,
-    GPM_CA = 5,
-    TASK_STACK_NO_GPM = 6,
-    TASK_STACK_GPM = 7,
-    TASK_2ND_PRIO = 8,
-    DYN_TASKS_READJ = 9,
+enum ConstraintTypesCA {
+    CA_OFF = 0,
+    CA,
+};
+
+enum ConstraintTypesJLA {
+    JLA_OFF = 0,
+    JLA,
+    JLA_MID,
 };
 
 struct JointStates
@@ -126,7 +133,17 @@ struct TwistControllerParams {
     double beta;
     double eps_damping;
     
-    ContraintTypes constraint;
+    SolverTypes solver;
+    uint32_t priority_main;
+
+    ConstraintTypesCA constraint_ca;
+    uint32_t priority_ca;
+    double k_H_ca;
+
+    ConstraintTypesJLA constraint_jla;
+    uint32_t priority_jla;
+    double k_H_jla;
+
     double mu;
     double k_H;
     
@@ -165,7 +182,6 @@ enum EN_ConstraintStates
     DANGER,
     CRITICAL,
 };
-
 
 class ConstraintState {
     public:

@@ -85,20 +85,22 @@ bool ConstraintSolverFactory::getSolverFactory(const TwistControllerParams& para
                                                boost::shared_ptr<ISolverFactory>& solver_factory)
 {
     ROS_INFO_STREAM("Called ConstraintSolverFactory::getSolverFactory");
-    switch(params.constraint)
+    switch(params.solver)
     {
-        case NO_CONSTRAINT:
+        case DEFAULT_SOLVER:
             solver_factory.reset(new SolverFactory<UnconstraintSolver>(params));
             break;
         case WLN:
-            solver_factory.reset(new SolverFactory<WeightedLeastNormSolver>(params));
+            if (params.constraint_jla == JLA)
+            {
+                solver_factory.reset(new SolverFactory<WLN_JointLimitAvoidanceSolver>(params));
+            }
+            else
+            {
+                solver_factory.reset(new SolverFactory<WeightedLeastNormSolver>(params));
+            }
             break;
-        case WLN_JLA:
-            solver_factory.reset(new SolverFactory<WLN_JointLimitAvoidanceSolver>(params));
-            break;
-        case GPM_JLA:
-        case GPM_JLA_MID:
-        case GPM_CA:
+        case GPM:
             solver_factory.reset(new SolverFactory<GradientProjectionMethodSolver>(params));
             break;
         case TASK_STACK_NO_GPM:
@@ -115,7 +117,7 @@ bool ConstraintSolverFactory::getSolverFactory(const TwistControllerParams& para
             break;
         default:
             ROS_ERROR("Returning NULL factory due to constraint solver creation error. There is no solver method for %d implemented.",
-                      params.constraint);
+                      params.solver);
             return false;
     }
 

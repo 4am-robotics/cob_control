@@ -107,6 +107,7 @@ public:
     void reinitServiceRegistration();
 
     void reconfigureCallback(cob_twist_controller::TwistControllerConfig& config, uint32_t level);
+    void checkSolverAndConstraints(const cob_twist_controller::TwistControllerConfig& config);
     void jointstateCallback(const sensor_msgs::JointState::ConstPtr& msg);
     void odometryCallback(const nav_msgs::Odometry::ConstPtr& msg);
     

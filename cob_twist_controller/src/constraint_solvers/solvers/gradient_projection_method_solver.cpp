@@ -47,21 +47,22 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const t_Vector6d& inCartVe
     Eigen::MatrixXd particular_solution = jacobianPseudoInverse * inCartVelocities;
     Eigen::MatrixXd homogeneous_solution = Eigen::MatrixXd::Zero(particular_solution.rows(), particular_solution.cols());
 
+    ROS_INFO_STREAM("===== task output =======");
     for (std::set<tConstraintBase>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
     {
         (*it)->update(joint_states, this->jacobian_data_);
         Eigen::VectorXd q_dot_0 = (*it)->getPartialValues();
         Eigen::MatrixXd tmpHomogeneousSolution = projector * q_dot_0;
         activation_gain = (*it)->getActivationGain(); // contribution of the homo. solution to the part. solution
-        double k_H = (*it)->getSelfMotionMagnitude(particular_solution, tmpHomogeneousSolution); // gain of homogenous solution (if active)
+        double constraint_k_H = (*it)->getSelfMotionMagnitude(particular_solution, tmpHomogeneousSolution); // gain of homogenous solution (if active)
 
         ROS_INFO_STREAM("task id: " << (*it)->getTaskId());
         ROS_INFO_STREAM("activation_gain: " << activation_gain);
-        ROS_INFO_STREAM("smm: " << k_H);
+        ROS_INFO_STREAM("smm: " << constraint_k_H);
 
-        homogeneous_solution += (k_H * activation_gain * tmpHomogeneousSolution);
+        homogeneous_solution += (constraint_k_H * activation_gain * tmpHomogeneousSolution);
     }
 
-    Eigen::MatrixXd qdots_out = particular_solution + homogeneous_solution; // weighting with k_H is done in loop
+    Eigen::MatrixXd qdots_out = particular_solution + this->params_.k_H * homogeneous_solution; // weighting with k_H is done in loop
     return qdots_out;
 }

@@ -117,8 +117,6 @@ int8_t MeshParser::toVec3f(uint32_t num_current_face, aiVector3D* vertex, fcl::V
     }
 
     out = fcl::Vec3f((*vertex)[0], (*vertex)[1], (*vertex)[2]);
-    ROS_INFO_STREAM(out);
-
     return 0;
 }
 

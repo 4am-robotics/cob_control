@@ -78,17 +78,17 @@ Eigen::MatrixXd StackOfTasksSolver::solve(const t_Vector6d& in_cart_velocities,
         if(activation_gain > 0.0)
         {
             Eigen::MatrixXd J_task0 = q_dot_0.transpose();
+            // "global" weighting for all constraints in params_.k_H
             Eigen::VectorXd task = this->params_.k_H * activation_gain * magnitude * derivative_value * Eigen::VectorXd::Identity(1, 1);
             Task_t t((*it)->getPriority(),(*it)->getTaskId() , J_task0, task);
             tsc->addTask(t);
         }
-
     }
 
     Eigen::VectorXd q_i = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
     Eigen::MatrixXd projector_i = Eigen::MatrixXd::Identity(this->jacobian_data_.cols(), this->jacobian_data_.cols());
 
-    Task_t t(MAIN_TASK_PRIO, "Main task", this->jacobian_data_, in_cart_velocities);
+    Task_t t(this->params_.priority_main, "Main task", this->jacobian_data_, in_cart_velocities);
     tsc->addTask(t);
 
 //    for(int32_t taskNr = 0; taskNr < 2; ++taskNr) // TODO: where to get max number of tasks? A POSITION AND A ORIENTATION TASK

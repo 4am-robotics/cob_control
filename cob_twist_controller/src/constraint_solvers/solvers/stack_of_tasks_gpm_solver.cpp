@@ -106,6 +106,9 @@ Eigen::MatrixXd StackOfTasksGPMSolver::solve(const t_Vector6d& in_cart_velocitie
         V_q = (*it)->getValue();
     }
 
+    sum_of_gradient = this->params_.k_H * sum_of_gradient; // "global" weighting for all constraints.
+    homogeneousSolution = this->params_.k_H * homogeneousSolution; // "global" weighting for all constraints.
+
     TaskStackController_t* tsc = this->params_.task_stack_controller;
     for(int32_t taskNr = 0; taskNr < in_cart_velocities.rows(); ++taskNr) // TODO: where to get max number of tasks?
     {
@@ -113,7 +116,8 @@ Eigen::MatrixXd StackOfTasksGPMSolver::solve(const t_Vector6d& in_cart_velocitie
         Eigen::VectorXd task = in_cart_velocities.row(taskNr);
         std::ostringstream oss;
         oss << taskNr;
-        Task_t t(taskNr, oss.str(), J_task, task);
+        // increased prio by task number so the translational tasks have higher prio than rotational parts.
+        Task_t t(this->params_.priority_main + taskNr, oss.str(), J_task, task);
         tsc->addTask(t);
 
         Eigen::MatrixXd J_task_inv = pinv_calc_.calculate(this->params_, this->damping_, J_task);

@@ -72,7 +72,7 @@ Eigen::MatrixXd TaskPrioritySolver::solve(const t_Vector6d& in_cart_velocities,
         }
 
         Eigen::MatrixXd m_derivative_cost_func_value = derivative_cost_func_value * Eigen::MatrixXd::Identity(1,1);
-        qdots_out = particular_solution + activation_gain * jac_inv_2nd_term * (magnitude * m_derivative_cost_func_value - partial_cost_func.transpose() * particular_solution);
+        qdots_out = particular_solution + this->params_.k_H * activation_gain * jac_inv_2nd_term * (magnitude * m_derivative_cost_func_value - partial_cost_func.transpose() * particular_solution);
     }
     else
     {

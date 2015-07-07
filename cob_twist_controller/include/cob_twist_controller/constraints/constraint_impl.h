@@ -59,32 +59,35 @@ std::set<tConstraintBase> ConstraintsBuilder<PRIO>::createConstraints(const Twis
                                                                       CallbackDataMediator& data_mediator)
 {
     std::set<tConstraintBase> constraints;
-    if (GPM_JLA == twist_controller_params.constraint)
+    // === Joint limit avoidance part
+    if (JLA == twist_controller_params.constraint_jla)
     {
         typedef JointLimitAvoidance<ConstraintParamsJLA, PRIO> tJla;
         ConstraintParamsJLA params = ConstraintParamFactory<ConstraintParamsJLA>::createConstraintParams(twist_controller_params, data_mediator);
         // TODO: take care PRIO could be of different type than UINT32
-        boost::shared_ptr<tJla > jla(new tJla(100, params, data_mediator));
+        boost::shared_ptr<tJla > jla(new tJla(twist_controller_params.priority_jla, params, data_mediator));
         constraints.insert(boost::static_pointer_cast<PriorityBase<PRIO> >(jla));
     }
-    else if(GPM_JLA_MID == twist_controller_params.constraint)
+    else if(JLA_MID == twist_controller_params.constraint_jla)
     {
         typedef JointLimitAvoidanceMid<ConstraintParamsJLA, PRIO> tJlaMid;
         // same params as for normal JLA
         ConstraintParamsJLA params = ConstraintParamFactory<ConstraintParamsJLA>::createConstraintParams(twist_controller_params, data_mediator);
         // TODO: take care PRIO could be of different type than UINT32
-        boost::shared_ptr<tJlaMid > jla(new tJlaMid(100, params, data_mediator));
+        boost::shared_ptr<tJlaMid > jla(new tJlaMid(twist_controller_params.priority_jla, params, data_mediator));
         constraints.insert(boost::static_pointer_cast<PriorityBase<PRIO> >(jla));
     }
-    else if(GPM_CA == twist_controller_params.constraint ||
-            TASK_STACK_NO_GPM == twist_controller_params.constraint ||
-            TASK_STACK_GPM == twist_controller_params.constraint ||
-            TASK_2ND_PRIO == twist_controller_params.constraint ||
-            DYN_TASKS_READJ == twist_controller_params.constraint)
+    else
+    {
+        // JLA_OFF selected.
+    }
+
+    // === Collision avoidance part
+    if(CA == twist_controller_params.constraint_ca)
     {
         typedef CollisionAvoidance<ConstraintParamsCA, PRIO> tCollisionAvoidance;
         uint32_t available_dists = data_mediator.obstacleDistancesCnt();
-        uint32_t startPrio = 100;
+        uint32_t startPrio = twist_controller_params.priority_ca;
         for (uint32_t i = 0; i < available_dists; ++i)
         {
             ConstraintParamsCA params = ConstraintParamFactory<ConstraintParamsCA>::createConstraintParams(twist_controller_params, data_mediator);
@@ -95,6 +98,7 @@ std::set<tConstraintBase> ConstraintsBuilder<PRIO>::createConstraints(const Twis
     }
     else
     {
+        // CA_OFF selected.
         // Nothing to do here!
         // Create constraints will be called also in case of an unconstraint solver etc.
         // So the log would be filled unnecessarily.
@@ -278,6 +282,7 @@ double CollisionAvoidance<T_PARAMS, PRIO>::getActivationThreshold() const
 template <typename T_PARAMS, typename PRIO>
 double CollisionAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const
 {
+    const TwistControllerParams& params = this->constraint_params_.getParams();
     double magnitude = 0.0;
     double activation = this->getActivationThreshold();
     ObstacleDistanceInfo d = this->constraint_params_.current_distance_;
@@ -287,7 +292,8 @@ double CollisionAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::M
         magnitude = pow(activation / d.min_distance, 2.0) - 1.0;
     }
 
-    return -magnitude; // constraint has to be minimized -> therefore minus
+    double k_H = params.k_H_ca;
+    return k_H * magnitude;
 }
 /* END CollisionAvoidance ***************************************************************************************/
 
@@ -315,6 +321,8 @@ void JointLimitAvoidance<T_PARAMS, PRIO>::calculate()
     this->calcValue();
     this->calcDerivativeValue();
     this->calcPartialValues();
+
+    this->state_.setState(CRITICAL); // always highest task -> avoid HW destruction.
 }
 
 /// Calculate values of the JLA cost function.
@@ -401,7 +409,13 @@ double JointLimitAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::
 //        dmm = -1.0;
 //    }
 
-    return params.k_H;
+    double k_H = params.k_H_jla;
+//    if (k_H > 0.0)
+//    {
+//        k_H *= -1.0; // constraint has to be minimized
+//    }
+
+    return k_H;
 }
 
 /* END JointLimitAvoidance **************************************************************************************/
@@ -518,7 +532,13 @@ template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidanceMid<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const
 {
     const TwistControllerParams& params = this->constraint_params_.getParams();
-    return params.k_H;
+    double k_H = params.k_H_jla;
+//    if (k_H > 0.0)
+//    {
+//        k_H *= -1.0; // constraint has to be minimized
+//    }
+
+    return k_H;
 }
 /* END 2nd JointLimitAvoidance **************************************************************************************/
 
