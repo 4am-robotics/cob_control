@@ -82,38 +82,39 @@ int8_t ConstraintSolverFactory::calculateJointVelocities(t_Matrix6Xd& jacobian_d
  * Given a proper constraint_type a corresponding SolverFactory is generated and returned.
  */
 bool ConstraintSolverFactory::getSolverFactory(const TwistControllerParams& params,
-                                               boost::shared_ptr<ISolverFactory>& solver_factory)
+                                               boost::shared_ptr<ISolverFactory>& solver_factory,
+                                               TaskStackController_t& task_stack_controller)
 {
     ROS_INFO_STREAM("Called ConstraintSolverFactory::getSolverFactory");
     switch(params.solver)
     {
         case DEFAULT_SOLVER:
-            solver_factory.reset(new SolverFactory<UnconstraintSolver>(params));
+            solver_factory.reset(new SolverFactory<UnconstraintSolver>(params, task_stack_controller));
             break;
         case WLN:
-            if (params.constraint_jla == JLA)
+            if (params.constraint_jla == JLA_ON)
             {
-                solver_factory.reset(new SolverFactory<WLN_JointLimitAvoidanceSolver>(params));
+                solver_factory.reset(new SolverFactory<WLN_JointLimitAvoidanceSolver>(params, task_stack_controller));
             }
             else
             {
-                solver_factory.reset(new SolverFactory<WeightedLeastNormSolver>(params));
+                solver_factory.reset(new SolverFactory<WeightedLeastNormSolver>(params, task_stack_controller));
             }
             break;
         case GPM:
-            solver_factory.reset(new SolverFactory<GradientProjectionMethodSolver>(params));
+            solver_factory.reset(new SolverFactory<GradientProjectionMethodSolver>(params, task_stack_controller));
             break;
         case TASK_STACK_NO_GPM:
-            solver_factory.reset(new SolverFactory<StackOfTasksSolver>(params));
+            solver_factory.reset(new SolverFactory<StackOfTasksSolver>(params, task_stack_controller));
             break;
         case TASK_STACK_GPM:
-            solver_factory.reset(new SolverFactory<StackOfTasksGPMSolver>(params));
+            solver_factory.reset(new SolverFactory<StackOfTasksGPMSolver>(params, task_stack_controller));
             break;
         case TASK_2ND_PRIO:
-            solver_factory.reset(new SolverFactory<TaskPrioritySolver>(params));
+            solver_factory.reset(new SolverFactory<TaskPrioritySolver>(params, task_stack_controller));
             break;
         case DYN_TASKS_READJ:
-            solver_factory.reset(new SolverFactory<DynamicTasksReadjustSolver>(params));
+            solver_factory.reset(new SolverFactory<DynamicTasksReadjustSolver>(params, task_stack_controller));
             break;
         default:
             ROS_ERROR("Returning NULL factory due to constraint solver creation error. There is no solver method for %d implemented.",
@@ -139,7 +140,7 @@ int8_t ConstraintSolverFactory::resetAll(const TwistControllerParams& params)
                                                                  this->jnt_to_jac_,
                                                                  this->data_mediator_);
 
-    if(!ConstraintSolverFactory::getSolverFactory(params, this->solver_factory_))
+    if(!ConstraintSolverFactory::getSolverFactory(params, this->solver_factory_, this->task_stack_controller_))
     {
         return -2;
     }

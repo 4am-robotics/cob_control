@@ -41,8 +41,8 @@
 class DynamicTasksReadjustSolver : public ConstraintSolver<>
 {
     public:
-        DynamicTasksReadjustSolver(const TwistControllerParams& params)
-                           : ConstraintSolver(params)
+        DynamicTasksReadjustSolver(const TwistControllerParams& params, TaskStackController_t& task_stack_controller)
+                           : ConstraintSolver(params, task_stack_controller)
         {
         }
 

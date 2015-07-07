@@ -82,10 +82,6 @@ bool CobTwistController::initialize()
         return false;
     }
 
-
-    ROS_INFO_STREAM("Size of collision_check_frames: " << twist_controller_params_.collision_check_frames.size());
-
-
     ///parse robot_description and generate KDL chains
     KDL::Tree my_tree;
     if (!kdl_parser::treeFromParam("/robot_description", my_tree)){
@@ -115,8 +111,12 @@ bool CobTwistController::initialize()
         twist_controller_params_.limits_max.push_back(model.getJoint(joints_[i])->limits->upper);
     }
 
+    ROS_INFO_STREAM(">>>>>>>>>>>>>>> Before init InverseDifferentialKinematicsSolver");
+
     ///initialize configuration control solver
     p_inv_diff_kin_solver_.reset(new InverseDifferentialKinematicsSolver(chain_, callback_data_mediator_));
+
+    ROS_INFO_STREAM(">>>>>>>>>>>>>>> Initialized InverseDifferentialKinematicsSolver");
 
     // Before setting up dynamic_reconfigure server: initParams with default values
     this->initParams();
@@ -199,10 +199,12 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     twist_controller_params_.constraint_jla = static_cast<ConstraintTypesJLA>(config.constraint_jla);
     twist_controller_params_.priority_jla = config.priority_jla;
     twist_controller_params_.k_H_jla = config.k_H_jla;
+    twist_controller_params_.damping_jla = config.damping_jla;
 
     twist_controller_params_.constraint_ca = static_cast<ConstraintTypesCA>(config.constraint_ca);
     twist_controller_params_.priority_ca = config.priority_ca;
     twist_controller_params_.k_H_ca = config.k_H_ca;
+    twist_controller_params_.damping_ca = config.damping_ca;
 
     twist_controller_params_.mu = config.mu;
     twist_controller_params_.k_H = config.k_H;
@@ -252,7 +254,7 @@ void CobTwistController::checkSolverAndConstraints(const cob_twist_controller::T
         warning = true;
     }
 
-    if(solver == TASK_2ND_PRIO && (ct_jla == JLA || ct_ca == CA_OFF))
+    if(solver == TASK_2ND_PRIO && (ct_jla == JLA_ON || ct_ca == CA_OFF))
     {
         ROS_WARN("The projection of a task into the null space of the main EE task is currently only for the CA constraint support!");
         warning = true;
@@ -291,7 +293,7 @@ void CobTwistController::initParams()
     twist_controller_params_.solver = WLN;
     twist_controller_params_.priority_main = 500;
 
-    twist_controller_params_.constraint_jla = JLA;
+    twist_controller_params_.constraint_jla = JLA_ON;
     twist_controller_params_.priority_jla = 50;
     twist_controller_params_.k_H_jla = -10.0;
 

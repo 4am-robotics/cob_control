@@ -109,7 +109,6 @@ Eigen::MatrixXd StackOfTasksGPMSolver::solve(const t_Vector6d& in_cart_velocitie
     sum_of_gradient = this->params_.k_H * sum_of_gradient; // "global" weighting for all constraints.
     homogeneousSolution = this->params_.k_H * homogeneousSolution; // "global" weighting for all constraints.
 
-    TaskStackController_t* tsc = this->params_.task_stack_controller;
     for(int32_t taskNr = 0; taskNr < in_cart_velocities.rows(); ++taskNr) // TODO: where to get max number of tasks?
     {
         Eigen::MatrixXd J_task = this->jacobian_data_.row(taskNr);
@@ -118,7 +117,7 @@ Eigen::MatrixXd StackOfTasksGPMSolver::solve(const t_Vector6d& in_cart_velocitie
         oss << taskNr;
         // increased prio by task number so the translational tasks have higher prio than rotational parts.
         Task_t t(this->params_.priority_main + taskNr, oss.str(), J_task, task);
-        tsc->addTask(t);
+        this->task_stack_controller_.addTask(t);
 
         Eigen::MatrixXd J_task_inv = pinv_calc_.calculate(this->params_, this->damping_, J_task);
         Eigen::MatrixXd projector_task = Eigen::MatrixXd::Identity(J_task_inv.rows(), J_task.cols()) - J_task_inv * J_task;
@@ -191,14 +190,14 @@ Eigen::MatrixXd StackOfTasksGPMSolver::solve(const t_Vector6d& in_cart_velocitie
             predicted_distance > -1 && predicted_distance < (crit_distance * 1.1))
     {
         ROS_WARN_STREAM("Deactivation of task: " << task_to_ignore);
-        tsc->deactivateTask(task_to_ignore);
+        this->task_stack_controller_.deactivateTask(task_to_ignore);
     }
 
     Eigen::MatrixXd qdots_out = Eigen::MatrixXd::Zero(this->jacobian_data_.cols(), 1);
 
     if(predicted_distance >= crit_distance)
     {
-        tsc->activateAllTasks(); // in safe region activate all tasks again.
+        this->task_stack_controller_.activateAllTasks(); // in safe region activate all tasks again.
     }
 
 
@@ -206,8 +205,8 @@ Eigen::MatrixXd StackOfTasksGPMSolver::solve(const t_Vector6d& in_cart_velocitie
     if(min_dist >= 0.001)
     {
         unsigned int lv = 0;
-        TaskSetIter_t it = tsc->beginTaskIter();
-        while((it = tsc->nextActiveTask()) != tsc->getTasksEnd())
+        TaskSetIter_t it = this->task_stack_controller_.beginTaskIter();
+        while((it = this->task_stack_controller_.nextActiveTask()) != this->task_stack_controller_.getTasksEnd())
         {
             Eigen::MatrixXd J_task = it->task_jacobian_;
             Eigen::MatrixXd J_temp = J_task * projector_i;

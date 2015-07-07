@@ -34,6 +34,7 @@
 
 #include "cob_twist_controller/damping_methods/damping_base.h"
 #include "cob_twist_controller/constraints/constraint_base.h"
+#include "cob_twist_controller/task_stack/task_stack_controller.h"
 
 /// Interface definition to support generic usage of the solver factory without specifying a typename in prior.
 class ISolverFactory
@@ -54,9 +55,10 @@ class SolverFactory : public ISolverFactory
 {
     public:
 
-        SolverFactory(const TwistControllerParams& params)
+        SolverFactory(const TwistControllerParams& params,
+                      TaskStackController_t& task_stack_controller)
         {
-            constraint_solver_.reset(new T(params));
+            constraint_solver_.reset(new T(params, task_stack_controller));
         }
 
         ~SolverFactory()

@@ -64,7 +64,7 @@ public:
         jac_(chain_.getNrOfJoints()),
         jnt2jac_(chain_),
         callback_data_mediator_(data_mediator),
-        constraint_solver_factory_(data_mediator, jnt2jac_)
+        constraint_solver_factory_(data_mediator, jnt2jac_, task_stack_controller_)
     {
         this->limiters_.reset(new LimiterContainer(this->params_, this->chain_));
         this->limiters_->init();

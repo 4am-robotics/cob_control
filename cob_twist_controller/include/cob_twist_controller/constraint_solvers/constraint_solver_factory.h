@@ -47,9 +47,12 @@ class ConstraintSolverFactory
          * @param data_mediator: Reference to an callback data mediator.
          * @param jnt_to_jac: Reference to an joint to Jacobian solver.
          */
-        ConstraintSolverFactory(CallbackDataMediator& data_mediator, KDL::ChainJntToJacSolver& jnt_to_jac) :
-            data_mediator_(data_mediator), jnt_to_jac_(jnt_to_jac)
+        ConstraintSolverFactory(CallbackDataMediator& data_mediator,
+                                KDL::ChainJntToJacSolver& jnt_to_jac,
+                                TaskStackController_t& task_stack_controller) :
+            data_mediator_(data_mediator), jnt_to_jac_(jnt_to_jac), task_stack_controller_(task_stack_controller)
         {
+            ROS_INFO_STREAM("ctor of ConstraintSolverFactory");
             this->solver_factory_.reset();
             this->damping_method_.reset();
         }
@@ -81,7 +84,8 @@ class ConstraintSolverFactory
          * @param solver_factory: Reference of a shared pointer to be filled.
          */
         static bool getSolverFactory(const TwistControllerParams& params,
-                                     boost::shared_ptr<ISolverFactory>& solver_factory);
+                                     boost::shared_ptr<ISolverFactory>& solver_factory,
+                                     TaskStackController_t& task_stack_controller);
 
         int8_t resetAll(const TwistControllerParams& params);
 
@@ -91,6 +95,7 @@ class ConstraintSolverFactory
         boost::shared_ptr<ISolverFactory> solver_factory_;
         boost::shared_ptr<DampingBase> damping_method_;
         std::set<tConstraintBase> constraints_;
+        TaskStackController_t& task_stack_controller_;
 };
 
 #endif /* CONSTRAINT_SOLVER_FACTORY_BUILDER_H_ */

@@ -60,7 +60,7 @@ std::set<tConstraintBase> ConstraintsBuilder<PRIO>::createConstraints(const Twis
 {
     std::set<tConstraintBase> constraints;
     // === Joint limit avoidance part
-    if (JLA == twist_controller_params.constraint_jla)
+    if (JLA_ON == twist_controller_params.constraint_jla)
     {
         typedef JointLimitAvoidance<ConstraintParamsJLA, PRIO> tJla;
         ConstraintParamsJLA params = ConstraintParamFactory<ConstraintParamsJLA>::createConstraintParams(twist_controller_params, data_mediator);
@@ -68,10 +68,10 @@ std::set<tConstraintBase> ConstraintsBuilder<PRIO>::createConstraints(const Twis
         boost::shared_ptr<tJla > jla(new tJla(twist_controller_params.priority_jla, params, data_mediator));
         constraints.insert(boost::static_pointer_cast<PriorityBase<PRIO> >(jla));
     }
-    else if(JLA_MID == twist_controller_params.constraint_jla)
+    else if(JLA_MID_ON == twist_controller_params.constraint_jla)
     {
-        typedef JointLimitAvoidanceMid<ConstraintParamsJLA, PRIO> tJlaMid;
         // same params as for normal JLA
+        typedef JointLimitAvoidanceMid<ConstraintParamsJLA, PRIO> tJlaMid;
         ConstraintParamsJLA params = ConstraintParamFactory<ConstraintParamsJLA>::createConstraintParams(twist_controller_params, data_mediator);
         // TODO: take care PRIO could be of different type than UINT32
         boost::shared_ptr<tJlaMid > jla(new tJlaMid(twist_controller_params.priority_jla, params, data_mediator));
@@ -83,7 +83,7 @@ std::set<tConstraintBase> ConstraintsBuilder<PRIO>::createConstraints(const Twis
     }
 
     // === Collision avoidance part
-    if(CA == twist_controller_params.constraint_ca)
+    if(CA_ON == twist_controller_params.constraint_ca)
     {
         typedef CollisionAvoidance<ConstraintParamsCA, PRIO> tCollisionAvoidance;
         uint32_t available_dists = data_mediator.obstacleDistancesCnt();
@@ -295,6 +295,56 @@ double CollisionAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::M
     double k_H = params.k_H_ca;
     return k_H * magnitude;
 }
+
+template <typename T_PARAMS, typename PRIO>
+ConstraintTypes CollisionAvoidance<T_PARAMS, PRIO>::getType() const
+{
+    return CA;
+}
+
+/**
+ * Critical Point Jacobian: Each critical point is represented by one CA constraint.
+ * So the partial values represent a one row task Jacobian.
+ * @return Partial values as task Jacobian.
+ */
+template <typename T_PARAMS, typename PRIO>
+Eigen::MatrixXd CollisionAvoidance<T_PARAMS, PRIO>::getTaskJacobian() const
+{
+    return this->partial_values_.transpose();
+}
+
+/**
+ * 1x1 Vector returning the task derivative of a CA constraint.
+ * One row task Jacobian <-> One dim derivative.
+ * @return The derivative value.
+ */
+template <typename T_PARAMS, typename PRIO>
+Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::getTaskDerivatives() const
+{
+    return Eigen::VectorXd::Identity(1, 1) * this->derivative_value_;
+}
+
+template <typename T_PARAMS, typename PRIO>
+Task_t CollisionAvoidance<T_PARAMS, PRIO>::createTask()
+{
+    const TwistControllerParams& params = this->constraint_params_.getParams();
+    TwistControllerParams adapted_params;
+    adapted_params.damping_method = CONSTANT;
+    adapted_params.damping_factor = params.damping_ca;
+    adapted_params.eps_truncation = 0.0;
+
+    Task_t task(this->getPriority(),
+                this->getTaskId(),
+                this->getTaskJacobian(),
+                this->getTaskDerivatives(),
+                this->getType());
+
+    task.tcp_ = adapted_params;
+    task.db_.reset(DampingBuilder::createDamping(adapted_params));
+
+    return task;
+}
+
 /* END CollisionAvoidance ***************************************************************************************/
 
 /* BEGIN JointLimitAvoidance ************************************************************************************/
@@ -319,10 +369,19 @@ template <typename T_PARAMS, typename PRIO>
 void JointLimitAvoidance<T_PARAMS, PRIO>::calculate()
 {
     this->calcValue();
-    this->calcDerivativeValue();
     this->calcPartialValues();
+    this->calcDerivativeValue();
 
-    this->state_.setState(CRITICAL); // always highest task -> avoid HW destruction.
+    if(this->partial_values_.sum() > ZERO_LIMIT)
+    {
+        this->state_.setState(CRITICAL); // always highest task -> avoid HW destruction.
+    }
+    else
+    {
+        this->state_.setState(NORMAL); // always highest task -> avoid HW destruction.
+    }
+
+
 }
 
 /// Calculate values of the JLA cost function.
@@ -333,16 +392,17 @@ double JointLimitAvoidance<T_PARAMS, PRIO>::calcValue()
     std::vector<double> limits_min = params.limits_min;
     std::vector<double> limits_max = params.limits_max;
     const KDL::JntArray joint_pos = this->joint_states_.current_q_;
-    double H_q = 0.0;
+    this->last_values_ = this->values_;
+    this->values_.resize(joint_pos.rows(), 1);
     for(uint8_t i = 0; i < joint_pos.rows() ; ++i)
     {
-        double jnt_pos_with_step = joint_pos(i);
         double nom = pow(limits_max[i] - limits_min[i], 2.0);
-        double denom = (limits_max[i] - jnt_pos_with_step) * (jnt_pos_with_step - limits_min[i]);
-        H_q += nom / denom;
+        double denom = (limits_max[i] - joint_pos(i)) * (joint_pos(i) - limits_min[i]);
+        this->values_(i) = nom / (4.0 * denom); // store value of cost function for each joint.
     }
 
-    this->value_ = H_q / 4.0;
+    this->last_value_ = this->value_;
+    this->value_ = this->values_.sum();
     return this->value_;
 }
 
@@ -352,16 +412,61 @@ double JointLimitAvoidance<T_PARAMS, PRIO>::calcDerivativeValue()
 {
     double current_time = ros::Time::now().toSec();
     double cycle = current_time - this->last_time_;
-    if(cycle > 0.0)
+    this->last_time_ = current_time;
+    const uint32_t values_rows = this->values_.rows();
+    if(cycle <= 0.0)
     {
-        this->derivative_value_ = (this->value_ - this->last_value_) / cycle;
+        ROS_INFO_STREAM("<<<<<<<<<<<<<< WAAAAAAAAAAAAAAAAAAAAAAAT");
+        cycle = 0.02;
     }
     else
     {
-        this->derivative_value_ = (this->value_ - this->last_value_) / 0.02;
+        ROS_INFO_STREAM("Cycle: " << cycle);
     }
 
-    this->last_time_ = current_time;
+    if(values_rows == this->last_values_.rows())
+    {
+        this->derivative_values_.resize(this->active_idx_.size(), 1);
+        for(uint8_t i = 0; i < this->active_idx_.size(); ++i)
+        {
+            uint8_t active_idx = this->active_idx_[i];
+            double delta = this->values_(active_idx) - this->last_values_(active_idx);
+            if(delta < 1.0e-5)
+            {
+                this->derivative_values_(i) = 0.0;
+            }
+            else
+            {
+                this->derivative_values_(i) = delta / cycle;
+            }
+
+        }
+
+
+//        for(uint32_t i = 0; i < values_rows; ++i)
+//        {
+//            double delta = this->values_(i) - this->last_values_(i);
+//            if(delta < 1.0e-5)
+//            {
+//                this->derivative_values_(i) = 0.0;
+//            }
+//            else
+//            {
+//                this->derivative_values_(i) = (this->values_(i) - this->last_values_(i)) / cycle;
+//            }
+//
+//            ROS_INFO_STREAM("this->derivative_values_(i): " << this->derivative_values_(i));
+//            ROS_INFO_STREAM("this->values_(i): " << this->values_(i));
+//            ROS_INFO_STREAM("this->last_values_(i): " << this->last_values_(i));
+//        }
+    }
+    else
+    {
+        uint8_t new_size = this->active_idx_.size() > 0 ? this->active_idx_.size() : values_rows;
+        this->derivative_values_ = Eigen::VectorXd::Zero(new_size, 1);
+    }
+
+    this->derivative_value_ = this->derivative_values_.sum();
     return this->derivative_value_;
 }
 
@@ -371,20 +476,39 @@ Eigen::VectorXd JointLimitAvoidance<T_PARAMS, PRIO>::calcPartialValues()
 {
     const TwistControllerParams& params = this->constraint_params_.getParams();
     const KDL::JntArray joint_pos = this->joint_states_.current_q_;
+    const KDL::JntArray joint_vel = this->joint_states_.current_q_dot_;
     std::vector<double> limits_min = params.limits_min;
     std::vector<double> limits_max = params.limits_max;
     uint8_t vec_rows = static_cast<uint8_t>(joint_pos.rows());
     Eigen::VectorXd partial_values = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
+    uint8_t used = 0;
+    this->active_idx_.clear();
     for(uint8_t i = 0; i < vec_rows; ++i)
     {
-        partial_values(i) = 0.0; // in the else cases -> output always 0
         //See Chan paper ISSN 1042-296X [Page 288]
-        double min_delta = (joint_pos(i) - limits_min[i]);
-        double max_delta = (limits_max[i] - joint_pos(i));
-        double nominator = (2.0 * joint_pos(i) - limits_min[i] - limits_max[i]) * (limits_max[i] - limits_min[i]) * (limits_max[i] - limits_min[i]);
-        double denom = 4.0 * min_delta * min_delta * max_delta * max_delta;
-        partial_values(i) = nominator / denom;
+        if( (joint_vel(i) > 0.0 && ((limits_max[i] - joint_pos(i)) < (joint_pos(i) - limits_min[i])))
+                || (joint_vel(i) < 0.0 && ((limits_max[i] - joint_pos(i)) > (joint_pos(i) - limits_min[i]))) )
+        {
+            double min_delta = (joint_pos(i) - limits_min[i]);
+            double max_delta = (limits_max[i] - joint_pos(i));
+            double nominator = (2.0 * joint_pos(i) - limits_min[i] - limits_max[i]) * (limits_max[i] - limits_min[i]) * (limits_max[i] - limits_min[i]);
+            double denom = 20.0 * 4.0 * min_delta * min_delta * max_delta * max_delta; // Experimentially 0.05 of jac values.
+            partial_values(used) = nominator / denom;
+            ++used;
+            this->active_idx_.push_back(i);
+        }
     }
+
+//    if(used != 0)
+//    {
+//        Eigen::VectorXd tmp_partial_values = partial_values;
+//        partial_values.resize(used, 1);
+//        for(uint8_t i = 0; i < partial_values.rows(); ++i)
+//        {
+//            partial_values(i) = tmp_partial_values(i);
+//        }
+//
+//    }
 
     this->partial_values_ = partial_values;
     return this->partial_values_;
@@ -416,6 +540,72 @@ double JointLimitAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::
 //    }
 
     return k_H;
+}
+
+template <typename T_PARAMS, typename PRIO>
+ConstraintTypes JointLimitAvoidance<T_PARAMS, PRIO>::getType() const
+{
+    return JLA;
+}
+
+/**
+ *
+ * @return
+ */
+template <typename T_PARAMS, typename PRIO>
+Eigen::MatrixXd JointLimitAvoidance<T_PARAMS, PRIO>::getTaskJacobian() const
+{
+    Eigen::MatrixXd task_jacobian = this->partial_values_.asDiagonal();
+    if(this->active_idx_.size() > 0 &&  this->active_idx_.size() != task_jacobian.cols())
+    {
+         task_jacobian.conservativeResize(this->active_idx_.size(), task_jacobian.cols());
+    }
+
+    return task_jacobian;
+}
+
+/**
+ *
+ * @return
+ */
+template <typename T_PARAMS, typename PRIO>
+Eigen::VectorXd JointLimitAvoidance<T_PARAMS, PRIO>::getTaskDerivatives() const
+{
+    return this->derivative_values_;
+}
+
+template <typename T_PARAMS, typename PRIO>
+Task_t JointLimitAvoidance<T_PARAMS, PRIO>::createTask()
+{
+    const TwistControllerParams& params = this->constraint_params_.getParams();
+    TwistControllerParams adapted_params;
+    adapted_params.damping_method = CONSTANT;
+    adapted_params.damping_factor = params.damping_jla;
+    adapted_params.eps_truncation = 0.0;
+    adapted_params.numerical_filtering = false;
+
+    Eigen::MatrixXd cost_func_jac = this->getTaskJacobian();
+    Eigen::VectorXd derivs = this->getTaskDerivatives();
+
+    ROS_INFO_STREAM("JointLimitAvoidance<T_PARAMS, PRIO>::createTask() JAC: " << std::endl << cost_func_jac);
+    ROS_INFO_STREAM("JointLimitAvoidance<T_PARAMS, PRIO>::createTask() TASK: " << derivs.transpose());
+
+    Task_t task(this->getPriority(),
+                this->getTaskId(),
+                cost_func_jac,
+                derivs,
+                this->getType());
+
+    task.tcp_ = adapted_params;
+    task.db_ = boost::shared_ptr<DampingBase>(DampingBuilder::createDamping(adapted_params));
+
+    ROS_INFO_STREAM("Created JLA task.");
+    if(task.db_ == NULL)
+    {
+        ROS_INFO_STREAM("Damping seems to be zero?!?!?!?!");
+    }
+
+    return task;
 }
 
 /* END JointLimitAvoidance **************************************************************************************/
@@ -539,6 +729,12 @@ double JointLimitAvoidanceMid<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eige
 //    }
 
     return k_H;
+}
+
+template <typename T_PARAMS, typename PRIO>
+ConstraintTypes JointLimitAvoidanceMid<T_PARAMS, PRIO>::getType() const
+{
+    return JLA_MID;
 }
 /* END 2nd JointLimitAvoidance **************************************************************************************/
 

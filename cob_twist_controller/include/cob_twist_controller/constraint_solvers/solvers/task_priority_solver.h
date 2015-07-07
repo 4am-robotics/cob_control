@@ -42,8 +42,8 @@
 class TaskPrioritySolver : public ConstraintSolver<>
 {
     public:
-        TaskPrioritySolver(const TwistControllerParams& params)
-                           : ConstraintSolver(params)
+        TaskPrioritySolver(const TwistControllerParams& params, TaskStackController_t& task_stack_controller)
+                           : ConstraintSolver(params, task_stack_controller)
         {
         }
 

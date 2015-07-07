@@ -43,8 +43,8 @@ class UnconstraintSolver : public ConstraintSolver<>
         virtual Eigen::MatrixXd solve(const t_Vector6d& in_cart_velocities,
                                       const JointStates& joint_states);
 
-        UnconstraintSolver(const TwistControllerParams& params)
-                           : ConstraintSolver(params)
+        UnconstraintSolver(const TwistControllerParams& params, TaskStackController_t& task_stack_controller)
+                           : ConstraintSolver(params, task_stack_controller)
         {}
 
         virtual ~UnconstraintSolver()

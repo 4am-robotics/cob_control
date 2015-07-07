@@ -46,6 +46,11 @@ Eigen::MatrixXd PInvBySVD::calculate(const TwistControllerParams& params,
     uint32_t i = 0;
     double lambda = db->getDampingFactor(singularValues, jacobian);
 
+
+    ROS_INFO_STREAM("lambda: " << lambda);
+    ROS_INFO_STREAM("params: " << params.damping_method);
+
+
     if(params.numerical_filtering)
     {
         // Formula 20 Singularity-robust Task-priority Redundandancy Resolution
@@ -81,3 +86,40 @@ Eigen::MatrixXd PInvBySVD::calculate(const TwistControllerParams& params,
     return pseudoInverseJacobian;
 }
 
+
+
+
+
+Eigen::MatrixXd PInvDirect::calculate(const TwistControllerParams& params,
+                                      boost::shared_ptr<DampingBase> db,
+                                      const Eigen::MatrixXd& jacobian) const
+{
+    Eigen::MatrixXd result;
+    Eigen::MatrixXd j_t = jacobian.transpose();
+    uint32_t jac_rows = jacobian.rows();
+    uint32_t jac_cols = jacobian.cols();
+    if(params.damping_method == LEAST_SINGULAR_VALUE)
+    {
+        ROS_ERROR("PInvDirect does not support SVD. Use PInvBySVD class instead!");
+    }
+
+    double lambda = db->getDampingFactor(Eigen::VectorXd::Zero(1, 1), jacobian); // use dummy for singular values.
+
+    ROS_INFO_STREAM("PInvDirect::lambda: " << lambda);
+    ROS_INFO_STREAM("PInvDirect::params: " << params.damping_method);
+
+    if(jac_cols >= jac_rows)
+    {
+        Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(jac_rows, jac_rows);
+        Eigen::MatrixXd toBeInv = jacobian * j_t + lambda * lambda * ident;
+        result = j_t * toBeInv.inverse();
+    }
+    else
+    {
+        Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(jac_cols, jac_cols);
+        Eigen::MatrixXd toBeInv = j_t * jacobian + lambda * lambda * ident;
+        result = toBeInv.inverse() * j_t;
+    }
+
+    return result;
+}

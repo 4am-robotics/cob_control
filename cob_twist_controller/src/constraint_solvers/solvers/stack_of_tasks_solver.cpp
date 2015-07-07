@@ -65,7 +65,6 @@ Eigen::MatrixXd StackOfTasksSolver::solve(const t_Vector6d& in_cart_velocities,
     Eigen::MatrixXd projector = ident - jacobianPseudoInverse * this->jacobian_data_;
     Eigen::MatrixXd partialSolution = jacobianPseudoInverse * in_cart_velocities;
 
-    TaskStackController_t* tsc = this->params_.task_stack_controller;
     for (std::set<tConstraintBase>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
     {
         (*it)->update(joint_states, this->jacobian_data_);
@@ -81,7 +80,7 @@ Eigen::MatrixXd StackOfTasksSolver::solve(const t_Vector6d& in_cart_velocities,
             // "global" weighting for all constraints in params_.k_H
             Eigen::VectorXd task = this->params_.k_H * activation_gain * magnitude * derivative_value * Eigen::VectorXd::Identity(1, 1);
             Task_t t((*it)->getPriority(),(*it)->getTaskId() , J_task0, task);
-            tsc->addTask(t);
+            this->task_stack_controller_.addTask(t);
         }
     }
 
@@ -89,7 +88,7 @@ Eigen::MatrixXd StackOfTasksSolver::solve(const t_Vector6d& in_cart_velocities,
     Eigen::MatrixXd projector_i = Eigen::MatrixXd::Identity(this->jacobian_data_.cols(), this->jacobian_data_.cols());
 
     Task_t t(this->params_.priority_main, "Main task", this->jacobian_data_, in_cart_velocities);
-    tsc->addTask(t);
+    this->task_stack_controller_.addTask(t);
 
 //    for(int32_t taskNr = 0; taskNr < 2; ++taskNr) // TODO: where to get max number of tasks? A POSITION AND A ORIENTATION TASK
 //    {
@@ -112,8 +111,8 @@ Eigen::MatrixXd StackOfTasksSolver::solve(const t_Vector6d& in_cart_velocities,
 //        tsc->addTask(t);
 //    }
 
-    TaskSetIter_t it = tsc->beginTaskIter();
-    while((it = tsc->nextActiveTask()) != tsc->getTasksEnd())
+    TaskSetIter_t it = this->task_stack_controller_.beginTaskIter();
+    while((it = this->task_stack_controller_.nextActiveTask()) != this->task_stack_controller_.getTasksEnd())
     {
         ROS_INFO_STREAM("Task: " << it->id_);
         Eigen::MatrixXd J_task = it->task_jacobian_;

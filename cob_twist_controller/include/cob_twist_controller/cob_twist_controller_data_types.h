@@ -35,8 +35,6 @@
 #include <Eigen/LU> // necessary to use several methods on EIGEN Matrices.
 #include <kdl/chainjnttojacsolver.hpp>
 
-#include "cob_twist_controller/task_stack/task_stack_controller.h"
-
 #define MAX_CRIT true
 #define MIN_CRIT false
 #define MAIN_TASK_PRIO 200
@@ -77,15 +75,23 @@ enum SolverTypes {
     DYN_TASKS_READJ,
 };
 
+enum ConstraintTypes
+{
+    None = 0,
+    CA,
+    JLA,
+    JLA_MID,
+};
+
 enum ConstraintTypesCA {
     CA_OFF = 0,
-    CA,
+    CA_ON,
 };
 
 enum ConstraintTypesJLA {
     JLA_OFF = 0,
-    JLA,
-    JLA_MID,
+    JLA_ON,
+    JLA_MID_ON,
 };
 
 struct JointStates
@@ -139,10 +145,12 @@ struct TwistControllerParams {
     ConstraintTypesCA constraint_ca;
     uint32_t priority_ca;
     double k_H_ca;
+    double damping_ca;
 
     ConstraintTypesJLA constraint_jla;
     uint32_t priority_jla;
     double k_H_jla;
+    double damping_jla;
 
     double mu;
     double k_H;
@@ -170,10 +178,6 @@ struct TwistControllerParams {
     std::vector<std::string> frame_names;
     // added a vector to contain all frames of interest for collision checking.
     std::vector<std::string> collision_check_frames;
-
-
-    // TODO: Check for better place
-    TaskStackController_t* task_stack_controller;
 };
 
 enum EN_ConstraintStates

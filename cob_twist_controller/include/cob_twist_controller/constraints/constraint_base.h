@@ -39,6 +39,7 @@
 #include "cob_twist_controller/constraints/self_motion_magnitude.h"
 #include "cob_twist_controller/constraints/constraint_params.h"
 #include "cob_twist_controller/callback_data_mediator.h"
+#include "cob_twist_controller/task_stack/task_stack_controller.h"
 
 /**
  * Main base class for all derived constraints. Used to create abstract containers that can be filled with concrete constraints.
@@ -93,6 +94,12 @@ class PriorityBase
         virtual void update(const JointStates& joint_states, const t_Matrix6Xd& jacobian_data) = 0;
         virtual std::string getTaskId() const = 0;
         virtual ConstraintState getState() const = 0;
+        virtual ConstraintTypes getType() const = 0;
+
+        virtual Eigen::MatrixXd getTaskJacobian() const = 0;
+        virtual Eigen::VectorXd getTaskDerivatives() const = 0;
+
+        virtual Task_t createTask() = 0;
 
     protected:
         PRIO priority_;
@@ -135,6 +142,7 @@ class ConstraintBase : public PriorityBase<PRIO>
         virtual void calculate() = 0;
         virtual double getActivationGain() const = 0;
         virtual std::string getTaskId() const = 0;
+        virtual ConstraintTypes getType() const = 0;
 
         virtual double getCriticalValue() const
         {
@@ -170,6 +178,25 @@ class ConstraintBase : public PriorityBase<PRIO>
             return this->state_;
         }
 
+        virtual Eigen::MatrixXd getTaskJacobian() const
+        {
+            return Eigen::MatrixXd::Zero(1,1);
+        }
+
+        virtual Eigen::VectorXd getTaskDerivatives() const
+        {
+            return Eigen::VectorXd::Zero(1,1);
+        }
+
+        virtual Task_t createTask()
+        {
+            Task_t task(this->getPriority(),
+                        this->getTaskId(),
+                        this->getTaskJacobian(),
+                        this->getTaskDerivatives(),
+                        this->getType());
+            return task;
+        }
 
     protected:
         ConstraintState state_;

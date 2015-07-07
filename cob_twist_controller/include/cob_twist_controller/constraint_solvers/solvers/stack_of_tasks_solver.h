@@ -42,8 +42,8 @@
 class StackOfTasksSolver : public ConstraintSolver<>
 {
     public:
-        StackOfTasksSolver(const TwistControllerParams& params)
-                           : ConstraintSolver(params)
+        StackOfTasksSolver(const TwistControllerParams& params, TaskStackController_t& task_stack_controller)
+                           : ConstraintSolver(params, task_stack_controller)
         {
         }
 

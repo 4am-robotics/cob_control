@@ -31,30 +31,54 @@
 #define TASK_STACK_CONTROLLER_H_
 
 #include <Eigen/Dense>
-#include <set>
 #include <vector>
 #include <stdint.h>
 
+#include <boost/shared_ptr.hpp>
+
 #include <ros/ros.h>
+
+#include "cob_twist_controller/cob_twist_controller_data_types.h"
+#include "cob_twist_controller/damping_methods/damping_base.h"
 
 template
 <typename PRIO>
 struct Task
 {
-
-    // TODO: Use a activation flag here?
     PRIO prio_;
     Eigen::MatrixXd task_jacobian_;
     Eigen::VectorXd task_;
     std::string id_;
     bool is_active_;
+    ConstraintTypes constraint_type_;
+    boost::shared_ptr<DampingBase> db_;
+    TwistControllerParams tcp_;
 
-    Task(PRIO prio, std::string id) : prio_(prio), id_(id), is_active_(true)
+
+    Task(PRIO prio, std::string id) : prio_(prio), id_(id), is_active_(true), constraint_type_(None)
     {}
 
-    Task(PRIO prio, std::string id, Eigen::MatrixXd task_jacobian, Eigen::VectorXd task)
-    : prio_(prio), id_(id), task_jacobian_(task_jacobian), task_(task), is_active_(true)
+    Task(PRIO prio, std::string id, Eigen::MatrixXd task_jacobian, Eigen::VectorXd task, ConstraintTypes ct = None)
+    : prio_(prio), id_(id), task_jacobian_(task_jacobian), task_(task), is_active_(true), constraint_type_(ct)
     {}
+
+    Task(const Task& task)
+    : prio_(task.prio_),
+      id_(task.id_),
+      task_jacobian_(task.task_jacobian_),
+      task_(task.task_),
+      is_active_(task.is_active_),
+      constraint_type_(task.constraint_type_),
+      tcp_(task.tcp_),
+      db_(task.db_)
+    {
+
+    }
+
+    ~Task()
+    {
+        this->db_.reset();
+    }
 
     inline void setPriority(PRIO prio)
     {
@@ -139,6 +163,8 @@ void TaskStackController<PRIO>::addTask(Task<PRIO> t)
             mem_it = it;
             it->task_jacobian_ = t.task_jacobian_;
             it->task_ = t.task_;
+            it->tcp_ = t.tcp_;
+            it->db_ = t.db_;
             break;
         }
     }

@@ -92,7 +92,7 @@ double DampingManipulability::getDampingFactor(const Eigen::VectorXd& sorted_sin
 {
     double w_threshold = this->params_.w_threshold;
     double lambda_max = this->params_.lambda_max;
-    Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> prod = jacobian_data * jacobian_data.transpose();
+    Eigen::MatrixXd prod = jacobian_data * jacobian_data.transpose();
     double d = prod.determinant();
     double w = std::sqrt(std::abs(d));
     double damping_factor;

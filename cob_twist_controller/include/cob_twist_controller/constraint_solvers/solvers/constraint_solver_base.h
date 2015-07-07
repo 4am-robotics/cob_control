@@ -36,6 +36,7 @@
 #include "cob_twist_controller/damping_methods/damping_base.h"
 #include "cob_twist_controller/constraints/constraint_base.h"
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
+#include "cob_twist_controller/task_stack/task_stack_controller.h"
 
 /// Base class for solvers, defining interface methods.
 template <typename PINV = PInvBySVD>
@@ -80,8 +81,8 @@ class ConstraintSolver
 
     protected:
 
-        ConstraintSolver(const TwistControllerParams& params)
-                         : params_(params)
+        ConstraintSolver(const TwistControllerParams& params, TaskStackController_t& task_stack_controller)
+                         : params_(params), task_stack_controller_(task_stack_controller)
         {
         }
 
@@ -89,6 +90,7 @@ class ConstraintSolver
         t_Matrix6Xd jacobian_data_; ///< References the current Jacobian (matrix data only).
         boost::shared_ptr<DampingBase> damping_; ///< The currently set damping method.
         PINV pinv_calc_; ///< An instance that helps solving the inverse of the Jacobian.
+        TaskStackController_t& task_stack_controller_;
 };
 
 #endif /* CONSTRAINT_SOLVER_BASE_H_ */

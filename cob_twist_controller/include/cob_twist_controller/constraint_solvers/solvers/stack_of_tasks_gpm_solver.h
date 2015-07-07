@@ -42,8 +42,8 @@
 class StackOfTasksGPMSolver : public ConstraintSolver<>
 {
     public:
-        StackOfTasksGPMSolver(const TwistControllerParams& params)
-                           : ConstraintSolver(params),
+        StackOfTasksGPMSolver(const TwistControllerParams& params, TaskStackController_t& task_stack_controller)
+                           : ConstraintSolver(params, task_stack_controller),
                              last_min_distance_(-1.0),
                              last_cycle_time_(-1.0)
         {

@@ -42,7 +42,7 @@ class DampingBase
     protected:
         DampingBase(const TwistControllerParams& params) : params_(params) { }
 
-        const TwistControllerParams& params_;
+        const TwistControllerParams params_;
 };
 
 #endif /* DAMPING_METHOD_INTERFACE_H_ */

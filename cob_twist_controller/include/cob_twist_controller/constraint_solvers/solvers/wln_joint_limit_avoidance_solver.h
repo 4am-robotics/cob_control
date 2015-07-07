@@ -39,8 +39,8 @@ class WLN_JointLimitAvoidanceSolver : public WeightedLeastNormSolver
 {
     public:
 
-        WLN_JointLimitAvoidanceSolver(const TwistControllerParams& params)
-                                  : WeightedLeastNormSolver(params)
+        WLN_JointLimitAvoidanceSolver(const TwistControllerParams& params, TaskStackController_t& task_stack_controller)
+                                  : WeightedLeastNormSolver(params, task_stack_controller)
         {
 
         }
