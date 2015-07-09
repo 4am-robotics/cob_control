@@ -81,6 +81,7 @@ enum ConstraintTypes
     CA,
     JLA,
     JLA_MID,
+    JLA_INEQ,
 };
 
 enum ConstraintTypesCA {
@@ -92,6 +93,7 @@ enum ConstraintTypesJLA {
     JLA_OFF = 0,
     JLA_ON,
     JLA_MID_ON,
+    JLA_INEQ_ON,
 };
 
 struct JointStates
@@ -176,6 +178,8 @@ struct TwistControllerParams {
 
 
     std::vector<std::string> frame_names;
+    std::vector<std::string> joints;
+
     // added a vector to contain all frames of interest for collision checking.
     std::vector<std::string> collision_check_frames;
 };

@@ -36,8 +36,10 @@ Eigen::MatrixXd DynamicTasksReadjustSolver::solve(const t_Vector6d& in_cart_velo
     Eigen::MatrixXd jacobianPseudoInverse = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
     Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(jacobianPseudoInverse.rows(), this->jacobian_data_.cols());
     Eigen::MatrixXd projector = ident - jacobianPseudoInverse * this->jacobian_data_;
-    Eigen::MatrixXd partialSolution = jacobianPseudoInverse * in_cart_velocities;
+    Eigen::MatrixXd particular_solution = jacobianPseudoInverse * in_cart_velocities;
 
+    Eigen::MatrixXd joint_pos = Eigen::MatrixXd::Zero(particular_solution.rows(), 1);
+    Eigen::MatrixXd prediction_solution = Eigen::MatrixXd::Zero(particular_solution.rows(), 1);
     Eigen::MatrixXd projector_i = Eigen::MatrixXd::Identity(this->jacobian_data_.cols(), this->jacobian_data_.cols());
     Eigen::VectorXd q_i = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
     Eigen::MatrixXd qdots_out = Eigen::MatrixXd::Zero(this->jacobian_data_.cols(), 1);
@@ -48,8 +50,8 @@ Eigen::MatrixXd DynamicTasksReadjustSolver::solve(const t_Vector6d& in_cart_velo
     for (std::set<tConstraintBase>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
     {
         ROS_INFO_STREAM("constraint id: " << (*it)->getTaskId());
-        (*it)->update(joint_states, this->jacobian_data_);
-        this->processState(it, projector, partialSolution, sum_of_gradient);
+        (*it)->update(joint_states, prediction_solution, this->jacobian_data_);
+        this->processState(it, projector, particular_solution, sum_of_gradient);
     }
 
     sum_of_gradient = this->params_.k_H * sum_of_gradient; // "global" weighting for all constraints.
@@ -68,35 +70,13 @@ Eigen::MatrixXd DynamicTasksReadjustSolver::solve(const t_Vector6d& in_cart_velo
         Eigen::MatrixXd J_temp = J_task * projector_i;
 
         Eigen::MatrixXd J_temp_inv;
-//        J_temp_inv = pinv_calc_.calculate(this->params_, this->damping_, J_temp);
-
-//        }
-//        else
-//        {
-//            ROS_INFO_STREAM("Specific processing for constraint!!! Damping: " << it->tcp_.damping_method);
-//            J_temp_inv = pinv_calc_.calculate(it->tcp_, it->db_, J_temp); // fast processing without SVD for constraint tasks!
-//        }
-
         Eigen::VectorXd v_task = it->task_;
 
-        if(None == it->constraint_type_) // main task
-        {
-            J_temp_inv = pinv_calc_.calculate(it->tcp_, it->db_, J_temp);
-
-//            ROS_INFO_STREAM("solve() params: " << it->tcp_.damping_method);
-//            ROS_INFO_STREAM("solve() JAC: " << std::endl << J_task);
-//            ROS_INFO_STREAM("solve() TASK: " << v_task.transpose());
-//            J_temp_inv = pinv_calc_.calculate(it->tcp_, it->db_, J_temp);
-        }
-        else
-        {
-            // J_temp_inv = PInvDirect().calculate(it->tcp_, it->db_, J_temp);
-            J_temp_inv = pinv_calc_.calculate(it->tcp_, it->db_, J_temp);
-        }
-
+        J_temp_inv = pinv_calc_.calculate(it->tcp_, it->db_, J_temp);
         q_i = q_i + J_temp_inv * (v_task - J_task * q_i);
         projector_i = projector_i - J_temp_inv * J_temp;
 
+        ROS_INFO_STREAM("q_i: " << q_i.transpose());
         // it->db_.reset();
     }
 
@@ -111,11 +91,9 @@ void DynamicTasksReadjustSolver::processState(std::set<tConstraintBase>::iterato
                                               Eigen::VectorXd& sum_of_gradient)
 {
     Eigen::VectorXd q_dot_0 = (*it)->getPartialValues();
-
     double activation_gain = (*it)->getActivationGain();
     Eigen::MatrixXd tmpHomogeneousSolution = projector * q_dot_0;
     double magnitude = (*it)->getSelfMotionMagnitude(particular_solution, tmpHomogeneousSolution);
-    double derivative_value = (*it)->getDerivativeValue();
     ConstraintState cstate = (*it)->getState();
     if(cstate.isTransition())
     {
@@ -125,13 +103,16 @@ void DynamicTasksReadjustSolver::processState(std::set<tConstraintBase>::iterato
             // "global" weighting k_H for all constraint tasks.
             //Eigen::VectorXd task = this->params_.k_H * activation_gain * magnitude * derivative_value * Eigen::VectorXd::Identity(1, 1);
             Task_t t = (*it)->createTask();
-            t.task_ = this->params_.k_H * activation_gain * std::abs(magnitude) * t.task_;
+            double factor = this->params_.k_H * activation_gain * magnitude;
+            t.task_ = factor * t.task_;
             this->task_stack_controller_.addTask(t);
             this->task_stack_controller_.activateTask((*it)->getTaskId());
 
         }
         else if(cstate.getCurrent() == DANGER)
         {
+            ROS_WARN_STREAM("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+            ROS_WARN_STREAM("-> DANGER!!!");
             this->task_stack_controller_.deactivateTask((*it)->getTaskId());
             sum_of_gradient += activation_gain * magnitude * q_dot_0; // smm adapted q_dot_0 vector
         }
@@ -148,11 +129,17 @@ void DynamicTasksReadjustSolver::processState(std::set<tConstraintBase>::iterato
             // "global" weighting k_H for all constraint tasks.
             //Eigen::VectorXd task = this->params_.k_H * activation_gain * magnitude * derivative_value * Eigen::VectorXd::Identity(1, 1);
             Task_t t = (*it)->createTask();
-            t.task_ = this->params_.k_H * activation_gain * std::abs(magnitude) * t.task_;
+            // double factor = this->params_.k_H * activation_gain * std::abs(magnitude);
+            double factor = this->params_.k_H * activation_gain * magnitude;
+            t.task_ = factor * t.task_;
+
+            // t.task_jacobian_ = factor * t.task_jacobian_;
             this->task_stack_controller_.addTask(t);
         }
         else if(cstate.getCurrent() == DANGER)
         {
+            ROS_WARN_STREAM("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
+            ROS_WARN_STREAM("DANGER!!!");
             sum_of_gradient += activation_gain * magnitude * q_dot_0; // smm adapted q_dot_0 vector
         }
         else

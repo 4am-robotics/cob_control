@@ -45,12 +45,6 @@ Eigen::MatrixXd PInvBySVD::calculate(const TwistControllerParams& params,
     Eigen::MatrixXd pseudoInverseJacobian;
     uint32_t i = 0;
     double lambda = db->getDampingFactor(singularValues, jacobian);
-
-
-    ROS_INFO_STREAM("lambda: " << lambda);
-    ROS_INFO_STREAM("params: " << params.damping_method);
-
-
     if(params.numerical_filtering)
     {
         // Formula 20 Singularity-robust Task-priority Redundandancy Resolution

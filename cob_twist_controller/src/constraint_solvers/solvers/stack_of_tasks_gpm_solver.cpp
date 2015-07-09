@@ -69,6 +69,11 @@ Eigen::MatrixXd StackOfTasksGPMSolver::solve(const t_Vector6d& in_cart_velocitie
     Eigen::MatrixXd projector = ident - jacobianPseudoInverse * this->jacobian_data_;
     Eigen::VectorXd partialSolution = jacobianPseudoInverse * in_cart_velocities;
     Eigen::MatrixXd homogeneousSolution = Eigen::MatrixXd::Zero(partialSolution.rows(), partialSolution.cols());
+    Eigen::MatrixXd prediction_solution = Eigen::MatrixXd::Zero(partialSolution.rows(), 1);
+    for(uint8_t i = 0; i < joint_states.current_q_.rows(); ++i)
+    {
+        prediction_solution(i, 0) = partialSolution(i, 0) * 0.02 + joint_states.current_q_(i);
+    }
 
     if(last_cycle_time_ > 0.0)
     {
@@ -94,7 +99,7 @@ Eigen::MatrixXd StackOfTasksGPMSolver::solve(const t_Vector6d& in_cart_velocitie
 
     for (std::set<tConstraintBase>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
     {
-        (*it)->update(joint_states, this->jacobian_data_);
+        (*it)->update(joint_states, prediction_solution, this->jacobian_data_);
         activation_gain = (*it)->getActivationGain();
         min_dist = (*it)->getCriticalValue();
         crit_distance = (*it)->getActivationThreshold();

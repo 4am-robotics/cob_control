@@ -45,12 +45,12 @@ bool CobTwistController::initialize()
     ros::NodeHandle nh_twist("twist_controller");
 
     // JointNames
-    if(!nh_.getParam("joint_names", joints_))
+    if(!nh_.getParam("joint_names", twist_controller_params_.joints))
     {
         ROS_ERROR("Parameter 'joint_names' not set");
         return false;
     }
-    twist_controller_params_.dof = joints_.size();
+    twist_controller_params_.dof = twist_controller_params_.joints.size();
 
     // Chain
     if(!nh_.getParam("chain_base_link", twist_controller_params_.chain_base_link))
@@ -106,17 +106,13 @@ bool CobTwistController::initialize()
 
     for(unsigned int i=0; i < twist_controller_params_.dof; i++)
     {
-        twist_controller_params_.limits_vel.push_back(model.getJoint(joints_[i])->limits->velocity);
-        twist_controller_params_.limits_min.push_back(model.getJoint(joints_[i])->limits->lower);
-        twist_controller_params_.limits_max.push_back(model.getJoint(joints_[i])->limits->upper);
+        twist_controller_params_.limits_vel.push_back(model.getJoint(twist_controller_params_.joints[i])->limits->velocity);
+        twist_controller_params_.limits_min.push_back(model.getJoint(twist_controller_params_.joints[i])->limits->lower);
+        twist_controller_params_.limits_max.push_back(model.getJoint(twist_controller_params_.joints[i])->limits->upper);
     }
-
-    ROS_INFO_STREAM(">>>>>>>>>>>>>>> Before init InverseDifferentialKinematicsSolver");
 
     ///initialize configuration control solver
     p_inv_diff_kin_solver_.reset(new InverseDifferentialKinematicsSolver(chain_, callback_data_mediator_));
-
-    ROS_INFO_STREAM(">>>>>>>>>>>>>>> Initialized InverseDifferentialKinematicsSolver");
 
     // Before setting up dynamic_reconfigure server: initParams with default values
     this->initParams();
@@ -177,11 +173,6 @@ void CobTwistController::reinitServiceRegistration()
 
 void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControllerConfig& config, uint32_t level)
 {
-    if((config.kinematic_extension == BASE_ACTIVE) && config.base_compensation)
-    {
-        ROS_ERROR("base_active and base_compensation cannot be enabled at the same time");
-    }
-    
     this->checkSolverAndConstraints(config);
     twist_controller_params_.hardware_interface_type = static_cast<HardwareInterfaceTypes>(config.hardware_interface_type);
     
@@ -219,50 +210,69 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     twist_controller_params_.base_compensation = config.base_compensation;
     twist_controller_params_.kinematic_extension = static_cast<KinematicExtensionTypes>(config.kinematic_extension);
     twist_controller_params_.base_ratio = config.base_ratio;
-    
+
 
     this->hardware_interface_.reset(HardwareInterfaceBuilder::createHardwareInterface(this->nh_, this->twist_controller_params_));
 
     p_inv_diff_kin_solver_->resetAll(this->twist_controller_params_);
 
-    this->reinitServiceRegistration();
+    if(CA_OFF != twist_controller_params_.constraint_ca)
+    {
+        this->reinitServiceRegistration();
+    }
 }
 
 
-void CobTwistController::checkSolverAndConstraints(const cob_twist_controller::TwistControllerConfig& config)
+void CobTwistController::checkSolverAndConstraints(cob_twist_controller::TwistControllerConfig& config)
 {
     bool warning = false;
     SolverTypes solver = static_cast<SolverTypes>(config.solver);
     ConstraintTypesJLA ct_jla = static_cast<ConstraintTypesJLA>(config.constraint_jla);
     ConstraintTypesCA ct_ca = static_cast<ConstraintTypesCA>(config.constraint_ca);
+    bool base_compensation = config.base_compensation;
+    KinematicExtensionTypes ket = static_cast<KinematicExtensionTypes>(config.kinematic_extension);
+
+    if(base_compensation && BASE_ACTIVE == ket)
+    {
+        ROS_ERROR("Base cannot be active and compensated at the same time! Setting base compensation back to false ...");
+        config.base_compensation = false;
+        warning = true;
+    }
 
     if(solver == DEFAULT_SOLVER && (ct_jla != JLA_OFF || ct_ca != CA_OFF))
     {
-        ROS_WARN("The selection of Default solver and a constraint doesn\'t make any sense. Constraints won\'t be recognized ...");
+        ROS_ERROR("The selection of Default solver and a constraint doesn\'t make any sense. Switch settings back ...");
+        config.constraint_jla = static_cast<int>(JLA_OFF);
+        config.constraint_ca = static_cast<int>(CA_OFF);
         warning = true;
     }
 
     if(solver == WLN && ct_ca != CA_OFF)
     {
-        ROS_WARN("The WLN solution doesn\'t support collision avoidance. Currently WLN is only implemented for Identity and JLA ...");
+        ROS_ERROR("The WLN solution doesn\'t support collision avoidance. Currently WLN is only implemented for Identity and JLA ...");
+        config.constraint_ca = static_cast<int>(CA_OFF);
         warning = true;
     }
 
     if(solver == GPM && ct_ca == CA_OFF && ct_jla == JLA_OFF)
     {
-        ROS_WARN("You have chosen GPM but without constraints! The behaviour without constraints will be the same like for DEFAULT_SOLVER.");
+        ROS_ERROR("You have chosen GPM but without constraints! The behaviour without constraints will be the same like for DEFAULT_SOLVER.");
         warning = true;
     }
 
     if(solver == TASK_2ND_PRIO && (ct_jla == JLA_ON || ct_ca == CA_OFF))
     {
-        ROS_WARN("The projection of a task into the null space of the main EE task is currently only for the CA constraint support!");
+        ROS_ERROR("The projection of a task into the null space of the main EE task is currently only for the CA constraint supported!");
+        config.constraint_ca = static_cast<int>(CA_ON);
+        config.constraint_jla = static_cast<int>(JLA_OFF);
         warning = true;
     }
 
+
+
     if(!warning)
     {
-        ROS_INFO("Selection of solver and constraints seems to be ok.");
+        ROS_INFO("Selection of parameters seem to be ok.");
     }
 }
 
@@ -310,17 +320,7 @@ void CobTwistController::initParams()
     twist_controller_params_.enforce_pos_limits = true;
     twist_controller_params_.enforce_vel_limits = true;
     twist_controller_params_.tolerance = 5.0;
-    
-    // added limits from URDF file
-//    params.limits_max = twist_controller_params_.limits_max;
-//    params.limits_min = twist_controller_params_.limits_min;
-//    params.limits_vel = twist_controller_params_.limits_vel;
-//
-//    params.max_vel_lin = twist_controller_params_.max_vel_lin;
-//    params.max_vel_rot = twist_controller_params_.max_vel_rot;
-//    params.max_vel_lin_base = twist_controller_params_.max_vel_lin_base;
-//    params.max_vel_rot_base = twist_controller_params_.max_vel_rot_base;
-    
+
     twist_controller_params_.base_compensation = false;
     twist_controller_params_.kinematic_extension = NO_EXTENSION;
     twist_controller_params_.base_ratio = 0.0;
@@ -419,7 +419,7 @@ void CobTwistController::jointstateCallback(const sensor_msgs::JointState::Const
     {
         for(unsigned int i = 0; i < msg->name.size(); i++)
         {
-            if(strcmp(msg->name[i].c_str(), joints_[j].c_str()) == 0)
+            if(strcmp(msg->name[i].c_str(), twist_controller_params_.joints[j].c_str()) == 0)
             {
                 q_temp(j) = msg->position[i];
                 q_dot_temp(j) = msg->velocity[i];
@@ -429,7 +429,7 @@ void CobTwistController::jointstateCallback(const sensor_msgs::JointState::Const
         }
     }
 
-    if(count == joints_.size())
+    if(count == twist_controller_params_.joints.size())
     {
         this->joint_states_.last_q_ = joint_states_.current_q_;
         this->joint_states_.last_q_dot_ = joint_states_.current_q_dot_;

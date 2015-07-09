@@ -64,10 +64,15 @@ Eigen::MatrixXd StackOfTasksSolver::solve(const t_Vector6d& in_cart_velocities,
     Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(jacobianPseudoInverse.rows(), this->jacobian_data_.cols());
     Eigen::MatrixXd projector = ident - jacobianPseudoInverse * this->jacobian_data_;
     Eigen::MatrixXd partialSolution = jacobianPseudoInverse * in_cart_velocities;
+    Eigen::MatrixXd prediction_solution = Eigen::MatrixXd::Zero(partialSolution.rows(), 1);
+    for(uint8_t i = 0; i < joint_states.current_q_.rows(); ++i)
+    {
+        prediction_solution(i, 0) = partialSolution(i, 0) * 0.02 + joint_states.current_q_(i);
+    }
 
     for (std::set<tConstraintBase>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
     {
-        (*it)->update(joint_states, this->jacobian_data_);
+        (*it)->update(joint_states, prediction_solution, this->jacobian_data_);
         q_dot_0 = (*it)->getPartialValues();
         activation_gain = (*it)->getActivationGain();
         Eigen::MatrixXd tmpHomogeneousSolution = projector * q_dot_0;

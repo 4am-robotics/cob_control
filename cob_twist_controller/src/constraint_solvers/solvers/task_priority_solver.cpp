@@ -46,12 +46,17 @@ Eigen::MatrixXd TaskPrioritySolver::solve(const t_Vector6d& in_cart_velocities,
     Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(jacobianPseudoInverse.rows(), this->jacobian_data_.cols());
     Eigen::MatrixXd projector = ident - jacobianPseudoInverse * this->jacobian_data_;
     Eigen::MatrixXd particular_solution = jacobianPseudoInverse * in_cart_velocities;
+    Eigen::MatrixXd prediction_solution = Eigen::MatrixXd::Zero(particular_solution.rows(), 1);
+    for(uint8_t i = 0; i < joint_states.current_q_.rows(); ++i)
+    {
+        prediction_solution(i, 0) = particular_solution(i, 0) * 0.02 + joint_states.current_q_(i);
+    }
 
     if (this->constraints_.size() > 0)
     {
         for (std::set<tConstraintBase>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
         {
-            (*it)->update(joint_states, this->jacobian_data_);
+            (*it)->update(joint_states, prediction_solution, this->jacobian_data_);
             partial_cost_func = (*it)->getPartialValues(); // Equal to (partial g) / (partial q) = J_g
             current_cost_func_value = (*it)->getValue();
             derivative_cost_func_value = (*it)->getDerivativeValue();

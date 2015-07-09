@@ -88,15 +88,19 @@ class ConstraintParamsJLA : public ConstraintParamsBase
     public:
 
         ConstraintParamsJLA(const TwistControllerParams& params)
-        : ConstraintParamsBase(params)
-        {}
+        : ConstraintParamsBase(params), joint_idx_(-1)
+        {
+        }
 
         ConstraintParamsJLA(const ConstraintParamsJLA& cpjla)
-        : ConstraintParamsBase(cpjla.params_)
+        : ConstraintParamsBase(cpjla.params_), joint_(cpjla.joint_), joint_idx_(cpjla.joint_idx_)
         {}
 
         virtual ~ConstraintParamsJLA()
         {}
+
+        std::string joint_;
+        int32_t joint_idx_;
 
 };
 /* END ConstraintParamsJLA **************************************************************************************/

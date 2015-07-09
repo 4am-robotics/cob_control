@@ -118,12 +118,21 @@ double DampingLeastSingularValues::getDampingFactor(const Eigen::VectorXd& sorte
                                                     const Eigen::MatrixXd& jacobian_data) const
 {
     // Formula 15 Singularity-robust Task-priority Redundandancy Resolution
-    if((double)sorted_singular_values(sorted_singular_values.rows()-1) < this->params_.eps_damping)
+    double least_singular_value = sorted_singular_values(sorted_singular_values.rows() - 1);
+
+    ROS_WARN_STREAM("least_singular_value: " << least_singular_value);
+    ROS_WARN_STREAM("this->params_.eps_damping: " << this->params_.eps_damping);
+    ROS_WARN_STREAM("this->params_.lambda_max: " << this->params_.lambda_max);
+
+
+    if(least_singular_value < this->params_.eps_damping)
     {
-        return sqrt( (1-pow((double)sorted_singular_values(sorted_singular_values.rows()-1)/this->params_.eps_damping,2)) * pow(this->params_.lambda_max,2) );
-    }else
+        double lambda_quad = pow(this->params_.lambda_max, 2.0);
+        return sqrt( (1.0 - pow(least_singular_value / this->params_.eps_damping, 2.0)) * lambda_quad);
+    }
+    else
     {
-        return 0;
+        return 0.0;
     }
 }
 /* END DampingLeastSingularValues ************************************************************************************/
