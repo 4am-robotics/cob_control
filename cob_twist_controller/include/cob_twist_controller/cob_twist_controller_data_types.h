@@ -41,6 +41,7 @@
 
 const double DAMPING_LIMIT = 1.0e-12; ///< const. value for zero comparison with damping factor
 const double ZERO_LIMIT = 1.0e-9;
+const double DIV0_SAFE = 1.0e-6;
 
 typedef Eigen::Matrix<double,6,Eigen::Dynamic> t_Matrix6Xd;
 

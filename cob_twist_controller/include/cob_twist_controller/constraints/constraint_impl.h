@@ -233,6 +233,9 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
                                                                     d.frame_id);
         if (params.frame_names.end() != str_it)
         {
+            /*
+             * Create a skew-symm matrix as transformation between the segment root and the critical point.
+             */
             Eigen::Matrix3d skew_symm;
             skew_symm <<    0.0,                          d.collision_pnt_vector.z(), -d.collision_pnt_vector.y(),
                             -d.collision_pnt_vector.z(),  0.0,                         d.collision_pnt_vector.x(),
@@ -244,7 +247,7 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
             T.block(0, 3, 3, 3) << skew_symm;
             T.block(3, 0, 3, 3) << Eigen::Matrix3d::Zero();
             T.block(3, 3, 3, 3) << ident;
-
+            // ****************************************************************************************************
 
             uint32_t idx = str_it - params.frame_names.begin();
             uint32_t frame_number = idx + 1; // segment nr not index represents frame number
@@ -266,12 +269,14 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
                     crit_pnt_jac.row(1),
                     crit_pnt_jac.row(2);
 
-            Eigen::Vector3d vec;
-            vec << d.distance_vec[0], d.distance_vec[1], d.distance_vec[2];
+            Eigen::Vector3d vec(d.distance_vec[0], d.distance_vec[1], d.distance_vec[2]);
+            double vec_norm = vec.norm();
+            vec_norm = vec_norm > 0.0 ? vec_norm : DIV0_SAFE;
             Eigen::VectorXd term_2nd = (m_transl.transpose()) * (vec / vec.norm()); // use the unit vector only for direction!
 
             // Gradient of the cost function from: Strasse O., Escande A., Mansard N. et al.
             // "Real-Time (Self)-Collision Avoidance Task on a HRP-2 Humanoid Robot", 2008 IEEE International Conference
+            double denom = d.min_distance > 0.0 ? d.min_distance : DIV0_SAFE;
             partial_values =  (2.0 * ((d.min_distance - this->getActivationThreshold()) / d.min_distance) * term_2nd);
         }
         else
