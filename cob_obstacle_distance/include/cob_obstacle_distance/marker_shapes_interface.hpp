@@ -50,6 +50,7 @@ class IMarkerShape
          virtual visualization_msgs::Marker getMarker() = 0;
          virtual void setDrawn() = 0;
          virtual bool isDrawn() const = 0;
+         virtual void updatePose(geometry_msgs::Vector3 &pos, geometry_msgs::Quaternion &quat) = 0;
          virtual fcl::CollisionObject getCollisionObject() const = 0;
          virtual ~IMarkerShape() {}
 };

@@ -97,6 +97,8 @@ inline void MarkerShape<T>::setColor(double color_r, double color_g, double colo
     marker_.color.g = color_g;
     marker_.color.b = color_b;
     marker_.color.a = color_a;
+
+    fcl_marker_converter_.assignValues(marker_);
 }
 
 
@@ -137,6 +139,20 @@ fcl::CollisionObject MarkerShape<T>::getCollisionObject() const
     geoShape.computeLocalAABB();
     fcl::CollisionObject cobj(boost::shared_ptr<fcl::CollisionGeometry>(new T(geoShape)), x);
     return cobj;
+}
+
+template <typename T>
+inline void MarkerShape<T>::updatePose(geometry_msgs::Vector3 &pos, geometry_msgs::Quaternion &quat)
+{
+    marker_.pose.position.x = pos.x;
+    marker_.pose.position.y = pos.y;
+    marker_.pose.position.z = pos.z;
+    marker_.pose.orientation.x = quat.x;
+    marker_.pose.orientation.y = quat.y;
+    marker_.pose.orientation.z = quat.z;
+    marker_.pose.orientation.w = quat.w;
+
+    fcl_marker_converter_.assignValues(marker_);
 }
 
 /* END MarkerShape **********************************************************************************************/

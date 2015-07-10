@@ -58,7 +58,7 @@
 
 uint32_t DistanceManager::seq_nr_ = 0;
 
-DistanceManager::DistanceManager(ros::NodeHandle& nh) : nh_(nh)
+DistanceManager::DistanceManager(ros::NodeHandle& nh) : nh_(nh), counter_(1000)
 {}
 
 DistanceManager::~DistanceManager()
@@ -151,14 +151,14 @@ bool DistanceManager::waitForMarkerSubscriber()
     return true;
 }
 
-void DistanceManager::addObstacle(Ptr_IMarkerShape_t s)
+void DistanceManager::addObstacle(const std::string& id, Ptr_IMarkerShape_t s)
 {
-    this->obstacle_mgr_->addShape(s);
+    this->obstacle_mgr_->addShape(id, s);
 }
 
-void DistanceManager::addObjectOfInterest(Ptr_IMarkerShape_t s)
+void DistanceManager::addObjectOfInterest(const std::string& id, Ptr_IMarkerShape_t s)
 {
-    this->object_of_interest_mgr_->addShape(s);
+    this->object_of_interest_mgr_->addShape(id, s);
 }
 
 void DistanceManager::drawObstacles(bool enforceDraw)
@@ -224,6 +224,9 @@ void DistanceManager::calculate()
 
         Eigen::Quaterniond q;
         tf::quaternionKDLToEigen (frame_pos.M, q);
+        Eigen::Matrix3d x = (tf_cb_frame_bl_.inverse() * q).rotation();
+        Eigen::Quaterniond q_1(x);
+
         /* ******* End Transformation part ************** */
 
         // Representation of segment_of_interest as specific shape
@@ -232,9 +235,25 @@ void DistanceManager::calculate()
         fcl::Cylinder c(0.1, 0.1);
         Ptr_IMarkerShape_t ooi;
 
-        if(!this->getMarkerShape(it->second.shape_type, abs_jnt_pos, q, ooi))
+        if(!this->object_of_interest_mgr_->getShape(frame_of_interest_name, ooi))
         {
             return;
+        }
+
+        geometry_msgs::Vector3 v3;
+        geometry_msgs::Quaternion quat;
+        tf::quaternionEigenToMsg(q_1, quat);
+        tf::vectorEigenToMsg(abs_jnt_pos, v3);
+        ooi->updatePose(v3, quat);
+
+        if(counter_ <= 0)
+        {
+            this->drawObjectsOfInterest(true);
+            counter_ = 1000;
+        }
+        else
+        {
+            counter_--;
         }
 
         fcl::CollisionObject ooi_co = ooi->getCollisionObject();
@@ -243,9 +262,10 @@ void DistanceManager::calculate()
         bool setDistResult = false;
         fcl::CollisionObject result_collision_obj = ooi_co;
         fcl::FCL_REAL last_dist = std::numeric_limits<fcl::FCL_REAL>::max();
-        for(ShapesManager::Iter_t it = this->obstacle_mgr_->begin(); it != this->obstacle_mgr_->end(); ++it)
+        for(ShapesManager::Map_iter_t it = this->obstacle_mgr_->begin(); it != this->obstacle_mgr_->end(); ++it)
         {
-            fcl::CollisionObject collision_obj = (*it)->getCollisionObject();
+            Ptr_IMarkerShape_t obstacle = it->second;
+            fcl::CollisionObject collision_obj = obstacle->getCollisionObject();
             fcl::DistanceResult tmpResult;
             fcl::DistanceRequest distRequest(true);
             fcl::FCL_REAL dist = fcl::distance(&ooi_co, &collision_obj, distRequest, tmpResult);
@@ -357,34 +377,6 @@ void DistanceManager::jointstateCb(const sensor_msgs::JointState::ConstPtr& msg)
     }
 }
 
-bool DistanceManager::registerPointOfInterest(cob_obstacle_distance::Registration::Request& request,
-                                              cob_obstacle_distance::Registration::Response& response)
-{
-    ROS_INFO_STREAM("Registering a point / frame of interest!");
-    if (this->obstacle_distances_.count(request.frame_id))
-    {
-        response.success = true;
-        response.message = "Element " + request.frame_id + " already existent.";
-    }
-    else
-    {
-        try
-        {
-            this->obstacle_distances_[request.frame_id] = ObstacleDistance(request.shape_type);
-            response.success = true;
-            response.message = "Successfully inserted element " + request.frame_id + ".";
-        }
-        catch(...)
-        {
-            response.success = false;
-            response.message = "Failed to insert element " + request.frame_id + "!";
-            ROS_ERROR_STREAM(response.message);
-        }
-    }
-
-    return true;
-}
-
 bool DistanceManager::predictDistance(cob_obstacle_distance::PredictDistance::Request& request,
                                       cob_obstacle_distance::PredictDistance::Response& response)
 {
@@ -427,7 +419,7 @@ bool DistanceManager::predictDistance(cob_obstacle_distance::PredictDistance::Re
 
         // Representation of segment_of_interest as specific shape
         Ptr_IMarkerShape_t ooi;
-        if(!DistanceManager::getMarkerShape(visualization_msgs::Marker::SPHERE, abs_jnt_pos, q, ooi))
+        if(!DistanceManager::getMarkerShape(visualization_msgs::Marker::SPHERE, abs_jnt_pos, q, frame_id, ooi))
         {
             return true;
         }
@@ -437,9 +429,10 @@ bool DistanceManager::predictDistance(cob_obstacle_distance::PredictDistance::Re
         fcl::CollisionObject result_collision_obj = ooi_co;
         fcl::FCL_REAL last_dist = std::numeric_limits<fcl::FCL_REAL>::max();
         fcl::FCL_REAL dist;
-        for(ShapesManager::Iter_t it = this->obstacle_mgr_->begin(); it != this->obstacle_mgr_->end(); ++it)
+        for(ShapesManager::Map_iter_t it = this->obstacle_mgr_->begin(); it != this->obstacle_mgr_->end(); ++it)
         {
-            fcl::CollisionObject collision_obj = (*it)->getCollisionObject();
+            Ptr_IMarkerShape_t obstacle = it->second;
+            fcl::CollisionObject collision_obj = obstacle->getCollisionObject();
             fcl::DistanceResult tmpResult;
             fcl::DistanceRequest distRequest(true);
             dist = fcl::distance(&ooi_co, &collision_obj, distRequest, tmpResult);
@@ -456,7 +449,53 @@ bool DistanceManager::predictDistance(cob_obstacle_distance::PredictDistance::Re
     return true;
 }
 
-bool DistanceManager::getMarkerShape(uint32_t shape_type, const Eigen::Vector3d& abs_pos, const Eigen::Quaterniond& quat_pos, Ptr_IMarkerShape_t& segment_of_interest_marker_shape)
+bool DistanceManager::registerPointOfInterest(cob_obstacle_distance::Registration::Request& request,
+                                              cob_obstacle_distance::Registration::Response& response)
+{
+    ROS_INFO_STREAM("Registering a point / frame of interest!");
+    if (this->obstacle_distances_.count(request.frame_id))
+    {
+        response.success = true;
+        response.message = "Element " + request.frame_id + " already existent.";
+    }
+    else
+    {
+        try
+        {
+            this->obstacle_distances_[request.frame_id] = ObstacleDistance(request.shape_type);
+
+            Ptr_IMarkerShape_t ooi;
+            Eigen::Quaterniond q;
+            Eigen::Vector3d v3;
+
+            if(this->getMarkerShape(request.shape_type, v3, q, request.frame_id, ooi))
+            {
+                this->addObjectOfInterest(request.frame_id, ooi);
+                response.success = true;
+                response.message = "Successfully inserted element " + request.frame_id + ".";
+            }
+            else
+            {
+                response.success = false;
+                response.message = "Failed to insert element " + request.frame_id + "!";
+            }
+        }
+        catch(...)
+        {
+            response.success = false;
+            response.message = "Failed to insert element " + request.frame_id + "!";
+            ROS_ERROR_STREAM(response.message);
+        }
+    }
+
+    return true;
+}
+
+bool DistanceManager::getMarkerShape(uint32_t shape_type,
+                                     const Eigen::Vector3d& abs_pos,
+                                     const Eigen::Quaterniond& quat_pos,
+                                     const std::string& frame_of_interest,
+                                     Ptr_IMarkerShape_t& segment_of_interest_marker_shape)
 {
     // Representation of segment_of_interest as specific fcl::Shape
     fcl::Box b(0.1, 0.1, 0.1);
@@ -474,9 +513,23 @@ bool DistanceManager::getMarkerShape(uint32_t shape_type, const Eigen::Vector3d&
 
     std_msgs::ColorRGBA col;
     col.a = 1.0;
-    col.r = 0.0;
+    col.r = 1.0;
     col.g = 0.0;
     col.b = 0.0;
+
+    std::string mesh_resource;
+    if(MESH_RES_MARKER == shape_type)
+    {
+        if(frame2CollisionMesh_.m.count(frame_of_interest) > 0)
+        {
+            mesh_resource = frame2CollisionMesh_.m[frame_of_interest];
+        }
+        else
+        {
+            ROS_WARN_STREAM("Could not find mesh resource for " << frame_of_interest << ". Rather using Sphere!");
+            shape_type = visualization_msgs::Marker::SPHERE;
+        }
+    }
 
     switch(shape_type)
     {
@@ -488,6 +541,12 @@ bool DistanceManager::getMarkerShape(uint32_t shape_type, const Eigen::Vector3d&
             break;
         case visualization_msgs::Marker::CYLINDER:
             segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Cylinder>(this->root_frame_, c, pose, col));
+            break;
+        case MESH_RES_MARKER:
+            segment_of_interest_marker_shape.reset(new MarkerShape<BVH_RSS_t>(this->root_frame_,
+                                                                              mesh_resource,
+                                                                              pose,
+                                                                              col));
             break;
         default:
            ROS_ERROR("Failed to process request due to unknown shape type: %d", shape_type);

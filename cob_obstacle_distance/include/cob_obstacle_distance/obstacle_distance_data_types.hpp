@@ -31,8 +31,11 @@
 #include <ros/ros.h>
 #include <Eigen/Core>
 #include <stdint.h>
+#include <unordered_map>
 
 #include "cob_obstacle_distance/ObstacleDistances.h"
+
+#define MESH_RES_MARKER 99u // Must be equal to "cob_twist_controller/cob_twist_cob.hpp"
 
 struct ObstacleDistance
 {
@@ -47,6 +50,32 @@ struct ObstacleDistance
     Eigen::Vector3d pos_on_manipulator;
     ros::Time timestamp;
     uint32_t shape_type;
+};
+
+struct ST_Frame2CollisionMesh
+{
+    std::unordered_map<std::string, std::string> m;
+
+    ST_Frame2CollisionMesh()
+    {
+        m["arm_right_1_link"] = "package://schunk_description/meshes/lwa4p_extended/arm_1_collision.stl";
+        m["arm_left_1_link"] = "package://schunk_description/meshes/lwa4p_extended/arm_1_collision.stl";
+
+        m["arm_right_2_link"] = "package://schunk_description/meshes/lwa4p_extended/arm_2_collision.stl";
+        m["arm_left_2_link"] = "package://schunk_description/meshes/lwa4p_extended/arm_2_collision.stl";
+
+        m["arm_right_3_link"] = "package://schunk_description/meshes/lwa4p_extended/arm_3_collision.stl";
+        m["arm_left_3_link"] = "package://schunk_description/meshes/lwa4p_extended/arm_3_collision.stl";
+
+        m["arm_right_4_link"] = "package://schunk_description/meshes/lwa4p_extended/arm_4_collision.stl";
+        m["arm_left_4_link"] = "package://schunk_description/meshes/lwa4p_extended/arm_4_collision.stl";
+
+        m["arm_right_5_link"] = "package://schunk_description/meshes/lwa4p_extended/arm_5_collision.stl";
+        m["arm_left_5_link"] = "package://schunk_description/meshes/lwa4p_extended/arm_5_collision.stl";
+
+        m["arm_right_6_link"] = "package://schunk_description/meshes/lwa4p_extended/arm_6_collision.stl";
+        m["arm_left_6_link"] = "package://schunk_description/meshes/lwa4p_extended/arm_6_collision.stl";
+    }
 };
 
 #endif /* OBSTACLE_DISTANCE_DATA_TYPES_HPP_ */

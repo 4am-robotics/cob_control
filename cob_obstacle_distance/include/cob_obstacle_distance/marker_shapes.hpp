@@ -100,6 +100,8 @@ class MarkerShape : public IMarkerShape
          */
         inline bool isDrawn() const;
 
+        inline void updatePose(geometry_msgs::Vector3 &pos, geometry_msgs::Quaternion &quat);
+
         /**
          * @return A fcl::CollisionObject to calculate distances to other objects or check whether collision occurred or not.
          */
@@ -164,6 +166,8 @@ class MarkerShape<BVH_RSS_t> : public IMarkerShape
          * @return True if marker has already been published.
          */
         inline bool isDrawn() const;
+
+        inline void updatePose(geometry_msgs::Vector3 &pos, geometry_msgs::Quaternion &quat);
 
         /**
          * @return A fcl::CollisionObject to calculate distances to other objects or check whether collision occurred or not.

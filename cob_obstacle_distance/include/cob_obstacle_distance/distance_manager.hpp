@@ -52,6 +52,9 @@
 #include <tf_conversions/tf_kdl.h>
 #include <tf_conversions/tf_eigen.h>
 
+#include <kdl/chainfksolvervel_recursive.hpp>
+#include <ros/ros.h>
+
 #include "cob_obstacle_distance/marker_shapes.hpp"
 #include "cob_obstacle_distance/shapes_manager.hpp"
 #include "cob_obstacle_distance/chainfk_solvers/advanced_chainfksolver_recursive.hpp"
@@ -59,8 +62,7 @@
 #include "cob_obstacle_distance/Registration.h"
 #include "cob_obstacle_distance/PredictDistance.h"
 
-#include <kdl/chainfksolvervel_recursive.hpp>
-#include <ros/ros.h>
+
 
 class DistanceManager
 {
@@ -93,6 +95,10 @@ class DistanceManager
 
         static uint32_t seq_nr_;
 
+        ST_Frame2CollisionMesh frame2CollisionMesh_;
+
+        int counter_;
+
     public:
         /**
          * @param nh Reference to the ROS node handle.
@@ -115,13 +121,13 @@ class DistanceManager
          * Add a new obstacle to the obstacles that shall be managed.
          * @param s Pointer to an already created MarkerShape that represent an obstacle.
          */
-        void addObstacle(Ptr_IMarkerShape_t s);
+        void addObstacle(const std::string& id, Ptr_IMarkerShape_t s);
 
         /**
          * Add a new object of interest that shall be investigated for collisions.
          * @param s Pointer to an already created MarkerShape that represent the object of interest (i.e. shape in reference frame of segment).
          */
-        void addObjectOfInterest(Ptr_IMarkerShape_t s);
+        void addObjectOfInterest(const std::string& id, Ptr_IMarkerShape_t s);
 
         /**
          * Simply draw all obstacle markers in RVIZ.
@@ -191,6 +197,7 @@ class DistanceManager
         bool getMarkerShape(uint32_t shape_type,
                             const Eigen::Vector3d& abs_pos,
                             const Eigen::Quaterniond& quat_pos,
+                            const std::string& frame_of_interest,
                             Ptr_IMarkerShape_t& segment_of_interest_marker_shape);
 };
 

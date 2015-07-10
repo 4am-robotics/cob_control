@@ -37,9 +37,9 @@
 
 #include "cob_obstacle_distance/Registration.h"
 
+#define MESH_RES_MARKER 99u // Must be equal to "cob_obstacle_distance/obstacle_distance_data_types.hpp"
 
 //ToDo: Should we re-add DEBUG_BASE_COMPENSATION stuff?
-
 bool CobTwistController::initialize()
 {
     ros::NodeHandle nh_twist("twist_controller");
@@ -158,7 +158,7 @@ void CobTwistController::reinitServiceRegistration()
 
         cob_obstacle_distance::Registration r;
         r.request.frame_id = *it;
-        r.request.shape_type = visualization_msgs::Marker::SPHERE;
+        r.request.shape_type = MESH_RES_MARKER;
         if (client.call(r))
         {
             ROS_INFO_STREAM("Called registration service with success: " << int(r.response.success) << ". Got message: " << r.response.message);
@@ -343,9 +343,6 @@ void CobTwistController::initParams()
     // TODO: initialization
 
 
-    //params.task_stack_controller = NULL;
-    
-    
 //    twist_controller_params_ = params;
     p_inv_diff_kin_solver_->resetAll(twist_controller_params_);
 }

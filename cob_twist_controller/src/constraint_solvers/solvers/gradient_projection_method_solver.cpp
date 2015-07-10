@@ -47,21 +47,17 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const t_Vector6d& inCartVe
     Eigen::MatrixXd particular_solution = jacobianPseudoInverse * inCartVelocities;
     Eigen::MatrixXd homogeneous_solution = Eigen::MatrixXd::Zero(particular_solution.rows(), particular_solution.cols());
     Eigen::MatrixXd prediction_solution = Eigen::MatrixXd::Zero(particular_solution.rows(), 1);
-    for(uint8_t i = 0; i < joint_states.current_q_.rows(); ++i)
-    {
-        prediction_solution(i, 0) = particular_solution(i, 0) * 0.02 + joint_states.current_q_(i);
-    }
 
     ROS_INFO_STREAM("===== task output =======");
     for (std::set<tConstraintBase>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
     {
+        ROS_INFO_STREAM("task id: " << (*it)->getTaskId());
         (*it)->update(joint_states, prediction_solution, this->jacobian_data_);
         Eigen::VectorXd q_dot_0 = (*it)->getPartialValues();
         Eigen::MatrixXd tmpHomogeneousSolution = projector * q_dot_0;
         activation_gain = (*it)->getActivationGain(); // contribution of the homo. solution to the part. solution
         double constraint_k_H = (*it)->getSelfMotionMagnitude(particular_solution, tmpHomogeneousSolution); // gain of homogenous solution (if active)
 
-        ROS_INFO_STREAM("task id: " << (*it)->getTaskId());
         ROS_INFO_STREAM("activation_gain: " << activation_gain);
         ROS_INFO_STREAM("smm: " << constraint_k_H);
 

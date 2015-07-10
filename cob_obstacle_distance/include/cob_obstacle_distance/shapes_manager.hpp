@@ -30,7 +30,7 @@
 #define SHAPES_MANAGER_HPP_
 
 #include <ros/ros.h>
-#include <vector>
+#include <unordered_map>
 
 #include "cob_obstacle_distance/marker_shapes_interface.hpp"
 
@@ -38,13 +38,12 @@
 class ShapesManager
 {
     private:
-        std::vector<Ptr_IMarkerShape_t> shapes_;
-
+        std::unordered_map<std::string, Ptr_IMarkerShape_t> shapes_2_;
         const ros::Publisher& pub_;
 
     public:
-        typedef std::vector<Ptr_IMarkerShape_t>::iterator Iter_t;
-        typedef std::vector<Ptr_IMarkerShape_t>::const_iterator Const_iterator_t;
+        typedef std::unordered_map<std::string, Ptr_IMarkerShape_t>::iterator Map_iter_t;
+        typedef std::unordered_map<std::string, Ptr_IMarkerShape_t>::const_iterator Map_const_iterator_t;
 
         /**
          * Ctor
@@ -56,9 +55,19 @@ class ShapesManager
 
         /**
          * Adds a new shape to the manager.
+         * @param id Key to access the marker shape.
          * @param s Pointer to an already created marker shape.
          */
-        void addShape(Ptr_IMarkerShape_t s);
+        void addShape(const std::string& id, Ptr_IMarkerShape_t s);
+
+        /**
+         * Tries to return the marker shape if ID is correct.
+         * @param id Key to access the marker shape.
+         * @param s Pointer to an already created marker shape.
+         * @return State of success.
+         */
+        bool getShape(const std::string& id, Ptr_IMarkerShape_t& s);
+
 
         /**
          * Draw the marker managed by the ShapesManager
@@ -71,10 +80,10 @@ class ShapesManager
          */
         void clear();
 
-        Iter_t begin() {return this->shapes_.begin(); }
-        Const_iterator_t begin() const {return this->shapes_.begin(); }
-        Iter_t end() {return this->shapes_.end(); }
-        Const_iterator_t end() const {return this->shapes_.end(); }
+        Map_iter_t begin() {return this->shapes_2_.begin(); }
+        Map_const_iterator_t begin() const {return this->shapes_2_.begin(); }
+        Map_iter_t end() {return this->shapes_2_.end(); }
+        Map_const_iterator_t end() const {return this->shapes_2_.end(); }
 };
 
 #endif /* SHAPES_MANAGER_HPP_ */

@@ -75,8 +75,8 @@ int main(int argc, char **argv)
     // Ptr_IMarkerShape_t sptr_Sphere(new MarkerShape<fcl::Sphere>(1.0, -1.0, -1.0));
     // Ptr_IMarkerShape_t sptr_Cyl(new MarkerShape<fcl::Cylinder>(-1.0, 1.0, -1.0));
 
-    sm.addObstacle(sptr_Sphere);
-    sm.addObstacle(sptr_Bvh);
+    sm.addObstacle("Sphere1", sptr_Sphere);
+    sm.addObstacle("arm_1_collision", sptr_Bvh);
     // sm.addObstacle(sptr_Cube);
     // sm.addObstacle(sptr_Cyl);
 

@@ -275,12 +275,12 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
             Eigen::Vector3d vec(d.distance_vec[0], d.distance_vec[1], d.distance_vec[2]);
             double vec_norm = vec.norm();
             vec_norm = vec_norm > 0.0 ? vec_norm : DIV0_SAFE;
-            Eigen::VectorXd term_2nd = (m_transl.transpose()) * (vec / vec.norm()); // use the unit vector only for direction!
+            Eigen::VectorXd term_2nd = (m_transl.transpose()) * (vec / vec_norm); // use the unit vector only for direction!
 
             // Gradient of the cost function from: Strasse O., Escande A., Mansard N. et al.
             // "Real-Time (Self)-Collision Avoidance Task on a HRP-2 Humanoid Robot", 2008 IEEE International Conference
             double denom = d.min_distance > 0.0 ? d.min_distance : DIV0_SAFE;
-            partial_values =  (2.0 * ((d.min_distance - this->getActivationThreshold()) / d.min_distance) * term_2nd);
+            partial_values =  (2.0 * ((d.min_distance - this->getActivationThreshold()) / denom) * term_2nd);
         }
         else
         {

@@ -95,6 +95,18 @@ inline void MarkerShape<BVH_RSS_t>::setColor(double color_r, double color_g, dou
 }
 
 
+inline void MarkerShape<BVH_RSS_t>::updatePose(geometry_msgs::Vector3 &pos, geometry_msgs::Quaternion &quat)
+{
+    marker_.pose.position.x = pos.x;
+    marker_.pose.position.y = pos.y;
+    marker_.pose.position.z = pos.z;
+    marker_.pose.orientation.x = quat.x;
+    marker_.pose.orientation.y = quat.y;
+    marker_.pose.orientation.z = quat.z;
+    marker_.pose.orientation.w = quat.w;
+}
+
+
 inline visualization_msgs::Marker MarkerShape<BVH_RSS_t>::getMarker()
 {
     this->marker_.header.stamp = ros::Time::now();
