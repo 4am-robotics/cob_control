@@ -107,6 +107,7 @@ class TaskStackController
 {
     public:
         typedef typename std::vector<Task<PRIO> >::iterator TypedIter_t;
+        typedef typename std::vector<Task<PRIO> >::const_iterator TypedConstIter_t;
 
         ~TaskStackController()
         {
@@ -138,6 +139,8 @@ class TaskStackController
 
         typename std::vector<Task<PRIO> >::iterator beginTaskIter();
 
+        int countActiveTasks() const;
+
     private:
         // Use a vector instead of a set here. Set stores const references ->
         // so they cannot be changed.
@@ -147,6 +150,22 @@ class TaskStackController
 
 
 };
+
+template <typename PRIO>
+int TaskStackController<PRIO>::countActiveTasks() const
+{
+    int i = 0;
+    for(TypedConstIter_t it = this->tasks_.begin(); it != this->tasks_.end(); it++)
+    {
+        if (it->is_active_)
+        {
+            ++i;
+        }
+    }
+
+    return i;
+}
+
 
 /**
  * Insert new task sorted.

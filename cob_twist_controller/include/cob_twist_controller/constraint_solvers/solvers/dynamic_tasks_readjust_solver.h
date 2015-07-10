@@ -42,7 +42,7 @@ class DynamicTasksReadjustSolver : public ConstraintSolver<>
 {
     public:
         DynamicTasksReadjustSolver(const TwistControllerParams& params, TaskStackController_t& task_stack_controller)
-                           : ConstraintSolver(params, task_stack_controller)
+                           : ConstraintSolver(params, task_stack_controller), in_cart_vel_damping_(1.0)
         {
         }
 
@@ -87,6 +87,9 @@ class DynamicTasksReadjustSolver : public ConstraintSolver<>
 
         /// set inserts sorted (default less operator); if element has already been added it returns an iterator on it.
         std::set<tConstraintBase> constraints_;
+
+
+        double in_cart_vel_damping_;
 };
 
 #endif /* DYNAMIC_TASKS_READJUST_SOLVER_H_ */

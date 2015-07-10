@@ -46,20 +46,24 @@ Eigen::MatrixXd DynamicTasksReadjustSolver::solve(const t_Vector6d& in_cart_velo
 
     Eigen::VectorXd sum_of_gradient = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
 
-    ROS_INFO_STREAM("============== Constraint output =============");
     for (std::set<tConstraintBase>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
     {
-        ROS_INFO_STREAM("constraint id: " << (*it)->getTaskId());
         (*it)->update(joint_states, prediction_solution, this->jacobian_data_);
         this->processState(it, projector, particular_solution, sum_of_gradient);
     }
 
     sum_of_gradient = this->params_.k_H * sum_of_gradient; // "global" weighting for all constraints.
 
-    Task_t t(this->params_.priority_main, "Main task", this->jacobian_data_, in_cart_velocities);
+
+    //const t_Vector6d scaled_in_cart_velocities = (1.0 / this->in_cart_vel_damping_) * in_cart_velocities;
+    const t_Vector6d scaled_in_cart_velocities = (1.0 / pow(this->in_cart_vel_damping_, 2.0)) * in_cart_velocities;
+    Task_t t(this->params_.priority_main, "Main task", this->jacobian_data_, scaled_in_cart_velocities);
     t.tcp_ = this->params_;
     t.db_ = this->damping_;
     this->task_stack_controller_.addTask(t);
+
+    ROS_INFO_STREAM("this->in_cart_vel_damping_:" << this->in_cart_vel_damping_);
+    ROS_INFO_STREAM("scaled in_cart_velocities:" << scaled_in_cart_velocities.transpose());
 
     ROS_INFO_STREAM("============== Task output =============");
     TaskSetIter_t it = this->task_stack_controller_.beginTaskIter();
@@ -69,14 +73,12 @@ Eigen::MatrixXd DynamicTasksReadjustSolver::solve(const t_Vector6d& in_cart_velo
         Eigen::MatrixXd J_task = it->task_jacobian_;
         Eigen::MatrixXd J_temp = J_task * projector_i;
 
-        Eigen::MatrixXd J_temp_inv;
         Eigen::VectorXd v_task = it->task_;
-
-        J_temp_inv = pinv_calc_.calculate(it->tcp_, it->db_, J_temp);
+        Eigen::MatrixXd J_temp_inv = pinv_calc_.calculate(it->tcp_, it->db_, J_temp);
         q_i = q_i + J_temp_inv * (v_task - J_task * q_i);
         projector_i = projector_i - J_temp_inv * J_temp;
 
-        ROS_INFO_STREAM("q_i: " << q_i.transpose());
+        // ROS_INFO_STREAM("q_i: " << q_i.transpose());
         // it->db_.reset();
     }
 
@@ -103,16 +105,17 @@ void DynamicTasksReadjustSolver::processState(std::set<tConstraintBase>::iterato
             // "global" weighting k_H for all constraint tasks.
             //Eigen::VectorXd task = this->params_.k_H * activation_gain * magnitude * derivative_value * Eigen::VectorXd::Identity(1, 1);
             Task_t t = (*it)->createTask();
-            double factor = this->params_.k_H * activation_gain * magnitude;
+            //double factor = this->params_.k_H * activation_gain * std::abs(magnitude);
+            double factor = activation_gain * std::abs(magnitude);
             t.task_ = factor * t.task_;
             this->task_stack_controller_.addTask(t);
             this->task_stack_controller_.activateTask((*it)->getTaskId());
 
+            this->in_cart_vel_damping_ = 50.0;
+
         }
         else if(cstate.getCurrent() == DANGER)
         {
-            ROS_WARN_STREAM("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
-            ROS_WARN_STREAM("-> DANGER!!!");
             this->task_stack_controller_.deactivateTask((*it)->getTaskId());
             sum_of_gradient += activation_gain * magnitude * q_dot_0; // smm adapted q_dot_0 vector
         }
@@ -130,20 +133,22 @@ void DynamicTasksReadjustSolver::processState(std::set<tConstraintBase>::iterato
             //Eigen::VectorXd task = this->params_.k_H * activation_gain * magnitude * derivative_value * Eigen::VectorXd::Identity(1, 1);
             Task_t t = (*it)->createTask();
             // double factor = this->params_.k_H * activation_gain * std::abs(magnitude);
-            double factor = this->params_.k_H * activation_gain * magnitude;
+            // double factor = this->params_.k_H * activation_gain * std::abs(magnitude); // task must be decided whether negative or not!
+            double factor = activation_gain * std::abs(magnitude); // task must be decided whether negative or not!
             t.task_ = factor * t.task_;
 
             // t.task_jacobian_ = factor * t.task_jacobian_;
             this->task_stack_controller_.addTask(t);
+            this->in_cart_vel_damping_ = 50.0;
         }
         else if(cstate.getCurrent() == DANGER)
         {
-            ROS_WARN_STREAM("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
-            ROS_WARN_STREAM("DANGER!!!");
             sum_of_gradient += activation_gain * magnitude * q_dot_0; // smm adapted q_dot_0 vector
         }
         else
         {
+            this->in_cart_vel_damping_ = this->in_cart_vel_damping_ > 1.0 ? (this->in_cart_vel_damping_ - 1.0) : 1.0;
+
             // just compute the particular solution
         }
     }

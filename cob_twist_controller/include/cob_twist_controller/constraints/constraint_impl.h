@@ -205,17 +205,20 @@ template <typename T_PARAMS, typename PRIO>
 double CollisionAvoidance<T_PARAMS, PRIO>::calcDerivativeValue()
 {
     double current_time = ros::Time::now().toSec();
-    double cycle = current_time - this->last_time_;
-    if(cycle > 0.0)
-    {
-        this->derivative_value_ = (this->value_ - this->last_value_) / cycle;
-    }
-    else
-    {
-        this->derivative_value_ = (this->value_ - this->last_value_) / 0.02;
-    }
+//    double cycle = current_time - this->last_time_;
+//    if(cycle > 0.0)
+//    {
+//        this->derivative_value_ = (this->value_ - this->last_value_) / cycle;
+//    }
+//    else
+//    {
+//        this->derivative_value_ = (this->value_ - this->last_value_) / 0.02;
+//    }
+//
+//    this->last_time_ = current_time;
 
-    this->last_time_ = current_time;
+    this->derivative_value_ = -0.1 * this->value_; // exponential decay
+
     return this->derivative_value_;
 }
 
@@ -864,7 +867,10 @@ double JointLimitAvoidanceIneq<T_PARAMS, PRIO>::calcValue()
     return this->value_;
 }
 
-/// Calculate derivative of values.
+/**
+ * Simple first order differential equation for exponential increase (move away from limit!)
+ * @return 1st order diff equation value.
+ */
 template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidanceIneq<T_PARAMS, PRIO>::calcDerivativeValue()
 {
