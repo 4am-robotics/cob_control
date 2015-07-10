@@ -235,44 +235,47 @@ void CobTwistController::checkSolverAndConstraints(cob_twist_controller::TwistCo
     if(base_compensation && BASE_ACTIVE == ket)
     {
         ROS_ERROR("Base cannot be active and compensated at the same time! Setting base compensation back to false ...");
-        config.base_compensation = false;
+        config.base_compensation = twist_controller_params_.base_compensation = false;
         warning = true;
     }
 
-    if(solver == DEFAULT_SOLVER && (ct_jla != JLA_OFF || ct_ca != CA_OFF))
+    if(DEFAULT_SOLVER == solver && (JLA_OFF != ct_jla || CA_OFF != ct_ca))
     {
         ROS_ERROR("The selection of Default solver and a constraint doesn\'t make any sense. Switch settings back ...");
-        config.constraint_jla = static_cast<int>(JLA_OFF);
-        config.constraint_ca = static_cast<int>(CA_OFF);
+        twist_controller_params_.constraint_jla = JLA_OFF;
+        twist_controller_params_.constraint_ca = CA_OFF;
+        config.constraint_jla = static_cast<int>(twist_controller_params_.constraint_jla);
+        config.constraint_ca = static_cast<int>(twist_controller_params_.constraint_ca);
         warning = true;
     }
 
-    if(solver == WLN && ct_ca != CA_OFF)
+    if(WLN == solver && CA_OFF != ct_ca)
     {
         ROS_ERROR("The WLN solution doesn\'t support collision avoidance. Currently WLN is only implemented for Identity and JLA ...");
-        config.constraint_ca = static_cast<int>(CA_OFF);
+        twist_controller_params_.constraint_ca = CA_OFF;
+        config.constraint_ca = static_cast<int>(twist_controller_params_.constraint_ca);
         warning = true;
     }
 
-    if(solver == GPM && ct_ca == CA_OFF && ct_jla == JLA_OFF)
+    if(GPM == solver && CA_OFF == ct_ca && JLA_OFF == ct_jla)
     {
         ROS_ERROR("You have chosen GPM but without constraints! The behaviour without constraints will be the same like for DEFAULT_SOLVER.");
         warning = true;
     }
 
-    if(solver == TASK_2ND_PRIO && (ct_jla == JLA_ON || ct_ca == CA_OFF))
+    if(TASK_2ND_PRIO == solver && (JLA_ON == ct_jla || CA_OFF == ct_ca))
     {
         ROS_ERROR("The projection of a task into the null space of the main EE task is currently only for the CA constraint supported!");
-        config.constraint_ca = static_cast<int>(CA_ON);
-        config.constraint_jla = static_cast<int>(JLA_OFF);
+        twist_controller_params_.constraint_jla = JLA_OFF;
+        twist_controller_params_.constraint_ca = CA_ON;
+        config.constraint_jla = static_cast<int>(twist_controller_params_.constraint_jla);
+        config.constraint_ca = static_cast<int>(twist_controller_params_.constraint_ca);
         warning = true;
     }
 
-
-
     if(!warning)
     {
-        ROS_INFO("Selection of parameters seem to be ok.");
+        ROS_INFO("Parameters seem to be ok.");
     }
 }
 
