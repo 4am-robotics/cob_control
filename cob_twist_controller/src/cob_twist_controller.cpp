@@ -37,8 +37,6 @@
 
 #include "cob_obstacle_distance/Registration.h"
 
-#define MESH_RES_MARKER 99u // Must be equal to "cob_obstacle_distance/obstacle_distance_data_types.hpp"
-
 //ToDo: Should we re-add DEBUG_BASE_COMPENSATION stuff?
 bool CobTwistController::initialize()
 {
@@ -158,7 +156,7 @@ void CobTwistController::reinitServiceRegistration()
 
         cob_obstacle_distance::Registration r;
         r.request.frame_id = *it;
-        r.request.shape_type = MESH_RES_MARKER;
+        r.request.shape_type = visualization_msgs::Marker::MESH_RESOURCE;
         if (client.call(r))
         {
             ROS_INFO_STREAM("Called registration service with success: " << int(r.response.success) << ". Got message: " << r.response.message);
@@ -288,11 +286,6 @@ void CobTwistController::initParams()
         return;
     }
 
-    //TwistControllerParams params;
-    
-//    params.dof = twist_controller_params_.dof;
-//    params.chain_base_link = twist_controller_params_.chain_base_link;
-//    params.chain_tip_link = twist_controller_params_.chain_tip_link;
     twist_controller_params_.hardware_interface_type = VELOCITY_INTERFACE;
     
     twist_controller_params_.numerical_filtering = false;
@@ -334,16 +327,6 @@ void CobTwistController::initParams()
         twist_controller_params_.frame_names.push_back(chain_.getSegment(i).getName());
     }
     
-//    params.collision_check_frames.clear();
-//    for(std::vector<std::string>::const_iterator it = twist_controller_params_.collision_check_frames.begin(); it != twist_controller_params_.collision_check_frames.end(); it++)
-//    {
-//        params.collision_check_frames.push_back(*it);
-//    }
-
-    // TODO: initialization
-
-
-//    twist_controller_params_ = params;
     p_inv_diff_kin_solver_->resetAll(twist_controller_params_);
 }
 

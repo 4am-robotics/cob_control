@@ -37,17 +37,14 @@
 
 #define MAX_CRIT true
 #define MIN_CRIT false
-#define MAIN_TASK_PRIO 200
+#define MAIN_TASK_PRIO 200u
 
 const double DAMPING_LIMIT = 1.0e-12; ///< const. value for zero comparison with damping factor
 const double ZERO_LIMIT = 1.0e-9;
 const double DIV0_SAFE = 1.0e-6;
 
-typedef Eigen::Matrix<double,6,Eigen::Dynamic> t_Matrix6Xd;
-
-typedef Eigen::Matrix<double,6,1> t_Vector6d;
-typedef Eigen::Matrix<double,7,1> t_Vector7d;
-typedef Eigen::Matrix<double,7,6> t_Matrix76d;
+typedef Eigen::Matrix<double,6,Eigen::Dynamic> Matrix6Xd_t;
+typedef Eigen::Matrix<double,6,1> Vector6d_t;
 
 enum DampingMethodTypes {
     NO_DAMPING = 0,
@@ -121,8 +118,8 @@ struct ObstacleDistanceInfo
 {
     double min_distance;
     // Eigen::Vector3d distance_vec;
-    t_Vector6d distance_vec;
-    t_Vector6d frame_twist;
+    Vector6d_t distance_vec;
+    Vector6d_t frame_twist;
     std::string frame_id;
     Eigen::Vector3d collision_pnt_vector;
 };

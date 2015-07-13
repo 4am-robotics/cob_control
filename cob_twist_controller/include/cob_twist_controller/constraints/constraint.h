@@ -60,7 +60,7 @@ template <typename PRIO = uint32_t>
 class ConstraintsBuilder
 {
     public:
-        static std::set<tConstraintBase> createConstraints(const TwistControllerParams& params,
+        static std::set<ConstraintBase_t> createConstraints(const TwistControllerParams& params,
                                                            KDL::ChainJntToJacSolver& jnt_to_jac_,
                                                            CallbackDataMediator& data_mediator);
 

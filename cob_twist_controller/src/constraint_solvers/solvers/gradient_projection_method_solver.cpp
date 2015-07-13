@@ -37,7 +37,7 @@
  * In addtion to the partial solution q_dot = J^+ * v the homogeneous solution (I - J^+ * J) q_dot_0 is calculated.
  * The q_dot_0 results from the sum of the constraint cost function gradients. The terms of the sum are weighted with a factor k_H separately.
  */
-Eigen::MatrixXd GradientProjectionMethodSolver::solve(const t_Vector6d& inCartVelocities,
+Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Vector6d_t& inCartVelocities,
                                                       const JointStates& joint_states)
 {
     double activation_gain;
@@ -49,7 +49,7 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const t_Vector6d& inCartVe
     Eigen::MatrixXd prediction_solution = Eigen::MatrixXd::Zero(particular_solution.rows(), 1);
 
     ROS_INFO_STREAM("===== task output =======");
-    for (std::set<tConstraintBase>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
+    for (std::set<ConstraintBase_t>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
     {
         ROS_INFO_STREAM("task id: " << (*it)->getTaskId());
         (*it)->update(joint_states, prediction_solution, this->jacobian_data_);

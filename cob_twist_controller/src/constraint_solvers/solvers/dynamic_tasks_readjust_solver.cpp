@@ -30,7 +30,7 @@
 #include "cob_twist_controller/task_stack/task_stack_controller.h"
 #include "cob_twist_controller/constraints/self_motion_magnitude.h"
 
-Eigen::MatrixXd DynamicTasksReadjustSolver::solve(const t_Vector6d& in_cart_velocities,
+Eigen::MatrixXd DynamicTasksReadjustSolver::solve(const Vector6d_t& in_cart_velocities,
                                                   const JointStates& joint_states)
 {
     Eigen::MatrixXd jacobianPseudoInverse = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
@@ -46,7 +46,7 @@ Eigen::MatrixXd DynamicTasksReadjustSolver::solve(const t_Vector6d& in_cart_velo
 
     Eigen::VectorXd sum_of_gradient = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
 
-    for (std::set<tConstraintBase>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
+    for (std::set<ConstraintBase_t>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
     {
         (*it)->update(joint_states, prediction_solution, this->jacobian_data_);
         this->processState(it, projector, particular_solution, sum_of_gradient);
@@ -56,7 +56,7 @@ Eigen::MatrixXd DynamicTasksReadjustSolver::solve(const t_Vector6d& in_cart_velo
 
 
     //const t_Vector6d scaled_in_cart_velocities = (1.0 / this->in_cart_vel_damping_) * in_cart_velocities;
-    const t_Vector6d scaled_in_cart_velocities = (1.0 / pow(this->in_cart_vel_damping_, 2.0)) * in_cart_velocities;
+    const Vector6d_t scaled_in_cart_velocities = (1.0 / pow(this->in_cart_vel_damping_, 2.0)) * in_cart_velocities;
     Task_t t(this->params_.priority_main, "Main task", this->jacobian_data_, scaled_in_cart_velocities);
     t.tcp_ = this->params_;
     t.db_ = this->damping_;
@@ -87,7 +87,7 @@ Eigen::MatrixXd DynamicTasksReadjustSolver::solve(const t_Vector6d& in_cart_velo
 }
 
 
-void DynamicTasksReadjustSolver::processState(std::set<tConstraintBase>::iterator& it,
+void DynamicTasksReadjustSolver::processState(std::set<ConstraintBase_t>::iterator& it,
                                               const Eigen::MatrixXd& projector,
                                               const Eigen::MatrixXd& particular_solution,
                                               Eigen::VectorXd& sum_of_gradient)

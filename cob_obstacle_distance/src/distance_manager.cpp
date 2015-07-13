@@ -46,11 +46,14 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/path.hpp>
+#include <boost/pointer_cast.hpp>
 
 #include <eigen_conversions/eigen_kdl.h>
 #include <eigen_conversions/eigen_msg.h>
 
 #include <kdl_conversions/kdl_msg.h>
+
+#include <urdf/model.h>
 
 #define VEC_X 0
 #define VEC_Y 1
@@ -80,7 +83,7 @@ int DistanceManager::init()
     }
 
 
-    if(!nh_.getParam("root_frame", this->root_frame_))
+    if(!nh_.getParam("root_frame", this->root_frame_id_))
     {
         ROS_ERROR("Failed to get parameter \"chain_base_link\".");
         return -3;
@@ -105,13 +108,18 @@ int DistanceManager::init()
         return -5;
     }
 
+    if(!this->frame2collision_.initParameter(this->root_frame_id_, "/robot_description"))
+    {
+        ROS_ERROR("Failed to initialize robot model from URDF by parameter \"/robot_description\".");
+        return -6;
+    }
+
     for(uint16_t i = 0; i < chain_.getNrOfSegments(); ++i)
     {
         KDL::Segment s = chain_.getSegment(i);
         this->segments_.push_back(s.getName());
         ROS_INFO_STREAM("Managing Segment Name: " << s.getName());
     }
-
 
     // Latched and continue in case there is no subscriber at the moment for a marker
     this->marker_pub_ = this->nh_.advertise<visualization_msgs::Marker>("obstacle_distance/marker", 1, true);
@@ -124,7 +132,6 @@ int DistanceManager::init()
 
     last_q_ = KDL::JntArray(chain_.getNrOfJoints());
     last_q_dot_ = KDL::JntArray(chain_.getNrOfJoints());
-
 
     return 0;
 }
@@ -151,12 +158,12 @@ bool DistanceManager::waitForMarkerSubscriber()
     return true;
 }
 
-void DistanceManager::addObstacle(const std::string& id, Ptr_IMarkerShape_t s)
+void DistanceManager::addObstacle(const std::string& id, PtrIMarkerShape_t s)
 {
     this->obstacle_mgr_->addShape(id, s);
 }
 
-void DistanceManager::addObjectOfInterest(const std::string& id, Ptr_IMarkerShape_t s)
+void DistanceManager::addObjectOfInterest(const std::string& id, PtrIMarkerShape_t s)
 {
     this->object_of_interest_mgr_->addShape(id, s);
 }
@@ -171,7 +178,7 @@ void DistanceManager::drawObjectsOfInterest(bool enforceDraw)
     this->object_of_interest_mgr_->draw(enforceDraw);
 }
 
-bool DistanceManager::collide(Ptr_IMarkerShape_t s1, Ptr_IMarkerShape_t s2)
+bool DistanceManager::collide(PtrIMarkerShape_t s1, PtrIMarkerShape_t s2)
 {
     fcl::CollisionObject x = s1->getCollisionObject();
     fcl::CollisionObject y = s2->getCollisionObject();
@@ -200,7 +207,7 @@ void DistanceManager::calculate()
         adv_chn_fk_solver_vel_->JntToCart(jnt_arr, p_dot_out);
     }
 
-    for(Map_ObstacleDistance_iter_t it = this->obstacle_distances_.begin(); it != this->obstacle_distances_.end(); ++it)
+    for(MapObstacleDistanceIter_t it = this->obstacle_distances_.begin(); it != this->obstacle_distances_.end(); ++it)
     {
         std::string frame_of_interest_name = it->first;
         std::vector<std::string>::const_iterator str_it = std::find(this->segments_.begin(),
@@ -233,7 +240,7 @@ void DistanceManager::calculate()
         fcl::Box b(0.1, 0.1, 0.1);
         fcl::Sphere s(0.1);
         fcl::Cylinder c(0.1, 0.1);
-        Ptr_IMarkerShape_t ooi;
+        PtrIMarkerShape_t ooi;
 
         if(!this->object_of_interest_mgr_->getShape(frame_of_interest_name, ooi))
         {
@@ -262,9 +269,9 @@ void DistanceManager::calculate()
         bool setDistResult = false;
         fcl::CollisionObject result_collision_obj = ooi_co;
         fcl::FCL_REAL last_dist = std::numeric_limits<fcl::FCL_REAL>::max();
-        for(ShapesManager::Map_iter_t it = this->obstacle_mgr_->begin(); it != this->obstacle_mgr_->end(); ++it)
+        for(ShapesManager::MapIter_t it = this->obstacle_mgr_->begin(); it != this->obstacle_mgr_->end(); ++it)
         {
-            Ptr_IMarkerShape_t obstacle = it->second;
+            PtrIMarkerShape_t obstacle = it->second;
             fcl::CollisionObject collision_obj = obstacle->getCollisionObject();
             fcl::DistanceResult tmpResult;
             fcl::DistanceRequest distRequest(true);
@@ -333,8 +340,8 @@ bool DistanceManager::transform()
     try
     {
         tf::StampedTransform cb_transform_bl;
-        tf_listener_.waitForTransform(chain_base_link_, root_frame_, ros::Time(0), ros::Duration(0.5));
-        tf_listener_.lookupTransform(chain_base_link_, root_frame_, ros::Time(0), cb_transform_bl);
+        tf_listener_.waitForTransform(chain_base_link_, root_frame_id_, ros::Time(0), ros::Duration(0.5));
+        tf_listener_.lookupTransform(chain_base_link_, root_frame_id_, ros::Time(0), cb_transform_bl);
         tf::transformTFToEigen(cb_transform_bl, tf_cb_frame_bl_);
     }
     catch (tf::TransformException &ex)
@@ -418,8 +425,8 @@ bool DistanceManager::predictDistance(cob_obstacle_distance::PredictDistance::Re
         /* ******* End Transformation part ************** */
 
         // Representation of segment_of_interest as specific shape
-        Ptr_IMarkerShape_t ooi;
-        if(!DistanceManager::getMarkerShape(visualization_msgs::Marker::SPHERE, abs_jnt_pos, q, frame_id, ooi))
+        PtrIMarkerShape_t ooi;
+        if(!this->frame2collision_.getMarkerShapeFromUrdf(abs_jnt_pos, q, frame_id, ooi))
         {
             return true;
         }
@@ -429,9 +436,9 @@ bool DistanceManager::predictDistance(cob_obstacle_distance::PredictDistance::Re
         fcl::CollisionObject result_collision_obj = ooi_co;
         fcl::FCL_REAL last_dist = std::numeric_limits<fcl::FCL_REAL>::max();
         fcl::FCL_REAL dist;
-        for(ShapesManager::Map_iter_t it = this->obstacle_mgr_->begin(); it != this->obstacle_mgr_->end(); ++it)
+        for(ShapesManager::MapIter_t it = this->obstacle_mgr_->begin(); it != this->obstacle_mgr_->end(); ++it)
         {
-            Ptr_IMarkerShape_t obstacle = it->second;
+            PtrIMarkerShape_t obstacle = it->second;
             fcl::CollisionObject collision_obj = obstacle->getCollisionObject();
             fcl::DistanceResult tmpResult;
             fcl::DistanceRequest distRequest(true);
@@ -464,11 +471,11 @@ bool DistanceManager::registerPointOfInterest(cob_obstacle_distance::Registratio
         {
             this->obstacle_distances_[request.frame_id] = ObstacleDistance(request.shape_type);
 
-            Ptr_IMarkerShape_t ooi;
+            PtrIMarkerShape_t ooi;
             Eigen::Quaterniond q;
             Eigen::Vector3d v3;
 
-            if(this->getMarkerShape(request.shape_type, v3, q, request.frame_id, ooi))
+            if(this->frame2collision_.getMarkerShapeFromType(request.shape_type, v3, q, request.frame_id, ooi))
             {
                 this->addObjectOfInterest(request.frame_id, ooi);
                 response.success = true;
@@ -486,71 +493,6 @@ bool DistanceManager::registerPointOfInterest(cob_obstacle_distance::Registratio
             response.message = "Failed to insert element " + request.frame_id + "!";
             ROS_ERROR_STREAM(response.message);
         }
-    }
-
-    return true;
-}
-
-bool DistanceManager::getMarkerShape(uint32_t shape_type,
-                                     const Eigen::Vector3d& abs_pos,
-                                     const Eigen::Quaterniond& quat_pos,
-                                     const std::string& frame_of_interest,
-                                     Ptr_IMarkerShape_t& segment_of_interest_marker_shape)
-{
-    // Representation of segment_of_interest as specific fcl::Shape
-    fcl::Box b(0.1, 0.1, 0.1);
-    fcl::Sphere s(0.05);
-    fcl::Cylinder c(0.05, 0.1);
-
-    geometry_msgs::Pose pose;
-    pose.position.x = abs_pos(VEC_X);
-    pose.position.y = abs_pos(VEC_Y);
-    pose.position.z = abs_pos(VEC_Z);
-    pose.orientation.x = quat_pos.x();
-    pose.orientation.y = quat_pos.y();
-    pose.orientation.z = quat_pos.z();
-    pose.orientation.w = quat_pos.w();
-
-    std_msgs::ColorRGBA col;
-    col.a = 1.0;
-    col.r = 1.0;
-    col.g = 0.0;
-    col.b = 0.0;
-
-    std::string mesh_resource;
-    if(MESH_RES_MARKER == shape_type)
-    {
-        if(frame2CollisionMesh_.m.count(frame_of_interest) > 0)
-        {
-            mesh_resource = frame2CollisionMesh_.m[frame_of_interest];
-        }
-        else
-        {
-            ROS_WARN_STREAM("Could not find mesh resource for " << frame_of_interest << ". Rather using Sphere!");
-            shape_type = visualization_msgs::Marker::SPHERE;
-        }
-    }
-
-    switch(shape_type)
-    {
-        case visualization_msgs::Marker::CUBE:
-            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Box>(this->root_frame_, b, pose, col));
-            break;
-        case visualization_msgs::Marker::SPHERE:
-            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Sphere>(this->root_frame_, s, pose, col));
-            break;
-        case visualization_msgs::Marker::CYLINDER:
-            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Cylinder>(this->root_frame_, c, pose, col));
-            break;
-        case MESH_RES_MARKER:
-            segment_of_interest_marker_shape.reset(new MarkerShape<BVH_RSS_t>(this->root_frame_,
-                                                                              mesh_resource,
-                                                                              pose,
-                                                                              col));
-            break;
-        default:
-           ROS_ERROR("Failed to process request due to unknown shape type: %d", shape_type);
-           return false;
     }
 
     return true;

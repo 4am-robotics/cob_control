@@ -57,7 +57,7 @@ class LimiterContainer : public LimiterBase
 
     protected:
         std::vector<const LimiterBase*> limiters_;
-        typedef std::vector<const LimiterBase*>::const_iterator t_lim_iter;
+        typedef std::vector<const LimiterBase*>::const_iterator LimIter_t;
 
         /**
          * Add method

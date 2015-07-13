@@ -48,7 +48,7 @@
  *
  *
  */
-Eigen::MatrixXd StackOfTasksSolver::solve(const t_Vector6d& in_cart_velocities,
+Eigen::MatrixXd StackOfTasksSolver::solve(const Vector6d_t& in_cart_velocities,
                                           const JointStates& joint_states)
 {
     double now_time = ros::Time::now().toSec();
@@ -58,7 +58,7 @@ Eigen::MatrixXd StackOfTasksSolver::solve(const t_Vector6d& in_cart_velocities,
 
     Eigen::MatrixXd qdots_out = Eigen::MatrixXd::Zero(this->jacobian_data_.cols(), 1);
 
-    t_Vector6d tmp_in_cart_velocities = in_cart_velocities;
+    Vector6d_t tmp_in_cart_velocities = in_cart_velocities;
     Eigen::VectorXd q_dot_0 = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
     Eigen::MatrixXd jacobianPseudoInverse = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
     Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(jacobianPseudoInverse.rows(), this->jacobian_data_.cols());
@@ -70,7 +70,7 @@ Eigen::MatrixXd StackOfTasksSolver::solve(const t_Vector6d& in_cart_velocities,
         prediction_solution(i, 0) = partialSolution(i, 0) * 0.02 + joint_states.current_q_(i);
     }
 
-    for (std::set<tConstraintBase>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
+    for (std::set<ConstraintBase_t>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
     {
         (*it)->update(joint_states, prediction_solution, this->jacobian_data_);
         q_dot_0 = (*it)->getPartialValues();

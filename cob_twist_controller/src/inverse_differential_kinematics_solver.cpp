@@ -46,7 +46,7 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const JointStates& joint_stat
     ///append columns to Jacobian in order to reflect additional DoFs of kinematical extension
     this->jac_ = this->kinematic_extension_->adjustJacobian(jac_chain);
 
-    t_Vector6d v_in_vec;
+    Vector6d_t v_in_vec;
     tf::twistKDLToEigen(v_in, v_in_vec);
 
     Eigen::MatrixXd qdot_out_vec;

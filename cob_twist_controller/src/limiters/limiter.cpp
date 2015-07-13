@@ -40,7 +40,7 @@ KDL::JntArray LimiterContainer::enforceLimits(const KDL::JntArray& q_dot_ik, con
 {
     // If nothing to do just return q_dot.
     KDL::JntArray tmp_q_dots(q_dot_ik);
-    for (t_lim_iter it = this->limiters_.begin(); it != this->limiters_.end(); it++)
+    for (LimIter_t it = this->limiters_.begin(); it != this->limiters_.end(); it++)
     {
         tmp_q_dots = (*it)->enforceLimits(tmp_q_dots, q);
     }

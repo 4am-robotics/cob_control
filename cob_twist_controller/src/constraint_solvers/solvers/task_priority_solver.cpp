@@ -32,7 +32,7 @@
  * Maciejewski A., Obstacle Avoidance for Kinematically Redundant Manipulators in Dyn Varying Environments.
  */
 //
-Eigen::MatrixXd TaskPrioritySolver::solve(const t_Vector6d& in_cart_velocities,
+Eigen::MatrixXd TaskPrioritySolver::solve(const Vector6d_t& in_cart_velocities,
                                           const JointStates& joint_states)
 {
     double derivative_cost_func_value;
@@ -54,7 +54,7 @@ Eigen::MatrixXd TaskPrioritySolver::solve(const t_Vector6d& in_cart_velocities,
 
     if (this->constraints_.size() > 0)
     {
-        for (std::set<tConstraintBase>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
+        for (std::set<ConstraintBase_t>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
         {
             (*it)->update(joint_states, prediction_solution, this->jacobian_data_);
             partial_cost_func = (*it)->getPartialValues(); // Equal to (partial g) / (partial q) = J_g

@@ -105,6 +105,6 @@ class ConstraintParamsJLA : public ConstraintParamsBase
 };
 /* END ConstraintParamsJLA **************************************************************************************/
 
-typedef boost::shared_ptr<ConstraintParamsBase> tConstraintParamsBase;
+typedef boost::shared_ptr<ConstraintParamsBase> ConstraintParamsBase_t;
 
 #endif /* CONSTRAINT_PARAMS_H_ */

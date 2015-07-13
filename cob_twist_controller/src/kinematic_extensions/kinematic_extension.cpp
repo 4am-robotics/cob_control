@@ -160,7 +160,7 @@ KDL::Jacobian KinematicExtension6D::adjustJacobian6d(const KDL::Jacobian& jac_ch
     jac_b(5,5) = w_z_chain_base(2) * active_dim.rot_z;
 
     //combine chain Jacobian and platform Jacobian
-    t_Matrix6Xd jac_full_matrix;
+    Matrix6Xd_t jac_full_matrix;
     jac_full_matrix.resize(6, jac_chain.data.cols() + jac_b.cols());
     jac_full_matrix << jac_chain.data, jac_b;
     jac_full.resize(jac_chain.data.cols() + jac_b.cols());

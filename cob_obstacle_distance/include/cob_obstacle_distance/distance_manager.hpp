@@ -55,27 +55,27 @@
 #include <kdl/chainfksolvervel_recursive.hpp>
 #include <ros/ros.h>
 
-#include "cob_obstacle_distance/marker_shapes.hpp"
+#include "cob_obstacle_distance/marker_shapes/marker_shapes.hpp"
 #include "cob_obstacle_distance/shapes_manager.hpp"
 #include "cob_obstacle_distance/chainfk_solvers/advanced_chainfksolver_recursive.hpp"
 #include "cob_obstacle_distance/obstacle_distance_data_types.hpp"
 #include "cob_obstacle_distance/Registration.h"
 #include "cob_obstacle_distance/PredictDistance.h"
-
+#include "cob_obstacle_distance/frame_to_collision.hpp"
 
 
 class DistanceManager
 {
     private:
-        typedef std::unordered_map<std::string, ObstacleDistance> Map_ObstacleDistance_t;
-        typedef std::unordered_map<std::string, ObstacleDistance>::iterator Map_ObstacleDistance_iter_t;
-        typedef std::unordered_map<std::string, ObstacleDistance>::const_iterator Map_ObstacleDistance_citer_t;
+        typedef std::unordered_map<std::string, ObstacleDistance> MapObstacleDistance_t;
+        typedef std::unordered_map<std::string, ObstacleDistance>::iterator MapObstacleDistanceIter_t;
+        typedef std::unordered_map<std::string, ObstacleDistance>::const_iterator MapObstacleDistanceConstIter_t;
 
-        std::string root_frame_;
+        std::string root_frame_id_;
         std::string chain_base_link_;
         std::string chain_tip_link_;
 
-        Map_ObstacleDistance_t obstacle_distances_;
+        MapObstacleDistance_t obstacle_distances_;
         boost::scoped_ptr<ShapesManager> obstacle_mgr_;
         boost::scoped_ptr<ShapesManager> object_of_interest_mgr_;
 
@@ -95,7 +95,7 @@ class DistanceManager
 
         static uint32_t seq_nr_;
 
-        ST_Frame2CollisionMesh frame2CollisionMesh_;
+        FrameToCollision frame2collision_;
 
         int counter_;
 
@@ -109,7 +109,7 @@ class DistanceManager
 
         inline const std::string getRootFrame() const
         {
-            return this->root_frame_;
+            return this->root_frame_id_;
         }
 
         /**
@@ -121,13 +121,13 @@ class DistanceManager
          * Add a new obstacle to the obstacles that shall be managed.
          * @param s Pointer to an already created MarkerShape that represent an obstacle.
          */
-        void addObstacle(const std::string& id, Ptr_IMarkerShape_t s);
+        void addObstacle(const std::string& id, PtrIMarkerShape_t s);
 
         /**
          * Add a new object of interest that shall be investigated for collisions.
          * @param s Pointer to an already created MarkerShape that represent the object of interest (i.e. shape in reference frame of segment).
          */
-        void addObjectOfInterest(const std::string& id, Ptr_IMarkerShape_t s);
+        void addObjectOfInterest(const std::string& id, PtrIMarkerShape_t s);
 
         /**
          * Simply draw all obstacle markers in RVIZ.
@@ -146,7 +146,7 @@ class DistanceManager
          * @param s1 First shape to be checked against second shape.
          * @param s2 Second shape to be checked against first shape.
          */
-        bool collide(Ptr_IMarkerShape_t s1, Ptr_IMarkerShape_t s2);
+        bool collide(PtrIMarkerShape_t s1, PtrIMarkerShape_t s2);
 
         /**
          * Updates the joint states.
@@ -189,16 +189,6 @@ class DistanceManager
 
         bool predictDistance(cob_obstacle_distance::PredictDistance::Request& request,
                              cob_obstacle_distance::PredictDistance::Response& response);
-
-        /**
-         * Given a proper shape_type and a absolute position vector a MarkerShape will be generated to represent the object of interest
-         * (i.e. shape in reference frame of segment)
-         */
-        bool getMarkerShape(uint32_t shape_type,
-                            const Eigen::Vector3d& abs_pos,
-                            const Eigen::Quaterniond& quat_pos,
-                            const std::string& frame_of_interest,
-                            Ptr_IMarkerShape_t& segment_of_interest_marker_shape);
 };
 
 #endif /* DISTANCE_MANAGER_HPP_ */

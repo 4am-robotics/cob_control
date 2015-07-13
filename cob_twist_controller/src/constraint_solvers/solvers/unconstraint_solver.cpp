@@ -33,7 +33,7 @@
  * It calculates the pseudo-inverse of the Jacobian via the base implementation of calculatePinvJacobianBySVD.
  * With the pseudo-inverse the joint velocity vector is calculated.
  */
-Eigen::MatrixXd UnconstraintSolver::solve(const t_Vector6d& inCartVelocities,
+Eigen::MatrixXd UnconstraintSolver::solve(const Vector6d_t& inCartVelocities,
                                           const JointStates& joint_states)
 {
     Eigen::MatrixXd jacobianPseudoInverse = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);

@@ -43,7 +43,7 @@
  * If conflicted with GPM then remove the task from processing.
  * With a prediction the deactivated task will be reactivated again.
  */
-Eigen::MatrixXd StackOfTasksGPMSolver::solve(const t_Vector6d& in_cart_velocities,
+Eigen::MatrixXd StackOfTasksGPMSolver::solve(const Vector6d_t& in_cart_velocities,
                                              const JointStates& joint_states)
 {
     double magnitude;
@@ -61,7 +61,7 @@ Eigen::MatrixXd StackOfTasksGPMSolver::solve(const t_Vector6d& in_cart_velocitie
     double crit_scalar = 0.0;
 
 
-    t_Vector6d tmp_in_cart_velocities = in_cart_velocities;
+    Vector6d_t tmp_in_cart_velocities = in_cart_velocities;
     Eigen::VectorXd sum_of_gradient = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
     // Eigen::VectorXd q_dot_0 = Eigen::VectorXd::Zero(joint_states.current_q_.rows());
     Eigen::MatrixXd jacobianPseudoInverse = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
@@ -97,7 +97,7 @@ Eigen::MatrixXd StackOfTasksGPMSolver::solve(const t_Vector6d& in_cart_velocitie
         eigen_vec_last_q(i) = joint_states.current_q_(i);
     }
 
-    for (std::set<tConstraintBase>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
+    for (std::set<ConstraintBase_t>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
     {
         (*it)->update(joint_states, prediction_solution, this->jacobian_data_);
         activation_gain = (*it)->getActivationGain();

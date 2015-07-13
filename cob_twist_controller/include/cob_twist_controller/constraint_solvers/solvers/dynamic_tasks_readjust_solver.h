@@ -55,14 +55,14 @@ class DynamicTasksReadjustSolver : public ConstraintSolver<>
          * Specific implementation of solve-method to solve IK problem with constraints by using the GPM.
          * See base class ConstraintSolver for more details on params and returns.
          */
-        virtual Eigen::MatrixXd solve(const t_Vector6d& in_cart_velocities,
+        virtual Eigen::MatrixXd solve(const Vector6d_t& in_cart_velocities,
                                       const JointStates& joint_states);
 
         /**
          * Set all created constraints in a (priorized) set.
          * @param constraints: All constraints ordered according to priority.
          */
-        virtual void setConstraints(std::set<tConstraintBase>& constraints)
+        virtual void setConstraints(std::set<ConstraintBase_t>& constraints)
         {
             this->constraints_ = constraints;
         }
@@ -78,7 +78,7 @@ class DynamicTasksReadjustSolver : public ConstraintSolver<>
         /**
          * Process the state of the constraint and update the sum_of_gradient.
          */
-        void processState(std::set<tConstraintBase>::iterator& it,
+        void processState(std::set<ConstraintBase_t>::iterator& it,
                           const Eigen::MatrixXd& projector,
                           const Eigen::MatrixXd& particular_solution,
                           Eigen::VectorXd& sum_of_gradient);
@@ -86,7 +86,7 @@ class DynamicTasksReadjustSolver : public ConstraintSolver<>
     protected:
 
         /// set inserts sorted (default less operator); if element has already been added it returns an iterator on it.
-        std::set<tConstraintBase> constraints_;
+        std::set<ConstraintBase_t> constraints_;
 
 
         double in_cart_vel_damping_;

@@ -49,7 +49,7 @@ class ConstraintSolver
          * @param joint_states The joint states with history.
          * @return The calculated new joint velocities.
          */
-        virtual Eigen::MatrixXd solve(const t_Vector6d& in_cart_velocities,
+        virtual Eigen::MatrixXd solve(const Vector6d_t& in_cart_velocities,
                                       const JointStates& joint_states) = 0;
 
         /**
@@ -64,7 +64,7 @@ class ConstraintSolver
         /**
          * Method to initialize the solver if necessary
          */
-        virtual void setConstraints(std::set<tConstraintBase>& constraints)
+        virtual void setConstraints(std::set<ConstraintBase_t>& constraints)
         {
 
         }
@@ -72,7 +72,7 @@ class ConstraintSolver
         /**
          * Method to initialize the solver if necessary
          */
-        virtual void setJacobianData(const t_Matrix6Xd& jacobian_data)
+        virtual void setJacobianData(const Matrix6Xd_t& jacobian_data)
         {
             this->jacobian_data_ = jacobian_data;
         }
@@ -87,7 +87,7 @@ class ConstraintSolver
         }
 
         const TwistControllerParams& params_; ///< References the inv. diff. kin. solver parameters.
-        t_Matrix6Xd jacobian_data_; ///< References the current Jacobian (matrix data only).
+        Matrix6Xd_t jacobian_data_; ///< References the current Jacobian (matrix data only).
         boost::shared_ptr<DampingBase> damping_; ///< The currently set damping method.
         PINV pinv_calc_; ///< An instance that helps solving the inverse of the Jacobian.
         TaskStackController_t& task_stack_controller_;

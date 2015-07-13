@@ -40,11 +40,11 @@
 class ISolverFactory
 {
     public:
-        virtual Eigen::MatrixXd calculateJointVelocities(t_Matrix6Xd& jacobian_data,
-                                                         const t_Vector6d& in_cart_velocities,
+        virtual Eigen::MatrixXd calculateJointVelocities(Matrix6Xd_t& jacobian_data,
+                                                         const Vector6d_t& in_cart_velocities,
                                                          const JointStates& joint_states,
                                                          boost::shared_ptr<DampingBase>& damping_method,
-                                                         std::set<tConstraintBase>& constraints) const = 0;
+                                                         std::set<ConstraintBase_t>& constraints) const = 0;
 
         virtual ~ISolverFactory() {}
 };
@@ -77,11 +77,11 @@ class SolverFactory : public ISolverFactory
          * @param damping_method The damping method.
          * @return Joint velocities in a (m x 1)-Matrix.
          */
-        Eigen::MatrixXd calculateJointVelocities(t_Matrix6Xd& jacobian_data,
-                                                 const t_Vector6d& in_cart_velocities,
+        Eigen::MatrixXd calculateJointVelocities(Matrix6Xd_t& jacobian_data,
+                                                 const Vector6d_t& in_cart_velocities,
                                                  const JointStates& joint_states,
                                                  boost::shared_ptr<DampingBase>& damping_method,
-                                                 std::set<tConstraintBase>& constraints) const
+                                                 std::set<ConstraintBase_t>& constraints) const
         {
             constraint_solver_->setJacobianData(jacobian_data);
             constraint_solver_->setConstraints(constraints);

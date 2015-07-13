@@ -9,7 +9,7 @@ find_package(catkin REQUIRED COMPONENTS cmake_modules roscpp roslib sensor_msgs 
 find_package(Eigen REQUIRED)
 add_definitions(${EIGEN_DEFINITIONS})
 
-# find_package(orocos_kdl REQUIRED)
+find_package(orocos_kdl REQUIRED)
 find_package(fcl REQUIRED)
 
 add_message_files(
@@ -45,7 +45,7 @@ add_library(parsers src/parsers/stl_parser.cpp src/parsers/mesh_parser.cpp)
 target_link_libraries(parsers ${fcl_LIBRARIES} ${catkin_LIBRARIES} ${Assimp_LIBRARIES})
 
 ## Declare a cpp executable
-add_executable(cob_obstacle_distance src/cob_obstacle_distance.cpp src/helpers/helper_functions.cpp src/marker_shapes_impl.cpp src/marker_shapes_interface.cpp src/shapes_manager.cpp src/distance_manager.cpp src/chainfk_solvers/advanced_chainfksolver_recursive.cpp)
+add_executable(cob_obstacle_distance src/cob_obstacle_distance.cpp src/helpers/helper_functions.cpp src/marker_shapes/marker_shapes_impl.cpp src/marker_shapes/marker_shapes_interface.cpp src/shapes_manager.cpp src/distance_manager.cpp src/chainfk_solvers/advanced_chainfksolver_recursive.cpp src/frame_to_collision.cpp)
 add_dependencies(cob_obstacle_distance cob_obstacle_distance_gencpp)
 target_link_libraries(cob_obstacle_distance parsers ${fcl_LIBRARIES} ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 

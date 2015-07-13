@@ -47,7 +47,7 @@ class StackOfTasksGPMSolver : public ConstraintSolver<>
                              last_min_distance_(-1.0),
                              last_cycle_time_(-1.0)
         {
-            last_in_cart_velocities_ = t_Vector6d::Zero();
+            last_in_cart_velocities_ = Vector6d_t::Zero();
         }
 
         virtual ~StackOfTasksGPMSolver()
@@ -59,14 +59,14 @@ class StackOfTasksGPMSolver : public ConstraintSolver<>
          * Specific implementation of solve-method to solve IK problem with constraints by using the GPM.
          * See base class ConstraintSolver for more details on params and returns.
          */
-        virtual Eigen::MatrixXd solve(const t_Vector6d& in_cart_velocities,
+        virtual Eigen::MatrixXd solve(const Vector6d_t& in_cart_velocities,
                                       const JointStates& joint_states);
 
         /**
          * Set all created constraints in a (priorized) set.
          * @param constraints: All constraints ordered according to priority.
          */
-        virtual void setConstraints(std::set<tConstraintBase>& constraints)
+        virtual void setConstraints(std::set<ConstraintBase_t>& constraints)
         {
             this->constraints_ = constraints;
         }
@@ -82,11 +82,11 @@ class StackOfTasksGPMSolver : public ConstraintSolver<>
     protected:
         double last_min_distance_;
         double last_cycle_time_;
-        t_Vector6d last_in_cart_velocities_;
+        Vector6d_t last_in_cart_velocities_;
         Eigen::MatrixXd last_jac_;
 
         /// set inserts sorted (default less operator); if element has already been added it returns an iterator on it.
-        std::set<tConstraintBase> constraints_;
+        std::set<ConstraintBase_t> constraints_;
 };
 
 #endif /* STACK_OF_TASKS_SOLVER_2ND_H_ */

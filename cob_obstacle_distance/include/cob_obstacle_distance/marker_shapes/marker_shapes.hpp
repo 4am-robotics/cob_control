@@ -36,7 +36,7 @@
 #include "fcl/collision_object.h"
 
 #include "cob_obstacle_distance/fcl_marker_converter.hpp"
-#include "cob_obstacle_distance/marker_shapes_interface.hpp"
+#include "cob_obstacle_distance/marker_shapes/marker_shapes_interface.hpp"
 
 static const std::string g_marker_namespace = "collision_object";
 
@@ -51,12 +51,12 @@ class MarkerShape : public IMarkerShape
         FclMarkerConverter<T> fcl_marker_converter_;
         visualization_msgs::Marker marker_;
 
-        void init(const std::string root_frame, double x, double y, double z,
+        void init(const std::string& root_frame, double x, double y, double z,
                   double quat_x, double quat_y, double quat_z, double quat_w,
                   double color_r, double color_g, double color_b, double color_a);
 
     public:
-        MarkerShape(const std::string root_frame, T& fcl_object, geometry_msgs::Pose& pose, std_msgs::ColorRGBA& col)
+        MarkerShape(const std::string& root_frame, T& fcl_object, const geometry_msgs::Pose& pose, const std_msgs::ColorRGBA& col)
         : MarkerShape(root_frame, fcl_object,
                 pose.position.x, pose.position.y, pose.position.z,
                 pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w,
@@ -64,17 +64,17 @@ class MarkerShape : public IMarkerShape
         {
         }
 
-        MarkerShape(const std::string root_frame, T &fcl_object, geometry_msgs::Point &pos, geometry_msgs::Quaternion &quat, std_msgs::ColorRGBA &col)
+        MarkerShape(const std::string& root_frame, T& fcl_object, const geometry_msgs::Point& pos, const geometry_msgs::Quaternion& quat, const std_msgs::ColorRGBA& col)
         : MarkerShape(root_frame, fcl_object, pos.x, pos.y, pos.z, quat.x, quat.y, quat.z, quat.w, col.r, col.g, col.b, col.a)
         {
         }
 
-        MarkerShape(const std::string root_frame, T &fcl_object,
+        MarkerShape(const std::string& root_frame, T& fcl_object,
               double x, double y, double z,
               double quat_x = 0.0, double quat_y = 0.0, double quat_z = 0.0, double quat_w = 1.0,
               double color_r = 0.0, double color_g = 0.0, double color_b = 0.0, double color_a = 1.0);
 
-        MarkerShape(const std::string root_frame, double x, double y, double z,
+        MarkerShape(const std::string& root_frame, double x, double y, double z,
                     double quat_x = 0.0, double quat_y = 0.0, double quat_z = 0.0, double quat_w = 1.0,
                     double color_r = 0.0, double color_g = 0.0, double color_b = 0.0, double color_a = 1.0);
 
@@ -100,7 +100,7 @@ class MarkerShape : public IMarkerShape
          */
         inline bool isDrawn() const;
 
-        inline void updatePose(geometry_msgs::Vector3 &pos, geometry_msgs::Quaternion &quat);
+        inline void updatePose(const geometry_msgs::Vector3& pos, const geometry_msgs::Quaternion& quat);
 
         /**
          * @return A fcl::CollisionObject to calculate distances to other objects or check whether collision occurred or not.
@@ -122,12 +122,12 @@ class MarkerShape<BVH_RSS_t> : public IMarkerShape
         BVH_RSS_t fcl_bvh_;
         visualization_msgs::Marker marker_;
 
-        void init(const std::string root_frame, const std::string mesh_resource, double x, double y, double z,
+        void init(const std::string& root_frame, const std::string& mesh_resource, double x, double y, double z,
                   double quat_x, double quat_y, double quat_z, double quat_w,
                   double color_r, double color_g, double color_b, double color_a);
 
     public:
-        MarkerShape(const std::string root_frame, const std::string mesh_resource, geometry_msgs::Pose& pose, std_msgs::ColorRGBA& col)
+        MarkerShape(const std::string& root_frame, const std::string& mesh_resource, const geometry_msgs::Pose& pose, const std_msgs::ColorRGBA& col)
         : MarkerShape(root_frame, mesh_resource,
                 pose.position.x, pose.position.y, pose.position.z,
                 pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w,
@@ -135,12 +135,12 @@ class MarkerShape<BVH_RSS_t> : public IMarkerShape
         {
         }
 
-        MarkerShape(const std::string root_frame, const std::string mesh_resource, geometry_msgs::Point &pos, geometry_msgs::Quaternion &quat, std_msgs::ColorRGBA &col)
+        MarkerShape(const std::string& root_frame, const std::string& mesh_resource, const geometry_msgs::Point& pos, const geometry_msgs::Quaternion& quat, const std_msgs::ColorRGBA& col)
         : MarkerShape(root_frame, mesh_resource, pos.x, pos.y, pos.z, quat.x, quat.y, quat.z, quat.w, col.r, col.g, col.b, col.a)
         {
         }
 
-        MarkerShape(const std::string root_frame, const std::string mesh_resource,
+        MarkerShape(const std::string& root_frame, const std::string& mesh_resource,
               double x, double y, double z,
               double quat_x = 0.0, double quat_y = 0.0, double quat_z = 0.0, double quat_w = 1.0,
               double color_r = 0.0, double color_g = 0.0, double color_b = 0.0, double color_a = 1.0);
@@ -167,7 +167,7 @@ class MarkerShape<BVH_RSS_t> : public IMarkerShape
          */
         inline bool isDrawn() const;
 
-        inline void updatePose(geometry_msgs::Vector3 &pos, geometry_msgs::Quaternion &quat);
+        inline void updatePose(const geometry_msgs::Vector3& pos, const geometry_msgs::Quaternion& quat);
 
         /**
          * @return A fcl::CollisionObject to calculate distances to other objects or check whether collision occurred or not.
@@ -181,6 +181,6 @@ class MarkerShape<BVH_RSS_t> : public IMarkerShape
 
 
 
-#include "cob_obstacle_distance/marker_shapes_impl.hpp"
+#include "cob_obstacle_distance/marker_shapes/marker_shapes_impl.hpp"
 
 #endif /* MARKER_SHAPES_HPP_ */

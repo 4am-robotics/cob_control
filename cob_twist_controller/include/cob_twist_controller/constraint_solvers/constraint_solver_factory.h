@@ -72,8 +72,8 @@ class ConstraintSolverFactory
          * @param out_jnt_velocities The calculated joint velocities as output reference.
          * @return The calculated new joint velocities in (m x 1)-Matrix.
          */
-        int8_t calculateJointVelocities(t_Matrix6Xd& jacobian_data,
-                                        const t_Vector6d& in_cart_velocities,
+        int8_t calculateJointVelocities(Matrix6Xd_t& jacobian_data,
+                                        const Vector6d_t& in_cart_velocities,
                                         const JointStates& joint_states,
                                         Eigen::MatrixXd& out_jnt_velocities);
 
@@ -94,7 +94,7 @@ class ConstraintSolverFactory
         KDL::ChainJntToJacSolver& jnt_to_jac_;
         boost::shared_ptr<ISolverFactory> solver_factory_;
         boost::shared_ptr<DampingBase> damping_method_;
-        std::set<tConstraintBase> constraints_;
+        std::set<ConstraintBase_t> constraints_;
         TaskStackController_t& task_stack_controller_;
 };
 

@@ -120,14 +120,11 @@ void AdvancedChainFkSolverPos_recursive::dumpAllSegmentPostures() const
     }
 }
 
+
 AdvancedChainFkSolverPos_recursive::~AdvancedChainFkSolverPos_recursive()
 {
 }
 
-
-
-
-/// -------------------------------------------------------------------------
 
 AdvancedChainFkSolverVel_recursive::AdvancedChainFkSolverVel_recursive(const KDL::Chain& _chain):
     chain_(_chain)

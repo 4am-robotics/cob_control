@@ -32,18 +32,18 @@
 #include <ros/ros.h>
 #include <unordered_map>
 
-#include "cob_obstacle_distance/marker_shapes_interface.hpp"
+#include "cob_obstacle_distance/marker_shapes/marker_shapes_interface.hpp"
 
 /// Class to manage fcl::Shapes and connect with RVIZ marker type.
 class ShapesManager
 {
     private:
-        std::unordered_map<std::string, Ptr_IMarkerShape_t> shapes_2_;
+        std::unordered_map<std::string, PtrIMarkerShape_t> shapes_;
         const ros::Publisher& pub_;
 
     public:
-        typedef std::unordered_map<std::string, Ptr_IMarkerShape_t>::iterator Map_iter_t;
-        typedef std::unordered_map<std::string, Ptr_IMarkerShape_t>::const_iterator Map_const_iterator_t;
+        typedef std::unordered_map<std::string, PtrIMarkerShape_t>::iterator MapIter_t;
+        typedef std::unordered_map<std::string, PtrIMarkerShape_t>::const_iterator MapConstIter_t;
 
         /**
          * Ctor
@@ -58,7 +58,7 @@ class ShapesManager
          * @param id Key to access the marker shape.
          * @param s Pointer to an already created marker shape.
          */
-        void addShape(const std::string& id, Ptr_IMarkerShape_t s);
+        void addShape(const std::string& id, PtrIMarkerShape_t s);
 
         /**
          * Tries to return the marker shape if ID is correct.
@@ -66,7 +66,7 @@ class ShapesManager
          * @param s Pointer to an already created marker shape.
          * @return State of success.
          */
-        bool getShape(const std::string& id, Ptr_IMarkerShape_t& s);
+        bool getShape(const std::string& id, PtrIMarkerShape_t& s);
 
 
         /**
@@ -80,10 +80,10 @@ class ShapesManager
          */
         void clear();
 
-        Map_iter_t begin() {return this->shapes_2_.begin(); }
-        Map_const_iterator_t begin() const {return this->shapes_2_.begin(); }
-        Map_iter_t end() {return this->shapes_2_.end(); }
-        Map_const_iterator_t end() const {return this->shapes_2_.end(); }
+        MapIter_t begin() {return this->shapes_.begin(); }
+        MapConstIter_t begin() const {return this->shapes_.begin(); }
+        MapIter_t end() {return this->shapes_.end(); }
+        MapConstIter_t end() const {return this->shapes_.end(); }
 };
 
 #endif /* SHAPES_MANAGER_HPP_ */
