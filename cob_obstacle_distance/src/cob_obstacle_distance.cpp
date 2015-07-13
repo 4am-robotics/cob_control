@@ -30,13 +30,13 @@
 #include <ros/ros.h>
 #include <fcl/shape/geometric_shapes.h>
 #include <fstream>
+#include <thread>
 
 #include "cob_obstacle_distance/distance_manager.hpp"
 #include "cob_obstacle_distance/marker_shapes/marker_shapes.hpp"
 
 
-#include <assimp/scene.h>
-
+void publishStaticObjects(DistanceManager& dm);
 
 
 int main(int argc, char** argv)
@@ -46,8 +46,6 @@ int main(int argc, char** argv)
     ros::Rate r(1.0);
     DistanceManager sm(nh);
 
-    aiNode ainode;
-
     if (0 != sm.init())
     {
         ROS_ERROR("Failed to initialize DistanceManager.");
@@ -55,33 +53,19 @@ int main(int argc, char** argv)
     }
 
     ros::Subscriber jointstate_sub = nh.subscribe("joint_states", 1, &DistanceManager::jointstateCb, &sm);
+
+    ros::Subscriber obstacle_sub = nh.subscribe("obstacle_distance/registerObstacle", 1, &DistanceManager::registerObstacle, &sm);
+
     ros::ServiceServer registration_srv = nh.advertiseService("obstacle_distance/registerPointOfInterest" , &DistanceManager::registerPointOfInterest, &sm);
     ros::ServiceServer distance_prediction_srv = nh.advertiseService("obstacle_distance/predictDistance" , &DistanceManager::predictDistance, &sm);
 
     ROS_INFO("Starting basic_shapes ...\r\n");
-    fcl::Sphere s(0.1);
-    fcl::Box b(0.1, 0.1, 0.1); // Take care the nearest point for collision is one of the eight corners!!! This might lead to jittering
 
-    PtrIMarkerShape_t sptr_Bvh(new MarkerShape<BVH_RSS_t>(sm.getRootFrame(),
-                                                           "package://schunk_description/meshes/lwa4p_extended/arm_1_collision.stl",
-                                                           -0.35,
-                                                           -0.35,
-                                                           0.8));
+    // publishStaticObjects(sm); // Comment in to see what happens
 
-
-    PtrIMarkerShape_t sptr_Sphere(new MarkerShape<fcl::Sphere>(sm.getRootFrame(), s, 0.35, -0.35, 0.8));
-
-    //Ptr_IMarkerShape_t sptr_Cube(new MarkerShape<fcl::Box>(b, 0.35, -0.35, 0.8));
-    // Ptr_IMarkerShape_t sptr_Sphere(new MarkerShape<fcl::Sphere>(1.0, -1.0, -1.0));
-    // Ptr_IMarkerShape_t sptr_Cyl(new MarkerShape<fcl::Cylinder>(-1.0, 1.0, -1.0));
-
-    sm.addObstacle("Sphere1", sptr_Sphere);
-    sm.addObstacle("arm_1_collision", sptr_Bvh);
-    // sm.addObstacle(sptr_Cube);
-    // sm.addObstacle(sptr_Cyl);
-
-    ROS_INFO_ONCE("Subscriber to the marker has been created");
-    sm.drawObstacles();
+    std::thread t(&DistanceManager::transform, std::ref(sm));
+    // t.join();
+    ROS_INFO_STREAM("Finished thread.");
 
     ros::Rate loop_rate(60);
     while(ros::ok())
@@ -92,6 +76,33 @@ int main(int argc, char** argv)
     }
 
 
+
     return 0;
 }
 
+
+/**
+ * Dummy publisher for some example fcl <-> rviz markers.
+ * @param dm The distance manager reference
+ */
+void publishStaticObjects(DistanceManager& dm)
+{
+    fcl::Sphere s(0.1);
+    fcl::Box b(0.1, 0.1, 0.1); // Take care the nearest point for collision is one of the eight corners!!! This might lead to jittering
+
+    PtrIMarkerShape_t sptr_Bvh(new MarkerShape<BVH_RSS_t>(dm.getRootFrame(),
+                                                           "package://schunk_description/meshes/lwa4p_extended/arm_1_collision.stl",
+                                                           -0.35,
+                                                           -0.35,
+                                                           0.8));
+
+
+    PtrIMarkerShape_t sptr_Sphere(new MarkerShape<fcl::Sphere>(dm.getRootFrame(), s, 0.35, -0.35, 0.8));
+
+    dm.addObstacle("Sphere1", sptr_Sphere);
+    dm.addObstacle("arm_1_collision", sptr_Bvh);
+
+    ROS_INFO_ONCE("Subscriber to the marker has been created");
+    dm.drawObstacles();
+
+}

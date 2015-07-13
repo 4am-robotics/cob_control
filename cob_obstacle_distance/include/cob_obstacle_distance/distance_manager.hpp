@@ -55,6 +55,8 @@
 #include <kdl/chainfksolvervel_recursive.hpp>
 #include <ros/ros.h>
 
+#include <moveit_msgs/CollisionObject.h>
+
 #include "cob_obstacle_distance/marker_shapes/marker_shapes.hpp"
 #include "cob_obstacle_distance/shapes_manager.hpp"
 #include "cob_obstacle_distance/chainfk_solvers/advanced_chainfksolver_recursive.hpp"
@@ -63,6 +65,7 @@
 #include "cob_obstacle_distance/PredictDistance.h"
 #include "cob_obstacle_distance/frame_to_collision.hpp"
 
+#include <mutex>
 
 class DistanceManager
 {
@@ -98,6 +101,22 @@ class DistanceManager
         FrameToCollision frame2collision_;
 
         int counter_;
+
+        std::mutex mtx_;
+
+        /**
+         * Build an obstacle from a message containing a mesh.
+         * @param msg Msg struct that contains mesh info.
+         * @param transform The transformation from a frame in msg header to root_frame_id.
+         */
+        void buildObstacleMesh(const moveit_msgs::CollisionObject::ConstPtr& msg, const tf::StampedTransform& transform);
+
+        /**
+         * Build an obstacle from a message containing a primitive shape.
+         * @param msg Msg struct that contains mesh info.
+         * @param transform The transformation from a frame in msg header to root_frame_id.
+         */
+        void buildObstaclePrimitive(const moveit_msgs::CollisionObject::ConstPtr& msg, const tf::StampedTransform& transform);
 
     public:
         /**
@@ -155,6 +174,12 @@ class DistanceManager
         void jointstateCb(const sensor_msgs::JointState::ConstPtr& msg);
 
         /**
+         * Registers an obstacle via message.
+         * @param msg MoveIt CollisionObject message type.
+         */
+        void registerObstacle(const moveit_msgs::CollisionObject::ConstPtr& msg);
+
+        /**
          * Initialization of ROS robot structure, parameters, publishers and subscribers.
          * @return Error status. If 0 then success.
          */
@@ -189,6 +214,13 @@ class DistanceManager
 
         bool predictDistance(cob_obstacle_distance::PredictDistance::Request& request,
                              cob_obstacle_distance::PredictDistance::Response& response);
+
+        /**
+         * Get method with mutex access on transform data.
+         * @return Transformation between chain base and base link.
+         */
+        Eigen::Affine3d getSynchedCbToBlTransform();
+
 };
 
 #endif /* DISTANCE_MANAGER_HPP_ */

@@ -147,11 +147,16 @@ inline void MarkerShape<T>::updatePose(const geometry_msgs::Vector3& pos, const 
     marker_.pose.position.x = pos.x;
     marker_.pose.position.y = pos.y;
     marker_.pose.position.z = pos.z;
-    marker_.pose.orientation.x = quat.x;
-    marker_.pose.orientation.y = quat.y;
-    marker_.pose.orientation.z = quat.z;
-    marker_.pose.orientation.w = quat.w;
+    marker_.pose.orientation = quat;
 
+    fcl_marker_converter_.assignValues(marker_);
+}
+
+
+template <typename T>
+inline void MarkerShape<T>::updatePose(const geometry_msgs::Pose& pose)
+{
+    marker_.pose = pose;
     fcl_marker_converter_.assignValues(marker_);
 }
 

@@ -32,6 +32,9 @@
 
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
+#include <shape_msgs/Mesh.h>
+#include <shape_msgs/MeshTriangle.h>
+
 #include "fcl/shape/geometric_shapes.h"
 #include "fcl/collision_object.h"
 
@@ -102,6 +105,8 @@ class MarkerShape : public IMarkerShape
 
         inline void updatePose(const geometry_msgs::Vector3& pos, const geometry_msgs::Quaternion& quat);
 
+        inline void updatePose(const geometry_msgs::Pose& pose);
+
         /**
          * @return A fcl::CollisionObject to calculate distances to other objects or check whether collision occurred or not.
          */
@@ -127,6 +132,8 @@ class MarkerShape<BVH_RSS_t> : public IMarkerShape
                   double color_r, double color_g, double color_b, double color_a);
 
     public:
+        MarkerShape(const std::string& root_frame, const shape_msgs::Mesh& mesh, const geometry_msgs::Pose& pose, const std_msgs::ColorRGBA& col);
+
         MarkerShape(const std::string& root_frame, const std::string& mesh_resource, const geometry_msgs::Pose& pose, const std_msgs::ColorRGBA& col)
         : MarkerShape(root_frame, mesh_resource,
                 pose.position.x, pose.position.y, pose.position.z,
@@ -168,6 +175,8 @@ class MarkerShape<BVH_RSS_t> : public IMarkerShape
         inline bool isDrawn() const;
 
         inline void updatePose(const geometry_msgs::Vector3& pos, const geometry_msgs::Quaternion& quat);
+
+        inline void updatePose(const geometry_msgs::Pose& pose);
 
         /**
          * @return A fcl::CollisionObject to calculate distances to other objects or check whether collision occurred or not.

@@ -31,6 +31,49 @@
 #include "cob_obstacle_distance/parsers/mesh_parser.hpp"
 
 /* BEGIN MarkerShape ********************************************************************************************/
+MarkerShape<BVH_RSS_t>::MarkerShape(const std::string& root_frame,
+                                    const shape_msgs::Mesh& mesh,
+                                    const geometry_msgs::Pose& pose,
+                                    const std_msgs::ColorRGBA& col)
+                                    : is_drawn_(false)
+{
+    this->fcl_bvh_.beginModel();
+
+    for(shape_msgs::MeshTriangle tri : mesh.triangles)
+    {
+        uint32_t v_idx_1 = tri.vertex_indices.elems[0];
+        uint32_t v_idx_2 = tri.vertex_indices.elems[1];
+        uint32_t v_idx_3 = tri.vertex_indices.elems[2];
+
+        fcl::Vec3f v1(mesh.vertices[v_idx_1].x, mesh.vertices[v_idx_1].y, mesh.vertices[v_idx_1].z);
+        fcl::Vec3f v2(mesh.vertices[v_idx_2].x, mesh.vertices[v_idx_2].y, mesh.vertices[v_idx_2].z);
+        fcl::Vec3f v3(mesh.vertices[v_idx_3].x, mesh.vertices[v_idx_3].y, mesh.vertices[v_idx_3].z);
+
+        this->fcl_bvh_.addTriangle(v1, v2, v3);
+    }
+
+    this->fcl_bvh_.endModel();
+    this->fcl_bvh_.computeLocalAABB();
+
+    marker_.pose = pose;
+    marker_.color = col;
+
+    marker_.scale.x = 1.0;
+    marker_.scale.y = 1.0;
+    marker_.scale.z = 1.0;
+    marker_.type = visualization_msgs::Marker::MESH_RESOURCE;
+
+    marker_.header.frame_id = root_frame;
+    marker_.header.stamp = ros::Time::now();
+    marker_.ns = g_marker_namespace;
+    marker_.action = visualization_msgs::Marker::ADD;
+    marker_.id = class_ctr_;
+    marker_.mesh_resource = ""; // TODO: Not given in this case: can happen e.g. when moveit_msgs/CollisionObject was given!
+
+    marker_.lifetime = ros::Duration();
+}
+
+
 MarkerShape<BVH_RSS_t>::MarkerShape(const std::string& root_frame, const std::string& mesh_resource,
       double x, double y, double z,
       double quat_x, double quat_y, double quat_z, double quat_w,
@@ -100,10 +143,12 @@ inline void MarkerShape<BVH_RSS_t>::updatePose(const geometry_msgs::Vector3& pos
     marker_.pose.position.x = pos.x;
     marker_.pose.position.y = pos.y;
     marker_.pose.position.z = pos.z;
-    marker_.pose.orientation.x = quat.x;
-    marker_.pose.orientation.y = quat.y;
-    marker_.pose.orientation.z = quat.z;
-    marker_.pose.orientation.w = quat.w;
+    marker_.pose.orientation = quat;
+}
+
+inline void MarkerShape<BVH_RSS_t>::updatePose(const geometry_msgs::Pose& pose)
+{
+    marker_.pose = pose;
 }
 
 

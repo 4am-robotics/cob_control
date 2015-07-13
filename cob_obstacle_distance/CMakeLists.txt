@@ -4,7 +4,7 @@ project(cob_obstacle_distance)
 set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 
 # Load catkin and all dependencies required for this package
-find_package(catkin REQUIRED COMPONENTS cmake_modules roscpp roslib sensor_msgs geometry_msgs visualization_msgs tf tf_conversions dynamic_reconfigure message_generation kdl_parser kdl_conversions eigen_conversions)
+find_package(catkin REQUIRED COMPONENTS cmake_modules roscpp roslib shape_msgs moveit_msgs sensor_msgs geometry_msgs visualization_msgs tf tf_conversions dynamic_reconfigure message_generation kdl_parser kdl_conversions eigen_conversions)
 
 find_package(Eigen REQUIRED)
 add_definitions(${EIGEN_DEFINITIONS})
@@ -34,7 +34,7 @@ generate_messages(
 catkin_package(
    INCLUDE_DIRS include
    LIBRARIES parsers
-   CATKIN_DEPENDS roscpp sensor_msgs geometry_msgs visualization_msgs message_runtime
+   CATKIN_DEPENDS roscpp shape_msgs moveit_msgs sensor_msgs geometry_msgs visualization_msgs message_runtime
    DEPENDS assimp
 )
 

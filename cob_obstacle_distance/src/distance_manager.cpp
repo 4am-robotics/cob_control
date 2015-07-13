@@ -55,6 +55,10 @@
 
 #include <urdf/model.h>
 
+#include <shape_msgs/Mesh.h>
+#include <shape_msgs/MeshTriangle.h>
+#include <shape_msgs/SolidPrimitive.h>
+
 #define VEC_X 0
 #define VEC_Y 1
 #define VEC_Z 2
@@ -196,12 +200,6 @@ void DistanceManager::calculate()
     // and is same for all obstacles.
     if(this->obstacle_distances_.size() > 0)
     {
-        if (!this->transform())
-        {
-            ROS_ERROR("Failed to transform Return with no publish!");
-            return;
-        }
-
         KDL::FrameVel p_dot_out;
         KDL::JntArrayVel jnt_arr(last_q_, last_q_dot_);
         adv_chn_fk_solver_vel_->JntToCart(jnt_arr, p_dot_out);
@@ -227,11 +225,13 @@ void DistanceManager::calculate()
         Eigen::Vector3d chainbase2frame_pos(frame_pos.p.x(),
                                             frame_pos.p.y(),
                                             frame_pos.p.z());
-        Eigen::Vector3d abs_jnt_pos = tf_cb_frame_bl_.inverse() * chainbase2frame_pos;
+
+        Eigen::Affine3d tmp_tf_cb_frame_bl = this->getSynchedCbToBlTransform();
+        Eigen::Vector3d abs_jnt_pos = tmp_tf_cb_frame_bl.inverse() * chainbase2frame_pos;
 
         Eigen::Quaterniond q;
         tf::quaternionKDLToEigen (frame_pos.M, q);
-        Eigen::Matrix3d x = (tf_cb_frame_bl_.inverse() * q).rotation();
+        Eigen::Matrix3d x = (tmp_tf_cb_frame_bl.inverse() * q).rotation();
         Eigen::Quaterniond q_1(x);
 
         /* ******* End Transformation part ************** */
@@ -253,15 +253,15 @@ void DistanceManager::calculate()
         tf::vectorEigenToMsg(abs_jnt_pos, v3);
         ooi->updatePose(v3, quat);
 
-        if(counter_ <= 0)
-        {
-            this->drawObjectsOfInterest(true);
-            counter_ = 1000;
-        }
-        else
-        {
-            counter_--;
-        }
+//        if(counter_ <= 0)
+//        {
+//            this->drawObjectsOfInterest(true);
+//            counter_ = 1000;
+//        }
+//        else
+//        {
+//            counter_--;
+//        }
 
         fcl::CollisionObject ooi_co = ooi->getCollisionObject();
         ooi.reset();
@@ -296,14 +296,14 @@ void DistanceManager::calculate()
             Eigen::Vector3d abs_obst_vector(t[VEC_X],
                                        t[VEC_Y],
                                        t[VEC_Z]);
-            Eigen::Vector3d obst_vector = tf_cb_frame_bl_ * abs_obst_vector;
-            Eigen::Vector3d tmp_obst_vector = tf_cb_frame_bl_.rotation() * abs_obst_vector + tf_cb_frame_bl_.translation();
+            Eigen::Vector3d obst_vector = tmp_tf_cb_frame_bl * abs_obst_vector;
+            Eigen::Vector3d tmp_obst_vector = tmp_tf_cb_frame_bl.rotation() * abs_obst_vector + tmp_tf_cb_frame_bl.translation();
 
             Eigen::Vector3d abs_jnt_pos_update(a[VEC_X],
                                                a[VEC_Y],
                                                a[VEC_Z]);
 
-            Eigen::Vector3d rel_base_link_frame_pos = tf_cb_frame_bl_ * abs_jnt_pos_update;
+            Eigen::Vector3d rel_base_link_frame_pos = tmp_tf_cb_frame_bl * abs_jnt_pos_update;
             Eigen::Vector3d dist_vector = rel_base_link_frame_pos - obst_vector; // expressed in arm base link frame
 
             // vector from frame origin to collision point
@@ -336,18 +336,27 @@ void DistanceManager::calculate()
 
 bool DistanceManager::transform()
 {
+
     bool success = true;
-    try
+
+    while(true)
     {
-        tf::StampedTransform cb_transform_bl;
-        tf_listener_.waitForTransform(chain_base_link_, root_frame_id_, ros::Time(0), ros::Duration(0.5));
-        tf_listener_.lookupTransform(chain_base_link_, root_frame_id_, ros::Time(0), cb_transform_bl);
-        tf::transformTFToEigen(cb_transform_bl, tf_cb_frame_bl_);
-    }
-    catch (tf::TransformException &ex)
-    {
-        success = false;
-        ROS_ERROR("%s",ex.what());
+        try
+        {
+            std::lock_guard<std::mutex> lock(mtx_);
+            tf::StampedTransform cb_transform_bl;
+            ros::Time time = ros::Time(0);
+            tf_listener_.waitForTransform(chain_base_link_, root_frame_id_, time, ros::Duration(0.5));
+            tf_listener_.lookupTransform(chain_base_link_, root_frame_id_, time, cb_transform_bl);
+            tf::transformTFToEigen(cb_transform_bl, tf_cb_frame_bl_);
+        }
+        catch (tf::TransformException& ex)
+        {
+            success = false;
+            ROS_ERROR("%s",ex.what());
+        }
+
+        sleep(0.001);
     }
 
     return success;
@@ -384,17 +393,212 @@ void DistanceManager::jointstateCb(const sensor_msgs::JointState::ConstPtr& msg)
     }
 }
 
+
+void DistanceManager::registerObstacle(const moveit_msgs::CollisionObject::ConstPtr& msg)
+{
+    ROS_INFO_STREAM("Called register obstacle");
+
+    const std::string frame_id = msg->header.frame_id;
+    tf::StampedTransform frame_transform_root;
+    Eigen::Affine3d tf_frame_root;
+
+    if(msg->meshes.size() > 0 && msg->primitives.size() > 0)
+    {
+        ROS_ERROR_STREAM("Can either build mesh or primitive but not both in one message for one id.");
+        return;
+    }
+
+    try
+    {
+        ros::Time time = ros::Time(0);
+        tf_listener_.waitForTransform(root_frame_id_, msg->header.frame_id, time, ros::Duration(0.5));
+        tf_listener_.lookupTransform(root_frame_id_, msg->header.frame_id, time, frame_transform_root);
+        tf::transformTFToEigen(frame_transform_root, tf_frame_root);
+    }
+    catch (tf::TransformException& ex)
+    {
+        ROS_ERROR("TransformException: %s",ex.what());
+        return;
+    }
+
+    if((msg->type.db.length() > 0 && 0 < msg->mesh_poses.size()) ||
+       (msg->meshes.size() > 0 && msg->meshes.size() == msg->mesh_poses.size()))
+    {
+        this->buildObstacleMesh(msg, frame_transform_root);
+    }
+
+    if(msg->primitives.size() > 0 && msg->primitives.size() == msg->primitive_poses.size())
+    {
+        this->buildObstaclePrimitive(msg, frame_transform_root);
+    }
+
+    this->drawObstacles(true);
+}
+
+
+void DistanceManager::buildObstacleMesh(const moveit_msgs::CollisionObject::ConstPtr& msg, const tf::StampedTransform& transform)
+{
+    uint32_t m_size = msg->mesh_poses.size();
+    const std::string package_file_name = msg->type.db; // using db field for package name instead of db json string
+
+    if(msg->mesh_poses.size() > 1)
+    {
+        ROS_WARN("Currenty only one mesh per message is supported! So only the first one is processed ...");
+        m_size = 1;
+    }
+
+    if(package_file_name.length() <= 0 && msg->mesh_poses.size() != msg->meshes.size())
+    {
+       ROS_ERROR("Mesh poses and meshes do not have the same size. If package resource string is empty then the sizes must be equal!");
+       return;
+    }
+
+    if(msg->ADD == msg->operation)
+    {
+        ROS_INFO("ADD obstacle");
+        for(uint32_t i = 0; i < m_size; ++i)
+        {
+            std_msgs::ColorRGBA c;
+            c.a = 1.0;
+            geometry_msgs::Pose p = msg->mesh_poses[i];
+
+            tf::Pose tf_p;
+            tf::poseMsgToTF(p, tf_p);
+            tf::Pose new_tf_p = transform * tf_p;
+            tf::poseTFToMsg(new_tf_p, p);
+
+            PtrIMarkerShape_t sptr_Bvh;
+
+            if(package_file_name.length() > 0)
+            {
+                sptr_Bvh.reset(new MarkerShape<BVH_RSS_t>(this->root_frame_id_,
+                                                          package_file_name,
+                                                          p,
+                                                          c));
+            }
+            else
+            {
+                shape_msgs::Mesh m = msg->meshes[i]; // is only filled in case of no package file name has been given
+                sptr_Bvh.reset(new MarkerShape<BVH_RSS_t>(this->root_frame_id_,
+                                                          m,
+                                                          p,
+                                                          c));
+            }
+
+            this->addObstacle(msg->id, sptr_Bvh);
+        }
+    }
+    else if(msg->MOVE == msg->operation)
+    {
+        ROS_INFO("MOVE obstacle");
+        PtrIMarkerShape_t sptr;
+        for(uint32_t i = 0; i < m_size; ++i)
+        {
+            if(this->obstacle_mgr_->getShape(msg->id, sptr))
+            {
+                geometry_msgs::Pose p = msg->mesh_poses[i];
+                tf::Pose tf_p;
+                tf::poseMsgToTF(p, tf_p);
+                tf::Pose new_tf_p = transform * tf_p;
+                tf::poseTFToMsg(new_tf_p, p);
+                sptr->updatePose(p);
+            }
+        }
+    }
+    else if(msg->REMOVE == msg->operation)
+    {
+        ROS_INFO("REMOVE obstacle");
+        this->obstacle_mgr_->removeShape(msg->id);
+    }
+    else
+    {
+        ROS_ERROR_STREAM("Operation not supported!");
+    }
+}
+
+
+void DistanceManager::buildObstaclePrimitive(const moveit_msgs::CollisionObject::ConstPtr& msg, const tf::StampedTransform& transform)
+{
+    uint32_t p_size = msg->primitives.size();
+    if(msg->primitives.size() > 1)
+    {
+        ROS_WARN("Currenty only one primitive per message is supported! So only the first one is processed ...");
+        p_size = 1;
+    }
+
+    if(msg->ADD == msg->operation)
+    {
+        ROS_INFO("ADD obstacle");
+        for(uint32_t i = 0; i < p_size; ++i)
+        {
+            std_msgs::ColorRGBA c;
+            c.a = 1.0;
+            shape_msgs::SolidPrimitive sp = msg->primitives[i];
+            geometry_msgs::Pose p = msg->primitive_poses[i];
+            tf::Pose tf_p;
+            tf::poseMsgToTF(p, tf_p);
+            tf::Pose new_tf_p = transform * tf_p;
+            tf::poseTFToMsg(new_tf_p, p);
+
+            PtrIMarkerShape_t sptr;
+            if(shape_msgs::SolidPrimitive::BOX == sp.type)
+            {
+                fcl::Box b(sp.dimensions[shape_msgs::SolidPrimitive::BOX_X],
+                           sp.dimensions[shape_msgs::SolidPrimitive::BOX_Y],
+                           sp.dimensions[shape_msgs::SolidPrimitive::BOX_Z]);
+                sptr.reset(new MarkerShape<fcl::Box>(this->root_frame_id_, b, p, c));
+            }
+            else if(shape_msgs::SolidPrimitive::SPHERE == sp.type)
+            {
+                fcl::Sphere s(sp.dimensions[shape_msgs::SolidPrimitive::SPHERE_RADIUS]);
+                sptr.reset(new MarkerShape<fcl::Sphere>(this->root_frame_id_, s, p, c));
+            }
+            else if(shape_msgs::SolidPrimitive::CYLINDER == sp.type)
+            {
+                fcl::Cylinder cyl(sp.dimensions[shape_msgs::SolidPrimitive::CYLINDER_RADIUS],
+                                  sp.dimensions[shape_msgs::SolidPrimitive::CYLINDER_HEIGHT]);
+                sptr.reset(new MarkerShape<fcl::Cylinder>(this->root_frame_id_, cyl, p, c));
+            }
+            else
+            {
+                ROS_ERROR_STREAM("Shape type not supported: " << sp.type);
+            }
+
+            this->addObstacle(msg->id, sptr);
+        }
+    }
+    else if(msg->MOVE == msg->operation)
+    {
+        ROS_INFO("MOVE obstacle");
+        PtrIMarkerShape_t sptr;
+        for(uint32_t i = 0; i < p_size; ++i)
+        {
+            if(this->obstacle_mgr_->getShape(msg->id, sptr))
+            {
+                geometry_msgs::Pose p = msg->primitive_poses[i];
+                tf::Pose tf_p;
+                tf::poseMsgToTF(p, tf_p);
+                tf::Pose new_tf_p = transform * tf_p;
+                tf::poseTFToMsg(new_tf_p, p);
+                sptr->updatePose(p);
+            }
+        }
+    }
+    else if(msg->REMOVE == msg->operation)
+    {
+        ROS_INFO("REMOVE obstacle");
+        this->obstacle_mgr_->removeShape(msg->id);
+    }
+    else
+    {
+        ROS_ERROR_STREAM("Operation not supported!");
+    }
+}
+
+
 bool DistanceManager::predictDistance(cob_obstacle_distance::PredictDistance::Request& request,
                                       cob_obstacle_distance::PredictDistance::Response& response)
 {
-    // Transform needs to be calculated only once for robot structure
-    // and is same for all obstacles.
-    if (!this->transform())
-    {
-        ROS_ERROR("Failed to transform Return with no publish!");
-        return true;
-    }
-
     KDL::FrameVel p_dot_out;
     KDL::JntArrayVel jnt_arr(last_q_, last_q_dot_);
     adv_chn_fk_solver_vel_->JntToCart(jnt_arr, p_dot_out);
@@ -419,7 +623,9 @@ bool DistanceManager::predictDistance(cob_obstacle_distance::PredictDistance::Re
         Eigen::Vector3d chainbase2frame_pos(frame_pos.p.x(),
                                             frame_pos.p.y(),
                                             frame_pos.p.z());
-        Eigen::Vector3d abs_jnt_pos = tf_cb_frame_bl_.inverse() * chainbase2frame_pos;
+
+        Eigen::Affine3d tmp_tf_cb_frame_bl = this->getSynchedCbToBlTransform();
+        Eigen::Vector3d abs_jnt_pos = tmp_tf_cb_frame_bl.inverse() * chainbase2frame_pos;
         Eigen::Quaterniond q;
         tf::quaternionKDLToEigen (frame_pos.M, q);
         /* ******* End Transformation part ************** */
@@ -496,4 +702,11 @@ bool DistanceManager::registerPointOfInterest(cob_obstacle_distance::Registratio
     }
 
     return true;
+}
+
+
+Eigen::Affine3d DistanceManager::getSynchedCbToBlTransform()
+{
+    std::lock_guard<std::mutex> lock(mtx_);
+    return this->tf_cb_frame_bl_;
 }

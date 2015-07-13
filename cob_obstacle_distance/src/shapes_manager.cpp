@@ -43,6 +43,20 @@ void ShapesManager::addShape(const std::string& id, PtrIMarkerShape_t s)
 }
 
 
+void ShapesManager::removeShape(const std::string& id)
+{
+    if(this->shapes_.count(id))
+    {
+        PtrIMarkerShape_t s = this->shapes_[id];
+        visualization_msgs::Marker marker = s->getMarker();
+        marker.action = visualization_msgs::Marker::DELETE;
+        this->pub_.publish(marker);
+    }
+
+    this->shapes_.erase(id);
+}
+
+
 bool ShapesManager::getShape(const std::string& id, PtrIMarkerShape_t& s)
 {
     bool success = false;
@@ -76,4 +90,10 @@ void ShapesManager::draw(bool enforce_draw)
 void ShapesManager::clear()
 {
     this->shapes_.clear();
+}
+
+
+uint32_t ShapesManager::count() const
+{
+    return this->shapes_.size();
 }

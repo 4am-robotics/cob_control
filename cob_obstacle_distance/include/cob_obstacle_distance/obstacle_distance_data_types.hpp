@@ -33,6 +33,9 @@
 #include <stdint.h>
 #include <unordered_map>
 
+#include <shape_msgs/SolidPrimitive.h>
+#include <visualization_msgs/Marker.h>
+
 #include "cob_obstacle_distance/ObstacleDistances.h"
 
 struct ObstacleDistance
@@ -49,5 +52,20 @@ struct ObstacleDistance
     ros::Time timestamp;
     uint32_t shape_type;
 };
+
+struct ShapeMsgTypeToVisMarkerType
+{
+    public:
+        std::unordered_map<uint8_t, uint32_t> map_;
+
+        ShapeMsgTypeToVisMarkerType()
+        {
+            map_[shape_msgs::SolidPrimitive::BOX] = visualization_msgs::Marker::CUBE;
+            map_[shape_msgs::SolidPrimitive::SPHERE] = visualization_msgs::Marker::SPHERE;
+            map_[shape_msgs::SolidPrimitive::CYLINDER] = visualization_msgs::Marker::CYLINDER;
+        }
+};
+
+static ShapeMsgTypeToVisMarkerType g_shapeMsgTypeToVisMarkerType;
 
 #endif /* OBSTACLE_DISTANCE_DATA_TYPES_HPP_ */

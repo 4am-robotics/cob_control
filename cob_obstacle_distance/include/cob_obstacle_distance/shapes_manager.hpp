@@ -61,6 +61,14 @@ class ShapesManager
         void addShape(const std::string& id, PtrIMarkerShape_t s);
 
         /**
+         * Removes a shape from the manager.
+         * @param id Key to access the marker shape.
+         * @param s Pointer to an already created marker shape.
+         */
+        void removeShape(const std::string& id);
+
+
+        /**
          * Tries to return the marker shape if ID is correct.
          * @param id Key to access the marker shape.
          * @param s Pointer to an already created marker shape.
@@ -79,6 +87,13 @@ class ShapesManager
          * Clear the managed shapes.
          */
         void clear();
+
+        /**
+         * Number of elements in map.
+         * @return Number of elements in map.
+         */
+        uint32_t count() const;
+
 
         MapIter_t begin() {return this->shapes_.begin(); }
         MapConstIter_t begin() const {return this->shapes_.begin(); }
