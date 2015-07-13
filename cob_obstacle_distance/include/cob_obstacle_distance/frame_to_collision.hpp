@@ -80,7 +80,6 @@ class FrameToCollision
                                        PtrIMarkerShape_t& segment_of_interest_marker_shape);
 
     public:
-
         FrameToCollision();
         ~FrameToCollision();
 
@@ -128,6 +127,21 @@ class FrameToCollision
                                     const Eigen::Vector3d& abs_pos,
                                     const Eigen::Quaterniond& quat_pos,
                                     const std::string& frame_of_interest,
+                                    const Eigen::Vector3d& dimension,
+                                    PtrIMarkerShape_t& segment_of_interest_marker_shape);
+
+        /**
+         * Tries to create a MarkerShape by a given shape_type (similar to above but with pose).
+         * @param shape_type The type of the shape (visualization_marker types).
+         * @param pose The pose of the shape (with respect to the root_frame).
+         * @param frame_of_interest The name of the frame of interest (e.g. link name if shape_type MESH_RESOURCE else only for id).
+         * @param segment_of_interest_marker_shape The pointer for that a marker shape shall be created.
+         * @return State of success.
+         */
+        bool getMarkerShapeFromType(const uint32_t& shape_type,
+                                    const geometry_msgs::Pose& pose,
+                                    const std::string& frame_of_interest,
+                                    const Eigen::Vector3d& dimension,
                                     PtrIMarkerShape_t& segment_of_interest_marker_shape);
 
 };

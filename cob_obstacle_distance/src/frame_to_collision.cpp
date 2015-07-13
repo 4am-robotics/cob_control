@@ -154,16 +154,30 @@ bool FrameToCollision::getMarkerShapeFromType(const uint32_t& shape_type,
                                               const Eigen::Vector3d& abs_pos,
                                               const Eigen::Quaterniond& quat_pos,
                                               const std::string& frame_of_interest,
+                                              const Eigen::Vector3d& dimension,
                                               PtrIMarkerShape_t& segment_of_interest_marker_shape)
 {
-    // Representation of segment_of_interest as specific fcl::Shape
-    fcl::Box b(0.1, 0.1, 0.1);
-    fcl::Sphere s(0.05);
-    fcl::Cylinder c(0.05, 0.1);
-
     geometry_msgs::Pose pose;
     tf::pointEigenToMsg(abs_pos, pose.position);
     tf::quaternionEigenToMsg(quat_pos, pose.orientation);
+    return this->getMarkerShapeFromType(shape_type,
+                                        pose,
+                                        frame_of_interest,
+                                        dimension,
+                                        segment_of_interest_marker_shape);
+}
+
+
+bool FrameToCollision::getMarkerShapeFromType(const uint32_t& shape_type,
+                            const geometry_msgs::Pose& pose,
+                            const std::string& frame_of_interest,
+                            const Eigen::Vector3d& dimension,
+                            PtrIMarkerShape_t& segment_of_interest_marker_shape)
+{
+    // Representation of segment_of_interest as specific fcl::Shape
+    fcl::Box b(dimension(FCL_BOX_X), dimension(FCL_BOX_Y), dimension(FCL_BOX_Z));
+    fcl::Sphere s(dimension(FCL_RADIUS));
+    fcl::Cylinder c(dimension(FCL_RADIUS), dimension(FCL_CYL_LENGTH));
 
     std_msgs::ColorRGBA col;
     col.a = 1.0;
@@ -219,3 +233,4 @@ bool FrameToCollision::getMarkerShapeFromType(const uint32_t& shape_type,
     return true;
 
 }
+

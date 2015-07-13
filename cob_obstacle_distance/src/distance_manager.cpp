@@ -541,29 +541,34 @@ void DistanceManager::buildObstaclePrimitive(const moveit_msgs::CollisionObject:
             tf::poseTFToMsg(new_tf_p, p);
 
             PtrIMarkerShape_t sptr;
+            Eigen::Vector3d dim;
             if(shape_msgs::SolidPrimitive::BOX == sp.type)
             {
-                fcl::Box b(sp.dimensions[shape_msgs::SolidPrimitive::BOX_X],
-                           sp.dimensions[shape_msgs::SolidPrimitive::BOX_Y],
-                           sp.dimensions[shape_msgs::SolidPrimitive::BOX_Z]);
-                sptr.reset(new MarkerShape<fcl::Box>(this->root_frame_id_, b, p, c));
+                dim(FCL_BOX_X) = sp.dimensions[shape_msgs::SolidPrimitive::BOX_X];
+                dim(FCL_BOX_Y) = sp.dimensions[shape_msgs::SolidPrimitive::BOX_Y];
+                dim(FCL_BOX_Z) = sp.dimensions[shape_msgs::SolidPrimitive::BOX_Z];
             }
             else if(shape_msgs::SolidPrimitive::SPHERE == sp.type)
             {
-                fcl::Sphere s(sp.dimensions[shape_msgs::SolidPrimitive::SPHERE_RADIUS]);
-                sptr.reset(new MarkerShape<fcl::Sphere>(this->root_frame_id_, s, p, c));
+                dim(FCL_RADIUS) = sp.dimensions[shape_msgs::SolidPrimitive::SPHERE_RADIUS];
             }
             else if(shape_msgs::SolidPrimitive::CYLINDER == sp.type)
             {
-                fcl::Cylinder cyl(sp.dimensions[shape_msgs::SolidPrimitive::CYLINDER_RADIUS],
-                                  sp.dimensions[shape_msgs::SolidPrimitive::CYLINDER_HEIGHT]);
-                sptr.reset(new MarkerShape<fcl::Cylinder>(this->root_frame_id_, cyl, p, c));
+                dim(FCL_RADIUS) = sp.dimensions[shape_msgs::SolidPrimitive::CYLINDER_RADIUS];
+                dim(FCL_CYL_LENGTH) = sp.dimensions[shape_msgs::SolidPrimitive::CYLINDER_HEIGHT];
             }
             else
             {
                 ROS_ERROR_STREAM("Shape type not supported: " << sp.type);
+                break;
             }
 
+            uint32_t shape_type = g_shapeMsgTypeToVisMarkerType.map_[sp.type];
+            this->frame2collision_.getMarkerShapeFromType(shape_type,
+                                                          p,
+                                                          msg->id,
+                                                          dim,
+                                                          sptr);
             this->addObstacle(msg->id, sptr);
         }
     }
@@ -680,8 +685,9 @@ bool DistanceManager::registerPointOfInterest(cob_obstacle_distance::Registratio
             PtrIMarkerShape_t ooi;
             Eigen::Quaterniond q;
             Eigen::Vector3d v3;
+            Eigen::Vector3d dim(0.05, 0.1, 0.1);
 
-            if(this->frame2collision_.getMarkerShapeFromType(request.shape_type, v3, q, request.frame_id, ooi))
+            if(this->frame2collision_.getMarkerShapeFromType(request.shape_type, v3, q, request.frame_id, dim, ooi))
             {
                 this->addObjectOfInterest(request.frame_id, ooi);
                 response.success = true;

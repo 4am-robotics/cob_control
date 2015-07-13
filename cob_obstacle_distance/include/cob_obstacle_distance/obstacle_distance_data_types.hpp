@@ -38,6 +38,15 @@
 
 #include "cob_obstacle_distance/ObstacleDistances.h"
 
+#define FCL_BOX_X 0u
+#define FCL_BOX_Y 1u
+#define FCL_BOX_Z 2u
+
+#define FCL_RADIUS 0u
+#define FCL_CYL_LENGTH 1u
+
+
+
 struct ObstacleDistance
 {
     ObstacleDistance(uint32_t shape_type) : min_distance(0.0), shape_type(shape_type)
