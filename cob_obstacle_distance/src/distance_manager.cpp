@@ -63,17 +63,27 @@
 #define VEC_Y 1
 #define VEC_Z 2
 
+// #define DEBUG
+
 uint32_t DistanceManager::seq_nr_ = 0;
 
-DistanceManager::DistanceManager(ros::NodeHandle& nh) : nh_(nh), counter_(1000)
+DistanceManager::DistanceManager(ros::NodeHandle& nh) : nh_(nh), counter_(1000), stop_sca_threads_(false)
 {}
 
 DistanceManager::~DistanceManager()
 {
+    this->clear();
 }
 
 int DistanceManager::init()
 {
+    // Latched and continue in case there is no subscriber at the moment for a marker
+    this->marker_pub_ = this->nh_.advertise<visualization_msgs::Marker>("obstacle_distance/marker", 1, true);
+    this->obstacle_distances_pub_ = this->nh_.advertise<cob_obstacle_distance::ObstacleDistances>("obstacle_distance", 1);
+
+    obstacle_mgr_.reset(new ShapesManager(this->marker_pub_));
+    object_of_interest_mgr_.reset(new ShapesManager(this->marker_pub_));
+
     KDL::Tree robot_structure;
     if (!kdl_parser::treeFromParam("/robot_description", robot_structure)){
         ROS_ERROR("Failed to construct kdl tree from parameter '/robot_description'.");
@@ -112,12 +122,6 @@ int DistanceManager::init()
         return -5;
     }
 
-    if(!this->frame2collision_.initParameter(this->root_frame_id_, "/robot_description"))
-    {
-        ROS_ERROR("Failed to initialize robot model from URDF by parameter \"/robot_description\".");
-        return -6;
-    }
-
     for(uint16_t i = 0; i < chain_.getNrOfSegments(); ++i)
     {
         KDL::Segment s = chain_.getSegment(i);
@@ -125,42 +129,54 @@ int DistanceManager::init()
         ROS_INFO_STREAM("Managing Segment Name: " << s.getName());
     }
 
-    // Latched and continue in case there is no subscriber at the moment for a marker
-    this->marker_pub_ = this->nh_.advertise<visualization_msgs::Marker>("obstacle_distance/marker", 1, true);
-    this->obstacle_distances_pub_ = this->nh_.advertise<cob_obstacle_distance::ObstacleDistances>("obstacle_distance", 1);
-
-    obstacle_mgr_.reset(new ShapesManager(this->marker_pub_));
-    object_of_interest_mgr_.reset(new ShapesManager(this->marker_pub_));
-
     adv_chn_fk_solver_vel_.reset(new AdvancedChainFkSolverVel_recursive(chain_));
-
     last_q_ = KDL::JntArray(chain_.getNrOfJoints());
     last_q_dot_ = KDL::JntArray(chain_.getNrOfJoints());
+
+    if(!this->frame2collision_.initParameter(this->root_frame_id_, "/robot_description"))
+    {
+        ROS_ERROR("Failed to initialize robot model from URDF by parameter \"/robot_description\".");
+        return -6;
+    }
+    else
+    {
+        XmlRpc::XmlRpcValue sca;
+        bool success = false;
+        if(nh_.getParam("self_collision_frames", sca))
+        {
+            success = this->frame2collision_.initSelfCollision(sca, obstacle_mgr_);
+        }
+
+        if(!success)
+        {
+            ROS_WARN("No self collision frames found. ");
+        }
+
+        for(FrameToCollision::MapSelfCollisions_t::iterator it = this->frame2collision_.getSelfCollisionsIterBegin();
+                it != this->frame2collision_.getSelfCollisionsIterEnd();
+                it++)
+        {
+            self_collision_transform_threads_.push_back(std::thread(&DistanceManager::transformSelfCollisionFrames, this, it->first));
+        }
+
+    }
 
     return 0;
 }
 
 void DistanceManager::clear()
 {
+    this->stop_sca_threads_ = true;
+    for(std::vector<std::thread>::iterator it = this->self_collision_transform_threads_.begin();
+            it != this->self_collision_transform_threads_.end(); it++)
+    {
+        it->join();
+    }
+
     this->obstacle_mgr_->clear();
     this->object_of_interest_mgr_->clear();
 }
 
-bool DistanceManager::waitForMarkerSubscriber()
-{
-    while (this->marker_pub_.getNumSubscribers() < 1)
-    {
-      if (!ros::ok())
-      {
-        return false;
-      }
-
-      ROS_WARN_ONCE("Please create a subscriber to the marker");
-      sleep(1);
-    }
-
-    return true;
-}
 
 void DistanceManager::addObstacle(const std::string& id, PtrIMarkerShape_t s)
 {
@@ -205,6 +221,7 @@ void DistanceManager::calculate()
         adv_chn_fk_solver_vel_->JntToCart(jnt_arr, p_dot_out);
     }
 
+    uint32_t loc_counter = 0;
     for(MapObstacleDistanceIter_t it = this->obstacle_distances_.begin(); it != this->obstacle_distances_.end(); ++it)
     {
         std::string frame_of_interest_name = it->first;
@@ -237,11 +254,7 @@ void DistanceManager::calculate()
         /* ******* End Transformation part ************** */
 
         // Representation of segment_of_interest as specific shape
-        fcl::Box b(0.1, 0.1, 0.1);
-        fcl::Sphere s(0.1);
-        fcl::Cylinder c(0.1, 0.1);
         PtrIMarkerShape_t ooi;
-
         if(!this->object_of_interest_mgr_->getShape(frame_of_interest_name, ooi))
         {
             return;
@@ -253,15 +266,23 @@ void DistanceManager::calculate()
         tf::vectorEigenToMsg(abs_jnt_pos, v3);
         ooi->updatePose(v3, quat);
 
-//        if(counter_ <= 0)
-//        {
-//            this->drawObjectsOfInterest(true);
-//            counter_ = 1000;
-//        }
-//        else
-//        {
-//            counter_--;
-//        }
+#ifdef DEBUG
+        if(counter_ <= 0)
+        {
+            if (frame_of_interest_name == "arm_right_3_link")
+            {
+                ROS_INFO_STREAM("Publish object of interest!!!");
+                this->drawObjectsOfInterest(true);
+            }
+
+            counter_ = 100;
+
+        }
+        else
+        {
+            counter_--;
+        }
+#endif
 
         fcl::CollisionObject ooi_co = ooi->getCollisionObject();
         ooi.reset();
@@ -269,39 +290,47 @@ void DistanceManager::calculate()
         bool setDistResult = false;
         fcl::CollisionObject result_collision_obj = ooi_co;
         fcl::FCL_REAL last_dist = std::numeric_limits<fcl::FCL_REAL>::max();
-        for(ShapesManager::MapIter_t it = this->obstacle_mgr_->begin(); it != this->obstacle_mgr_->end(); ++it)
-        {
-            PtrIMarkerShape_t obstacle = it->second;
-            fcl::CollisionObject collision_obj = obstacle->getCollisionObject();
-            fcl::DistanceResult tmpResult;
-            fcl::DistanceRequest distRequest(true);
-            fcl::FCL_REAL dist = fcl::distance(&ooi_co, &collision_obj, distRequest, tmpResult);
-            if (dist < last_dist)
+
+        { // introduced the block to lock this critical section until block leaved.
+            std::lock_guard<std::mutex> lock(obstacle_mgr_mtx_);
+            for(ShapesManager::MapIter_t it = this->obstacle_mgr_->begin(); it != this->obstacle_mgr_->end(); ++it)
             {
-                setDistResult = true;
-                dist_result = tmpResult;
-                result_collision_obj = collision_obj;
-                last_dist = dist;
+                if(this->frame2collision_.ignoreSelfCollisionPart(frame_of_interest_name, it->first))
+                {
+                    // Ignore elements that can never be in collision
+                    // (specified in parameter and parent / child frames)
+                    continue;
+                }
+
+                PtrIMarkerShape_t obstacle = it->second;
+                fcl::CollisionObject collision_obj = obstacle->getCollisionObject();
+                fcl::DistanceResult tmpResult;
+                fcl::DistanceRequest distRequest(true, 0.5, 0.001);
+                fcl::FCL_REAL dist = fcl::distance(&ooi_co, &collision_obj, distRequest, tmpResult);
+                if (dist < last_dist)
+                {
+                    setDistResult = true;
+                    dist_result = tmpResult;
+                    result_collision_obj = collision_obj;
+                    last_dist = dist;
+                }
             }
         }
 
         if(setDistResult)
         {
-            fcl::Vec3f t = result_collision_obj.getTransform().transform(dist_result.nearest_points[1]); // Transform from "base_link" frame!!!
-            fcl::Vec3f a = ooi_co.getTransform().transform(dist_result.nearest_points[0]);
             fcl::Quaternion3f qt = result_collision_obj.getQuatRotation();
             fcl::Quaternion3f qa = ooi_co.getQuatRotation();
             fcl::Quaternion3f diff_a_t = qa - qt;
 
-            Eigen::Vector3d abs_obst_vector(t[VEC_X],
-                                       t[VEC_Y],
-                                       t[VEC_Z]);
+            Eigen::Vector3d abs_obst_vector(dist_result.nearest_points[1][VEC_X],
+                                            dist_result.nearest_points[1][VEC_Y],
+                                            dist_result.nearest_points[1][VEC_Z]);
             Eigen::Vector3d obst_vector = tmp_tf_cb_frame_bl * abs_obst_vector;
-            Eigen::Vector3d tmp_obst_vector = tmp_tf_cb_frame_bl.rotation() * abs_obst_vector + tmp_tf_cb_frame_bl.translation();
 
-            Eigen::Vector3d abs_jnt_pos_update(a[VEC_X],
-                                               a[VEC_Y],
-                                               a[VEC_Z]);
+            Eigen::Vector3d abs_jnt_pos_update(dist_result.nearest_points[0][VEC_X],
+                                               dist_result.nearest_points[0][VEC_Y],
+                                               dist_result.nearest_points[0][VEC_Z]);
 
             Eigen::Vector3d rel_base_link_frame_pos = tmp_tf_cb_frame_bl * abs_jnt_pos_update;
             Eigen::Vector3d dist_vector = rel_base_link_frame_pos - obst_vector; // expressed in arm base link frame
@@ -325,6 +354,45 @@ void DistanceManager::calculate()
             tf::twistKDLToMsg(frame_vel.GetTwist(), od_msg.frame_twist);
             tf::vectorEigenToMsg(rel_frame_origin_to_collision_pnt, od_msg.collision_pnt_vector);
             obstacle_distances.distances.push_back(od_msg);
+
+#ifdef DEBUG
+            if (frame_of_interest_name == "arm_right_7_link" && counter_ == 100)
+            {
+                ROS_INFO_STREAM("rel_base_link_frame_pos: " << std::endl << rel_base_link_frame_pos);
+                ROS_INFO_STREAM("obst_vector: " << std::endl << obst_vector);
+
+                visualization_msgs::Marker marker;
+                marker.type = visualization_msgs::Marker::ARROW;
+                marker.lifetime = ros::Duration();
+                marker.action = visualization_msgs::Marker::ADD;
+                marker.id = 9999;
+                loc_counter++;
+                marker.header.frame_id = chain_base_link_;
+
+                marker.scale.x = 0.05;
+                marker.scale.y = 0.08;
+                //marker.scale.z = 1.0;
+
+                geometry_msgs::Point start;
+                start.x = obst_vector(0);
+                start.y = obst_vector(1); // >>>>>>>>>>>>>  works for BVH <<<<<<<<<<<<<
+                start.z = obst_vector(2);
+
+                geometry_msgs::Point end;
+                end.x = obst_vector(0) + dist_vector(0);
+                end.y = obst_vector(1) + dist_vector(1); // >>>>>>>>>>>>>  works for BVH <<<<<<<<<<<<<
+                end.z = obst_vector(2) + dist_vector(2);
+
+                marker.color.a = 1.0;
+                marker.color.g = 1.0;
+
+                marker.points.push_back(start);
+                marker.points.push_back(end);
+
+                ROS_INFO_STREAM("Publishing arrow marker.");
+                this->marker_pub_.publish(marker);
+            }
+#endif
         }
     }
 
@@ -334,33 +402,66 @@ void DistanceManager::calculate()
     }
 }
 
-bool DistanceManager::transform()
+
+void DistanceManager::transform()
 {
-
-    bool success = true;
-
-    while(true)
+    while(!this->stop_sca_threads_)
     {
         try
         {
-            std::lock_guard<std::mutex> lock(mtx_);
             tf::StampedTransform cb_transform_bl;
             ros::Time time = ros::Time(0);
-            tf_listener_.waitForTransform(chain_base_link_, root_frame_id_, time, ros::Duration(0.5));
-            tf_listener_.lookupTransform(chain_base_link_, root_frame_id_, time, cb_transform_bl);
-            tf::transformTFToEigen(cb_transform_bl, tf_cb_frame_bl_);
+            if(tf_listener_.waitForTransform(chain_base_link_, root_frame_id_, time, ros::Duration(5.0)))
+            {
+                std::lock_guard<std::mutex> lock(mtx_);
+                tf_listener_.lookupTransform(chain_base_link_, root_frame_id_, time, cb_transform_bl);
+                tf::transformTFToEigen(cb_transform_bl, tf_cb_frame_bl_);
+            }
         }
         catch (tf::TransformException& ex)
         {
-            success = false;
             ROS_ERROR("%s",ex.what());
         }
 
         sleep(0.001);
     }
-
-    return success;
 }
+
+
+void DistanceManager::transformSelfCollisionFrames(const std::string frame_name)
+{
+
+    ROS_INFO_STREAM("Starting transformation listener thread for frame / link name: " << frame_name);
+    while(!this->stop_sca_threads_)
+    {
+        try
+        {
+            ros::Time time = ros::Time(0);
+            // https://github.com/ros-visualization/rviz/issues/702: TF listener is thread safe
+            if(tf_listener_.waitForTransform(root_frame_id_, frame_name, time, ros::Duration(5.0)))
+            {
+                std::lock_guard<std::mutex> lock(obstacle_mgr_mtx_);
+                tf::StampedTransform stamped_transform;
+                geometry_msgs::Transform msg_transform;
+                tf_listener_.lookupTransform(root_frame_id_, frame_name, time, stamped_transform);
+                tf::transformTFToMsg(stamped_transform, msg_transform);
+
+                PtrIMarkerShape_t shape_ptr;
+                if(this->obstacle_mgr_->getShape(frame_name, shape_ptr))
+                {
+                    shape_ptr->updatePose(msg_transform.translation, msg_transform.rotation);
+                }
+            }
+        }
+        catch (tf::TransformException& ex)
+        {
+            ROS_ERROR("%s",ex.what());
+        }
+
+        sleep(0.001);
+    }
+}
+
 
 void DistanceManager::jointstateCb(const sensor_msgs::JointState::ConstPtr& msg)
 {
@@ -397,6 +498,7 @@ void DistanceManager::jointstateCb(const sensor_msgs::JointState::ConstPtr& msg)
 void DistanceManager::registerObstacle(const moveit_msgs::CollisionObject::ConstPtr& msg)
 {
     ROS_INFO_STREAM("Called register obstacle");
+    std::lock_guard<std::mutex> lock(obstacle_mgr_mtx_);
 
     const std::string frame_id = msg->header.frame_id;
     tf::StampedTransform frame_transform_root;

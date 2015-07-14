@@ -74,6 +74,12 @@ MarkerShape<BVH_RSS_t>::MarkerShape(const std::string& root_frame,
 }
 
 
+geometry_msgs::Pose MarkerShape<BVH_RSS_t>::getMarkerPose() const
+{
+    return this->marker_.pose;
+}
+
+
 MarkerShape<BVH_RSS_t>::MarkerShape(const std::string& root_frame, const std::string& mesh_resource,
       double x, double y, double z,
       double quat_x, double quat_y, double quat_z, double quat_w,

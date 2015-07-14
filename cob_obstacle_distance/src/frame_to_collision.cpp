@@ -42,6 +42,19 @@ FrameToCollision::~FrameToCollision()
 
 }
 
+bool FrameToCollision::ignoreSelfCollisionPart(const std::string& frame_of_interest,
+                                               const std::string& self_collision_obstacle_frame)
+{
+    if(this->self_collision_frames_.count(self_collision_obstacle_frame) <= 0)
+    {
+        return false;
+    }
+
+    std::vector<std::string>::iterator sca_begin = this->self_collision_frames_[self_collision_obstacle_frame].begin();
+    std::vector<std::string>::iterator sca_end = this->self_collision_frames_[self_collision_obstacle_frame].end();
+    return std::find(sca_begin, sca_end, frame_of_interest) != sca_end;
+}
+
 
 bool FrameToCollision::initFile(const std::string& root_frame_id, const std::string& urdf_file_name)
 {
@@ -59,6 +72,59 @@ bool FrameToCollision::initParameter(const std::string& root_frame_id, const std
 }
 
 
+bool FrameToCollision::initSelfCollision(XmlRpc::XmlRpcValue& self_collision_params, boost::scoped_ptr<ShapesManager>& sm)
+{
+    bool success = true;
+    ROS_ASSERT(self_collision_params.getType() == XmlRpc::XmlRpcValue::TypeStruct);
+    try
+    {
+        for (XmlRpc::XmlRpcValue::iterator it = self_collision_params.begin(); it != self_collision_params.end(); ++it)
+        {
+            std::vector<std::string> empty_vec;
+            this->self_collision_frames_[it->first] = empty_vec;
+            ROS_ASSERT(it->second.getType() == XmlRpc::XmlRpcValue::TypeArray);
+            for(int j=0; j < it->second.size(); ++j)
+            {
+                ROS_ASSERT(it->second[j].getType() == XmlRpc::XmlRpcValue::TypeString);
+                this->self_collision_frames_[it->first].push_back(it->second[j]);
+            }
+        }
+    }
+    catch(...)
+    {
+        success = false;
+    }
+
+    if(success)
+    {
+        ROS_INFO("Additional ignore links: ");
+        for(MapIter_t it = this->self_collision_frames_.begin(); it != this->self_collision_frames_.end(); it++)
+        {
+            PtrConstLink_t link = this->model_.getLink(it->first);
+            if(NULL != link)
+            {
+                PtrLink_t p_link = link->getParent();
+                ROS_INFO_STREAM("Current link: " << it->first);
+                ROS_INFO_STREAM(" Parent link to be ignored: " << p_link->name);
+                it->second.push_back(p_link->name);
+                for(PtrLink_t c_link : link->child_links)
+                {
+                    ROS_INFO_STREAM("  Child link to be ignored: " << c_link->name);
+                    it->second.push_back(c_link->name);
+                }
+            }
+
+            // Create real obstacles now.
+            PtrIMarkerShape_t ptr_obstacle;
+            this->getMarkerShapeFromUrdf(Eigen::Vector3d(), Eigen::Quaterniond(), it->first, ptr_obstacle);
+            sm->addShape(it->first, ptr_obstacle);
+        }
+    }
+
+    return success;
+}
+
+
 bool FrameToCollision::getMarkerShapeFromUrdf(const Eigen::Vector3d& abs_pos,
                                               const Eigen::Quaterniond& quat_pos,
                                               const std::string& frame_of_interest,
@@ -71,7 +137,7 @@ bool FrameToCollision::getMarkerShapeFromUrdf(const Eigen::Vector3d& abs_pos,
     }
 
     bool local_success = true;
-    PtrLink_t link = this->model_.getLink(frame_of_interest);
+    PtrConstLink_t link = this->model_.getLink(frame_of_interest);
     if(NULL != link)
     {
         geometry_msgs::Pose pose;
@@ -81,8 +147,6 @@ bool FrameToCollision::getMarkerShapeFromUrdf(const Eigen::Vector3d& abs_pos,
         std_msgs::ColorRGBA col;
         col.a = 1.0;
         col.r = 1.0;
-        col.g = 0.0;
-        col.b = 0.0;
 
         PtrCollision_t collision = link->collision;
         if(NULL != link->collision && NULL != link->collision->geometry)
@@ -189,7 +253,7 @@ bool FrameToCollision::getMarkerShapeFromType(const uint32_t& shape_type,
     std::string mesh_resource;
     if(visualization_msgs::Marker::MESH_RESOURCE == loc_shape_type)
     {
-        PtrLink_t link = this->model_.getLink(frame_of_interest);
+        PtrConstLink_t link = this->model_.getLink(frame_of_interest);
         if(this->success_ &&
                 NULL != link &&
                 NULL != link->collision &&

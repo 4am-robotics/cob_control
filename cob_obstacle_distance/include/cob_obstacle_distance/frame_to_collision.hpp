@@ -26,6 +26,8 @@
  ****************************************************************/
 
 #include <stdint.h>
+#include <unordered_map>
+#include <vector>
 
 #include <Eigen/Dense>
 
@@ -33,6 +35,7 @@
 #include <urdf/model.h>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <boost/pointer_cast.hpp>
 
 #include <fcl/collision_object.h>
@@ -48,22 +51,27 @@
 
 #include "cob_obstacle_distance/marker_shapes/marker_shapes_interface.hpp"
 #include "cob_obstacle_distance/marker_shapes/marker_shapes.hpp"
+#include "cob_obstacle_distance/shapes_manager.hpp"
 #include "cob_obstacle_distance/obstacle_distance_data_types.hpp"
 
 class FrameToCollision
 {
     private:
-        typedef boost::shared_ptr<const urdf::Link> PtrLink_t;
+        typedef boost::shared_ptr<const urdf::Link> PtrConstLink_t;
+        typedef boost::shared_ptr<urdf::Link> PtrLink_t;
+        typedef std::vector<boost::shared_ptr<urdf::Link> > VecPtrLink_t;
         typedef boost::shared_ptr<urdf::Collision> PtrCollision_t;
         typedef boost::shared_ptr<urdf::Geometry> PtrGeometry_t;
         typedef boost::shared_ptr<urdf::Mesh> PtrMesh_t;
         typedef boost::shared_ptr<urdf::Box> PtrBox_t;
         typedef boost::shared_ptr<urdf::Sphere> PtrSphere_t;
         typedef boost::shared_ptr<urdf::Cylinder> PtrCylinder_t;
+        typedef std::unordered_map<std::string, std::vector<std::string> >::iterator MapIter_t;
 
         urdf::Model model_;
         bool success_;
         std::string root_frame_id_;
+        std::unordered_map<std::string, std::vector<std::string> > self_collision_frames_; /// first: key of part to be checked with, second ignore links
 
         /**
          * Private method to create a specific marker shape for the output pointer.
@@ -80,8 +88,22 @@ class FrameToCollision
                                        PtrIMarkerShape_t& segment_of_interest_marker_shape);
 
     public:
+        typedef std::unordered_map<std::string, std::vector<std::string> > MapSelfCollisions_t;
+
         FrameToCollision();
         ~FrameToCollision();
+
+        inline MapSelfCollisions_t::iterator getSelfCollisionsIterBegin()
+        {
+            return this->self_collision_frames_.begin();
+        }
+
+        inline MapSelfCollisions_t::iterator getSelfCollisionsIterEnd()
+        {
+            return this->self_collision_frames_.end();
+        }
+
+        bool ignoreSelfCollisionPart(const std::string& frame_of_interest, const std::string& self_collision_obstacle_frame);
 
         /**
          * Initialize the FrameToCollision model by an URDF file.
@@ -98,6 +120,17 @@ class FrameToCollision
          * @return State of success.
          */
         bool initParameter(const std::string& root_frame_id, const std::string& urdf_param);
+
+        /**
+         * From the parameters self collision dictionary the keys are extracted as the self-collision "obstacles".
+         * While the values are the parts to be ignored for self-collision checking.
+         * Additionally the parts to be ignored are extended by the parent and child elements of the link corresponding to the key.
+         * @param self_collision_params A XML RPC data structure representing the self_collision params (from YAML or parameter server)
+         * @param sm The shapes manager that will by extended by self-collision "obstacles"
+         * @return State of success.
+         */
+        bool initSelfCollision(XmlRpc::XmlRpcValue& self_collision_params, boost::scoped_ptr<ShapesManager>& sm);
+
 
         /**
          * Tries to find the given frame_of_interest in the links parsed from URDF.

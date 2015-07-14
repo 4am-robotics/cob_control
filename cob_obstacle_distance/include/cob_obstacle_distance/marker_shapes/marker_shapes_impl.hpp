@@ -51,7 +51,11 @@ MarkerShape<T>::MarkerShape(const std::string& root_frame, double x, double y, d
     this->init(root_frame, x, y, z, quat_x, quat_y, quat_z, quat_w, color_r, color_g, color_b, color_a);
 }
 
-
+template <typename T>
+geometry_msgs::Pose MarkerShape<T>::getMarkerPose() const
+{
+    return this->marker_.pose;
+}
 
 template <typename T>
 void MarkerShape<T>::init(const std::string& root_frame, double x, double y, double z,
@@ -134,12 +138,13 @@ fcl::CollisionObject MarkerShape<T>::getCollisionObject() const
                        fcl::Vec3f(this->marker_.pose.position.x,
                                   this->marker_.pose.position.y,
                                   this->marker_.pose.position.z));
-
-    T geoShape = fcl_marker_converter_.getGeoShape();
-    geoShape.computeLocalAABB();
-    fcl::CollisionObject cobj(boost::shared_ptr<fcl::CollisionGeometry>(new T(geoShape)), x);
+    BVH_RSS_t bvh;
+    fcl_marker_converter_.getBvhModel(bvh);
+    bvh.computeLocalAABB();
+    fcl::CollisionObject cobj(boost::shared_ptr<fcl::CollisionGeometry>(new BVH_RSS_t(bvh)), x);
     return cobj;
 }
+
 
 template <typename T>
 inline void MarkerShape<T>::updatePose(const geometry_msgs::Vector3& pos, const geometry_msgs::Quaternion& quat)

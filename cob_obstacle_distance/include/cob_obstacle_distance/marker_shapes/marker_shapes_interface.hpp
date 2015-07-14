@@ -53,6 +53,7 @@ class IMarkerShape
          virtual void updatePose(const geometry_msgs::Vector3& pos, const geometry_msgs::Quaternion& quat) = 0;
          virtual void updatePose(const geometry_msgs::Pose& pose) = 0;
          virtual fcl::CollisionObject getCollisionObject() const = 0;
+         virtual geometry_msgs::Pose getMarkerPose() const = 0;
          virtual ~IMarkerShape() {}
 };
 /* END IMarkerShape *********************************************************************************************/

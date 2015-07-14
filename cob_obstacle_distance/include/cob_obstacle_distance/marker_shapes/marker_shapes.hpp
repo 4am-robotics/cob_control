@@ -81,6 +81,8 @@ class MarkerShape : public IMarkerShape
                     double quat_x = 0.0, double quat_y = 0.0, double quat_z = 0.0, double quat_w = 1.0,
                     double color_r = 0.0, double color_g = 0.0, double color_b = 0.0, double color_a = 1.0);
 
+        inline geometry_msgs::Pose getMarkerPose() const;
+
         /**
          * @param Returns the marker id with that it is published to RVIZ.
          */
@@ -151,6 +153,8 @@ class MarkerShape<BVH_RSS_t> : public IMarkerShape
               double x, double y, double z,
               double quat_x = 0.0, double quat_y = 0.0, double quat_z = 0.0, double quat_w = 1.0,
               double color_r = 0.0, double color_g = 0.0, double color_b = 0.0, double color_a = 1.0);
+
+        inline geometry_msgs::Pose getMarkerPose() const;
 
         /**
          * @param Returns the marker id with that it is published to RVIZ.

@@ -65,6 +65,7 @@
 #include "cob_obstacle_distance/PredictDistance.h"
 #include "cob_obstacle_distance/frame_to_collision.hpp"
 
+#include <thread>
 #include <mutex>
 
 class DistanceManager
@@ -81,6 +82,8 @@ class DistanceManager
         MapObstacleDistance_t obstacle_distances_;
         boost::scoped_ptr<ShapesManager> obstacle_mgr_;
         boost::scoped_ptr<ShapesManager> object_of_interest_mgr_;
+
+        std::vector<std::thread> self_collision_transform_threads_;
 
         boost::scoped_ptr<AdvancedChainFkSolverVel_recursive> adv_chn_fk_solver_vel_;
         KDL::Chain chain_;
@@ -103,6 +106,9 @@ class DistanceManager
         int counter_;
 
         std::mutex mtx_;
+        std::mutex obstacle_mgr_mtx_;
+
+        bool stop_sca_threads_;
 
         /**
          * Build an obstacle from a message containing a mesh.
@@ -186,22 +192,25 @@ class DistanceManager
         int init();
 
         /**
-         * tf Transformation between chain_base_link (arm_right_base_link or arm_left_base_link) and the root frame (e.g. base_link)).
-         * @return True if transformation was successfull.
+         * tf Transformation thread between chain_base_link (arm_right_base_link or arm_left_base_link) and the root frame (e.g. base_link)).
+         * Runs endless.
+         * @return True if transformation was successful.
          */
-        bool transform();
+        void transform();
+
+        /**
+         * Thread that runs endless to listen to transforms for the self collision parts of the robot.
+         * This will directly update the self collision obstacle pose.
+         * @param frame_name The frame name of the self collision checking part. Similar to link name in URDF.
+         * @return
+         */
+        void transformSelfCollisionFrames(const std::string frame_name);
 
         /**
          * Calculate the distances between the objects of interest (reference frames at KDL::segments) and obstacles.
          * Publishes them on the obstacle_distance topic according to robot_namespace (arm_right, arm_left, ...)
          */
         void calculate();
-
-        /**
-         * Wait loop until a marker topic subscriber (RVIZ) is available.
-         * @return True if subscriber could be found.
-         */
-        bool waitForMarkerSubscriber();
 
         /**
          * Registers a new point of interest at a given frame id.
