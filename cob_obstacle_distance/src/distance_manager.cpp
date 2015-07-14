@@ -133,7 +133,7 @@ int DistanceManager::init()
     last_q_ = KDL::JntArray(chain_.getNrOfJoints());
     last_q_dot_ = KDL::JntArray(chain_.getNrOfJoints());
 
-    if(!this->frame2collision_.initParameter(this->root_frame_id_, "/robot_description"))
+    if(!this->frame_to_collision_.initParameter(this->root_frame_id_, "/robot_description"))
     {
         ROS_ERROR("Failed to initialize robot model from URDF by parameter \"/robot_description\".");
         return -6;
@@ -144,7 +144,7 @@ int DistanceManager::init()
         bool success = false;
         if(nh_.getParam("self_collision_frames", sca))
         {
-            success = this->frame2collision_.initSelfCollision(sca, obstacle_mgr_);
+            success = this->frame_to_collision_.initSelfCollision(sca, obstacle_mgr_);
         }
 
         if(!success)
@@ -152,8 +152,8 @@ int DistanceManager::init()
             ROS_WARN("No self collision frames found. ");
         }
 
-        for(FrameToCollision::MapSelfCollisions_t::iterator it = this->frame2collision_.getSelfCollisionsIterBegin();
-                it != this->frame2collision_.getSelfCollisionsIterEnd();
+        for(FrameToCollision::MapSelfCollisions_t::iterator it = this->frame_to_collision_.getSelfCollisionsIterBegin();
+                it != this->frame_to_collision_.getSelfCollisionsIterEnd();
                 it++)
         {
             self_collision_transform_threads_.push_back(std::thread(&DistanceManager::transformSelfCollisionFrames, this, it->first));
@@ -295,7 +295,7 @@ void DistanceManager::calculate()
             std::lock_guard<std::mutex> lock(obstacle_mgr_mtx_);
             for(ShapesManager::MapIter_t it = this->obstacle_mgr_->begin(); it != this->obstacle_mgr_->end(); ++it)
             {
-                if(this->frame2collision_.ignoreSelfCollisionPart(frame_of_interest_name, it->first))
+                if(this->frame_to_collision_.ignoreSelfCollisionPart(frame_of_interest_name, it->first))
                 {
                     // Ignore elements that can never be in collision
                     // (specified in parameter and parent / child frames)
@@ -666,7 +666,7 @@ void DistanceManager::buildObstaclePrimitive(const moveit_msgs::CollisionObject:
             }
 
             uint32_t shape_type = g_shapeMsgTypeToVisMarkerType.map_[sp.type];
-            this->frame2collision_.getMarkerShapeFromType(shape_type,
+            this->frame_to_collision_.getMarkerShapeFromType(shape_type,
                                                           p,
                                                           msg->id,
                                                           dim,
@@ -739,7 +739,7 @@ bool DistanceManager::predictDistance(cob_obstacle_distance::PredictDistance::Re
 
         // Representation of segment_of_interest as specific shape
         PtrIMarkerShape_t ooi;
-        if(!this->frame2collision_.getMarkerShapeFromUrdf(abs_jnt_pos, q, frame_id, ooi))
+        if(!this->frame_to_collision_.getMarkerShapeFromUrdf(abs_jnt_pos, q, frame_id, ooi))
         {
             return true;
         }
@@ -789,7 +789,7 @@ bool DistanceManager::registerPointOfInterest(cob_obstacle_distance::Registratio
             Eigen::Vector3d v3;
             Eigen::Vector3d dim(0.05, 0.1, 0.1);
 
-            if(this->frame2collision_.getMarkerShapeFromType(request.shape_type, v3, q, request.frame_id, dim, ooi))
+            if(this->frame_to_collision_.getMarkerShapeFromType(request.shape_type, v3, q, request.frame_id, dim, ooi))
             {
                 this->addObjectOfInterest(request.frame_id, ooi);
                 response.success = true;

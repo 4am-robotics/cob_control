@@ -84,6 +84,9 @@ class DistanceManager
         boost::scoped_ptr<ShapesManager> object_of_interest_mgr_;
 
         std::vector<std::thread> self_collision_transform_threads_;
+        std::mutex mtx_;
+        std::mutex obstacle_mgr_mtx_;
+        bool stop_sca_threads_;
 
         boost::scoped_ptr<AdvancedChainFkSolverVel_recursive> adv_chn_fk_solver_vel_;
         KDL::Chain chain_;
@@ -101,14 +104,9 @@ class DistanceManager
 
         static uint32_t seq_nr_;
 
-        FrameToCollision frame2collision_;
+        FrameToCollision frame_to_collision_;
 
         int counter_;
-
-        std::mutex mtx_;
-        std::mutex obstacle_mgr_mtx_;
-
-        bool stop_sca_threads_;
 
         /**
          * Build an obstacle from a message containing a mesh.

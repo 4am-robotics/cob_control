@@ -119,12 +119,6 @@ double DampingLeastSingularValues::getDampingFactor(const Eigen::VectorXd& sorte
 {
     // Formula 15 Singularity-robust Task-priority Redundandancy Resolution
     double least_singular_value = sorted_singular_values(sorted_singular_values.rows() - 1);
-
-    ROS_WARN_STREAM("least_singular_value: " << least_singular_value);
-    ROS_WARN_STREAM("this->params_.eps_damping: " << this->params_.eps_damping);
-    ROS_WARN_STREAM("this->params_.lambda_max: " << this->params_.lambda_max);
-
-
     if(least_singular_value < this->params_.eps_damping)
     {
         double lambda_quad = pow(this->params_.lambda_max, 2.0);

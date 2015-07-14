@@ -52,7 +52,6 @@ class ConstraintSolverFactory
                                 TaskStackController_t& task_stack_controller) :
             data_mediator_(data_mediator), jnt_to_jac_(jnt_to_jac), task_stack_controller_(task_stack_controller)
         {
-            ROS_INFO_STREAM("ctor of ConstraintSolverFactory");
             this->solver_factory_.reset();
             this->damping_method_.reset();
         }

@@ -57,7 +57,7 @@ Eigen::MatrixXd StackOfTasksGPMSolver::solve(const Vector6d_t& in_cart_velocitie
     Eigen::MatrixXd projector_i = Eigen::MatrixXd::Identity(this->jacobian_data_.cols(), this->jacobian_data_.cols());
 
     std::string task_to_ignore = "";
-    double crit = 9999999;
+    double crit = std::numeric_limits<double>::max();
     double crit_scalar = 0.0;
 
 
@@ -142,7 +142,7 @@ Eigen::MatrixXd StackOfTasksGPMSolver::solve(const Vector6d_t& in_cart_velocitie
      */
 
     double predicted_distance = -1.0;
-    double min_predicted_distance = 999999.9;
+    double min_predicted_distance = std::numeric_limits<double>::max();
     if (cycle_time > 0.0)
     {
         if (ros::service::exists("obstacle_distance/predictDistance", true))

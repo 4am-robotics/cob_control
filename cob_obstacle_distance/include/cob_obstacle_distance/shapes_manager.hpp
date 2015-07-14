@@ -63,7 +63,6 @@ class ShapesManager
         /**
          * Removes a shape from the manager.
          * @param id Key to access the marker shape.
-         * @param s Pointer to an already created marker shape.
          */
         void removeShape(const std::string& id);
 

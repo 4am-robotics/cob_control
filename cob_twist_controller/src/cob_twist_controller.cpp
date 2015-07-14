@@ -76,8 +76,8 @@ bool CobTwistController::initialize()
     // Frames of Interest
     if(!nh_twist.getParam("collision_check_frames", twist_controller_params_.collision_check_frames))
     {
-        ROS_ERROR_STREAM("Parameter vector 'collision_check_frames' not set.");
-        return false;
+        ROS_WARN_STREAM("Parameter vector 'collision_check_frames' not set. Collision Avoidance constraint will not do anything.");
+        twist_controller_params_.collision_check_frames.clear();
     }
 
     ///parse robot_description and generate KDL chains
@@ -146,7 +146,8 @@ void CobTwistController::reinitServiceRegistration()
 {
     ROS_INFO("Reinit of Service registration!");
     ros::ServiceClient client = nh_.serviceClient<cob_obstacle_distance::Registration>("obstacle_distance/registerPointOfInterest");
-    ROS_INFO_STREAM("Created service client for service " << nh_.getNamespace() << "/obstacle_distance/registerPointOfInterest");
+    ROS_WARN_COND(twist_controller_params_.collision_check_frames.size() <= 0,
+                  "There are no collision check frames for this manipulator. So nothing will be registered. Ensure parameters are set correctly.");
 
     for(std::vector<std::string>::const_iterator it = twist_controller_params_.collision_check_frames.begin();
             it != twist_controller_params_.collision_check_frames.end();

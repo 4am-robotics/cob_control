@@ -85,7 +85,6 @@ bool ConstraintSolverFactory::getSolverFactory(const TwistControllerParams& para
                                                boost::shared_ptr<ISolverFactory>& solver_factory,
                                                TaskStackController_t& task_stack_controller)
 {
-    ROS_INFO_STREAM("Called ConstraintSolverFactory::getSolverFactory");
     switch(params.solver)
     {
         case DEFAULT_SOLVER:
@@ -127,8 +126,6 @@ bool ConstraintSolverFactory::getSolverFactory(const TwistControllerParams& para
 
 int8_t ConstraintSolverFactory::resetAll(const TwistControllerParams& params)
 {
-    ROS_INFO_STREAM("Called ConstraintSolverFactory::resetAll");
-
     this->damping_method_.reset(DampingBuilder::createDamping(params));
     if(NULL == this->damping_method_)
     {

@@ -33,8 +33,8 @@
 #include <vector>
 #include <stdint.h>
 
-typedef std::vector<KDL::Frame> tFrameVector;
-typedef std::vector<KDL::FrameVel> tFrameVelVector;
+typedef std::vector<KDL::Frame> FrameVector_t;
+typedef std::vector<KDL::FrameVel> FrameVelVector_t;
 
 /**
  * Implementation of a recursive forward position kinematics
@@ -66,7 +66,7 @@ class AdvancedChainFkSolverPos_recursive : public KDL::ChainFkSolverPos
 
     private:
         const KDL::Chain& chain_;
-        tFrameVector segment_pos_;
+        FrameVector_t segment_pos_;
 
 };
 
@@ -100,7 +100,7 @@ class AdvancedChainFkSolverVel_recursive : public KDL::ChainFkSolverVel
 
     private:
         const KDL::Chain& chain_;
-        tFrameVelVector segment_vel_;
+        FrameVelVector_t segment_vel_;
 
 };
 

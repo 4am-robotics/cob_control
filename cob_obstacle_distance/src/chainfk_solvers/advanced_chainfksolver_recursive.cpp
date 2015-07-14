@@ -105,7 +105,7 @@ void AdvancedChainFkSolverPos_recursive::dumpAllSegmentPostures() const
 {
     uint16_t id = 0;
     ROS_INFO_STREAM("=== Dump all Jnt Postures ===");
-    for(tFrameVector::const_iterator it = this->segment_pos_.begin(); it != this->segment_pos_.end(); ++it)
+    for(FrameVector_t::const_iterator it = this->segment_pos_.begin(); it != this->segment_pos_.end(); ++it)
     {
 
         ROS_INFO_STREAM("Segment " << id++ << ". Position: " << std::endl <<

@@ -36,7 +36,7 @@
 #include "cob_obstacle_distance/marker_shapes/marker_shapes.hpp"
 
 
-void publishStaticObjects(DistanceManager& dm);
+void addTestObstacles(DistanceManager& dm);
 
 
 int main(int argc, char** argv)
@@ -59,13 +59,10 @@ int main(int argc, char** argv)
     ros::ServiceServer registration_srv = nh.advertiseService("obstacle_distance/registerPointOfInterest" , &DistanceManager::registerPointOfInterest, &sm);
     ros::ServiceServer distance_prediction_srv = nh.advertiseService("obstacle_distance/predictDistance" , &DistanceManager::predictDistance, &sm);
 
-    ROS_INFO("Starting basic_shapes ...\r\n");
-
-    // publishStaticObjects(sm); // Comment in to see what happens
+    // addTestObstacles(sm); // Comment in to see what happens
 
     std::thread t(&DistanceManager::transform, std::ref(sm));
-    // t.join();
-    ROS_INFO_STREAM("Finished thread.");
+    ROS_INFO_STREAM("Started transform thread.");
 
     ros::Rate loop_rate(60);
     while(ros::ok())
@@ -85,7 +82,7 @@ int main(int argc, char** argv)
  * Dummy publisher for some example fcl <-> rviz markers.
  * @param dm The distance manager reference
  */
-void publishStaticObjects(DistanceManager& dm)
+void addTestObstacles(DistanceManager& dm)
 {
     fcl::Sphere s(0.1);
     fcl::Box b(0.1, 0.1, 0.1); // Take care the nearest point for collision is one of the eight corners!!! This might lead to jittering

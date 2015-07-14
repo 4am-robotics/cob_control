@@ -98,10 +98,6 @@ Eigen::MatrixXd PInvDirect::calculate(const TwistControllerParams& params,
     }
 
     double lambda = db->getDampingFactor(Eigen::VectorXd::Zero(1, 1), jacobian); // use dummy for singular values.
-
-    ROS_INFO_STREAM("PInvDirect::lambda: " << lambda);
-    ROS_INFO_STREAM("PInvDirect::params: " << params.damping_method);
-
     if(jac_cols >= jac_rows)
     {
         Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(jac_rows, jac_rows);

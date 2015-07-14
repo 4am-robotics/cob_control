@@ -205,20 +205,7 @@ template <typename T_PARAMS, typename PRIO>
 double CollisionAvoidance<T_PARAMS, PRIO>::calcDerivativeValue()
 {
     double current_time = ros::Time::now().toSec();
-//    double cycle = current_time - this->last_time_;
-//    if(cycle > 0.0)
-//    {
-//        this->derivative_value_ = (this->value_ - this->last_value_) / cycle;
-//    }
-//    else
-//    {
-//        this->derivative_value_ = (this->value_ - this->last_value_) / 0.02;
-//    }
-//
-//    this->last_time_ = current_time;
-
-    this->derivative_value_ = -0.1 * this->value_; // exponential decay
-
+    this->derivative_value_ = -1.0 * this->value_; // exponential decay
     return this->derivative_value_;
 }
 
@@ -395,7 +382,7 @@ void JointLimitAvoidance<T_PARAMS, PRIO>::calculate()
     this->calcPartialValues();
     this->calcDerivativeValue();
 
-    if(this->partial_values_.sum() > ZERO_LIMIT)
+    if(this->partial_values_.sum() > ZERO_THRESHOLD)
     {
         this->state_.setState(CRITICAL); // always highest task -> avoid HW destruction.
     }
@@ -403,8 +390,6 @@ void JointLimitAvoidance<T_PARAMS, PRIO>::calculate()
     {
         this->state_.setState(NORMAL); // always highest task -> avoid HW destruction.
     }
-
-
 }
 
 /// Calculate values of the JLA cost function.
@@ -439,12 +424,7 @@ double JointLimitAvoidance<T_PARAMS, PRIO>::calcDerivativeValue()
     const uint32_t values_rows = this->values_.rows();
     if(cycle <= 0.0)
     {
-        ROS_INFO_STREAM("<<<<<<<<<<<<<< WAAAAAAAAAAAAAAAAAAAAAAAT");
-        cycle = 0.02;
-    }
-    else
-    {
-        ROS_INFO_STREAM("Cycle: " << cycle);
+        cycle = DEFAULT_CYCLE;
     }
 
     if(values_rows == this->last_values_.rows())
@@ -464,24 +444,6 @@ double JointLimitAvoidance<T_PARAMS, PRIO>::calcDerivativeValue()
             }
 
         }
-
-
-//        for(uint32_t i = 0; i < values_rows; ++i)
-//        {
-//            double delta = this->values_(i) - this->last_values_(i);
-//            if(delta < 1.0e-5)
-//            {
-//                this->derivative_values_(i) = 0.0;
-//            }
-//            else
-//            {
-//                this->derivative_values_(i) = (this->values_(i) - this->last_values_(i)) / cycle;
-//            }
-//
-//            ROS_INFO_STREAM("this->derivative_values_(i): " << this->derivative_values_(i));
-//            ROS_INFO_STREAM("this->values_(i): " << this->values_(i));
-//            ROS_INFO_STREAM("this->last_values_(i): " << this->last_values_(i));
-//        }
     }
     else
     {
@@ -522,17 +484,6 @@ Eigen::VectorXd JointLimitAvoidance<T_PARAMS, PRIO>::calcPartialValues()
         }
     }
 
-//    if(used != 0)
-//    {
-//        Eigen::VectorXd tmp_partial_values = partial_values;
-//        partial_values.resize(used, 1);
-//        for(uint8_t i = 0; i < partial_values.rows(); ++i)
-//        {
-//            partial_values(i) = tmp_partial_values(i);
-//        }
-//
-//    }
-
     this->partial_values_ = partial_values;
     return this->partial_values_;
 }
@@ -550,18 +501,7 @@ template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const
 {
     const TwistControllerParams& params = this->constraint_params_.getParams();
-//    double dmm = SelfMotionMagnitudeFactory<SmmDeterminatorVelocityBounds<MIN_CRIT> >::calculate(params, particular_solution, homogeneous_solution);
-//    if(std::abs(dmm) < ZERO_LIMIT)
-//    {
-//        dmm = -1.0;
-//    }
-
     double k_H = params.k_H_jla;
-//    if (k_H > 0.0)
-//    {
-//        k_H *= -1.0; // constraint has to be minimized
-//    }
-
     return k_H;
 }
 
@@ -610,9 +550,6 @@ Task_t JointLimitAvoidance<T_PARAMS, PRIO>::createTask()
     Eigen::MatrixXd cost_func_jac = this->getTaskJacobian();
     Eigen::VectorXd derivs = this->getTaskDerivatives();
 
-    ROS_INFO_STREAM("JointLimitAvoidance<T_PARAMS, PRIO>::createTask() JAC: " << std::endl << cost_func_jac);
-    ROS_INFO_STREAM("JointLimitAvoidance<T_PARAMS, PRIO>::createTask() TASK: " << derivs.transpose());
-
     Task_t task(this->getPriority(),
                 this->getTaskId(),
                 cost_func_jac,
@@ -621,13 +558,6 @@ Task_t JointLimitAvoidance<T_PARAMS, PRIO>::createTask()
 
     task.tcp_ = adapted_params;
     task.db_ = boost::shared_ptr<DampingBase>(DampingBuilder::createDamping(adapted_params));
-
-    ROS_INFO_STREAM("Created JLA task.");
-    if(task.db_ == NULL)
-    {
-        ROS_INFO_STREAM("Damping seems to be zero?!?!?!?!");
-    }
-
     return task;
 }
 
@@ -692,7 +622,7 @@ double JointLimitAvoidanceMid<T_PARAMS, PRIO>::calcDerivativeValue()
     }
     else
     {
-        this->derivative_value_ = (this->value_ - this->last_value_) / 0.02;
+        this->derivative_value_ = (this->value_ - this->last_value_) / DEFAULT_CYCLE;
     }
 
     this->last_time_ = current_time;
@@ -746,11 +676,6 @@ double JointLimitAvoidanceMid<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eige
 {
     const TwistControllerParams& params = this->constraint_params_.getParams();
     double k_H = params.k_H_jla;
-//    if (k_H > 0.0)
-//    {
-//        k_H *= -1.0; // constraint has to be minimized
-//    }
-
     return k_H;
 }
 
@@ -816,7 +741,6 @@ template <typename T_PARAMS, typename PRIO>
 void JointLimitAvoidanceIneq<T_PARAMS, PRIO>::calculate()
 {
     const TwistControllerParams& params = this->constraint_params_.getParams();
-
     const int32_t joint_idx = this->constraint_params_.joint_idx_;
     const double limit_min = std::abs(params.limits_min[joint_idx]);
     const double limit_max = std::abs(params.limits_max[joint_idx]);

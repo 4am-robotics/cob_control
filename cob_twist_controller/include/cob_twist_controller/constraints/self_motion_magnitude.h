@@ -98,7 +98,7 @@ class SmmDeterminatorVelocityBounds : public SelfMotionMagnitudeDeterminatorBase
                 return 0.0;
             }
 
-            if(homogeneous_solution.norm() <= ZERO_LIMIT)
+            if(homogeneous_solution.norm() <= ZERO_THRESHOLD)
             {
                 return 0.0;
             }
@@ -110,7 +110,7 @@ class SmmDeterminatorVelocityBounds : public SelfMotionMagnitudeDeterminatorBase
             {
                 double upper;
                 double lower;
-                if (std::abs(double(homogeneous_solution(i))) > ZERO_LIMIT)
+                if (std::abs(double(homogeneous_solution(i))) > ZERO_THRESHOLD)
                 {
                     upper = (velLim[i] - particular_solution(i)) / homogeneous_solution(i);
                     lower = (-velLim[i] - particular_solution(i)) / homogeneous_solution(i);
