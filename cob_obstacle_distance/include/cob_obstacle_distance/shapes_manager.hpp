@@ -93,6 +93,12 @@ class ShapesManager
          */
         uint32_t count() const;
 
+        /**
+         * Number of elements with the given id in map.
+         * @return Number of elements in map.
+         */
+        uint32_t count(const std::string& id) const;
+
 
         MapIter_t begin() {return this->shapes_.begin(); }
         MapConstIter_t begin() const {return this->shapes_.begin(); }

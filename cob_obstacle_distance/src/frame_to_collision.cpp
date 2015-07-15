@@ -148,7 +148,6 @@ bool FrameToCollision::getMarkerShapeFromUrdf(const Eigen::Vector3d& abs_pos,
         col.a = 1.0;
         col.r = 1.0;
 
-        PtrCollision_t collision = link->collision;
         if(NULL != link->collision && NULL != link->collision->geometry)
         {
             this->createSpecificMarkerShape(frame_of_interest,
@@ -157,10 +156,27 @@ bool FrameToCollision::getMarkerShapeFromUrdf(const Eigen::Vector3d& abs_pos,
                                             link->collision->geometry,
                                             segment_of_interest_marker_shape);
         }
+        else if(NULL != link->visual && NULL != link->visual->geometry)
+        {
+            ROS_WARN_STREAM("Could not find a collision or collision geometry for " << frame_of_interest <<
+                            ". Trying to create the shape from visual.");
+            this->createSpecificMarkerShape(frame_of_interest,
+                                            pose,
+                                            col,
+                                            link->visual->geometry,
+                                            segment_of_interest_marker_shape);
+        }
         else
         {
-            ROS_ERROR_STREAM("There is either no collision object or no collision geometry available: " << frame_of_interest);
-            local_success = false;
+            ROS_ERROR_STREAM("There is either no collision object or no collision geometry available: " << frame_of_interest <<
+                             ". Trying fallback solution: getMarker from a default SPHERE.");
+            const Eigen::Vector3d dim(0.05, 0.1, 0.1);
+            this->getMarkerShapeFromType(visualization_msgs::Marker::SPHERE,
+                                         pose,
+                                         frame_of_interest,
+                                         dim,
+                                         segment_of_interest_marker_shape);
+            local_success = segment_of_interest_marker_shape != NULL;
         }
     }
     else

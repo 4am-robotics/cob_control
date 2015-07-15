@@ -156,7 +156,7 @@ void CobTwistController::reinitServiceRegistration()
         ROS_INFO_STREAM("Trying to register for " << *it);
 
         cob_obstacle_distance::Registration r;
-        r.request.frame_id = *it;
+        r.request.link_id = *it;
         r.request.shape_type = visualization_msgs::Marker::MESH_RESOURCE;
         if (client.call(r))
         {

@@ -1,5 +1,11 @@
-string frame_id
+# The id of the object to be registered as a link / frame of interest for that distances are calculated.
+string link_id
+
+# The desired shape type the link will be represented as.
 uint32 shape_type
 ---
+# Registration state of success.
 bool success
+
+# Message in case of error.
 string message

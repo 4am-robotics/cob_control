@@ -71,15 +71,10 @@
 class DistanceManager
 {
     private:
-        typedef std::unordered_map<std::string, ObstacleDistance> MapObstacleDistance_t;
-        typedef std::unordered_map<std::string, ObstacleDistance>::iterator MapObstacleDistanceIter_t;
-        typedef std::unordered_map<std::string, ObstacleDistance>::const_iterator MapObstacleDistanceConstIter_t;
-
         std::string root_frame_id_;
         std::string chain_base_link_;
         std::string chain_tip_link_;
 
-        MapObstacleDistance_t obstacle_distances_;
         boost::scoped_ptr<ShapesManager> obstacle_mgr_;
         boost::scoped_ptr<ShapesManager> object_of_interest_mgr_;
 

@@ -46,22 +46,6 @@
 #define FCL_CYL_LENGTH 1u
 
 
-
-struct ObstacleDistance
-{
-    ObstacleDistance(uint32_t shape_type) : min_distance(0.0), shape_type(shape_type)
-    {}
-
-    ObstacleDistance() : min_distance(0.0), shape_type(0)
-    {}
-
-    double min_distance;
-    Eigen::Vector3d obstacle_pos;
-    Eigen::Vector3d pos_on_manipulator;
-    ros::Time timestamp;
-    uint32_t shape_type;
-};
-
 struct ShapeMsgTypeToVisMarkerType
 {
     public:
@@ -74,6 +58,7 @@ struct ShapeMsgTypeToVisMarkerType
             map_[shape_msgs::SolidPrimitive::CYLINDER] = visualization_msgs::Marker::CYLINDER;
         }
 };
+
 
 struct TriangleSupport
 {

@@ -214,7 +214,7 @@ void DistanceManager::calculate()
 
     // Transform needs to be calculated only once for robot structure
     // and is same for all obstacles.
-    if(this->obstacle_distances_.size() > 0)
+    if(this->object_of_interest_mgr_->count() > 0)
     {
         KDL::FrameVel p_dot_out;
         KDL::JntArrayVel jnt_arr(last_q_, last_q_dot_);
@@ -222,15 +222,17 @@ void DistanceManager::calculate()
     }
 
     uint32_t loc_counter = 0;
-    for(MapObstacleDistanceIter_t it = this->obstacle_distances_.begin(); it != this->obstacle_distances_.end(); ++it)
+
+    for(ShapesManager::MapIter_t it = this->object_of_interest_mgr_->begin(); it != this->object_of_interest_mgr_->end(); ++it)
+    // for(MapObstacleDistanceIter_t it = this->obstacle_distances_.begin(); it != this->obstacle_distances_.end(); ++it)
     {
-        std::string frame_of_interest_name = it->first;
+        std::string object_of_interest_name = it->first;
         std::vector<std::string>::const_iterator str_it = std::find(this->segments_.begin(),
                                                                     this->segments_.end(),
-                                                                    frame_of_interest_name);
+                                                                    object_of_interest_name);
         if(this->segments_.end() == str_it)
         {
-            ROS_ERROR_STREAM("Could not find: " << frame_of_interest_name << ". Continue ...");
+            ROS_ERROR_STREAM("Could not find: " << object_of_interest_name << ". Continue ...");
             continue;
         }
 
@@ -250,15 +252,10 @@ void DistanceManager::calculate()
         tf::quaternionKDLToEigen (frame_pos.M, q);
         Eigen::Matrix3d x = (tmp_tf_cb_frame_bl.inverse() * q).rotation();
         Eigen::Quaterniond q_1(x);
-
         /* ******* End Transformation part ************** */
 
         // Representation of segment_of_interest as specific shape
-        PtrIMarkerShape_t ooi;
-        if(!this->object_of_interest_mgr_->getShape(frame_of_interest_name, ooi))
-        {
-            return;
-        }
+        PtrIMarkerShape_t ooi = it->second;
 
         geometry_msgs::Vector3 v3;
         geometry_msgs::Quaternion quat;
@@ -269,7 +266,7 @@ void DistanceManager::calculate()
 #ifdef DEBUG
         if(counter_ <= 0)
         {
-            if (frame_of_interest_name == "arm_right_3_link")
+            if (object_of_interest_name == "arm_right_3_link")
             {
                 ROS_INFO_STREAM("Publish object of interest!!!");
                 this->drawObjectsOfInterest(true);
@@ -295,7 +292,7 @@ void DistanceManager::calculate()
             std::lock_guard<std::mutex> lock(obstacle_mgr_mtx_);
             for(ShapesManager::MapIter_t it = this->obstacle_mgr_->begin(); it != this->obstacle_mgr_->end(); ++it)
             {
-                if(this->frame_to_collision_.ignoreSelfCollisionPart(frame_of_interest_name, it->first))
+                if(this->frame_to_collision_.ignoreSelfCollisionPart(object_of_interest_name, it->first))
                 {
                     // Ignore elements that can never be in collision
                     // (specified in parameter and parent / child frames)
@@ -337,21 +334,21 @@ void DistanceManager::calculate()
 
             // vector from frame origin to collision point
             Eigen::Vector3d rel_frame_origin_to_collision_pnt = rel_base_link_frame_pos - chainbase2frame_pos;
-            ROS_INFO_STREAM("Frame \"" << frame_of_interest_name << "\": Minimal distance: " << dist_result.min_distance);
+            ROS_INFO_STREAM("Frame \"" << object_of_interest_name << "\": Minimal distance: " << dist_result.min_distance);
 
             cob_obstacle_distance::ObstacleDistance od_msg;
             od_msg.distance = dist_result.min_distance;
             od_msg.distance_vector.x = dist_vector(VEC_X);
             od_msg.distance_vector.y = dist_vector(VEC_Y);
             od_msg.distance_vector.z = dist_vector(VEC_Z);
-            od_msg.header.frame_id = frame_of_interest_name;
+            od_msg.header.frame_id = object_of_interest_name;
             od_msg.header.stamp = ros::Time::now();
             od_msg.header.seq = seq_nr_;
             tf::vectorEigenToMsg(rel_frame_origin_to_collision_pnt, od_msg.collision_pnt_vector);
             obstacle_distances.distances.push_back(od_msg);
 
 #ifdef DEBUG
-            if (frame_of_interest_name == "arm_right_7_link" && counter_ == 100)
+            if (object_of_interest_name == "arm_right_7_link" && counter_ == 100)
             {
                 ROS_INFO_STREAM("rel_base_link_frame_pos: " << std::endl << rel_base_link_frame_pos);
                 ROS_INFO_STREAM("obst_vector: " << std::endl << obst_vector);
@@ -768,38 +765,34 @@ bool DistanceManager::registerPointOfInterest(cob_obstacle_distance::Registratio
                                               cob_obstacle_distance::Registration::Response& response)
 {
     ROS_INFO_STREAM("Registering a point / frame of interest!");
-    if (this->obstacle_distances_.count(request.frame_id))
+    if(this->object_of_interest_mgr_->count(request.link_id) > 0)
     {
         response.success = true;
-        response.message = "Element " + request.frame_id + " already existent.";
+        response.message = "Element " + request.link_id + " already existent.";
     }
     else
     {
         try
         {
-            this->obstacle_distances_[request.frame_id] = ObstacleDistance(request.shape_type);
-
             PtrIMarkerShape_t ooi;
             Eigen::Quaterniond q;
             Eigen::Vector3d v3;
-            Eigen::Vector3d dim(0.05, 0.1, 0.1);
-
-            if(this->frame_to_collision_.getMarkerShapeFromType(request.shape_type, v3, q, request.frame_id, dim, ooi))
+            if(this->frame_to_collision_.getMarkerShapeFromUrdf(v3, q, request.link_id, ooi))
             {
-                this->addObjectOfInterest(request.frame_id, ooi);
+                this->addObjectOfInterest(request.link_id, ooi);
                 response.success = true;
-                response.message = "Successfully inserted element " + request.frame_id + ".";
+                response.message = "Successfully inserted element " + request.link_id + ".";
             }
             else
             {
                 response.success = false;
-                response.message = "Failed to insert element " + request.frame_id + "!";
+                response.message = "Failed to insert element " + request.link_id + "!";
             }
         }
         catch(...)
         {
             response.success = false;
-            response.message = "Failed to insert element " + request.frame_id + "!";
+            response.message = "Failed to insert element " + request.link_id + "!";
             ROS_ERROR_STREAM(response.message);
         }
     }

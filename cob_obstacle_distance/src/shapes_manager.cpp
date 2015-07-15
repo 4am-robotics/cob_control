@@ -97,3 +97,9 @@ uint32_t ShapesManager::count() const
 {
     return this->shapes_.size();
 }
+
+
+uint32_t ShapesManager::count(const std::string& id) const
+{
+    return this->shapes_.count(id);
+}
