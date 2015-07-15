@@ -148,10 +148,7 @@ Eigen::MatrixXd StackOfTasksGPMSolver::solve(const Vector6d_t& in_cart_velocitie
         if (ros::service::exists("obstacle_distance/predictDistance", true))
         {
             cob_obstacle_distance::PredictDistance pd;
-            pd.request.frame_id.push_back("arm_right_3_link");
-            pd.request.frame_id.push_back("arm_right_5_link");
-            pd.request.frame_id.push_back("arm_right_7_link");
-
+            pd.request.frame_id = this->params_.collision_check_frames;
             Eigen::MatrixXd predict_qdots_out = partialSolution + homogeneousSolution;
             Eigen::VectorXd new_eigen_vec_last_q = eigen_vec_last_q + cycle_time * predict_qdots_out;
 

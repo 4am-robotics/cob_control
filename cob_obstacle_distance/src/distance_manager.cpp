@@ -341,17 +341,12 @@ void DistanceManager::calculate()
 
             cob_obstacle_distance::ObstacleDistance od_msg;
             od_msg.distance = dist_result.min_distance;
-            od_msg.distance_vector.position.x = dist_vector(VEC_X);
-            od_msg.distance_vector.position.y = dist_vector(VEC_Y);
-            od_msg.distance_vector.position.z = dist_vector(VEC_Z);
-            od_msg.distance_vector.orientation.x = diff_a_t.getX();
-            od_msg.distance_vector.orientation.y = diff_a_t.getY();
-            od_msg.distance_vector.orientation.z = diff_a_t.getZ();
-            od_msg.distance_vector.orientation.w = diff_a_t.getW();
+            od_msg.distance_vector.x = dist_vector(VEC_X);
+            od_msg.distance_vector.y = dist_vector(VEC_Y);
+            od_msg.distance_vector.z = dist_vector(VEC_Z);
             od_msg.header.frame_id = frame_of_interest_name;
             od_msg.header.stamp = ros::Time::now();
             od_msg.header.seq = seq_nr_;
-            tf::twistKDLToMsg(frame_vel.GetTwist(), od_msg.frame_twist);
             tf::vectorEigenToMsg(rel_frame_origin_to_collision_pnt, od_msg.collision_pnt_vector);
             obstacle_distances.distances.push_back(od_msg);
 
@@ -667,10 +662,10 @@ void DistanceManager::buildObstaclePrimitive(const moveit_msgs::CollisionObject:
 
             uint32_t shape_type = g_shapeMsgTypeToVisMarkerType.map_[sp.type];
             this->frame_to_collision_.getMarkerShapeFromType(shape_type,
-                                                          p,
-                                                          msg->id,
-                                                          dim,
-                                                          sptr);
+                                                             p,
+                                                             msg->id,
+                                                             dim,
+                                                             sptr);
             this->addObstacle(msg->id, sptr);
         }
     }

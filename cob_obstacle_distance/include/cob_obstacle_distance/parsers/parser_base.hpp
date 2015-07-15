@@ -31,7 +31,7 @@
 #include <fcl/BVH/BVH_model.h>
 #include <fcl/math/vec_3f.h>
 
-#include "cob_obstacle_distance/parsers/triangle_support.hpp"
+#include "cob_obstacle_distance/obstacle_distance_data_types.hpp"
 
 class ParserBase
 {

@@ -86,13 +86,9 @@ void CallbackDataMediator::distancesToObstaclesCallback(const cob_obstacle_dista
         ObstacleDistanceInfo d;
         d.min_distance = it->distance;
 
-        d.distance_vec << it->distance_vector.position.x,
-                          it->distance_vector.position.y,
-                          it->distance_vector.position.z,
-                          it->distance_vector.orientation.x,
-                          it->distance_vector.orientation.y,
-                          it->distance_vector.orientation.z;
-        tf::twistMsgToEigen(it->frame_twist, d.frame_twist);
+        d.distance_vec << it->distance_vector.x,
+                          it->distance_vector.y,
+                          it->distance_vector.z;
         tf::vectorMsgToEigen(it->collision_pnt_vector, d.collision_pnt_vector);
 
         d.frame_id = it->header.frame_id;

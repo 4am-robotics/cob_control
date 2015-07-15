@@ -41,7 +41,7 @@
 #define DEFAULT_CYCLE 0.02
 #define ZERO_THRESHOLD 1.0e-9  ///< used for numerical 0.0 threshold
 #define DIV0_SAFE 1.0e-6 ///< used for division in case of DIV/0
-
+#define ACTIVATION_BUFFER 0.05 ///< means 5 % upper the activation threshold the activation gain function gets active
 
 typedef Eigen::Matrix<double,6,Eigen::Dynamic> Matrix6Xd_t;
 typedef Eigen::Matrix<double,6,1> Vector6d_t;
@@ -117,9 +117,7 @@ struct ActiveCartesianDimension {
 struct ObstacleDistanceInfo
 {
     double min_distance;
-    // Eigen::Vector3d distance_vec;
-    Vector6d_t distance_vec;
-    Vector6d_t frame_twist;
+    Eigen::Vector3d distance_vec;
     std::string frame_id;
     Eigen::Vector3d collision_pnt_vector;
 };
@@ -145,11 +143,13 @@ struct TwistControllerParams {
     ConstraintTypesCA constraint_ca;
     uint32_t priority_ca;
     double k_H_ca;
+    double activation_threshold_ca;
     double damping_ca;
 
     ConstraintTypesJLA constraint_jla;
     uint32_t priority_jla;
     double k_H_jla;
+    double activation_threshold_jla;
     double damping_jla;
 
     double mu;

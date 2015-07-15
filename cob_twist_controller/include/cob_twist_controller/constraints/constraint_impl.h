@@ -47,8 +47,6 @@
 #include "cob_twist_controller/inverse_jacobian_calculations/inverse_jacobian_calculation.h"
 
 
-
-
 /* BEGIN ConstraintsBuilder *************************************************************************************/
 /**
  * Static builder method to create damping methods dependent on parameterization.
@@ -148,7 +146,7 @@ double CollisionAvoidance<T_PARAMS, PRIO>::getActivationGain() const
     double activation_gain;
     double activation = this->getActivationThreshold();
     ObstacleDistanceInfo d = this->constraint_params_.current_distance_;
-    double activation_buffer_region = activation * 1.05;
+    double activation_buffer_region = activation * (1.0 + ACTIVATION_BUFFER);
 
     if (d.min_distance < activation) // activation == d_m
     {
@@ -259,10 +257,9 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
                     crit_pnt_jac.row(1),
                     crit_pnt_jac.row(2);
 
-            Eigen::Vector3d vec(d.distance_vec[0], d.distance_vec[1], d.distance_vec[2]);
-            double vec_norm = vec.norm();
+            double vec_norm = d.distance_vec.norm();
             vec_norm = vec_norm > 0.0 ? vec_norm : DIV0_SAFE;
-            Eigen::VectorXd term_2nd = (m_transl.transpose()) * (vec / vec_norm); // use the unit vector only for direction!
+            Eigen::VectorXd term_2nd = (m_transl.transpose()) * (d.distance_vec / vec_norm); // use the unit vector only for direction!
 
             // Gradient of the cost function from: Strasse O., Escande A., Mansard N. et al.
             // "Real-Time (Self)-Collision Avoidance Task on a HRP-2 Humanoid Robot", 2008 IEEE International Conference
@@ -284,7 +281,8 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
 template <typename T_PARAMS, typename PRIO>
 double CollisionAvoidance<T_PARAMS, PRIO>::getActivationThreshold() const
 {
-    return 0.1; // in [m]
+    const TwistControllerParams& params = this->constraint_params_.getParams();
+    return params.activation_threshold_ca; // in [m]
 }
 
 
@@ -702,7 +700,7 @@ template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidanceIneq<T_PARAMS, PRIO>::getActivationGain() const
 {
     const double activation_threshold = this->getActivationThreshold();  // %
-    const double activation_buffer_region = activation_threshold * 1.1; // %
+    const double activation_buffer_region = activation_threshold * (1.0 + ACTIVATION_BUFFER); // %
     double activation_gain;
     double rel_delta;
 
@@ -822,8 +820,8 @@ Eigen::VectorXd JointLimitAvoidanceIneq<T_PARAMS, PRIO>::calcPartialValues()
 template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidanceIneq<T_PARAMS, PRIO>::getActivationThreshold() const
 {
-    double activation_threshold = 0.1; // 10 %
-    return activation_threshold;
+    const TwistControllerParams& params = this->constraint_params_.getParams();
+    return params.activation_threshold_jla;
 }
 
 /// Returns a value for k_H to weight the partial values for GPM e.g.
@@ -899,12 +897,6 @@ Task_t JointLimitAvoidanceIneq<T_PARAMS, PRIO>::createTask()
 
     task.tcp_ = adapted_params;
     task.db_ = boost::shared_ptr<DampingBase>(DampingBuilder::createDamping(adapted_params));
-
-    if(task.db_ == NULL)
-    {
-        ROS_ERROR_STREAM("Damping seems to be zero?!?!?!?!");
-    }
-
     return task;
 }
 

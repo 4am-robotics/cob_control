@@ -38,10 +38,10 @@
 
 #include "cob_obstacle_distance/marker_shapes/marker_shapes_interface.hpp"
 
-#define SEGMENTS 10u // the less the better performance for BVH generation
-#define RINGS 10u
-#define SEG_AXIS 10u
-#define SEG_CIRCLE 10u
+#define SEGMENTS 100u // the less the better performance for BVH generation
+#define RINGS 100u
+#define SEG_AXIS 100u
+#define SEG_CIRCLE 100u
 
 template <typename T>
 class FclMarkerConverter

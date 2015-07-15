@@ -189,11 +189,14 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     twist_controller_params_.constraint_jla = static_cast<ConstraintTypesJLA>(config.constraint_jla);
     twist_controller_params_.priority_jla = config.priority_jla;
     twist_controller_params_.k_H_jla = config.k_H_jla;
+    double activation_in_percent = config.activation_threshold_jla; // in [%]
+    twist_controller_params_.activation_threshold_jla = activation_in_percent / 100.0;
     twist_controller_params_.damping_jla = config.damping_jla;
 
     twist_controller_params_.constraint_ca = static_cast<ConstraintTypesCA>(config.constraint_ca);
     twist_controller_params_.priority_ca = config.priority_ca;
     twist_controller_params_.k_H_ca = config.k_H_ca;
+    twist_controller_params_.activation_threshold_ca = config.activation_threshold_ca; // in [m]
     twist_controller_params_.damping_ca = config.damping_ca;
 
     twist_controller_params_.mu = config.mu;

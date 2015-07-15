@@ -1,5 +1,4 @@
-float64 distance
 Header header
-geometry_msgs/Pose distance_vector
-geometry_msgs/Twist frame_twist
+float64 distance
+geometry_msgs/Vector3 distance_vector
 geometry_msgs/Vector3 collision_pnt_vector

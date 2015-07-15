@@ -84,6 +84,8 @@ void MarkerShape<T>::init(const std::string& root_frame, double x, double y, dou
     marker_.lifetime = ros::Duration();
 
     fcl_marker_converter_.assignValues(marker_);
+    fcl_marker_converter_.getBvhModel(this->bvh_);
+    this->bvh_.computeLocalAABB();
 }
 
 
@@ -138,10 +140,7 @@ fcl::CollisionObject MarkerShape<T>::getCollisionObject() const
                        fcl::Vec3f(this->marker_.pose.position.x,
                                   this->marker_.pose.position.y,
                                   this->marker_.pose.position.z));
-    BVH_RSS_t bvh;
-    fcl_marker_converter_.getBvhModel(bvh);
-    bvh.computeLocalAABB();
-    fcl::CollisionObject cobj(boost::shared_ptr<fcl::CollisionGeometry>(new BVH_RSS_t(bvh)), x);
+    fcl::CollisionObject cobj(boost::shared_ptr<fcl::CollisionGeometry>(new BVH_RSS_t(this->bvh_)), x);
     return cobj;
 }
 
@@ -153,8 +152,6 @@ inline void MarkerShape<T>::updatePose(const geometry_msgs::Vector3& pos, const 
     marker_.pose.position.y = pos.y;
     marker_.pose.position.z = pos.z;
     marker_.pose.orientation = quat;
-
-    fcl_marker_converter_.assignValues(marker_);
 }
 
 
@@ -162,7 +159,6 @@ template <typename T>
 inline void MarkerShape<T>::updatePose(const geometry_msgs::Pose& pose)
 {
     marker_.pose = pose;
-    fcl_marker_converter_.assignValues(marker_);
 }
 
 /* END MarkerShape **********************************************************************************************/

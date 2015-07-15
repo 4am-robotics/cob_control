@@ -75,6 +75,13 @@ struct ShapeMsgTypeToVisMarkerType
         }
 };
 
+struct TriangleSupport
+{
+    fcl::Vec3f a;
+    fcl::Vec3f b;
+    fcl::Vec3f c;
+};
+
 static ShapeMsgTypeToVisMarkerType g_shapeMsgTypeToVisMarkerType;
 
 #endif /* OBSTACLE_DISTANCE_DATA_TYPES_HPP_ */

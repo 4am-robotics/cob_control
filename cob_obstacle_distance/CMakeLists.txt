@@ -33,7 +33,7 @@ generate_messages(
 # Declare catkin package
 catkin_package(
    INCLUDE_DIRS include
-   LIBRARIES parsers
+   LIBRARIES parsers marker_shapes_management
    CATKIN_DEPENDS roscpp shape_msgs moveit_msgs sensor_msgs geometry_msgs visualization_msgs message_runtime
    DEPENDS assimp
 )

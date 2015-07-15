@@ -50,6 +50,7 @@ template
 class MarkerShape : public IMarkerShape
 {
     private:
+        BVH_RSS_t bvh_;
         bool is_drawn_;
         FclMarkerConverter<T> fcl_marker_converter_;
         visualization_msgs::Marker marker_;

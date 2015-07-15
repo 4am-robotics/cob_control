@@ -70,7 +70,7 @@ install(DIRECTORY include/cob_twist_controller/
 )
 
 # Mark other files for installation (e.g. launch and bag files, etc.)
-install(PROGRAMS scripts/test_publisher_twist.py scripts/test_publisher_twist_stamped.py scripts/test_publisher_twist_series.py
+install(PROGRAMS scripts/test_publisher_twist.py scripts/test_publisher_twist_stamped.py scripts/test_publisher_twist_series.py trajectory_marker_publisher_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/scripts
 )
 

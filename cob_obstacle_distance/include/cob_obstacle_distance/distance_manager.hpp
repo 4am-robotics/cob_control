@@ -192,7 +192,6 @@ class DistanceManager
         /**
          * tf Transformation thread between chain_base_link (arm_right_base_link or arm_left_base_link) and the root frame (e.g. base_link)).
          * Runs endless.
-         * @return True if transformation was successful.
          */
         void transform();
 
@@ -200,7 +199,6 @@ class DistanceManager
          * Thread that runs endless to listen to transforms for the self collision parts of the robot.
          * This will directly update the self collision obstacle pose.
          * @param frame_name The frame name of the self collision checking part. Similar to link name in URDF.
-         * @return
          */
         void transformSelfCollisionFrames(const std::string frame_name);
 
