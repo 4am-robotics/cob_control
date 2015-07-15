@@ -41,7 +41,7 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${FCL_I
 
 ## Build
 add_library(parsers src/parsers/stl_parser.cpp src/parsers/mesh_parser.cpp)
-target_link_libraries(parsers ${fcl_LIBRARIES} ${catkin_LIBRARIES} ${Assimp_LIBRARIES})
+target_link_libraries(parsers assimp ${fcl_LIBRARIES} ${catkin_LIBRARIES})
 
 add_library(marker_shapes_management src/marker_shapes/marker_shapes_impl.cpp src/marker_shapes/marker_shapes_interface.cpp src/shapes_manager.cpp src/frame_to_collision.cpp) 
 target_link_libraries(marker_shapes_management parsers ${fcl_LIBRARIES} ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
@@ -53,7 +53,7 @@ target_link_libraries(cob_obstacle_distance parsers marker_shapes_management ${f
 
 ## Install
 # Mark executables and/or libraries for installation
-install(TARGETS cob_obstacle_distance parsers
+install(TARGETS cob_obstacle_distance parsers marker_shapes_management
  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
