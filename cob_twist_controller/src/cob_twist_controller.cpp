@@ -47,6 +47,7 @@ bool CobTwistController::initialize()
         ROS_ERROR("Parameter 'joint_names' not set");
         return false;
     }
+
     twist_controller_params_.dof = twist_controller_params_.joints.size();
 
     // Chain
@@ -55,6 +56,7 @@ bool CobTwistController::initialize()
         ROS_ERROR("Parameter 'chain_base_link' not set");
         return false;
     }
+
     if (!nh_.getParam("chain_tip_link", twist_controller_params_.chain_tip_link))
     {
         ROS_ERROR("Parameter 'chain_tip_link' not set");
