@@ -54,6 +54,7 @@ class MarkerShape : public IMarkerShape
         bool is_drawn_;
         FclMarkerConverter<T> fcl_marker_converter_;
         visualization_msgs::Marker marker_;
+        geometry_msgs::Pose origin_;
 
         void init(const std::string& root_frame, double x, double y, double z,
                   double quat_x, double quat_y, double quat_z, double quat_w,
@@ -83,6 +84,8 @@ class MarkerShape : public IMarkerShape
                     double color_r = 0.0, double color_g = 0.0, double color_b = 0.0, double color_a = 1.0);
 
         inline geometry_msgs::Pose getMarkerPose() const;
+
+        inline geometry_msgs::Pose getOriginRelToFrame() const;
 
         /**
          * @param Returns the marker id with that it is published to RVIZ.
@@ -129,6 +132,7 @@ class MarkerShape<BVH_RSS_t> : public IMarkerShape
         bool is_drawn_;
         BVH_RSS_t fcl_bvh_;
         visualization_msgs::Marker marker_;
+        geometry_msgs::Pose origin_;
 
         void init(const std::string& root_frame, const std::string& mesh_resource, double x, double y, double z,
                   double quat_x, double quat_y, double quat_z, double quat_w,
@@ -156,6 +160,8 @@ class MarkerShape<BVH_RSS_t> : public IMarkerShape
               double color_r = 0.0, double color_g = 0.0, double color_b = 0.0, double color_a = 1.0);
 
         inline geometry_msgs::Pose getMarkerPose() const;
+
+        inline geometry_msgs::Pose getOriginRelToFrame() const;
 
         /**
          * @param Returns the marker id with that it is published to RVIZ.

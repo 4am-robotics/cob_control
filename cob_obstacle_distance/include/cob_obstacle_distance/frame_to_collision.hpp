@@ -87,6 +87,14 @@ class FrameToCollision
                                        const PtrGeometry_t& geometry,
                                        PtrIMarkerShape_t& segment_of_interest_marker_shape);
 
+
+        /**
+         * Convert a pose object from URDF into a pose msg object.
+         * @param urdf_pose Pose from URDF.
+         * @param msg_pose Pose expressed as message.
+         */
+        void poseURDFToMsg(const urdf::Pose& urdf_pose, geometry_msgs::Pose& msg_pose);
+
     public:
         typedef std::unordered_map<std::string, std::vector<std::string> > MapSelfCollisions_t;
 

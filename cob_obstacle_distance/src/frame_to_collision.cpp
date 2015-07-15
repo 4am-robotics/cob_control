@@ -42,6 +42,20 @@ FrameToCollision::~FrameToCollision()
 
 }
 
+
+void FrameToCollision::poseURDFToMsg(const urdf::Pose& urdf_pose, geometry_msgs::Pose& msg_pose)
+{
+    msg_pose.position.x = urdf_pose.position.x;
+    msg_pose.position.y = urdf_pose.position.y;
+    msg_pose.position.z = urdf_pose.position.z;
+
+    msg_pose.orientation.x = urdf_pose.rotation.x;
+    msg_pose.orientation.y = urdf_pose.rotation.y;
+    msg_pose.orientation.z = urdf_pose.rotation.z;
+    msg_pose.orientation.w = urdf_pose.rotation.w;
+}
+
+
 bool FrameToCollision::ignoreSelfCollisionPart(const std::string& frame_of_interest,
                                                const std::string& self_collision_obstacle_frame)
 {
@@ -147,9 +161,9 @@ bool FrameToCollision::getMarkerShapeFromUrdf(const Eigen::Vector3d& abs_pos,
         std_msgs::ColorRGBA col;
         col.a = 1.0;
         col.r = 1.0;
-
         if(NULL != link->collision && NULL != link->collision->geometry)
         {
+            this->poseURDFToMsg(link->collision->origin, pose);
             this->createSpecificMarkerShape(frame_of_interest,
                                             pose,
                                             col,
@@ -160,6 +174,7 @@ bool FrameToCollision::getMarkerShapeFromUrdf(const Eigen::Vector3d& abs_pos,
         {
             ROS_WARN_STREAM("Could not find a collision or collision geometry for " << frame_of_interest <<
                             ". Trying to create the shape from visual.");
+            this->poseURDFToMsg(link->visual->origin, pose);
             this->createSpecificMarkerShape(frame_of_interest,
                                             pose,
                                             col,

@@ -63,11 +63,11 @@
 #define VEC_Y 1
 #define VEC_Z 2
 
-// #define DEBUG
+//#define DEBUG
 
 uint32_t DistanceManager::seq_nr_ = 0;
 
-DistanceManager::DistanceManager(ros::NodeHandle& nh) : nh_(nh), counter_(1000), stop_sca_threads_(false)
+DistanceManager::DistanceManager(ros::NodeHandle& nh) : nh_(nh), counter_(100), stop_sca_threads_(false)
 {}
 
 DistanceManager::~DistanceManager()
@@ -77,13 +77,13 @@ DistanceManager::~DistanceManager()
 
 int DistanceManager::init()
 {
+    this->stop_sca_threads_ = false;
+
     // Latched and continue in case there is no subscriber at the moment for a marker
     this->marker_pub_ = this->nh_.advertise<visualization_msgs::Marker>("obstacle_distance/marker", 1, true);
     this->obstacle_distances_pub_ = this->nh_.advertise<cob_obstacle_distance::ObstacleDistances>("obstacle_distance", 1);
-
     obstacle_mgr_.reset(new ShapesManager(this->marker_pub_));
     object_of_interest_mgr_.reset(new ShapesManager(this->marker_pub_));
-
     KDL::Tree robot_structure;
     if (!kdl_parser::treeFromParam("/robot_description", robot_structure)){
         ROS_ERROR("Failed to construct kdl tree from parameter '/robot_description'.");
@@ -95,7 +95,6 @@ int DistanceManager::init()
         ROS_ERROR("Failed to get parameter \"joint_names\".");
         return -2;
     }
-
 
     if(!nh_.getParam("root_frame", this->root_frame_id_))
     {
@@ -132,7 +131,6 @@ int DistanceManager::init()
     adv_chn_fk_solver_vel_.reset(new AdvancedChainFkSolverVel_recursive(chain_));
     last_q_ = KDL::JntArray(chain_.getNrOfJoints());
     last_q_dot_ = KDL::JntArray(chain_.getNrOfJoints());
-
     if(!this->frame_to_collision_.initParameter(this->root_frame_id_, "/robot_description"))
     {
         ROS_ERROR("Failed to initialize robot model from URDF by parameter \"/robot_description\".");
@@ -183,30 +181,24 @@ void DistanceManager::addObstacle(const std::string& id, PtrIMarkerShape_t s)
     this->obstacle_mgr_->addShape(id, s);
 }
 
+
 void DistanceManager::addObjectOfInterest(const std::string& id, PtrIMarkerShape_t s)
 {
     this->object_of_interest_mgr_->addShape(id, s);
 }
+
 
 void DistanceManager::drawObstacles(bool enforceDraw)
 {
     this->obstacle_mgr_->draw(enforceDraw);
 }
 
+
 void DistanceManager::drawObjectsOfInterest(bool enforceDraw)
 {
     this->object_of_interest_mgr_->draw(enforceDraw);
 }
 
-bool DistanceManager::collide(PtrIMarkerShape_t s1, PtrIMarkerShape_t s2)
-{
-    fcl::CollisionObject x = s1->getCollisionObject();
-    fcl::CollisionObject y = s2->getCollisionObject();
-    fcl::CollisionResult result;
-    fcl::CollisionRequest request(1, true);
-    fcl::collide(&x, &y, request, result);
-    ROS_INFO_STREAM("isCollision: " << result.isCollision() << std::endl);
-}
 
 void DistanceManager::calculate()
 {
@@ -222,9 +214,7 @@ void DistanceManager::calculate()
     }
 
     uint32_t loc_counter = 0;
-
     for(ShapesManager::MapIter_t it = this->object_of_interest_mgr_->begin(); it != this->object_of_interest_mgr_->end(); ++it)
-    // for(MapObstacleDistanceIter_t it = this->obstacle_distances_.begin(); it != this->obstacle_distances_.end(); ++it)
     {
         std::string object_of_interest_name = it->first;
         std::vector<std::string>::const_iterator str_it = std::find(this->segments_.begin(),
@@ -236,26 +226,31 @@ void DistanceManager::calculate()
             continue;
         }
 
-        uint16_t idx = str_it - this->segments_.begin();
-
-        /* ******* Start Transformation part ************** */
-        KDL::FrameVel frame_vel = adv_chn_fk_solver_vel_->getFrameVelAtSegment(idx);
-        KDL::Frame frame_pos = frame_vel.GetFrame();
-        Eigen::Vector3d chainbase2frame_pos(frame_pos.p.x(),
-                                            frame_pos.p.y(),
-                                            frame_pos.p.z());
-
-        Eigen::Affine3d tmp_tf_cb_frame_bl = this->getSynchedCbToBlTransform();
-        Eigen::Vector3d abs_jnt_pos = tmp_tf_cb_frame_bl.inverse() * chainbase2frame_pos;
-
-        Eigen::Quaterniond q;
-        tf::quaternionKDLToEigen (frame_pos.M, q);
-        Eigen::Matrix3d x = (tmp_tf_cb_frame_bl.inverse() * q).rotation();
-        Eigen::Quaterniond q_1(x);
-        /* ******* End Transformation part ************** */
-
         // Representation of segment_of_interest as specific shape
         PtrIMarkerShape_t ooi = it->second;
+        uint16_t idx = str_it - this->segments_.begin();
+        geometry_msgs::Pose origin_p = ooi->getOriginRelToFrame();
+        KDL::Frame origin_f;
+        tf::poseMsgToKDL(origin_p, origin_f);
+
+        // ******* Start Transformation part **************
+        KDL::FrameVel frame_vel = adv_chn_fk_solver_vel_->getFrameVelAtSegment(idx);
+        KDL::Frame frame_pos = frame_vel.GetFrame();
+        KDL::Frame frame_with_offset = frame_pos * origin_f;
+
+        Eigen::Vector3d chainbase2frame_pos(frame_with_offset.p.x(),
+                                            frame_with_offset.p.y(),
+                                            frame_with_offset.p.z());
+
+        Eigen::Affine3d tmp_tf_cb_frame_bl = this->getSynchedCbToBlTransform();
+        Eigen::Affine3d tmp_inv_tf_cb_frame_bl = tmp_tf_cb_frame_bl.inverse();
+        Eigen::Vector3d abs_jnt_pos = tmp_inv_tf_cb_frame_bl * chainbase2frame_pos;
+
+        Eigen::Quaterniond q;
+        tf::quaternionKDLToEigen (frame_with_offset.M, q);
+        Eigen::Matrix3d x = (tmp_inv_tf_cb_frame_bl * q).rotation();
+        Eigen::Quaterniond q_1(x);
+        // ******* End Transformation part **************
 
         geometry_msgs::Vector3 v3;
         geometry_msgs::Quaternion quat;
@@ -266,7 +261,7 @@ void DistanceManager::calculate()
 #ifdef DEBUG
         if(counter_ <= 0)
         {
-            if (object_of_interest_name == "arm_right_3_link")
+            if (object_of_interest_name == "arm_right_7_link")
             {
                 ROS_INFO_STREAM("Publish object of interest!!!");
                 this->drawObjectsOfInterest(true);
@@ -316,10 +311,6 @@ void DistanceManager::calculate()
 
         if(setDistResult)
         {
-            fcl::Quaternion3f qt = result_collision_obj.getQuatRotation();
-            fcl::Quaternion3f qa = ooi_co.getQuatRotation();
-            fcl::Quaternion3f diff_a_t = qa - qt;
-
             Eigen::Vector3d abs_obst_vector(dist_result.nearest_points[1][VEC_X],
                                             dist_result.nearest_points[1][VEC_Y],
                                             dist_result.nearest_points[1][VEC_Z]);
@@ -329,8 +320,9 @@ void DistanceManager::calculate()
                                                dist_result.nearest_points[0][VEC_Y],
                                                dist_result.nearest_points[0][VEC_Z]);
 
+            // express in arm base link frame
             Eigen::Vector3d rel_base_link_frame_pos = tmp_tf_cb_frame_bl * abs_jnt_pos_update;
-            Eigen::Vector3d dist_vector = rel_base_link_frame_pos - obst_vector; // expressed in arm base link frame
+            Eigen::Vector3d dist_vector = rel_base_link_frame_pos - obst_vector;
 
             // vector from frame origin to collision point
             Eigen::Vector3d rel_frame_origin_to_collision_pnt = rel_base_link_frame_pos - chainbase2frame_pos;
@@ -348,6 +340,7 @@ void DistanceManager::calculate()
             obstacle_distances.distances.push_back(od_msg);
 
 #ifdef DEBUG
+            // Arrow marker: Shows vector between nearest point on obstacle and robot link
             if (object_of_interest_name == "arm_right_7_link" && counter_ == 100)
             {
                 ROS_INFO_STREAM("rel_base_link_frame_pos: " << std::endl << rel_base_link_frame_pos);
@@ -363,16 +356,15 @@ void DistanceManager::calculate()
 
                 marker.scale.x = 0.05;
                 marker.scale.y = 0.08;
-                //marker.scale.z = 1.0;
 
                 geometry_msgs::Point start;
                 start.x = obst_vector(0);
-                start.y = obst_vector(1); // >>>>>>>>>>>>>  works for BVH <<<<<<<<<<<<<
+                start.y = obst_vector(1);
                 start.z = obst_vector(2);
 
                 geometry_msgs::Point end;
                 end.x = obst_vector(0) + dist_vector(0);
-                end.y = obst_vector(1) + dist_vector(1); // >>>>>>>>>>>>>  works for BVH <<<<<<<<<<<<<
+                end.y = obst_vector(1) + dist_vector(1);
                 end.z = obst_vector(2) + dist_vector(2);
 
                 marker.color.a = 1.0;
@@ -761,14 +753,15 @@ bool DistanceManager::predictDistance(cob_obstacle_distance::PredictDistance::Re
     return true;
 }
 
-bool DistanceManager::registerPointOfInterest(cob_obstacle_distance::Registration::Request& request,
-                                              cob_obstacle_distance::Registration::Response& response)
+
+bool DistanceManager::registerPointOfInterest(cob_srvs::SetString::Request& request,
+                                              cob_srvs::SetString::Response& response)
 {
     ROS_INFO_STREAM("Registering a point / frame of interest!");
-    if(this->object_of_interest_mgr_->count(request.link_id) > 0)
+    if(this->object_of_interest_mgr_->count(request.data) > 0)
     {
         response.success = true;
-        response.message = "Element " + request.link_id + " already existent.";
+        response.message = "Element " + request.data + " already existent.";
     }
     else
     {
@@ -777,22 +770,22 @@ bool DistanceManager::registerPointOfInterest(cob_obstacle_distance::Registratio
             PtrIMarkerShape_t ooi;
             Eigen::Quaterniond q;
             Eigen::Vector3d v3;
-            if(this->frame_to_collision_.getMarkerShapeFromUrdf(v3, q, request.link_id, ooi))
+            if(this->frame_to_collision_.getMarkerShapeFromUrdf(v3, q, request.data, ooi))
             {
-                this->addObjectOfInterest(request.link_id, ooi);
+                this->addObjectOfInterest(request.data, ooi);
                 response.success = true;
-                response.message = "Successfully inserted element " + request.link_id + ".";
+                response.message = "Successfully inserted element " + request.data + ".";
             }
             else
             {
                 response.success = false;
-                response.message = "Failed to insert element " + request.link_id + "!";
+                response.message = "Failed to insert element " + request.data + "!";
             }
         }
         catch(...)
         {
             response.success = false;
-            response.message = "Failed to insert element " + request.link_id + "!";
+            response.message = "Failed to insert element " + request.data + "!";
             ROS_ERROR_STREAM(response.message);
         }
     }

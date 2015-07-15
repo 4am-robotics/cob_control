@@ -31,42 +31,34 @@
 #define DISTANCE_MANAGER_HPP_
 
 #include <vector>
-#include <unordered_map>
+#include <thread>
+#include <mutex>
 #include <boost/scoped_ptr.hpp>
 
+#include <ros/ros.h>
+
 #include <kdl_parser/kdl_parser.hpp>
-#include <kdl/chainfksolvervel_recursive.hpp>
-#include <kdl/chainiksolvervel_pinv.hpp>
-#include <kdl/jntarray.hpp>
-#include <kdl/jntarrayvel.hpp>
-#include <kdl/frames.hpp>
 #include <kdl/tree.hpp>
+#include <kdl/frames.hpp>
 
-#include <sensor_msgs/JointState.h>
-
-#include <Eigen/Core>
-#include <Eigen/LU> // necessary to use several methods on EIGEN Matrices.
+#include <Eigen/Dense>
 
 #include <tf/tf.h>
 #include <tf/transform_listener.h>
 #include <tf_conversions/tf_kdl.h>
 #include <tf_conversions/tf_eigen.h>
 
-#include <kdl/chainfksolvervel_recursive.hpp>
-#include <ros/ros.h>
-
+#include <sensor_msgs/JointState.h>
 #include <moveit_msgs/CollisionObject.h>
+#include "cob_srvs/SetString.h"
+#include "cob_obstacle_distance/PredictDistance.h"
 
 #include "cob_obstacle_distance/marker_shapes/marker_shapes.hpp"
 #include "cob_obstacle_distance/shapes_manager.hpp"
 #include "cob_obstacle_distance/chainfk_solvers/advanced_chainfksolver_recursive.hpp"
 #include "cob_obstacle_distance/obstacle_distance_data_types.hpp"
-#include "cob_obstacle_distance/Registration.h"
-#include "cob_obstacle_distance/PredictDistance.h"
 #include "cob_obstacle_distance/frame_to_collision.hpp"
 
-#include <thread>
-#include <mutex>
 
 class DistanceManager
 {
@@ -97,11 +89,11 @@ class DistanceManager
         KDL::JntArray last_q_;
         KDL::JntArray last_q_dot_;
 
-        static uint32_t seq_nr_;
-
         FrameToCollision frame_to_collision_;
 
-        int counter_;
+        uint32_t counter_;
+
+        static uint32_t seq_nr_;
 
         /**
          * Build an obstacle from a message containing a mesh.
@@ -160,13 +152,6 @@ class DistanceManager
         void drawObjectsOfInterest(bool enforceDraw = false);
 
         /**
-         * Check whether a collision between two given shapes has been occurred or not.
-         * @param s1 First shape to be checked against second shape.
-         * @param s2 Second shape to be checked against first shape.
-         */
-        bool collide(PtrIMarkerShape_t s1, PtrIMarkerShape_t s2);
-
-        /**
          * Updates the joint states.
          * @param msg Joint state message.
          */
@@ -209,18 +194,23 @@ class DistanceManager
          * @param response Success message.
          * @return Registration service call successfull or not.
          */
-        bool registerPointOfInterest(cob_obstacle_distance::Registration::Request& request,
-                                     cob_obstacle_distance::Registration::Response& response);
+        bool registerPointOfInterest(cob_srvs::SetString::Request& request,
+                                     cob_srvs::SetString::Response& response);
 
+        /**
+         * Service to execute a prediction on future joint configuration.
+         * @param request Consists of frames of interest and the future joint config.
+         * @param response Success status and message.
+         * @return State of success.
+         */
         bool predictDistance(cob_obstacle_distance::PredictDistance::Request& request,
                              cob_obstacle_distance::PredictDistance::Response& response);
 
         /**
          * Get method with mutex access on transform data.
-         * @return Transformation between chain base and base link.
+         * @return Inverse transformation between chain base and base link.
          */
         Eigen::Affine3d getSynchedCbToBlTransform();
-
 };
 
 #endif /* DISTANCE_MANAGER_HPP_ */

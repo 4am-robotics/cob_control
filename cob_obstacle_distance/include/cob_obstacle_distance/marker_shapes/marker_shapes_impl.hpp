@@ -57,18 +57,26 @@ geometry_msgs::Pose MarkerShape<T>::getMarkerPose() const
     return this->marker_.pose;
 }
 
+
+template <typename T>
+geometry_msgs::Pose MarkerShape<T>::getOriginRelToFrame() const
+{
+    return this->origin_;
+}
+
+
 template <typename T>
 void MarkerShape<T>::init(const std::string& root_frame, double x, double y, double z,
           double quat_x, double quat_y, double quat_z, double quat_w,
           double color_r, double color_g, double color_b, double color_a)
 {
-    marker_.pose.position.x = x;
-    marker_.pose.position.y = y;
-    marker_.pose.position.z = z;
-    marker_.pose.orientation.x = quat_x;
-    marker_.pose.orientation.y = quat_y;
-    marker_.pose.orientation.z = quat_z;
-    marker_.pose.orientation.w = quat_w;
+    marker_.pose.position.x = origin_.position.x = x;
+    marker_.pose.position.y = origin_.position.y = y;
+    marker_.pose.position.z = origin_.position.z = z;
+    marker_.pose.orientation.x = origin_.orientation.x = quat_x;
+    marker_.pose.orientation.y = origin_.orientation.y = quat_y;
+    marker_.pose.orientation.z = origin_.orientation.z = quat_z;
+    marker_.pose.orientation.w = origin_.orientation.w = quat_w;
 
     marker_.color.r = color_r;
     marker_.color.g = color_g;
@@ -103,7 +111,6 @@ inline void MarkerShape<T>::setColor(double color_r, double color_g, double colo
     marker_.color.g = color_g;
     marker_.color.b = color_b;
     marker_.color.a = color_a;
-
     fcl_marker_converter_.assignValues(marker_);
 }
 

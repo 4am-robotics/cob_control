@@ -34,8 +34,7 @@
 #include <visualization_msgs/Marker.h>
 
 #include <Eigen/Dense>
-
-#include "cob_obstacle_distance/Registration.h"
+#include "cob_srvs/SetString.h"
 
 //ToDo: Should we re-add DEBUG_BASE_COMPENSATION stuff?
 bool CobTwistController::initialize()
@@ -145,7 +144,7 @@ bool CobTwistController::initialize()
 void CobTwistController::reinitServiceRegistration()
 {
     ROS_INFO("Reinit of Service registration!");
-    ros::ServiceClient client = nh_.serviceClient<cob_obstacle_distance::Registration>("obstacle_distance/registerPointOfInterest");
+    ros::ServiceClient client = nh_.serviceClient<cob_srvs::SetString>("obstacle_distance/registerPointOfInterest");
     ROS_WARN_COND(twist_controller_params_.collision_check_frames.size() <= 0,
                   "There are no collision check frames for this manipulator. So nothing will be registered. Ensure parameters are set correctly.");
 
@@ -154,10 +153,8 @@ void CobTwistController::reinitServiceRegistration()
             it++)
     {
         ROS_INFO_STREAM("Trying to register for " << *it);
-
-        cob_obstacle_distance::Registration r;
-        r.request.link_id = *it;
-        r.request.shape_type = visualization_msgs::Marker::MESH_RESOURCE;
+        cob_srvs::SetString r;
+        r.request.data = *it;
         if (client.call(r))
         {
             ROS_INFO_STREAM("Called registration service with success: " << int(r.response.success) << ". Got message: " << r.response.message);

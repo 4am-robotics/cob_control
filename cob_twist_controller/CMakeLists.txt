@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(cob_twist_controller)
 
 # Load catkin and all dependencies required for this package
-find_package(catkin REQUIRED COMPONENTS cmake_modules roscpp sensor_msgs geometry_msgs nav_msgs visualization_msgs kdl_parser kdl_conversions eigen_conversions tf tf_conversions dynamic_reconfigure cob_obstacle_distance)
+find_package(catkin REQUIRED COMPONENTS cmake_modules roscpp sensor_msgs geometry_msgs nav_msgs visualization_msgs kdl_parser kdl_conversions eigen_conversions tf tf_conversions dynamic_reconfigure cob_srvs)
 
 find_package(Eigen REQUIRED)
 add_definitions(${EIGEN_DEFINITIONS})
@@ -17,7 +17,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES damping_methods inv_calculations constraint_solvers limiters hardware_interfaces kinematic_extensions inverse_differential_kinematics_solver twist_controller
-  CATKIN_DEPENDS roscpp sensor_msgs geometry_msgs nav_msgs visualization_msgs cob_obstacle_distance
+  CATKIN_DEPENDS roscpp sensor_msgs geometry_msgs nav_msgs visualization_msgs cob_srvs
 )
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${orocos_kdl_INCLUDE_DIRS} )
@@ -31,7 +31,7 @@ set(SRC_CS_DIR "${SRC_C_DIR}/solvers")
 add_library(damping_methods src/damping_methods/damping.cpp)
 add_library(inv_calculations src/inverse_jacobian_calculations/inverse_jacobian_calculation.cpp)
 add_library(constraint_solvers ${SRC_CS_DIR}/unconstraint_solver.cpp ${SRC_CS_DIR}/wln_joint_limit_avoidance_solver.cpp ${SRC_CS_DIR}/weighted_least_norm_solver.cpp ${SRC_CS_DIR}/gradient_projection_method_solver.cpp ${SRC_CS_DIR}/stack_of_tasks_solver.cpp ${SRC_CS_DIR}/stack_of_tasks_gpm_solver.cpp ${SRC_CS_DIR}/stack_of_tasks_gpm_solver.cpp ${SRC_CS_DIR}/task_priority_solver.cpp ${SRC_CS_DIR}/dynamic_tasks_readjust_solver.cpp ${SRC_C_DIR}/constraint_solver_factory.cpp)
-add_dependencies(constraint_solvers cob_obstacle_distance_gencpp)
+add_dependencies(constraint_solvers cob_srvs_gencpp)
 target_link_libraries(constraint_solvers damping_methods inv_calculations)
 
 add_library(limiters src/limiters/limiter.cpp)

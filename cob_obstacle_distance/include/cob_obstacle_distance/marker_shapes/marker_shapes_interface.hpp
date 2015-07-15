@@ -54,12 +54,12 @@ class IMarkerShape
          virtual void updatePose(const geometry_msgs::Pose& pose) = 0;
          virtual fcl::CollisionObject getCollisionObject() const = 0;
          virtual geometry_msgs::Pose getMarkerPose() const = 0;
+         virtual geometry_msgs::Pose getOriginRelToFrame() const = 0;
          virtual ~IMarkerShape() {}
 };
 /* END IMarkerShape *********************************************************************************************/
 
 typedef boost::shared_ptr< IMarkerShape > PtrIMarkerShape_t;
-
 typedef fcl::BVHModel<fcl::RSS> BVH_RSS_t;
 
 #endif /* MARKER_SHAPES_INTERFACE_HPP_ */

@@ -53,9 +53,7 @@ int main(int argc, char** argv)
     }
 
     ros::Subscriber jointstate_sub = nh.subscribe("joint_states", 1, &DistanceManager::jointstateCb, &sm);
-
     ros::Subscriber obstacle_sub = nh.subscribe("obstacle_distance/registerObstacle", 1, &DistanceManager::registerObstacle, &sm);
-
     ros::ServiceServer registration_srv = nh.advertiseService("obstacle_distance/registerPointOfInterest" , &DistanceManager::registerPointOfInterest, &sm);
     ros::ServiceServer distance_prediction_srv = nh.advertiseService("obstacle_distance/predictDistance" , &DistanceManager::predictDistance, &sm);
 

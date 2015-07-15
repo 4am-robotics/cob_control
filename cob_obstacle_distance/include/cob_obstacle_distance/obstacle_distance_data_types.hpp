@@ -29,14 +29,10 @@
 #define OBSTACLE_DISTANCE_DATA_TYPES_HPP_
 
 #include <ros/ros.h>
-#include <Eigen/Core>
 #include <stdint.h>
 #include <unordered_map>
-
 #include <shape_msgs/SolidPrimitive.h>
 #include <visualization_msgs/Marker.h>
-
-#include "cob_obstacle_distance/ObstacleDistances.h"
 
 #define FCL_BOX_X 0u
 #define FCL_BOX_Y 1u

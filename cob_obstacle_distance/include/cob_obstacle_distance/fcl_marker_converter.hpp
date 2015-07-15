@@ -97,9 +97,9 @@ class FclMarkerConverter<fcl::Sphere>
 
         void assignValues(visualization_msgs::Marker &marker)
         {
-            marker.scale.x = this->geo_shape_.radius;
-            marker.scale.y = this->geo_shape_.radius;
-            marker.scale.z = this->geo_shape_.radius;
+            marker.scale.x = this->geo_shape_.radius * 2.0; // marker needs the diameter in x
+            marker.scale.y = this->geo_shape_.radius * 2.0; // marker needs the diameter in y
+            marker.scale.z = this->geo_shape_.radius * 2.0; // marker needs the diameter in z
             marker.type = visualization_msgs::Marker::SPHERE;
         }
 
@@ -135,8 +135,8 @@ class FclMarkerConverter<fcl::Cylinder>
 
         void assignValues(visualization_msgs::Marker &marker)
         {
-            marker.scale.x = this->geo_shape_.radius;
-            marker.scale.y = this->geo_shape_.radius;
+            marker.scale.x = this->geo_shape_.radius * 2.0; // marker needs the diameter in x
+            marker.scale.y = this->geo_shape_.radius * 2.0; // marker needs the diameter in y
             marker.scale.z = this->geo_shape_.lz;
             marker.type = visualization_msgs::Marker::CYLINDER;
         }

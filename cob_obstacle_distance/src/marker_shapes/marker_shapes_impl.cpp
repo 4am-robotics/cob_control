@@ -38,7 +38,6 @@ MarkerShape<BVH_RSS_t>::MarkerShape(const std::string& root_frame,
                                     : is_drawn_(false)
 {
     this->fcl_bvh_.beginModel();
-
     for(shape_msgs::MeshTriangle tri : mesh.triangles)
     {
         uint32_t v_idx_1 = tri.vertex_indices.elems[0];
@@ -67,16 +66,10 @@ MarkerShape<BVH_RSS_t>::MarkerShape(const std::string& root_frame,
     marker_.header.stamp = ros::Time::now();
     marker_.ns = g_marker_namespace;
     marker_.action = visualization_msgs::Marker::ADD;
-    marker_.id = class_ctr_;
+    marker_.id = IMarkerShape::class_ctr_;
     marker_.mesh_resource = ""; // TODO: Not given in this case: can happen e.g. when moveit_msgs/CollisionObject was given!
 
     marker_.lifetime = ros::Duration();
-}
-
-
-geometry_msgs::Pose MarkerShape<BVH_RSS_t>::getMarkerPose() const
-{
-    return this->marker_.pose;
 }
 
 
@@ -100,13 +93,13 @@ void MarkerShape<BVH_RSS_t>::init(const std::string& mesh_resource, const std::s
         ROS_ERROR("Could not create BVH model!");
     }
 
-    marker_.pose.position.x = x;
-    marker_.pose.position.y = y;
-    marker_.pose.position.z = z;
-    marker_.pose.orientation.x = quat_x;
-    marker_.pose.orientation.y = quat_y;
-    marker_.pose.orientation.z = quat_z;
-    marker_.pose.orientation.w = quat_w;
+    marker_.pose.position.x = origin_.position.x = x;
+    marker_.pose.position.y = origin_.position.y = y;
+    marker_.pose.position.z = origin_.position.z = z;
+    marker_.pose.orientation.x = origin_.orientation.x = quat_x;
+    marker_.pose.orientation.y = origin_.orientation.y = quat_y;
+    marker_.pose.orientation.z = origin_.orientation.z = quat_z;
+    marker_.pose.orientation.w = origin_.orientation.w = quat_w;
 
     marker_.color.r = color_r;
     marker_.color.g = color_g;
@@ -122,10 +115,22 @@ void MarkerShape<BVH_RSS_t>::init(const std::string& mesh_resource, const std::s
     marker_.header.stamp = ros::Time::now();
     marker_.ns = g_marker_namespace;
     marker_.action = visualization_msgs::Marker::ADD;
-    marker_.id = class_ctr_;
+    marker_.id = IMarkerShape::class_ctr_;
     marker_.mesh_resource = mesh_resource;
 
     marker_.lifetime = ros::Duration();
+}
+
+
+inline geometry_msgs::Pose MarkerShape<BVH_RSS_t>::getMarkerPose() const
+{
+    return this->marker_.pose;
+}
+
+
+inline geometry_msgs::Pose MarkerShape<BVH_RSS_t>::getOriginRelToFrame() const
+{
+    return this->origin_;
 }
 
 
@@ -151,6 +156,7 @@ inline void MarkerShape<BVH_RSS_t>::updatePose(const geometry_msgs::Vector3& pos
     marker_.pose.position.z = pos.z;
     marker_.pose.orientation = quat;
 }
+
 
 inline void MarkerShape<BVH_RSS_t>::updatePose(const geometry_msgs::Pose& pose)
 {
