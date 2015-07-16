@@ -28,10 +28,8 @@
 
 #include <cob_cartesian_controller/trajectory_interpolator/trajectory_interpolator.h>
 
-
-void TrajectoryInterpolator::linear_interpolation(  std::vector <geometry_msgs::Pose>& poseVector,
-                                                    geometry_msgs::Pose start, geometry_msgs::Pose end,
-                                                    double VelMax, double AcclMax, std::string profile, bool justRotate)
+bool TrajectoryInterpolator::linear_interpolation(  std::vector <geometry_msgs::Pose>& poseVector,
+                                                    trajectory_action_move_lin& taml)
 {
     std::vector<double> linearPath, rollPath, pitchPath, yawPath;
 
@@ -40,13 +38,23 @@ void TrajectoryInterpolator::linear_interpolation(  std::vector <geometry_msgs::
     std::vector<double> pathMatrix[4];
     double start_roll, start_pitch, start_yaw;
     double end_roll, end_pitch, end_yaw;
-    double Se = sqrt(pow((end.position.x-start.position.x), 2) + pow((end.position.y-start.position.y), 2) + pow((end.position.z-start.position.z), 2));
+    double Se = sqrt(pow((taml.end.position.x - taml.start.position.x), 2) +
+                     pow((taml.end.position.y - taml.start.position.y), 2) +
+                     pow((taml.end.position.z - taml.start.position.z), 2));
 
     // Convert Quaternions into RPY Angles for start and end pose
-    q = tf::Quaternion(start.orientation.x, start.orientation.y, start.orientation.z, start.orientation.w);
+    q = tf::Quaternion(taml.start.orientation.x,
+                       taml.start.orientation.y,
+                       taml.start.orientation.z,
+                       taml.start.orientation.w);
+
     tf::Matrix3x3(q).getRPY(start_roll, start_pitch, start_yaw);
 
-    q = tf::Quaternion(end.orientation.x, end.orientation.y, end.orientation.z, end.orientation.w);
+    q = tf::Quaternion(taml.end.orientation.x,
+                       taml.end.orientation.y,
+                       taml.end.orientation.z,
+                       taml.end.orientation.w);
+
     tf::Matrix3x3(q).getRPY(end_roll, end_pitch, end_yaw);
 
     // Calculate path length for the angular movement
@@ -55,12 +63,11 @@ void TrajectoryInterpolator::linear_interpolation(  std::vector <geometry_msgs::
     Se_pitch    = end_pitch - start_pitch;
     Se_yaw      = end_yaw   - start_yaw;
 
-//    ROS_INFO_STREAM("Length: " << std::endl << Se_roll << std::endl << Se_pitch << std::endl << Se_yaw << std::endl);
-
-
     // Calculate path for each Angle
-    TPG_.calculateProfileForAngularMovements(pathMatrix, Se, Se_roll, Se_pitch, Se_yaw, start_roll, start_pitch, start_yaw,
-                                             VelMax, AcclMax, profile, justRotate);
+    if(!TPG_.calculateProfileForAngularMovements(pathMatrix, Se, Se_roll, Se_pitch, Se_yaw, taml))
+    {
+        return false;
+    }
 
     linearPath  = pathMatrix[0];
     rollPath    = pathMatrix[1];
@@ -70,17 +77,17 @@ void TrajectoryInterpolator::linear_interpolation(  std::vector <geometry_msgs::
     // Interpolate the linear path
     for(int i = 0 ; i < pathMatrix[0].size() ; i++)
     {
-        if(!justRotate)
+        if(!taml.rotate_only)
         {
-            pose.position.x = start.position.x + linearPath.at(i) * (end.position.x-start.position.x)/Se;
-            pose.position.y = start.position.y + linearPath.at(i) * (end.position.y-start.position.y)/Se;
-            pose.position.z = start.position.z + linearPath.at(i) * (end.position.z-start.position.z)/Se;
+            pose.position.x = taml.start.position.x + linearPath.at(i) * (taml.end.position.x - taml.start.position.x) / Se;
+            pose.position.y = taml.start.position.y + linearPath.at(i) * (taml.end.position.y - taml.start.position.y) / Se;
+            pose.position.z = taml.start.position.z + linearPath.at(i) * (taml.end.position.z - taml.start.position.z) / Se;
         }
         else
         {
-            pose.position.x = start.position.x;
-            pose.position.y = start.position.y;
-            pose.position.z = start.position.z;
+            pose.position.x = taml.start.position.x;
+            pose.position.y = taml.start.position.y;
+            pose.position.z = taml.start.position.z;
         }
 
         // Transform RPY to Quaternion
@@ -93,13 +100,11 @@ void TrajectoryInterpolator::linear_interpolation(  std::vector <geometry_msgs::
         pose.orientation.w = q.getW();
         poseVector.push_back(pose);
     }
+    return true;
 }
 
-void TrajectoryInterpolator::circular_interpolation(std::vector<geometry_msgs::Pose>& poseVector,
-                                                    double M_x, double M_y, double M_z,
-                                                    double M_roll, double M_pitch, double M_yaw,
-                                                    double startAngle, double endAngle, double r, double VelMax, double AcclMax,
-                                                    std::string profile)
+bool TrajectoryInterpolator::circular_interpolation(std::vector<geometry_msgs::Pose>& poseVector,
+                                                    trajectory_action_move_circ &tamc)
 {
     tf::Transform C, P, T;
     tf::Quaternion q;
@@ -107,13 +112,13 @@ void TrajectoryInterpolator::circular_interpolation(std::vector<geometry_msgs::P
     std::vector<double> pathArray;
 
     // Convert RPY angles into [RAD]
-    startAngle  = startAngle * M_PI/180;
-    endAngle    = endAngle   * M_PI/180;
-    M_roll      = M_roll     * M_PI/180;
-    M_pitch     = M_pitch    * M_PI/180;
-    M_yaw       = M_yaw      * M_PI/180;
+    tamc.startAngle     *= M_PI/180;
+    tamc.endAngle       *= M_PI/180;
+    tamc.roll_center    *= M_PI/180;
+    tamc.pitch_center   *= M_PI/180;
+    tamc.yaw_center     *= M_PI/180;
 
-    double Se = endAngle-startAngle;
+    double Se = tamc.endAngle-tamc.startAngle;
     bool forward;
 
     if(Se < 0)
@@ -124,27 +129,30 @@ void TrajectoryInterpolator::circular_interpolation(std::vector<geometry_msgs::P
     Se = std::fabs(Se);
 
     // Calculates the Path with Ramp - or Sinoidprofile
-    TPG_.calculateProfile(pathArray, Se, VelMax, AcclMax, profile);
+    if(!TPG_.calculateProfile(pathArray, Se, tamc.vel, tamc.accl, tamc.profile))
+    {
+        return false;
+    }
 
     // Define Center Pose
-    C.setOrigin(tf::Vector3(M_x, M_y, M_z));
-    q.setRPY(M_roll, M_pitch, M_yaw);
+    C.setOrigin(tf::Vector3(tamc.x_center, tamc.y_center, tamc.z_center));
+    q.setRPY(tamc.roll_center, tamc.pitch_center, tamc.yaw_center);
     C.setRotation(q);
 
     // Interpolate the circular path
     for(int i = 0 ; i < pathArray.size() ; i++)
     {
         // Rotate T
-        T.setOrigin(tf::Vector3(cos(pathArray.at(i))*r, 0, sin(pathArray.at(i))*r));
+        T.setOrigin(tf::Vector3(cos(pathArray.at(i)) * tamc.radius, 0, sin(pathArray.at(i)) * tamc.radius));
 
         if(forward)
         {
-            T.setOrigin(tf::Vector3(cos(pathArray.at(i))*r, 0, sin(pathArray.at(i))*r));
+            T.setOrigin(tf::Vector3(cos(pathArray.at(i)) * tamc.radius, 0, sin(pathArray.at(i)) * tamc.radius));
             q.setRPY(0,-pathArray.at(i),0);
         }
         else
         {
-            T.setOrigin(tf::Vector3(cos(startAngle-pathArray.at(i))*r, 0, sin(startAngle-pathArray.at(i))*r));
+            T.setOrigin(tf::Vector3(cos(tamc.startAngle-pathArray.at(i)) * tamc.radius, 0, sin(tamc.startAngle-pathArray.at(i)) * tamc.radius));
             q.setRPY(0, pathArray.at(i), 0);
         }
 
@@ -166,9 +174,5 @@ void TrajectoryInterpolator::circular_interpolation(std::vector<geometry_msgs::P
         // Put the pose into the pose Vector
         poseVector.push_back(pose);
     }
-    // Visualize center point
-//    int marker4=0;
-//    q.setRPY(M_roll+(M_PI/2),M_pitch,M_yaw);
-//    C.setRotation(q);
-//    showLevel(C,marker4,1.0,0,0,"level");
+    return true;
 }

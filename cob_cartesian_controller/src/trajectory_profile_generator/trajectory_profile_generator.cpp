@@ -28,12 +28,12 @@
 
 #include <cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator.h>
 
-void TrajectoryProfileGenerator::calculateProfile(std::vector<double> &pathArray, double Se, double VelMax,
+bool TrajectoryProfileGenerator::calculateProfile(std::vector<double> &pathArray, double Se, double VelMax,
                                                   double AcclMax, std::string profile)
 {
     int steps_te, steps_tv, steps_tb = 0;
     double tv, tb, te = 0;
-    double T_IPO=pow(update_rate_,-1);
+    double T_IPO = pow(update_rate_,-1);
 
     if(profile == "ramp")
     {
@@ -59,6 +59,7 @@ void TrajectoryProfileGenerator::calculateProfile(std::vector<double> &pathArray
     else
     {
         ROS_ERROR("Unknown Profile");
+        return false;
     }
 
     // Interpolationsteps for every timesequence
@@ -121,14 +122,15 @@ void TrajectoryProfileGenerator::calculateProfile(std::vector<double> &pathArray
     else
     {
         ROS_ERROR("Unknown Profile");
+        return false;
     }
+    return true;
 }
 
 
-void TrajectoryProfileGenerator::calculateProfileForAngularMovements(  std::vector<double> *pathMatrix,
+bool TrajectoryProfileGenerator::calculateProfileForAngularMovements(  std::vector<double> *pathMatrix,
                                                                        double Se, double Se_roll, double Se_pitch, double Se_yaw,
-                                                                       double start_angle_roll, double start_angle_pitch, double start_angle_yaw,
-                                                                       double VelMax, double AcclMax, std::string profile, bool justRotate)
+                                                                       trajectory_action_move_lin &taml)
 {
     std::vector<double> linearPath, rollPath, pitchPath, yawPath;
     int steps_te, steps_tv, steps_tb = 0;
@@ -148,8 +150,8 @@ void TrajectoryProfileGenerator::calculateProfileForAngularMovements(  std::vect
         }
     }
 
-    // If justRoate == true, then set the largest angular difference as Se_max.
-    if(justRotate)
+    // If rotateOnly == true, then set the largest angular difference as Se_max.
+    if(taml.rotate_only)
     {
         Se_max = temp;
     }
@@ -159,31 +161,32 @@ void TrajectoryProfileGenerator::calculateProfileForAngularMovements(  std::vect
     }
 
     // Calculate the Profile Timings for the linear-path
-    if(profile == "ramp")
+    if(taml.profile == "ramp")
     {
         // Calculate the Ramp Profile Parameters
-        if (VelMax > sqrt(std::fabs(Se_max)*AcclMax))
+        if (taml.vel > sqrt(std::fabs(Se_max) * taml.accl))
         {
-            VelMax = sqrt(std::fabs(Se_max)*AcclMax);
+            taml.vel = sqrt(std::fabs(Se_max)*taml.accl);
         }
-        tb = VelMax/AcclMax;
-        te = (std::fabs(Se_max) / VelMax) + tb;
+        tb = taml.vel / taml.accl;
+        te = (std::fabs(Se_max) / taml.vel) + tb;
         tv = te - tb;
     }
-    else if(profile == "sinoide")
+    else if(taml.profile == "sinoide")
     {
         // Calculate the Sinoide Profile Parameters
-        if (VelMax > sqrt(std::fabs(Se_max)*AcclMax/2))
+        if (taml.vel > sqrt(std::fabs(Se_max) * taml.accl / 2))
         {
-            VelMax = sqrt(std::fabs(Se_max)*AcclMax/2);
+            taml.vel = sqrt(std::fabs(Se_max) * taml.accl / 2);
         }
-        tb = 2 * VelMax/AcclMax;
-        te = (std::fabs(Se_max) / VelMax) + tb;
+        tb = 2 * taml.vel / taml.accl;
+        te = (std::fabs(Se_max) / taml.vel) + tb;
         tv = te - tb;
     }
     else
     {
         ROS_ERROR("Unknown Profile");
+        return false;
     }
 
     // Interpolationsteps for every timesequence
@@ -197,21 +200,25 @@ void TrajectoryProfileGenerator::calculateProfileForAngularMovements(  std::vect
     te = (steps_tb + steps_tv + steps_te) * T_IPO;
 
     // Calculate the paths
-    if(!generatePath(linearPath,       T_IPO,VelMax, AcclMax   , Se_max    , (steps_tb+steps_tv+steps_te), profile))
+    if(!generatePath(linearPath,        T_IPO       , taml.vel  ,  taml.accl  , Se_max  , (steps_tb+steps_tv+steps_te), taml.profile))
     {
         ROS_WARN("Error while Calculating path");
+        return false;
     }
-    if(!generatePathWithTe(rollPath,   T_IPO, te   , AcclMax   , Se_roll   , (steps_tb+steps_tv+steps_te), start_angle_roll,   profile))
+    if(!generatePathWithTe(rollPath,    T_IPO, te   , taml.accl ,   Se_roll   , (steps_tb+steps_tv+steps_te), taml.roll,   taml.profile))
     {
         ROS_WARN("Error while Calculating path");
+        return false;
     }
-    if(!generatePathWithTe(pitchPath,  T_IPO, te   , AcclMax   , Se_pitch  , (steps_tb+steps_tv+steps_te), start_angle_pitch,  profile))
+    if(!generatePathWithTe(pitchPath,   T_IPO, te   , taml.accl ,   Se_pitch  , (steps_tb+steps_tv+steps_te), taml.pitch,  taml.profile))
     {
         ROS_WARN("Error while Calculating path");
+        return false;
     }
-    if(!generatePathWithTe(yawPath,    T_IPO, te   , AcclMax   , Se_yaw    , (steps_tb+steps_tv+steps_te), start_angle_yaw,    profile))
+    if(!generatePathWithTe(yawPath,     T_IPO, te   , taml.accl ,   Se_yaw    , (steps_tb+steps_tv+steps_te), taml.yaw,    taml.profile))
     {
         ROS_WARN("Error while Calculating path");
+        return false;
     }
 
     // Get the Vector sizes of each path-vector
@@ -280,6 +287,7 @@ void TrajectoryProfileGenerator::calculateProfileForAngularMovements(  std::vect
     pathMatrix[1] = rollPath;
     pathMatrix[2] = pitchPath;
     pathMatrix[3] = yawPath;
+    return true;
 }
 
 

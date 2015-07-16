@@ -30,6 +30,8 @@
 #define COB_CONTROL_COB_CARTESIAN_CONTROLLER_INCLUDE_COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_TRAJECTORY_PROFILE_GENERATOR_H_
 
 #include <ros/ros.h>
+#include <cob_cartesian_controller/helper_classes/data_structures.h>
+#include <cob_cartesian_controller/helper_classes/utils.h>
 
 class TrajectoryProfileGenerator
 {
@@ -39,12 +41,11 @@ public:
     }
     ~TrajectoryProfileGenerator(){}
 
-    void calculateProfile(std::vector<double> &pathArray, double Se, double VelMax, double AcclMax, std::string profile);
+    bool calculateProfile(std::vector<double> &pathArray, double Se, double VelMax, double AcclMax, std::string profile);
 
-    void calculateProfileForAngularMovements(std::vector<double> *pathMatrix,
+    bool calculateProfileForAngularMovements(std::vector<double> *pathMatrix,
                                              double Se, double Se_roll, double Se_pitch, double Se_yaw,
-                                             double start_angle_roll, double start_angle_pitch, double start_angle_yaw,
-                                             double VelMax, double AcclMax, std::string profile, bool justRotate);
+                                             trajectory_action_move_lin &taml);
 private:
 
 

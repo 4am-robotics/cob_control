@@ -38,7 +38,7 @@ int main(int argc, char **argv)
 	if(success)
 	{
 		ROS_INFO("...initialized!");
-		cc->load();
+		cc->run();
 	}else
 	{
 		ROS_ERROR("Initialization failed");
