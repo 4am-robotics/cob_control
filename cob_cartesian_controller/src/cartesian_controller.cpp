@@ -348,9 +348,9 @@ void CartesianController::goalCB()
         else if(ta.name == "move_circ")
         {
             ROS_INFO("move_circ");
-            trajectory_action_move_circ ta_circ_lin = convertActionIntoMoveCirc(ta);
+            trajectory_action_move_circ ta_move_circ = convertActionIntoMoveCirc(ta);
 
-            if(!TIP.circular_interpolation(posVec, ta_circ_lin))
+            if(!TIP.circular_interpolation(posVec, ta_move_circ))
             {
                 movePTP(posVec.at(0), 0.03);
                 //Broadcast the circular path
@@ -380,7 +380,6 @@ void CartesianController::goalCB()
             actualTcpPose = utils_.getEndeffectorPose(listener,referenceFrame_, chain_tip_link_);
             ros::Timer timer = nh_.createTimer(ros::Duration(ta.hold_time), &CartesianController::timerCallback, this);
             hold_ = true;
-//            utils_.PoseToRPY(actualTcpPose, roll, pitch, yaw);
 
             holdPosition(actualTcpPose);
             actionSuccess();
