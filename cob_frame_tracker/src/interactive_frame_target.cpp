@@ -70,7 +70,6 @@ bool InteractiveFrameTarget::initialize()
         return false;
     }
 
-
     if (nh_tracker.hasParam("movable_trans"))
     {    nh_tracker.getParam("movable_trans", movable_trans_);    }
     else
@@ -95,11 +94,13 @@ bool InteractiveFrameTarget::initialize()
     bool transform_available = false;
     while(!transform_available)
     {
-        try{
+        try
+        {
             tf_listener_.lookupTransform(root_frame_, chain_tip_link_, ros::Time(), target_pose_);
             transform_available = true;
         }
-        catch (tf::TransformException& ex){
+        catch (tf::TransformException& ex)
+        {
             //ROS_WARN("Waiting for transform...(%s)",ex.what());
             ros::Duration(0.1).sleep();
         }
@@ -183,12 +184,12 @@ bool InteractiveFrameTarget::initialize()
     }
     control_3d.markers.push_back( box_marker );
     int_marker_.controls.push_back(control_3d);
-    ia_server_->insert(int_marker_, boost::bind(&InteractiveFrameTarget::marker_fb,   this, _1));
+    ia_server_->insert(int_marker_, boost::bind(&InteractiveFrameTarget::markerFeedback,   this, _1));
 
     // create menu
-    menu_handler_.insert( "StartTracking", boost::bind(&InteractiveFrameTarget::start_tracking,   this, _1) );
-    menu_handler_.insert( "StopTracking", boost::bind(&InteractiveFrameTarget::stop_tracking,   this, _1) );
-    menu_handler_.insert( "ResetTracking", boost::bind(&InteractiveFrameTarget::reset_tracking,   this, _1) );
+    menu_handler_.insert( "StartTracking", boost::bind(&InteractiveFrameTarget::startTracking,   this, _1) );
+    menu_handler_.insert( "StopTracking", boost::bind(&InteractiveFrameTarget::stopTracking,   this, _1) );
+    menu_handler_.insert( "ResetTracking", boost::bind(&InteractiveFrameTarget::resetTracking,   this, _1) );
 
     int_marker_menu_.header.frame_id = tracking_frame_;
     int_marker_menu_.name = "marker_menu";
@@ -212,28 +213,28 @@ bool InteractiveFrameTarget::initialize()
     //control_menu.description = "InteractiveMenu";
     control_menu.markers.push_back(menu_marker);
     int_marker_menu_.controls.push_back(control_menu);
-    ia_server_->insert(int_marker_menu_, boost::bind(&InteractiveFrameTarget::menu_fb,   this, _1) );
+    ia_server_->insert(int_marker_menu_, boost::bind(&InteractiveFrameTarget::menuFeedback,   this, _1) );
     menu_handler_.apply( *ia_server_, int_marker_menu_.name );
     ia_server_->applyChanges();
 
-    timer_ = nh_.createTimer(ros::Duration(1/update_rate_), &InteractiveFrameTarget::send_transform,   this );
+    timer_ = nh_.createTimer(ros::Duration(1/update_rate_), &InteractiveFrameTarget::sendTransform,   this );
     timer_.start();
 
     ROS_INFO("INTERACTIVE_MARKER...initialized!");
     return true;
 }
 
-void InteractiveFrameTarget::send_transform(const ros::TimerEvent& event)
+void InteractiveFrameTarget::sendTransform(const ros::TimerEvent& event)
 {
     if(!tracking_)
-    {    update_marker();    }
+    {    updateMarker();    }
 
     target_pose_.stamp_ = ros::Time::now();
     target_pose_.child_frame_id_ = tracking_frame_;
     tf_broadcaster_.sendTransform(target_pose_);
 }
 
-void InteractiveFrameTarget::update_marker()
+void InteractiveFrameTarget::updateMarker()
 {
     bool transform_available = false;
     while(!transform_available)
@@ -260,7 +261,7 @@ void InteractiveFrameTarget::update_marker()
     ia_server_->applyChanges();
 }
 
-void InteractiveFrameTarget::start_tracking( const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback )
+void InteractiveFrameTarget::startTracking( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback )
 {
     ROS_INFO("StartTracking");
 
@@ -278,7 +279,7 @@ void InteractiveFrameTarget::start_tracking( const visualization_msgs::Interacti
     }
 }
 
-void InteractiveFrameTarget::stop_tracking( const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback )
+void InteractiveFrameTarget::stopTracking( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback )
 {
     std_srvs::Empty srv;
 
@@ -293,18 +294,18 @@ void InteractiveFrameTarget::stop_tracking( const visualization_msgs::Interactiv
     }
 }
 
-void InteractiveFrameTarget::reset_tracking( const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback )
+void InteractiveFrameTarget::resetTracking( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback )
 {
-    stop_tracking(feedback);
-    update_marker();
+    stopTracking(feedback);
+    updateMarker();
 }
 
-void InteractiveFrameTarget::menu_fb( const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback )
+void InteractiveFrameTarget::menuFeedback( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback )
 {
     return;
 }
 
-void InteractiveFrameTarget::marker_fb( const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback )
+void InteractiveFrameTarget::markerFeedback( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback )
 {
     target_pose_.stamp_ = feedback->header.stamp;
     target_pose_.frame_id_ = feedback->header.frame_id;
