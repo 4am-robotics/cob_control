@@ -27,33 +27,35 @@
  ****************************************************************/
 
 #include <cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator.h>
+#include <cob_cartesian_controller/Profile.h>
 
-bool TrajectoryProfileGenerator::calculateProfile(std::vector<double> &pathArray, double Se, double VelMax,
-                                                  double AcclMax, std::string profile)
+bool TrajectoryProfileGenerator::calculateProfile(std::vector<double>& path_array, double Se,
+                                                  double vel_max, double accl_max, unsigned int profile)
 {
     int steps_te, steps_tv, steps_tb = 0;
-    double tv, tb, te = 0;
-    double T_IPO = pow(update_rate_,-1);
+    double tv, tb, te = 0.0;
+    double T_IPO = pow(update_rate_, -1);
 
-    if(profile == "ramp")
+    if(profile == cob_cartesian_controller::Profile::RAMP)
     {
         // Calculate the Ramp Profile Parameters
-        if (VelMax > sqrt(Se*AcclMax)){
-            VelMax = sqrt(Se*AcclMax);
+        if (vel_max > sqrt(Se*accl_max))
+        {
+            vel_max = sqrt(Se*accl_max);
         }
-        tb = VelMax/AcclMax;
-        te = (Se / VelMax) + tb;
+        tb = vel_max/accl_max;
+        te = (Se / vel_max) + tb;
         tv = te - tb;
     }
-    else if(profile == "sinoide")
+    else if(profile == cob_cartesian_controller::Profile::SINOID)
     {
         // Calculate the Sinoide Profile Parameters
-        if (VelMax > sqrt(Se*AcclMax/2))
+        if (vel_max > sqrt(Se*accl_max/2))
         {
-            VelMax = sqrt(Se*AcclMax/2);
+            vel_max = sqrt(Se*accl_max/2);
         }
-        tb = 2 * VelMax/AcclMax;
-        te = (Se / VelMax) + tb;
+        tb = 2 * vel_max/accl_max;
+        te = (Se / vel_max) + tb;
         tv = te - tb;
     }
     else
@@ -72,51 +74,51 @@ bool TrajectoryProfileGenerator::calculateProfile(std::vector<double> &pathArray
     tv = (steps_tb + steps_tv) * T_IPO;
     te = (steps_tb + steps_tv + steps_te) * T_IPO;
 
-//    ROS_INFO("Vm: %f m/s",VelMax);
-//    ROS_INFO("Bm: %f m/s²",AcclMax);
-//    ROS_INFO("Se: %f ",Se);
-//    ROS_INFO("tb: %f s",tb);
-//    ROS_INFO("tv: %f s",tv);
-//    ROS_INFO("te: %f s",te);
+//    ROS_INFO("Vm: %f m/s", vel_max);
+//    ROS_INFO("Bm: %f m/s^-2", accl_max);
+//    ROS_INFO("Se: %f ", Se);
+//    ROS_INFO("tb: %f s", tb);
+//    ROS_INFO("tv: %f s", tv);
+//    ROS_INFO("te: %f s", te);
 
-    if(profile == "ramp")
+    if(cob_cartesian_controller::Profile::RAMP)
     {
         ROS_INFO("Ramp Profile");
         // Calculate the ramp profile path
         // 0 <= t <= tb
         for(int i = 0 ; i <= steps_tb-1 ; i++)
         {
-            pathArray.push_back(0.5*AcclMax*pow((T_IPO*i),2));
+            path_array.push_back(0.5 * accl_max * pow((T_IPO * i),2));
         }
         // tb <= t <= tv
         for(int i = steps_tb ; i <= (steps_tb + steps_tv-1) ; i++)
         {
-            pathArray.push_back(VelMax*(T_IPO*i)-0.5*pow(VelMax,2)/AcclMax);
+            path_array.push_back(vel_max * (T_IPO * i) - 0.5 * pow(vel_max, 2)/accl_max);
         }
         // tv <= t <= te
         for(int i = (steps_tb + steps_tv) ; i < (steps_tv + steps_tb + steps_te-1) ; i++)
         {
-            pathArray.push_back(VelMax * (te-tb) - 0.5*AcclMax* pow(te-(i*T_IPO),2));
+            path_array.push_back(vel_max * (te-tb) - 0.5 * accl_max * pow(te - (T_IPO * i), 2));
         }
     }
-    else if(profile == "sinoide")
+    else if(cob_cartesian_controller::Profile::SINOID)
     {
         ROS_INFO("Sinoide Profile");
         // Calculate the sinoide profile path
         // 0 <= t <= tb
         for(int i = 0 ; i <= steps_tb-1 ; i++)
         {
-            pathArray.push_back(  AcclMax*(0.25*pow(i*T_IPO,2) + pow(tb,2)/(8*pow(M_PI,2)) *(cos(2*M_PI/tb * (i*T_IPO))-1)));
+            path_array.push_back(accl_max * (0.25 * pow(T_IPO * i, 2) + pow(tb, 2)/(8 * pow(M_PI, 2)) * (cos(2 * M_PI/tb * (T_IPO*i))-1)));
         }
         // tb <= t <= tv
         for(int i = steps_tb ; i <= (steps_tb + steps_tv-1) ; i++)
         {
-            pathArray.push_back(VelMax*(i*T_IPO-0.5*tb));
+            path_array.push_back(vel_max * (i*T_IPO - 0.5 * tb));
         }
         // tv <= t <= te
         for(int i = (steps_tb + steps_tv) ; i < (steps_tv + steps_tb + steps_te-1) ; i++)
         {
-            pathArray.push_back(0.5*AcclMax*( te*(i*T_IPO + tb) - 0.5*(pow(i*T_IPO,2)+pow(te,2)+2*pow(tb,2))  + (pow(tb,2)/(4*pow(M_PI,2))) * (1-cos( ((2*M_PI)/tb) * (i*T_IPO-tv)))));
+            path_array.push_back(0.5 * accl_max * (te * (i*T_IPO + tb) - 0.5 * (pow(T_IPO*i, 2) + pow(te, 2) + 2 * pow(tb, 2)) + (pow(tb, 2)/(4 * pow(M_PI, 2))) * (1 - cos( ((2*M_PI)/tb) * (i*T_IPO - tv)))));
         }
     }
     else
@@ -128,17 +130,17 @@ bool TrajectoryProfileGenerator::calculateProfile(std::vector<double> &pathArray
 }
 
 
-bool TrajectoryProfileGenerator::calculateProfileForAngularMovements(  std::vector<double> *pathMatrix,
-                                                                       double Se, double Se_roll, double Se_pitch, double Se_yaw,
-                                                                       trajectory_action_move_lin &taml)
+bool TrajectoryProfileGenerator::calculateProfileForAngularMovements(std::vector<double>* path_matrix,
+                                                                      double Se, double Se_roll, double Se_pitch, double Se_yaw,
+                                                                      cob_cartesian_controller::MoveLinStruct& move_lin)
 {
-    std::vector<double> linearPath, rollPath, pitchPath, yawPath;
+    std::vector<double> linear_path, roll_path, pitch_path, yaw_path;
     int steps_te, steps_tv, steps_tb = 0;
-    double tv, tb, te = 0;
-    double T_IPO = pow(update_rate_,-1);
+    double tv, tb, te = 0.0;
+    double T_IPO = pow(update_rate_, -1);
     double params[4][2];
-    double Se_max, temp = 0;
-    bool linearOkay, rollOkay, pitchOkay, yawOkay = false;
+    double Se_max, temp = 0.0;
+    bool linear_okay, roll_okay, pitch_okay, yaw_okay = false;
 
     double Se_array[4] = {Se, Se_roll, Se_pitch, Se_yaw};
 
@@ -151,7 +153,7 @@ bool TrajectoryProfileGenerator::calculateProfileForAngularMovements(  std::vect
     }
 
     // If rotateOnly == true, then set the largest angular difference as Se_max.
-    if(taml.rotate_only)
+    if(move_lin.rotate_only)
     {
         Se_max = temp;
     }
@@ -161,26 +163,26 @@ bool TrajectoryProfileGenerator::calculateProfileForAngularMovements(  std::vect
     }
 
     // Calculate the Profile Timings for the linear-path
-    if(taml.profile == "ramp")
+    if(move_lin.profile.profile_type == cob_cartesian_controller::Profile::RAMP)
     {
         // Calculate the Ramp Profile Parameters
-        if (taml.vel > sqrt(std::fabs(Se_max) * taml.accl))
+        if (move_lin.profile.vel > sqrt(std::fabs(Se_max) * move_lin.profile.accl))
         {
-            taml.vel = sqrt(std::fabs(Se_max)*taml.accl);
+            move_lin.profile.vel = sqrt(std::fabs(Se_max) * move_lin.profile.accl);
         }
-        tb = taml.vel / taml.accl;
-        te = (std::fabs(Se_max) / taml.vel) + tb;
+        tb = move_lin.profile.vel / move_lin.profile.accl;
+        te = (std::fabs(Se_max) / move_lin.profile.vel) + tb;
         tv = te - tb;
     }
-    else if(taml.profile == "sinoide")
+    else if(move_lin.profile.profile_type == cob_cartesian_controller::Profile::SINOID)
     {
         // Calculate the Sinoide Profile Parameters
-        if (taml.vel > sqrt(std::fabs(Se_max) * taml.accl / 2))
+        if (move_lin.profile.vel > sqrt(std::fabs(Se_max) * move_lin.profile.accl / 2))
         {
-            taml.vel = sqrt(std::fabs(Se_max) * taml.accl / 2);
+            move_lin.profile.vel = sqrt(std::fabs(Se_max) * move_lin.profile.accl / 2);
         }
-        tb = 2 * taml.vel / taml.accl;
-        te = (std::fabs(Se_max) / taml.vel) + tb;
+        tb = 2 * move_lin.profile.vel / move_lin.profile.accl;
+        te = (std::fabs(Se_max) / move_lin.profile.vel) + tb;
         tv = te - tb;
     }
     else
@@ -190,7 +192,7 @@ bool TrajectoryProfileGenerator::calculateProfileForAngularMovements(  std::vect
     }
 
     // Interpolationsteps for every timesequence
-    steps_tb = (double)tb / T_IPO;
+    steps_tb = (double)tb      / T_IPO;
     steps_tv = (double)(tv-tb) / T_IPO;
     steps_te = (double)(te-tv) / T_IPO;
 
@@ -200,126 +202,134 @@ bool TrajectoryProfileGenerator::calculateProfileForAngularMovements(  std::vect
     te = (steps_tb + steps_tv + steps_te) * T_IPO;
 
     // Calculate the paths
-    if(!generatePath(linearPath,        T_IPO       , taml.vel  ,  taml.accl  , Se_max  , (steps_tb+steps_tv+steps_te), taml.profile))
+    if(!generatePath(linear_path, T_IPO, move_lin.profile.vel, move_lin.profile.accl, Se_max, (steps_tb + steps_tv + steps_te), move_lin.profile.profile_type))
     {
         ROS_WARN("Error while Calculating path");
         return false;
     }
-    if(!generatePathWithTe(rollPath,    T_IPO, te   , taml.accl ,   Se_roll   , (steps_tb+steps_tv+steps_te), taml.roll,   taml.profile))
+    if(!generatePathWithTe(roll_path, T_IPO, te, move_lin.profile.accl, Se_roll, (steps_tb + steps_tv + steps_te), move_lin.roll, move_lin.profile.profile_type))
     {
         ROS_WARN("Error while Calculating path");
         return false;
     }
-    if(!generatePathWithTe(pitchPath,   T_IPO, te   , taml.accl ,   Se_pitch  , (steps_tb+steps_tv+steps_te), taml.pitch,  taml.profile))
+    if(!generatePathWithTe(pitch_path, T_IPO, te, move_lin.profile.accl, Se_pitch, (steps_tb + steps_tv + steps_te), move_lin.pitch, move_lin.profile.profile_type))
     {
         ROS_WARN("Error while Calculating path");
         return false;
     }
-    if(!generatePathWithTe(yawPath,     T_IPO, te   , taml.accl ,   Se_yaw    , (steps_tb+steps_tv+steps_te), taml.yaw,    taml.profile))
+    if(!generatePathWithTe(yaw_path, T_IPO, te, move_lin.profile.accl, Se_yaw, (steps_tb + steps_tv + steps_te), move_lin.yaw, move_lin.profile.profile_type))
     {
         ROS_WARN("Error while Calculating path");
         return false;
     }
 
     // Get the Vector sizes of each path-vector
-    int MaxStepArray[4], maxSteps;
+    int max_step_array[4], max_steps;
 
-    MaxStepArray[0] = linearPath.size();
-    MaxStepArray[1] = rollPath.size();
-    MaxStepArray[2] = pitchPath.size();
-    MaxStepArray[3] = yawPath.size();
+    max_step_array[0] = linear_path.size();
+    max_step_array[1] = roll_path.size();
+    max_step_array[2] = pitch_path.size();
+    max_step_array[3] = yaw_path.size();
 
     // Get the largest one
-    maxSteps = 0;
+    max_steps = 0;
     for(int i = 0 ; i < 4 ; i++)
     {
-        if(maxSteps<MaxStepArray[i])
-            maxSteps=MaxStepArray[i];
+        if(max_steps<max_step_array[i])
+        {
+            max_steps = max_step_array[i];
+        }
     }
 
     // Check if every vector has the same length than the largest one.
     while(true)
     {
-        if(linearPath.size() < maxSteps)
+        if(linear_path.size() < max_steps)
         {
-            linearPath.push_back(linearPath.at(linearPath.size()-1));
+            linear_path.push_back(linear_path.at(linear_path.size()-1));
         }
         else
         {
-            linearOkay=true;
+            linear_okay = true;
         }
 
-        if(rollPath.size() < maxSteps)
+        if(roll_path.size() < max_steps)
         {
-            rollPath.push_back(rollPath.at(rollPath.size()-1));
+            roll_path.push_back(roll_path.at(roll_path.size()-1));
         }
         else
         {
-            rollOkay=true;
+            roll_okay=true;
         }
 
-        if(pitchPath.size() < maxSteps)
+        if(pitch_path.size() < max_steps)
         {
-            pitchPath.push_back(pitchPath.at(pitchPath.size()-1));
+            pitch_path.push_back(pitch_path.at(pitch_path.size()-1));
         }
         else
         {
-            pitchOkay=true;
+            pitch_okay=true;
         }
 
-        if(yawPath.size() < maxSteps)
+        if(yaw_path.size() < max_steps)
         {
-            yawPath.push_back(yawPath.at(yawPath.size()-1));
+            yaw_path.push_back(yaw_path.at(yaw_path.size()-1));
         }
         else
         {
-            yawOkay=true;
+            yaw_okay=true;
         }
 
-        if(linearOkay && rollOkay && pitchOkay && yawOkay)
+        if(linear_okay && roll_okay && pitch_okay && yaw_okay)
         {
             break;
         }
     }
 
-    // Put the interpolated paths into the pathMatrix
-    pathMatrix[0] = linearPath;
-    pathMatrix[1] = rollPath;
-    pathMatrix[2] = pitchPath;
-    pathMatrix[3] = yawPath;
+    // Put the interpolated paths into the path_matrix
+    path_matrix[0] = linear_path;
+    path_matrix[1] = roll_path;
+    path_matrix[2] = pitch_path;
+    path_matrix[3] = yaw_path;
+    
     return true;
 }
 
 
-bool TrajectoryProfileGenerator::generatePath(std::vector<double> &pathArray, double T_IPO, double VelMax,
-                                              double AcclMax, double Se_max, int steps_max, std::string profile)
+bool TrajectoryProfileGenerator::generatePath(std::vector<double>& path_array, double T_IPO,
+                                              double vel_max, double accl_max, double Se_max, int steps_max, unsigned int profile)
 {
-    double tv,tb,te=0;
+    double tv, tb, te = 0.0;
     int steps_te, steps_tv, steps_tb = 0;
 
     // Reconfigure the timings and parameters with T_IPO
-    tb = (VelMax/(AcclMax*T_IPO)) * T_IPO;
-    tv = (std::fabs(Se_max)/(VelMax * T_IPO)) * T_IPO;
+    tb = (vel_max/(accl_max * T_IPO)) * T_IPO;
+    tv = (std::fabs(Se_max)/(vel_max * T_IPO)) * T_IPO;
     te = tv + tb;
-    VelMax = std::fabs(Se_max) / tv;
-    AcclMax = VelMax / tb;
+    vel_max = std::fabs(Se_max) / tv;
+    accl_max = vel_max / tb;
 
     // Calculate the Profile Timings for the longest path
-    if(profile == "ramp")
+    if(profile == cob_cartesian_controller::Profile::RAMP)
     {
-        tb = VelMax/AcclMax;
-        te = (std::fabs(Se_max) / VelMax) + tb;
+        tb = vel_max/accl_max;
+        te = (std::fabs(Se_max) / vel_max) + tb;
+        tv = te - tb;
+    }
+    else if(profile == cob_cartesian_controller::Profile::SINOID)
+    {
+        tb = 2 * vel_max/accl_max;
+        te = (std::fabs(Se_max) / vel_max) + tb;
         tv = te - tb;
     }
     else
     {
-        tb = 2 * VelMax/AcclMax;
-        te = (std::fabs(Se_max) / VelMax) + tb;
-        tv = te - tb;
+        ROS_ERROR("Unknown Profile");
+        return false;
     }
 
     // Interpolationsteps for every timesequence
-    steps_tb = (double)tb / T_IPO;
+    steps_tb = (double)tb      / T_IPO;
     steps_tv = (double)(tv-tb) / T_IPO;
     steps_te = (double)(te-tv) / T_IPO;
 
@@ -328,44 +338,44 @@ bool TrajectoryProfileGenerator::generatePath(std::vector<double> &pathArray, do
     tv = (steps_tb + steps_tv) * T_IPO;
     te = (steps_tb + steps_tv + steps_te) * T_IPO;
 
-    if(profile == "ramp")
+    if(profile == cob_cartesian_controller::Profile::RAMP)
     {
         // Calculate the ramp profile path
         // 0 <= t <= tb
         for(int i = 0 ; i <= steps_tb-1 ; i++)
         {
-            pathArray.push_back( Se_max/std::fabs(Se_max)*(0.5*AcclMax*pow((T_IPO*i),2)));
+            path_array.push_back( Se_max/std::fabs(Se_max)*(0.5*accl_max*pow((T_IPO*i),2)));
         }
 
         // tb <= t <= tv
         for(int i = steps_tb ; i <= (steps_tb + steps_tv-1) ; i++)
         {
-            pathArray.push_back(Se_max/std::fabs(Se_max)*(VelMax*(T_IPO*i)-0.5*pow(VelMax,2)/AcclMax));
+            path_array.push_back(Se_max/std::fabs(Se_max)*(vel_max*(T_IPO*i)-0.5*pow(vel_max,2)/accl_max));
         }
 
         // tv <= t <= te
         for(int i = (steps_tb + steps_tv) ; i < (steps_tv + steps_tb + steps_te-1) ; i++)
         {
-            pathArray.push_back(Se_max/std::fabs(Se_max)*(VelMax * (te-tb) - 0.5*AcclMax* pow(te-(i*T_IPO),2)));
+            path_array.push_back(Se_max/std::fabs(Se_max)*(vel_max * (te-tb) - 0.5*accl_max* pow(te-(i*T_IPO),2)));
         }
     }
-    else if(profile == "sinoide")
+    else if(profile == cob_cartesian_controller::Profile::SINOID)
     {
         // Calculate the sinoide profile path
         // 0 <= t <= tb
         for(int i = 0 ; i <= steps_tb-1 ; i++)
         {
-            pathArray.push_back( Se_max/std::fabs(Se_max)*( AcclMax*(0.25*pow(i*T_IPO,2) + pow(tb,2)/(8*pow(M_PI,2)) *(cos(2*M_PI/tb * (i*T_IPO))-1))));
+            path_array.push_back( Se_max/std::fabs(Se_max)*( accl_max*(0.25*pow(i*T_IPO,2) + pow(tb,2)/(8*pow(M_PI,2)) *(cos(2*M_PI/tb * (i*T_IPO))-1))));
         }
         // tb <= t <= tv
         for(int i = steps_tb ; i <= (steps_tb + steps_tv-1) ; i++)
         {
-            pathArray.push_back(Se_max/std::fabs(Se_max)*( VelMax*(i*T_IPO-0.5*tb)));
+            path_array.push_back(Se_max/std::fabs(Se_max)*( vel_max*(i*T_IPO-0.5*tb)));
         }
         // tv <= t <= te
         for(int i = (steps_tb + steps_tv) ; i < (steps_tv + steps_tb + steps_te-1) ; i++)
         {
-            pathArray.push_back(Se_max/std::fabs(Se_max)*( 0.5 * AcclMax *( te*(i*T_IPO + tb) - 0.5*(pow(i*T_IPO,2)+pow(te,2)+2*pow(tb,2)) + (pow(tb,2)/(4*pow(M_PI,2))) * (1-cos( ((2*M_PI)/tb) * (i*T_IPO-tv))))));
+            path_array.push_back(Se_max/std::fabs(Se_max)*( 0.5 * accl_max *( te*(i*T_IPO + tb) - 0.5*(pow(i*T_IPO,2)+pow(te,2)+2*pow(tb,2)) + (pow(tb,2)/(4*pow(M_PI,2))) * (1-cos( ((2*M_PI)/tb) * (i*T_IPO-tv))))));
         }
     }
     else
@@ -376,46 +386,47 @@ bool TrajectoryProfileGenerator::generatePath(std::vector<double> &pathArray, do
     return true;
 }
 
-bool TrajectoryProfileGenerator::generatePathWithTe(std::vector<double> &pathArray, double T_IPO, double te, double AcclMax,
-                                                    double Se_max, int steps_max, double start_angle, std::string profile)
+bool TrajectoryProfileGenerator::generatePathWithTe(std::vector<double>& path_array, double T_IPO, double te, 
+                                                    double accl_max, double Se_max, int steps_max, double start_angle, unsigned int profile)
 {
-    double tv,tb=0;
-    int steps_te,steps_tv,steps_tb=0;
-    double VelMax;
+    double tv,tb = 0.0;
+    int steps_te, steps_tv, steps_tb = 0;
+    double vel_max;
 
     if(std::fabs(Se_max) > 0.001)
     {
         // Calculate the Profile Timings
-        if(profile == "ramp")
+        if(profile == cob_cartesian_controller::Profile::RAMP)
         {
-            // Reconfigure AcclMax and Velmax
-            while(te < 2 * sqrt(std::fabs(Se_max)/AcclMax))
+            // Reconfigure accl_max and Velmax
+            while(te < 2 * sqrt(std::fabs(Se_max)/accl_max))
             {
-                AcclMax+=0.001;
+                accl_max+=0.001;
             }
 
-            VelMax = AcclMax * te / 2 - sqrt((pow(AcclMax,2)*pow(te,2)/4) - std::fabs(Se_max) * AcclMax );
+            vel_max = accl_max * te / 2 - sqrt((pow(accl_max,2)*pow(te,2)/4) - std::fabs(Se_max) * accl_max );
 
             // Calculate profile timings, te is known
-            tb = VelMax/AcclMax;
+            tb = vel_max/accl_max;
             tv = te - tb;
         }
-        else if(profile == "sinoide")
+        else if(profile == cob_cartesian_controller::Profile::SINOID)
         {
-            // Reconfigure AcclMax and Velmax
-            while(te < sqrt(std::fabs(Se_max) * 8/AcclMax))
+            // Reconfigure accl_max and Velmax
+            while(te < sqrt(std::fabs(Se_max) * 8/accl_max))
             {
-                AcclMax += 0.001;
+                accl_max += 0.001;
             }
-            VelMax = AcclMax * te / 4 - sqrt((pow(AcclMax,2)*pow(te,2)/16) - std::fabs(Se_max) * AcclMax/2 );
+            vel_max = accl_max * te / 4 - sqrt((pow(accl_max,2)*pow(te,2)/16) - std::fabs(Se_max) * accl_max/2 );
 
             // Calculate profile timings, te is known
-            tb = 2 * VelMax/AcclMax;
+            tb = 2 * vel_max/accl_max;
             tv = te - tb;
         }
         else
         {
             ROS_ERROR("Unknown Profile");
+            return false;
         }
 
         // Interpolationsteps for every timesequence
@@ -428,41 +439,41 @@ bool TrajectoryProfileGenerator::generatePathWithTe(std::vector<double> &pathArr
         tv = (steps_tb + steps_tv) * T_IPO;
         te = (steps_tb + steps_tv + steps_te) * T_IPO;
 
-        if(profile == "ramp")
+        if(profile == cob_cartesian_controller::Profile::RAMP)
         {
             // Calculate the ramp profile path
             // 0 <= t <= tb
             for(int i = 0 ; i <= steps_tb-1 ; i++)
             {
-                pathArray.push_back( start_angle + Se_max/std::fabs(Se_max)*(0.5*AcclMax*pow((T_IPO*i),2)));
+                path_array.push_back( start_angle + Se_max/std::fabs(Se_max)*(0.5*accl_max*pow((T_IPO*i),2)));
             }
             // tb <= t <= tv
             for(int i=steps_tb;i<=(steps_tb+steps_tv-1);i++)
             {
-                pathArray.push_back(start_angle + Se_max/std::fabs(Se_max)*(VelMax*(T_IPO*i)-0.5*pow(VelMax,2)/AcclMax));
+                path_array.push_back(start_angle + Se_max/std::fabs(Se_max)*(vel_max*(T_IPO*i)-0.5*pow(vel_max,2)/accl_max));
             }
             // tv <= t <= te
             for(int i = (steps_tb + steps_tv) ; i < (steps_tv + steps_tb + steps_te-1);i++)
             {
-                pathArray.push_back(start_angle + Se_max/std::fabs(Se_max)*(VelMax * (te-tb) - 0.5*AcclMax* pow(te-(i*T_IPO),2)));
+                path_array.push_back(start_angle + Se_max/std::fabs(Se_max)*(vel_max * (te-tb) - 0.5*accl_max* pow(te-(i*T_IPO),2)));
             }
         }
-        else if(profile == "sinoide")
+        else if(profile == cob_cartesian_controller::Profile::SINOID)
         {
             // Calculate the sinoide profile path
             // 0 <= t <= tb
             for(int i = 0 ; i <= steps_tb-1 ; i++)
             {
-                pathArray.push_back(start_angle + Se_max/std::fabs(Se_max)*( AcclMax*(0.25*pow(i*T_IPO,2) + pow(tb,2)/(8*pow(M_PI,2)) *(cos(2*M_PI/tb * (i*T_IPO))-1))));
+                path_array.push_back(start_angle + Se_max/std::fabs(Se_max)*( accl_max*(0.25*pow(i*T_IPO,2) + pow(tb,2)/(8*pow(M_PI,2)) *(cos(2*M_PI/tb * (i*T_IPO))-1))));
             }
             // tb <= t <= tv
             for(int i = steps_tb ; i <= (steps_tb + steps_tv-1) ; i++)
             {
-                pathArray.push_back(start_angle + Se_max/std::fabs(Se_max)*(VelMax*(i*T_IPO-0.5*tb)));
+                path_array.push_back(start_angle + Se_max/std::fabs(Se_max)*(vel_max*(i*T_IPO-0.5*tb)));
             }
             // tv <= t <= te
             for(int i = (steps_tb + steps_tv); i < (steps_tv+steps_tb+steps_te-1) ; i++){
-                pathArray.push_back(start_angle + Se_max/std::fabs(Se_max)*(0.5*AcclMax*( te*(i*T_IPO + tb) - 0.5*(pow(i*T_IPO,2)+pow(te,2)+2*pow(tb,2))  + (pow(tb,2)/(4*pow(M_PI,2))) * (1-cos( ((2*M_PI)/tb) * (i*T_IPO-tv))))));
+                path_array.push_back(start_angle + Se_max/std::fabs(Se_max)*(0.5*accl_max*( te*(i*T_IPO + tb) - 0.5*(pow(i*T_IPO,2)+pow(te,2)+2*pow(tb,2))  + (pow(tb,2)/(4*pow(M_PI,2))) * (1-cos( ((2*M_PI)/tb) * (i*T_IPO-tv))))));
             }
         }
         else
@@ -473,9 +484,7 @@ bool TrajectoryProfileGenerator::generatePathWithTe(std::vector<double> &pathArr
     }
     else
     {
-        pathArray.push_back(start_angle);
+        path_array.push_back(start_angle);
     }
     return true;
 }
-
-

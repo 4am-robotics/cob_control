@@ -26,37 +26,53 @@
  *
  ****************************************************************/
 
-#ifndef COB_CONTROL_COB_CARTESIAN_CONTROLLER_INCLUDE_COB_CARTESIAN_CONTROLLER_HELPER_CLASSES_DATA_STRUCTURES_H_
-#define COB_CONTROL_COB_CARTESIAN_CONTROLLER_INCLUDE_COB_CARTESIAN_CONTROLLER_HELPER_CLASSES_DATA_STRUCTURES_H_
+#ifndef COB_CARTESIAN_CONTROLLER_DATA_STRUCTURES_H_
+#define COB_CARTESIAN_CONTROLLER_DATA_STRUCTURES_H_
 
 #include <std_msgs/Float64.h>
 #include <geometry_msgs/Pose.h>
 #include <exception>
 
-struct trajectory_action_move_lin{
-        bool rotate_only;
-        std::string profile;
-        double x, y, z, roll, pitch, yaw, vel, accl;
+namespace cob_cartesian_controller
+{
+    struct ProfileStruct
+    {
+        unsigned int profile_type;
+        double vel, accl;
+    };
+
+    struct MoveLinStruct
+    {
+        double x, y, z, roll, pitch, yaw;
         geometry_msgs::Pose start, end;
-};
+        bool rotate_only;
+        
+        ProfileStruct profile;
+    };
 
-struct trajectory_action_move_circ{
-        bool rotateOnly;
-        std::string profile;
-        double x_center, y_center, z_center, roll_center, pitch_center, yaw_center, vel, accl, startAngle, endAngle, radius;
-};
+    struct MoveCircStruct
+    {
+        double x_center, y_center, z_center, roll_center, pitch_center, yaw_center;
+        double start_angle, end_angle, radius;
+        bool rotate_only;
+        
+        ProfileStruct profile;
+    };
 
-struct trajectory_action{
+    struct CartesianActionStruct
+    {
         std::string name;
         double hold_time;
-        trajectory_action_move_lin move_lin;
-        trajectory_action_move_circ move_circ;
-};
+        MoveLinStruct move_lin;
+        MoveCircStruct move_circ;
+    };
+
+}//namespace
 
 class errorException: public std::runtime_error
 {
 public:
-        errorException(const std::string errorDescription) : std::runtime_error(errorDescription) { ; };
+    errorException(const std::string error_description) : std::runtime_error(error_description) { ; };
 };
 
-#endif /* COB_CONTROL_COB_CARTESIAN_CONTROLLER_INCLUDE_COB_CARTESIAN_CONTROLLER_HELPER_CLASSES_DATA_STRUCTURES_H_ */
+#endif /* COB_CARTESIAN_CONTROLLER_DATA_STRUCTURES_H_ */

@@ -42,22 +42,22 @@ bool CartesianController::initialize()
     ros::NodeHandle nh_private("~");
 
     ///get params articulation Nodehandle
-    if(!nh_private.getParam("reference_frame", referenceFrame_))
+    if(!nh_private.getParam("reference_frame", reference_frame_))
     {
         ROS_ERROR("Parameter 'reference_frame' not set");
         return false;
     }
 
-    if(!nh_private.getParam("target_frame", targetFrame_))
+    if(!nh_private.getParam("target_frame", target_frame_))
     {
         ROS_ERROR("Parameter 'target_frame' not set");
         return false;
     }
 
     if (nh_private.hasParam("update_rate"))
-    {	nh_private.getParam("update_rate", update_rate_);	}
+    {    nh_private.getParam("update_rate", update_rate_);    }
     else
-    {	update_rate_ = 68.0;	}	//hz
+    {    update_rate_ = 68.0;    }    //hz
 
 
     /// Cartesian Nodehandle
@@ -68,13 +68,13 @@ bool CartesianController::initialize()
     }
 
     ROS_WARN("Waiting for Services...");
-    startTracking_ = nh_.serviceClient<cob_srvs::SetString>("frame_tracker/start_tracking");
-    stopTracking_ = nh_.serviceClient<std_srvs::Empty>("frame_tracker/stop_tracking");
-    startTracking_.waitForExistence();
-    stopTracking_.waitForExistence();
+    start_tracking_ = nh_.serviceClient<cob_srvs::SetString>("frame_tracker/start_tracking");
+    stop_tracking_ = nh_.serviceClient<std_srvs::Empty>("frame_tracker/stop_tracking");
+    start_tracking_.waitForExistence();
+    stop_tracking_.waitForExistence();
 
     action_name_ = "cartesian_trajectory_action_";
-    as_.reset(new tSAS_CartesianControllerAction(nh_, action_name_, false));
+    as_.reset(new SAS_CartesianControllerAction_t(nh_, action_name_, false));
     as_->registerGoalCallback(boost::bind(&CartesianController::goalCB, this));
     as_->registerPreemptCallback(boost::bind(&CartesianController::preemptCB, this));
     as_->start();
@@ -83,8 +83,8 @@ bool CartesianController::initialize()
     tracking_ = false;
     failure_counter_ = 0;
 
-	ROS_INFO("...done!");
-	return true;
+    ROS_INFO("...done!");
+    return true;
 }
 
 void CartesianController::run()
@@ -103,7 +103,7 @@ void CartesianController::timerCallback(const ros::TimerEvent& event)
 }
 
 // Pseudo PTP
-void CartesianController::movePTP(geometry_msgs::Pose targetPose, double epsilon)
+void CartesianController::movePTP(geometry_msgs::Pose target_pose, double epsilon)
 {
     tf::TransformBroadcaster br;
     tf::Transform transform;
@@ -112,25 +112,25 @@ void CartesianController::movePTP(geometry_msgs::Pose targetPose, double epsilon
     int reached_pos_counter = 0;
     double ro, pi, ya;
     ros::Rate rate(update_rate_);
-    tf::StampedTransform stampedTransform;
+    tf::StampedTransform stamped_transform;
     tf::Quaternion q;
 
     while(ros::ok())
     {
         // Linearkoordinaten
-        transform.setOrigin( tf::Vector3(targetPose.position.x, targetPose.position.y, targetPose.position.z) );
+        transform.setOrigin( tf::Vector3(target_pose.position.x, target_pose.position.y, target_pose.position.z) );
 
-        q = tf::Quaternion(targetPose.orientation.x, targetPose.orientation.y, targetPose.orientation.z, targetPose.orientation.w);
+        q = tf::Quaternion(target_pose.orientation.x, target_pose.orientation.y, target_pose.orientation.z, target_pose.orientation.w);
         transform.setRotation(q);
 
         // Send br Frame
-        br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), referenceFrame_, targetFrame_));
+        br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), reference_frame_, target_frame_));
 
         // Get transformation
         try
         {
             startTracking();
-            listener.lookupTransform(targetFrame_, chain_tip_link_, ros::Time(0), stampedTransform);
+            listener.lookupTransform(target_frame_, chain_tip_link_, ros::Time(0), stamped_transform);
         }
         catch (tf::TransformException &ex)
         {
@@ -138,14 +138,14 @@ void CartesianController::movePTP(geometry_msgs::Pose targetPose, double epsilon
         }
 
         // Get current RPY out of quaternion
-        tf::Quaternion quatern = stampedTransform.getRotation();
+        tf::Quaternion quatern = stamped_transform.getRotation();
         tf::Matrix3x3(quatern).getRPY(ro,pi,ya);
 
 
         // Wait for arm_7_link to be in position
-        if(utils_.epsilon_area(stampedTransform.getOrigin().x(), stampedTransform.getOrigin().y(), stampedTransform.getOrigin().z(), ro, pi, ya,epsilon))
+        if(utils_.epsilonArea(stamped_transform.getOrigin().x(), stamped_transform.getOrigin().y(), stamped_transform.getOrigin().z(), ro, pi, ya,epsilon))
         {
-            reached_pos_counter++;	// Count up if end effector position is in the epsilon area to avoid wrong values
+            reached_pos_counter++;    // Count up if end effector position is in the epsilon area to avoid wrong values
         }
 
         if(reached_pos_counter >= 50)
@@ -153,7 +153,7 @@ void CartesianController::movePTP(geometry_msgs::Pose targetPose, double epsilon
             reached_pos_ = true;
         }
 
-        if(reached_pos_ == true)	// Cancel while loop
+        if(reached_pos_ == true)    // Cancel while loop
         {
             break;
         }
@@ -162,11 +162,11 @@ void CartesianController::movePTP(geometry_msgs::Pose targetPose, double epsilon
     }
 }
 
-void CartesianController::posePathBroadcaster(std::vector <geometry_msgs::Pose> *poseVector)
+void CartesianController::posePathBroadcaster(std::vector<geometry_msgs::Pose>* pose_vector)
 {
     double roll, pitch, yaw;
     tf::TransformListener listener;
-    tf::StampedTransform stampedTransform;
+    tf::StampedTransform stamped_transform;
     tf::TransformBroadcaster br;
     tf::Transform transform;
     ros::Rate rate(update_rate_);
@@ -176,7 +176,7 @@ void CartesianController::posePathBroadcaster(std::vector <geometry_msgs::Pose> 
 
     startTracking();
 
-    for(int i = 0; i < poseVector->size()-1; i++)
+    for(int i = 0; i < pose_vector->size()-1; i++)
     {
         if(!tracking_goal_)
         {
@@ -186,34 +186,34 @@ void CartesianController::posePathBroadcaster(std::vector <geometry_msgs::Pose> 
         ros::Time now = ros::Time::now();
 
         // Linearkoordinaten
-        transform.setOrigin(tf::Vector3(poseVector->at(i).position.x, poseVector->at(i).position.y, poseVector->at(i).position.z));
-        q = tf::Quaternion(poseVector->at(i).orientation.x,
-                           poseVector->at(i).orientation.y,
-                           poseVector->at(i).orientation.z,
-                           poseVector->at(i).orientation.w);
+        transform.setOrigin(tf::Vector3(pose_vector->at(i).position.x, pose_vector->at(i).position.y, pose_vector->at(i).position.z));
+        q = tf::Quaternion(pose_vector->at(i).orientation.x,
+                           pose_vector->at(i).orientation.y,
+                           pose_vector->at(i).orientation.z,
+                           pose_vector->at(i).orientation.w);
         transform.setRotation(q);
 
-//        utils_.showMarker(tf::StampedTransform(transform, ros::Time::now(), referenceFrame_, targetFrame_),referenceFrame_,marker1_, 0 , 1.0 , 0 ,"goalFrame");
+//        utils_.showMarker(tf::StampedTransform(transform, ros::Time::now(), reference_frame_, target_frame_), reference_frame_, marker_, 0 , 1, 0, "goalFrame");
 
-        br.sendTransform(tf::StampedTransform(transform, now, referenceFrame_, targetFrame_));
+        br.sendTransform(tf::StampedTransform(transform, now, reference_frame_, target_frame_));
 
-        marker1_++;
+        marker_++;
 
         // Get transformation
         try
         {
-            listener.lookupTransform(targetFrame_, chain_tip_link_, ros::Time(0), stampedTransform);
+            listener.lookupTransform(target_frame_, chain_tip_link_, ros::Time(0), stamped_transform);
         }
-        catch (tf::TransformException &ex)
+        catch (tf::TransformException& ex)
         {
 //            ROS_ERROR("%s",ex.what());
         }
 
         // Get current RPY out of quaternion
-        tf::Quaternion quatern = stampedTransform.getRotation();
+        tf::Quaternion quatern = stamped_transform.getRotation();
         tf::Matrix3x3(quatern).getRPY(roll, pitch, yaw);
 
-        if(!utils_.epsilon_area(stampedTransform.getOrigin().x(), stampedTransform.getOrigin().y(), stampedTransform.getOrigin().z(),
+        if(!utils_.epsilonArea(stamped_transform.getOrigin().x(), stamped_transform.getOrigin().y(), stamped_transform.getOrigin().z(),
                                 roll, pitch, yaw, epsilon))
         {
             failure_counter_++;
@@ -221,7 +221,9 @@ void CartesianController::posePathBroadcaster(std::vector <geometry_msgs::Pose> 
         else
         {
             if(failure_counter_ > 0)
+            {
                 failure_counter_--;
+            }
         }
 
         if(failure_counter_ > 50)
@@ -237,7 +239,7 @@ void CartesianController::posePathBroadcaster(std::vector <geometry_msgs::Pose> 
     stopTracking();
 }
 
-void CartesianController::holdPosition(geometry_msgs::Pose holdPose)
+void CartesianController::holdPosition(geometry_msgs::Pose hold_pose)
 {
     tf::TransformBroadcaster br;
     tf::Transform transform;
@@ -249,13 +251,13 @@ void CartesianController::holdPosition(geometry_msgs::Pose holdPose)
     while(hold_)
     {
         // Linearcoordinates
-        transform.setOrigin( tf::Vector3(holdPose.position.x,holdPose.position.y,holdPose.position.z) );
+        transform.setOrigin( tf::Vector3(hold_pose.position.x, hold_pose.position.y, hold_pose.position.z) );
 
         // RPY Angles
-        q = tf::Quaternion(holdPose.orientation.x,holdPose.orientation.y,holdPose.orientation.z,holdPose.orientation.w);
+        q = tf::Quaternion(hold_pose.orientation.x, hold_pose.orientation.y, hold_pose.orientation.z, hold_pose.orientation.w);
         transform.setRotation(q);
 
-        br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), referenceFrame_, targetFrame_));
+        br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), reference_frame_, target_frame_));
         ros::spinOnce();
         rate.sleep();
     }
@@ -266,10 +268,10 @@ void CartesianController::holdPosition(geometry_msgs::Pose holdPose)
 void CartesianController::startTracking()
 {
     cob_srvs::SetString start;
-    start.request.data = targetFrame_;
+    start.request.data = target_frame_;
     if(!tracking_)
     {
-        startTracking_.call(start);
+        start_tracking_.call(start);
 
         if(start.response.success==true)
         {
@@ -290,7 +292,7 @@ void CartesianController::stopTracking()
     srv_save_stop.request;
     if(tracking_)
     {
-        if(stopTracking_.call(srv_save_stop))
+        if(stop_tracking_.call(srv_save_stop))
         {
             ROS_INFO("... service stopped!");
             tracking_ = false;
@@ -306,38 +308,38 @@ void CartesianController::goalCB()
 {
     tf::TransformListener listener;
     TrajectoryInterpolator TIP(update_rate_);
-    std::vector <geometry_msgs::Pose> posVec;
-    geometry_msgs::Pose actualTcpPose;
+    std::vector <geometry_msgs::Pose> pos_vec;
+    geometry_msgs::Pose actual_tcp_pose;
     double roll, pitch, yaw;
-    trajectory_action ta;
+    cob_cartesian_controller::CartesianActionStruct action_struct;
 
     ROS_INFO("Received a new goal");
 
     if (as_->isNewGoalAvailable())
     {
-        ta = acceptGoal(as_->acceptNewGoal());
+        action_struct = acceptGoal(as_->acceptNewGoal());
         tracking_goal_ = true;
 
-        if(ta.name == "move_lin")
+        if(action_struct.name == "move_lin")
         {
             ROS_INFO("move_lin");
 
-            trajectory_action_move_lin ta_move_lin = convertActionIntoMoveLin(ta);
+            cob_cartesian_controller::MoveLinStruct move_lin = action_struct.move_lin;
 
             // Interpolate the path
-            if(TIP.linear_interpolation(posVec, ta_move_lin))
+            if(TIP.linearInterpolation(pos_vec, move_lin))
             {
                 //Broadcast the linear path
                 try
                 {
-                    posePathBroadcaster(&posVec);
+                    posePathBroadcaster(&pos_vec);
                     actionSuccess();
                 }
-                catch (errorException &e) {
+                catch (errorException& e)
+                {
                     ROS_WARN("%s",e.what());
                     actionAbort();
                 }
-
             }
             else
             {
@@ -345,26 +347,27 @@ void CartesianController::goalCB()
                 tracking_goal_ = false;
             }
         }
-        else if(ta.name == "move_circ")
+        else if(action_struct.name == "move_circ")
         {
             ROS_INFO("move_circ");
-            trajectory_action_move_circ ta_move_circ = convertActionIntoMoveCirc(ta);
+            cob_cartesian_controller::MoveCircStruct move_circ = action_struct.move_circ;
 
-            if(!TIP.circular_interpolation(posVec, ta_move_circ))
+            if(!TIP.circularInterpolation(pos_vec, move_circ))
             {
-                movePTP(posVec.at(0), 0.03);
+                movePTP(pos_vec.at(0), 0.03);
                 //Broadcast the circular path
                 try
                 {
-                    posePathBroadcaster(&posVec);
+                    posePathBroadcaster(&pos_vec);
                     actionSuccess();
                 }
-                catch (errorException &e) {
+                catch (errorException& e)
+                {
                     ROS_WARN("%s",e.what());
                     actionAbort();
                 }
 
-                actualTcpPose = posVec.at(posVec.size()-1);
+                actual_tcp_pose = pos_vec.at(pos_vec.size()-1);
             }
             else
             {
@@ -372,16 +375,15 @@ void CartesianController::goalCB()
                 tracking_goal_ = false;
             }
         }
-
-        else if(ta.name == "hold")
+        else if(action_struct.name == "hold")
         {
             ROS_INFO("Hold position");
 
-            actualTcpPose = utils_.getEndeffectorPose(listener,referenceFrame_, chain_tip_link_);
-            ros::Timer timer = nh_.createTimer(ros::Duration(ta.hold_time), &CartesianController::timerCallback, this);
+            actual_tcp_pose = utils_.getEndeffectorPose(listener, reference_frame_, chain_tip_link_);
+            ros::Timer timer = nh_.createTimer(ros::Duration(action_struct.hold_time), &CartesianController::timerCallback, this);
             hold_ = true;
 
-            holdPosition(actualTcpPose);
+            holdPosition(actual_tcp_pose);
             actionSuccess();
         }
         else
@@ -389,7 +391,7 @@ void CartesianController::goalCB()
             ROS_ERROR("Unknown trajectory action");
             actionAbort();
         }
-        posVec.clear();
+        pos_vec.clear();
     }
 }
 
@@ -407,84 +409,45 @@ void CartesianController::preemptCB()
 }
 
 
-trajectory_action CartesianController::acceptGoal(boost::shared_ptr<const cob_cartesian_controller::CartesianControllerGoal> goal)
+cob_cartesian_controller::CartesianActionStruct CartesianController::acceptGoal(boost::shared_ptr<const cob_cartesian_controller::CartesianControllerGoal> goal)
 {
-    trajectory_action ta;
-    ta.name = goal->ta.name;
+    cob_cartesian_controller::CartesianActionStruct action_struct;
+    action_struct.name = goal->name;
 
-    if(ta.name == "move_lin")
+    if(action_struct.name == "move_lin")
     {
-        ta.move_lin.x           = goal->ta.move_lin.x;
-        ta.move_lin.y           = goal->ta.move_lin.y;
-        ta.move_lin.z           = goal->ta.move_lin.z;
-        ta.move_lin.roll        = goal->ta.move_lin.roll * M_PI/180;
-        ta.move_lin.pitch       = goal->ta.move_lin.pitch * M_PI/180;
-        ta.move_lin.yaw         = goal->ta.move_lin.yaw * M_PI/180;
-        ta.move_lin.vel         = goal->ta.move_lin.vel;
-        ta.move_lin.accl        = goal->ta.move_lin.accl;
-        ta.move_lin.rotate_only = goal->ta.move_lin.rotateOnly;
-        ta.move_lin.profile     = goal->ta.move_lin.profile;
+        action_struct.move_lin.x           = goal->move_lin.x;
+        action_struct.move_lin.y           = goal->move_lin.y;
+        action_struct.move_lin.z           = goal->move_lin.z;
+        action_struct.move_lin.roll        = goal->move_lin.roll * M_PI/180;
+        action_struct.move_lin.pitch       = goal->move_lin.pitch * M_PI/180;
+        action_struct.move_lin.yaw         = goal->move_lin.yaw * M_PI/180;
+        action_struct.move_lin.rotate_only = goal->move_lin.rotate_only;
+        action_struct.move_lin.profile.vel          = goal->move_lin.profile.vel;
+        action_struct.move_lin.profile.accl         = goal->move_lin.profile.accl;
+        action_struct.move_lin.profile.profile_type = goal->move_lin.profile.profile_type;
     }
-    else if(ta.name == "move_circ")
+    else if(action_struct.name == "move_circ")
     {
-        ta.move_circ.x_center      = goal->ta.move_circ.x_center;
-        ta.move_circ.y_center      = goal->ta.move_circ.y_center;
-        ta.move_circ.z_center      = goal->ta.move_circ.z_center;
-        ta.move_circ.roll_center   = goal->ta.move_circ.roll_center * M_PI/180;
-        ta.move_circ.pitch_center  = goal->ta.move_circ.pitch_center * M_PI/180;
-        ta.move_circ.yaw_center    = goal->ta.move_circ.yaw_center * M_PI/180;
-        ta.move_circ.startAngle    = goal->ta.move_circ.start_angle;
-        ta.move_circ.endAngle      = goal->ta.move_circ.end_angle;
-        ta.move_circ.radius        = goal->ta.move_circ.radius;
-        ta.move_circ.vel           = goal->ta.move_circ.vel;
-        ta.move_circ.accl          = goal->ta.move_circ.accl;
-        ta.move_circ.profile       = goal->ta.move_circ.profile;
+        action_struct.move_circ.x_center      = goal->move_circ.x_center;
+        action_struct.move_circ.y_center      = goal->move_circ.y_center;
+        action_struct.move_circ.z_center      = goal->move_circ.z_center;
+        action_struct.move_circ.roll_center   = goal->move_circ.roll_center * M_PI/180;
+        action_struct.move_circ.pitch_center  = goal->move_circ.pitch_center * M_PI/180;
+        action_struct.move_circ.yaw_center    = goal->move_circ.yaw_center * M_PI/180;
+        action_struct.move_circ.start_angle   = goal->move_circ.start_angle;
+        action_struct.move_circ.end_angle     = goal->move_circ.end_angle;
+        action_struct.move_circ.radius        = goal->move_circ.radius;
+        action_struct.move_circ.profile.vel           = goal->move_circ.profile.vel;
+        action_struct.move_circ.profile.accl          = goal->move_circ.profile.accl;
+        action_struct.move_circ.profile.profile_type  = goal->move_circ.profile.profile_type;
     }
-    else if(ta.name == "hold")
+    else if(action_struct.name == "hold")
     {
-        ta.hold_time = goal -> ta.hold_time;
+        action_struct.hold_time = goal ->hold_time;
     }
 
-    return ta;
-}
-
-trajectory_action_move_lin CartesianController::convertActionIntoMoveLin(trajectory_action ta)
-{
-    tf::TransformListener listener;
-    geometry_msgs::Pose actualTcpPose, end;
-    tf::Quaternion q_start,q_end, q_rel;
-
-    actualTcpPose = utils_.getEndeffectorPose(listener, referenceFrame_, chain_tip_link_);
-
-    // Transform RPY to Quaternion
-    q_rel.setRPY(ta.move_lin.roll, ta.move_lin.pitch, ta.move_lin.yaw);
-
-    q_start = tf::Quaternion(actualTcpPose.orientation.x,
-                             actualTcpPose.orientation.y,
-                             actualTcpPose.orientation.z,
-                             actualTcpPose.orientation.w);
-
-    q_end = q_start * q_rel;
-
-    // Define End Pose
-    end.position.x = actualTcpPose.position.x + ta.move_lin.x;
-    end.position.y = actualTcpPose.position.y + ta.move_lin.y;
-    end.position.z = actualTcpPose.position.z + ta.move_lin.z;
-    end.orientation.x = q_end.getX();
-    end.orientation.y = q_end.getY();
-    end.orientation.z = q_end.getZ();
-    end.orientation.w = q_end.getW();
-
-    utils_.PoseToRPY(actualTcpPose, ta.move_lin.roll, ta.move_lin.pitch, ta.move_lin.yaw);
-    ta.move_lin.start = actualTcpPose;
-    ta.move_lin.end = end;
-
-    return ta.move_lin;
-}
-
-trajectory_action_move_circ CartesianController::convertActionIntoMoveCirc(trajectory_action ta)
-{
-    return ta.move_circ;
+    return action_struct;
 }
 
 void CartesianController::actionSuccess()

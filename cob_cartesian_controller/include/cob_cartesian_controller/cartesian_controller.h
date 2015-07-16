@@ -38,60 +38,55 @@
 #include <cob_cartesian_controller/helper_classes/data_structures.h>
 #include <cob_cartesian_controller/helper_classes/utils.h>
 
-typedef actionlib::SimpleActionServer<cob_cartesian_controller::CartesianControllerAction> tSAS_CartesianControllerAction;
+typedef actionlib::SimpleActionServer<cob_cartesian_controller::CartesianControllerAction> SAS_CartesianControllerAction_t;
 
 class CartesianController
 {
 public:
     void run();
-	bool initialize();
-	
-	// Main functions
-	void posePathBroadcaster(std::vector <geometry_msgs::Pose> *poseVector);
-	void movePTP(geometry_msgs::Pose targetPose, double epsilon);
-	void holdPosition(geometry_msgs::Pose);
-	
-	// Helper function
-	void timerCallback(const ros::TimerEvent&);
-	void startTracking();
-	void stopTracking();
+    bool initialize();
+    
+    // Main functions
+    void posePathBroadcaster(std::vector<geometry_msgs::Pose>* pose_vector);
+    void movePTP(geometry_msgs::Pose target_pose, double epsilon);
+    void holdPosition(geometry_msgs::Pose pose);
+    
+    // Helper function
+    void timerCallback(const ros::TimerEvent& event);
+    void startTracking();
+    void stopTracking();
 
     /// Action interface
     void goalCB();
     void preemptCB();
     void actionSuccess();
     void actionAbort();
-    trajectory_action acceptGoal(boost::shared_ptr<const cob_cartesian_controller::CartesianControllerGoal> goal);
-    trajectory_action_move_lin convertActionIntoMoveLin(trajectory_action move_lin);
-    trajectory_action_move_circ convertActionIntoMoveCirc(trajectory_action move_lin);
+    cob_cartesian_controller::CartesianActionStruct acceptGoal(boost::shared_ptr<const cob_cartesian_controller::CartesianControllerGoal> goal);
 
 private:
     ros::NodeHandle nh_;
 
     // Publisher
-    ros::ServiceClient startTracking_;
-    ros::ServiceClient stopTracking_;
+    ros::ServiceClient start_tracking_;
+    ros::ServiceClient stop_tracking_;
 
     // Var for PTP Movement and hold Position
-    bool reached_pos_,hold_;
+    bool reached_pos_, hold_;
 
     // yaml params
     double update_rate_;
-    std::string referenceFrame_, targetFrame_;
+    std::string reference_frame_, target_frame_;
     std::string chain_tip_link_;
 
-    int marker1_;
+    int marker_;
 
     /// Action interface
     std::string action_name_;
-    boost::shared_ptr<tSAS_CartesianControllerAction> as_;
+    boost::shared_ptr<SAS_CartesianControllerAction_t> as_;
     cob_cartesian_controller::CartesianControllerFeedback action_feedback_;
     cob_cartesian_controller::CartesianControllerResult action_result_;
 
-    // Data structs for action goals
-
-
-    Utils utils_;
+    CartesianControllerUtils utils_;
 
     bool tracking_;
     bool tracking_goal_;

@@ -26,8 +26,8 @@
  *
  ****************************************************************/
 
-#ifndef COB_CONTROL_COB_CARTESIAN_CONTROLLER_INCLUDE_COB_CARTESIAN_CONTROLLER_HELPER_CLASSES_UTILS_H_
-#define COB_CONTROL_COB_CARTESIAN_CONTROLLER_INCLUDE_COB_CARTESIAN_CONTROLLER_HELPER_CLASSES_UTILS_H_
+#ifndef COB_CARTESIAN_CONTROLLER_UTILS_H_
+#define COB_CARTESIAN_CONTROLLER_UTILS_H_
 
 #include <ros/ros.h>
 #include <math.h>
@@ -38,14 +38,15 @@
 
 
 
-class Utils{
-    public:
-        void showLevel(tf::Transform pos, std::string referenceFrame, int marker_id,double red, double green, double blue,std::string ns);
-        void showDot(std::string referenceFrame, double x,double y,double z,int marker_id,double red, double green, double blue,std::string ns);
-        void showMarker(tf::StampedTransform tf, std::string referenceFrame, int marker_id,double red, double green, double blue,std::string ns);
-        bool epsilon_area(double x,double y, double z, double roll, double pitch, double yaw,double epsilon);
-        geometry_msgs::Pose getEndeffectorPose(tf::TransformListener &listener, std::string referenceFrame, std::string chain_tip_link);
-        void PoseToRPY(geometry_msgs::Pose pose, double &roll, double &pitch, double &yaw);
+class CartesianControllerUtils
+{
+public:
+    void showLevel(tf::Transform pos, std::string reference_frame, int marker_id, double red, double green, double blue, std::string ns);
+    void showDot(std::string reference_frame, double x, double y, double z, int marker_id, double red, double green, double blue, std::string ns);
+    void showMarker(tf::StampedTransform tf, std::string reference_frame, int marker_id, double red, double green, double blue, std::string ns);
+    bool epsilonArea(double x, double y, double z, double roll, double pitch, double yaw, double epsilon);
+    geometry_msgs::Pose getEndeffectorPose(tf::TransformListener& listener, std::string reference_frame, std::string chain_tip_link);
+    void poseToRPY(geometry_msgs::Pose pose, double& roll, double& pitch, double& yaw);
 };
 
-#endif /* COB_CONTROL_COB_CARTESIAN_CONTROLLER_INCLUDE_COB_CARTESIAN_CONTROLLER_HELPER_CLASSES_UTILS_H_ */
+#endif /* COB_CARTESIAN_CONTROLLER_UTILS_H_ */
