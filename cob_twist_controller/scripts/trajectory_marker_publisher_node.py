@@ -71,17 +71,21 @@ if __name__=="__main__":
     
     listener = tf.TransformListener()
     
-    chain_tip_link = rospy.get_param('chain_tip_link')
     root_frame = rospy.get_param('root_frame')
+    base_link = "base_link"
+    chain_tip_link = rospy.get_param('chain_tip_link')
     tracking_frame = rospy.get_param('frame_tracker/tracking_frame')
     
     pub = rospy.Publisher('trajectory_marker', Marker, queue_size=1)
-       
+    
     colorx = ColorRGBA(1.0, 0.0, 0.0, 1.0)
-    tip_marker = getMarker(root_frame, 99, colorx)
+    tip_marker = getMarker(root_frame, 101, colorx)
     
     colorx = ColorRGBA(0.0, 1.0, 0.0, 1.0)
-    target_marker = getMarker(root_frame, 999, colorx)
+    target_marker = getMarker(root_frame, 102, colorx)
+    
+    colorx = ColorRGBA(0.0, 0.0, 1.0, 1.0)
+    base_marker = getMarker(root_frame, 103, colorx)
     
     
     while pub.get_num_connections() < 1: 
@@ -106,7 +110,13 @@ if __name__=="__main__":
             rospy.logwarn(str(e))
             continue
         
-        # ######################################################################
+        try:
+            (trans_base, rot_base) = listener.lookupTransform(root_frame, base_link, rospy.Time(0))
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException) as e:
+            rospy.logwarn(str(e))
+            continue
+        
+        # ######################## TipMarker ###############################
         p = Point()
         p.x = trans_tip[0]
         p.y = trans_tip[1]
@@ -120,8 +130,10 @@ if __name__=="__main__":
             tip_marker.points.append(last_point)
         
         tip_marker.points.append(p)
+        pub.publish(tip_marker)
+        time.sleep(0.001)
         
-        # ######################################################################
+        # ######################## TargetMarker ###############################
         p = Point()
         p.x = trans_target[0]
         p.y = trans_target[1]
@@ -135,12 +147,31 @@ if __name__=="__main__":
             target_marker.points.append(last_point)
         
         target_marker.points.append(p)
+        pub.publish(target_marker)
+        time.sleep(0.001)
+        
+        # ######################## BaseMarker ###############################
+        base_active = rospy.get_param('twist_controller/kinematic_extension')
+        if(base_active == 1):
+            p = Point()
+            p.x = trans_base[0]
+            p.y = trans_base[1]
+            p.z = trans_base[2]
+            
+            if counter > 100000:
+                counter = 0
+                last_point = base_marker.points.pop()
+                base_marker.points = []
+                base_marker.id = base_marker.id + 1
+                base_marker.points.append(last_point)
+            
+            base_marker.points.append(p)
+            pub.publish(base_marker)
+            time.sleep(0.001)
         
         # ######################################################################
-        #rospy.loginfo("Publishing")
-        pub.publish(tip_marker)
-        time.sleep(0.001)
-        pub.publish(target_marker)
-        
         counter += 1
-        rate.sleep()
+        try:
+            rate.sleep()
+        except rospy.ROSInterruptException as e:
+            pass
