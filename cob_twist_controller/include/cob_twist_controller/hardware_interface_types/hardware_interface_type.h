@@ -53,9 +53,8 @@ class HardwareInterfaceBuilder
 /* END HardwareInterfaceBuilder *******************************************************************************************/
 
 
-
-
 /* BEGIN HardwareInterfaceVelocity ****************************************************************************************/
+/// Class providing a HardwareInterface publishing velocities.
 class HardwareInterfaceVelocity : public HardwareInterfaceBase
 {
     public:
@@ -75,6 +74,7 @@ class HardwareInterfaceVelocity : public HardwareInterfaceBase
 
 
 /* BEGIN HardwareInterfacePosition ****************************************************************************************/
+/// Class providing a HardwareInterface publishing positions.
 class HardwareInterfacePosition : public HardwareInterfaceBase
 {
     public:
@@ -114,6 +114,7 @@ class HardwareInterfacePosition : public HardwareInterfaceBase
 
 
 /* BEGIN HardwareInterfaceJointStates ****************************************************************************************/
+/// Class providing a HardwareInterface publishing joint_states.
 class HardwareInterfaceJointStates : public HardwareInterfaceBase
 {
     public:

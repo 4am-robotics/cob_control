@@ -28,7 +28,10 @@
 
 #include "cob_twist_controller/hardware_interface_types/hardware_interface_type.h"
 
-
+/* BEGIN HardwareInterfaceBuilder *****************************************************************************************/
+/**
+ * Static builder method to create hardware interface based on given parameterization.
+ */
 HardwareInterfaceBase* HardwareInterfaceBuilder::createHardwareInterface(ros::NodeHandle& nh,
                                                                          const TwistControllerParams& params)
 {
@@ -52,8 +55,12 @@ HardwareInterfaceBase* HardwareInterfaceBuilder::createHardwareInterface(ros::No
 
     return ib;
 }
+/* END HardwareInterfaceBuilder *******************************************************************************************/
 
 /* BEGIN HardwareInterfaceVelocity ********************************************************************************************/
+/**
+ * Method processing the result by publishing to the 'joint_group_velocity_controller/command' topic.
+ */
 inline void HardwareInterfaceVelocity::processResult(const KDL::JntArray& q_dot_ik,
                                                      const KDL::JntArray& current_q)
 {
@@ -70,6 +77,9 @@ inline void HardwareInterfaceVelocity::processResult(const KDL::JntArray& q_dot_
 
 
 /* BEGIN HardwareInterfacePosition ****************************************************************************************/
+/**
+ * Method processing the result using integration method (Simpson) and publishing to the 'joint_group_position_controller/command' topic.
+ */
 inline void HardwareInterfacePosition::processResult(const KDL::JntArray& q_dot_ik,
                                                      const KDL::JntArray& current_q)
 {
@@ -140,6 +150,9 @@ inline void HardwareInterfacePosition::processResult(const KDL::JntArray& q_dot_
 
 
 /* BEGIN HardwareInterfaceJointStates ****************************************************************************************/
+/**
+ * Method processing the result using integration method (Simpson) updating the internal JointState.
+ */
 inline void HardwareInterfaceJointStates::processResult(const KDL::JntArray& q_dot_ik,
                                                         const KDL::JntArray& current_q)
 {
@@ -213,6 +226,9 @@ inline void HardwareInterfaceJointStates::processResult(const KDL::JntArray& q_d
 }
 
 void HardwareInterfaceJointStates::publishJointState(const ros::TimerEvent& event)
+/**
+ * Timer callback publishing the internal JointState to the 'joint_state' topic.
+ */
 {
     boost::mutex::scoped_lock lock(mutex_);
     js_msg_.header.stamp = ros::Time::now();

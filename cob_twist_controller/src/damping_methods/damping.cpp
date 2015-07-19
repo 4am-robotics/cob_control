@@ -59,6 +59,7 @@ DampingBase* DampingBuilder::createDamping(const TwistControllerParams& params)
 }
 /* END DampingBuilder *******************************************************************************************/
 
+
 /* BEGIN DampingNone ********************************************************************************************/
 /**
  * Method just returns the damping factor from ros parameter server.
@@ -68,8 +69,8 @@ inline double DampingNone::getDampingFactor(const Eigen::VectorXd& sorted_singul
 {
     return 0.0;
 }
-
 /* END DampingNone **********************************************************************************************/
+
 
 /* BEGIN DampingConstant ****************************************************************************************/
 /**
@@ -81,6 +82,7 @@ inline double DampingConstant::getDampingFactor(const Eigen::VectorXd& sorted_si
     return this->params_.damping_factor;
 }
 /* END DampingConstant ******************************************************************************************/
+
 
 /* BEGIN DampingManipulability **********************************************************************************/
 /**
@@ -109,11 +111,13 @@ double DampingManipulability::getDampingFactor(const Eigen::VectorXd& sorted_sin
 
     return damping_factor;
 }
-
 /* END DampingManipulability ************************************************************************************/
 
-/* BEGIN DampingLeastSingularValues **********************************************************************************/
 
+/* BEGIN DampingLeastSingularValues **********************************************************************************/
+/**
+ * Method returns the damping factor according to the least singular value.
+ */
 double DampingLeastSingularValues::getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
                                                     const Eigen::MatrixXd& jacobian_data) const
 {

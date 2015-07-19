@@ -57,6 +57,7 @@ class KinematicExtensionBuilder
 
 
 /* BEGIN KinematicExtensionNone ****************************************************************************************/
+/// Class implementing the interface in case KinematicExtension is disabled.
 class KinematicExtensionNone : public KinematicExtensionBase
 {
     public:
@@ -75,6 +76,7 @@ class KinematicExtensionNone : public KinematicExtensionBase
 
 
 /* BEGIN KinematicExtension6D ****************************************************************************************/
+/// Abstract Helper Class to be used for Cartesian KinematicExtensions based on enabled DoFs.
 class KinematicExtension6D : public KinematicExtensionBase
 {
     public:
@@ -95,6 +97,7 @@ class KinematicExtension6D : public KinematicExtensionBase
 
 
 /* BEGIN KinematicExtensionBaseActive ****************************************************************************************/
+/// Class implementing the a mobile base KinematicExtension with Cartesian DoFs (lin_x, lin_y, rot_z) enabled (i.e. 2D).
 class KinematicExtensionBaseActive : public KinematicExtension6D
 {
     public:

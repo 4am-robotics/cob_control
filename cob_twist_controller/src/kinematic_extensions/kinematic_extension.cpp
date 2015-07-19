@@ -32,9 +32,10 @@
 #include <eigen_conversions/eigen_kdl.h>
 
 
-//ToDo: Should we re-add DEBUG_BASE_ACTIVE stuff in KinematicExtensionBaseActive class?
-
-
+/* BEGIN KinematicExtensionBuilder *****************************************************************************************/
+/**
+ * Static builder method to create kinematic extensions based on given parameterization.
+ */
 KinematicExtensionBase* KinematicExtensionBuilder::createKinematicExtension(const TwistControllerParams& params)
 {
     KinematicExtensionBase* keb = NULL;
@@ -55,22 +56,32 @@ KinematicExtensionBase* KinematicExtensionBuilder::createKinematicExtension(cons
     
     return keb;
 }
+/* END KinematicExtensionBuilder *******************************************************************************************/
+
 
 /* BEGIN KinematicExtensionNone ********************************************************************************************/
+/**
+ * Method adjusting the Jacobian used in inverse differential computation. No changes applied.
+ */
 KDL::Jacobian KinematicExtensionNone::adjustJacobian(const KDL::Jacobian& jac_chain)
 {
     return jac_chain;
 }
 
+/**
+ * Method processing the partial result realted to the kinematic extension. Nothing to be done.
+ */
 void KinematicExtensionNone::processResultExtension(const KDL::JntArray& q_dot_ik)
 {
     return;
 }
-
 /* END KinematicExtensionNone **********************************************************************************************/
 
 
 /* BEGIN KinematicExtension6D ********************************************************************************************/
+/**
+ * Method adjusting the Jacobian used in inverse differential computation. All Cartesian DoFs are disabled.
+ */
 KDL::Jacobian KinematicExtension6D::adjustJacobian(const KDL::Jacobian& jac_chain)
 {
     KDL::Frame dummy;
@@ -79,7 +90,9 @@ KDL::Jacobian KinematicExtension6D::adjustJacobian(const KDL::Jacobian& jac_chai
     return adjustJacobian6d(jac_chain, dummy, dummy, active_dim);
 }
 
-
+/**
+ * Helper function adjusting the Jacobian used in inverse differential computation based on the Cartesian DoFs enabled in 'adjustJacobian()'.
+ */
 KDL::Jacobian KinematicExtension6D::adjustJacobian6d(const KDL::Jacobian& jac_chain, const KDL::Frame full_frame, const KDL::Frame partial_frame, const ActiveCartesianDimension active_dim)
 {
     ///compose jac_full considering kinematical extension
@@ -168,12 +181,13 @@ KDL::Jacobian KinematicExtension6D::adjustJacobian6d(const KDL::Jacobian& jac_ch
 
     return jac_full;
 }
-
 /* END KinematicExtension6D **********************************************************************************************/
 
 
-
 /* BEGIN KinematicExtensionBaseActive ********************************************************************************************/
+/**
+ * Method adjusting the Jacobian used in inverse differential computation. Enable Cartesian DoFs (lin_x, lin_y, rot_z) considering current transformation to main kinematic chain.
+ */
 KDL::Jacobian KinematicExtensionBaseActive::adjustJacobian(const KDL::Jacobian& jac_chain)
 {
     tf::StampedTransform bl_transform_ct, cb_transform_bl;
@@ -214,6 +228,9 @@ KDL::Jacobian KinematicExtensionBaseActive::adjustJacobian(const KDL::Jacobian& 
     return adjustJacobian6d(jac_chain, bl_frame_ct, cb_frame_bl, active_dim);
 }
 
+/**
+ * Method processing the partial result related to the kinematic extension. Publish desired Twist to the 'command' topic of the base.
+ */
 void KinematicExtensionBaseActive::processResultExtension(const KDL::JntArray& q_dot_ik)
 {
     geometry_msgs::Twist base_vel_msg;
@@ -227,6 +244,5 @@ void KinematicExtensionBaseActive::processResultExtension(const KDL::JntArray& q
     
     base_vel_pub_.publish(base_vel_msg);
 }
-
 /* END KinematicExtensionBaseActive **********************************************************************************************/
 
