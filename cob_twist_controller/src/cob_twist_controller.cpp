@@ -110,6 +110,7 @@ bool CobTwistController::initialize()
     }
 
     ///initialize configuration control solver
+    twist_controller_params_.kinematic_extension = NO_EXTENSION;
     p_inv_diff_kin_solver_.reset(new InverseDifferentialKinematicsSolver(chain_, callback_data_mediator_));
 
     // Before setting up dynamic_reconfigure server: initParams with default values

@@ -144,7 +144,6 @@ inline void HardwareInterfaceJointStates::processResult(const KDL::JntArray& q_d
                                                         const KDL::JntArray& current_q)
 {
     std_msgs::Float64MultiArray vel_msg, pos_msg;
-    sensor_msgs::JointState js_msg;
 
     time_now_ = ros::Time::now();
     integration_period_ = time_now_ - last_update_time_;
@@ -198,13 +197,13 @@ inline void HardwareInterfaceJointStates::processResult(const KDL::JntArray& q_d
             vel_support_integration_point_.push_back(vel_msg.data[i]);
         }
         
-        //publish to interface
-        js_msg.header.stamp = ros::Time::now();
-        js_msg.name = params_.joints;
-        js_msg.position = pos_msg.data;
-        js_msg.velocity = vel_msg.data;
-        js_msg.effort.assign(params_.joints.size(), 0.0);
-        pub_.publish(js_msg);
+        ///update JointState
+        boost::mutex::scoped_lock lock(mutex_);
+        //js_msg_.header.stamp = ros::Time::now();
+        js_msg_.position = pos_msg.data;
+        js_msg_.velocity = vel_msg.data;
+        
+        ///publishing takes place in separate thread
     }
 
     if(iteration_counter_ < 3)
@@ -212,4 +211,12 @@ inline void HardwareInterfaceJointStates::processResult(const KDL::JntArray& q_d
         ++iteration_counter_;
     }
 }
+
+void HardwareInterfaceJointStates::publishJointState(const ros::TimerEvent& event)
+{
+    boost::mutex::scoped_lock lock(mutex_);
+    js_msg_.header.stamp = ros::Time::now();
+    pub_.publish(js_msg_);
+}
+
 /* END HardwareInterfaceJointStates ******************************************************************************************/

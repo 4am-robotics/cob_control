@@ -46,25 +46,29 @@
 typedef Eigen::Matrix<double,6,Eigen::Dynamic> Matrix6Xd_t;
 typedef Eigen::Matrix<double,6,1> Vector6d_t;
 
-enum DampingMethodTypes {
+enum DampingMethodTypes
+{
     NO_DAMPING = 0,
     CONSTANT = 1,
     MANIPULABILITY = 2,
     LEAST_SINGULAR_VALUE = 3,
 };
 
-enum HardwareInterfaceTypes {
+enum HardwareInterfaceTypes
+{
     VELOCITY_INTERFACE = 0,
     POSITION_INTERFACE = 1,
     JOINT_STATE_INTERFACE = 2,
 };
 
-enum KinematicExtensionTypes {
+enum KinematicExtensionTypes
+{
     NO_EXTENSION = 0,
     BASE_ACTIVE = 1,
 };
 
-enum SolverTypes {
+enum SolverTypes
+{
     DEFAULT_SOLVER = 0,
     WLN,
     GPM,
@@ -83,12 +87,14 @@ enum ConstraintTypes
     JLA_INEQ,
 };
 
-enum ConstraintTypesCA {
+enum ConstraintTypesCA
+{
     CA_OFF = 0,
     CA_ON,
 };
 
-enum ConstraintTypesJLA {
+enum ConstraintTypesJLA
+{
     JLA_OFF = 0,
     JLA_ON,
     JLA_MID_ON,
@@ -103,7 +109,8 @@ struct JointStates
     KDL::JntArray last_q_dot_;
 };
 
-struct ActiveCartesianDimension {
+struct ActiveCartesianDimension
+{
     ActiveCartesianDimension():
         lin_x(0.0), lin_y(0.0), lin_z(0.0), rot_x(0.0), rot_y(0.0), rot_z(0.0) {}
     
@@ -123,7 +130,8 @@ struct ObstacleDistanceInfo
     Eigen::Vector3d collision_pnt_vector;
 };
 
-struct TwistControllerParams {
+struct TwistControllerParams
+{
     uint8_t dof;
     std::string chain_base_link;
     std::string chain_tip_link;
@@ -190,7 +198,8 @@ enum EN_ConstraintStates
     CRITICAL,
 };
 
-class ConstraintState {
+class ConstraintState
+{
     public:
 
         ConstraintState()
