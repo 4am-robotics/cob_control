@@ -56,6 +56,7 @@ enum DampingMethodTypes {
 enum HardwareInterfaceTypes {
     VELOCITY_INTERFACE = 0,
     POSITION_INTERFACE = 1,
+    JOINT_STATE_INTERFACE = 2,
 };
 
 enum KinematicExtensionTypes {

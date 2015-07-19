@@ -30,6 +30,7 @@
 #define HARDWARE_INTERFACE_TYPE_H_
 
 #include <std_msgs/Float64MultiArray.h>
+#include <sensor_msgs/JointState.h>
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/utils/moving_average.h"
@@ -109,6 +110,44 @@ class HardwareInterfacePosition : public HardwareInterfaceBase
 };
 /* END HardwareInterfacePosition **********************************************************************************************/
 
+
+/* BEGIN HardwareInterfaceJointStates ****************************************************************************************/
+class HardwareInterfaceJointStates : public HardwareInterfaceBase
+{
+    public:
+        HardwareInterfaceJointStates(ros::NodeHandle& nh,
+                                     const TwistControllerParams& params)
+        : HardwareInterfaceBase(nh, params),
+          iteration_counter_(0)
+        {
+            for(int i = 0; i < params.dof; i++)
+            {
+                ma_.push_back(MovingAverage());
+                vel_support_integration_point_.push_back(0.0);
+                vel_first_integration_point_.push_back(0.0);
+            }
+            
+            time_now_ = ros::Time::now();
+            last_update_time_ = time_now_;
+            integration_period_ = time_now_ - last_update_time_;
+            pub_ = nh.advertise<sensor_msgs::JointState>("joint_states", 1);
+        }
+
+        ~HardwareInterfaceJointStates() {}
+
+        virtual void processResult(const KDL::JntArray& q_dot_ik,
+                                   const KDL::JntArray& current_q);
+
+    private:
+        std::vector<MovingAverage> ma_;
+        std::vector<double> vel_support_integration_point_, vel_first_integration_point_;
+        unsigned int iteration_counter_;
+        ros::Duration integration_period_;
+        ros::Time time_now_;
+        ros::Time last_update_time_;
+
+};
+/* END HardwareInterfaceJointStates **********************************************************************************************/
 
 
 #endif /* HARDWARE_INTERFACE_TYPE_H_ */
