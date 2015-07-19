@@ -1,11 +1,17 @@
 <launch>
     <arg name="robot" default="$(optenv ROBOT !!NO_ROBOT_SET!!)"/>
     <arg name="pkg_hardware_config" default="$(find cob_hardware_config)"/>
-    <arg name="component_name" default="arm_right"/>
+    <arg name="component_name"/>
 
     <include file="$(arg pkg_hardware_config)/common/upload_robot.launch">
-        <arg name="robot" default="$(optenv ROBOT !!NO_ROBOT_SET!!)"/>
+        <arg name="robot" default="$(arg robot)"/>
     </include>
+  
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" >
+        <param name="use_gui" value="true"/>
+    </node>
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
+    <node pkg="tf" type="static_transform_publisher" name="odom_combined_broadcaster" args="0 0 0 0 0 0 /base_footprint /odom_combined 50" />
     
     <group ns="$(arg component_name)">
         <rosparam command="load" file="$(arg pkg_hardware_config)/$(arg robot)/config/$(arg component_name)_controller.yaml"/>

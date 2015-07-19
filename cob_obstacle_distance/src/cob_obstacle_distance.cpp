@@ -57,7 +57,7 @@ int main(int argc, char** argv)
     ros::ServiceServer registration_srv = nh.advertiseService("obstacle_distance/registerPointOfInterest" , &DistanceManager::registerPointOfInterest, &sm);
     ros::ServiceServer distance_prediction_srv = nh.advertiseService("obstacle_distance/predictDistance" , &DistanceManager::predictDistance, &sm);
 
-    // addTestObstacles(sm); // Comment in to see what happens
+    //addTestObstacles(sm); // Comment in to see what happens
 
     std::thread t(&DistanceManager::transform, std::ref(sm));
     ROS_INFO_STREAM("Started transform thread.");
@@ -86,16 +86,16 @@ void addTestObstacles(DistanceManager& dm)
     fcl::Box b(0.1, 0.1, 0.1); // Take care the nearest point for collision is one of the eight corners!!! This might lead to jittering
 
     PtrIMarkerShape_t sptr_Bvh(new MarkerShape<BVH_RSS_t>(dm.getRootFrame(),
-                                                           "package://schunk_description/meshes/lwa4p_extended/arm_1_collision.stl",
+                                                          "package://cob_gazebo_objects/Media/models/milk.dae",
                                                            -0.35,
                                                            -0.35,
-                                                           0.8));
+                                                            0.8));
 
 
     PtrIMarkerShape_t sptr_Sphere(new MarkerShape<fcl::Sphere>(dm.getRootFrame(), s, 0.35, -0.35, 0.8));
 
-    dm.addObstacle("Sphere1", sptr_Sphere);
-    dm.addObstacle("arm_1_collision", sptr_Bvh);
+    dm.addObstacle("Funny Sphere", sptr_Sphere);
+    dm.addObstacle("Funny Mesh", sptr_Bvh);
 
     ROS_INFO_ONCE("Subscriber to the marker has been created");
     dm.drawObstacles();

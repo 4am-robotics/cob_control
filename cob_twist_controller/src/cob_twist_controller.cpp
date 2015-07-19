@@ -36,7 +36,6 @@
 #include <Eigen/Dense>
 #include "cob_srvs/SetString.h"
 
-//ToDo: Should we re-add DEBUG_BASE_COMPENSATION stuff?
 bool CobTwistController::initialize()
 {
     ros::NodeHandle nh_twist("twist_controller");

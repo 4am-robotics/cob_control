@@ -63,7 +63,7 @@
 #define VEC_Y 1
 #define VEC_Z 2
 
-//#define DEBUG
+#define DEBUG
 
 uint32_t DistanceManager::seq_nr_ = 0;
 
@@ -261,7 +261,7 @@ void DistanceManager::calculate()
 #ifdef DEBUG
         if(counter_ <= 0)
         {
-            if (object_of_interest_name == "arm_right_7_link")
+            if (object_of_interest_name == this->chain_tip_link_)
             {
                 ROS_INFO_STREAM("Publish object of interest!!!");
                 this->drawObjectsOfInterest(true);
@@ -341,7 +341,7 @@ void DistanceManager::calculate()
 
 #ifdef DEBUG
             // Arrow marker: Shows vector between nearest point on obstacle and robot link
-            if (object_of_interest_name == "arm_right_7_link" && counter_ == 100)
+            if (object_of_interest_name == this->chain_tip_link_ && counter_ == 100)
             {
                 ROS_INFO_STREAM("rel_base_link_frame_pos: " << std::endl << rel_base_link_frame_pos);
                 ROS_INFO_STREAM("obst_vector: " << std::endl << obst_vector);

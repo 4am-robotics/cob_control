@@ -95,11 +95,9 @@ class MovingAverage
                 j += 1.0;
             }
             
-            //ROS_WARN("Before: %f",weighting_[0]);
             err = 1 - sum;
             std::deque<double>::iterator i = weighting_.begin();
             *i += err;
-            //ROS_WARN("Before: %f",*i);
         }
 
         double factorial(unsigned int n)

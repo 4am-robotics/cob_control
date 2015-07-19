@@ -66,11 +66,11 @@ install(DIRECTORY include/cob_obstacle_distance/
  PATTERN ".svn" EXCLUDE
 )
 
-install(PROGRAMS scripts/test_obstacle_publisher_node.py
+install(PROGRAMS scripts/example_obstacle_publisher_node.py scripts/test_obstacle_publisher_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/scripts
 )
 
-install(DIRECTORY launch
+install(DIRECTORY config launch
  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
