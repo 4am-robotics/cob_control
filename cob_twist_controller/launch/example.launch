@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- send lwa4p_extended urdf to param server -->
+  <param name="robot_description" command="$(find xacro)/xacro.py '$(find schunk_lwa4p_extended)/urdf/robot.urdf.xacro'" />
+  
+  <!-- robot state publisher -->
+  <node ns="arm" name="joint_states_relay" pkg="topic_tools" type="relay" args="joint_states /joint_states" cwd="node" respawn="true" output="screen"/>
+  <node ns="arm" pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+      <param name="publish_frequency" type="double" value="50.0" />
+      <param name="tf_prefix" type="string" value="" />
+  </node>
+
+  <!-- controllers -->
+  <rosparam ns="arm" command="load" file="$(find cob_twist_controller)/config/example_cartesian_controller.yaml" />
+
+  <!-- Cartesian stuff -->
+  <node ns="arm" name="twist_controller" pkg="cob_twist_controller" type="cob_twist_controller_node" cwd="node" respawn="false" output="screen"/>
+  <node ns="arm" name="frame_tracker" pkg="cob_frame_tracker" type="cob_frame_tracker_node" cwd="node" respawn="false" output="screen"/>
+  <node ns="arm" name="interactive_target" pkg="cob_frame_tracker" type="interactive_frame_target_node" cwd="node" respawn="false" output="screen"/>
+  
+  <node ns="arm" name="trajectory_marker_node" pkg="cob_twist_controller" type="trajectory_marker_publisher_node.py" cwd="node" respawn="false" output="screen"/>
+  
+  <!-- Obstacle distance -->
+<!--
+  <node ns="arm" name="obstacle_distance" pkg="cob_obstacle_distance" type="cob_obstacle_distance" output="screen" />
+-->
+  
+  <!-- rviz visualization -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find cob_twist_controller)/launch/rviz_config.rviz" />
+
+</launch>

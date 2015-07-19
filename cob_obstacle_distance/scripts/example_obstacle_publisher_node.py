@@ -39,7 +39,7 @@ if __name__=="__main__":
     rospy.init_node("example_obstacle_publisher")
     
     #Specify a frame_id - transformation to root_frame of obstacle_distance node is handled in according subscriber callback
-    frame_id = "odom_combined"
+    frame_id = rospy.get_param('root_frame')
         
     pub = rospy.Publisher("obstacle_distance/registerObstacle", CollisionObject, queue_size=1)
        

@@ -63,7 +63,7 @@
 #define VEC_Y 1
 #define VEC_Z 2
 
-#define DEBUG
+//#define DEBUG
 
 uint32_t DistanceManager::seq_nr_ = 0;
 

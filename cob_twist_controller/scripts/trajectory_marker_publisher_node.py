@@ -110,11 +110,13 @@ if __name__=="__main__":
             rospy.logwarn(str(e))
             continue
         
-        try:
-            (trans_base, rot_base) = listener.lookupTransform(root_frame, base_link, rospy.Time(0))
-        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException) as e:
-            rospy.logwarn(str(e))
-            continue
+        base_active = rospy.get_param('twist_controller/kinematic_extension')
+        if(base_active == 1):
+            try:
+                (trans_base, rot_base) = listener.lookupTransform(root_frame, base_link, rospy.Time(0))
+            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException) as e:
+                rospy.logwarn(str(e))
+                continue
         
         # ######################## TipMarker ###############################
         p = Point()
@@ -151,7 +153,6 @@ if __name__=="__main__":
         time.sleep(0.001)
         
         # ######################## BaseMarker ###############################
-        base_active = rospy.get_param('twist_controller/kinematic_extension')
         if(base_active == 1):
             p = Point()
             p.x = trans_base[0]
