@@ -98,11 +98,14 @@ bool CobTwistController::initialize()
         twist_controller_params_.limits_max.push_back(model.getJoint(twist_controller_params_.joints[i])->limits->upper);
     }
 
-    // Before setting up dynamic_reconfigure server: initParams with default values
-    this->initParams();
+    twist_controller_params_.frame_names.clear();
+    for (uint16_t i = 0; i < chain_.getNrOfSegments(); ++i)
+    {
+        twist_controller_params_.frame_names.push_back(chain_.getSegment(i).getName());
+    }
 
     ///initialize configuration control solver
-    p_inv_diff_kin_solver_.reset(new InverseDifferentialKinematicsSolver(chain_, callback_data_mediator_));
+    p_inv_diff_kin_solver_.reset(new InverseDifferentialKinematicsSolver(twist_controller_params_, chain_, callback_data_mediator_));
     p_inv_diff_kin_solver_->resetAll(twist_controller_params_);
 
     ///Setting up dynamic_reconfigure server for the TwistControlerConfig parameters
@@ -269,50 +272,6 @@ void CobTwistController::checkSolverAndConstraints(cob_twist_controller::TwistCo
     }
 }
 
-
-void CobTwistController::initParams()
-{
-    twist_controller_params_.hardware_interface_type = VELOCITY_INTERFACE;
-    
-    twist_controller_params_.numerical_filtering = false;
-    twist_controller_params_.damping_method = MANIPULABILITY;
-    twist_controller_params_.damping_factor = 0.2;
-    twist_controller_params_.lambda_max = 0.1;
-    twist_controller_params_.w_threshold = 0.005;
-    twist_controller_params_.beta = 0.005;
-    twist_controller_params_.eps_damping = 0.003;
-    
-    twist_controller_params_.solver = WLN;
-    twist_controller_params_.priority_main = 500;
-
-    twist_controller_params_.constraint_jla = JLA_ON;
-    twist_controller_params_.priority_jla = 50;
-    twist_controller_params_.k_H_jla = -10.0;
-
-    twist_controller_params_.constraint_ca = CA_OFF;
-    twist_controller_params_.priority_ca = 100;
-    twist_controller_params_.k_H_ca = 2.0;
-
-    twist_controller_params_.mu = -2.0;
-    twist_controller_params_.k_H = 1.0;
-    
-    twist_controller_params_.eps_truncation = 0.001;
-    
-    twist_controller_params_.keep_direction = true;
-    twist_controller_params_.enforce_pos_limits = true;
-    twist_controller_params_.enforce_vel_limits = true;
-    twist_controller_params_.tolerance = 5.0;
-
-    twist_controller_params_.base_compensation = false;
-    twist_controller_params_.kinematic_extension = NO_EXTENSION;
-    twist_controller_params_.base_ratio = 0.0;
-
-    twist_controller_params_.frame_names.clear();
-    for (uint16_t i = 0; i < chain_.getNrOfSegments(); ++i)
-    {
-        twist_controller_params_.frame_names.push_back(chain_.getSegment(i).getName());
-    }
-}
 
 void CobTwistController::run()
 {

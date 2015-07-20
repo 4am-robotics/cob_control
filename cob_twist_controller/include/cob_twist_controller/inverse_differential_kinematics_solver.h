@@ -59,7 +59,8 @@ public:
      * kinematics for
      *
      */
-    InverseDifferentialKinematicsSolver(const KDL::Chain& chain, CallbackDataMediator& data_mediator) :
+    InverseDifferentialKinematicsSolver(const TwistControllerParams& params, const KDL::Chain& chain, CallbackDataMediator& data_mediator) :
+        params_(params),
         chain_(chain),
         jac_(chain_.getNrOfJoints()),
         jnt2jac_(chain_),

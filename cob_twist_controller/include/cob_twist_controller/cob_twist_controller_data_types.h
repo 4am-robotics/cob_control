@@ -132,6 +132,50 @@ struct ObstacleDistanceInfo
 
 struct TwistControllerParams
 {
+    TwistControllerParams() :
+            dof(0),
+            hardware_interface_type(VELOCITY_INTERFACE),
+
+            numerical_filtering(false),
+            damping_method(MANIPULABILITY),
+            damping_factor(0.2),
+            lambda_max(0.1),
+            w_threshold(0.005),
+            beta(0.005),
+            eps_damping(0.003),
+            eps_truncation(0.001),
+
+            solver(WLN),
+            priority_main(500),
+            mu(-2.0),
+            k_H(1.0),
+
+            constraint_jla(JLA_ON),
+            priority_jla(50),
+            k_H_jla(-10.0),
+            activation_threshold_jla(10.0),
+            damping_jla(0.000001),
+
+            constraint_ca(CA_OFF),
+            priority_ca(100),
+            activation_threshold_ca(0.1),
+            damping_ca(0.000001),
+            k_H_ca(2.0),
+
+            keep_direction(true),
+            enforce_pos_limits(true),
+            enforce_vel_limits(true),
+            tolerance(5.0),
+            max_vel_lin_base(0.5),
+            max_vel_rot_base(0.5),
+
+            base_compensation(false),
+            kinematic_extension(NO_EXTENSION),
+            base_ratio(0.0)
+            {
+
+            }
+
     uint8_t dof;
     std::string chain_base_link;
     std::string chain_tip_link;
@@ -145,9 +189,12 @@ struct TwistControllerParams
     double w_threshold;
     double beta;
     double eps_damping;
+    double eps_truncation;
     
     SolverTypes solver;
     uint32_t priority_main;
+    double mu;
+    double k_H;
 
     ConstraintTypesCA constraint_ca;
     uint32_t priority_ca;
@@ -161,11 +208,6 @@ struct TwistControllerParams
     double activation_threshold_jla;
     double damping_jla;
 
-    double mu;
-    double k_H;
-    
-    double eps_truncation;
-    
     bool keep_direction;
     bool enforce_pos_limits;
     bool enforce_vel_limits;
@@ -182,7 +224,6 @@ struct TwistControllerParams
     bool base_compensation;
     KinematicExtensionTypes kinematic_extension;
     double base_ratio;
-
 
     std::vector<std::string> frame_names;
     std::vector<std::string> joints;
