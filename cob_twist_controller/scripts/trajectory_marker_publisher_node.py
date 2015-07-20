@@ -91,7 +91,7 @@ if __name__=="__main__":
     while pub.get_num_connections() < 1: 
         if rospy.is_shutdown():
             exit(0)
-        rospy.logwarn("Please create a subscriber to the marker")
+        rospy.logwarn("Please create a subscriber to '" + rospy.get_namespace() + "/trajectory_marker' topic (Type: visualization_msgs/Marker)")
         time.sleep(1.0)
     
     rate = rospy.Rate(20) # 20hz
