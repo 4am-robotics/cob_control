@@ -62,17 +62,6 @@ bool CobTwistController::initialize()
         return false;
     }
 
-    if (!nh_twist.getParam("max_vel_lin_base", twist_controller_params_.max_vel_lin_base))
-    {
-        twist_controller_params_.max_vel_lin_base = 0.5;    //m/sec
-        ROS_WARN_STREAM("Parameter 'max_vel_lin_base' not set. Using default: " << twist_controller_params_.max_vel_lin_base);
-    }
-    if (!nh_twist.getParam("max_vel_rot_base", twist_controller_params_.max_vel_rot_base))
-    {
-        twist_controller_params_.max_vel_rot_base = 0.5;    //rad/sec
-        ROS_WARN_STREAM("Parameter 'max_vel_rot_base' not set. Using default: " << twist_controller_params_.max_vel_rot_base);
-    }
-
     // Frames of Interest
     if(!nh_twist.getParam("collision_check_frames", twist_controller_params_.collision_check_frames))
     {
@@ -109,12 +98,12 @@ bool CobTwistController::initialize()
         twist_controller_params_.limits_max.push_back(model.getJoint(twist_controller_params_.joints[i])->limits->upper);
     }
 
-    ///initialize configuration control solver
-    twist_controller_params_.kinematic_extension = NO_EXTENSION;
-    p_inv_diff_kin_solver_.reset(new InverseDifferentialKinematicsSolver(chain_, callback_data_mediator_));
-
     // Before setting up dynamic_reconfigure server: initParams with default values
     this->initParams();
+
+    ///initialize configuration control solver
+    p_inv_diff_kin_solver_.reset(new InverseDifferentialKinematicsSolver(chain_, callback_data_mediator_));
+    p_inv_diff_kin_solver_->resetAll(twist_controller_params_);
 
     ///Setting up dynamic_reconfigure server for the TwistControlerConfig parameters
     reconfigure_server_.reset(new dynamic_reconfigure::Server<cob_twist_controller::TwistControllerConfig>(reconfig_mutex_, nh_twist));
@@ -283,12 +272,6 @@ void CobTwistController::checkSolverAndConstraints(cob_twist_controller::TwistCo
 
 void CobTwistController::initParams()
 {
-    if(NULL == this->p_inv_diff_kin_solver_)
-    {
-        ROS_ERROR("p_inv_diff_kin_solver_ not yet initialized.");
-        return;
-    }
-
     twist_controller_params_.hardware_interface_type = VELOCITY_INTERFACE;
     
     twist_controller_params_.numerical_filtering = false;
@@ -329,8 +312,6 @@ void CobTwistController::initParams()
     {
         twist_controller_params_.frame_names.push_back(chain_.getSegment(i).getName());
     }
-    
-    p_inv_diff_kin_solver_->resetAll(twist_controller_params_);
 }
 
 void CobTwistController::run()
