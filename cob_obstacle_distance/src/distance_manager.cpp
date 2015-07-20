@@ -407,7 +407,7 @@ void DistanceManager::transform()
             ROS_ERROR("%s",ex.what());
         }
 
-        sleep(0.001);
+        ros::Duration(0.1).sleep();
     }
 }
 
@@ -442,7 +442,7 @@ void DistanceManager::transformSelfCollisionFrames(const std::string frame_name)
             ROS_ERROR("%s",ex.what());
         }
 
-        sleep(0.001);
+        ros::Duration(0.1).sleep();
     }
 }
 

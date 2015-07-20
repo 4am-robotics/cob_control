@@ -62,7 +62,7 @@ int main(int argc, char** argv)
     std::thread t(&DistanceManager::transform, std::ref(sm));
     ROS_INFO_STREAM("Started transform thread.");
 
-    ros::Rate loop_rate(60);
+    ros::Rate loop_rate(20);
     while(ros::ok())
     {
         sm.calculate();
