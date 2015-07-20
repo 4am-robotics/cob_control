@@ -21,6 +21,9 @@
   <run_depend>cob_control_mode_adapter</run_depend>
   <run_depend>cob_footprint_observer</run_depend>
   <run_depend>cob_frame_tracker</run_depend>
+  <run_depend>cob_model_identifier</run_depend>
+  <run_depend>cob_obstacle_distance</run_depend>
+  <run_depend>cob_omni_drive_controller</run_depend>
   <run_depend>cob_trajectory_controller</run_depend>
   <run_depend>cob_twist_controller</run_depend>
 
