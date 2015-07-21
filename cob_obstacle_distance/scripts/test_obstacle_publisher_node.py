@@ -80,7 +80,7 @@ if __name__=="__main__":
     y = CollisionObject()
     y.id = "Funny Mesh"
     y.header.frame_id = root_frame
-    y.type.db = "package://schunk_description/meshes/lwa4p_extended/arm_1_collision.stl"
+    y.type.db = "package://cob_gazebo_objects/Media/models/milk.dae"
     y.operation = CollisionObject.ADD
     
     pose = Pose()
