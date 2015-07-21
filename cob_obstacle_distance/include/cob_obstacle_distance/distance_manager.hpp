@@ -91,8 +91,6 @@ class DistanceManager
 
         FrameToCollision frame_to_collision_;
 
-        uint32_t counter_;
-
         static uint32_t seq_nr_;
 
         /**
