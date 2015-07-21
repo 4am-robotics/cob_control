@@ -3,8 +3,7 @@ Panels:
     Help Height: 78
     Name: Displays
     Property Tree Widget:
-      Expanded:
-        - /Global Options1
+      Expanded: ~
       Splitter Ratio: 0.5
     Tree Height: 444
   - Class: rviz/Selection
@@ -121,12 +120,13 @@ Visualization Manager:
       Show Visual Aids: false
       Update Topic: /arm/marker_server/update
       Value: true
-    - Class: rviz/Marker
+    - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /arm/trajectory_marker
       Name: TrajectoryMarker
       Namespaces:
-        basic_shapes: true
+        target_marker: true
+        tip_marker: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -161,7 +161,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3.59635
+      Distance: 3.03003
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
@@ -173,10 +173,10 @@ Visualization Manager:
         Z: 0.47275
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.285398
+      Pitch: 0.440398
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.600398
+      Yaw: 0.190397
     Saved: ~
 Window Geometry:
   Displays:
@@ -194,5 +194,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1200
-  X: 127
-  Y: 79
+  X: 164
+  Y: 127

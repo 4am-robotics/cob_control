@@ -19,7 +19,7 @@
   <node ns="arm" name="frame_tracker" pkg="cob_frame_tracker" type="cob_frame_tracker_node" cwd="node" respawn="false" output="screen"/>
   <node ns="arm" name="interactive_target" pkg="cob_frame_tracker" type="interactive_frame_target_node" cwd="node" respawn="false" output="screen"/>
   
-  <node ns="arm" name="trajectory_marker_node" pkg="cob_twist_controller" type="trajectory_marker_publisher_node.py" cwd="node" respawn="false" output="screen"/>
+  <node ns="arm" name="debug_trajectory_marker_node" pkg="cob_twist_controller" type="debug_trajectory_marker_node" cwd="node" respawn="false" output="screen"/>
   
   <!-- Obstacle distance -->
 <!--
