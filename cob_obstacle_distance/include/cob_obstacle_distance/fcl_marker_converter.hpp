@@ -38,10 +38,13 @@
 
 #include "cob_obstacle_distance/marker_shapes/marker_shapes_interface.hpp"
 
-#define SEGMENTS 100u // the less the better performance for BVH generation
-#define RINGS 100u
-#define SEG_AXIS 100u
-#define SEG_CIRCLE 100u
+// the less the better performance for BVH generation and distance calculation
+// E.g. values == 100u then CPU% at 20 Hz is 65 %
+// E.g. values == 10u then CPU% at 20 Hz is 35 %
+#define SEGMENTS 10u
+#define RINGS 10u
+#define SEG_AXIS 10u
+#define SEG_CIRCLE 10u
 
 template <typename T>
 class FclMarkerConverter
