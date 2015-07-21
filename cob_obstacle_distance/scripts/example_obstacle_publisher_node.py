@@ -41,7 +41,7 @@ if __name__=="__main__":
     #Specify a frame_id - transformation to root_frame of obstacle_distance node is handled in according subscriber callback
     frame_id = rospy.get_param('root_frame')
         
-    pub = rospy.Publisher("obstacle_distance/registerObstacle", CollisionObject, queue_size=1)
+    pub = rospy.Publisher("obstacle_distance/registerObstacle", CollisionObject, queue_size=1, latch=True)
        
     while pub.get_num_connections() < 1: 
         if rospy.is_shutdown():
