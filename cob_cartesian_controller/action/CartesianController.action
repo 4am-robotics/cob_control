@@ -1,0 +1,8 @@
+# goal definition
+trajectory_action ta
+---
+# result definition
+bool success
+string message
+---
+# Define a feedback message
