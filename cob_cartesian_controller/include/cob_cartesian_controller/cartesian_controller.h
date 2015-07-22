@@ -47,7 +47,7 @@ public:
     bool initialize();
     
     // Main functions
-    void posePathBroadcaster(std::vector<geometry_msgs::Pose>* pose_vector);
+    void posePathBroadcaster(std::vector<geometry_msgs::Pose>& pose_vector);
     void movePTP(geometry_msgs::Pose target_pose, double epsilon);
     void holdPosition(geometry_msgs::Pose pose);
     
@@ -62,6 +62,9 @@ public:
     void actionSuccess();
     void actionAbort();
     cob_cartesian_controller::CartesianActionStruct acceptGoal(boost::shared_ptr<const cob_cartesian_controller::CartesianControllerGoal> goal);
+
+    cob_cartesian_controller::MoveLinStruct convertMoveLinRelToAbs(const cob_cartesian_controller::MoveLinStruct& rel_move_lin);
+    cob_cartesian_controller::MoveCircStruct convertMoveCircRelToAbs(cob_cartesian_controller::MoveCircStruct& rel_move_circ);
 
 private:
     ros::NodeHandle nh_;

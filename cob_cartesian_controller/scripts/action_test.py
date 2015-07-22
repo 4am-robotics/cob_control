@@ -39,7 +39,7 @@ def move_lin_x(client, length):
     # Attention: Changes the endeffector position with reference to the world_frame, but the orientation will be changed relatively to the current orientation. 
     goal = CartesianControllerGoal()
     goal.name = "move_lin"
-    goal.move_lin.x = 0.1
+    goal.move_lin.x = 0.5
     goal.move_lin.y = 0
     goal.move_lin.z = 0
     goal.move_lin.roll = 0.0
@@ -243,6 +243,6 @@ if __name__ == '__main__':
     
     client = actionlib.SimpleActionClient('cartesian_trajectory_action_', CartesianControllerAction)
     client.wait_for_server()
-    # move_santa(client)
-    move_lin_x(client, -0.5)
+    move_santa(client)
+    #move_lin_x(client, -0.5)
     

@@ -162,7 +162,7 @@ void CartesianController::movePTP(geometry_msgs::Pose target_pose, double epsilo
     }
 }
 
-void CartesianController::posePathBroadcaster(std::vector<geometry_msgs::Pose>* pose_vector)
+void CartesianController::posePathBroadcaster(std::vector<geometry_msgs::Pose>& pose_vector)
 {
     double roll, pitch, yaw;
     tf::TransformListener listener;
@@ -172,11 +172,11 @@ void CartesianController::posePathBroadcaster(std::vector<geometry_msgs::Pose>* 
     ros::Rate rate(update_rate_);
     tf::Quaternion q;
     double T_IPO = pow(update_rate_, -1);
-    double epsilon = 0.1;
+    double epsilon = 0.3;
 
     startTracking();
 
-    for(int i = 0; i < pose_vector->size()-1; i++)
+    for(int i = 0; i < pose_vector.size()-1; i++)
     {
         if(!tracking_goal_)
         {
@@ -186,11 +186,11 @@ void CartesianController::posePathBroadcaster(std::vector<geometry_msgs::Pose>* 
         ros::Time now = ros::Time::now();
 
         // Linearkoordinaten
-        transform.setOrigin(tf::Vector3(pose_vector->at(i).position.x, pose_vector->at(i).position.y, pose_vector->at(i).position.z));
-        q = tf::Quaternion(pose_vector->at(i).orientation.x,
-                           pose_vector->at(i).orientation.y,
-                           pose_vector->at(i).orientation.z,
-                           pose_vector->at(i).orientation.w);
+        transform.setOrigin(tf::Vector3(pose_vector.at(i).position.x, pose_vector.at(i).position.y, pose_vector.at(i).position.z));
+        q = tf::Quaternion(pose_vector.at(i).orientation.x,
+                           pose_vector.at(i).orientation.y,
+                           pose_vector.at(i).orientation.z,
+                           pose_vector.at(i).orientation.w);
         transform.setRotation(q);
 
 //        utils_.showMarker(tf::StampedTransform(transform, ros::Time::now(), reference_frame_, target_frame_), reference_frame_, marker_, 0 , 1, 0, "goalFrame");
@@ -226,7 +226,7 @@ void CartesianController::posePathBroadcaster(std::vector<geometry_msgs::Pose>* 
             }
         }
 
-        if(failure_counter_ > 50)
+        if(failure_counter_ > 100)
         {
             stopTracking();
             throw errorException("Distance between endeffector and tracking_frame exceeded the limit.");
@@ -324,7 +324,7 @@ void CartesianController::goalCB()
         {
             ROS_INFO("move_lin");
 
-            cob_cartesian_controller::MoveLinStruct move_lin = action_struct.move_lin;
+            cob_cartesian_controller::MoveLinStruct move_lin = convertMoveLinRelToAbs(action_struct.move_lin);
 
             // Interpolate the path
             if(TIP.linearInterpolation(pos_vec, move_lin))
@@ -332,7 +332,7 @@ void CartesianController::goalCB()
                 //Broadcast the linear path
                 try
                 {
-                    posePathBroadcaster(&pos_vec);
+                    posePathBroadcaster(pos_vec);
                     actionSuccess();
                 }
                 catch (errorException& e)
@@ -350,7 +350,7 @@ void CartesianController::goalCB()
         else if(action_struct.name == "move_circ")
         {
             ROS_INFO("move_circ");
-            cob_cartesian_controller::MoveCircStruct move_circ = action_struct.move_circ;
+            cob_cartesian_controller::MoveCircStruct move_circ = convertMoveCircRelToAbs(action_struct.move_circ);
 
             if(!TIP.circularInterpolation(pos_vec, move_circ))
             {
@@ -358,7 +358,7 @@ void CartesianController::goalCB()
                 //Broadcast the circular path
                 try
                 {
-                    posePathBroadcaster(&pos_vec);
+                    posePathBroadcaster(pos_vec);
                     actionSuccess();
                 }
                 catch (errorException& e)
@@ -394,6 +394,50 @@ void CartesianController::goalCB()
         pos_vec.clear();
     }
 }
+
+
+cob_cartesian_controller::MoveLinStruct CartesianController::convertMoveLinRelToAbs(const cob_cartesian_controller::MoveLinStruct& rel_move_lin)
+{
+    tf::TransformListener listener;
+    geometry_msgs::Pose actualTcpPose, end;
+    tf::Quaternion q_start,q_end, q_rel;
+    actualTcpPose = utils_.getEndeffectorPose(listener, reference_frame_, chain_tip_link_);
+
+    cob_cartesian_controller::MoveLinStruct update_ml = rel_move_lin;
+
+    // Transform RPY to Quaternion
+    q_rel.setRPY(rel_move_lin.roll, rel_move_lin.pitch, rel_move_lin.yaw);
+
+    q_start = tf::Quaternion(actualTcpPose.orientation.x,
+                             actualTcpPose.orientation.y,
+                             actualTcpPose.orientation.z,
+                             actualTcpPose.orientation.w);
+
+    // q_end = q_start * q_rel; // this does a rotation with respect to the endeffector but the rotation should be relative to the reference frame
+    q_end = q_rel * q_start; // this does a rotation with respect to the reference as well as the lin movement is done in abs. coordinates
+
+    // Define End Pose
+    end.position.x = actualTcpPose.position.x + rel_move_lin.x;
+    end.position.y = actualTcpPose.position.y + rel_move_lin.y;
+    end.position.z = actualTcpPose.position.z + rel_move_lin.z;
+    end.orientation.x = q_end.getX();
+    end.orientation.y = q_end.getY();
+    end.orientation.z = q_end.getZ();
+    end.orientation.w = q_end.getW();
+
+    utils_.poseToRPY(actualTcpPose, update_ml.roll, update_ml.pitch, update_ml.yaw);
+    update_ml.start = actualTcpPose;
+    update_ml.end = end;
+
+    return update_ml;
+}
+
+
+cob_cartesian_controller::MoveCircStruct CartesianController::convertMoveCircRelToAbs(cob_cartesian_controller::MoveCircStruct& rel_move_circ)
+{
+    return rel_move_circ;
+}
+
 
 void CartesianController::preemptCB()
 {
@@ -446,15 +490,22 @@ cob_cartesian_controller::CartesianActionStruct CartesianController::acceptGoal(
     {
         action_struct.hold_time = goal ->hold_time;
     }
+    else
+    {
+        ROS_ERROR_STREAM("There is no handling for the action with name: " << action_struct.name);
+        actionAbort();
+    }
 
     return action_struct;
 }
+
 
 void CartesianController::actionSuccess()
 {
     as_->setSucceeded(action_result_, action_result_.message);
     ROS_INFO("Goal succeeded!");
 }
+
 
 void CartesianController::actionAbort()
 {
