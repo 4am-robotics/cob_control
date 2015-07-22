@@ -395,11 +395,11 @@ void DistanceManager::jointstateCb(const sensor_msgs::JointState::ConstPtr& msg)
 {
     KDL::JntArray q_temp = last_q_;
     KDL::JntArray q_dot_temp = last_q_dot_;
-    unsigned int count = 0;
+    uint16_t count = 0;
 
-    for(unsigned int j = 0; j < chain_.getNrOfJoints(); j++)
+    for(uint16_t j = 0; j < chain_.getNrOfJoints(); j++)
     {
-        for(unsigned int i = 0; i < msg->name.size(); i++)
+        for(uint16_t i = 0; i < msg->name.size(); i++)
         {
             if(strcmp(msg->name[i].c_str(), joints_[j].c_str()) == 0)
             {
