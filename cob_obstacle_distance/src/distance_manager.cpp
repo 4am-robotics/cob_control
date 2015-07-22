@@ -63,11 +63,10 @@
 #define VEC_Y 1
 #define VEC_Z 2
 
-//#define DEBUG
 
 uint32_t DistanceManager::seq_nr_ = 0;
 
-DistanceManager::DistanceManager(ros::NodeHandle& nh) : nh_(nh), counter_(100), stop_sca_threads_(false)
+DistanceManager::DistanceManager(ros::NodeHandle& nh) : nh_(nh), stop_sca_threads_(false)
 {}
 
 DistanceManager::~DistanceManager()
@@ -213,7 +212,6 @@ void DistanceManager::calculate()
         adv_chn_fk_solver_vel_->JntToCart(jnt_arr, p_dot_out);
     }
 
-    uint32_t loc_counter = 0;
     for(ShapesManager::MapIter_t it = this->object_of_interest_mgr_->begin(); it != this->object_of_interest_mgr_->end(); ++it)
     {
         std::string object_of_interest_name = it->first;
@@ -257,24 +255,6 @@ void DistanceManager::calculate()
         tf::quaternionEigenToMsg(q_1, quat);
         tf::vectorEigenToMsg(abs_jnt_pos, v3);
         ooi->updatePose(v3, quat);
-
-#ifdef DEBUG
-        if(counter_ <= 0)
-        {
-            if (object_of_interest_name == this->chain_tip_link_)
-            {
-                ROS_INFO_STREAM("Publish object of interest!!!");
-                this->drawObjectsOfInterest(true);
-            }
-
-            counter_ = 100;
-
-        }
-        else
-        {
-            counter_--;
-        }
-#endif
 
         fcl::CollisionObject ooi_co = ooi->getCollisionObject();
         ooi.reset();
@@ -326,57 +306,21 @@ void DistanceManager::calculate()
 
             // vector from frame origin to collision point
             Eigen::Vector3d rel_frame_origin_to_collision_pnt = rel_base_link_frame_pos - chainbase2frame_pos;
-            ROS_INFO_STREAM("Frame \"" << object_of_interest_name << "\": Minimal distance: " << dist_result.min_distance);
+            ROS_DEBUG_STREAM("Frame \"" << object_of_interest_name << "\": Minimal distance: " << dist_result.min_distance);
 
             cob_obstacle_distance::ObstacleDistance od_msg;
             od_msg.distance = dist_result.min_distance;
             od_msg.distance_vector.x = dist_vector(VEC_X);
             od_msg.distance_vector.y = dist_vector(VEC_Y);
             od_msg.distance_vector.z = dist_vector(VEC_Z);
+            od_msg.obstacle_vector.x = obst_vector(VEC_X);
+            od_msg.obstacle_vector.y = obst_vector(VEC_Y);
+            od_msg.obstacle_vector.z = obst_vector(VEC_Z);
             od_msg.header.frame_id = object_of_interest_name;
             od_msg.header.stamp = ros::Time::now();
             od_msg.header.seq = seq_nr_;
             tf::vectorEigenToMsg(rel_frame_origin_to_collision_pnt, od_msg.collision_pnt_vector);
             obstacle_distances.distances.push_back(od_msg);
-
-#ifdef DEBUG
-            // Arrow marker: Shows vector between nearest point on obstacle and robot link
-            if (object_of_interest_name == this->chain_tip_link_ && counter_ == 100)
-            {
-                ROS_INFO_STREAM("rel_base_link_frame_pos: " << std::endl << rel_base_link_frame_pos);
-                ROS_INFO_STREAM("obst_vector: " << std::endl << obst_vector);
-
-                visualization_msgs::Marker marker;
-                marker.type = visualization_msgs::Marker::ARROW;
-                marker.lifetime = ros::Duration();
-                marker.action = visualization_msgs::Marker::ADD;
-                marker.id = 9999;
-                loc_counter++;
-                marker.header.frame_id = chain_base_link_;
-
-                marker.scale.x = 0.05;
-                marker.scale.y = 0.08;
-
-                geometry_msgs::Point start;
-                start.x = obst_vector(0);
-                start.y = obst_vector(1);
-                start.z = obst_vector(2);
-
-                geometry_msgs::Point end;
-                end.x = obst_vector(0) + dist_vector(0);
-                end.y = obst_vector(1) + dist_vector(1);
-                end.z = obst_vector(2) + dist_vector(2);
-
-                marker.color.a = 1.0;
-                marker.color.g = 1.0;
-
-                marker.points.push_back(start);
-                marker.points.push_back(end);
-
-                ROS_INFO_STREAM("Publishing arrow marker.");
-                this->marker_pub_.publish(marker);
-            }
-#endif
         }
     }
 
@@ -451,11 +395,11 @@ void DistanceManager::jointstateCb(const sensor_msgs::JointState::ConstPtr& msg)
 {
     KDL::JntArray q_temp = last_q_;
     KDL::JntArray q_dot_temp = last_q_dot_;
-    uint16_t count = 0;
+    unsigned int count = 0;
 
-    for(uint16_t j = 0; j < chain_.getNrOfJoints(); ++j)
+    for(unsigned int j = 0; j < chain_.getNrOfJoints(); j++)
     {
-        for(uint16_t i = 0; i < msg->name.size(); i++)
+        for(unsigned int i = 0; i < msg->name.size(); i++)
         {
             if(strcmp(msg->name[i].c_str(), joints_[j].c_str()) == 0)
             {

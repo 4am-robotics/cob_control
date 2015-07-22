@@ -54,9 +54,12 @@ target_link_libraries(twist_controller inverse_differential_kinematics_solver li
 add_executable(cob_twist_controller_node src/cob_twist_controller_node.cpp)
 target_link_libraries(cob_twist_controller_node twist_controller ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 
+add_executable(debug_trajectory_marker_node src/debug/debug_trajectory_marker_node.cpp)
+target_link_libraries(debug_trajectory_marker_node ${catkin_LIBRARIES})
+
 ## Install
 # Mark executables and/or libraries for installation
-install(TARGETS cob_twist_controller_node damping_methods inv_calculations constraint_solvers limiters hardware_interfaces kinematic_extensions inverse_differential_kinematics_solver twist_controller
+install(TARGETS cob_twist_controller_node damping_methods inv_calculations constraint_solvers limiters hardware_interfaces kinematic_extensions inverse_differential_kinematics_solver twist_controller debug_trajectory_marker_node
  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -70,7 +73,7 @@ install(DIRECTORY include/cob_twist_controller/
 )
 
 # Mark other files for installation (e.g. launch and bag files, etc.)
-install(PROGRAMS scripts/test_publisher_twist.py scripts/test_publisher_twist_stamped.py scripts/test_publisher_twist_series.py scripts/trajectory_marker_publisher_node.py
+install(PROGRAMS scripts/test_publisher_twist.py scripts/test_publisher_twist_stamped.py scripts/test_publisher_twist_series.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/scripts
 )
 

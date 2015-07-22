@@ -51,9 +51,12 @@ add_executable(cob_obstacle_distance src/cob_obstacle_distance.cpp src/helpers/h
 add_dependencies(cob_obstacle_distance cob_srvs_gencpp)
 target_link_libraries(cob_obstacle_distance parsers marker_shapes_management ${fcl_LIBRARIES} ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 
+add_executable(debug_obstacle_distance_node src/debug/debug_obstacle_distance_node.cpp)
+target_link_libraries(debug_obstacle_distance_node ${catkin_LIBRARIES})
+
 ## Install
 # Mark executables and/or libraries for installation
-install(TARGETS cob_obstacle_distance parsers marker_shapes_management
+install(TARGETS cob_obstacle_distance parsers marker_shapes_management debug_obstacle_distance_node
  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

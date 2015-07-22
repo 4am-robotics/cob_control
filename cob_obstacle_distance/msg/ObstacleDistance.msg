@@ -1,4 +1,5 @@
 Header header
 float64 distance
 geometry_msgs/Vector3 distance_vector
+geometry_msgs/Vector3 obstacle_vector
 geometry_msgs/Vector3 collision_pnt_vector

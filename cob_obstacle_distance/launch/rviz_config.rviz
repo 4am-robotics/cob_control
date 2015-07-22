@@ -3,7 +3,8 @@ Panels:
     Help Height: 78
     Name: Displays
     Property Tree Widget:
-      Expanded: ~
+      Expanded:
+        - /ObstacleVectors1/Namespaces1
       Splitter Ratio: 0.5
     Tree Height: 444
   - Class: rviz/Selection
@@ -111,28 +112,18 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
-    - Class: rviz/InteractiveMarkers
-      Enable Transparency: true
-      Enabled: true
-      Name: InteractiveMarkers
-      Show Axes: false
-      Show Descriptions: true
-      Show Visual Aids: false
-      Update Topic: /arm/marker_server/update
-      Value: true
-    - Class: rviz/MarkerArray
-      Enabled: true
-      Marker Topic: /arm/trajectory_marker
-      Name: TrajectoryMarker
-      Namespaces:
-        target_marker: true
-        tip_marker: true
-      Queue Size: 100
-      Value: true
     - Class: rviz/Marker
       Enabled: true
       Marker Topic: /arm/obstacle_distance/marker
       Name: ObstacleMarker
+      Namespaces:
+        collision_object: true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /arm/obstacle_distance/debug
+      Name: ObstacleVectors
       Namespaces:
         {}
       Queue Size: 100
@@ -161,22 +152,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3.03003
+      Distance: 2.51612
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.107485
-        Y: -0.125967
-        Z: 0.47275
+        X: -0.0452093
+        Y: -0.134049
+        Z: 0.535046
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.440398
+      Pitch: 0.450398
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.190397
+      Yaw: 4.75358
     Saved: ~
 Window Geometry:
   Displays:
@@ -194,5 +185,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1200
-  X: 164
-  Y: 127
+  X: 380
+  Y: 51
