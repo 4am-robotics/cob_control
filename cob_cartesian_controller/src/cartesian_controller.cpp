@@ -419,9 +419,9 @@ cob_cartesian_controller::CartesianActionStruct CartesianController::acceptGoal(
         action_struct.move_lin.x           = goal->move_lin.x;
         action_struct.move_lin.y           = goal->move_lin.y;
         action_struct.move_lin.z           = goal->move_lin.z;
-        action_struct.move_lin.roll        = goal->move_lin.roll * M_PI/180;
-        action_struct.move_lin.pitch       = goal->move_lin.pitch * M_PI/180;
-        action_struct.move_lin.yaw         = goal->move_lin.yaw * M_PI/180;
+        action_struct.move_lin.roll        = goal->move_lin.roll * M_PI / 180.0;
+        action_struct.move_lin.pitch       = goal->move_lin.pitch * M_PI / 180.0;
+        action_struct.move_lin.yaw         = goal->move_lin.yaw * M_PI / 180.0;
         action_struct.move_lin.rotate_only = goal->move_lin.rotate_only;
         action_struct.move_lin.profile.vel          = goal->move_lin.profile.vel;
         action_struct.move_lin.profile.accl         = goal->move_lin.profile.accl;
@@ -432,9 +432,9 @@ cob_cartesian_controller::CartesianActionStruct CartesianController::acceptGoal(
         action_struct.move_circ.x_center      = goal->move_circ.x_center;
         action_struct.move_circ.y_center      = goal->move_circ.y_center;
         action_struct.move_circ.z_center      = goal->move_circ.z_center;
-        action_struct.move_circ.roll_center   = goal->move_circ.roll_center * M_PI/180;
-        action_struct.move_circ.pitch_center  = goal->move_circ.pitch_center * M_PI/180;
-        action_struct.move_circ.yaw_center    = goal->move_circ.yaw_center * M_PI/180;
+        action_struct.move_circ.roll_center   = goal->move_circ.roll_center * M_PI / 180.0;
+        action_struct.move_circ.pitch_center  = goal->move_circ.pitch_center * M_PI / 180.0;
+        action_struct.move_circ.yaw_center    = goal->move_circ.yaw_center * M_PI / 180.0;
         action_struct.move_circ.start_angle   = goal->move_circ.start_angle;
         action_struct.move_circ.end_angle     = goal->move_circ.end_angle;
         action_struct.move_circ.radius        = goal->move_circ.radius;

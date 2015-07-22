@@ -34,6 +34,7 @@
 #include <Eigen/Core>
 #include <Eigen/LU> // necessary to use several methods on EIGEN Matrices.
 #include <kdl/chainjnttojacsolver.hpp>
+#include <cob_twist_controller/TwistControllerConfig.h>
 
 #define MAX_CRIT true
 #define MIN_CRIT false
@@ -48,57 +49,57 @@ typedef Eigen::Matrix<double,6,1> Vector6d_t;
 
 enum DampingMethodTypes
 {
-    NO_DAMPING = 0,
-    CONSTANT = 1,
-    MANIPULABILITY = 2,
-    LEAST_SINGULAR_VALUE = 3,
+    NO_DAMPING = cob_twist_controller::TwistController_NO_DAMPING,
+    CONSTANT = cob_twist_controller::TwistController_CONSTANT,
+    MANIPULABILITY = cob_twist_controller::TwistController_MANIPULABILITY,
+    LEAST_SINGULAR_VALUE = cob_twist_controller::TwistController_LEAST_SINGULAR_VALUE,
 };
 
 enum HardwareInterfaceTypes
 {
-    VELOCITY_INTERFACE = 0,
-    POSITION_INTERFACE = 1,
-    JOINT_STATE_INTERFACE = 2,
+    VELOCITY_INTERFACE = cob_twist_controller::TwistController_VELOCITY_INTERFACE,
+    POSITION_INTERFACE = cob_twist_controller::TwistController_POSITION_INTERFACE,
+    JOINT_STATE_INTERFACE = cob_twist_controller::TwistController_JOINT_STATE_INTERFACE,
 };
 
 enum KinematicExtensionTypes
 {
-    NO_EXTENSION = 0,
-    BASE_ACTIVE = 1,
+    NO_EXTENSION = cob_twist_controller::TwistController_NO_EXTENSION,
+    BASE_ACTIVE = cob_twist_controller::TwistController_BASE_ACTIVE,
 };
 
 enum SolverTypes
 {
-    DEFAULT_SOLVER = 0,
-    WLN,
-    GPM,
-    TASK_STACK_NO_GPM,
-    TASK_STACK_GPM,
-    TASK_2ND_PRIO,
-    DYN_TASKS_READJ,
-};
-
-enum ConstraintTypes
-{
-    None = 0,
-    CA,
-    JLA,
-    JLA_MID,
-    JLA_INEQ,
+    DEFAULT_SOLVER = cob_twist_controller::TwistController_DEFAULT_SOLVER,
+    WLN = cob_twist_controller::TwistController_WLN,
+    GPM = cob_twist_controller::TwistController_GPM,
+    TASK_STACK_NO_GPM = cob_twist_controller::TwistController_TASK_STACK_NO_GPM,
+    TASK_STACK_GPM = cob_twist_controller::TwistController_TASK_STACK_GPM,
+    TASK_2ND_PRIO = cob_twist_controller::TwistController_TASK_2ND_PRIO,
+    DYN_TASKS_READJ = cob_twist_controller::TwistController_DYN_TASKS_READJ,
 };
 
 enum ConstraintTypesCA
 {
-    CA_OFF = 0,
-    CA_ON,
+    CA_OFF = cob_twist_controller::TwistController_CA_OFF,
+    CA_ON = cob_twist_controller::TwistController_CA,
 };
 
 enum ConstraintTypesJLA
 {
-    JLA_OFF = 0,
-    JLA_ON,
-    JLA_MID_ON,
-    JLA_INEQ_ON,
+    JLA_OFF = cob_twist_controller::TwistController_JLA_OFF,
+    JLA_ON = cob_twist_controller::TwistController_JLA,
+    JLA_MID_ON = cob_twist_controller::TwistController_JLA_MID,
+    JLA_INEQ_ON = cob_twist_controller::TwistController_JLA_INEQ,
+};
+
+enum ConstraintTypes
+{
+    None,
+    CA,
+    JLA,
+    JLA_MID,
+    JLA_INEQ,
 };
 
 struct JointStates
