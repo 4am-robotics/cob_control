@@ -26,8 +26,8 @@
  *
  ****************************************************************/
 
-#ifndef COB_CONTROL_COB_CARTESIAN_CONTROLLER_INCLUDE_COB_CARTESIAN_CONTROLLER_TRAJECTORY_INTERPOLATOR_TRAJECTORY_INTERPOLATOR_H_
-#define COB_CONTROL_COB_CARTESIAN_CONTROLLER_INCLUDE_COB_CARTESIAN_CONTROLLER_TRAJECTORY_INTERPOLATOR_TRAJECTORY_INTERPOLATOR_H_
+#ifndef COB_CARTESIAN_CONTROLLER_TRAJECTORY_INTERPOLATOR_H_
+#define COB_CARTESIAN_CONTROLLER_TRAJECTORY_INTERPOLATOR_H_
 
 #include <ros/ros.h>
 #include <cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator.h>
@@ -42,16 +42,16 @@ public:
 
     ~TrajectoryInterpolator(){}
 
-    bool linear_interpolation(  std::vector <geometry_msgs::Pose>& poseVector,
-                                trajectory_action_move_lin &taml);
+    bool linearInterpolation(std::vector <geometry_msgs::Pose>& pose_vector,
+                             cob_cartesian_controller::MoveLinStruct& move_lin);
 
-    bool circular_interpolation(std::vector<geometry_msgs::Pose>& poseVector,
-                                trajectory_action_move_circ &tamc);
+    bool circularInterpolation(std::vector<geometry_msgs::Pose>& pose_vector,
+                               cob_cartesian_controller::MoveCircStruct& move_circ);
+
 private:
     TrajectoryProfileGenerator TPG_;
-
 };
 
 
 
-#endif /* COB_CONTROL_COB_CARTESIAN_CONTROLLER_INCLUDE_COB_CARTESIAN_CONTROLLER_TRAJECTORY_INTERPOLATOR_TRAJECTORY_INTERPOLATOR_H_ */
+#endif /* COB_CARTESIAN_CONTROLLER_TRAJECTORY_INTERPOLATOR_H_ */

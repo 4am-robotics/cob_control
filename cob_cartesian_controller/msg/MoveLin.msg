@@ -4,7 +4,7 @@ float64 z
 float64 roll
 float64 pitch
 float64 yaw
-float64 vel
-float64 accl
-string profile
-bool rotateOnly
+
+bool rotate_only
+
+cob_cartesian_controller/Profile profile

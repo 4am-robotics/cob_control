@@ -29,37 +29,39 @@
 #include <cob_cartesian_controller/helper_classes/utils.h>
 
 
-geometry_msgs::Pose Utils::getEndeffectorPose(tf::TransformListener &listener, std::string referenceFrame, std::string chain_tip_link)
+geometry_msgs::Pose CartesianControllerUtils::getEndeffectorPose(tf::TransformListener& listener, std::string reference_frame, std::string chain_tip_link)
 {
     geometry_msgs::Pose pos;
-    tf::StampedTransform stampedTransform;
+    tf::StampedTransform stamped_transform;
     bool transformed = false;
 
-    do{
-        // Get transformation
-        try{
-            listener.lookupTransform(referenceFrame, chain_tip_link, ros::Time(0), stampedTransform);
+    do
+    {
+        try
+        {
+            listener.lookupTransform(reference_frame, chain_tip_link, ros::Time(0), stamped_transform);
             transformed = true;
         }
-        catch (tf::TransformException &ex) {
+        catch (tf::TransformException& ex)
+        {
             transformed = false;
             ros::Duration(0.1).sleep();
         }
     }while(!transformed);
 
-    pos.position.x=stampedTransform.getOrigin().x();
-    pos.position.y=stampedTransform.getOrigin().y();
-    pos.position.z=stampedTransform.getOrigin().z();
-    pos.orientation.x = stampedTransform.getRotation()[0];
-    pos.orientation.y = stampedTransform.getRotation()[1];
-    pos.orientation.z = stampedTransform.getRotation()[2];
-    pos.orientation.w = stampedTransform.getRotation()[3];
+    pos.position.x = stamped_transform.getOrigin().x();
+    pos.position.y = stamped_transform.getOrigin().y();
+    pos.position.z = stamped_transform.getOrigin().z();
+    pos.orientation.x = stamped_transform.getRotation()[0];
+    pos.orientation.y = stamped_transform.getRotation()[1];
+    pos.orientation.z = stamped_transform.getRotation()[2];
+    pos.orientation.w = stamped_transform.getRotation()[3];
 
     return pos;
 }
 
-// Checks if the endeffector is in the area of the 'br' frame
-bool Utils::epsilon_area(double x,double y, double z, double roll, double pitch, double yaw, double epsilon)
+// Checks if the endeffector is in the area of the target frame
+bool CartesianControllerUtils::epsilonArea(double x, double y, double z, double roll, double pitch, double yaw, double epsilon)
 {
     bool x_okay, y_okay, z_okay = false;
     bool roll_okay, pitch_okay, yaw_okay = false;
@@ -81,11 +83,14 @@ bool Utils::epsilon_area(double x,double y, double z, double roll, double pitch,
     }
 }
 
-void Utils::showMarker(tf::StampedTransform tf, std::string referenceFrame, int marker_id, double red, double green, double blue, std::string ns)
+void CartesianControllerUtils::showMarker(tf::StampedTransform tf, std::string reference_frame, int marker_id, double red, double green, double blue, std::string ns)
 {
+    //ToDo: vis_pub should be a member
+    //ToDo: where is the advertise for vis_pub?
     ros::Publisher vis_pub;
+    
     visualization_msgs::Marker marker;
-    marker.header.frame_id = referenceFrame;
+    marker.header.frame_id = reference_frame;
     marker.header.stamp = ros::Time();
     marker.ns = ns;
     marker.id = marker_id;
@@ -105,16 +110,19 @@ void Utils::showMarker(tf::StampedTransform tf, std::string referenceFrame, int 
     marker.color.r = red;
     marker.color.g = green;
     marker.color.b = blue;
-
     marker.color.a = 1.0;
+    
     vis_pub.publish( marker );
 }
 
-void Utils::showDot(std::string referenceFrame, double x, double y, double z, int marker_id, double red, double green, double blue, std::string ns)
+void CartesianControllerUtils::showDot(std::string reference_frame, double x, double y, double z, int marker_id, double red, double green, double blue, std::string ns)
 {
+    //ToDo: vis_pub should be a member
+    //ToDo: where is the advertise for vis_pub?
     ros::Publisher vis_pub;
+    
     visualization_msgs::Marker marker;
-    marker.header.frame_id = referenceFrame;
+    marker.header.frame_id = reference_frame;
     marker.header.stamp = ros::Time();
     marker.ns = ns;
     marker.id = marker_id;
@@ -135,17 +143,19 @@ void Utils::showDot(std::string referenceFrame, double x, double y, double z, in
     marker.color.r = red;
     marker.color.g = green;
     marker.color.b = blue;
-
     marker.color.a = 1.0;
 
     vis_pub.publish( marker );
 }
 
-void Utils::showLevel(tf::Transform pos, std::string referenceFrame, int marker_id, double red, double green, double blue,std::string ns)
+void CartesianControllerUtils::showLevel(tf::Transform pos, std::string reference_frame, int marker_id, double red, double green, double blue, std::string ns)
 {
+    //ToDo: vis_pub should be a member
+    //ToDo: where is the advertise for vis_pub?
     ros::Publisher vis_pub;
+    
     visualization_msgs::Marker marker;
-    marker.header.frame_id = referenceFrame;
+    marker.header.frame_id = reference_frame;
     marker.header.stamp = ros::Time();
     marker.ns = ns;
     marker.id = marker_id;
@@ -164,13 +174,12 @@ void Utils::showLevel(tf::Transform pos, std::string referenceFrame, int marker_
     marker.color.r = red;
     marker.color.g = green;
     marker.color.b = blue;
-
     marker.color.a = 0.2;
 
     vis_pub.publish( marker );
 }
 
-void Utils::PoseToRPY(geometry_msgs::Pose pose, double &roll, double &pitch, double &yaw)
+void CartesianControllerUtils::poseToRPY(geometry_msgs::Pose pose, double& roll, double& pitch, double& yaw)
 {
     tf::Quaternion q = tf::Quaternion(pose.orientation.x,
                                       pose.orientation.y,

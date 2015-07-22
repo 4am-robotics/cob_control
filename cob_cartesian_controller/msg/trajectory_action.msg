@@ -1,4 +1,0 @@
-string name
-trajectory_move_lin move_lin
-trajectory_move_circ move_circ
-float64 hold_time

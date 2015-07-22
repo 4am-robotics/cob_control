@@ -28,9 +28,9 @@ add_action_files(
 
 add_message_files(
   DIRECTORY msg
-  FILES trajectory_move_lin.msg
-        trajectory_move_circ.msg
-        trajectory_action.msg
+  FILES MoveLin.msg
+        MoveCirc.msg
+        Profile.msg
 )
 
 
