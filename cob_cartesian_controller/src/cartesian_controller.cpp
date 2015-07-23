@@ -172,7 +172,7 @@ void CartesianController::posePathBroadcaster(std::vector<geometry_msgs::Pose>& 
     ros::Rate rate(update_rate_);
     tf::Quaternion q;
     double T_IPO = pow(update_rate_, -1);
-    double epsilon = 0.3;
+    double epsilon = 0.1;
 
     startTracking();
 

@@ -202,8 +202,7 @@ double CollisionAvoidance<T_PARAMS, PRIO>::calcValue()
 template <typename T_PARAMS, typename PRIO>
 double CollisionAvoidance<T_PARAMS, PRIO>::calcDerivativeValue()
 {
-    double current_time = ros::Time::now().toSec();
-    this->derivative_value_ = -1.0 * this->value_; // exponential decay
+    this->derivative_value_ = -0.1 * this->value_; // exponential decay
     return this->derivative_value_;
 }
 
@@ -755,7 +754,7 @@ void JointLimitAvoidanceIneq<T_PARAMS, PRIO>::calculate()
     this->calcDerivativeValue();
 
     double activation = this->getActivationThreshold();
-    double critical = 0.5 * activation;
+    double critical = 0.4 * activation;
 
     const double rel_val = this->rel_max_ < this->rel_min_ ? this->rel_max_ : this->rel_min_;
 

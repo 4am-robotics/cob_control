@@ -46,6 +46,8 @@ Eigen::MatrixXd DynamicTasksReadjustSolver::solve(const Vector6d_t& in_cart_velo
 
     Eigen::VectorXd sum_of_gradient = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
 
+    ros::Time last_ts_mod_time = this->task_stack_controller_.getLastModificationTime();
+
     for (std::set<ConstraintBase_t>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
     {
         (*it)->update(joint_states, prediction_solution, this->jacobian_data_);
@@ -54,26 +56,109 @@ Eigen::MatrixXd DynamicTasksReadjustSolver::solve(const Vector6d_t& in_cart_velo
 
     sum_of_gradient = this->params_.k_H * sum_of_gradient; // "global" weighting for all constraints.
 
-    const Vector6d_t scaled_in_cart_velocities = (1.0 / pow(this->in_cart_vel_damping_, 2.0)) * in_cart_velocities;
+    //const Vector6d_t scaled_in_cart_velocities = (1.0 / pow(this->in_cart_vel_damping_, 2.0)) * in_cart_velocities;
+
+    //const Vector6d_t scaled_in_cart_velocities = (1.0 - this->in_cart_vel_damping_) * in_cart_velocities;
+    const Vector6d_t scaled_in_cart_velocities = in_cart_velocities;
+
     Task_t t(this->params_.priority_main, "Main task", this->jacobian_data_, scaled_in_cart_velocities);
     t.tcp_ = this->params_;
     t.db_ = this->damping_;
     this->task_stack_controller_.addTask(t);
 
-    ROS_INFO_STREAM("============== Task output =============");
+
+///////////////////////////////////
+    uint32_t cnt_task_rows = 0;
+    TaskSetIter_t tmp_it = this->task_stack_controller_.beginTaskIter();
+    while((tmp_it = this->task_stack_controller_.nextActiveTask()) != this->task_stack_controller_.getTasksEnd())
+    {
+        cnt_task_rows += tmp_it->task_.rows();
+    }
+
+
+    Eigen::MatrixXd J_full(cnt_task_rows, this->jacobian_data_.cols());
+    Eigen::VectorXd task_full(cnt_task_rows, 1);
+///////////////////////////////////
+
+    ROS_INFO_STREAM("============== Task output ============= with main task damping: " << this->in_cart_vel_damping_);
+
+
+
+    uint32_t block_start_row = 0;
+    int active_tasks = this->task_stack_controller_.countActiveTasks();
+
     TaskSetIter_t it = this->task_stack_controller_.beginTaskIter();
     while((it = this->task_stack_controller_.nextActiveTask()) != this->task_stack_controller_.getTasksEnd())
     {
         ROS_INFO_STREAM("id: " << it->id_);
         Eigen::MatrixXd J_task = it->task_jacobian_;
         Eigen::MatrixXd J_temp = J_task * projector_i;
+
         Eigen::VectorXd v_task = it->task_;
+
+        ///////////////////////////////////
+        J_full.block(block_start_row, 0, J_temp.rows(), J_temp.cols()) = J_temp;
+        task_full.block(block_start_row, 0, v_task.rows(), 1) = v_task;
+        block_start_row += J_temp.rows();
+        ///////////////////////////////////
+
         Eigen::MatrixXd J_temp_inv = pinv_calc_.calculate(it->tcp_, it->db_, J_temp);
         q_i = q_i + J_temp_inv * (v_task - J_task * q_i);
         projector_i = projector_i - J_temp_inv * J_temp;
     }
 
-    qdots_out.col(0) = q_i + projector_i * sum_of_gradient;
+    //this->J_full_=  pinv_calc_.calculate(this->params_, this->damping_, J_full);
+
+    Eigen::VectorXd last_mod_solution = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
+
+    //if(!this->init_ && this->last_active_tasks_ != active_tasks)
+    if(!this->init_ && this->last_active_tasks_ != active_tasks)
+    {
+//        if(this->last_active_tasks_ < active_tasks)
+//        {
+//            this->J_full_ = J_full;
+//            this->task_full_ = task_full;
+//        }
+//        else
+//        {
+//            ros::Duration d = ros::Time::now() - this->last_mod_time_;
+//
+//            Eigen::MatrixXd J_full_inv =  pinv_calc_.calculate(this->params_, this->damping_, this->J_full_);
+//
+//            last_mod_solution = exp(this->params_.mu * d.toSec()) * J_full_inv * this->task_full_;
+//            ROS_WARN_STREAM("Current q_n: " << std::endl << q_i);
+//            ROS_WARN_STREAM("CAlc last_mod_solution: " << std::endl << last_mod_solution);
+//        }
+
+        ros::Duration d = ros::Time::now() - this->last_mod_time_;
+
+        Eigen::MatrixXd J_full_inv =  pinv_calc_.calculate(this->params_, this->damping_, this->J_full_);
+
+        last_mod_solution = exp(this->params_.mu * d.toSec()) * J_full_inv * this->task_full_;
+
+
+        ROS_WARN_STREAM("Current q_n: " << std::endl << q_i);
+        ROS_WARN_STREAM("CAlc last_mod_solution: " << std::endl << last_mod_solution);
+
+        ROS_INFO_STREAM("J_full: " << J_full);
+        this->J_full_ = J_full;
+        this->task_full_ = task_full;
+        this->last_mod_time_ = ros::Time::now();
+    }
+
+    if(this->init_)
+    {
+        this->J_full_ = J_full;
+        this->task_full_ = task_full;
+        this->init_ = false;
+    }
+
+
+
+    this->last_active_tasks_ = active_tasks;
+
+    //qdots_out.col(0) = q_i + projector_i * sum_of_gradient;
+    qdots_out.col(0) = q_i + last_mod_solution + projector_i * sum_of_gradient;
     return qdots_out;
 }
 
@@ -102,7 +187,7 @@ void DynamicTasksReadjustSolver::processState(std::set<ConstraintBase_t>::iterat
             this->task_stack_controller_.addTask(t);
             this->task_stack_controller_.activateTask((*it)->getTaskId());
 
-            this->in_cart_vel_damping_ = 50.0;
+            this->in_cart_vel_damping_ = START_CNT;
 
         }
         else if(cstate.getCurrent() == DANGER)
@@ -130,7 +215,7 @@ void DynamicTasksReadjustSolver::processState(std::set<ConstraintBase_t>::iterat
 
             // t.task_jacobian_ = factor * t.task_jacobian_;
             this->task_stack_controller_.addTask(t);
-            this->in_cart_vel_damping_ = 50.0;
+            this->in_cart_vel_damping_ = START_CNT;
         }
         else if(cstate.getCurrent() == DANGER)
         {

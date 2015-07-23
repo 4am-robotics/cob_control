@@ -701,7 +701,6 @@ bool DistanceManager::predictDistance(cob_obstacle_distance::PredictDistance::Re
 bool DistanceManager::registerPointOfInterest(cob_srvs::SetString::Request& request,
                                               cob_srvs::SetString::Response& response)
 {
-    ROS_INFO_STREAM("Registering a point / frame of interest!");
     if(this->object_of_interest_mgr_->count(request.data) > 0)
     {
         response.success = true;
@@ -734,6 +733,7 @@ bool DistanceManager::registerPointOfInterest(cob_srvs::SetString::Request& requ
         }
     }
 
+    ROS_INFO_STREAM("Registration: " << response.message);
     return true;
 }
 

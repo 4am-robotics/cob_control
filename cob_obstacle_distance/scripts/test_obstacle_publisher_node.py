@@ -50,27 +50,27 @@ if __name__=="__main__":
     rospy.loginfo("Continue ...")
     
     # Publish a simple sphere
-    x = CollisionObject()
-    x.id = "Funny Sphere"
-    x.header.frame_id = root_frame
-    x.operation = CollisionObject.ADD
-    
-    sphere = SolidPrimitive()
-    sphere.type = SolidPrimitive.SPHERE
-    sphere.dimensions.append(0.1) # radius
-    x.primitives.append(sphere)
-    
-    pose = Pose()
-    pose.position.x = 0.35
-    pose.position.y = -0.35
-    pose.position.z = 0.8
-    pose.orientation.x = 0.0; 
-    pose.orientation.y = 0.0; 
-    pose.orientation.z = 0.0; 
-    pose.orientation.w = 1.0; 
-    x.primitive_poses.append(pose)
-    
-    pub.publish(x)
+#     x = CollisionObject()
+#     x.id = "Funny Sphere"
+#     x.header.frame_id = root_frame
+#     x.operation = CollisionObject.ADD
+#     
+#     sphere = SolidPrimitive()
+#     sphere.type = SolidPrimitive.SPHERE
+#     sphere.dimensions.append(0.1) # radius
+#     x.primitives.append(sphere)
+#     
+#     pose = Pose()
+#     pose.position.x = 0.35
+#     pose.position.y = -0.35
+#     pose.position.z = 0.8
+#     pose.orientation.x = 0.0; 
+#     pose.orientation.y = 0.0; 
+#     pose.orientation.z = 0.0; 
+#     pose.orientation.w = 1.0; 
+#     x.primitive_poses.append(pose)
+#     
+#     pub.publish(x)
     
     # Now publish a mesh and use the db field for the stl-resource name
     # This is an example how to use STL-files
@@ -80,17 +80,18 @@ if __name__=="__main__":
     y = CollisionObject()
     y.id = "Funny Mesh"
     y.header.frame_id = root_frame
-    y.type.db = "package://cob_gazebo_objects/Media/models/milk.dae"
+    # y.type.db = "package://cob_gazebo_objects/Media/models/milk.dae"
+    y.type.db = "package://cob_twist_controller/files/torus_0_25_inner_rad.stl"
     y.operation = CollisionObject.ADD
     
     pose = Pose()
-    pose.position.x = -0.35
-    pose.position.y = -0.35
-    pose.position.z = 0.8
-    pose.orientation.x = 0.0; 
-    pose.orientation.y = 0.0; 
-    pose.orientation.z = 0.0; 
-    pose.orientation.w = 1.0; 
+    pose.position.x = 0.2
+    pose.position.y = -0.75
+    pose.position.z = 0.9
+    pose.orientation.x = 0.0
+    pose.orientation.y = 0.0
+    pose.orientation.z = 0.0
+    pose.orientation.w = 1.0
     y.mesh_poses.append(pose)
 
     pub.publish(y)

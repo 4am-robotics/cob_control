@@ -38,12 +38,17 @@
 #include "cob_twist_controller/constraints/constraint_base.h"
 #include "cob_twist_controller/constraints/constraint.h"
 
+#define START_CNT 100.0
+
 class DynamicTasksReadjustSolver : public ConstraintSolver<>
 {
     public:
         DynamicTasksReadjustSolver(const TwistControllerParams& params, TaskStackController_t& task_stack_controller)
-                           : ConstraintSolver(params, task_stack_controller), in_cart_vel_damping_(1.0)
+                           : ConstraintSolver(params, task_stack_controller), in_cart_vel_damping_(START_CNT)
         {
+            this->init_ = true;
+            this->last_active_tasks_ = task_stack_controller.countActiveTasks();
+            this->last_mod_time_ = ros::Time::now();
         }
 
         virtual ~DynamicTasksReadjustSolver()
@@ -90,6 +95,14 @@ class DynamicTasksReadjustSolver : public ConstraintSolver<>
 
 
         double in_cart_vel_damping_;
+
+
+        bool init_;
+        int last_active_tasks_;
+        Eigen::MatrixXd J_full_;
+        Eigen::MatrixXd task_full_;
+
+        ros::Time last_mod_time_;
 };
 
 #endif /* DYNAMIC_TASKS_READJUST_SOLVER_H_ */
