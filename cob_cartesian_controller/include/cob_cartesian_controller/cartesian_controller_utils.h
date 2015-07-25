@@ -31,6 +31,7 @@
 
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
+#include <tf/transform_datatypes.h>
 
 
 class CartesianControllerUtils

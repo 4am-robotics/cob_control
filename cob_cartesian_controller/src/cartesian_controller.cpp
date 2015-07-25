@@ -31,7 +31,6 @@
 #include <ros/ros.h>
 #include <std_srvs/Empty.h>
 #include <cob_srvs/SetString.h>
-#include <kdl_conversions/kdl_msg.h>
 
 #include <cob_cartesian_controller/cartesian_controller.h>
 
@@ -361,34 +360,24 @@ cob_cartesian_controller::MoveLinStruct CartesianController::convertMoveLinRelTo
 {
     //ToDo: Use proper call to transformPose() here after the action description has been changed to be using a PoseStamped
     
-    geometry_msgs::Pose actualTcpPose, end;
+    geometry_msgs::Pose start, end;
     tf::Quaternion q_start, q_end, q_rel;
-    actualTcpPose = utils_.getPose(root_frame_, chain_tip_link_);
-
-    cob_cartesian_controller::MoveLinStruct update_ml = rel_move_lin;
-
-    // Transform RPY to Quaternion
+    start = utils_.getPose(root_frame_, chain_tip_link_);   //current tcp pose
+    
+    tf::quaternionMsgToTF(start.orientation, q_start);
     q_rel.setRPY(rel_move_lin.roll, rel_move_lin.pitch, rel_move_lin.yaw);
-
-    q_start = tf::Quaternion(actualTcpPose.orientation.x,
-                             actualTcpPose.orientation.y,
-                             actualTcpPose.orientation.z,
-                             actualTcpPose.orientation.w);
-
     // q_end = q_start * q_rel; // this does a rotation with respect to the endeffector but the rotation should be relative to the reference frame
     q_end = q_rel * q_start; // this does a rotation with respect to the reference as well as the lin movement is done in abs. coordinates
 
-    // Define End Pose
-    end.position.x = actualTcpPose.position.x + rel_move_lin.x;
-    end.position.y = actualTcpPose.position.y + rel_move_lin.y;
-    end.position.z = actualTcpPose.position.z + rel_move_lin.z;
-    end.orientation.x = q_end.getX();
-    end.orientation.y = q_end.getY();
-    end.orientation.z = q_end.getZ();
-    end.orientation.w = q_end.getW();
+    end.position.x = start.position.x + rel_move_lin.x;
+    end.position.y = start.position.y + rel_move_lin.y;
+    end.position.z = start.position.z + rel_move_lin.z;
+    tf::quaternionTFToMsg(q_end, end.orientation);
 
-    utils_.poseToRPY(actualTcpPose, update_ml.roll, update_ml.pitch, update_ml.yaw);
-    update_ml.start = actualTcpPose;
+    cob_cartesian_controller::MoveLinStruct update_ml = rel_move_lin;
+    //ToDo: Why is roll, pitch and yaw set to respective values of start? What about x, y, z? Should it not be the goal?
+    utils_.poseToRPY(start, update_ml.roll, update_ml.pitch, update_ml.yaw);
+    update_ml.start = start;
     update_ml.end = end;
 
     return update_ml;
@@ -428,8 +417,8 @@ cob_cartesian_controller::CartesianActionStruct CartesianController::acceptGoal(
         action_struct.move_circ.roll_center   = goal->move_circ.roll_center * M_PI / 180.0;
         action_struct.move_circ.pitch_center  = goal->move_circ.pitch_center * M_PI / 180.0;
         action_struct.move_circ.yaw_center    = goal->move_circ.yaw_center * M_PI / 180.0;
-        action_struct.move_circ.start_angle   = goal->move_circ.start_angle;
-        action_struct.move_circ.end_angle     = goal->move_circ.end_angle;
+        action_struct.move_circ.start_angle   = goal->move_circ.start_angle * M_PI / 180.0;
+        action_struct.move_circ.end_angle     = goal->move_circ.end_angle  * M_PI / 180.0;
         action_struct.move_circ.radius        = goal->move_circ.radius;
         action_struct.move_circ.profile.vel           = goal->move_circ.profile.vel;
         action_struct.move_circ.profile.accl          = goal->move_circ.profile.accl;

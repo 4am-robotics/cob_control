@@ -1,7 +1,4 @@
 #! /usr/bin/env python
-
-import roslib
-roslib.load_manifest('cob_cartesian_controller')
 import rospy
 import actionlib
 

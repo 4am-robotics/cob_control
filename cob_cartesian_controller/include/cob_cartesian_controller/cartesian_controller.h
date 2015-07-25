@@ -36,6 +36,7 @@
 
 #include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h>
+#include <tf/transform_datatypes.h>
 
 #include <actionlib/server/simple_action_server.h>
 #include <cob_cartesian_controller/CartesianControllerAction.h>

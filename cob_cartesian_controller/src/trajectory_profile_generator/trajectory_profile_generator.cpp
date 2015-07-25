@@ -131,31 +131,22 @@ bool TrajectoryProfileGenerator::calculateProfile(std::vector<double>& path_arra
 
 
 bool TrajectoryProfileGenerator::calculateProfileForAngularMovements(std::vector<double>* path_matrix,
-                                                                      double Se, double Se_roll, double Se_pitch, double Se_yaw,
-                                                                      cob_cartesian_controller::MoveLinStruct& move_lin)
+                                                                     double Se, double Se_roll, double Se_pitch, double Se_yaw,
+                                                                     cob_cartesian_controller::MoveLinStruct& move_lin)
 {
     std::vector<double> linear_path, roll_path, pitch_path, yaw_path;
     int steps_te, steps_tv, steps_tb = 0;
     double tv, tb, te = 0.0;
     double T_IPO = pow(update_rate_, -1);
-    double params[4][2];
-    double Se_max, temp = 0.0;
-    bool linear_okay, roll_okay, pitch_okay, yaw_okay = false;
-
-    double Se_array[4] = {Se, Se_roll, Se_pitch, Se_yaw};
-
-    for(int i = 0 ; i < sizeof(Se_array) ; i++)
-    {
-        if(temp < std::fabs(Se_array[i]))
-        {
-            temp = std::fabs(Se_array[i]);
-        }
-    }
+    double Se_max = 0.0;
 
     // If rotateOnly == true, then set the largest angular difference as Se_max.
     if(move_lin.rotate_only)
     {
-        Se_max = temp;
+        Se_max = std::max(std::fabs(Se), Se_max);
+        Se_max = std::max(std::fabs(Se_roll), Se_max);
+        Se_max = std::max(std::fabs(Se_pitch), Se_max);
+        Se_max = std::max(std::fabs(Se_yaw), Se_max);
     }
     else    // Otherwise set the linear-path as Se_max
     {
@@ -204,87 +195,36 @@ bool TrajectoryProfileGenerator::calculateProfileForAngularMovements(std::vector
     // Calculate the paths
     if(!generatePath(linear_path, T_IPO, move_lin.profile.vel, move_lin.profile.accl, Se_max, (steps_tb + steps_tv + steps_te), move_lin.profile.profile_type))
     {
-        ROS_WARN("Error while Calculating path");
+        ROS_WARN("Error while Calculating linear_path");
         return false;
     }
     if(!generatePathWithTe(roll_path, T_IPO, te, move_lin.profile.accl, Se_roll, (steps_tb + steps_tv + steps_te), move_lin.roll, move_lin.profile.profile_type))
     {
-        ROS_WARN("Error while Calculating path");
+        ROS_WARN("Error while Calculating roll_path");
         return false;
     }
     if(!generatePathWithTe(pitch_path, T_IPO, te, move_lin.profile.accl, Se_pitch, (steps_tb + steps_tv + steps_te), move_lin.pitch, move_lin.profile.profile_type))
     {
-        ROS_WARN("Error while Calculating path");
+        ROS_WARN("Error while Calculating pitch_path");
         return false;
     }
     if(!generatePathWithTe(yaw_path, T_IPO, te, move_lin.profile.accl, Se_yaw, (steps_tb + steps_tv + steps_te), move_lin.yaw, move_lin.profile.profile_type))
     {
-        ROS_WARN("Error while Calculating path");
+        ROS_WARN("Error while Calculating yaw_path");
         return false;
     }
 
-    // Get the Vector sizes of each path-vector
-    int max_step_array[4], max_steps;
-
-    max_step_array[0] = linear_path.size();
-    max_step_array[1] = roll_path.size();
-    max_step_array[2] = pitch_path.size();
-    max_step_array[3] = yaw_path.size();
-
-    // Get the largest one
-    max_steps = 0;
-    for(int i = 0 ; i < 4 ; i++)
-    {
-        if(max_steps<max_step_array[i])
-        {
-            max_steps = max_step_array[i];
-        }
-    }
-
-    // Check if every vector has the same length than the largest one.
-    while(true)
-    {
-        if(linear_path.size() < max_steps)
-        {
-            linear_path.push_back(linear_path.at(linear_path.size()-1));
-        }
-        else
-        {
-            linear_okay = true;
-        }
-
-        if(roll_path.size() < max_steps)
-        {
-            roll_path.push_back(roll_path.at(roll_path.size()-1));
-        }
-        else
-        {
-            roll_okay=true;
-        }
-
-        if(pitch_path.size() < max_steps)
-        {
-            pitch_path.push_back(pitch_path.at(pitch_path.size()-1));
-        }
-        else
-        {
-            pitch_okay=true;
-        }
-
-        if(yaw_path.size() < max_steps)
-        {
-            yaw_path.push_back(yaw_path.at(yaw_path.size()-1));
-        }
-        else
-        {
-            yaw_okay=true;
-        }
-
-        if(linear_okay && roll_okay && pitch_okay && yaw_okay)
-        {
-            break;
-        }
-    }
+    // Resize the path vectors
+    unsigned int max_steps = 0;
+    max_steps = std::max((unsigned int)linear_path.size(), max_steps);
+    max_steps = std::max((unsigned int)roll_path.size(), max_steps);
+    max_steps = std::max((unsigned int)pitch_path.size(), max_steps);
+    max_steps = std::max((unsigned int)yaw_path.size(), max_steps);
+    
+    linear_path.resize(max_steps, linear_path.back());
+    roll_path.resize(max_steps, roll_path.back());
+    pitch_path.resize(max_steps, pitch_path.back());
+    yaw_path.resize(max_steps, yaw_path.back());
 
     // Put the interpolated paths into the path_matrix
     path_matrix[0] = linear_path;

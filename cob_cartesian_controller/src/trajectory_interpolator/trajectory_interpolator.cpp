@@ -31,30 +31,23 @@
 bool TrajectoryInterpolator::linearInterpolation(std::vector<geometry_msgs::Pose>& pose_vector,
                                                  cob_cartesian_controller::MoveLinStruct& move_lin)
 {
-    std::vector<double> linear_path, roll_path, pitch_path, yaw_path;
-
-    geometry_msgs::Pose pose;
     tf::Quaternion q;
-    std::vector<double> path_matrix[4];
     double start_roll, start_pitch, start_yaw;
     double end_roll, end_pitch, end_yaw;
+
+    std::vector<double> linear_path, roll_path, pitch_path, yaw_path;
+    std::vector<double> path_matrix[4];
+    geometry_msgs::Pose pose;
+
     double Se = sqrt(pow((move_lin.end.position.x - move_lin.start.position.x), 2) +
                      pow((move_lin.end.position.y - move_lin.start.position.y), 2) +
                      pow((move_lin.end.position.z - move_lin.start.position.z), 2));
 
     // Convert Quaternions into RPY Angles for start and end pose
-    q = tf::Quaternion(move_lin.start.orientation.x,
-                       move_lin.start.orientation.y,
-                       move_lin.start.orientation.z,
-                       move_lin.start.orientation.w);
-
+    tf::quaternionMsgToTF(move_lin.start.orientation, q);
     tf::Matrix3x3(q).getRPY(start_roll, start_pitch, start_yaw);
 
-    q = tf::Quaternion(move_lin.end.orientation.x,
-                       move_lin.end.orientation.y,
-                       move_lin.end.orientation.z,
-                       move_lin.end.orientation.w);
-
+    tf::quaternionMsgToTF(move_lin.end.orientation, q);
     tf::Matrix3x3(q).getRPY(end_roll, end_pitch, end_yaw);
 
     // Calculate path length for the angular movement
@@ -64,7 +57,7 @@ bool TrajectoryInterpolator::linearInterpolation(std::vector<geometry_msgs::Pose
     Se_yaw   = end_yaw   - start_yaw;
 
     // Calculate path for each Angle
-    if(!TPG_.calculateProfileForAngularMovements(path_matrix, Se, Se_roll, Se_pitch, Se_yaw, move_lin))
+    if(!trajectory_profile_generator_.calculateProfileForAngularMovements(path_matrix, Se, Se_roll, Se_pitch, Se_yaw, move_lin))
     {
         return false;
     }
@@ -77,27 +70,23 @@ bool TrajectoryInterpolator::linearInterpolation(std::vector<geometry_msgs::Pose
     // Interpolate the linear path
     for(int i = 0 ; i < path_matrix[0].size() ; i++)
     {
-        if(!move_lin.rotate_only)
-        {
-            pose.position.x = move_lin.start.position.x + linear_path.at(i) * (move_lin.end.position.x - move_lin.start.position.x) / Se;
-            pose.position.y = move_lin.start.position.y + linear_path.at(i) * (move_lin.end.position.y - move_lin.start.position.y) / Se;
-            pose.position.z = move_lin.start.position.z + linear_path.at(i) * (move_lin.end.position.z - move_lin.start.position.z) / Se;
-        }
-        else
+        if(move_lin.rotate_only)
         {
             pose.position.x = move_lin.start.position.x;
             pose.position.y = move_lin.start.position.y;
             pose.position.z = move_lin.start.position.z;
         }
+        else
+        {
+            pose.position.x = move_lin.start.position.x + linear_path.at(i) * (move_lin.end.position.x - move_lin.start.position.x) / Se;
+            pose.position.y = move_lin.start.position.y + linear_path.at(i) * (move_lin.end.position.y - move_lin.start.position.y) / Se;
+            pose.position.z = move_lin.start.position.z + linear_path.at(i) * (move_lin.end.position.z - move_lin.start.position.z) / Se;
+        }
 
         // Transform RPY to Quaternion
         q.setRPY(roll_path.at(i), pitch_path.at(i), yaw_path.at(i));
+        tf::quaternionTFToMsg(q, pose.orientation);
 
-        // Get Quaternion Values
-        pose.orientation.x = q.getX();
-        pose.orientation.y = q.getY();
-        pose.orientation.z = q.getZ();
-        pose.orientation.w = q.getW();
         pose_vector.push_back(pose);
     }
     return true;
@@ -106,17 +95,11 @@ bool TrajectoryInterpolator::linearInterpolation(std::vector<geometry_msgs::Pose
 bool TrajectoryInterpolator::circularInterpolation(std::vector<geometry_msgs::Pose>& pose_vector,
                                                    cob_cartesian_controller::MoveCircStruct& move_circ)
 {
-    tf::Transform C, P, T;
     tf::Quaternion q;
-    geometry_msgs::Pose pose, pos;
-    std::vector<double> path_array;
+    tf::Transform C, P, T;
 
-    // Convert RPY angles into [RAD]
-    move_circ.start_angle    *= M_PI/180;
-    move_circ.end_angle      *= M_PI/180;
-    move_circ.roll_center    *= M_PI/180;
-    move_circ.pitch_center   *= M_PI/180;
-    move_circ.yaw_center     *= M_PI/180;
+    std::vector<double> path_array;
+    geometry_msgs::Pose pose;
 
     double Se = move_circ.end_angle - move_circ.start_angle;
     bool forward;
@@ -133,7 +116,7 @@ bool TrajectoryInterpolator::circularInterpolation(std::vector<geometry_msgs::Po
     Se = std::fabs(Se);
 
     // Calculates the Path with RAMP or SINOID profile
-    if(!TPG_.calculateProfile(path_array, Se, move_circ.profile.vel, move_circ.profile.accl, move_circ.profile.profile_type))
+    if(!trajectory_profile_generator_.calculateProfile(path_array, Se, move_circ.profile.vel, move_circ.profile.accl, move_circ.profile.profile_type))
     {
         return false;
     }
@@ -164,18 +147,10 @@ bool TrajectoryInterpolator::circularInterpolation(std::vector<geometry_msgs::Po
 
         // Calculate TCP Position
         P = C * T;
+        
+        tf::pointTFToMsg(P.getOrigin(), pose.position);
+        tf::quaternionTFToMsg(P.getRotation(), pose.orientation);
 
-        // Fill the Pose
-        pose.position.x = P.getOrigin().x();
-        pose.position.y = P.getOrigin().y();
-        pose.position.z = P.getOrigin().z();
-
-        pose.orientation.x = P.getRotation()[0];
-        pose.orientation.y = P.getRotation()[1];
-        pose.orientation.z = P.getRotation()[2];
-        pose.orientation.w = P.getRotation()[3];
-
-        // Put the pose into the pose Vector
         pose_vector.push_back(pose);
     }
     return true;

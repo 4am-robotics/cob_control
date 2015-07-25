@@ -11,13 +11,9 @@ find_package(catkin REQUIRED COMPONENTS
     std_srvs 
     cob_srvs 
     tf 
-    kdl_conversions 
-    roslib  
     actionlib_msgs
     message_generation
 )
-
-find_package(orocos_kdl REQUIRED)
 
 ## Generate actions in the 'action' folder
 add_action_files(
@@ -43,10 +39,10 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES profile_generator trajectory_interpolator cartesian_controller cartesian_controller_utils
-  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs visualization_msgs std_srvs cob_srvs tf kdl_conversions actionlib_msgs message_runtime
+  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs visualization_msgs std_srvs cob_srvs tf actionlib_msgs message_runtime
 )
 
-include_directories(include ${catkin_INCLUDE_DIRS} ${orocos_kdl_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS})
 
 ## Build
 # Declare a cpp library
@@ -61,7 +57,7 @@ target_link_libraries(trajectory_interpolator profile_generator ${catkin_LIBRARI
 
 add_library(cartesian_controller src/cartesian_controller.cpp )
 add_dependencies(cartesian_controller cob_srvs_gencpp)
-target_link_libraries(cartesian_controller trajectory_interpolator cartesian_controller_utils ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${orocos_kdl_LIBRARIES})
+target_link_libraries(cartesian_controller trajectory_interpolator cartesian_controller_utils ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 # Declare a cpp executable
 add_executable(cartesian_controller_node src/cartesian_controller_node.cpp)

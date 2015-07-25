@@ -35,14 +35,9 @@ geometry_msgs::Pose CartesianControllerUtils::getPose(std::string target_frame, 
     tf::StampedTransform stamped_transform;
     
     stamped_transform = getStampedTransform(target_frame, source_frame);
-
-    pose.position.x = stamped_transform.getOrigin().x();
-    pose.position.y = stamped_transform.getOrigin().y();
-    pose.position.z = stamped_transform.getOrigin().z();
-    pose.orientation.x = stamped_transform.getRotation()[0];
-    pose.orientation.y = stamped_transform.getRotation()[1];
-    pose.orientation.z = stamped_transform.getRotation()[2];
-    pose.orientation.w = stamped_transform.getRotation()[3];
+    
+    tf::pointTFToMsg(stamped_transform.getOrigin(), pose.position);
+    tf::quaternionTFToMsg(stamped_transform.getRotation(), pose.orientation);
 
     return pose;
 }
@@ -109,9 +104,7 @@ bool CartesianControllerUtils::inEpsilonArea(tf::StampedTransform stamped_transf
 
 void CartesianControllerUtils::poseToRPY(geometry_msgs::Pose pose, double& roll, double& pitch, double& yaw)
 {
-    tf::Quaternion q = tf::Quaternion(pose.orientation.x,
-                                      pose.orientation.y,
-                                      pose.orientation.z,
-                                      pose.orientation.w);
+    tf::Quaternion q;
+    tf::quaternionMsgToTF(pose.orientation, q);
     tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
 }

@@ -33,6 +33,7 @@
 #include <cob_cartesian_controller/cartesian_controller_data_types.h>
 #include <cob_cartesian_controller/cartesian_controller_utils.h>
 
+
 class TrajectoryProfileGenerator
 {
 public:

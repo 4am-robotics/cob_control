@@ -30,6 +30,10 @@
 #define COB_CARTESIAN_CONTROLLER_TRAJECTORY_INTERPOLATOR_H_
 
 #include <ros/ros.h>
+#include <geometry_msgs/Pose.h>
+#include <tf/transform_datatypes.h>
+
+#include <cob_cartesian_controller/cartesian_controller_data_types.h>
 #include <cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator.h>
 
 
@@ -37,7 +41,7 @@ class TrajectoryInterpolator
 {
 public:
     TrajectoryInterpolator(double update_rate)
-    :   TPG_(TrajectoryProfileGenerator(update_rate))
+    :   trajectory_profile_generator_(TrajectoryProfileGenerator(update_rate))
     {}
 
     ~TrajectoryInterpolator(){}
@@ -49,9 +53,7 @@ public:
                                cob_cartesian_controller::MoveCircStruct& move_circ);
 
 private:
-    TrajectoryProfileGenerator TPG_;
+    TrajectoryProfileGenerator trajectory_profile_generator_;
 };
-
-
 
 #endif /* COB_CARTESIAN_CONTROLLER_TRAJECTORY_INTERPOLATOR_H_ */
