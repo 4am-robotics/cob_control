@@ -116,34 +116,46 @@ public:
         visualization_msgs::MarkerArray marker_array;
         geometry_msgs::Point point;
         
-        if(tip_marker_.points.size() > 10000)
+        if(tf_listener_.frameExists(this->chain_tip_link_))
         {
-            tip_marker_.points.clear();
-        }
-        point = getPoint(this->root_frame_, this->chain_tip_link_);
-        tip_marker_.points.push_back(point);
-        marker_array.markers.push_back(tip_marker_);
-        
-        if(target_marker_.points.size() > 10000)
-        {
-            target_marker_.points.clear();
-        }
-        point = getPoint(this->root_frame_, this->target_frame_);
-        target_marker_.points.push_back(point);
-        marker_array.markers.push_back(target_marker_);
-        
-        if(nh_.param("twist_controller/kinematic_extension", 0) == 1)//BASE_ACTIVE
-        {
-            if(base_marker_.points.size() > 10000)
+            if(tip_marker_.points.size() > 10000)
             {
-                base_marker_.points.clear();
+                tip_marker_.points.clear();
             }
-            point = getPoint(this->root_frame_, this->base_link_);
-            base_marker_.points.push_back(point);
-            marker_array.markers.push_back(base_marker_);
+            point = getPoint(this->root_frame_, this->chain_tip_link_);
+            tip_marker_.points.push_back(point);
+            marker_array.markers.push_back(tip_marker_);
         }
         
-        this->marker_pub_.publish(marker_array);
+        if(tf_listener_.frameExists(this->target_frame_))
+        {
+            if(target_marker_.points.size() > 10000)
+            {
+                target_marker_.points.clear();
+            }
+            point = getPoint(this->root_frame_, this->target_frame_);
+            target_marker_.points.push_back(point);
+            marker_array.markers.push_back(target_marker_);
+        }
+        
+        if(tf_listener_.frameExists(this->base_link_))
+        {
+            if(nh_.param("twist_controller/kinematic_extension", 0) == 1)//BASE_ACTIVE
+            {
+                if(base_marker_.points.size() > 10000)
+                {
+                    base_marker_.points.clear();
+                }
+                point = getPoint(this->root_frame_, this->base_link_);
+                base_marker_.points.push_back(point);
+                marker_array.markers.push_back(base_marker_);
+            }
+        }
+        
+        if(!marker_array.markers.empty())
+        {
+            this->marker_pub_.publish(marker_array);
+        }
     }
 
     visualization_msgs::Marker getMarker(std_msgs::ColorRGBA color)
