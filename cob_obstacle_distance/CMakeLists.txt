@@ -33,7 +33,7 @@ generate_messages(
 catkin_package(
    INCLUDE_DIRS include
    LIBRARIES parsers marker_shapes_management
-   CATKIN_DEPENDS roscpp shape_msgs moveit_msgs sensor_msgs geometry_msgs visualization_msgs message_runtime cob_srvs
+   CATKIN_DEPENDS roscpp shape_msgs moveit_msgs sensor_msgs geometry_msgs visualization_msgs message_runtime cob_srvs interactive_markers
    DEPENDS assimp
 )
 
@@ -69,7 +69,9 @@ install(DIRECTORY include/cob_obstacle_distance/
  PATTERN ".svn" EXCLUDE
 )
 
-install(PROGRAMS scripts/example_obstacle_publisher_node.py scripts/test_obstacle_publisher_node.py
+install(PROGRAMS scripts/example_obstacle_publisher_node.py
+                 scripts/test_obstacle_publisher_node.py 
+                 scripts/test_interactive_obstacle_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/scripts
 )
 

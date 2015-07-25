@@ -25,6 +25,7 @@
   
   <!-- spawn example obstacle -->
   <node ns="arm" name="example_obstacle_publisher" pkg="cob_obstacle_distance" type="example_obstacle_publisher_node.py" output="screen"/>
+  <node ns="arm" name="interactive_obstacle_publisher" pkg="cob_obstacle_distance" type="test_interactive_obstacle_node.py" output="screen"/>
 
   <!-- rviz visualization -->
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find cob_obstacle_distance)/launch/rviz_config.rviz" />

@@ -81,7 +81,7 @@ void ShapesManager::draw(bool enforce_draw)
             visualization_msgs::Marker marker = elem->getMarker();
             this->pub_.publish(marker);
             elem->setDrawn();
-            sleep(1.5); // it takes some time for Rviz to compute and show the marker!
+            sleep(0.1); // it takes some time for Rviz to compute and show the marker!
         }
     }
 }

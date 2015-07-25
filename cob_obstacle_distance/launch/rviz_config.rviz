@@ -4,6 +4,7 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
+        - /Global Options1
         - /ObstacleVectors1/Namespaces1
       Splitter Ratio: 0.5
     Tree Height: 444
@@ -125,8 +126,17 @@ Visualization Manager:
       Marker Topic: /arm/obstacle_distance/debug
       Name: ObstacleVectors
       Namespaces:
-        {}
+        arm_7_link: true
       Queue Size: 100
+      Value: true
+    - Class: rviz/InteractiveMarkers
+      Enable Transparency: true
+      Enabled: true
+      Name: InteractiveMarkers
+      Show Axes: false
+      Show Descriptions: true
+      Show Visual Aids: false
+      Update Topic: /arm/marker_server/update
       Value: true
   Enabled: true
   Global Options:
@@ -159,15 +169,15 @@ Visualization Manager:
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.0452093
-        Y: -0.134049
-        Z: 0.535046
+        X: -0.0616659
+        Y: -0.0634887
+        Z: 0.762656
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.450398
+      Pitch: 0.415398
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.75358
+      Yaw: 4.27359
     Saved: ~
 Window Geometry:
   Displays:
@@ -185,5 +195,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1200
-  X: 380
-  Y: 51
+  X: 360
+  Y: 31
