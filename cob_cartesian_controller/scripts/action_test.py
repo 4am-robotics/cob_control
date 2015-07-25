@@ -69,11 +69,7 @@ def move_test():
     client.send_goal(goal)
     client.wait_for_result()
     
-    goal = CartesianControllerGoal()
-    goal.name = "hold"
-    goal.hold_time = 0.5
-    client.send_goal(goal)
-    client.wait_for_result()
+    rospy.sleep(0.5)
     
     goal = CartesianControllerGoal()
     goal.name = "move_lin"
@@ -90,11 +86,7 @@ def move_test():
     client.send_goal(goal)
     client.wait_for_result()
     
-    goal = CartesianControllerGoal()
-    goal.name = "hold"
-    goal.hold_time = 0.5
-    client.send_goal(goal)
-    client.wait_for_result()
+    rospy.sleep(0.5)
     
     goal = CartesianControllerGoal()
     goal.name = "move_lin"
@@ -111,11 +103,7 @@ def move_test():
     client.send_goal(goal)
     client.wait_for_result()
     
-    goal = CartesianControllerGoal()
-    goal.name = "hold"
-    goal.hold_time = 0.5
-    client.send_goal(goal)
-    client.wait_for_result()
+    rospy.sleep(0.5)
     
     goal = CartesianControllerGoal()
     goal.name = "move_lin"
@@ -132,11 +120,7 @@ def move_test():
     client.send_goal(goal)
     client.wait_for_result()
     
-    goal = CartesianControllerGoal()
-    goal.name = "hold"
-    goal.hold_time = 0.5
-    client.send_goal(goal)
-    client.wait_for_result()
+    rospy.sleep(0.5)
     
     # Try to grap down wards in the torus
     rospy.loginfo("Try to move down behind torus")
@@ -157,11 +141,7 @@ def move_test():
     result = client.get_result()
     rospy.loginfo("Result: " + str(result))
     
-    goal = CartesianControllerGoal()
-    goal.name = "hold"
-    goal.hold_time = 0.5
-    client.send_goal(goal)
-    client.wait_for_result()
+    rospy.sleep(0.5)
     
     # Try to grap up wards in the torus
     rospy.loginfo("Try to move up behind torus")
@@ -182,11 +162,7 @@ def move_test():
     result = client.get_result()
     rospy.loginfo("Result: " + str(result))
     
-    goal = CartesianControllerGoal()
-    goal.name = "hold"
-    goal.hold_time = 0.5
-    client.send_goal(goal)
-    client.wait_for_result()
+    rospy.sleep(0.5)
     
     rospy.loginfo("Try to move down again")
     goal = CartesianControllerGoal()
@@ -206,11 +182,7 @@ def move_test():
     result = client.get_result()
     rospy.loginfo("Result: " + str(result))
     
-    goal = CartesianControllerGoal()
-    goal.name = "hold"
-    goal.hold_time = 0.5
-    client.send_goal(goal)
-    client.wait_for_result()
+    rospy.sleep(0.5)
     
     rospy.loginfo("Try to move back")
     goal = CartesianControllerGoal()
@@ -228,11 +200,7 @@ def move_test():
     client.send_goal(goal)
     client.wait_for_result()
 
-#     goal = CartesianControllerGoal()
-#     goal.name = "hold"
-#     goal.hold_time = 0.5
-#     client.send_goal(goal)
-#     client.wait_for_result()
+#     rospy.sleep(0.5)
 #     
 #     goal = CartesianControllerGoal()
 #     goal.name = "move_lin"
@@ -270,13 +238,9 @@ def move_lin_x(client, length):
 # 
 #     print("Finished move_lin")
 
-#     goal = CartesianControllerGoal()
-#     goal.name = "hold"
-#     goal.hold_time = 2
-#     client.send_goal(goal)
-#     client.wait_for_result()
+#    rospy.sleep(2.0)
 #     
-#     print("Finished hold")
+#     print("Finished Pause")
 # 
     # Attention: Changes the endeffector position with reference to the world_frame, but the orientation will be changed relatively to the current orientation. 
     goal = CartesianControllerGoal()
@@ -313,11 +277,7 @@ def move_santa(client):
     client.send_goal(goal)
     client.wait_for_result()
     
-    goal = CartesianControllerGoal()
-    goal.name = "hold"
-    goal.hold_time = 4
-    client.send_goal(goal)
-    client.wait_for_result()
+    rospy.sleep(4.0)
     
     # Step 2
     goal = CartesianControllerGoal()
@@ -335,11 +295,7 @@ def move_santa(client):
     client.send_goal(goal)
     client.wait_for_result()
     
-    goal = CartesianControllerGoal()
-    goal.name = "hold"
-    goal.hold_time = 4
-    client.send_goal(goal)
-    client.wait_for_result()
+    rospy.sleep(4.0)
     
     # Step 3
     goal = CartesianControllerGoal()
@@ -357,11 +313,7 @@ def move_santa(client):
     client.send_goal(goal)
     client.wait_for_result()
     
-    goal = CartesianControllerGoal()
-    goal.name = "hold"
-    goal.hold_time = 2
-    client.send_goal(goal)
-    client.wait_for_result()
+    rospy.sleep(2.0)
     
     # Step 4
     goal = CartesianControllerGoal()
@@ -379,11 +331,7 @@ def move_santa(client):
     client.send_goal(goal)
     client.wait_for_result()
     
-    goal = CartesianControllerGoal()
-    goal.name = "hold"
-    goal.hold_time = 2
-    client.send_goal(goal)
-    client.wait_for_result()
+    rospy.sleep(2.0)
     
     # Step 5
     goal = CartesianControllerGoal()
@@ -401,11 +349,7 @@ def move_santa(client):
     client.send_goal(goal)
     client.wait_for_result()
     
-    goal = CartesianControllerGoal()
-    goal.name = "hold"
-    goal.hold_time = 2
-    client.send_goal(goal)
-    client.wait_for_result()
+    rospy.sleep(2.0)
 
     # Step 6
     goal = CartesianControllerGoal()
@@ -423,11 +367,7 @@ def move_santa(client):
     client.send_goal(goal)
     client.wait_for_result()
     
-    goal = CartesianControllerGoal()
-    goal.name = "hold"
-    goal.hold_time = 2
-    client.send_goal(goal)
-    client.wait_for_result()
+    rospy.sleep(2.0)
     
     # Step 7
     goal = CartesianControllerGoal()
@@ -445,11 +385,7 @@ def move_santa(client):
     client.send_goal(goal)
     client.wait_for_result()
     
-    goal = CartesianControllerGoal()
-    goal.name = "hold"
-    goal.hold_time = 2
-    client.send_goal(goal)
-    client.wait_for_result()
+    rospy.sleep(2.0)
     
     # Step 8
     goal = CartesianControllerGoal()

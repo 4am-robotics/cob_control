@@ -82,10 +82,10 @@ install(DIRECTORY include/${PROJECT_NAME}/
  PATTERN ".svn" EXCLUDE
 )
 
-install(PROGRAMS scripts/test_action_client.py
+install(PROGRAMS scripts/test_move_lin.py scripts/test_move_circ.py scripts/test_move_santa.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/scripts
 )
 
-install(DIRECTORY launch movement
+install(DIRECTORY launch
  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
