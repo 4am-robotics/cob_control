@@ -56,7 +56,10 @@ tf::StampedTransform CartesianControllerUtils::getStampedTransform(std::string t
     {
         try
         {
-            ros::Time now = ros::Time::now();
+            //ToDo: Verify timestamps and Exceptions
+            
+            ros::Time now = ros::Time(0);
+            //ros::Time now = ros::Time::now();
             tf_listener_.waitForTransform(target_frame, source_frame, now, ros::Duration(0.5));
             tf_listener_.lookupTransform(target_frame, source_frame, now, stamped_transform);
             transform = true;
@@ -64,6 +67,7 @@ tf::StampedTransform CartesianControllerUtils::getStampedTransform(std::string t
         catch (tf::TransformException& ex)
         {
             ROS_ERROR("%s",ex.what());
+            ros::Duration(0.1).sleep();
         }
     }while(!transform);
     

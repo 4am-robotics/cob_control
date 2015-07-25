@@ -86,6 +86,6 @@ install(PROGRAMS scripts/test_move_lin.py scripts/test_move_circ.py scripts/test
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/scripts
 )
 
-install(DIRECTORY launch
+install(DIRECTORY config launch
  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
