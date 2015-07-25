@@ -10,3 +10,5 @@ bool success
 string message
 ---
 # Define a feedback message
+bool success
+string message

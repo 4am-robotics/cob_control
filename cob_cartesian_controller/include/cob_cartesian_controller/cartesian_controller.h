@@ -32,6 +32,7 @@
 #include <ros/ros.h>
 #include <vector>
 #include <string.h>
+#include <boost/shared_ptr.hpp>
 
 #include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h>
@@ -39,6 +40,7 @@
 #include <actionlib/server/simple_action_server.h>
 #include <cob_cartesian_controller/CartesianControllerAction.h>
 
+#include <cob_cartesian_controller/trajectory_interpolator/trajectory_interpolator.h>
 #include <cob_cartesian_controller/cartesian_controller_data_types.h>
 #include <cob_cartesian_controller/cartesian_controller_utils.h>
 
@@ -50,20 +52,21 @@ public:
     bool initialize();
     
     // Main functions
-    void posePathBroadcaster(std::vector<geometry_msgs::Pose>& pose_vector);
-    void movePTP(geometry_msgs::Pose target_pose, double epsilon);
+    bool posePathBroadcaster(std::vector<geometry_msgs::Pose>& pose_vector);
+    bool movePTP(geometry_msgs::Pose target_pose, double epsilon);
     
     // Helper function
-    void startTracking();
-    void stopTracking();
+    bool startTracking();
+    bool stopTracking();
 
     /// Action interface
     void goalCB();
     void preemptCB();
-    void actionSuccess();
-    void actionAbort();
+    void actionSuccess(bool success, std::string message);
+    void actionPreempt(bool success, std::string message);
+    void actionAbort(bool success, std::string message);
+    
     cob_cartesian_controller::CartesianActionStruct acceptGoal(boost::shared_ptr<const cob_cartesian_controller::CartesianControllerGoal> goal);
-
     cob_cartesian_controller::MoveLinStruct convertMoveLinRelToAbs(const cob_cartesian_controller::MoveLinStruct& rel_move_lin);
     cob_cartesian_controller::MoveCircStruct convertMoveCircRelToAbs(cob_cartesian_controller::MoveCircStruct& rel_move_circ);
 
@@ -74,6 +77,7 @@ private:
 
     ros::ServiceClient start_tracking_;
     ros::ServiceClient stop_tracking_;
+    bool tracking_;
 
     double update_rate_;
     std::string root_frame_, chain_tip_link_, target_frame_;
@@ -88,11 +92,7 @@ private:
     cob_cartesian_controller::CartesianControllerResult action_result_;
 
     CartesianControllerUtils utils_;
-
-    bool tracking_;
-    bool tracking_goal_;
-    double distance_;
-    double failure_counter_;
+    boost::shared_ptr< TrajectoryInterpolator > trajectory_interpolator_;
 };
 
 #endif
