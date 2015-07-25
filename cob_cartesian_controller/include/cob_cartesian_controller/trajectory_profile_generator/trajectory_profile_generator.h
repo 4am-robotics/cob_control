@@ -30,8 +30,8 @@
 #define COB_CARTESIAN_CONTROLLER_PROFILE_GENERATOR_H_
 
 #include <ros/ros.h>
-#include <cob_cartesian_controller/helper_classes/data_structures.h>
-#include <cob_cartesian_controller/helper_classes/utils.h>
+#include <cob_cartesian_controller/cartesian_controller_data_types.h>
+#include <cob_cartesian_controller/cartesian_controller_utils.h>
 
 class TrajectoryProfileGenerator
 {

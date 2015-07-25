@@ -13,12 +13,7 @@
     -->
 
     <node ns="$(arg component_name)" pkg="cob_cartesian_controller" type="cartesian_controller_node" name="cartesian_controller" output="screen">
-        <param name="reference_frame" type="str" value="odom_combined"/>
         <param name="target_frame" type="str" value="cartesian_target"/>
-        
-        <!--param name="file_name" type="str" value="move_relative.prog"/-->
-        <!--param name="file_name" type="str" value="move_circ.prog"/-->
-        <param name="file_name" type="str" value="move_santa.prog"/>
     </node>
 
 </launch>

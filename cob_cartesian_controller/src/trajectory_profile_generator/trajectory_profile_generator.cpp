@@ -49,7 +49,7 @@ bool TrajectoryProfileGenerator::calculateProfile(std::vector<double>& path_arra
     }
     else if(profile == cob_cartesian_controller::Profile::SINOID)
     {
-        // Calculate the Sinoide Profile Parameters
+        // Calculate the Sinoid Profile Parameters
         if (vel_max > sqrt(Se*accl_max/2))
         {
             vel_max = sqrt(Se*accl_max/2);
@@ -103,8 +103,8 @@ bool TrajectoryProfileGenerator::calculateProfile(std::vector<double>& path_arra
     }
     else if(cob_cartesian_controller::Profile::SINOID)
     {
-        ROS_INFO("Sinoide Profile");
-        // Calculate the sinoide profile path
+        ROS_INFO("Sinoid Profile");
+        // Calculate the sinoid profile path
         // 0 <= t <= tb
         for(int i = 0 ; i <= steps_tb-1 ; i++)
         {
@@ -176,7 +176,7 @@ bool TrajectoryProfileGenerator::calculateProfileForAngularMovements(std::vector
     }
     else if(move_lin.profile.profile_type == cob_cartesian_controller::Profile::SINOID)
     {
-        // Calculate the Sinoide Profile Parameters
+        // Calculate the Sinoid Profile Parameters
         if (move_lin.profile.vel > sqrt(std::fabs(Se_max) * move_lin.profile.accl / 2))
         {
             move_lin.profile.vel = sqrt(std::fabs(Se_max) * move_lin.profile.accl / 2);
@@ -361,7 +361,7 @@ bool TrajectoryProfileGenerator::generatePath(std::vector<double>& path_array, d
     }
     else if(profile == cob_cartesian_controller::Profile::SINOID)
     {
-        // Calculate the sinoide profile path
+        // Calculate the sinoid profile path
         // 0 <= t <= tb
         for(int i = 0 ; i <= steps_tb-1 ; i++)
         {
@@ -460,7 +460,7 @@ bool TrajectoryProfileGenerator::generatePathWithTe(std::vector<double>& path_ar
         }
         else if(profile == cob_cartesian_controller::Profile::SINOID)
         {
-            // Calculate the sinoide profile path
+            // Calculate the sinoid profile path
             // 0 <= t <= tb
             for(int i = 0 ; i <= steps_tb-1 ; i++)
             {

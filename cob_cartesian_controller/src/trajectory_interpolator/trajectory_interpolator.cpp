@@ -132,7 +132,7 @@ bool TrajectoryInterpolator::circularInterpolation(std::vector<geometry_msgs::Po
 
     Se = std::fabs(Se);
 
-    // Calculates the Path with Ramp - or Sinoidprofile
+    // Calculates the Path with RAMP or SINOID profile
     if(!TPG_.calculateProfile(path_array, Se, move_circ.profile.vel, move_circ.profile.accl, move_circ.profile.profile_type))
     {
         return false;

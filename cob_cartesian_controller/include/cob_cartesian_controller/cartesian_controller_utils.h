@@ -30,23 +30,32 @@
 #define COB_CARTESIAN_CONTROLLER_UTILS_H_
 
 #include <ros/ros.h>
-#include <math.h>
-#include <visualization_msgs/Marker.h>
-#include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
-#include <cob_cartesian_controller/helper_classes/data_structures.h>
-
 
 
 class CartesianControllerUtils
 {
 public:
-    void showLevel(tf::Transform pos, std::string reference_frame, int marker_id, double red, double green, double blue, std::string ns);
-    void showDot(std::string reference_frame, double x, double y, double z, int marker_id, double red, double green, double blue, std::string ns);
-    void showMarker(tf::StampedTransform tf, std::string reference_frame, int marker_id, double red, double green, double blue, std::string ns);
-    bool epsilonArea(double x, double y, double z, double roll, double pitch, double yaw, double epsilon);
-    geometry_msgs::Pose getEndeffectorPose(tf::TransformListener& listener, std::string reference_frame, std::string chain_tip_link);
+    tf::StampedTransform getStampedTransform(std::string target_frame, std::string source_frame);
+    geometry_msgs::Pose getPose(std::string target_frame, std::string source_frame);
+    
+    bool inEpsilonArea(tf::StampedTransform stamped_transform, double epsilon);
     void poseToRPY(geometry_msgs::Pose pose, double& roll, double& pitch, double& yaw);
+    
+    //Note: 
+    //  all functions related to plotting the Cartesian trajectory 
+    //  by publishing visualization_msgs/Marker to a topic
+    //  have been removed in favor of debug_trajectory_marker_node (cob_twist_controller)
+    //
+    //Example Usage:
+    //  <node ns="arm" name="debug_trajectory_marker_node" pkg="cob_twist_controller" type="debug_trajectory_marker_node" cwd="node" respawn="false" output="screen">
+    //    <param name="target_frame" type="str" value="cartesian_target" />
+    //  </node>
+
+
+private:
+    ros::NodeHandle nh_;
+    tf::TransformListener tf_listener_;
 };
 
 #endif /* COB_CARTESIAN_CONTROLLER_UTILS_H_ */

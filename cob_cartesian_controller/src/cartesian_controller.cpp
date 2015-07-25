@@ -29,7 +29,6 @@
 #include <algorithm>
 
 #include <ros/ros.h>
-#include "ros/package.h"
 #include <std_srvs/Empty.h>
 #include <cob_srvs/SetString.h>
 #include <kdl_conversions/kdl_msg.h>
@@ -41,31 +40,30 @@ bool CartesianController::initialize()
 {
     ros::NodeHandle nh_private("~");
 
-    ///get params articulation Nodehandle
-    if(!nh_private.getParam("reference_frame", reference_frame_))
-    {
-        ROS_ERROR("Parameter 'reference_frame' not set");
-        return false;
-    }
-
-    if(!nh_private.getParam("target_frame", target_frame_))
-    {
-        ROS_ERROR("Parameter 'target_frame' not set");
-        return false;
-    }
-
-    if (nh_private.hasParam("update_rate"))
-    {    nh_private.getParam("update_rate", update_rate_);    }
-    else
-    {    update_rate_ = 68.0;    }    //hz
-
-
-    /// Cartesian Nodehandle
     if (!nh_.getParam("chain_tip_link", chain_tip_link_))
     {
         ROS_ERROR("Parameter 'chain_tip_link' not set");
         return false;
     }
+    
+    if(!nh_.getParam("root_frame", root_frame_))
+    {
+        ROS_ERROR("Parameter 'reference_frame' not set");
+        return false;
+    }
+
+    if(!nh_.getParam("update_rate", update_rate_))
+    {
+        update_rate_ = 50.0;    //hz
+    }
+
+    /// Private Nodehandle
+    if(!nh_private.getParam("target_frame", target_frame_))
+    {
+        ROS_WARN("Parameter 'target_frame' not set. Using default 'cartesian_target'");
+        target_frame_ = "cartesian_target";
+    }
+
 
     ROS_WARN("Waiting for Services...");
     start_tracking_ = nh_.serviceClient<cob_srvs::SetString>("frame_tracker/start_tracking");
@@ -73,7 +71,7 @@ bool CartesianController::initialize()
     start_tracking_.waitForExistence();
     stop_tracking_.waitForExistence();
 
-    action_name_ = "cartesian_trajectory_action_";
+    action_name_ = "cartesian_trajectory_action";
     as_.reset(new SAS_CartesianControllerAction_t(nh_, action_name_, false));
     as_->registerGoalCallback(boost::bind(&CartesianController::goalCB, this));
     as_->registerPreemptCallback(boost::bind(&CartesianController::preemptCB, this));
@@ -87,16 +85,6 @@ bool CartesianController::initialize()
     return true;
 }
 
-void CartesianController::run()
-{
-    ros::Rate r(100.0);
-    while (ros::ok())
-    {
-        ros::spinOnce();
-        r.sleep();
-    }
-}
-
 void CartesianController::timerCallback(const ros::TimerEvent& event)
 {
     hold_ = false;
@@ -105,9 +93,8 @@ void CartesianController::timerCallback(const ros::TimerEvent& event)
 // Pseudo PTP
 void CartesianController::movePTP(geometry_msgs::Pose target_pose, double epsilon)
 {
-    tf::TransformBroadcaster br;
     tf::Transform transform;
-    tf::TransformListener listener;
+
     reached_pos_ = false;
     int reached_pos_counter = 0;
     double ro, pi, ya;
@@ -124,26 +111,14 @@ void CartesianController::movePTP(geometry_msgs::Pose target_pose, double epsilo
         transform.setRotation(q);
 
         // Send br Frame
-        br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), reference_frame_, target_frame_));
+        tf_broadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), root_frame_, target_frame_));
 
         // Get transformation
-        try
-        {
-            startTracking();
-            listener.lookupTransform(target_frame_, chain_tip_link_, ros::Time(0), stamped_transform);
-        }
-        catch (tf::TransformException &ex)
-        {
-            ROS_ERROR("%s",ex.what());
-        }
+        stamped_transform = utils_.getStampedTransform(target_frame_, chain_tip_link_);
+        startTracking();
 
-        // Get current RPY out of quaternion
-        tf::Quaternion quatern = stamped_transform.getRotation();
-        tf::Matrix3x3(quatern).getRPY(ro,pi,ya);
-
-
-        // Wait for arm_7_link to be in position
-        if(utils_.epsilonArea(stamped_transform.getOrigin().x(), stamped_transform.getOrigin().y(), stamped_transform.getOrigin().z(), ro, pi, ya,epsilon))
+        // Wait for chain_tip_link to be within epsilon area of target_frame
+        if(utils_.inEpsilonArea(stamped_transform, epsilon))
         {
             reached_pos_counter++;    // Count up if end effector position is in the epsilon area to avoid wrong values
         }
@@ -165,9 +140,7 @@ void CartesianController::movePTP(geometry_msgs::Pose target_pose, double epsilo
 void CartesianController::posePathBroadcaster(std::vector<geometry_msgs::Pose>& pose_vector)
 {
     double roll, pitch, yaw;
-    tf::TransformListener listener;
     tf::StampedTransform stamped_transform;
-    tf::TransformBroadcaster br;
     tf::Transform transform;
     ros::Rate rate(update_rate_);
     tf::Quaternion q;
@@ -183,8 +156,6 @@ void CartesianController::posePathBroadcaster(std::vector<geometry_msgs::Pose>& 
             throw errorException("Action was preempted.");
         }
 
-        ros::Time now = ros::Time::now();
-
         // Linearkoordinaten
         transform.setOrigin(tf::Vector3(pose_vector.at(i).position.x, pose_vector.at(i).position.y, pose_vector.at(i).position.z));
         q = tf::Quaternion(pose_vector.at(i).orientation.x,
@@ -193,28 +164,13 @@ void CartesianController::posePathBroadcaster(std::vector<geometry_msgs::Pose>& 
                            pose_vector.at(i).orientation.w);
         transform.setRotation(q);
 
-//        utils_.showMarker(tf::StampedTransform(transform, ros::Time::now(), reference_frame_, target_frame_), reference_frame_, marker_, 0 , 1, 0, "goalFrame");
-
-        br.sendTransform(tf::StampedTransform(transform, now, reference_frame_, target_frame_));
-
-        marker_++;
+        tf_broadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), root_frame_, target_frame_));
 
         // Get transformation
-        try
-        {
-            listener.lookupTransform(target_frame_, chain_tip_link_, ros::Time(0), stamped_transform);
-        }
-        catch (tf::TransformException& ex)
-        {
-//            ROS_ERROR("%s",ex.what());
-        }
+        stamped_transform = utils_.getStampedTransform(target_frame_, chain_tip_link_);
 
-        // Get current RPY out of quaternion
-        tf::Quaternion quatern = stamped_transform.getRotation();
-        tf::Matrix3x3(quatern).getRPY(roll, pitch, yaw);
-
-        if(!utils_.epsilonArea(stamped_transform.getOrigin().x(), stamped_transform.getOrigin().y(), stamped_transform.getOrigin().z(),
-                                roll, pitch, yaw, epsilon))
+        // Wait for chain_tip_link to be within epsilon area of target_frame
+        if(!utils_.inEpsilonArea(stamped_transform, epsilon))
         {
             failure_counter_++;
         }
@@ -241,7 +197,6 @@ void CartesianController::posePathBroadcaster(std::vector<geometry_msgs::Pose>& 
 
 void CartesianController::holdPosition(geometry_msgs::Pose hold_pose)
 {
-    tf::TransformBroadcaster br;
     tf::Transform transform;
     ros::Rate rate(update_rate_);
     tf::Quaternion q;
@@ -257,7 +212,7 @@ void CartesianController::holdPosition(geometry_msgs::Pose hold_pose)
         q = tf::Quaternion(hold_pose.orientation.x, hold_pose.orientation.y, hold_pose.orientation.z, hold_pose.orientation.w);
         transform.setRotation(q);
 
-        br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), reference_frame_, target_frame_));
+        tf_broadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), root_frame_, target_frame_));
         ros::spinOnce();
         rate.sleep();
     }
@@ -306,7 +261,6 @@ void CartesianController::stopTracking()
 
 void CartesianController::goalCB()
 {
-    tf::TransformListener listener;
     TrajectoryInterpolator TIP(update_rate_);
     std::vector <geometry_msgs::Pose> pos_vec;
     geometry_msgs::Pose actual_tcp_pose;
@@ -379,7 +333,7 @@ void CartesianController::goalCB()
         {
             ROS_INFO("Hold position");
 
-            actual_tcp_pose = utils_.getEndeffectorPose(listener, reference_frame_, chain_tip_link_);
+            actual_tcp_pose = utils_.getPose(root_frame_, chain_tip_link_);
             ros::Timer timer = nh_.createTimer(ros::Duration(action_struct.hold_time), &CartesianController::timerCallback, this);
             hold_ = true;
 
@@ -398,10 +352,9 @@ void CartesianController::goalCB()
 
 cob_cartesian_controller::MoveLinStruct CartesianController::convertMoveLinRelToAbs(const cob_cartesian_controller::MoveLinStruct& rel_move_lin)
 {
-    tf::TransformListener listener;
     geometry_msgs::Pose actualTcpPose, end;
     tf::Quaternion q_start,q_end, q_rel;
-    actualTcpPose = utils_.getEndeffectorPose(listener, reference_frame_, chain_tip_link_);
+    actualTcpPose = utils_.getPose(root_frame_, chain_tip_link_);
 
     cob_cartesian_controller::MoveLinStruct update_ml = rel_move_lin;
 

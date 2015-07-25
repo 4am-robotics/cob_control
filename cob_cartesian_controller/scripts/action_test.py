@@ -483,7 +483,7 @@ def move_santa(client):
 if __name__ == '__main__':
     rospy.init_node('CartesianControllerAction_client')
     
-    client = actionlib.SimpleActionClient('cartesian_trajectory_action_', CartesianControllerAction)
+    client = actionlib.SimpleActionClient('cartesian_trajectory_action', CartesianControllerAction)
     client.wait_for_server()
     #move_santa(client)
     #move_lin_x(client, -0.5)

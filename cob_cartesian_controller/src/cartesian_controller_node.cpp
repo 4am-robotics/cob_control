@@ -34,14 +34,11 @@ int main(int argc, char **argv)
 	ros::init (argc, argv, "cartesian_controller_node");
 	CartesianController *cc = new CartesianController();
 	
-	bool success = cc->initialize();
-	if(success)
-	{
-		ROS_INFO("...initialized!");
-		cc->run();
-	}else
+	if(!cc->initialize())
 	{
 		ROS_ERROR("Initialization failed");
+		return -1;
 	}
-	return 0;
+	
+	ros::spin();
 }

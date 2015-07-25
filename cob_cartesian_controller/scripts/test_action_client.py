@@ -6,7 +6,7 @@ from cob_cartesian_controller.msg import CartesianControllerAction, CartesianCon
 
 if __name__ == '__main__':
     rospy.init_node('test_action_client')
-    client = actionlib.SimpleActionClient('cartesian_trajectory_action_', CartesianControllerAction)
+    client = actionlib.SimpleActionClient('cartesian_trajectory_action', CartesianControllerAction)
     rospy.logwarn("Waiting for ActionServer...")
     client.wait_for_server()
     rospy.logwarn("...done")
@@ -25,7 +25,7 @@ if __name__ == '__main__':
 #
 #    goal.move_lin.profile.vel = 0.2
 #    goal.move_lin.profile.accl = 0.1
-#    goal.move_lin.profile.profile_type = 2 #SINOIDE
+#    goal.move_lin.profile.profile_type = 2 #SINOID
      
     goal.name = "hold"
     goal.hold_time = 5

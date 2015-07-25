@@ -32,18 +32,21 @@
 #include <ros/ros.h>
 #include <vector>
 #include <string.h>
-#include <cob_cartesian_controller/CartesianControllerAction.h>
-#include <actionlib/server/simple_action_server.h>
 
-#include <cob_cartesian_controller/helper_classes/data_structures.h>
-#include <cob_cartesian_controller/helper_classes/utils.h>
+#include <tf/transform_listener.h>
+#include <tf/transform_broadcaster.h>
+
+#include <actionlib/server/simple_action_server.h>
+#include <cob_cartesian_controller/CartesianControllerAction.h>
+
+#include <cob_cartesian_controller/cartesian_controller_data_types.h>
+#include <cob_cartesian_controller/cartesian_controller_utils.h>
 
 typedef actionlib::SimpleActionServer<cob_cartesian_controller::CartesianControllerAction> SAS_CartesianControllerAction_t;
 
 class CartesianController
 {
 public:
-    void run();
     bool initialize();
     
     // Main functions
@@ -68,20 +71,17 @@ public:
 
 private:
     ros::NodeHandle nh_;
+    tf::TransformListener tf_listener_;
+    tf::TransformBroadcaster tf_broadcaster_;
 
-    // Publisher
     ros::ServiceClient start_tracking_;
     ros::ServiceClient stop_tracking_;
 
-    // Var for PTP Movement and hold Position
-    bool reached_pos_, hold_;
-
-    // yaml params
     double update_rate_;
-    std::string reference_frame_, target_frame_;
-    std::string chain_tip_link_;
-
-    int marker_;
+    std::string root_frame_, chain_tip_link_, target_frame_;
+    
+    // HelperVars for movePTP and holdPosition
+    bool reached_pos_, hold_;
 
     /// Action interface
     std::string action_name_;
