@@ -57,7 +57,7 @@ bool TrajectoryInterpolator::linearInterpolation(std::vector<geometry_msgs::Pose
     Se_yaw   = end_yaw   - start_yaw;
 
     // Calculate path for each Angle
-    if(!trajectory_profile_generator_.calculateProfileForAngularMovements(path_matrix, Se, Se_roll, Se_pitch, Se_yaw, move_lin))
+    if(!trajectory_profile_generator_lin_.calculateProfile(path_matrix, Se, Se_roll, Se_pitch, Se_yaw, move_lin))
     {
         return false;
     }
@@ -116,7 +116,7 @@ bool TrajectoryInterpolator::circularInterpolation(std::vector<geometry_msgs::Po
     Se = std::fabs(Se);
 
     // Calculates the Path with RAMP or SINOID profile
-    if(!trajectory_profile_generator_.calculateProfile(path_array, Se, move_circ.profile.vel, move_circ.profile.accl, move_circ.profile.profile_type))
+    if(!trajectory_profile_generator_circ_.calculateProfile(path_array, Se, move_circ.profile))
     {
         return false;
     }

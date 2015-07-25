@@ -34,14 +34,16 @@
 #include <tf/transform_datatypes.h>
 
 #include <cob_cartesian_controller/cartesian_controller_data_types.h>
-#include <cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator.h>
+#include <cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_lin.h>
+#include <cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_circ.h>
 
 
 class TrajectoryInterpolator
 {
 public:
     TrajectoryInterpolator(double update_rate)
-    :   trajectory_profile_generator_(TrajectoryProfileGenerator(update_rate))
+    :   trajectory_profile_generator_lin_(TrajectoryProfileGeneratorLin(update_rate)),
+        trajectory_profile_generator_circ_(TrajectoryProfileGeneratorCirc(update_rate))    
     {}
 
     ~TrajectoryInterpolator(){}
@@ -53,7 +55,8 @@ public:
                                cob_cartesian_controller::MoveCircStruct& move_circ);
 
 private:
-    TrajectoryProfileGenerator trajectory_profile_generator_;
+    TrajectoryProfileGeneratorLin trajectory_profile_generator_lin_;
+    TrajectoryProfileGeneratorCirc trajectory_profile_generator_circ_;
 };
 
 #endif /* COB_CARTESIAN_CONTROLLER_TRAJECTORY_INTERPOLATOR_H_ */

@@ -49,7 +49,7 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 add_library(cartesian_controller_utils src/cartesian_controller_utils.cpp)
 target_link_libraries(cartesian_controller_utils ${catkin_LIBRARIES})
 
-add_library(profile_generator src/trajectory_profile_generator/trajectory_profile_generator.cpp)
+add_library(profile_generator src/trajectory_profile_generator/trajectory_profile_generator_lin.cpp src/trajectory_profile_generator/trajectory_profile_generator_circ.cpp)
 target_link_libraries(profile_generator ${catkin_LIBRARIES})
 
 add_library(trajectory_interpolator src/trajectory_interpolator/trajectory_interpolator.cpp)
