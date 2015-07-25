@@ -62,7 +62,6 @@ namespace cob_cartesian_controller
     struct CartesianActionStruct
     {
         std::string name;
-        double hold_time;
         MoveLinStruct move_lin;
         MoveCircStruct move_circ;
     };

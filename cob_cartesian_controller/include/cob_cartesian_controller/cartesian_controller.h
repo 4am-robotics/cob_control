@@ -52,10 +52,8 @@ public:
     // Main functions
     void posePathBroadcaster(std::vector<geometry_msgs::Pose>& pose_vector);
     void movePTP(geometry_msgs::Pose target_pose, double epsilon);
-    void holdPosition(geometry_msgs::Pose pose);
     
     // Helper function
-    void timerCallback(const ros::TimerEvent& event);
     void startTracking();
     void stopTracking();
 
@@ -80,8 +78,8 @@ private:
     double update_rate_;
     std::string root_frame_, chain_tip_link_, target_frame_;
     
-    // HelperVars for movePTP and holdPosition
-    bool reached_pos_, hold_;
+    // HelperVars for movePTP
+    bool reached_pos_;
 
     /// Action interface
     std::string action_name_;

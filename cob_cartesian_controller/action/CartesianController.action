@@ -1,6 +1,5 @@
 # goal definition
 string name
-float64 hold_time
 
 cob_cartesian_controller/MoveLin move_lin
 cob_cartesian_controller/MoveCirc move_circ

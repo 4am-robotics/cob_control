@@ -85,11 +85,6 @@ bool CartesianController::initialize()
     return true;
 }
 
-void CartesianController::timerCallback(const ros::TimerEvent& event)
-{
-    hold_ = false;
-}
-
 // Pseudo PTP
 void CartesianController::movePTP(geometry_msgs::Pose target_pose, double epsilon)
 {
@@ -188,31 +183,6 @@ void CartesianController::posePathBroadcaster(std::vector<geometry_msgs::Pose>& 
             throw errorException("Distance between endeffector and tracking_frame exceeded the limit.");
         }
 
-        ros::spinOnce();
-        rate.sleep();
-    }
-
-    stopTracking();
-}
-
-void CartesianController::holdPosition(geometry_msgs::Pose hold_pose)
-{
-    tf::Transform transform;
-    ros::Rate rate(update_rate_);
-    tf::Quaternion q;
-
-    startTracking();
-
-    while(hold_)
-    {
-        // Linearcoordinates
-        transform.setOrigin( tf::Vector3(hold_pose.position.x, hold_pose.position.y, hold_pose.position.z) );
-
-        // RPY Angles
-        q = tf::Quaternion(hold_pose.orientation.x, hold_pose.orientation.y, hold_pose.orientation.z, hold_pose.orientation.w);
-        transform.setRotation(q);
-
-        tf_broadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), root_frame_, target_frame_));
         ros::spinOnce();
         rate.sleep();
     }
@@ -329,17 +299,6 @@ void CartesianController::goalCB()
                 tracking_goal_ = false;
             }
         }
-        else if(action_struct.name == "hold")
-        {
-            ROS_INFO("Hold position");
-
-            actual_tcp_pose = utils_.getPose(root_frame_, chain_tip_link_);
-            ros::Timer timer = nh_.createTimer(ros::Duration(action_struct.hold_time), &CartesianController::timerCallback, this);
-            hold_ = true;
-
-            holdPosition(actual_tcp_pose);
-            actionSuccess();
-        }
         else
         {
             ROS_ERROR("Unknown trajectory action");
@@ -438,10 +397,6 @@ cob_cartesian_controller::CartesianActionStruct CartesianController::acceptGoal(
         action_struct.move_circ.profile.vel           = goal->move_circ.profile.vel;
         action_struct.move_circ.profile.accl          = goal->move_circ.profile.accl;
         action_struct.move_circ.profile.profile_type  = goal->move_circ.profile.profile_type;
-    }
-    else if(action_struct.name == "hold")
-    {
-        action_struct.hold_time = goal ->hold_time;
     }
     else
     {
