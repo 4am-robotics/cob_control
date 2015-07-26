@@ -19,11 +19,11 @@ if __name__ == '__main__':
     goal.move_lin.pose_goal.position.x = -0.9
     goal.move_lin.pose_goal.position.y = 0.0
     goal.move_lin.pose_goal.position.z = 0.0
-    goal.move_lin.pose_center.orientation.x = 0.0
-    goal.move_lin.pose_center.orientation.y = 0.0
-    goal.move_lin.pose_center.orientation.z = 0.0
-    goal.move_lin.pose_center.orientation.w = 1.0
-    goal.move_circ.frame_id = 'world'
+    goal.move_lin.pose_goal.orientation.x = 0.0
+    goal.move_lin.pose_goal.orientation.y = 0.0
+    goal.move_lin.pose_goal.orientation.z = 0.0
+    goal.move_lin.pose_goal.orientation.w = 1.0
+    goal.move_lin.frame_id = 'world'
     goal.move_lin.rotate_only = False
 
     goal.move_lin.profile.vel = 0.2

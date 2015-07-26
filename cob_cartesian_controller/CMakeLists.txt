@@ -15,6 +15,8 @@ find_package(catkin REQUIRED COMPONENTS
     message_generation
 )
 
+catkin_python_setup()
+
 ## Generate actions in the 'action' folder
 add_action_files(
   DIRECTORY action
