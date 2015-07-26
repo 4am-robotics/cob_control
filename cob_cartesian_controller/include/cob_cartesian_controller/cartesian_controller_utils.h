@@ -33,10 +33,17 @@
 #include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
 
+#include <visualization_msgs/MarkerArray.h>
+
 
 class CartesianControllerUtils
 {
 public:
+    CartesianControllerUtils()
+    {
+        marker_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("cartesian_controller/preview_path",1);
+    }
+
     tf::StampedTransform getStampedTransform(std::string target_frame, std::string source_frame);
     geometry_msgs::Pose getPose(std::string target_frame, std::string source_frame);
     
@@ -52,11 +59,18 @@ public:
     //  <node ns="arm" name="debug_trajectory_marker_node" pkg="cob_twist_controller" type="debug_trajectory_marker_node" cwd="node" respawn="false" output="screen">
     //    <param name="target_frame" type="str" value="cartesian_target" />
     //  </node>
+    void previewPoseVec(const std::vector <geometry_msgs::Pose>& pos_vec);
+
+
+
+
 
 
 private:
     ros::NodeHandle nh_;
     tf::TransformListener tf_listener_;
+    
+    ros::Publisher marker_pub_;
 };
 
 #endif /* COB_CARTESIAN_CONTROLLER_UTILS_H_ */

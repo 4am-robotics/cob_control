@@ -50,13 +50,13 @@ add_library(cartesian_controller_utils src/cartesian_controller_utils.cpp)
 target_link_libraries(cartesian_controller_utils ${catkin_LIBRARIES})
 
 add_library(profile_generator src/trajectory_profile_generator/trajectory_profile_generator_lin.cpp src/trajectory_profile_generator/trajectory_profile_generator_circ.cpp)
+add_dependencies(profile_generator ${PROJECT_NAME}_gencpp)
 target_link_libraries(profile_generator ${catkin_LIBRARIES})
 
 add_library(trajectory_interpolator src/trajectory_interpolator/trajectory_interpolator.cpp)
 target_link_libraries(trajectory_interpolator profile_generator ${catkin_LIBRARIES})
 
-add_library(cartesian_controller src/cartesian_controller.cpp )
-add_dependencies(cartesian_controller cob_srvs_gencpp)
+add_library(cartesian_controller src/cartesian_controller.cpp)
 target_link_libraries(cartesian_controller trajectory_interpolator cartesian_controller_utils ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 # Declare a cpp executable
