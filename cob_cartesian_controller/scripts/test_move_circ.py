@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+import math
 import rospy
 import actionlib
 
@@ -16,21 +17,25 @@ if __name__ == '__main__':
     goal = CartesianControllerGoal()
 
     goal.name = "move_circ"
-    goal.move_circ.x_center = 0.0
-    goal.move_circ.y_center = 0.7
-    goal.move_circ.z_center = 1.0
-    goal.move_circ.roll_center = 0
-    goal.move_circ.pitch_center = 0
-    goal.move_circ.yaw_center = 0
+    goal.move_circ.pose_center.position.x = 0.0
+    goal.move_circ.pose_center.position.y = 0.7
+    goal.move_circ.pose_center.position.z = 1.0
+    goal.move_circ.pose_center.orientation.x = 0.0
+    goal.move_circ.pose_center.orientation.y = 0.0
+    goal.move_circ.pose_center.orientation.z = 0.0
+    goal.move_circ.pose_center.orientation.w = 1.0
+    goal.move_circ.frame_id = 'world'
     goal.move_circ.rotate_only = False
 
-    goal.move_circ.start_angle = 0
-    goal.move_circ.end_angle = 90
+    goal.move_circ.start_angle = 0 * math.pi / 180.0
+    goal.move_circ.end_angle = 90 * math.pi / 180.0
     goal.move_circ.radius = 0.3
 
-    goal.move_lin.profile.vel = 0.1
-    goal.move_lin.profile.accl = 0.2
-    goal.move_lin.profile.profile_type = Profile.SINOID
+    goal.move_circ.profile.vel = 0.1
+    goal.move_circ.profile.accl = 0.2
+    goal.move_circ.profile.profile_type = Profile.SINOID
+    
+    print goal
 
     # Send the goal
     client.send_goal(goal)

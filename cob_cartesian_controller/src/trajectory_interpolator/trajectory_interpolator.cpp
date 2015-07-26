@@ -28,9 +28,12 @@
 
 #include <cob_cartesian_controller/trajectory_interpolator/trajectory_interpolator.h>
 
-bool TrajectoryInterpolator::linearInterpolation(std::vector<geometry_msgs::Pose>& pose_vector,
+bool TrajectoryInterpolator::linearInterpolation(geometry_msgs::PoseArray& pose_array,
                                                  cob_cartesian_controller::MoveLinStruct& move_lin)
 {
+    pose_array.header.stamp = ros::Time::now();
+    pose_array.header.frame_id = root_frame_;
+    
     tf::Quaternion q;
     double start_roll, start_pitch, start_yaw;
     double end_roll, end_pitch, end_yaw;
@@ -87,14 +90,17 @@ bool TrajectoryInterpolator::linearInterpolation(std::vector<geometry_msgs::Pose
         q.setRPY(roll_path.at(i), pitch_path.at(i), yaw_path.at(i));
         tf::quaternionTFToMsg(q, pose.orientation);
 
-        pose_vector.push_back(pose);
+        pose_array.poses.push_back(pose);
     }
     return true;
 }
 
-bool TrajectoryInterpolator::circularInterpolation(std::vector<geometry_msgs::Pose>& pose_vector,
+bool TrajectoryInterpolator::circularInterpolation(geometry_msgs::PoseArray& pose_array,
                                                    cob_cartesian_controller::MoveCircStruct& move_circ)
 {
+    pose_array.header.stamp = ros::Time::now();
+    pose_array.header.frame_id = root_frame_;
+    
     tf::Quaternion q;
     tf::Transform C, P, T;
 
@@ -122,8 +128,8 @@ bool TrajectoryInterpolator::circularInterpolation(std::vector<geometry_msgs::Po
     }
 
     // Define Center Pose
-    C.setOrigin(tf::Vector3(move_circ.x_center, move_circ.y_center, move_circ.z_center));
-    q.setRPY(move_circ.roll_center, move_circ.pitch_center, move_circ.yaw_center);
+    C.setOrigin(tf::Vector3(move_circ.pose_center.position.x, move_circ.pose_center.position.y, move_circ.pose_center.position.z));
+    tf::quaternionMsgToTF(move_circ.pose_center.orientation, q);
     C.setRotation(q);
 
     // Interpolate the circular path
@@ -151,7 +157,7 @@ bool TrajectoryInterpolator::circularInterpolation(std::vector<geometry_msgs::Po
         tf::pointTFToMsg(P.getOrigin(), pose.position);
         tf::quaternionTFToMsg(P.getRotation(), pose.orientation);
 
-        pose_vector.push_back(pose);
+        pose_array.poses.push_back(pose);
     }
     return true;
 }

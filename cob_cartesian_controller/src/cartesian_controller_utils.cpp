@@ -51,10 +51,7 @@ tf::StampedTransform CartesianControllerUtils::getStampedTransform(std::string t
     {
         try
         {
-            //ToDo: Verify timestamps and Exceptions
-            
-            ros::Time now = ros::Time(0);
-            //ros::Time now = ros::Time::now();
+            ros::Time now = ros::Time::now();
             tf_listener_.waitForTransform(target_frame, source_frame, now, ros::Duration(0.5));
             tf_listener_.lookupTransform(target_frame, source_frame, now, stamped_transform);
             transform = true;
@@ -67,6 +64,32 @@ tf::StampedTransform CartesianControllerUtils::getStampedTransform(std::string t
     }while(!transform);
     
     return stamped_transform;
+}
+
+void CartesianControllerUtils::transformPose(const std::string source_frame, const std::string target_frame, const geometry_msgs::Pose pose_in, geometry_msgs::Pose& pose_out)
+{
+    bool transform = false;
+    geometry_msgs::PoseStamped stamped_in, stamped_out;
+    stamped_in.header.frame_id = source_frame;
+    stamped_in.pose = pose_in;
+    
+    do
+    {
+        try
+        {
+            stamped_in.header.stamp = ros::Time::now();
+
+            tf_listener_.waitForTransform(target_frame, source_frame, stamped_in.header.stamp, ros::Duration(0.5));
+            tf_listener_.transformPose(target_frame, stamped_in, stamped_out);
+            pose_out = stamped_out.pose;
+            transform = true;
+        }
+        catch (tf::TransformException& ex)
+        {
+            ROS_ERROR("%s",ex.what());
+            ros::Duration(0.1).sleep();
+        }
+    }while(!transform);
 }
 
 
@@ -109,15 +132,7 @@ void CartesianControllerUtils::poseToRPY(geometry_msgs::Pose pose, double& roll,
     tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
 }
 
-
-
-
-
-
-
-
-
-void CartesianControllerUtils::previewPoseVec(const std::vector <geometry_msgs::Pose>& pos_vec)
+void CartesianControllerUtils::previewPath(const geometry_msgs::PoseArray& pose_array)
 {
     visualization_msgs::MarkerArray marker_array;
     
@@ -125,8 +140,7 @@ void CartesianControllerUtils::previewPoseVec(const std::vector <geometry_msgs::
     marker.type = visualization_msgs::Marker::ARROW;
     marker.lifetime = ros::Duration();
     marker.action = visualization_msgs::Marker::ADD;
-    marker.header.stamp = ros::Time::now();
-    marker.header.frame_id = "odom_combined";   //ToDo
+    marker.header = pose_array.header;
     marker.ns = "preview";
     marker.scale.x = 0.01;
     marker.scale.y = 0.01;
@@ -136,15 +150,12 @@ void CartesianControllerUtils::previewPoseVec(const std::vector <geometry_msgs::
     marker.color.b = 1.0;
     marker.color.a = 1.0;
     
-    for(unsigned int i=0; i<pos_vec.size(); i++)
+    for(unsigned int i=0; i<pose_array.poses.size(); i++)
     {
         marker.id = i;
-        marker.pose = pos_vec.at(i);
+        marker.pose = pose_array.poses.at(i);
         marker_array.markers.push_back(marker);
     }
     
     marker_pub_.publish(marker_array);
 }
-
-
-

@@ -30,7 +30,7 @@
 #define COB_CARTESIAN_CONTROLLER_TRAJECTORY_INTERPOLATOR_H_
 
 #include <ros/ros.h>
-#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/PoseArray.h>
 #include <tf/transform_datatypes.h>
 
 #include <cob_cartesian_controller/cartesian_controller_data_types.h>
@@ -41,22 +41,25 @@
 class TrajectoryInterpolator
 {
 public:
-    TrajectoryInterpolator(double update_rate)
-    :   trajectory_profile_generator_lin_(TrajectoryProfileGeneratorLin(update_rate)),
+    TrajectoryInterpolator(std::string root_frame, double update_rate)
+    :   root_frame_(root_frame),
+        trajectory_profile_generator_lin_(TrajectoryProfileGeneratorLin(update_rate)),
         trajectory_profile_generator_circ_(TrajectoryProfileGeneratorCirc(update_rate))    
     {}
 
     ~TrajectoryInterpolator(){}
 
-    bool linearInterpolation(std::vector <geometry_msgs::Pose>& pose_vector,
+    bool linearInterpolation(geometry_msgs::PoseArray& pose_array,
                              cob_cartesian_controller::MoveLinStruct& move_lin);
 
-    bool circularInterpolation(std::vector<geometry_msgs::Pose>& pose_vector,
+    bool circularInterpolation(geometry_msgs::PoseArray& pose_array,
                                cob_cartesian_controller::MoveCircStruct& move_circ);
 
 private:
     TrajectoryProfileGeneratorLin trajectory_profile_generator_lin_;
     TrajectoryProfileGeneratorCirc trajectory_profile_generator_circ_;
+    
+    std::string root_frame_;
 };
 
 #endif /* COB_CARTESIAN_CONTROLLER_TRAJECTORY_INTERPOLATOR_H_ */

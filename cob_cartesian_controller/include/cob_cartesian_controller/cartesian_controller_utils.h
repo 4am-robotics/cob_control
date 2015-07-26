@@ -33,6 +33,7 @@
 #include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
 
+#include <geometry_msgs/PoseArray.h>
 #include <visualization_msgs/MarkerArray.h>
 
 
@@ -44,26 +45,14 @@ public:
         marker_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("cartesian_controller/preview_path",1);
     }
 
+    void transformPose(const std::string source_frame, const std::string target_frame, const geometry_msgs::Pose pose_in, geometry_msgs::Pose& pose_out);
     tf::StampedTransform getStampedTransform(std::string target_frame, std::string source_frame);
     geometry_msgs::Pose getPose(std::string target_frame, std::string source_frame);
     
     bool inEpsilonArea(tf::StampedTransform stamped_transform, double epsilon);
     void poseToRPY(geometry_msgs::Pose pose, double& roll, double& pitch, double& yaw);
     
-    //Note: 
-    //  all functions related to plotting the Cartesian trajectory 
-    //  by publishing visualization_msgs/Marker to a topic
-    //  have been removed in favor of debug_trajectory_marker_node (cob_twist_controller)
-    //
-    //Example Usage:
-    //  <node ns="arm" name="debug_trajectory_marker_node" pkg="cob_twist_controller" type="debug_trajectory_marker_node" cwd="node" respawn="false" output="screen">
-    //    <param name="target_frame" type="str" value="cartesian_target" />
-    //  </node>
-    void previewPoseVec(const std::vector <geometry_msgs::Pose>& pos_vec);
-
-
-
-
+    void previewPath(const geometry_msgs::PoseArray& pose_array);
 
 
 private:

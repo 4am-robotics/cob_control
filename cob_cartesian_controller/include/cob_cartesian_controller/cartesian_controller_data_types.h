@@ -43,7 +43,6 @@ namespace cob_cartesian_controller
 
     struct MoveLinStruct
     {
-        double x, y, z, roll, pitch, yaw;
         geometry_msgs::Pose start, end;
         bool rotate_only;
         
@@ -52,8 +51,9 @@ namespace cob_cartesian_controller
 
     struct MoveCircStruct
     {
-        double x_center, y_center, z_center, roll_center, pitch_center, yaw_center;
-        double start_angle, end_angle, radius;
+        geometry_msgs::Pose pose_center;
+        double start_angle, end_angle;
+        double radius;
         bool rotate_only;
         
         ProfileStruct profile;
@@ -68,10 +68,5 @@ namespace cob_cartesian_controller
 
 }//namespace
 
-class errorException: public std::runtime_error
-{
-public:
-    errorException(const std::string error_description) : std::runtime_error(error_description) { ; };
-};
 
 #endif /* COB_CARTESIAN_CONTROLLER_DATA_STRUCTURES_H_ */

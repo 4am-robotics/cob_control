@@ -53,7 +53,7 @@ public:
     bool initialize();
     
     // Main functions
-    bool posePathBroadcaster(std::vector<geometry_msgs::Pose>& pose_vector);
+    bool posePathBroadcaster(const geometry_msgs::PoseArray& cartesian_path);
     bool movePTP(geometry_msgs::Pose target_pose, double epsilon);
     
     // Helper function
@@ -68,8 +68,8 @@ public:
     void actionAbort(bool success, std::string message);
     
     cob_cartesian_controller::CartesianActionStruct acceptGoal(boost::shared_ptr<const cob_cartesian_controller::CartesianControllerGoal> goal);
-    cob_cartesian_controller::MoveLinStruct convertMoveLinRelToAbs(const cob_cartesian_controller::MoveLinStruct& rel_move_lin);
-    cob_cartesian_controller::MoveCircStruct convertMoveCircRelToAbs(cob_cartesian_controller::MoveCircStruct& rel_move_circ);
+    cob_cartesian_controller::MoveLinStruct convertMoveLin(const cob_cartesian_controller::MoveLin& move_lin_msg);
+    cob_cartesian_controller::MoveCircStruct convertMoveCirc(const cob_cartesian_controller::MoveCirc& move_circ_msg);
 
 private:
     ros::NodeHandle nh_;

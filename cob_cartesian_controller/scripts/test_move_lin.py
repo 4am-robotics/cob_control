@@ -16,17 +16,21 @@ if __name__ == '__main__':
     goal = CartesianControllerGoal()
     
     goal.name = "move_lin"
-    goal.move_lin.x = -0.9
-    goal.move_lin.y = 0.0
-    goal.move_lin.z = 0.0
-    goal.move_lin.roll = 0.0
-    goal.move_lin.pitch = 0.0
-    goal.move_lin.yaw = 0.0
+    goal.move_lin.pose_goal.position.x = -0.9
+    goal.move_lin.pose_goal.position.y = 0.0
+    goal.move_lin.pose_goal.position.z = 0.0
+    goal.move_lin.pose_center.orientation.x = 0.0
+    goal.move_lin.pose_center.orientation.y = 0.0
+    goal.move_lin.pose_center.orientation.z = 0.0
+    goal.move_lin.pose_center.orientation.w = 1.0
+    goal.move_circ.frame_id = 'world'
     goal.move_lin.rotate_only = False
 
     goal.move_lin.profile.vel = 0.2
     goal.move_lin.profile.accl = 0.1
     goal.move_lin.profile.profile_type = Profile.SINOID
+
+    print goal
 
     # Send the goal
     client.send_goal(goal)

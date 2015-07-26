@@ -120,6 +120,14 @@ Visualization Manager:
         tip_marker: true
       Queue Size: 100
       Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /arm/cartesian_controller/preview_path
+      Name: PreviewPath
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 141; 141; 141
@@ -144,22 +152,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3.03003
+      Distance: 2.94622
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.107485
-        Y: -0.125967
-        Z: 0.47275
+        X: -0.491729
+        Y: 0.0118906
+        Z: 0.900492
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.290398
+      Pitch: 0.204797
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.85858
+      Yaw: 5.40859
     Saved: ~
 Window Geometry:
   Displays:
@@ -177,5 +185,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1200
-  X: 591
-  Y: 95
+  X: 494
+  Y: 44

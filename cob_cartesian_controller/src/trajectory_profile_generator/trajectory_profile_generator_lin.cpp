@@ -94,23 +94,29 @@ bool TrajectoryProfileGeneratorLin::calculateRampProfile(std::vector<double>* pa
     tv = (steps_tb + steps_tv) * t_ipo_;
     te = (steps_tb + steps_tv + steps_te) * t_ipo_;
 
+    //Convert to RPY
+    double roll, pitch, yaw;
+    tf::Quaternion q;
+    tf::quaternionMsgToTF(move_lin.start.orientation, q);
+    tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
+
     // Calculate the paths
     if(!generateRampPath(linear_path, move_lin.profile.vel, move_lin.profile.accl, Se_max, (steps_tb + steps_tv + steps_te)))
     {
         ROS_WARN("Error while Calculating linear_path");
         return false;
     }
-    if(!generateRampPathWithTe(roll_path, te, move_lin.profile.accl, Se_roll, (steps_tb + steps_tv + steps_te), move_lin.roll))
+    if(!generateRampPathWithTe(roll_path, te, move_lin.profile.accl, Se_roll, (steps_tb + steps_tv + steps_te), roll))
     {
         ROS_WARN("Error while Calculating roll_path");
         return false;
     }
-    if(!generateRampPathWithTe(pitch_path, te, move_lin.profile.accl, Se_pitch, (steps_tb + steps_tv + steps_te), move_lin.pitch))
+    if(!generateRampPathWithTe(pitch_path, te, move_lin.profile.accl, Se_pitch, (steps_tb + steps_tv + steps_te), pitch))
     {
         ROS_WARN("Error while Calculating pitch_path");
         return false;
     }
-    if(!generateRampPathWithTe(yaw_path, te, move_lin.profile.accl, Se_yaw, (steps_tb + steps_tv + steps_te), move_lin.yaw))
+    if(!generateRampPathWithTe(yaw_path, te, move_lin.profile.accl, Se_yaw, (steps_tb + steps_tv + steps_te), yaw))
     {
         ROS_WARN("Error while Calculating yaw_path");
         return false;
@@ -180,23 +186,29 @@ bool TrajectoryProfileGeneratorLin::calculateSinoidProfile(std::vector<double>* 
     tv = (steps_tb + steps_tv) * t_ipo_;
     te = (steps_tb + steps_tv + steps_te) * t_ipo_;
 
+    //Convert to RPY
+    double roll, pitch, yaw;
+    tf::Quaternion q;
+    tf::quaternionMsgToTF(move_lin.start.orientation, q);
+    tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
+
     // Calculate the paths
     if(!generateSinoidPath(linear_path, move_lin.profile.vel, move_lin.profile.accl, Se_max, (steps_tb + steps_tv + steps_te)))
     {
         ROS_WARN("Error while Calculating linear_path");
         return false;
     }
-    if(!generateSinoidPathWithTe(roll_path, te, move_lin.profile.accl, Se_roll, (steps_tb + steps_tv + steps_te), move_lin.roll))
+    if(!generateSinoidPathWithTe(roll_path, te, move_lin.profile.accl, Se_roll, (steps_tb + steps_tv + steps_te), roll))
     {
         ROS_WARN("Error while Calculating roll_path");
         return false;
     }
-    if(!generateSinoidPathWithTe(pitch_path, te, move_lin.profile.accl, Se_pitch, (steps_tb + steps_tv + steps_te), move_lin.pitch))
+    if(!generateSinoidPathWithTe(pitch_path, te, move_lin.profile.accl, Se_pitch, (steps_tb + steps_tv + steps_te), pitch))
     {
         ROS_WARN("Error while Calculating pitch_path");
         return false;
     }
-    if(!generateSinoidPathWithTe(yaw_path, te, move_lin.profile.accl, Se_yaw, (steps_tb + steps_tv + steps_te), move_lin.yaw))
+    if(!generateSinoidPathWithTe(yaw_path, te, move_lin.profile.accl, Se_yaw, (steps_tb + steps_tv + steps_te), yaw))
     {
         ROS_WARN("Error while Calculating yaw_path");
         return false;

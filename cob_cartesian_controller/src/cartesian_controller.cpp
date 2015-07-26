@@ -70,7 +70,7 @@ bool CartesianController::initialize()
     stop_tracking_.waitForExistence();
     tracking_ = false;
 
-    trajectory_interpolator_.reset(new TrajectoryInterpolator(update_rate_));
+    trajectory_interpolator_.reset(new TrajectoryInterpolator(root_frame_, update_rate_));
 
     action_name_ = "cartesian_trajectory_action";
     as_.reset(new SAS_CartesianControllerAction_t(nh_, action_name_, false));
@@ -194,7 +194,7 @@ bool CartesianController::movePTP(geometry_msgs::Pose target_pose, double epsilo
 }
 
 // Broadcasting interpolated Cartesian path
-bool CartesianController::posePathBroadcaster(std::vector<geometry_msgs::Pose>& pose_vector)
+bool CartesianController::posePathBroadcaster(const geometry_msgs::PoseArray& cartesian_path)
 {
     bool success = false;
     double epsilon = 0.1;
@@ -205,7 +205,7 @@ bool CartesianController::posePathBroadcaster(std::vector<geometry_msgs::Pose>& 
     stamped_transform.frame_id_ = root_frame_;
     stamped_transform.child_frame_id_ = target_frame_;
 
-    for(int i = 0; i < pose_vector.size()-1; i++)
+    for(int i = 0; i < cartesian_path.poses.size()-1; i++)
     {
         if(!as_->isActive())
         {
@@ -214,13 +214,13 @@ bool CartesianController::posePathBroadcaster(std::vector<geometry_msgs::Pose>& 
         }
         
         // Send/Refresh target Frame
-        stamped_transform.setOrigin( tf::Vector3(pose_vector.at(i).position.x,
-                                                 pose_vector.at(i).position.y,
-                                                 pose_vector.at(i).position.z) );
-        stamped_transform.setRotation( tf::Quaternion(pose_vector.at(i).orientation.x,
-                                                      pose_vector.at(i).orientation.y,
-                                                      pose_vector.at(i).orientation.z,
-                                                      pose_vector.at(i).orientation.w) );
+        stamped_transform.setOrigin( tf::Vector3(cartesian_path.poses.at(i).position.x,
+                                                 cartesian_path.poses.at(i).position.y,
+                                                 cartesian_path.poses.at(i).position.z) );
+        stamped_transform.setRotation( tf::Quaternion(cartesian_path.poses.at(i).orientation.x,
+                                                      cartesian_path.poses.at(i).orientation.y,
+                                                      cartesian_path.poses.at(i).orientation.z,
+                                                      cartesian_path.poses.at(i).orientation.w) );
         stamped_transform.stamp_ = ros::Time::now();
         tf_broadcaster_.sendTransform(stamped_transform);
 
@@ -259,7 +259,7 @@ bool CartesianController::posePathBroadcaster(std::vector<geometry_msgs::Pose>& 
 
 void CartesianController::goalCB()
 {
-    std::vector <geometry_msgs::Pose> pos_vec;
+    geometry_msgs::PoseArray cartesian_path;
     cob_cartesian_controller::CartesianActionStruct action_struct;
 
     ROS_INFO("Received a new goal");
@@ -270,17 +270,15 @@ void CartesianController::goalCB()
     {
         ROS_INFO("move_lin");
 
-        cob_cartesian_controller::MoveLinStruct move_lin = convertMoveLinRelToAbs(action_struct.move_lin);
-
         // Interpolate path
-        if(!trajectory_interpolator_->linearInterpolation(pos_vec, move_lin))
+        if(!trajectory_interpolator_->linearInterpolation(cartesian_path, action_struct.move_lin))
         {
             actionAbort(false, "Failed to do interpolation for 'move_lin'");
             return;
         }
         
-        //ToDo: maybe publish a "preview" of the path as MarkerArray?
-        
+        // Publish Preview
+        utils_.previewPath(cartesian_path);
 
         // Activate Tracking
         if(!startTracking())
@@ -290,7 +288,7 @@ void CartesianController::goalCB()
         }
         
         // Execute path
-        if(!posePathBroadcaster(pos_vec))
+        if(!posePathBroadcaster(cartesian_path))
         {
             actionAbort(false, "Failed to execute path for 'move_lin'");
             return;
@@ -308,16 +306,15 @@ void CartesianController::goalCB()
     else if(action_struct.name == "move_circ")
     {
         ROS_INFO("move_circ");
-        cob_cartesian_controller::MoveCircStruct move_circ = convertMoveCircRelToAbs(action_struct.move_circ);
-
-        if(!trajectory_interpolator_->circularInterpolation(pos_vec, move_circ))
+        
+        if(!trajectory_interpolator_->circularInterpolation(cartesian_path, action_struct.move_circ))
         {
             actionAbort(false, "Failed to do interpolation for 'move_circ'");
             return;
         }
         
-        //ToDo: maybe publish a "preview" of the path as MarkerArray?
-        
+        // Publish Preview
+        utils_.previewPath(cartesian_path);
 
         // Activate Tracking
         if(!startTracking())
@@ -327,14 +324,14 @@ void CartesianController::goalCB()
         }
         
         // Move to start
-        if(!movePTP(pos_vec.at(0), 0.03))
+        if(!movePTP(cartesian_path.poses.at(0), 0.03))
         {
             actionAbort(false, "Failed to movePTP to start");
             return;
         }
         
         // Execute path
-        if(!posePathBroadcaster(pos_vec))
+        if(!posePathBroadcaster(cartesian_path))
         {
             actionAbort(false, "Failed to execute path for 'move_circ'");
             return;
@@ -356,73 +353,54 @@ void CartesianController::goalCB()
     }
 }
 
-cob_cartesian_controller::MoveLinStruct CartesianController::convertMoveLinRelToAbs(const cob_cartesian_controller::MoveLinStruct& rel_move_lin)
+cob_cartesian_controller::MoveLinStruct CartesianController::convertMoveLin(const cob_cartesian_controller::MoveLin& move_lin_msg)
 {
-    //ToDo: Use proper call to transformPose() here after the action description has been changed to be using a PoseStamped
-    
     geometry_msgs::Pose start, end;
-    tf::Quaternion q_start, q_end, q_rel;
     start = utils_.getPose(root_frame_, chain_tip_link_);   //current tcp pose
+    utils_.transformPose(move_lin_msg.frame_id, root_frame_, move_lin_msg.pose_goal, end);
     
-    tf::quaternionMsgToTF(start.orientation, q_start);
-    q_rel.setRPY(rel_move_lin.roll, rel_move_lin.pitch, rel_move_lin.yaw);
-    // q_end = q_start * q_rel; // this does a rotation with respect to the endeffector but the rotation should be relative to the reference frame
-    q_end = q_rel * q_start; // this does a rotation with respect to the reference as well as the lin movement is done in abs. coordinates
+    cob_cartesian_controller::MoveLinStruct move_lin_struct;
+    move_lin_struct.rotate_only          = move_lin_msg.rotate_only;
+    move_lin_struct.profile.vel          = move_lin_msg.profile.vel;
+    move_lin_struct.profile.accl         = move_lin_msg.profile.accl;
+    move_lin_struct.profile.profile_type = move_lin_msg.profile.profile_type;
 
-    end.position.x = start.position.x + rel_move_lin.x;
-    end.position.y = start.position.y + rel_move_lin.y;
-    end.position.z = start.position.z + rel_move_lin.z;
-    tf::quaternionTFToMsg(q_end, end.orientation);
+    move_lin_struct.start = start;
+    move_lin_struct.end = end;
 
-    cob_cartesian_controller::MoveLinStruct update_ml = rel_move_lin;
-    //ToDo: Why is roll, pitch and yaw set to respective values of start? What about x, y, z? Should it not be the goal?
-    utils_.poseToRPY(start, update_ml.roll, update_ml.pitch, update_ml.yaw);
-    update_ml.start = start;
-    update_ml.end = end;
-
-    return update_ml;
+    return move_lin_struct;
 }
 
-
-cob_cartesian_controller::MoveCircStruct CartesianController::convertMoveCircRelToAbs(cob_cartesian_controller::MoveCircStruct& rel_move_circ)
+cob_cartesian_controller::MoveCircStruct CartesianController::convertMoveCirc(const cob_cartesian_controller::MoveCirc& move_circ_msg)
 {
-    return rel_move_circ;
+    geometry_msgs::Pose center;
+    utils_.transformPose(move_circ_msg.frame_id, root_frame_, move_circ_msg.pose_center, center);
+    
+    cob_cartesian_controller::MoveCircStruct move_circ_struct;
+    move_circ_struct.start_angle           = move_circ_msg.start_angle;
+    move_circ_struct.end_angle             = move_circ_msg.end_angle;
+    move_circ_struct.radius                = move_circ_msg.radius;
+    move_circ_struct.profile.vel           = move_circ_msg.profile.vel;
+    move_circ_struct.profile.accl          = move_circ_msg.profile.accl;
+    move_circ_struct.profile.profile_type  = move_circ_msg.profile.profile_type;
+    
+    move_circ_struct.pose_center = center;
+    
+    return move_circ_struct;
 }
 
 cob_cartesian_controller::CartesianActionStruct CartesianController::acceptGoal(boost::shared_ptr<const cob_cartesian_controller::CartesianControllerGoal> goal)
 {
     cob_cartesian_controller::CartesianActionStruct action_struct;
     action_struct.name = goal->name;
-    
-    //ToDo: use a geometry_msgs::PoseStamped with proper frame_id instead of (x, y, z, roll, pitch, yaw)!
 
     if(action_struct.name == "move_lin")
     {
-        action_struct.move_lin.x           = goal->move_lin.x;
-        action_struct.move_lin.y           = goal->move_lin.y;
-        action_struct.move_lin.z           = goal->move_lin.z;
-        action_struct.move_lin.roll        = goal->move_lin.roll * M_PI / 180.0;
-        action_struct.move_lin.pitch       = goal->move_lin.pitch * M_PI / 180.0;
-        action_struct.move_lin.yaw         = goal->move_lin.yaw * M_PI / 180.0;
-        action_struct.move_lin.rotate_only = goal->move_lin.rotate_only;
-        action_struct.move_lin.profile.vel          = goal->move_lin.profile.vel;
-        action_struct.move_lin.profile.accl         = goal->move_lin.profile.accl;
-        action_struct.move_lin.profile.profile_type = goal->move_lin.profile.profile_type;
+        action_struct.move_lin = convertMoveLin(goal->move_lin);
     }
     else if(action_struct.name == "move_circ")
     {
-        action_struct.move_circ.x_center      = goal->move_circ.x_center;
-        action_struct.move_circ.y_center      = goal->move_circ.y_center;
-        action_struct.move_circ.z_center      = goal->move_circ.z_center;
-        action_struct.move_circ.roll_center   = goal->move_circ.roll_center * M_PI / 180.0;
-        action_struct.move_circ.pitch_center  = goal->move_circ.pitch_center * M_PI / 180.0;
-        action_struct.move_circ.yaw_center    = goal->move_circ.yaw_center * M_PI / 180.0;
-        action_struct.move_circ.start_angle   = goal->move_circ.start_angle * M_PI / 180.0;
-        action_struct.move_circ.end_angle     = goal->move_circ.end_angle  * M_PI / 180.0;
-        action_struct.move_circ.radius        = goal->move_circ.radius;
-        action_struct.move_circ.profile.vel           = goal->move_circ.profile.vel;
-        action_struct.move_circ.profile.accl          = goal->move_circ.profile.accl;
-        action_struct.move_circ.profile.profile_type  = goal->move_circ.profile.profile_type;
+        action_struct.move_circ = convertMoveCirc(goal->move_circ);
     }
     else
     {
