@@ -35,12 +35,12 @@ class MovingAverage
 {
     private:
         std::deque<double> s_;
-        std::deque<double> weighting_, temp_;
+        std::deque<double> weighting_;
 
         unsigned int size_;
 
     public:
-        MovingAverage(int size=3)
+        MovingAverage(unsigned int size=3)
         {
             size_ = size;
             calculateWeighting();
@@ -62,7 +62,7 @@ class MovingAverage
 
         double calcMovingAverage()
         {
-            double sum = 0;
+            double sum = 0.0;
             for(std::deque<double>::const_iterator i = s_.begin(); i != s_.end(); ++i)
             {
                 sum += *i;
@@ -73,8 +73,8 @@ class MovingAverage
 
         double calcWeightedMovingAverage()
         {
-            double sum = 0;
-            for(int i = 0; i < s_.size(); i++)
+            double sum = 0.0;
+            for(unsigned int i = 0; i < s_.size(); i++)
             {
                 sum += s_[i] * weighting_[i];
             }
@@ -84,27 +84,26 @@ class MovingAverage
 
         void calculateWeighting()
         {
-            double sum = 0;
-            double err = 0;
-            double j = 0.0;
+            double sum = 0.0;
+            double err = 0.0;
+            unsigned int j = 0;
 
-            for(int i = 0; i < size_; i++)
+            for(unsigned int i = 0; i < size_; i++)
             {
                 weighting_.push_back((pow(log(2),j+1) / factorial(j+1)));
                 sum += weighting_[i];
-                j += 1.0;
+                j += 1;
             }
             
-            err = 1 - sum;
-            std::deque<double>::iterator i = weighting_.begin();
-            *i += err;
+            err = 1.0 - sum;
+            weighting_.front() += err;
         }
 
         double factorial(unsigned int n)
         {
             if ( n <= 1 )
             {
-                return  1;
+                return  1.0;
             }
             else
             {
