@@ -18,12 +18,6 @@ add_message_files(
   ObstacleDistances.msg
 )
 
-## Generate services in the 'srv' folder
-add_service_files(
-  FILES
-  PredictDistance.srv
-)
-
 generate_messages(
   DEPENDENCIES
   geometry_msgs

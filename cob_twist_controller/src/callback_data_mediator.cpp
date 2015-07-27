@@ -52,10 +52,11 @@ bool CallbackDataMediator::fill(ConstraintParamsCA& params_ca)
     bool success = false;
     if (this->obstacle_distances_.end() != this->it_distances)
     {
-        params_ca.current_distance_.distance_vec = this->it_distances->distance_vec;
         params_ca.current_distance_.frame_id = this->it_distances->frame_id;
         params_ca.current_distance_.min_distance = this->it_distances->min_distance;
-        params_ca.current_distance_.collision_pnt_vector = this->it_distances->collision_pnt_vector;
+        params_ca.current_distance_.frame_vector = this->it_distances->frame_vector;
+        params_ca.current_distance_.nearest_point_frame_vector = this->it_distances->nearest_point_frame_vector;
+        params_ca.current_distance_.nearest_point_obstacle_vector = this->it_distances->nearest_point_obstacle_vector;
         this->it_distances++;
 
         // Let the iterator point to the first element again -> Returns the same elements again until callback occurred.
@@ -85,13 +86,10 @@ void CallbackDataMediator::distancesToObstaclesCallback(const cob_obstacle_dista
     {
         ObstacleDistanceInfo d;
         d.min_distance = it->distance;
-
-        d.distance_vec << it->distance_vector.x,
-                          it->distance_vector.y,
-                          it->distance_vector.z;
-        tf::vectorMsgToEigen(it->collision_pnt_vector, d.collision_pnt_vector);
-
-        d.frame_id = it->header.frame_id;
+        d.frame_id = it->frame_of_interest;
+        tf::vectorMsgToEigen(it->frame_vector, d.frame_vector);
+        tf::vectorMsgToEigen(it->nearest_point_frame_vector, d.nearest_point_frame_vector);
+        tf::vectorMsgToEigen(it->nearest_point_obstacle_vector, d.nearest_point_obstacle_vector);
         this->obstacle_distances_.push_back(d);
     }
 

@@ -29,6 +29,8 @@
 #ifndef CONSTRAINT_H_
 #define CONSTRAINT_H_
 
+#include <kdl/chainfksolvervel_recursive.hpp>
+
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/constraints/constraint_base.h"
 #include "cob_twist_controller/callback_data_mediator.h"
@@ -62,6 +64,7 @@ class ConstraintsBuilder
     public:
         static std::set<ConstraintBase_t> createConstraints(const TwistControllerParams& params,
                                                            KDL::ChainJntToJacSolver& jnt_to_jac_,
+                                                           KDL::ChainFkSolverVel_recursive& fk_solver_vel,
                                                            CallbackDataMediator& data_mediator);
 
     private:
@@ -80,8 +83,9 @@ class CollisionAvoidance : public ConstraintBase<T_PARAMS, PRIO>
         CollisionAvoidance(PRIO prio,
                            T_PARAMS constraint_params,
                            CallbackDataMediator& cbdm,
-                           KDL::ChainJntToJacSolver& jnt_to_jac) :
-            ConstraintBase<T_PARAMS, PRIO>(prio, constraint_params, cbdm), jnt_to_jac_(jnt_to_jac)
+                           KDL::ChainJntToJacSolver& jnt_to_jac,
+                           KDL::ChainFkSolverVel_recursive& fk_solver_vel) :
+            ConstraintBase<T_PARAMS, PRIO>(prio, constraint_params, cbdm), jnt_to_jac_(jnt_to_jac), fk_solver_vel_(fk_solver_vel)
         {
         }
 
@@ -114,10 +118,10 @@ class CollisionAvoidance : public ConstraintBase<T_PARAMS, PRIO>
         double calcValue();
         double calcDerivativeValue();
         Eigen::VectorXd calcPartialValues();
+        double predictValue();
 
         KDL::ChainJntToJacSolver& jnt_to_jac_;
-
-
+        KDL::ChainFkSolverVel_recursive& fk_solver_vel_;
 };
 /* END CollisionAvoidance ***************************************************************************************/
 

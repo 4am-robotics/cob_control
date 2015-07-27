@@ -36,7 +36,6 @@
 
 #include <ros/ros.h>
 
-#include <kdl/chainiksolver.hpp>
 #include <kdl/chainjnttojacsolver.hpp>
 #include <kdl/jntarray.hpp>
 
@@ -46,6 +45,7 @@
 #include "cob_twist_controller/damping_methods/damping.h"
 #include "cob_twist_controller/inverse_jacobian_calculations/inverse_jacobian_calculation.h"
 
+#include <eigen_conversions/eigen_kdl.h>
 
 /* BEGIN ConstraintsBuilder *************************************************************************************/
 /**
@@ -54,6 +54,7 @@
 template <typename PRIO>
 std::set<ConstraintBase_t> ConstraintsBuilder<PRIO>::createConstraints(const TwistControllerParams& twist_controller_params,
                                                                       KDL::ChainJntToJacSolver& jnt_to_jac,
+                                                                      KDL::ChainFkSolverVel_recursive& fk_solver_vel,
                                                                       CallbackDataMediator& data_mediator)
 {
     std::set<ConstraintBase_t> constraints;
@@ -105,7 +106,7 @@ std::set<ConstraintBase_t> ConstraintsBuilder<PRIO>::createConstraints(const Twi
         {
             ConstraintParamsCA params = ConstraintParamFactory<ConstraintParamsCA>::createConstraintParams(twist_controller_params, data_mediator);
             // TODO: take care PRIO could be of different type than UINT32
-            boost::shared_ptr<CollisionAvoidance_t > ca(new CollisionAvoidance_t(startPrio--, params, data_mediator, jnt_to_jac));
+            boost::shared_ptr<CollisionAvoidance_t > ca(new CollisionAvoidance_t(startPrio--, params, data_mediator, jnt_to_jac, fk_solver_vel));
             constraints.insert(boost::static_pointer_cast<PriorityBase<PRIO> >(ca));
         }
     }
@@ -171,12 +172,22 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calculate()
     this->calcValue();
     this->calcDerivativeValue();
     this->calcPartialValues();
+    double pred_min_dist = this->predictValue();
 
     double activation = this->getActivationThreshold();
     double critical = 0.5 * activation;
 
-    if(d.min_distance < critical)
+    if(this->state_.getCurrent() == CRITICAL && pred_min_dist < d.min_distance)
     {
+        ROS_WARN_STREAM(d.frame_id << "Current state is CRITICAL but prediction is smaller than current dist -> Stay in CRIT.");
+    }
+    else if(d.min_distance < critical || pred_min_dist < critical)
+    {
+        if(pred_min_dist < critical)
+        {
+            ROS_WARN_STREAM(d.frame_id << "pred_min_dist < critical!!!");
+        }
+
         this->state_.setState(CRITICAL);
     }
     else if(d.min_distance < activation)
@@ -197,6 +208,52 @@ double CollisionAvoidance<T_PARAMS, PRIO>::calcValue()
     this->value_ = pow(d.min_distance - this->getActivationThreshold(), 2.0);
     return this->value_;
 }
+
+template <typename T_PARAMS, typename PRIO>
+double CollisionAvoidance<T_PARAMS, PRIO>::predictValue()
+{
+    const TwistControllerParams& params = this->constraint_params_.getParams();
+    const ObstacleDistanceInfo d = this->constraint_params_.current_distance_;
+    this->prediction_value_ = std::numeric_limits<double>::max();
+
+    std::vector<std::string>::const_iterator str_it = std::find(params.frame_names.begin(),
+                                                                params.frame_names.end(),
+                                                                d.frame_id);
+    if (params.frame_names.end() != str_it)
+    {
+        uint32_t frame_number = (str_it - params.frame_names.begin()) + 1; // segment nr not index represents frame number
+        KDL::FrameVel frame_vel;
+
+        // Calculate prediction for pos and vel
+        if(0 != this->fk_solver_vel_.JntToCart(this->jnts_prediction_, frame_vel, frame_number))
+        {
+            ROS_ERROR_STREAM("Could not calculate twist for frame: " << frame_number);
+            return std::numeric_limits<double>::max();
+        }
+
+        KDL::Twist twist = frame_vel.GetTwist(); // predicted frame twist
+
+        Eigen::Vector3d pred_twist_vel;
+        tf::vectorKDLToEigen(twist.vel, pred_twist_vel);
+
+        Eigen::Vector3d pred_twist_rot;
+        tf::vectorKDLToEigen(twist.rot, pred_twist_rot);
+
+        Eigen::Vector3d delta_pred_vel = pred_twist_vel + pred_twist_rot.cross(d.nearest_point_frame_vector);
+        double cycle = (ros::Time::now() - this->last_pred_time_).toSec();
+        this->last_pred_time_ = ros::Time::now();
+        Eigen::Vector3d pred_pos = d.nearest_point_frame_vector + delta_pred_vel * cycle;
+        this->prediction_value_ = (d.nearest_point_obstacle_vector - pred_pos).norm();
+
+        ROS_ERROR_STREAM("Minimal distance for " << d.frame_id << ": " << d.min_distance);
+        ROS_ERROR_STREAM("Predicted distance for " << d.frame_id << ": " << this->prediction_value_);
+    }
+
+    return this->prediction_value_;
+}
+
+
+
 
 
 template <typename T_PARAMS, typename PRIO>
@@ -220,13 +277,16 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
                                                                     d.frame_id);
         if (params.frame_names.end() != str_it)
         {
+            Eigen::Vector3d collision_pnt_vector = d.nearest_point_frame_vector - d.frame_vector;
+            Eigen::Vector3d distance_vec = d.nearest_point_frame_vector - d.nearest_point_obstacle_vector;
+
             /*
              * Create a skew-symm matrix as transformation between the segment root and the critical point.
              */
             Eigen::Matrix3d skew_symm;
-            skew_symm <<    0.0,                          d.collision_pnt_vector.z(), -d.collision_pnt_vector.y(),
-                            -d.collision_pnt_vector.z(),  0.0,                         d.collision_pnt_vector.x(),
-                             d.collision_pnt_vector.y(), -d.collision_pnt_vector.x(),  0.0;
+            skew_symm <<    0.0,                        collision_pnt_vector.z(), -collision_pnt_vector.y(),
+                            -collision_pnt_vector.z(),  0.0,                       collision_pnt_vector.x(),
+                             collision_pnt_vector.y(), -collision_pnt_vector.x(),  0.0;
 
             Eigen::Matrix3d ident = Eigen::Matrix3d::Identity();
             Eigen::Matrix<double,6,6> T;
@@ -256,9 +316,9 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
                     crit_pnt_jac.row(1),
                     crit_pnt_jac.row(2);
 
-            double vec_norm = d.distance_vec.norm();
+            double vec_norm = distance_vec.norm();
             vec_norm = vec_norm > 0.0 ? vec_norm : DIV0_SAFE;
-            Eigen::VectorXd term_2nd = (m_transl.transpose()) * (d.distance_vec / vec_norm); // use the unit vector only for direction!
+            Eigen::VectorXd term_2nd = (m_transl.transpose()) * (distance_vec / vec_norm); // use the unit vector only for direction!
 
             // Gradient of the cost function from: Strasse O., Escande A., Mansard N. et al.
             // "Real-Time (Self)-Collision Avoidance Task on a HRP-2 Humanoid Robot", 2008 IEEE International Conference
@@ -749,17 +809,35 @@ void JointLimitAvoidanceIneq<T_PARAMS, PRIO>::calculate()
     this->abs_delta_min_ = std::abs(joint_pos - limit_min);
     this->rel_min_ = std::abs(this->abs_delta_min_ / limit_min);
 
+    const double rel_val = this->rel_max_ < this->rel_min_ ? this->rel_max_ : this->rel_min_;
+
     this->calcValue();
     this->calcPartialValues();
     this->calcDerivativeValue();
 
+    // Compute prediction
+    const double pred_delta_max = std::abs(limit_max - this->jnts_prediction_.q(joint_idx));
+    const double pred_rel_max = std::abs(pred_delta_max / limit_max);
+
+    const double pred_delta_min = std::abs(this->jnts_prediction_.q(joint_idx) - limit_min);
+    const double pred_rel_min = std::abs(pred_delta_min / limit_min);
+
+    this->prediction_value_ = pred_rel_max < pred_rel_min ? pred_rel_max : pred_rel_min;
+
     double activation = this->getActivationThreshold();
     double critical = 0.4 * activation;
 
-    const double rel_val = this->rel_max_ < this->rel_min_ ? this->rel_max_ : this->rel_min_;
-
-    if(rel_val < critical)
+    if(this->state_.getCurrent() == CRITICAL && this->prediction_value_ < rel_val)
     {
+        ROS_WARN_STREAM("JLA_Current state is CRITICAL but prediction is smaller than current rel_val -> Stay in CRIT.");
+    }
+    else if(rel_val < critical || this->prediction_value_ < critical)
+    {
+        if(this->prediction_value_ < critical)
+        {
+            ROS_WARN_STREAM("pred_val < critical!!!");
+        }
+
         this->state_.setState(CRITICAL); // -> avoid HW destruction.
     }
     else if(rel_val < activation)

@@ -70,7 +70,7 @@ public:
             marker_vector.type = visualization_msgs::Marker::ARROW;
             marker_vector.lifetime = ros::Duration();
             marker_vector.action = visualization_msgs::Marker::ADD;
-            marker_vector.ns = msg->distances[i].header.frame_id;
+            marker_vector.ns = msg->distances[i].frame_of_interest;
             marker_vector.id = 42;
             marker_vector.header.frame_id = chain_base_link_;
 
@@ -78,14 +78,14 @@ public:
             marker_vector.scale.y = 0.05;
 
             geometry_msgs::Point start;
-            start.x = msg->distances[i].obstacle_vector.x;
-            start.y = msg->distances[i].obstacle_vector.y;
-            start.z = msg->distances[i].obstacle_vector.z;
+            start.x = msg->distances[i].nearest_point_obstacle_vector.x;
+            start.y = msg->distances[i].nearest_point_obstacle_vector.y;
+            start.z = msg->distances[i].nearest_point_obstacle_vector.z;
 
             geometry_msgs::Point end;
-            end.x = msg->distances[i].obstacle_vector.x + msg->distances[i].distance_vector.x;
-            end.y = msg->distances[i].obstacle_vector.y + msg->distances[i].distance_vector.y;
-            end.z = msg->distances[i].obstacle_vector.z + msg->distances[i].distance_vector.z;
+            end.x = msg->distances[i].nearest_point_frame_vector.x;
+            end.y = msg->distances[i].nearest_point_frame_vector.y;
+            end.z = msg->distances[i].nearest_point_frame_vector.z;
 
             marker_vector.color.a = 1.0;
             marker_vector.color.g = 1.0;
@@ -100,7 +100,7 @@ public:
             marker_distance.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
             marker_distance.lifetime = ros::Duration();
             marker_distance.action = visualization_msgs::Marker::ADD;
-            marker_distance.ns = msg->distances[i].header.frame_id;
+            marker_distance.ns = msg->distances[i].frame_of_interest;
             marker_distance.id = 69;
             marker_distance.header.frame_id = msg->distances[i].header.frame_id;
             marker_distance.text = boost::lexical_cast<std::string>(boost::format("%.2f") % msg->distances[i].distance);

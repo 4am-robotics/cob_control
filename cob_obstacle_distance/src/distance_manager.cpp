@@ -277,7 +277,7 @@ void DistanceManager::calculate()
                 PtrIMarkerShape_t obstacle = it->second;
                 fcl::CollisionObject collision_obj = obstacle->getCollisionObject();
                 fcl::DistanceResult tmpResult;
-                fcl::DistanceRequest distRequest(true, 0.5, 0.001);
+                fcl::DistanceRequest distRequest(true, 5.0, 0.01);
                 fcl::FCL_REAL dist = fcl::distance(&ooi_co, &collision_obj, distRequest, tmpResult);
                 if (dist < last_dist)
                 {
@@ -300,26 +300,19 @@ void DistanceManager::calculate()
                                                dist_result.nearest_points[0][VEC_Y],
                                                dist_result.nearest_points[0][VEC_Z]);
 
-            // express in arm base link frame
+            // vector from arm base link frame to nearest collision point on frame
             Eigen::Vector3d rel_base_link_frame_pos = tmp_tf_cb_frame_bl * abs_jnt_pos_update;
-            Eigen::Vector3d dist_vector = rel_base_link_frame_pos - obst_vector;
-
-            // vector from frame origin to collision point
-            Eigen::Vector3d rel_frame_origin_to_collision_pnt = rel_base_link_frame_pos - chainbase2frame_pos;
             ROS_DEBUG_STREAM("Frame \"" << object_of_interest_name << "\": Minimal distance: " << dist_result.min_distance);
 
             cob_obstacle_distance::ObstacleDistance od_msg;
             od_msg.distance = dist_result.min_distance;
-            od_msg.distance_vector.x = dist_vector(VEC_X);
-            od_msg.distance_vector.y = dist_vector(VEC_Y);
-            od_msg.distance_vector.z = dist_vector(VEC_Z);
-            od_msg.obstacle_vector.x = obst_vector(VEC_X);
-            od_msg.obstacle_vector.y = obst_vector(VEC_Y);
-            od_msg.obstacle_vector.z = obst_vector(VEC_Z);
-            od_msg.header.frame_id = object_of_interest_name;
+            od_msg.frame_of_interest = object_of_interest_name;
+            od_msg.header.frame_id = chain_base_link_;
             od_msg.header.stamp = ros::Time::now();
             od_msg.header.seq = seq_nr_;
-            tf::vectorEigenToMsg(rel_frame_origin_to_collision_pnt, od_msg.collision_pnt_vector);
+            tf::vectorEigenToMsg(obst_vector, od_msg.nearest_point_obstacle_vector);
+            tf::vectorEigenToMsg(rel_base_link_frame_pos, od_msg.nearest_point_frame_vector);
+            tf::vectorEigenToMsg(chainbase2frame_pos, od_msg.frame_vector);
             obstacle_distances.distances.push_back(od_msg);
         }
     }
@@ -631,74 +624,7 @@ void DistanceManager::buildObstaclePrimitive(const moveit_msgs::CollisionObject:
 }
 
 
-bool DistanceManager::predictDistance(cob_obstacle_distance::PredictDistance::Request& request,
-                                      cob_obstacle_distance::PredictDistance::Response& response)
-{
-    KDL::FrameVel p_dot_out;
-    KDL::JntArrayVel jnt_arr(last_q_, last_q_dot_);
-    adv_chn_fk_solver_vel_->JntToCart(jnt_arr, p_dot_out);
-
-    for(uint32_t frame_idx = 0; frame_idx < request.frame_id.size(); ++frame_idx)
-    {
-        KDL::JntArray joint_pos(request.joint_pos.size());
-        std::string frame_id = request.frame_id.at(frame_idx);
-        for(uint32_t lv = 0; lv < request.joint_pos.size(); ++lv)
-        {
-            joint_pos(lv) = request.joint_pos.at(lv);
-        }
-
-        std::vector<std::string>::const_iterator str_it = std::find(this->segments_.begin(),
-                                                                    this->segments_.end(),
-                                                                    frame_id);
-        uint16_t idx = str_it - this->segments_.begin();
-
-        /* ******* Start Transformation part ************** */
-        KDL::FrameVel frame_vel = adv_chn_fk_solver_vel_->getFrameVelAtSegment(idx);
-        KDL::Frame frame_pos = frame_vel.GetFrame();
-        Eigen::Vector3d chainbase2frame_pos(frame_pos.p.x(),
-                                            frame_pos.p.y(),
-                                            frame_pos.p.z());
-
-        Eigen::Affine3d tmp_tf_cb_frame_bl = this->getSynchedCbToBlTransform();
-        Eigen::Vector3d abs_jnt_pos = tmp_tf_cb_frame_bl.inverse() * chainbase2frame_pos;
-        Eigen::Quaterniond q;
-        tf::quaternionKDLToEigen (frame_pos.M, q);
-        /* ******* End Transformation part ************** */
-
-        // Representation of segment_of_interest as specific shape
-        PtrIMarkerShape_t ooi;
-        if(!this->frame_to_collision_.getMarkerShapeFromUrdf(abs_jnt_pos, q, frame_id, ooi))
-        {
-            return true;
-        }
-
-        fcl::CollisionObject ooi_co = ooi->getCollisionObject();
-        ooi.reset();
-        fcl::CollisionObject result_collision_obj = ooi_co;
-        fcl::FCL_REAL last_dist = std::numeric_limits<fcl::FCL_REAL>::max();
-        fcl::FCL_REAL dist;
-        for(ShapesManager::MapIter_t it = this->obstacle_mgr_->begin(); it != this->obstacle_mgr_->end(); ++it)
-        {
-            PtrIMarkerShape_t obstacle = it->second;
-            fcl::CollisionObject collision_obj = obstacle->getCollisionObject();
-            fcl::DistanceResult tmpResult;
-            fcl::DistanceRequest distRequest(true);
-            dist = fcl::distance(&ooi_co, &collision_obj, distRequest, tmpResult);
-            if (dist < last_dist)
-            {
-                result_collision_obj = collision_obj;
-                last_dist = dist;
-            }
-        }
-
-        response.min_distances.push_back(dist);
-    }
-
-    return true;
-}
-
-
-bool DistanceManager::registerPointOfInterest(cob_srvs::SetString::Request& request,
+bool DistanceManager::registerFrameOfInterest(cob_srvs::SetString::Request& request,
                                               cob_srvs::SetString::Response& response)
 {
     if(this->object_of_interest_mgr_->count(request.data) > 0)

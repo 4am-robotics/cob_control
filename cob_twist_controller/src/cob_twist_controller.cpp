@@ -138,7 +138,7 @@ bool CobTwistController::initialize()
 void CobTwistController::reinitServiceRegistration()
 {
     ROS_INFO("Reinit of Service registration!");
-    ros::ServiceClient client = nh_.serviceClient<cob_srvs::SetString>("obstacle_distance/registerPointOfInterest");
+    ros::ServiceClient client = nh_.serviceClient<cob_srvs::SetString>("obstacle_distance/registerFrameOfInterest");
     ROS_WARN_COND(twist_controller_params_.collision_check_frames.size() <= 0,
                   "There are no collision check frames for this manipulator. So nothing will be registered. Ensure parameters are set correctly.");
 

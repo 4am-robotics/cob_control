@@ -31,7 +31,7 @@
   
 <!--
   for activation execute the following command on a terminal:
-  'rosservice call /arm/obstacle_distance/registerPointOfInterest "data: 'arm_7_link'"'
+  'rosservice call /arm/obstacle_distance/registerFrameOfInterest "data: 'arm_7_link'"'
 -->
 
 

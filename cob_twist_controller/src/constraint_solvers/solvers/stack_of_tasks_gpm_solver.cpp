@@ -31,11 +31,6 @@
 #include <Eigen/Dense>
 
 #include "cob_twist_controller/task_stack/task_stack_controller.h"
-
-
-
-#include "cob_obstacle_distance/PredictDistance.h"
-
 #include "cob_twist_controller/constraints/self_motion_magnitude.h"
 
 /*
@@ -67,12 +62,13 @@ Eigen::MatrixXd StackOfTasksGPMSolver::solve(const Vector6d_t& in_cart_velocitie
     Eigen::MatrixXd jacobianPseudoInverse = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
     Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(jacobianPseudoInverse.rows(), this->jacobian_data_.cols());
     Eigen::MatrixXd projector = ident - jacobianPseudoInverse * this->jacobian_data_;
-    Eigen::VectorXd partialSolution = jacobianPseudoInverse * in_cart_velocities;
-    Eigen::MatrixXd homogeneousSolution = Eigen::MatrixXd::Zero(partialSolution.rows(), partialSolution.cols());
-    Eigen::MatrixXd prediction_solution = Eigen::MatrixXd::Zero(partialSolution.rows(), 1);
+    Eigen::VectorXd particular_solution = jacobianPseudoInverse * in_cart_velocities;
+    Eigen::MatrixXd homogeneousSolution = Eigen::MatrixXd::Zero(particular_solution.rows(), particular_solution.cols());
+    KDL::JntArrayVel predict_jnts_vel(joint_states.current_q_.rows());
     for(uint8_t i = 0; i < joint_states.current_q_.rows(); ++i)
     {
-        prediction_solution(i, 0) = partialSolution(i, 0) * 0.02 + joint_states.current_q_(i);
+        predict_jnts_vel.q(i) = particular_solution(i, 0) * 0.02 + joint_states.current_q_(i);
+        predict_jnts_vel.qdot(i) = particular_solution(i, 0);
     }
 
     if(last_cycle_time_ > 0.0)
@@ -97,18 +93,23 @@ Eigen::MatrixXd StackOfTasksGPMSolver::solve(const Vector6d_t& in_cart_velocitie
         eigen_vec_last_q(i) = joint_states.current_q_(i);
     }
 
+    double min_predicted_distance = std::numeric_limits<double>::max();
     for (std::set<ConstraintBase_t>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
     {
-        (*it)->update(joint_states, prediction_solution, this->jacobian_data_);
+        (*it)->update(joint_states, predict_jnts_vel, this->jacobian_data_);
         activation_gain = (*it)->getActivationGain();
         min_dist = (*it)->getCriticalValue();
         crit_distance = (*it)->getActivationThreshold();
         Eigen::VectorXd q_dot_0 = params_.k_H * activation_gain * (*it)->getPartialValues();
         Eigen::MatrixXd tmpHomogeneousSolution = projector * q_dot_0;
-        magnitude = (*it)->getSelfMotionMagnitude(partialSolution, tmpHomogeneousSolution);
+        magnitude = (*it)->getSelfMotionMagnitude(particular_solution, tmpHomogeneousSolution);
         sum_of_gradient += magnitude * q_dot_0; // smm adapted q_dot_0 vector
         homogeneousSolution += magnitude * tmpHomogeneousSolution; // smm adapted homo. solution
         V_q = (*it)->getValue();
+        if((*it)->getTaskId().find("CollisionAvoidance") != std::string::npos)
+        { // get predictive distances only for CA constraint!
+            min_predicted_distance = (*it)->getPrediction() < min_predicted_distance ? (*it)->getPrediction() : min_predicted_distance;
+        }
     }
 
     sum_of_gradient = this->params_.k_H * sum_of_gradient; // "global" weighting for all constraints.
@@ -137,59 +138,8 @@ Eigen::MatrixXd StackOfTasksGPMSolver::solve(const Vector6d_t& in_cart_velocitie
         }
     }
 
-    /*
-     * Prediction of distance:
-     */
-
-    double predicted_distance = -1.0;
-    double min_predicted_distance = std::numeric_limits<double>::max();
-    if (cycle_time > 0.0)
-    {
-        if (ros::service::exists("obstacle_distance/predictDistance", true))
-        {
-            cob_obstacle_distance::PredictDistance pd;
-            pd.request.frame_id = this->params_.collision_check_frames;
-            Eigen::MatrixXd predict_qdots_out = partialSolution + homogeneousSolution;
-            Eigen::VectorXd new_eigen_vec_last_q = eigen_vec_last_q + cycle_time * predict_qdots_out;
-
-            for(uint32_t i = 0; i < new_eigen_vec_last_q.rows(); ++i)
-            {
-                pd.request.joint_pos.push_back(static_cast<double>(new_eigen_vec_last_q(i)));
-            }
-
-            bool found = ros::service::call("obstacle_distance/predictDistance", pd);
-            if(found)
-            {
-                for(uint32_t dist_idx = 0; dist_idx < pd.response.min_distances.size(); ++dist_idx)
-                {
-                    predicted_distance = static_cast<double>(pd.response.min_distances.at(dist_idx));
-
-                    if(min_predicted_distance < 0.0)
-                    {
-                        min_predicted_distance = predicted_distance;
-                    }
-                    else if(predicted_distance < min_predicted_distance)
-                    {
-                        min_predicted_distance = predicted_distance;
-                    }
-                }
-            }
-        }
-        else
-        {
-            ROS_ERROR("Service obstacle_distance/predictDistance does not exist.");
-        }
-    }
-    else
-    {
-        ROS_ERROR("Cannot call service because cycle time is <= 0.0!!!");
-    }
-
-    predicted_distance = min_predicted_distance;
-
-
     if (task_to_ignore != "" &&
-            predicted_distance > -1 && predicted_distance < (crit_distance * 1.1))
+            min_predicted_distance > -1 && min_predicted_distance < (crit_distance * 1.1))
     {
         ROS_WARN_STREAM("Deactivation of task: " << task_to_ignore);
         this->task_stack_controller_.deactivateTask(task_to_ignore);
@@ -197,7 +147,7 @@ Eigen::MatrixXd StackOfTasksGPMSolver::solve(const Vector6d_t& in_cart_velocitie
 
     Eigen::MatrixXd qdots_out = Eigen::MatrixXd::Zero(this->jacobian_data_.cols(), 1);
 
-    if(predicted_distance >= crit_distance)
+    if(min_predicted_distance >= crit_distance)
     {
         this->task_stack_controller_.activateAllTasks(); // in safe region activate all tasks again.
     }

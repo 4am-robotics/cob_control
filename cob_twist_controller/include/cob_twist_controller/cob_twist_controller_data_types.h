@@ -123,12 +123,14 @@ struct ActiveCartesianDimension
     double rot_z;
 };
 
+
 struct ObstacleDistanceInfo
 {
     double min_distance;
-    Eigen::Vector3d distance_vec;
     std::string frame_id;
-    Eigen::Vector3d collision_pnt_vector;
+    Eigen::Vector3d frame_vector;
+    Eigen::Vector3d nearest_point_frame_vector;
+    Eigen::Vector3d nearest_point_obstacle_vector;
 };
 
 struct TwistControllerParams
@@ -231,11 +233,17 @@ struct TwistControllerParams
 
     // added a vector to contain all frames of interest for collision checking.
     std::vector<std::string> collision_check_frames;
+
+
+
+
+
+    KDL::Chain chain_;
 };
 
 enum EN_ConstraintStates
 {
-    NORMAL,
+    NORMAL = 0,
     DANGER,
     CRITICAL,
 };
