@@ -13,6 +13,7 @@ if __name__ == '__main__':
     profile = Profile()
     profile.vel = 0.2
     profile.accl = 0.1
-    profile.profile_type = Profile.SINOID
+    #profile.profile_type = Profile.SINOID
+    profile.profile_type = Profile.RAMP
     
-    success = sci.move_circ(pose, "world", profile)
+    success = sci.move_lin(pose, "world", profile)

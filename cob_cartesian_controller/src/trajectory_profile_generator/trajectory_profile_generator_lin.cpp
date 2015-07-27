@@ -262,6 +262,13 @@ bool TrajectoryProfileGeneratorLin::generateRampPath(std::vector<double>& path_a
     tv = (steps_tb + steps_tv) * t_ipo_;
     te = (steps_tb + steps_tv + steps_te) * t_ipo_;
 
+    ROS_DEBUG("Vm: %f m/s", vel_max);
+    ROS_DEBUG("Bm: %f m/s^-2", accl_max);
+    ROS_DEBUG("Se_max: %f ", Se_max);
+    ROS_DEBUG("tb: %f s", tb);
+    ROS_DEBUG("tv: %f s", tv);
+    ROS_DEBUG("te: %f s", te);
+
     // Calculate the ramp profile path
     // 0 <= t <= tb
     for(int i = 0 ; i <= steps_tb-1 ; i++)
@@ -310,6 +317,13 @@ bool TrajectoryProfileGeneratorLin::generateSinoidPath(std::vector<double>& path
     tb = steps_tb * t_ipo_;
     tv = (steps_tb + steps_tv) * t_ipo_;
     te = (steps_tb + steps_tv + steps_te) * t_ipo_;
+
+    ROS_DEBUG("Vm: %f m/s", vel_max);
+    ROS_DEBUG("Bm: %f m/s^-2", accl_max);
+    ROS_DEBUG("Se_max: %f ", Se_max);
+    ROS_DEBUG("tb: %f s", tb);
+    ROS_DEBUG("tv: %f s", tv);
+    ROS_DEBUG("te: %f s", te);
 
     // Calculate the sinoid profile path
     // 0 <= t <= tb

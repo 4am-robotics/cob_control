@@ -16,10 +16,11 @@ _action_client = None
 _action_client_lock = threading.Lock()
 
 def move_lin(pose_goal, frame_id, profile, rotate_only=False):
-    client = get_action_client()
+    client = actionlib.SimpleActionClient('cartesian_trajectory_action', CartesianControllerAction)
     rospy.logwarn("Waiting for ActionServer...")
-    client.wait_for_server()
-    rospy.logwarn("...done")
+    success = client.wait_for_server(rospy.Duration(2.0))
+    if(not success):
+        return (success, "ActionServer not available within timeout")
     
     goal = CartesianControllerGoal()
     goal.name = "move_lin"
@@ -31,14 +32,19 @@ def move_lin(pose_goal, frame_id, profile, rotate_only=False):
     
     client.send_goal(goal)
     print "goal sent"
+    state = client.get_state()
+    print state
     client.wait_for_result()
     print "result received"
+    result = client.get_result()
+    return (result.success, result.message)
 
 def move_circ(pose_center, frame_id, start_angle, end_angle, radius, profile, rotate_only=False):
-    client = get_action_client()
+    client = actionlib.SimpleActionClient('cartesian_trajectory_action', CartesianControllerAction)
     rospy.logwarn("Waiting for ActionServer...")
-    client.wait_for_server()
-    rospy.logwarn("...done")
+    success = client.wait_for_server(rospy.Duration(2.0))
+    if(not success):
+        return (success, "ActionServer not available within timeout")
     
     goal = CartesianControllerGoal()
     goal.name = "move_circ"
@@ -46,15 +52,19 @@ def move_circ(pose_center, frame_id, start_angle, end_angle, radius, profile, ro
     goal.move_circ.frame_id = frame_id
     goal.move_circ.rotate_only = rotate_only
     goal.move_circ.start_angle = start_angle
-    goal.move_circ.end_angle = start_angle
+    goal.move_circ.end_angle = end_angle
     goal.move_circ.radius = radius
     goal.move_circ.profile = profile
     print goal
     
     client.send_goal(goal)
     print "goal sent"
+    state = client.get_state()
+    print state
     client.wait_for_result()
     print "result received"
+    result = client.get_result()
+    return (result.success, result.message)
 
 
 

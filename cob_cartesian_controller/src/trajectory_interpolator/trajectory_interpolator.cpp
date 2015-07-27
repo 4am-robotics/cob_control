@@ -108,8 +108,8 @@ bool TrajectoryInterpolator::circularInterpolation(geometry_msgs::PoseArray& pos
     geometry_msgs::Pose pose;
 
     double Se = move_circ.end_angle - move_circ.start_angle;
-    bool forward;
 
+    bool forward;
     if(Se < 0)
     {
         forward = false;
@@ -118,7 +118,6 @@ bool TrajectoryInterpolator::circularInterpolation(geometry_msgs::PoseArray& pos
     {
         forward = true;
     }
-
     Se = std::fabs(Se);
 
     // Calculates the Path with RAMP or SINOID profile
