@@ -85,7 +85,7 @@ class HardwareInterfacePosition : public HardwareInterfaceBase
         {
             for(int i = 0; i < params.dof; i++)
             {
-                ma_.push_back(MovingAverage());
+                ma_.push_back(MovingAvg_double_t());
                 vel_support_integration_point_.push_back(0.0);
                 vel_first_integration_point_.push_back(0.0);
             }
@@ -102,7 +102,7 @@ class HardwareInterfacePosition : public HardwareInterfaceBase
                                    const KDL::JntArray& current_q);
 
     private:
-        std::vector<MovingAverage> ma_;
+        std::vector<MovingAvg_double_t> ma_;
         std::vector<double> vel_support_integration_point_, vel_first_integration_point_;
         unsigned int iteration_counter_;
         ros::Duration integration_period_;
@@ -125,7 +125,7 @@ class HardwareInterfaceJointStates : public HardwareInterfaceBase
         {
             for(int i = 0; i < params.dof; i++)
             {
-                ma_.push_back(MovingAverage());
+                ma_.push_back(MovingAvg_double_t());
                 vel_support_integration_point_.push_back(0.0);
                 vel_first_integration_point_.push_back(0.0);
             }
@@ -150,7 +150,7 @@ class HardwareInterfaceJointStates : public HardwareInterfaceBase
                                    const KDL::JntArray& current_q);
 
     private:
-        std::vector<MovingAverage> ma_;
+        std::vector<MovingAvg_double_t> ma_;
         std::vector<double> vel_support_integration_point_, vel_first_integration_point_;
         unsigned int iteration_counter_;
         ros::Duration integration_period_;

@@ -169,6 +169,15 @@ template <typename T_PARAMS, typename PRIO>
 void CollisionAvoidance<T_PARAMS, PRIO>::calculate()
 {
     ObstacleDistanceInfo d = this->constraint_params_.current_distance_;
+
+    mvg_avg_distances_.addElement(d.min_distance);
+
+    Eigen::Vector3d distance_vec = d.nearest_point_frame_vector - d.nearest_point_obstacle_vector;
+    mvg_avg_dist_vec_.addElement(distance_vec);
+
+    Eigen::Vector3d coll_pnt_vec = d.nearest_point_frame_vector - d.frame_vector;
+    mvg_avg_coll_pnt_vec_.addElement(coll_pnt_vec);
+
     this->calcValue();
     this->calcDerivativeValue();
     this->calcPartialValues();
@@ -205,7 +214,10 @@ double CollisionAvoidance<T_PARAMS, PRIO>::calcValue()
 {
     ObstacleDistanceInfo d = this->constraint_params_.current_distance_;
     this->last_value_ = this->value_;
-    this->value_ = pow(d.min_distance - this->getActivationThreshold(), 2.0);
+    // this->value_ = pow(d.min_distance - this->getActivationThreshold(), 2.0);
+    double avg = 0.0;
+    mvg_avg_distances_.calcWeightedMovingAverage(avg);
+    this->value_ = pow(avg - this->getActivationThreshold(), 2.0);
     return this->value_;
 }
 
@@ -277,8 +289,14 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
                                                                     d.frame_id);
         if (params.frame_names.end() != str_it)
         {
-            Eigen::Vector3d collision_pnt_vector = d.nearest_point_frame_vector - d.frame_vector;
-            Eigen::Vector3d distance_vec = d.nearest_point_frame_vector - d.nearest_point_obstacle_vector;
+            // Eigen::Vector3d collision_pnt_vector = d.nearest_point_frame_vector - d.frame_vector;
+            // Eigen::Vector3d distance_vec = d.nearest_point_frame_vector - d.nearest_point_obstacle_vector;
+
+            Eigen::Vector3d collision_pnt_vector = Eigen::Vector3d::Zero();
+            mvg_avg_coll_pnt_vec_.calcWeightedMovingAverage(collision_pnt_vector);
+
+            Eigen::Vector3d distance_vec = Eigen::Vector3d::Zero();
+            mvg_avg_dist_vec_.calcWeightedMovingAverage(distance_vec);
 
             /*
              * Create a skew-symm matrix as transformation between the segment root and the critical point.
@@ -433,19 +451,78 @@ double JointLimitAvoidance<T_PARAMS, PRIO>::getActivationGain() const
 }
 
 template <typename T_PARAMS, typename PRIO>
+double JointLimitAvoidance<T_PARAMS, PRIO>::predictValue()
+{
+    const TwistControllerParams& params = this->constraint_params_.getParams();
+    const KDL::JntArray joint_pos = this->jnts_prediction_.q;
+    const KDL::JntArray joint_vel = this->jnts_prediction_.qdot;
+    std::vector<double> limits_min = params.limits_min;
+    std::vector<double> limits_max = params.limits_max;
+    uint8_t vec_rows = static_cast<uint8_t>(joint_pos.rows());
+    Eigen::VectorXd partial_values = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
+    uint8_t used = 0;
+    Eigen::VectorXd predict_values = Eigen::VectorXd::Zero(joint_pos.rows(), 1);
+    this->pred_active_idx_.clear();
+    for(uint8_t i = 0; i < vec_rows; ++i)
+    {
+        double nom = pow(limits_max[i] - limits_min[i], 2.0);
+        double denom = (limits_max[i] - joint_pos(i)) * (joint_pos(i) - limits_min[i]);
+        predict_values(i) = nom / (4.0 * denom); // store value of cost function for each joint.
+
+        //See Chan paper ISSN 1042-296X [Page 288]
+        if( (joint_vel(i) > 0.0 && ((limits_max[i] - joint_pos(i)) < (joint_pos(i) - limits_min[i])))
+                || (joint_vel(i) < 0.0 && ((limits_max[i] - joint_pos(i)) > (joint_pos(i) - limits_min[i]))) )
+        {
+            double min_delta = (joint_pos(i) - limits_min[i]);
+            double max_delta = (limits_max[i] - joint_pos(i));
+            double nominator = (2.0 * joint_pos(i) - limits_min[i] - limits_max[i]) * (limits_max[i] - limits_min[i]) * (limits_max[i] - limits_min[i]);
+            double denom = 4.0 * min_delta * min_delta * max_delta * max_delta;
+            partial_values(used) = nominator / denom;
+            ++used;
+            this->pred_active_idx_.push_back(i);
+        }
+    }
+
+    const uint32_t values_rows = predict_values.rows();
+    this->predict_derivative_values_.resize(this->pred_active_idx_.size(), 1);
+    for(uint8_t i = 0; i < this->pred_active_idx_.size(); ++i)
+    {
+        uint8_t active_idx = this->pred_active_idx_[i];
+        this->predict_derivative_values_(i) = this->exp_decay_ * this->values_(active_idx);
+    }
+
+    this->predict_partial_values_ = partial_values;
+    this->prediction_value_ = partial_values.sum();
+    return this->prediction_value_;
+}
+
+template <typename T_PARAMS, typename PRIO>
 void JointLimitAvoidance<T_PARAMS, PRIO>::calculate()
 {
     this->calcValue();
     this->calcPartialValues();
     this->calcDerivativeValue();
+    this->predictValue();
 
-    if(this->partial_values_.sum() > ZERO_THRESHOLD)
+    const double activation = this->getActivationThreshold();
+    const double critical = activation * 10.0;
+    const double partial_val_sum = this->partial_values_.sum();
+
+    if(this->state_.getCurrent() == CRITICAL && this->prediction_value_ > partial_val_sum && this->pred_active_idx_.size() > 0)
+    {
+        ROS_WARN_STREAM("Current state is CRITICAL but prediction is > value before -> Stay in CRIT.");
+        // Stay in critical but use prediction
+        this->partial_values_ = this->predict_partial_values_;
+        this->derivative_values_ = this->predict_derivative_values_;
+        this->active_idx_ = this->pred_active_idx_;
+    }
+    else if(this->partial_values_.sum() > critical && this->partial_values_.sum() > 0.0)
     {
         this->state_.setState(CRITICAL); // always highest task -> avoid HW destruction.
     }
     else
     {
-        this->state_.setState(NORMAL); // always highest task -> avoid HW destruction.
+        this->state_.setState(DANGER); // always highest task -> avoid HW destruction.
     }
 }
 
@@ -457,13 +534,12 @@ double JointLimitAvoidance<T_PARAMS, PRIO>::calcValue()
     std::vector<double> limits_min = params.limits_min;
     std::vector<double> limits_max = params.limits_max;
     const KDL::JntArray joint_pos = this->joint_states_.current_q_;
-    this->last_values_ = this->values_;
     this->values_.resize(joint_pos.rows(), 1);
     for(uint8_t i = 0; i < joint_pos.rows() ; ++i)
     {
         double nom = pow(limits_max[i] - limits_min[i], 2.0);
         double denom = (limits_max[i] - joint_pos(i)) * (joint_pos(i) - limits_min[i]);
-        this->values_(i) = nom / (10.0 * 4.0 * denom); // store value of cost function for each joint.
+        this->values_(i) = nom / (4.0 * denom); // store value of cost function for each joint.
     }
 
     this->last_value_ = this->value_;
@@ -475,37 +551,47 @@ double JointLimitAvoidance<T_PARAMS, PRIO>::calcValue()
 template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidance<T_PARAMS, PRIO>::calcDerivativeValue()
 {
-    double current_time = ros::Time::now().toSec();
-    double cycle = current_time - this->last_time_;
-    this->last_time_ = current_time;
+//    double current_time = ros::Time::now().toSec();
+//    double cycle = current_time - this->last_time_;
+//    this->last_time_ = current_time;
+//    const uint32_t values_rows = this->values_.rows();
+//    if(cycle <= 0.0)
+//    {
+//        cycle = DEFAULT_CYCLE;
+//    }
+//
+//    if(values_rows == this->last_values_.rows())
+//    {
+//        this->derivative_values_.resize(this->active_idx_.size(), 1);
+//        for(uint8_t i = 0; i < this->active_idx_.size(); ++i)
+//        {
+//            uint8_t active_idx = this->active_idx_[i];
+//            double delta = this->values_(active_idx) - this->last_values_(active_idx);
+//            if(delta < 1.0e-5)
+//            {
+//                this->derivative_values_(i) = 0.0;
+//            }
+//            else
+//            {
+//                this->derivative_values_(i) = delta / cycle;
+//            }
+//
+//        }
+//    }
+//    else
+//    {
+//        uint8_t new_size = this->active_idx_.size() > 0 ? this->active_idx_.size() : values_rows;
+//        this->derivative_values_ = Eigen::VectorXd::Zero(new_size, 1);
+//    }
+
+
+
     const uint32_t values_rows = this->values_.rows();
-    if(cycle <= 0.0)
+    this->derivative_values_.resize(this->active_idx_.size(), 1);
+    for(uint8_t i = 0; i < this->active_idx_.size(); ++i)
     {
-        cycle = DEFAULT_CYCLE;
-    }
-
-    if(values_rows == this->last_values_.rows())
-    {
-        this->derivative_values_.resize(this->active_idx_.size(), 1);
-        for(uint8_t i = 0; i < this->active_idx_.size(); ++i)
-        {
-            uint8_t active_idx = this->active_idx_[i];
-            double delta = this->values_(active_idx) - this->last_values_(active_idx);
-            if(delta < 1.0e-5)
-            {
-                this->derivative_values_(i) = 0.0;
-            }
-            else
-            {
-                this->derivative_values_(i) = delta / cycle;
-            }
-
-        }
-    }
-    else
-    {
-        uint8_t new_size = this->active_idx_.size() > 0 ? this->active_idx_.size() : values_rows;
-        this->derivative_values_ = Eigen::VectorXd::Zero(new_size, 1);
+        uint8_t active_idx = this->active_idx_[i];
+        this->derivative_values_(i) = this->exp_decay_ * this->values_(active_idx);
     }
 
     this->derivative_value_ = this->derivative_values_.sum();
@@ -534,7 +620,7 @@ Eigen::VectorXd JointLimitAvoidance<T_PARAMS, PRIO>::calcPartialValues()
             double min_delta = (joint_pos(i) - limits_min[i]);
             double max_delta = (limits_max[i] - joint_pos(i));
             double nominator = (2.0 * joint_pos(i) - limits_min[i] - limits_max[i]) * (limits_max[i] - limits_min[i]) * (limits_max[i] - limits_min[i]);
-            double denom = 10.0 * 4.0 * min_delta * min_delta * max_delta * max_delta; // Experimentially 0.1 of jac values.
+            double denom = 4.0 * min_delta * min_delta * max_delta * max_delta;
             partial_values(used) = nominator / denom;
             ++used;
             this->active_idx_.push_back(i);
@@ -550,7 +636,8 @@ Eigen::VectorXd JointLimitAvoidance<T_PARAMS, PRIO>::calcPartialValues()
 template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidance<T_PARAMS, PRIO>::getActivationThreshold() const
 {
-    return 0.0;
+    const TwistControllerParams& params = this->constraint_params_.getParams();
+    return params.activation_threshold_jla;
 }
 
 /// Returns a value for k_H to weight the partial values for GPM e.g.
@@ -575,11 +662,17 @@ ConstraintTypes JointLimitAvoidance<T_PARAMS, PRIO>::getType() const
 template <typename T_PARAMS, typename PRIO>
 Eigen::MatrixXd JointLimitAvoidance<T_PARAMS, PRIO>::getTaskJacobian() const
 {
-    Eigen::MatrixXd task_jacobian = this->partial_values_.asDiagonal();
-    if(this->active_idx_.size() > 0 &&  this->active_idx_.size() != task_jacobian.cols())
+    Eigen::MatrixXd task_jacobian = Eigen::MatrixXd::Zero(this->active_idx_.size(), this->partial_values_.rows());
+            //this->partial_values_.asDiagonal();
+
+
+    for(uint8_t i = 0; i < this->active_idx_.size(); ++i)
     {
-         task_jacobian.conservativeResize(this->active_idx_.size(), task_jacobian.cols());
+        uint8_t active_idx = this->active_idx_[i];
+        task_jacobian(i, active_idx) = this->partial_values_(i);
     }
+
+    ROS_INFO_STREAM("TASK JAC: " << std::endl << task_jacobian);
 
     return task_jacobian;
 }
@@ -591,6 +684,8 @@ Eigen::MatrixXd JointLimitAvoidance<T_PARAMS, PRIO>::getTaskJacobian() const
 template <typename T_PARAMS, typename PRIO>
 Eigen::VectorXd JointLimitAvoidance<T_PARAMS, PRIO>::getTaskDerivatives() const
 {
+    ROS_INFO_STREAM("TASK DERIVS: " << std::endl << this->derivative_values_);
+
     return this->derivative_values_;
 }
 
@@ -840,14 +935,18 @@ void JointLimitAvoidanceIneq<T_PARAMS, PRIO>::calculate()
 
         this->state_.setState(CRITICAL); // -> avoid HW destruction.
     }
-    else if(rel_val < activation)
-    {
-        this->state_.setState(DANGER); // GPM
-    }
     else
     {
-        this->state_.setState(NORMAL);
+        this->state_.setState(DANGER); // GPM always active!
     }
+//    else if(rel_val < activation)
+//    {
+//        this->state_.setState(DANGER); // GPM
+//    }
+//    else
+//    {
+//        this->state_.setState(NORMAL);
+//    }
 }
 
 /// Calculate values of the JLA cost function.
