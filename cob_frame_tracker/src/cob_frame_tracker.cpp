@@ -212,8 +212,8 @@ void CobFrameTracker::publishTwist(ros::Duration period)
     {
         tf_listener_.lookupTransform(chain_tip_link_, tracking_frame_, ros::Time(0), transform_tf);
     }
-    catch (tf::TransformException ex){
-        ROS_ERROR("%s",ex.what());
+    catch (tf::TransformException& ex){
+        ROS_ERROR("CobFrameTracker::publishTwist: \n%s",ex.what());
         return;
     }
 

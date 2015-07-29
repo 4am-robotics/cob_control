@@ -199,12 +199,8 @@ bool CartesianController::posePathBroadcaster(const geometry_msgs::PoseArray& ca
     bool success = false;
     double epsilon = 0.1;
     int failure_counter = 0;
-
     ros::Rate rate(update_rate_);
-    tf::StampedTransform stamped_transform;
-    stamped_transform.frame_id_ = root_frame_;
-    stamped_transform.child_frame_id_ = target_frame_;
-
+    tf::Transform transform;
     for(int i = 0; i < cartesian_path.poses.size()-1; i++)
     {
         if(!as_->isActive())
@@ -212,20 +208,19 @@ bool CartesianController::posePathBroadcaster(const geometry_msgs::PoseArray& ca
             success = false;
             break;
         }
-        
+
         // Send/Refresh target Frame
-        stamped_transform.setOrigin( tf::Vector3(cartesian_path.poses.at(i).position.x,
+        transform.setOrigin( tf::Vector3(cartesian_path.poses.at(i).position.x,
                                                  cartesian_path.poses.at(i).position.y,
                                                  cartesian_path.poses.at(i).position.z) );
-        stamped_transform.setRotation( tf::Quaternion(cartesian_path.poses.at(i).orientation.x,
+        transform.setRotation( tf::Quaternion(cartesian_path.poses.at(i).orientation.x,
                                                       cartesian_path.poses.at(i).orientation.y,
                                                       cartesian_path.poses.at(i).orientation.z,
                                                       cartesian_path.poses.at(i).orientation.w) );
-        stamped_transform.stamp_ = ros::Time::now();
-        tf_broadcaster_.sendTransform(stamped_transform);
+        tf_broadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), cartesian_path.header.frame_id, target_frame_));
 
         // Get transformation
-        stamped_transform = utils_.getStampedTransform(target_frame_, chain_tip_link_);
+        tf::StampedTransform stamped_transform = utils_.getStampedTransform(target_frame_, chain_tip_link_);
 
         // Check whether chain_tip_link is within epsilon area of target_frame
         if(!utils_.inEpsilonArea(stamped_transform, epsilon))
@@ -439,4 +434,5 @@ void CartesianController::actionAbort(bool success, std::string message)
     action_result_.success = success;
     action_result_.message = message;
     as_->setAborted(action_result_, action_result_.message);
+    stopTracking();
 }

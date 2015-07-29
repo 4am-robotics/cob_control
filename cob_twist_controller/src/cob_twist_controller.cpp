@@ -291,7 +291,7 @@ void CobTwistController::twistStampedCallback(const geometry_msgs::TwistStamped:
         frame.M = KDL::Rotation::Quaternion(transform_tf.getRotation().x(), transform_tf.getRotation().y(), transform_tf.getRotation().z(), transform_tf.getRotation().w());
     }
     catch (tf::TransformException& ex){
-        ROS_ERROR("%s",ex.what());
+        ROS_ERROR("CobTwistController::twistStampedCallback: \n%s",ex.what());
         return;
     }
 
@@ -382,7 +382,7 @@ void CobTwistController::odometryCallback(const nav_msgs::Odometry::ConstPtr& ms
     }
     catch (tf::TransformException& ex)
     {
-        ROS_ERROR("%s",ex.what());
+        ROS_ERROR("CobTwistController::odometryCallback: \n%s",ex.what());
         return;
     }
     

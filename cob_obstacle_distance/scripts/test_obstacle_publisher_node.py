@@ -83,9 +83,9 @@ if __name__=="__main__":
     y.operation = CollisionObject.ADD
     
     pose = Pose()
-    pose.position.x = 0.2
-    pose.position.y = -0.75
-    pose.position.z = 0.9
+    pose.position.x = 0.25
+    pose.position.y = -0.60
+    pose.position.z = 0.95
     pose.orientation.x = 0.0
     pose.orientation.y = 0.0
     pose.orientation.z = 0.0
