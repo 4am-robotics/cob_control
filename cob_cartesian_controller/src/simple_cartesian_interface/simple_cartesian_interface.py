@@ -28,7 +28,7 @@ def move_lin(pose_goal, frame_id, profile, rotate_only=False):
     goal.move_lin.frame_id = frame_id
     goal.move_lin.rotate_only = rotate_only
     goal.move_lin.profile = profile
-    print goal
+    # print goal
     
     client.send_goal(goal)
     print "goal sent"
