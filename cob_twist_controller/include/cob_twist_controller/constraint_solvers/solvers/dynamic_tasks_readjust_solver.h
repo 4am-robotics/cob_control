@@ -85,6 +85,7 @@ class DynamicTasksReadjustSolver : public ConstraintSolver<>
         void processState(std::set<ConstraintBase_t>::iterator& it,
                           const Eigen::MatrixXd& projector,
                           const Eigen::MatrixXd& particular_solution,
+                          double inv_sum_of_prios,
                           Eigen::VectorXd& sum_of_gradient);
 
     protected:

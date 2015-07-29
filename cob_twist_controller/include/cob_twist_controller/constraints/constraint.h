@@ -134,6 +134,7 @@ class CollisionAvoidance : public ConstraintBase<T_PARAMS, PRIO>
         double calcDerivativeValue();
         Eigen::VectorXd calcPartialValues();
         double predictValue();
+        double getActivationThresholdWithBuffer() const;
 
         KDL::ChainJntToJacSolver& jnt_to_jac_;
         KDL::ChainFkSolverVel_recursive& fk_solver_vel_;
@@ -155,8 +156,10 @@ class JointLimitAvoidance : public ConstraintBase<T_PARAMS, PRIO>
                             T_PARAMS constraint_params,
                             CallbackDataMediator& cbdm)
             : ConstraintBase<T_PARAMS, PRIO>(prio, constraint_params, cbdm),
-              exp_decay_(-0.01)
-
+              abs_delta_max_(std::numeric_limits<double>::max()),
+              abs_delta_min_(std::numeric_limits<double>::max()),  // max. delta away from min
+              rel_max_(1.0), // 100% rel. range to max limit
+              rel_min_(1.0) // 100% rel. range to min limit
         {}
 
         virtual ~JointLimitAvoidance()
@@ -177,16 +180,12 @@ class JointLimitAvoidance : public ConstraintBase<T_PARAMS, PRIO>
         double calcValue();
         double calcDerivativeValue();
         Eigen::VectorXd calcPartialValues();
-        double predictValue();
 
-        std::vector<uint8_t> active_idx_;
-        std::vector<uint8_t> pred_active_idx_;
-        Eigen::VectorXd values_;
-        Eigen::VectorXd derivative_values_;
-        Eigen::VectorXd predict_derivative_values_;
-        Eigen::VectorXd predict_partial_values_;
+        double abs_delta_max_;
+        double abs_delta_min_;
+        double rel_max_;
+        double rel_min_;
 
-        const double exp_decay_;
 };
 /* END JointLimitAvoidance **************************************************************************************/
 

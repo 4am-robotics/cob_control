@@ -57,10 +57,22 @@ Eigen::MatrixXd DynamicTasksReadjustSolver::solve(const Vector6d_t& in_cart_velo
         predict_jnts_vel.qdot(i) = particular_solution(i, 0);
     }
 
+    // First iteration: update constraint state and calculate the according GPM weighting (DANGER state)
+    double inv_sum_of_prionums = 0.0;
     for (std::set<ConstraintBase_t>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
     {
         (*it)->update(joint_states, predict_jnts_vel, this->jacobian_data_);
-        this->processState(it, projector, particular_solution, sum_of_gradient);
+        const double constr_prio = (*it)->getPriorityAsNum();
+        if((*it)->getState().getCurrent() == DANGER)
+        {
+            inv_sum_of_prionums += constr_prio > ZERO_THRESHOLD ? 1.0 / constr_prio : 1.0 / DIV0_SAFE;
+        }
+    }
+
+    // Second iteration: Process constraints with sum of prios for active GPM constraints!
+    for (std::set<ConstraintBase_t>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
+    {
+        this->processState(it, projector, particular_solution, inv_sum_of_prionums, sum_of_gradient);
     }
 
     sum_of_gradient = this->params_.k_H * sum_of_gradient; // "global" weighting for all constraints.
@@ -101,13 +113,22 @@ Eigen::MatrixXd DynamicTasksReadjustSolver::solve(const Vector6d_t& in_cart_velo
 void DynamicTasksReadjustSolver::processState(std::set<ConstraintBase_t>::iterator& it,
                                               const Eigen::MatrixXd& projector,
                                               const Eigen::MatrixXd& particular_solution,
+                                              double inv_sum_of_prios,
                                               Eigen::VectorXd& sum_of_gradient)
 {
     Eigen::VectorXd q_dot_0 = (*it)->getPartialValues();
-    double activation_gain = (*it)->getActivationGain();
+    const double activation_gain = (*it)->getActivationGain();
     Eigen::MatrixXd tmpHomogeneousSolution = projector * q_dot_0;
-    double magnitude = (*it)->getSelfMotionMagnitude(particular_solution, tmpHomogeneousSolution);
+    const double magnitude = (*it)->getSelfMotionMagnitude(particular_solution, tmpHomogeneousSolution);
     ConstraintState cstate = (*it)->getState();
+
+    const double constr_prio = (*it)->getPriorityAsNum();
+    const double inv_constr_prio = constr_prio > ZERO_THRESHOLD ? 1.0 / constr_prio : 1.0 / DIV0_SAFE;
+    // only necessary for GPM sum because task stack is already sorted according to PRIOs.
+    const double gpm_weighting = inv_constr_prio / inv_sum_of_prios;
+
+    ROS_WARN_STREAM("Weighting for current GPM constraint: " << gpm_weighting);
+
     if(cstate.isTransition())
     {
         if(cstate.getCurrent() == CRITICAL)
@@ -125,7 +146,7 @@ void DynamicTasksReadjustSolver::processState(std::set<ConstraintBase_t>::iterat
         else if(cstate.getCurrent() == DANGER)
         {
             this->task_stack_controller_.deactivateTask((*it)->getTaskId());
-            sum_of_gradient += activation_gain * magnitude * q_dot_0; // smm adapted q_dot_0 vector
+            sum_of_gradient += gpm_weighting * activation_gain * magnitude * q_dot_0; // smm adapted q_dot_0 vector
         }
         else
         {
@@ -136,21 +157,14 @@ void DynamicTasksReadjustSolver::processState(std::set<ConstraintBase_t>::iterat
     {
         if(cstate.getCurrent() == CRITICAL)
         {
-            // Eigen::MatrixXd J_task0 = q_dot_0.transpose();
-            // "global" weighting k_H for all constraint tasks.
-            //Eigen::VectorXd task = this->params_.k_H * activation_gain * magnitude * derivative_value * Eigen::VectorXd::Identity(1, 1);
             Task_t t = (*it)->createTask();
-            // double factor = this->params_.k_H * activation_gain * std::abs(magnitude);
-            // double factor = this->params_.k_H * activation_gain * std::abs(magnitude); // task must be decided whether negative or not!
             double factor = activation_gain * std::abs(magnitude); // task must be decided whether negative or not!
             t.task_ = factor * t.task_;
-
-            // t.task_jacobian_ = factor * t.task_jacobian_;
             this->task_stack_controller_.addTask(t);
         }
         else if(cstate.getCurrent() == DANGER)
         {
-            sum_of_gradient += activation_gain * magnitude * q_dot_0; // smm adapted q_dot_0 vector
+            sum_of_gradient += gpm_weighting * activation_gain * magnitude * q_dot_0; // smm adapted q_dot_0 vector
         }
         else
         {

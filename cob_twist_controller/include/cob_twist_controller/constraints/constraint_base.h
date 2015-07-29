@@ -43,7 +43,7 @@
 #include "cob_twist_controller/task_stack/task_stack_controller.h"
 /**
  * Main base class for all derived constraints. Used to create abstract containers that can be filled with concrete constraints.
- * @tparam PRIO A priority class that has operators <, > and == for comparison overridden. Default uint comparison.
+ * @tparam PRIO A priority class that has operators <, > and == for comparison overridden. To return the priority as a computable double it must override "operator double() const"! Default uint comparison.
  */
 template
 <typename PRIO = uint32_t>
@@ -80,6 +80,11 @@ class PriorityBase
         inline PRIO getPriority() const
         {
             return priority_;
+        }
+
+        inline double getPriorityAsNum() const
+        {
+            return static_cast<double>(priority_);
         }
 
         virtual double getCriticalValue() const = 0;

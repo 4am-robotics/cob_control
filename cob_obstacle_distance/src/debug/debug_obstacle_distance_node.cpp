@@ -102,7 +102,7 @@ public:
             marker_distance.action = visualization_msgs::Marker::ADD;
             marker_distance.ns = msg->distances[i].frame_of_interest;
             marker_distance.id = 69;
-            marker_distance.header.frame_id = msg->distances[i].header.frame_id;
+            marker_distance.header.frame_id = msg->distances[i].frame_of_interest;
             marker_distance.text = boost::lexical_cast<std::string>(boost::format("%.2f") % msg->distances[i].distance);
             
             marker_distance.scale.x = 0.1;

@@ -43,6 +43,7 @@
 #define ZERO_THRESHOLD 1.0e-9  ///< used for numerical 0.0 threshold
 #define DIV0_SAFE 1.0e-6 ///< used for division in case of DIV/0
 #define ACTIVATION_BUFFER 0.50 ///< means 50 % upper the activation threshold the activation gain function gets active
+#define ACTIVATION_BUFFER_JLA 3.0 ///< means 300 % upper the activation threshold the activation gain function gets active
 
 typedef Eigen::Matrix<double,6,Eigen::Dynamic> Matrix6Xd_t;
 typedef Eigen::Matrix<double,6,1> Vector6d_t;
