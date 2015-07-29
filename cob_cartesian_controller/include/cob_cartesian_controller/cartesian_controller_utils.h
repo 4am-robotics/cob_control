@@ -30,23 +30,36 @@
 #define COB_CARTESIAN_CONTROLLER_UTILS_H_
 
 #include <ros/ros.h>
-#include <math.h>
-#include <visualization_msgs/Marker.h>
-#include <tf/transform_broadcaster.h>
 #include <tf/transform_listener.h>
-#include <cob_cartesian_controller/helper_classes/data_structures.h>
+#include <tf/transform_datatypes.h>
 
+#include <geometry_msgs/PoseArray.h>
+#include <visualization_msgs/MarkerArray.h>
 
 
 class CartesianControllerUtils
 {
 public:
-    void showLevel(tf::Transform pos, std::string reference_frame, int marker_id, double red, double green, double blue, std::string ns);
-    void showDot(std::string reference_frame, double x, double y, double z, int marker_id, double red, double green, double blue, std::string ns);
-    void showMarker(tf::StampedTransform tf, std::string reference_frame, int marker_id, double red, double green, double blue, std::string ns);
-    bool epsilonArea(double x, double y, double z, double roll, double pitch, double yaw, double epsilon);
-    geometry_msgs::Pose getEndeffectorPose(tf::TransformListener& listener, std::string reference_frame, std::string chain_tip_link);
+    CartesianControllerUtils()
+    {
+        marker_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("cartesian_controller/preview_path",1);
+    }
+
+    void transformPose(const std::string source_frame, const std::string target_frame, const geometry_msgs::Pose pose_in, geometry_msgs::Pose& pose_out);
+    tf::StampedTransform getStampedTransform(std::string target_frame, std::string source_frame);
+    geometry_msgs::Pose getPose(std::string target_frame, std::string source_frame);
+    
+    bool inEpsilonArea(tf::StampedTransform stamped_transform, double epsilon);
     void poseToRPY(geometry_msgs::Pose pose, double& roll, double& pitch, double& yaw);
+    
+    void previewPath(const geometry_msgs::PoseArray& pose_array);
+
+
+private:
+    ros::NodeHandle nh_;
+    tf::TransformListener tf_listener_;
+    
+    ros::Publisher marker_pub_;
 };
 
 #endif /* COB_CARTESIAN_CONTROLLER_UTILS_H_ */

@@ -26,13 +26,11 @@
  *
 """
 import time
-import roslib 
 import rospy
 
 from geometry_msgs.msg import Pose
 from moveit_msgs.msg import CollisionObject
-from shape_msgs.msg import SolidPrimitive
-from shape_msgs.msg import Mesh
+from shape_msgs.msg import SolidPrimitive, Mesh
 
 
 if __name__=="__main__":

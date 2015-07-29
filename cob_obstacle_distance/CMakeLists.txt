@@ -27,7 +27,7 @@ generate_messages(
 catkin_package(
    INCLUDE_DIRS include
    LIBRARIES parsers marker_shapes_management
-   CATKIN_DEPENDS roscpp shape_msgs moveit_msgs sensor_msgs geometry_msgs visualization_msgs message_runtime cob_srvs
+   CATKIN_DEPENDS roscpp shape_msgs moveit_msgs sensor_msgs geometry_msgs visualization_msgs message_runtime cob_srvs interactive_markers
    DEPENDS assimp
 )
 
@@ -42,7 +42,7 @@ target_link_libraries(marker_shapes_management parsers ${fcl_LIBRARIES} ${catkin
 
 ## Declare a cpp executable
 add_executable(cob_obstacle_distance src/cob_obstacle_distance.cpp src/helpers/helper_functions.cpp src/distance_manager.cpp src/chainfk_solvers/advanced_chainfksolver_recursive.cpp)
-add_dependencies(cob_obstacle_distance cob_srvs_gencpp)
+add_dependencies(cob_obstacle_distance ${PROJECT_NAME}_gencpp)
 target_link_libraries(cob_obstacle_distance parsers marker_shapes_management ${fcl_LIBRARIES} ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 
 add_executable(debug_obstacle_distance_node src/debug/debug_obstacle_distance_node.cpp)
@@ -63,7 +63,9 @@ install(DIRECTORY include/cob_obstacle_distance/
  PATTERN ".svn" EXCLUDE
 )
 
-install(PROGRAMS scripts/example_obstacle_publisher_node.py scripts/test_obstacle_publisher_node.py
+install(PROGRAMS scripts/example_obstacle_publisher_node.py
+                 scripts/test_obstacle_publisher_node.py 
+                 scripts/test_interactive_obstacle_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/scripts
 )
 

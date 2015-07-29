@@ -83,69 +83,40 @@ inline void HardwareInterfaceVelocity::processResult(const KDL::JntArray& q_dot_
 inline void HardwareInterfacePosition::processResult(const KDL::JntArray& q_dot_ik,
                                                      const KDL::JntArray& current_q)
 {
-    std_msgs::Float64MultiArray vel_msg, pos_msg;
+    std_msgs::Float64MultiArray pos_msg;
 
-    time_now_ = ros::Time::now();
-    integration_period_ = time_now_ - last_update_time_;
+    ros::Time now = ros::Time::now();
+    ros::Duration period = now - last_update_time_;
+    last_update_time_ = now;
 
-    for(unsigned int i = 0; i < params_.dof; ++i)
+    ///check for proper initialization (quiet_NaN == quiet_NaN -> false)
+    if(vel_before_last_.front() == vel_before_last_.front())
     {
-        vel_msg.data.push_back(q_dot_ik(i));
-
-        // Simpson
-        if(iteration_counter_ > 1)
+        for(unsigned int i = 0; i < params_.dof; ++i)
         {
-            double integration_value = static_cast<double>(integration_period_.toSec() / 6.0 * (vel_first_integration_point_[i] + 4.0 * (vel_first_integration_point_[i] + vel_support_integration_point_[i]) + vel_first_integration_point_[i] + vel_support_integration_point_[i] + vel_msg.data[i]) + current_q(i));
+            // Simpson
+            double integration_value = static_cast<double>(period.toSec() / 6.0 * (vel_before_last_[i] + 4.0 * (vel_before_last_[i] + vel_last_[i]) + vel_before_last_[i] + vel_last_[i] + q_dot_ik(i)) + current_q(i));
             ma_[i].addElement(integration_value);
             double avg = 0.0;
             ma_[i].calcWeightedMovingAverage(avg);
             pos_msg.data.push_back(avg);
+            
+            //publish to interface
+            pub_.publish(pos_msg);
         }
     }
-    last_update_time_ = time_now_;
     
-    
-    // Initialize the velocity vectors in the first and second iteration
-    if(iteration_counter_ == 0)
+    // Continuously shift the vectors for simpson integration
+    vel_before_last_.clear();
+    for(unsigned int i=0; i < vel_last_.size(); ++i)
     {
-        vel_first_integration_point_.clear();
-        for(int i=0; i < vel_msg.data.size(); ++i)
-        {
-            vel_first_integration_point_.push_back(vel_msg.data[i]);
-        }
+        vel_before_last_.push_back(vel_last_[i]);
     }
 
-    if(iteration_counter_ == 1)
+    vel_last_.clear();
+    for(unsigned int i=0; i < q_dot_ik.rows(); ++i)
     {
-        vel_support_integration_point_.clear();
-        for(int i=0; i < vel_msg.data.size(); ++i)
-        {
-            vel_support_integration_point_.push_back(vel_msg.data[i]);
-        }
-    }
-
-    if(iteration_counter_ > 1)
-    {
-        // Continuously shift the vectors for simpson integration
-        vel_first_integration_point_.clear();
-        for(int i=0; i < vel_support_integration_point_.size(); ++i)
-        {
-            vel_first_integration_point_.push_back(vel_support_integration_point_[i]);
-        }
-
-        vel_support_integration_point_.clear();
-        for(int i=0; i < vel_msg.data.size(); ++i)
-        {
-            vel_support_integration_point_.push_back(vel_msg.data[i]);
-        }
-        
-        //publish to interface
-        pub_.publish(pos_msg);
-    }
-
-    if(iteration_counter_ < 3)
-    {
-        ++iteration_counter_;
+        vel_last_.push_back(q_dot_ik(i));
     }
 }
 /* END HardwareInterfacePosition ******************************************************************************************/
@@ -160,72 +131,43 @@ inline void HardwareInterfaceJointStates::processResult(const KDL::JntArray& q_d
 {
     std_msgs::Float64MultiArray vel_msg, pos_msg;
 
-    time_now_ = ros::Time::now();
-    integration_period_ = time_now_ - last_update_time_;
+    ros::Time now = ros::Time::now();
+    ros::Duration period = now - last_update_time_;
+    last_update_time_ = now;
 
-    for(unsigned int i = 0; i < params_.dof; ++i)
+    ///check for proper initialization (quiet_NaN == quiet_NaN -> false)
+    if(vel_before_last_.front() == vel_before_last_.front())
     {
-        vel_msg.data.push_back(q_dot_ik(i));
-
-        // Simpson
-        if(iteration_counter_ > 1)
+        for(unsigned int i = 0; i < params_.dof; ++i)
         {
-            double integration_value = static_cast<double>(integration_period_.toSec() / 6.0 * (vel_first_integration_point_[i] + 4.0 * (vel_first_integration_point_[i] + vel_support_integration_point_[i]) + vel_first_integration_point_[i] + vel_support_integration_point_[i] + vel_msg.data[i]) + current_q(i));
+            // Simpson
+            double integration_value = static_cast<double>(period.toSec() / 6.0 * (vel_before_last_[i] + 4.0 * (vel_before_last_[i] + vel_last_[i]) + vel_before_last_[i] + vel_last_[i] + q_dot_ik(i)) + current_q(i));
             ma_[i].addElement(integration_value);
             double avg = 0.0;
             ma_[i].calcWeightedMovingAverage(avg);
             pos_msg.data.push_back(avg);
+            
+            vel_msg.data.push_back(q_dot_ik(i));
         }
-    }
-    last_update_time_ = time_now_;
-    
-    
-    // Initialize the velocity vectors in the first and second iteration
-    if(iteration_counter_ == 0)
-    {
-        vel_first_integration_point_.clear();
-        for(int i=0; i < vel_msg.data.size(); ++i)
-        {
-            vel_first_integration_point_.push_back(vel_msg.data[i]);
-        }
-    }
-
-    if(iteration_counter_ == 1)
-    {
-        vel_support_integration_point_.clear();
-        for(int i=0; i < vel_msg.data.size(); ++i)
-        {
-            vel_support_integration_point_.push_back(vel_msg.data[i]);
-        }
-    }
-
-    if(iteration_counter_ > 1)
-    {
-        // Continuously shift the vectors for simpson integration
-        vel_first_integration_point_.clear();
-        for(int i=0; i < vel_support_integration_point_.size(); ++i)
-        {
-            vel_first_integration_point_.push_back(vel_support_integration_point_[i]);
-        }
-
-        vel_support_integration_point_.clear();
-        for(int i=0; i < vel_msg.data.size(); ++i)
-        {
-            vel_support_integration_point_.push_back(vel_msg.data[i]);
-        }
-        
         ///update JointState
         boost::mutex::scoped_lock lock(mutex_);
-        //js_msg_.header.stamp = ros::Time::now();
         js_msg_.position = pos_msg.data;
         js_msg_.velocity = vel_msg.data;
         
         ///publishing takes place in separate thread
     }
-
-    if(iteration_counter_ < 3)
+    
+    // Continuously shift the vectors for simpson integration
+    vel_before_last_.clear();
+    for(unsigned int i=0; i < vel_last_.size(); ++i)
     {
-        ++iteration_counter_;
+        vel_before_last_.push_back(vel_last_[i]);
+    }
+
+    vel_last_.clear();
+    for(unsigned int i=0; i < q_dot_ik.rows(); ++i)
+    {
+        vel_last_.push_back(q_dot_ik(i));
     }
 }
 

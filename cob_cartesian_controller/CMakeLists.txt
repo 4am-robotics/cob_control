@@ -11,14 +11,11 @@ find_package(catkin REQUIRED COMPONENTS
     std_srvs 
     cob_srvs 
     tf 
-    kdl_conversions 
-    roslib  
     actionlib_msgs
     message_generation
 )
 
-find_package(TinyXML REQUIRED)
-find_package(orocos_kdl REQUIRED)
+catkin_python_setup()
 
 ## Generate actions in the 'action' folder
 add_action_files(
@@ -43,36 +40,34 @@ generate_messages(
 # Declare catkin package
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES profile_generator trajectory_interpolator cartesian_controller utils
-  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs visualization_msgs std_srvs cob_srvs tf kdl_conversions actionlib_msgs message_runtime
+  LIBRARIES profile_generator trajectory_interpolator cartesian_controller cartesian_controller_utils
+  CATKIN_DEPENDS roscpp rospy std_msgs geometry_msgs visualization_msgs std_srvs cob_srvs tf actionlib_msgs message_runtime
 )
 
-include_directories(include ${catkin_INCLUDE_DIRS} ${TinyXML_INCLUDE_DIRS} ${orocos_kdl_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS})
 
 ## Build
 # Declare a cpp library
+add_library(cartesian_controller_utils src/cartesian_controller_utils.cpp)
+target_link_libraries(cartesian_controller_utils ${catkin_LIBRARIES})
 
-add_library(utils src/helper_classes/utils.cpp)
-target_link_libraries(utils ${catkin_LIBRARIES})
-
-add_library(profile_generator src/trajectory_profile_generator/trajectory_profile_generator.cpp)
+add_library(profile_generator src/trajectory_profile_generator/trajectory_profile_generator_lin.cpp src/trajectory_profile_generator/trajectory_profile_generator_circ.cpp)
+add_dependencies(profile_generator ${PROJECT_NAME}_gencpp)
 target_link_libraries(profile_generator ${catkin_LIBRARIES})
 
 add_library(trajectory_interpolator src/trajectory_interpolator/trajectory_interpolator.cpp)
 target_link_libraries(trajectory_interpolator profile_generator ${catkin_LIBRARIES})
 
-add_library(cartesian_controller src/cartesian_controller.cpp )
-add_dependencies(cartesian_controller cob_srvs_gencpp)
-target_link_libraries(cartesian_controller trajectory_interpolator utils ${catkin_LIBRARIES} ${TinyXML_LIBRARIES} ${Boost_LIBRARIES} ${orocos_kdl_LIBRARIES})
+add_library(cartesian_controller src/cartesian_controller.cpp)
+target_link_libraries(cartesian_controller trajectory_interpolator cartesian_controller_utils ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
-
-## Declare a cpp executable
+# Declare a cpp executable
 add_executable(cartesian_controller_node src/cartesian_controller_node.cpp)
 target_link_libraries(cartesian_controller_node cartesian_controller ${catkin_LIBRARIES})
 
 ## Install
 # Mark executables and/or libraries for installation
-install(TARGETS profile_generator trajectory_interpolator cartesian_controller cartesian_controller_node
+install(TARGETS profile_generator trajectory_interpolator cartesian_controller cartesian_controller_utils cartesian_controller_node
  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -85,6 +80,10 @@ install(DIRECTORY include/${PROJECT_NAME}/
  PATTERN ".svn" EXCLUDE
 )
 
-install(DIRECTORY launch movement
+install(PROGRAMS scripts/test_move_lin.py scripts/test_move_circ.py scripts/test_move_santa.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/scripts
+)
+
+install(DIRECTORY config launch
  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

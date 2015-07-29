@@ -1,9 +1,5 @@
-float64 x_center
-float64 y_center
-float64 z_center
-float64 roll_center
-float64 pitch_center
-float64 yaw_center
+geometry_msgs/Pose pose_center
+string frame_id
 
 float64 start_angle
 float64 end_angle

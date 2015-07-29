@@ -45,15 +45,11 @@ ros::Timer marker_timer_;
 std::string root_frame_;
 std::string base_link_;
 std::string chain_tip_link_;
-std::string tracking_frame_;
+std::string target_frame_;
 
 visualization_msgs::Marker tip_marker_;
 visualization_msgs::Marker target_marker_;
 visualization_msgs::Marker base_marker_;
-
-
-
-
 
 
 public:
@@ -74,9 +70,11 @@ public:
             return -2;
         }
         
-        if(!nh_.getParam("frame_tracker/tracking_frame", this->tracking_frame_))
+        ros::NodeHandle nh_private("~");
+        if(!nh_private.getParam("target_frame", this->target_frame_))
         {
-            ROS_ERROR("Failed to get parameter \"frame_tracker/tracking_frame\".");
+            ROS_ERROR_STREAM("Please provide a '~target_frame' parameter in this node's private namespace.");
+            ROS_ERROR_STREAM("Most likely '~target_frame' is desired to be the same as either '" << nh_.getNamespace() << "/tracking_frame' or '" << nh_.getNamespace() << "/cartesian_controller/target_frame'");
             return -3;
         }
 
@@ -118,34 +116,46 @@ public:
         visualization_msgs::MarkerArray marker_array;
         geometry_msgs::Point point;
         
-        if(tip_marker_.points.size() > 10000)
+        if(tf_listener_.frameExists(this->chain_tip_link_))
         {
-            tip_marker_.points.clear();
-        }
-        point = getPoint(this->root_frame_, this->chain_tip_link_);
-        tip_marker_.points.push_back(point);
-        marker_array.markers.push_back(tip_marker_);
-        
-        if(target_marker_.points.size() > 10000)
-        {
-            target_marker_.points.clear();
-        }
-        point = getPoint(this->root_frame_, this->tracking_frame_);
-        target_marker_.points.push_back(point);
-        marker_array.markers.push_back(target_marker_);
-        
-        if(nh_.param("twist_controller/kinematic_extension", 0) == 1)//BASE_ACTIVE
-        {
-            if(base_marker_.points.size() > 10000)
+            if(tip_marker_.points.size() > 10000)
             {
-                base_marker_.points.clear();
+                tip_marker_.points.clear();
             }
-            point = getPoint(this->root_frame_, this->base_link_);
-            base_marker_.points.push_back(point);
-            marker_array.markers.push_back(base_marker_);
+            point = getPoint(this->root_frame_, this->chain_tip_link_);
+            tip_marker_.points.push_back(point);
+            marker_array.markers.push_back(tip_marker_);
         }
         
-        this->marker_pub_.publish(marker_array);
+        if(tf_listener_.frameExists(this->target_frame_))
+        {
+            if(target_marker_.points.size() > 10000)
+            {
+                target_marker_.points.clear();
+            }
+            point = getPoint(this->root_frame_, this->target_frame_);
+            target_marker_.points.push_back(point);
+            marker_array.markers.push_back(target_marker_);
+        }
+        
+        if(tf_listener_.frameExists(this->base_link_))
+        {
+            if(nh_.param("twist_controller/kinematic_extension", 0) == 1)//BASE_ACTIVE
+            {
+                if(base_marker_.points.size() > 10000)
+                {
+                    base_marker_.points.clear();
+                }
+                point = getPoint(this->root_frame_, this->base_link_);
+                base_marker_.points.push_back(point);
+                marker_array.markers.push_back(base_marker_);
+            }
+        }
+        
+        if(!marker_array.markers.empty())
+        {
+            this->marker_pub_.publish(marker_array);
+        }
     }
 
     visualization_msgs::Marker getMarker(std_msgs::ColorRGBA color)

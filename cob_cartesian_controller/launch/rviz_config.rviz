@@ -5,7 +5,6 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
-        - /ObstacleVectors1/Namespaces1
       Splitter Ratio: 0.5
     Tree Height: 444
   - Class: rviz/Selection
@@ -113,30 +112,21 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
-    - Class: rviz/Marker
+    - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /arm/obstacle_distance/marker
-      Name: ObstacleMarker
+      Marker Topic: /arm/trajectory_marker
+      Name: TrajectoryMarker
       Namespaces:
-        collision_object: true
+        tip_marker: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /arm/obstacle_distance/debug
-      Name: ObstacleVectors
+      Marker Topic: /arm/cartesian_controller/preview_path
+      Name: PreviewPath
       Namespaces:
-        arm_7_link: true
+        {}
       Queue Size: 100
-      Value: true
-    - Class: rviz/InteractiveMarkers
-      Enable Transparency: true
-      Enabled: true
-      Name: InteractiveMarkers
-      Show Axes: false
-      Show Descriptions: true
-      Show Visual Aids: false
-      Update Topic: /arm/marker_server/update
       Value: true
   Enabled: true
   Global Options:
@@ -162,22 +152,22 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 2.51612
+      Distance: 2.94622
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.0616659
-        Y: -0.0634887
-        Z: 0.762656
+        X: -0.491729
+        Y: 0.0118906
+        Z: 0.900492
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.415398
+      Pitch: 0.204797
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.27359
+      Yaw: 5.40859
     Saved: ~
 Window Geometry:
   Displays:
@@ -195,5 +185,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1200
-  X: 360
-  Y: 31
+  X: 494
+  Y: 44

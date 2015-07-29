@@ -46,6 +46,7 @@
   <run_depend>orocos_kdl</run_depend>
   <run_depend>tf</run_depend>
   <run_depend>tf_conversions</run_depend>
+  <run_depend>interactive_markers</run_depend>
   <run_depend>dynamic_reconfigure</run_depend>
   <run_depend>fcl</run_depend>
   <run_depend>eigen</run_depend>

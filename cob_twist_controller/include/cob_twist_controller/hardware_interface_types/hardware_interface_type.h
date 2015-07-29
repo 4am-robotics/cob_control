@@ -32,6 +32,7 @@
 #include <std_msgs/Float64MultiArray.h>
 #include <sensor_msgs/JointState.h>
 
+#include <limits>
 #include <boost/thread/mutex.hpp>
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
@@ -80,19 +81,13 @@ class HardwareInterfacePosition : public HardwareInterfaceBase
     public:
         HardwareInterfacePosition(ros::NodeHandle& nh,
                                   const TwistControllerParams& params)
-        : HardwareInterfaceBase(nh, params),
-          iteration_counter_(0)
+        : HardwareInterfaceBase(nh, params)
         {
-            for(int i = 0; i < params.dof; i++)
-            {
-                ma_.push_back(MovingAvg_double_t());
-                vel_support_integration_point_.push_back(0.0);
-                vel_first_integration_point_.push_back(0.0);
-            }
+            ma_.assign(params.dof, MovingAvg_double_t(3));
+            vel_last_.assign(1, std::numeric_limits<double>::quiet_NaN());
+            vel_before_last_.assign(1, std::numeric_limits<double>::quiet_NaN());
             
-            time_now_ = ros::Time::now();
-            last_update_time_ = time_now_;
-            integration_period_ = time_now_ - last_update_time_;
+            last_update_time_ = ros::Time::now();
             pub_ = nh.advertise<std_msgs::Float64MultiArray>("joint_group_position_controller/command", 1);
         }
 
@@ -103,10 +98,7 @@ class HardwareInterfacePosition : public HardwareInterfaceBase
 
     private:
         std::vector<MovingAvg_double_t> ma_;
-        std::vector<double> vel_support_integration_point_, vel_first_integration_point_;
-        unsigned int iteration_counter_;
-        ros::Duration integration_period_;
-        ros::Time time_now_;
+        std::vector<double> vel_last_, vel_before_last_;
         ros::Time last_update_time_;
 
 };
@@ -120,19 +112,13 @@ class HardwareInterfaceJointStates : public HardwareInterfaceBase
     public:
         HardwareInterfaceJointStates(ros::NodeHandle& nh,
                                      const TwistControllerParams& params)
-        : HardwareInterfaceBase(nh, params),
-          iteration_counter_(0)
+        : HardwareInterfaceBase(nh, params)
         {
-            for(int i = 0; i < params.dof; i++)
-            {
-                ma_.push_back(MovingAvg_double_t());
-                vel_support_integration_point_.push_back(0.0);
-                vel_first_integration_point_.push_back(0.0);
-            }
+            ma_.assign(params.dof, MovingAvg_double_t(3));
+            vel_last_.assign(1, std::numeric_limits<double>::quiet_NaN());
+            vel_before_last_.assign(1, std::numeric_limits<double>::quiet_NaN());
             
-            time_now_ = ros::Time::now();
-            last_update_time_ = time_now_;
-            integration_period_ = time_now_ - last_update_time_;
+            last_update_time_ = ros::Time::now();
             pub_ = nh.advertise<sensor_msgs::JointState>("joint_states", 1);
             
             js_msg_.name = params_.joints;
@@ -151,10 +137,7 @@ class HardwareInterfaceJointStates : public HardwareInterfaceBase
 
     private:
         std::vector<MovingAvg_double_t> ma_;
-        std::vector<double> vel_support_integration_point_, vel_first_integration_point_;
-        unsigned int iteration_counter_;
-        ros::Duration integration_period_;
-        ros::Time time_now_;
+        std::vector<double> vel_last_, vel_before_last_;
         ros::Time last_update_time_;
         
         boost::mutex mutex_;
