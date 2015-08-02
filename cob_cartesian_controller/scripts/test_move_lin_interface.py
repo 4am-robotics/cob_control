@@ -16,4 +16,8 @@ if __name__ == '__main__':
     #profile.profile_type = Profile.SINOID
     profile.profile_type = Profile.RAMP
     
-    success = sci.move_lin(pose, "world", profile)
+    success, message = sci.move_lin(pose, "world", profile)
+    if success:
+        rospy.loginfo(message)
+    else:
+        rospy.logerr(message)

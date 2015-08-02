@@ -18,4 +18,8 @@ if __name__ == '__main__':
     #profile.profile_type = Profile.SINOID
     profile.profile_type = Profile.RAMP
     
-    success = sci.move_circ(pose, "world", start_angle, end_angle, 0.3, profile)
+    success, message = sci.move_circ(pose, "world", start_angle, end_angle, 0.3, profile)
+    if success:
+        rospy.loginfo(message)
+    else:
+        rospy.logerr(message)

@@ -1,155 +1,88 @@
 #! /usr/bin/env python
+from math import radians
 import rospy
-import actionlib
 
-from cob_cartesian_controller.msg import CartesianControllerAction, CartesianControllerGoal
+from geometry_msgs.msg import Pose
 from cob_cartesian_controller.msg import Profile
+import simple_cartesian_interface as sci
 
 if __name__ == '__main__':
-    rospy.init_node('test_move_lin')
-    client = actionlib.SimpleActionClient('cartesian_trajectory_action', CartesianControllerAction)
-    rospy.logwarn("Waiting for ActionServer...")
-    client.wait_for_server()
-    rospy.logwarn("...done")
+    rospy.init_node('test_move_santa')
 
     # Step 1
-    goal = CartesianControllerGoal()
-    goal.name = "move_lin"
-    goal.move_lin.x = -1.0
-    goal.move_lin.y = 0
-    goal.move_lin.z = 0
-    goal.move_lin.roll = 45.0
-    goal.move_lin.pitch = 0
-    goal.move_lin.yaw = -25.0
-    goal.move_lin.profile.vel = 0.1
-    goal.move_lin.profile.accl = 0.2
-    goal.move_lin.profile.profile_type = Profile.SINOID
-    goal.move_lin.rotate_only = False
-    client.send_goal(goal)
-    client.wait_for_result()
+    pose = sci.gen_pose(pos=[-1.0, 0.0, 0.0], rpy=[radians(45.0), 0.0, radians(-25.0)])
+    profile = Profile()
+    profile.vel = 0.1
+    profile.accl = 0.2
+    profile.profile_type = Profile.SINOID
+    success, message = sci.move_lin(pose, "world", profile)
 
     rospy.sleep(4.0)
 
     # Step 2
-    goal = CartesianControllerGoal()
-    goal.name = "move_lin"
-    goal.move_lin.x = -0.5
-    goal.move_lin.y = 0.5
-    goal.move_lin.z = 0
-    goal.move_lin.roll = -45.0
-    goal.move_lin.pitch = 0
-    goal.move_lin.yaw = -30.0
-    goal.move_lin.profile.vel = 0.1
-    goal.move_lin.profile.accl = 0.2
-    goal.move_lin.profile.profile_type = Profile.SINOID
-    goal.move_lin.rotate_only = False
-    client.send_goal(goal)
-    client.wait_for_result()
+    pose = sci.gen_pose(pos=[-0.5, 0.5, 0.0], rpy=[radians(-45.0), 0.0, radians(-30.0)])
+    profile = Profile()
+    profile.vel = 0.1
+    profile.accl = 0.2
+    profile.profile_type = Profile.SINOID
+    success, message = sci.move_lin(pose, "world", profile)
 
     rospy.sleep(4.0)
 
     # Step 3
-    goal = CartesianControllerGoal()
-    goal.name = "move_lin"
-    goal.move_lin.x = 0.5
-    goal.move_lin.y = 0.5
-    goal.move_lin.z = 0
-    goal.move_lin.roll = 0.0
-    goal.move_lin.pitch = 0.0
-    goal.move_lin.yaw = 0.0
-    goal.move_lin.profile.vel = 0.1
-    goal.move_lin.profile.accl = 0.2
-    goal.move_lin.profile.profile_type = Profile.SINOID
-    goal.move_lin.rotate_only = False
-    client.send_goal(goal)
-    client.wait_for_result()
+    pose = sci.gen_pose(pos=[0.5, 0.5, 0.0])
+    profile = Profile()
+    profile.vel = 0.1
+    profile.accl = 0.2
+    profile.profile_type = Profile.SINOID
+    success, message = sci.move_lin(pose, "world", profile)
 
     rospy.sleep(2.0)
 
     # Step 4
-    goal = CartesianControllerGoal()
-    goal.name = "move_lin"
-    goal.move_lin.x = 1.0
-    goal.move_lin.y = 0.0
-    goal.move_lin.z = 0
-    goal.move_lin.roll = 0.0
-    goal.move_lin.pitch = 0.0
-    goal.move_lin.yaw = 0.0
-    goal.move_lin.profile.vel = 0.1
-    goal.move_lin.profile.accl = 0.2
-    goal.move_lin.profile.profile_type = Profile.SINOID
-    goal.move_lin.rotate_only = False
-    client.send_goal(goal)
-    client.wait_for_result()
+    pose = sci.gen_pose(pos=[1.0, 0.0, 0.0])
+    profile = Profile()
+    profile.vel = 0.1
+    profile.accl = 0.2
+    profile.profile_type = Profile.SINOID
+    success, message = sci.move_lin(pose, "world", profile)
 
     rospy.sleep(2.0)
 
     # Step 5
-    goal = CartesianControllerGoal()
-    goal.name = "move_lin"
-    goal.move_lin.x = 0.0
-    goal.move_lin.y = -1.0
-    goal.move_lin.z = 0
-    goal.move_lin.roll = 0.0
-    goal.move_lin.pitch = 0.0
-    goal.move_lin.yaw = 0.0
-    goal.move_lin.profile.vel = 0.1
-    goal.move_lin.profile.accl = 0.2
-    goal.move_lin.profile.profile_type = Profile.SINOID
-    goal.move_lin.rotate_only = False
-    client.send_goal(goal)
-    client.wait_for_result()
+    pose = sci.gen_pose(pos=[0.0, -1.0, 0.0])
+    profile = Profile()
+    profile.vel = 0.1
+    profile.accl = 0.2
+    profile.profile_type = Profile.SINOID
+    success, message = sci.move_lin(pose, "world", profile)
 
     rospy.sleep(2.0)
 
     # Step 6
-    goal = CartesianControllerGoal()
-    goal.name = "move_lin"
-    goal.move_lin.x = -1.0
-    goal.move_lin.y = 1.0
-    goal.move_lin.z = 0
-    goal.move_lin.roll = 0.0
-    goal.move_lin.pitch = 0.0
-    goal.move_lin.yaw = 0.0
-    goal.move_lin.profile.vel = 0.1
-    goal.move_lin.profile.accl = 0.2
-    goal.move_lin.profile.profile_type = Profile.SINOID
-    goal.move_lin.rotate_only = False
-    client.send_goal(goal)
-    client.wait_for_result()
+    pose = sci.gen_pose(pos=[-1.0, 1.0, 0.0])
+    profile = Profile()
+    profile.vel = 0.1
+    profile.accl = 0.2
+    profile.profile_type = Profile.SINOID
+    success, message = sci.move_lin(pose, "world", profile)
 
     rospy.sleep(2.0)
 
     # Step 7
-    goal = CartesianControllerGoal()
-    goal.name = "move_lin"
-    goal.move_lin.x = 0.0
-    goal.move_lin.y = -1.0
-    goal.move_lin.z = 0
-    goal.move_lin.roll = 0.0
-    goal.move_lin.pitch = 0.0
-    goal.move_lin.yaw = 0.0
-    goal.move_lin.profile.vel = 0.1
-    goal.move_lin.profile.accl = 0.2
-    goal.move_lin.profile.profile_type = Profile.SINOID
-    goal.move_lin.rotate_only = False
-    client.send_goal(goal)
-    client.wait_for_result()
+    pose = sci.gen_pose(pos=[0.0, -1.0, 0.0])
+    profile = Profile()
+    profile.vel = 0.1
+    profile.accl = 0.2
+    profile.profile_type = Profile.SINOID
+    success, message = sci.move_lin(pose, "world", profile)
 
     rospy.sleep(2.0)
 
     # Step 8
-    goal = CartesianControllerGoal()
-    goal.name = "move_lin"
-    goal.move_lin.x = 1.0
-    goal.move_lin.y = 1.0
-    goal.move_lin.z = 0
-    goal.move_lin.roll = 0.0
-    goal.move_lin.pitch = 0.0
-    goal.move_lin.yaw = 0.0
-    goal.move_lin.profile.vel = 0.1
-    goal.move_lin.profile.accl = 0.2
-    goal.move_lin.profile.profile_type = Profile.SINOID
-    goal.move_lin.rotate_only = False
-    client.send_goal(goal)
-    client.wait_for_result()
+    pose = sci.gen_pose(pos=[1.0, 1.0, 0.0])
+    profile = Profile()
+    profile.vel = 0.1
+    profile.accl = 0.2
+    profile.profile_type = Profile.SINOID
+    success, message = sci.move_lin(pose, "world", profile)
