@@ -8,36 +8,21 @@ find_package(catkin REQUIRED COMPONENTS
   controller_manager_msgs
 )
 
-find_package(Boost REQUIRED COMPONENTS thread )
+find_package(Boost REQUIRED COMPONENTS thread)
 
 catkin_package(
   CATKIN_DEPENDS roscpp std_msgs control_msgs controller_manager_msgs
 )
 
-###########
-## Build ##
-###########
+### BUILD ###
+include_directories(${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
-include_directories(
-  ${catkin_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS}
-)
-
-# Declare a cpp executable
 add_executable(cob_control_mode_adapter_node src/cob_control_mode_adapter_node.cpp)
 add_dependencies(cob_control_mode_adapter_node controller_manager_msgs_gencpp)
+target_link_libraries(cob_control_mode_adapter_node ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
-# Specify libraries to link a library or executable target against
-target_link_libraries(cob_control_mode_adapter_node
- ${catkin_LIBRARIES}
- ${Boost_LIBRARIES}
-)
 
-#############
-## Install ##
-#############
-
-# Mark executables and/or libraries for installation
+### INSTALL ###
 install(TARGETS cob_control_mode_adapter_node
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

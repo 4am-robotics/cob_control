@@ -21,8 +21,4 @@
   <run_depend>control_msgs</run_depend>
   <run_depend>controller_manager_msgs</run_depend>
 
-
-  <export>
-
-  </export>
 </package>
