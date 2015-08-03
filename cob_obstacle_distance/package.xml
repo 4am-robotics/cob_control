@@ -28,8 +28,10 @@
   <build_depend>roslib</build_depend>
   <build_depend>sensor_msgs</build_depend>
   <build_depend>shape_msgs</build_depend>
+  <build_depend>std_msgs</build_depend>
   <build_depend>tf_conversions</build_depend>
   <build_depend>tf</build_depend>
+  <build_depend>urdf</build_depend>
   <build_depend>visualization_msgs</build_depend>
   
   <run_depend>assimp</run_depend>
@@ -39,18 +41,24 @@
   <run_depend>eigen</run_depend>
   <run_depend>fcl</run_depend>
   <run_depend>geometry_msgs</run_depend>
+  <run_depend>joint_state_publisher</run_depend>
   <run_depend>kdl_conversions</run_depend>
   <run_depend>kdl_parser</run_depend>
   <run_depend>message_runtime</run_depend>
   <run_depend>moveit_msgs</run_depend>
   <run_depend>orocos_kdl</run_depend>
+  <run_depend>robot_state_publisher</run_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>roslib</run_depend>
   <run_depend>rospy</run_depend>
+  <run_depend>rviz</run_depend>
   <run_depend>sensor_msgs</run_depend>
   <run_depend>shape_msgs</run_depend>
+  <run_depend>std_msgs</run_depend>
   <run_depend>tf_conversions</run_depend>
   <run_depend>tf</run_depend>
+  <run_depend>urdf</run_depend>
   <run_depend>visualization_msgs</run_depend>
+  <run_depend>xacro</run_depend>
 
 </package>

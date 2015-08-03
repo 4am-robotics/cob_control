@@ -44,7 +44,6 @@
 #include <cob_frame_tracker/FrameTrackingAction.h>
 
 #include <control_toolbox/pid.h>
-#include <kdl_conversions/kdl_msg.h>
 #include <kdl/frames.hpp>
 #include <kdl_parser/kdl_parser.hpp>
 

@@ -23,7 +23,6 @@ add_executable(${PROJECT_NAME} ros/src/${PROJECT_NAME}.cpp common/src/genericArm
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 
-
 ### INSTALL ###
 install(TARGETS ${PROJECT_NAME} 
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

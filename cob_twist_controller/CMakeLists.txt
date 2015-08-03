@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(cob_twist_controller)
 
-find_package(catkin REQUIRED COMPONENTS cmake_modules cob_srvs dynamic_reconfigure eigen_conversions geometry_msgs kdl_conversions kdl_parser nav_msgs roscpp sensor_msgs tf_conversions tf visualization_msgs)
+find_package(catkin REQUIRED COMPONENTS cmake_modules cob_obstacle_distance cob_srvs dynamic_reconfigure eigen_conversions geometry_msgs kdl_conversions kdl_parser nav_msgs roscpp sensor_msgs std_msgs tf urdf visualization_msgs)
 
 find_package(Eigen REQUIRED)
 add_definitions(${EIGEN_DEFINITIONS})
@@ -15,11 +15,11 @@ generate_dynamic_reconfigure_options(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES damping_methods inv_calculations constraint_solvers limiters hardware_interfaces kinematic_extensions inverse_differential_kinematics_solver twist_controller
-  CATKIN_DEPENDS cob_srvs dynamic_reconfigure eigen_conversions geometry_msgs kdl_conversions kdl_parser nav_msgs roscpp rospy sensor_msgs tf_conversions tf visualization_msgs
+  CATKIN_DEPENDS cob_frame_tracker cob_obstacle_distance cob_srvs dynamic_reconfigure eigen_conversions geometry_msgs kdl_conversions kdl_parser nav_msgs robot_state_publisher roscpp rospy rviz sensor_msgs std_msgs tf topic_tools urdf visualization_msgs xacro
 )
 
 ### BUILD ###
-include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${orocos_kdl_INCLUDE_DIRS} )
+include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${orocos_kdl_INCLUDE_DIRS})
 
 set(SRC_C_DIR "src/constraint_solvers")
 set(SRC_CS_DIR "${SRC_C_DIR}/solvers")

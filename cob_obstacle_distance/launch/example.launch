@@ -15,7 +15,7 @@
   </node>
     
   <!-- controllers -->
-  <rosparam ns="arm" command="load" file="$(find cob_twist_controller)/config/example_cartesian_controller.yaml" />
+  <rosparam ns="arm" command="load" file="$(find cob_obstacle_distance)/config/example_obstacle_distance.yaml" />
   
   <!-- Obstacle distance -->
   <node ns="arm" name="obstacle_distance" pkg="cob_obstacle_distance" type="cob_obstacle_distance" output="screen">
