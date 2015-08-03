@@ -26,7 +26,7 @@
  *   Important to note: increases a static class counter to ensure
  *   a unique ID for the rviz Marker publishing.
  ****************************************************************/
-#include "cob_obstacle_distance/marker_shapes_interface.hpp"
+#include "cob_obstacle_distance/marker_shapes/marker_shapes_interface.hpp"
 
 /* BEGIN IMarkerShape *******************************************************************************************/
 /// Interface class marking methods that have to be implemented in derived classes.

@@ -29,24 +29,40 @@
 #define OBSTACLE_DISTANCE_DATA_TYPES_HPP_
 
 #include <ros/ros.h>
-#include <Eigen/Core>
 #include <stdint.h>
+#include <unordered_map>
+#include <shape_msgs/SolidPrimitive.h>
+#include <visualization_msgs/Marker.h>
 
-#include "cob_obstacle_distance/ObstacleDistances.h"
+#define FCL_BOX_X 0u
+#define FCL_BOX_Y 1u
+#define FCL_BOX_Z 2u
 
-struct ObstacleDistance
+#define FCL_RADIUS 0u
+#define FCL_CYL_LENGTH 1u
+
+
+struct ShapeMsgTypeToVisMarkerType
 {
-    ObstacleDistance(uint32_t shape_type) : min_distance(0.0), shape_type(shape_type)
-    {}
+    public:
+        std::unordered_map<uint8_t, uint32_t> map_;
 
-    ObstacleDistance() : min_distance(0.0), shape_type(0)
-    {}
-
-    double min_distance;
-    Eigen::Vector3d obstacle_pos;
-    Eigen::Vector3d pos_on_manipulator;
-    ros::Time timestamp;
-    uint32_t shape_type;
+        ShapeMsgTypeToVisMarkerType()
+        {
+            map_[shape_msgs::SolidPrimitive::BOX] = visualization_msgs::Marker::CUBE;
+            map_[shape_msgs::SolidPrimitive::SPHERE] = visualization_msgs::Marker::SPHERE;
+            map_[shape_msgs::SolidPrimitive::CYLINDER] = visualization_msgs::Marker::CYLINDER;
+        }
 };
+
+
+struct TriangleSupport
+{
+    fcl::Vec3f a;
+    fcl::Vec3f b;
+    fcl::Vec3f c;
+};
+
+static ShapeMsgTypeToVisMarkerType g_shapeMsgTypeToVisMarkerType;
 
 #endif /* OBSTACLE_DISTANCE_DATA_TYPES_HPP_ */

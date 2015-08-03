@@ -26,8 +26,7 @@
  ****************************************************************/
 #include "cob_obstacle_distance/shapes_manager.hpp"
 
-
-ShapesManager::ShapesManager(const ros::Publisher &pub) : pub_(pub)
+ShapesManager::ShapesManager(const ros::Publisher& pub) : pub_(pub)
 {
 }
 
@@ -38,22 +37,51 @@ ShapesManager::~ShapesManager()
 }
 
 
-void ShapesManager::addShape(t_ptr_IMarkerShape s)
+void ShapesManager::addShape(const std::string& id, PtrIMarkerShape_t s)
 {
-    this->shapes_.push_back(s);
+    this->shapes_[id] = s;
+}
+
+
+void ShapesManager::removeShape(const std::string& id)
+{
+    if(this->shapes_.count(id))
+    {
+        PtrIMarkerShape_t s = this->shapes_[id];
+        visualization_msgs::Marker marker = s->getMarker();
+        marker.action = visualization_msgs::Marker::DELETE;
+        this->pub_.publish(marker);
+    }
+
+    this->shapes_.erase(id);
+}
+
+
+bool ShapesManager::getShape(const std::string& id, PtrIMarkerShape_t& s)
+{
+    bool success = false;
+    if(this->shapes_.count(id))
+    {
+        s = this->shapes_[id];
+        success = true;
+    }
+
+    return success;
 }
 
 
 void ShapesManager::draw(bool enforce_draw)
 {
-    for(t_iter iter = shapes_.begin(); iter != shapes_.end(); ++iter)
+    for(MapIter_t iter = shapes_.begin(); iter != shapes_.end(); ++iter)
     {
-        if(!((*iter)->isDrawn()) || enforce_draw)
+        PtrIMarkerShape_t elem = iter->second;
+        if(!(elem->isDrawn()) || enforce_draw)
         {
-            ROS_INFO_STREAM("Publishing marker #" << (*iter)->getId() << std::endl);
-            visualization_msgs::Marker marker = (*iter)->getMarker();
+            ROS_INFO_STREAM("Publishing marker #" << elem->getId() << std::endl);
+            visualization_msgs::Marker marker = elem->getMarker();
             this->pub_.publish(marker);
-            (*iter)->setDrawn();
+            elem->setDrawn();
+            sleep(1.5); // it takes some time for Rviz to compute and show the marker!
         }
     }
 }
@@ -62,4 +90,16 @@ void ShapesManager::draw(bool enforce_draw)
 void ShapesManager::clear()
 {
     this->shapes_.clear();
+}
+
+
+uint32_t ShapesManager::count() const
+{
+    return this->shapes_.size();
+}
+
+
+uint32_t ShapesManager::count(const std::string& id) const
+{
+    return this->shapes_.count(id);
 }

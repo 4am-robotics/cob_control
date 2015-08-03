@@ -34,11 +34,10 @@
  * This is done by calculation of a weighting which is dependent on inherited classes for the Jacobian.
  * Uses the base implementation of calculatePinvJacobianBySVD to calculate the pseudo-inverse (weighted) Jacobian.
  */
-Eigen::MatrixXd WeightedLeastNormSolver::solve(const t_Vector6d &in_cart_velocities,
-                                               const KDL::JntArray& q,
-                                               const KDL::JntArray& last_q_dot) const
+Eigen::MatrixXd WeightedLeastNormSolver::solve(const Vector6d_t& in_cart_velocities,
+                                               const JointStates& joint_states)
 {
-    Eigen::MatrixXd W_WLN = this->calculateWeighting(q, last_q_dot);
+    Eigen::MatrixXd W_WLN = this->calculateWeighting(joint_states);
     // for the following formulas see Chan paper ISSN 1042-296X [Page 288]
     Eigen::MatrixXd root_W_WLN =  W_WLN.cwiseSqrt(); // element-wise sqrt -> ok because diag matrix W^(1/2)
     Eigen::MatrixXd inv_root_W_WLN =  root_W_WLN.inverse(); // -> W^(-1/2)
@@ -54,7 +53,7 @@ Eigen::MatrixXd WeightedLeastNormSolver::solve(const t_Vector6d &in_cart_velocit
 /**
  * This function returns the identity as weighting matrix for base functionality.
  */
-Eigen::MatrixXd WeightedLeastNormSolver::calculateWeighting(const KDL::JntArray& q, const KDL::JntArray& last_q_dot) const
+Eigen::MatrixXd WeightedLeastNormSolver::calculateWeighting(const JointStates& joint_states) const
 {
     uint32_t cols = this->jacobian_data_.cols();
     Eigen::VectorXd output = Eigen::VectorXd::Ones(cols);

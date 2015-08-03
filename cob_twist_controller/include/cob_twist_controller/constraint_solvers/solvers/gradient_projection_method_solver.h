@@ -42,10 +42,8 @@
 class GradientProjectionMethodSolver : public ConstraintSolver<>
 {
     public:
-        GradientProjectionMethodSolver(InvDiffKinSolverParams &params,
-                           t_Matrix6Xd &jacobian_data)
-                           : ConstraintSolver(params,
-                                              jacobian_data)
+        GradientProjectionMethodSolver(const TwistControllerParams& params, TaskStackController_t& task_stack_controller)
+                           : ConstraintSolver(params, task_stack_controller)
         {
         }
 
@@ -58,15 +56,14 @@ class GradientProjectionMethodSolver : public ConstraintSolver<>
          * Specific implementation of solve-method to solve IK problem with constraints by using the GPM.
          * See base class ConstraintSolver for more details on params and returns.
          */
-        virtual Eigen::MatrixXd solve(const t_Vector6d &in_cart_velocities,
-                                      const KDL::JntArray& q,
-                                      const KDL::JntArray& last_q_dot) const;
+        virtual Eigen::MatrixXd solve(const Vector6d_t& in_cart_velocities,
+                                      const JointStates& joint_states);
 
         /**
          * Set all created constraints in a (priorized) set.
          * @param constraints: All constraints ordered according to priority.
          */
-        virtual void setConstraints(std::set<tConstraintBase>& constraints)
+        virtual void setConstraints(std::set<ConstraintBase_t>& constraints)
         {
             this->constraints_ = constraints;
         }
@@ -82,7 +79,7 @@ class GradientProjectionMethodSolver : public ConstraintSolver<>
     protected:
 
         /// set inserts sorted (default less operator); if element has already been added it returns an iterator on it.
-        std::set<tConstraintBase> constraints_;
+        std::set<ConstraintBase_t> constraints_;
 };
 
 #endif /* GRADIENT_PROJECTION_METHOD_SOLVER_H_ */

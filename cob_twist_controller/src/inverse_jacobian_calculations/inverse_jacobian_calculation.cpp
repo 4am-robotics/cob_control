@@ -34,9 +34,9 @@
  * Calculates the pseudoinverse of the Jacobian by using SVD technique.
  * This allows to get information about singular values and evaluate them.
  */
-Eigen::MatrixXd PInvBySVD::calculate(const InvDiffKinSolverParams& params,
-                                                 boost::shared_ptr<DampingBase> db,
-                                                 const Eigen::MatrixXd& jacobian) const
+Eigen::MatrixXd PInvBySVD::calculate(const TwistControllerParams& params,
+                                     boost::shared_ptr<DampingBase> db,
+                                     const Eigen::MatrixXd& jacobian) const
 {
     Eigen::JacobiSVD<Eigen::MatrixXd> svd(jacobian, Eigen::ComputeThinU | Eigen::ComputeThinV);
     double eps_truncation = params.eps_truncation;
@@ -44,8 +44,7 @@ Eigen::MatrixXd PInvBySVD::calculate(const InvDiffKinSolverParams& params,
     Eigen::VectorXd singularValuesInv = Eigen::VectorXd::Zero(singularValues.rows());
     Eigen::MatrixXd pseudoInverseJacobian;
     uint32_t i = 0;
-    double lambda = db->get_damping_factor(singularValues);
-
+    double lambda = db->getDampingFactor(singularValues, jacobian);
     if(params.numerical_filtering)
     {
         // Formula 20 Singularity-robust Task-priority Redundandancy Resolution
@@ -81,3 +80,36 @@ Eigen::MatrixXd PInvBySVD::calculate(const InvDiffKinSolverParams& params,
     return pseudoInverseJacobian;
 }
 
+
+
+
+
+Eigen::MatrixXd PInvDirect::calculate(const TwistControllerParams& params,
+                                      boost::shared_ptr<DampingBase> db,
+                                      const Eigen::MatrixXd& jacobian) const
+{
+    Eigen::MatrixXd result;
+    Eigen::MatrixXd j_t = jacobian.transpose();
+    uint32_t jac_rows = jacobian.rows();
+    uint32_t jac_cols = jacobian.cols();
+    if(params.damping_method == LEAST_SINGULAR_VALUE)
+    {
+        ROS_ERROR("PInvDirect does not support SVD. Use PInvBySVD class instead!");
+    }
+
+    double lambda = db->getDampingFactor(Eigen::VectorXd::Zero(1, 1), jacobian); // use dummy for singular values.
+    if(jac_cols >= jac_rows)
+    {
+        Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(jac_rows, jac_rows);
+        Eigen::MatrixXd toBeInv = jacobian * j_t + lambda * lambda * ident;
+        result = j_t * toBeInv.inverse();
+    }
+    else
+    {
+        Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(jac_cols, jac_cols);
+        Eigen::MatrixXd toBeInv = j_t * jacobian + lambda * lambda * ident;
+        result = toBeInv.inverse() * j_t;
+    }
+
+    return result;
+}

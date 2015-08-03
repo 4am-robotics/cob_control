@@ -1,5 +1,0 @@
-string frame_id
-uint32 shape_type
----
-bool success
-string message

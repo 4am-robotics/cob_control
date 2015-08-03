@@ -14,7 +14,6 @@ catkin_package(
   DEPENDS eigen
 )
 
-
 ### BUILD ###
 include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${orocos_kdl_INCLUDE_DIRS})
 
@@ -23,7 +22,6 @@ target_link_libraries(output_recorder ${catkin_LIBRARIES} ${EIGEN_LIBRARIES} ${o
 
 add_executable(output_recorder_node src/output_recorder_node.cpp)
 target_link_libraries(output_recorder_node output_recorder)
-
 
 ### INSTALL ###
 install(TARGETS output_recorder_node output_recorder
