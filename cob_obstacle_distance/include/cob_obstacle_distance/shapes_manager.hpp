@@ -30,21 +30,20 @@
 #define SHAPES_MANAGER_HPP_
 
 #include <ros/ros.h>
-#include <vector>
+#include <unordered_map>
 
-#include "cob_obstacle_distance/marker_shapes_interface.hpp"
+#include "cob_obstacle_distance/marker_shapes/marker_shapes_interface.hpp"
 
 /// Class to manage fcl::Shapes and connect with RVIZ marker type.
 class ShapesManager
 {
     private:
-        std::vector<t_ptr_IMarkerShape> shapes_;
-
+        std::unordered_map<std::string, PtrIMarkerShape_t> shapes_;
         const ros::Publisher& pub_;
 
     public:
-        typedef std::vector<t_ptr_IMarkerShape>::iterator t_iter;
-        typedef std::vector<t_ptr_IMarkerShape>::const_iterator t_const_iterator;
+        typedef std::unordered_map<std::string, PtrIMarkerShape_t>::iterator MapIter_t;
+        typedef std::unordered_map<std::string, PtrIMarkerShape_t>::const_iterator MapConstIter_t;
 
         /**
          * Ctor
@@ -56,9 +55,26 @@ class ShapesManager
 
         /**
          * Adds a new shape to the manager.
+         * @param id Key to access the marker shape.
          * @param s Pointer to an already created marker shape.
          */
-        void addShape(t_ptr_IMarkerShape s);
+        void addShape(const std::string& id, PtrIMarkerShape_t s);
+
+        /**
+         * Removes a shape from the manager.
+         * @param id Key to access the marker shape.
+         */
+        void removeShape(const std::string& id);
+
+
+        /**
+         * Tries to return the marker shape if ID is correct.
+         * @param id Key to access the marker shape.
+         * @param s Pointer to an already created marker shape.
+         * @return State of success.
+         */
+        bool getShape(const std::string& id, PtrIMarkerShape_t& s);
+
 
         /**
          * Draw the marker managed by the ShapesManager
@@ -71,10 +87,23 @@ class ShapesManager
          */
         void clear();
 
-        t_iter begin() {return this->shapes_.begin(); }
-        t_const_iterator begin() const {return this->shapes_.begin(); }
-        t_iter end() {return this->shapes_.end(); }
-        t_const_iterator end() const {return this->shapes_.end(); }
+        /**
+         * Number of elements in map.
+         * @return Number of elements in map.
+         */
+        uint32_t count() const;
+
+        /**
+         * Number of elements with the given id in map.
+         * @return Number of elements in map.
+         */
+        uint32_t count(const std::string& id) const;
+
+
+        MapIter_t begin() {return this->shapes_.begin(); }
+        MapConstIter_t begin() const {return this->shapes_.begin(); }
+        MapIter_t end() {return this->shapes_.end(); }
+        MapConstIter_t end() const {return this->shapes_.end(); }
 };
 
 #endif /* SHAPES_MANAGER_HPP_ */

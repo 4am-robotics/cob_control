@@ -31,58 +31,56 @@
 #define DISTANCE_MANAGER_HPP_
 
 #include <vector>
-#include <unordered_map>
+#include <thread>
+#include <mutex>
 #include <boost/scoped_ptr.hpp>
 
+#include <ros/ros.h>
+
 #include <kdl_parser/kdl_parser.hpp>
-#include <kdl/chainfksolvervel_recursive.hpp>
-#include <kdl/chainiksolvervel_pinv.hpp>
-#include <kdl/jntarray.hpp>
-#include <kdl/jntarrayvel.hpp>
-#include <kdl/frames.hpp>
 #include <kdl/tree.hpp>
+#include <kdl/frames.hpp>
 
-#include <sensor_msgs/JointState.h>
-
-#include <Eigen/Core>
-#include <Eigen/LU> // necessary to use several methods on EIGEN Matrices.
+#include <Eigen/Dense>
 
 #include <tf/tf.h>
 #include <tf/transform_listener.h>
 #include <tf_conversions/tf_kdl.h>
 #include <tf_conversions/tf_eigen.h>
 
-#include "cob_obstacle_distance/marker_shapes.hpp"
-#include "cob_obstacle_distance/shapes_manager.hpp"
-#include "cob_obstacle_distance/chainfk_solvers/advanced_chainfksolverpos_recursive.h"
-#include "cob_obstacle_distance/obstacle_distance_data_types.hpp"
-#include "cob_obstacle_distance/Registration.h"
+#include <sensor_msgs/JointState.h>
+#include <moveit_msgs/CollisionObject.h>
+#include "cob_srvs/SetString.h"
+#include "cob_obstacle_distance/PredictDistance.h"
 
-#include <ros/ros.h>
+#include "cob_obstacle_distance/marker_shapes/marker_shapes.hpp"
+#include "cob_obstacle_distance/shapes_manager.hpp"
+#include "cob_obstacle_distance/chainfk_solvers/advanced_chainfksolver_recursive.hpp"
+#include "cob_obstacle_distance/obstacle_distance_data_types.hpp"
+#include "cob_obstacle_distance/frame_to_collision.hpp"
+
 
 class DistanceManager
 {
     private:
-        typedef std::unordered_map<std::string, ObstacleDistance> t_map_ObstacleDistance;
-        typedef std::unordered_map<std::string, ObstacleDistance>::iterator t_map_ObstacleDistance_iter;
-        typedef std::unordered_map<std::string, ObstacleDistance>::const_iterator t_map_ObstacleDistance_citer;
-
-        std::string root_frame_;
+        std::string root_frame_id_;
         std::string chain_base_link_;
         std::string chain_tip_link_;
 
-        t_map_ObstacleDistance obstacle_distances_;
         boost::scoped_ptr<ShapesManager> obstacle_mgr_;
         boost::scoped_ptr<ShapesManager> object_of_interest_mgr_;
 
-        boost::scoped_ptr<AdvancedChainFkSolverPos_recursive> adv_chn_fk_solver_pos_;
-        boost::scoped_ptr<KDL::ChainJntToJacSolver> jnt2jac_;
+        std::vector<std::thread> self_collision_transform_threads_;
+        std::mutex mtx_;
+        std::mutex obstacle_mgr_mtx_;
+        bool stop_sca_threads_;
+
+        boost::scoped_ptr<AdvancedChainFkSolverVel_recursive> adv_chn_fk_solver_vel_;
         KDL::Chain chain_;
 
         ros::NodeHandle& nh_;
         ros::Publisher marker_pub_;
         ros::Publisher obstacle_distances_pub_;
-
         tf::TransformListener tf_listener_;
         Eigen::Affine3d tf_cb_frame_bl_;
 
@@ -91,6 +89,24 @@ class DistanceManager
         KDL::JntArray last_q_;
         KDL::JntArray last_q_dot_;
 
+        FrameToCollision frame_to_collision_;
+
+        static uint32_t seq_nr_;
+
+        /**
+         * Build an obstacle from a message containing a mesh.
+         * @param msg Msg struct that contains mesh info.
+         * @param transform The transformation from a frame in msg header to root_frame_id.
+         */
+        void buildObstacleMesh(const moveit_msgs::CollisionObject::ConstPtr& msg, const tf::StampedTransform& transform);
+
+        /**
+         * Build an obstacle from a message containing a primitive shape.
+         * @param msg Msg struct that contains mesh info.
+         * @param transform The transformation from a frame in msg header to root_frame_id.
+         */
+        void buildObstaclePrimitive(const moveit_msgs::CollisionObject::ConstPtr& msg, const tf::StampedTransform& transform);
+
     public:
         /**
          * @param nh Reference to the ROS node handle.
@@ -98,6 +114,11 @@ class DistanceManager
         DistanceManager(ros::NodeHandle& nh);
 
         ~DistanceManager();
+
+        inline const std::string getRootFrame() const
+        {
+            return this->root_frame_id_;
+        }
 
         /**
          * Clears all managed obstacles and objects of interest.
@@ -108,13 +129,13 @@ class DistanceManager
          * Add a new obstacle to the obstacles that shall be managed.
          * @param s Pointer to an already created MarkerShape that represent an obstacle.
          */
-        void addObstacle(t_ptr_IMarkerShape s);
+        void addObstacle(const std::string& id, PtrIMarkerShape_t s);
 
         /**
          * Add a new object of interest that shall be investigated for collisions.
          * @param s Pointer to an already created MarkerShape that represent the object of interest (i.e. shape in reference frame of segment).
          */
-        void addObjectOfInterest(t_ptr_IMarkerShape s);
+        void addObjectOfInterest(const std::string& id, PtrIMarkerShape_t s);
 
         /**
          * Simply draw all obstacle markers in RVIZ.
@@ -129,17 +150,16 @@ class DistanceManager
         void drawObjectsOfInterest(bool enforceDraw = false);
 
         /**
-         * Check whether a collision between two given shapes has been occurred or not.
-         * @param s1 First shape to be checked against second shape.
-         * @param s2 Second shape to be checked against first shape.
-         */
-        bool collide(t_ptr_IMarkerShape s1, t_ptr_IMarkerShape s2);
-
-        /**
          * Updates the joint states.
          * @param msg Joint state message.
          */
         void jointstateCb(const sensor_msgs::JointState::ConstPtr& msg);
+
+        /**
+         * Registers an obstacle via message.
+         * @param msg MoveIt CollisionObject message type.
+         */
+        void registerObstacle(const moveit_msgs::CollisionObject::ConstPtr& msg);
 
         /**
          * Initialization of ROS robot structure, parameters, publishers and subscribers.
@@ -148,10 +168,17 @@ class DistanceManager
         int init();
 
         /**
-         * tf Transformation between chain_base_link (arm_right_base_link or arm_left_base_link) and the root frame (e.g. base_link)).
-         * @return True if transformation was successfull.
+         * tf Transformation thread between chain_base_link (arm_right_base_link or arm_left_base_link) and the root frame (e.g. base_link)).
+         * Runs endless.
          */
-        bool transform();
+        void transform();
+
+        /**
+         * Thread that runs endless to listen to transforms for the self collision parts of the robot.
+         * This will directly update the self collision obstacle pose.
+         * @param frame_name The frame name of the self collision checking part. Similar to link name in URDF.
+         */
+        void transformSelfCollisionFrames(const std::string frame_name);
 
         /**
          * Calculate the distances between the objects of interest (reference frames at KDL::segments) and obstacles.
@@ -160,27 +187,28 @@ class DistanceManager
         void calculate();
 
         /**
-         * Wait loop until a marker topic subscriber (RVIZ) is available.
-         * @return True if subscriber could be found.
-         */
-        bool waitForMarkerSubscriber();
-
-        /**
          * Registers a new point of interest at a given frame id.
          * @param request The service request for registration of a point of interest (i.e. reference frame id corresponding to segment)
          * @param response Success message.
          * @return Registration service call successfull or not.
          */
-        bool registerPointOfInterest(cob_obstacle_distance::Registration::Request& request,
-                                     cob_obstacle_distance::Registration::Response& response);
+        bool registerPointOfInterest(cob_srvs::SetString::Request& request,
+                                     cob_srvs::SetString::Response& response);
 
         /**
-         * Given a proper shape_type and a absolute position vector a MarkerShape will be generated to represent the object of interest
-         * (i.e. shape in reference frame of segment)
+         * Service to execute a prediction on future joint configuration.
+         * @param request Consists of frames of interest and the future joint config.
+         * @param response Success status and message.
+         * @return State of success.
          */
-        static bool getMarkerShape(uint32_t shape_type,
-                                   const Eigen::Vector3d& abs_pos,
-                                   t_ptr_IMarkerShape& segment_of_interest_marker_shape);
+        bool predictDistance(cob_obstacle_distance::PredictDistance::Request& request,
+                             cob_obstacle_distance::PredictDistance::Response& response);
+
+        /**
+         * Get method with mutex access on transform data.
+         * @return Inverse transformation between chain base and base link.
+         */
+        Eigen::Affine3d getSynchedCbToBlTransform();
 };
 
 #endif /* DISTANCE_MANAGER_HPP_ */

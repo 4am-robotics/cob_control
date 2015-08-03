@@ -41,19 +41,19 @@ class ConstraintParamsBase
 {
     public:
 
-        ConstraintParamsBase(const InvDiffKinSolverParams& params) : params_(params)
+        ConstraintParamsBase(const TwistControllerParams& params) : params_(params)
         {}
 
         ~ConstraintParamsBase()
         {}
 
-        const InvDiffKinSolverParams& getInvDiffKinSolverParams() const
+        const TwistControllerParams& getParams() const
         {
             return this->params_;
         }
 
     protected:
-        const InvDiffKinSolverParams& params_;
+        const TwistControllerParams& params_;
 };
 /* END ConstraintParamsBase *************************************************************************************/
 
@@ -65,7 +65,7 @@ class ConstraintParamsCA : public ConstraintParamsBase
 
         ObstacleDistanceInfo current_distance_;
 
-        ConstraintParamsCA(const InvDiffKinSolverParams& params)
+        ConstraintParamsCA(const TwistControllerParams& params)
         : ConstraintParamsBase(params)
         {}
 
@@ -87,20 +87,24 @@ class ConstraintParamsJLA : public ConstraintParamsBase
 {
     public:
 
-        ConstraintParamsJLA(const InvDiffKinSolverParams& params)
-        : ConstraintParamsBase(params)
-        {}
+        ConstraintParamsJLA(const TwistControllerParams& params)
+        : ConstraintParamsBase(params), joint_idx_(-1)
+        {
+        }
 
         ConstraintParamsJLA(const ConstraintParamsJLA& cpjla)
-        : ConstraintParamsBase(cpjla.params_)
+        : ConstraintParamsBase(cpjla.params_), joint_(cpjla.joint_), joint_idx_(cpjla.joint_idx_)
         {}
 
         virtual ~ConstraintParamsJLA()
         {}
 
+        std::string joint_;
+        int32_t joint_idx_;
+
 };
 /* END ConstraintParamsJLA **************************************************************************************/
 
-typedef boost::shared_ptr<ConstraintParamsBase> tConstraintParamsBase;
+typedef boost::shared_ptr<ConstraintParamsBase> ConstraintParamsBase_t;
 
 #endif /* CONSTRAINT_PARAMS_H_ */

@@ -45,9 +45,9 @@ class IPseudoinverseCalculator
          * @param jacobian The Jacobi matrix.
          * @return A pseudoinverse Jacobian
          */
-        virtual Eigen::MatrixXd calculate(const InvDiffKinSolverParams& params,
-                                                 boost::shared_ptr<DampingBase> db,
-                                                 const Eigen::MatrixXd& jacobian) const = 0;
+        virtual Eigen::MatrixXd calculate(const TwistControllerParams& params,
+                                          boost::shared_ptr<DampingBase> db,
+                                          const Eigen::MatrixXd& jacobian) const = 0;
 
         /**
          * Class has no members so implementing an empty destructor.

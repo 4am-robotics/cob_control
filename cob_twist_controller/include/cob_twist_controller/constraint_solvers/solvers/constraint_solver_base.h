@@ -36,6 +36,7 @@
 #include "cob_twist_controller/damping_methods/damping_base.h"
 #include "cob_twist_controller/constraints/constraint_base.h"
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
+#include "cob_twist_controller/task_stack/task_stack_controller.h"
 
 /// Base class for solvers, defining interface methods.
 template <typename PINV = PInvBySVD>
@@ -45,13 +46,11 @@ class ConstraintSolver
         /**
          * The interface method to solve the inverse kinematics problem. Has to be implemented in inherited classes.
          * @param inCartVelocities The input velocities vector (in cartesian space).
-         * @param q The current joint positions.
-         * @param last_q_dot The last joint velocities.
+         * @param joint_states The joint states with history.
          * @return The calculated new joint velocities.
          */
-        virtual Eigen::MatrixXd solve(const t_Vector6d &in_cart_velocities,
-                                      const KDL::JntArray& q,
-                                      const KDL::JntArray& last_q_dot) const = 0;
+        virtual Eigen::MatrixXd solve(const Vector6d_t& in_cart_velocities,
+                                      const JointStates& joint_states) = 0;
 
         /**
          * Inline method to set the damping
@@ -65,27 +64,33 @@ class ConstraintSolver
         /**
          * Method to initialize the solver if necessary
          */
-        virtual void setConstraints(std::set<tConstraintBase>& constraints)
+        virtual void setConstraints(std::set<ConstraintBase_t>& constraints)
         {
 
+        }
+
+        /**
+         * Method to initialize the solver if necessary
+         */
+        virtual void setJacobianData(const Matrix6Xd_t& jacobian_data)
+        {
+            this->jacobian_data_ = jacobian_data;
         }
 
         virtual ~ConstraintSolver() {}
 
     protected:
 
-        ConstraintSolver(InvDiffKinSolverParams &params,
-                         t_Matrix6Xd &jacobian_data)
-                         : params_(params),
-                           jacobian_data_(jacobian_data)
+        ConstraintSolver(const TwistControllerParams& params, TaskStackController_t& task_stack_controller)
+                         : params_(params), task_stack_controller_(task_stack_controller)
         {
         }
 
-        const InvDiffKinSolverParams& params_; ///< References the inv. diff. kin. solver parameters.
-        const t_Matrix6Xd& jacobian_data_; ///< References the current Jacobian (matrix data only).
+        const TwistControllerParams& params_; ///< References the inv. diff. kin. solver parameters.
+        Matrix6Xd_t jacobian_data_; ///< References the current Jacobian (matrix data only).
         boost::shared_ptr<DampingBase> damping_; ///< The currently set damping method.
-
-        PINV pinv_calc_;
+        PINV pinv_calc_; ///< An instance that helps solving the inverse of the Jacobian.
+        TaskStackController_t& task_stack_controller_;
 };
 
 #endif /* CONSTRAINT_SOLVER_BASE_H_ */
