@@ -35,7 +35,6 @@
 #include <std_srvs/Empty.h>
 #include <cob_srvs/SetString.h>
 
-#include <kdl_conversions/kdl_msg.h>
 #include <cob_cartesian_controller/cartesian_controller.h>
 
 
