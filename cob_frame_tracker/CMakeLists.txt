@@ -1,28 +1,9 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(cob_frame_tracker)
 
-# Load catkin and all dependencies required for this package
-find_package(catkin REQUIRED COMPONENTS
-    roscpp
-    std_msgs
-    sensor_msgs
-    geometry_msgs
-    actionlib_msgs
-    visualization_msgs
-    std_srvs
-    cob_srvs
-    message_generation
-    kdl_parser
-    kdl_conversions
-    tf
-    tf_conversions
-    dynamic_reconfigure
-    interactive_markers
-    control_toolbox
-)
+find_package(catkin REQUIRED COMPONENTS actionlib_msgs cob_srvs control_toolbox dynamic_reconfigure geometry_msgs interactive_markers kdl_conversions kdl_parser message_generation roscpp sensor_msgs std_msgs std_srvs tf_conversions tf visualization_msgs)
 
 find_package(orocos_kdl REQUIRED)
-
 
 ### Message Generation ###
 generate_dynamic_reconfigure_options(cfg/FrameTracker.cfg)
@@ -39,26 +20,10 @@ generate_messages(
   actionlib_msgs
 )
 
-# Declare catkin package
 catkin_package(
-  INCLUDE_DIRS include LIBRARIES cob_frame_tracker CATKIN_DEPENDS
-    roscpp
-    rospy
-    std_msgs
-    sensor_msgs
-    geometry_msgs
-    actionlib_msgs
-    visualization_msgs
-    std_srvs
-    cob_srvs
-    message_runtime
-    kdl_parser
-    kdl_conversions
-    tf
-    tf_conversions
-    dynamic_reconfigure
-    interactive_markers
-    control_toolbox
+  INCLUDE_DIRS include
+  LIBRARIES cob_frame_tracker
+  CATKIN_DEPENDS actionlib_msgs cob_srvs control_toolbox dynamic_reconfigure geometry_msgs interactive_markers kdl_conversions kdl_parser message_runtime roscpp rospy sensor_msgs std_msgs std_srvs tf_conversions tf visualization_msgs
 )
 
 ### BUILD ###
@@ -76,7 +41,6 @@ target_link_libraries(cob_frame_tracker_node cob_frame_tracker ${catkin_LIBRARIE
 
 add_executable(interactive_frame_target_node src/interactive_frame_target_node.cpp)
 target_link_libraries(interactive_frame_target_node interactive_frame_target ${catkin_LIBRARIES})
-
 
 ### INSTALL ###
 install(TARGETS cob_frame_tracker cob_frame_tracker_node interactive_frame_target interactive_frame_target_node

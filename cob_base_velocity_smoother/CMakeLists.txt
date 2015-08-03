@@ -10,7 +10,7 @@ else()
 endif()
 
 catkin_package(
-    CATKIN_DEPENDSs geometry_msgs roscpp std_msg
+    CATKIN_DEPENDS geometry_msgs roscpp std_msgs
 )
 
 ### BUILD ###

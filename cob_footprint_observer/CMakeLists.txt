@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(cob_footprint_observer)
 
-find_package(catkin REQUIRED COMPONENTS roscpp message_generation std_msgs geometry_msgs tf)
+find_package(catkin REQUIRED COMPONENTS geometry_msgs message_generation roscpp std_msgs tf)
 
 if(CMAKE_COMPILER_IS_GNUCXX)
   add_definitions(-std=gnu++0x)
@@ -20,7 +20,7 @@ generate_messages(
 )
 
 catkin_package( 
-    CATKIN_DEPENDS roscpp message_runtime std_msgs geometry_msgs tf
+    CATKIN_DEPENDS geometry_msgs message_runtime roscpp std_msgs tf
 )
 
 ### BUILD ###

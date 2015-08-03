@@ -1,18 +1,15 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(cob_omni_drive_controller)
 
-find_package(catkin REQUIRED COMPONENTS
-  controller_interface std_srvs angles hardware_interface sensor_msgs geometry_msgs nav_msgs tf urdf
-)
+find_package(catkin REQUIRED COMPONENTS angles controller_interface geometry_msgs hardware_interface nav_msgs sensor_msgs std_srvs tf urdf)
 
-find_package(Boost REQUIRED) # COMPONENTS system)
+find_package(Boost REQUIRED)
 
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES cob_omni_drive_geom cob_omni_drive_controller
-  CATKIN_DEPENDS sensor_msgs tf geometry_msgs nav_msgs std_srvs
+  CATKIN_DEPENDS angles controller_interface geometry_msgs hardware_interface nav_msgs sensor_msgs std_srvs tf urdf
 )
-
 
 ### BUILD ###
 include_directories(
@@ -30,7 +27,6 @@ add_library(cob_omni_drive_geom
 add_library(cob_omni_drive_controller src/odom_plugin.cpp src/control_plugin.cpp)
 target_link_libraries(cob_omni_drive_controller cob_omni_drive_geom ${catkin_LIBRARIES})
 add_dependencies(cob_omni_drive_controller cob_omni_drive_controller_generate_messages_cpp)
-
 
 ### INSTALL ###
 install(TARGETS cob_omni_drive_geom cob_omni_drive_controller

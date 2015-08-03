@@ -1,17 +1,15 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(cob_cartesian_controller)
 
-# Load catkin and all dependencies required for this package
-find_package(catkin REQUIRED COMPONENTS roscpp roslib cmake_modules std_msgs geometry_msgs visualization_msgs std_srvs cob_srvs tf kdl_conversions)
+find_package(catkin REQUIRED COMPONENTS cmake_modules cob_srvs geometry_msgs kdl_conversions roscpp std_msgs std_srvs tf visualization_msgs)
 
 find_package(TinyXML REQUIRED)
 find_package(orocos_kdl REQUIRED)
 
-# Declare catkin package
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES cartesian_controller
-  CATKIN_DEPENDS roscpp rospy roslib std_msgs geometry_msgs visualization_msgs std_srvs cob_srvs tf kdl_conversions
+  CATKIN_DEPENDS cob_srvs geometry_msgs kdl_conversions roscpp rospy std_msgs std_srvs tf visualization_msgs
 )
 
 ### BUILD ###

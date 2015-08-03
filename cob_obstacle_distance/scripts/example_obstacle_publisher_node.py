@@ -26,9 +26,8 @@
  *
 """
 import time
-import roslib 
-import rospy
 
+import rospy
 from geometry_msgs.msg import Pose
 from moveit_msgs.msg import CollisionObject
 from shape_msgs.msg import SolidPrimitive
