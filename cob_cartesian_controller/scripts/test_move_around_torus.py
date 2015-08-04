@@ -13,7 +13,9 @@ from simple_script_server.simple_script_server import simple_script_server
 
 from geometry_msgs.msg import Pose
 from cob_cartesian_controller.msg import Profile
+
 import simple_cartesian_interface as sci
+import twist_controller_config as tcc
 
 from tf.transformations import *
 '''
@@ -313,7 +315,6 @@ def move_around_torus():
     ml.move('Move out of singularity', [-0.094, -0.987, 0.93])
     ml.move('Move to center of torus', [-0.09, -0.607, 0.93])
     ml.move('Move through torus', [0.558, -0.614, 0.93])
-
     ml.move('Move to torso', [0.56, -0.25, 0.93], hold_duration=0.3)    
     ml.move('Move away from torso', [0.56, -0.69, 0.93], hold_duration=0.3)    
     ml.move('1st) Move to center of torus (front)', [0.45, -0.66, 0.94], hold_duration=0.3)
@@ -328,14 +329,45 @@ def move_around_torus():
     # ml.move('Move up to center of torus', [0.558, -0.607, 0.93], hold_duration=0.3)
     # ml.move('Move through torus again (behind)', [-0.09, -0.607, 0.93], hold_duration=0.3)
     
+
+def init_dyn_recfg():
+    cli = tcc.TwistControllerReconfigureClient()
+    cli.init()
     
+    cli.set_config_param(tcc.DAMP_METHOD, tcc.TwistController_MANIPULABILITY)
+    cli.set_config_param(tcc.LAMBDA_MAX, 0.1)
+    cli.set_config_param(tcc.W_THRESH, 0.005)
+    cli.set_config_param(tcc.SOLVER, tcc.TwistController_DYN_TASKS_READJ)
+    cli.set_config_param(tcc.K_H, 1.0)
+    
+    cli.set_config_param(tcc.CONSTR_CA, tcc.TwistController_CA)
+    cli.set_config_param(tcc.K_H_CA, -20.0)
+    cli.set_config_param(tcc.DAMP_CA, 0.000001)
+    cli.set_config_param(tcc.ACTIV_THRESH_CA, 0.1)
+    
+    cli.set_config_param(tcc.CONSTR_JLA, tcc.TwistController_JLA)
+    cli.set_config_param(tcc.K_H_JLA, -1.0)
+    cli.set_config_param(tcc.DAMP_JLA, 0.00001)
+    cli.set_config_param(tcc.ACTIV_THRESH_JLA, 10.0)
+    
+    cli.set_config_param(tcc.KIN_EXT, tcc.TwistController_NO_EXTENSION)
+    cli.set_config_param(tcc.KEEP_DIR, True)
+    cli.set_config_param(tcc.ENF_VEL_LIM, True)
+    cli.set_config_param(tcc.ENF_POS_LIM, True)
+    
+    cli.update()
+    cli.close()
+
+
 if __name__ == '__main__':
     rospy.init_node('test_move_around_torus')
     
     client = actionlib.SimpleActionClient('cartesian_trajectory_action', CartesianControllerAction)
     rospy.logwarn("Waiting for ActionServer...")
     client.wait_for_server()
-    rospy.logwarn("...done")
+    rospy.logwarn("...done")  
+    
+    init_dyn_recfg()
     
     sss = simple_script_server()
     sss.move("arm_right", "home")

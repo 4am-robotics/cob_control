@@ -9,6 +9,8 @@ add_definitions(${EIGEN_DEFINITIONS})
 
 find_package(orocos_kdl REQUIRED)
 
+catkin_python_setup()
+
 generate_dynamic_reconfigure_options(
   cfg/TwistController.cfg
 )
