@@ -155,7 +155,6 @@ int DistanceManager::init()
         {
             self_collision_transform_threads_.push_back(std::thread(&DistanceManager::transformSelfCollisionFrames, this, it->first));
         }
-
     }
 
     return 0;
@@ -257,7 +256,6 @@ void DistanceManager::calculate()
         ooi->updatePose(v3, quat);
 
         fcl::CollisionObject ooi_co = ooi->getCollisionObject();
-        ooi.reset();
         fcl::DistanceResult dist_result;
         bool setDistResult = false;
         fcl::CollisionObject result_collision_obj = ooi_co;
