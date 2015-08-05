@@ -53,7 +53,6 @@
 #include <kdl/frames.hpp>
 #include <kdl/jntarray.hpp>
 #include <kdl/jntarrayvel.hpp>
-#include <kdl_conversions/kdl_msg.h>
 
 #include <control_toolbox/pid.h>
 #include <dynamic_reconfigure/server.h>

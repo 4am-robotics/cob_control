@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(cob_cartesian_controller)
 
-find_package(catkin REQUIRED COMPONENTS actionlib_msgs cmake_modules cob_srvs geometry_msgs message_generation roscpp std_msgs std_srvs tf visualization_msgs)
+find_package(catkin REQUIRED COMPONENTS actionlib_msgs actionlib cob_srvs geometry_msgs message_generation roscpp std_msgs std_srvs tf visualization_msgs)
 
 catkin_python_setup()
 
@@ -20,13 +20,13 @@ add_message_files(
 
 generate_messages(
   DEPENDENCIES
-  std_msgs geometry_msgs actionlib_msgs
+  actionlib_msgs geometry_msgs std_msgs
 )
 
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES profile_generator trajectory_interpolator cartesian_controller cartesian_controller_utils
-  CATKIN_DEPENDS actionlib_msgs cob_srvs geometry_msgs message_runtime roscpp rospy std_msgs std_srvs tf visualization_msgs
+  CATKIN_DEPENDS actionlib_msgs actionlib cob_srvs geometry_msgs message_runtime roscpp rospy std_msgs std_srvs tf visualization_msgs
 )
 
 ### BUILD ###
