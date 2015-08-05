@@ -44,6 +44,7 @@ add_dependencies(cob_obstacle_distance ${PROJECT_NAME}_gencpp)
 target_link_libraries(cob_obstacle_distance parsers marker_shapes_management ${fcl_LIBRARIES} ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 
 add_executable(debug_obstacle_distance_node src/debug/debug_obstacle_distance_node.cpp)
+add_dependencies(debug_obstacle_distance_node ${PROJECT_NAME}_generate_messages)
 target_link_libraries(debug_obstacle_distance_node ${catkin_LIBRARIES})
 
 ### Install ###
