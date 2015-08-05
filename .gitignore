@@ -1,0 +1,6 @@
+*~
+*.orig
+*.pyc
+
+*.cproject
+*.project

@@ -4,9 +4,6 @@ import math
 import copy
 from copy import deepcopy
 
-import roslib
-roslib.load_manifest('cob_frame_tracker')
-
 import rospy
 import tf
 from std_srvs.srv import Empty
