@@ -51,7 +51,6 @@
 #include <sensor_msgs/JointState.h>
 #include <moveit_msgs/CollisionObject.h>
 #include "cob_srvs/SetString.h"
-#include "cob_obstacle_distance/PredictDistance.h"
 
 #include "cob_obstacle_distance/marker_shapes/marker_shapes.hpp"
 #include "cob_obstacle_distance/shapes_manager.hpp"
@@ -192,17 +191,8 @@ class DistanceManager
          * @param response Success message.
          * @return Registration service call successfull or not.
          */
-        bool registerPointOfInterest(cob_srvs::SetString::Request& request,
+        bool registerFrameOfInterest(cob_srvs::SetString::Request& request,
                                      cob_srvs::SetString::Response& response);
-
-        /**
-         * Service to execute a prediction on future joint configuration.
-         * @param request Consists of frames of interest and the future joint config.
-         * @param response Success status and message.
-         * @return State of success.
-         */
-        bool predictDistance(cob_obstacle_distance::PredictDistance::Request& request,
-                             cob_obstacle_distance::PredictDistance::Response& response);
 
         /**
          * Get method with mutex access on transform data.

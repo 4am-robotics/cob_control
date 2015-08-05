@@ -83,7 +83,7 @@ class HardwareInterfacePosition : public HardwareInterfaceBase
                                   const TwistControllerParams& params)
         : HardwareInterfaceBase(nh, params)
         {
-            ma_.assign(params.dof, MovingAverage(3));
+            ma_.assign(params.dof, MovingAvg_double_t(3));
             vel_last_.assign(1, std::numeric_limits<double>::quiet_NaN());
             vel_before_last_.assign(1, std::numeric_limits<double>::quiet_NaN());
             
@@ -97,7 +97,7 @@ class HardwareInterfacePosition : public HardwareInterfaceBase
                                    const KDL::JntArray& current_q);
 
     private:
-        std::vector<MovingAverage> ma_;
+        std::vector<MovingAvg_double_t> ma_;
         std::vector<double> vel_last_, vel_before_last_;
         ros::Time last_update_time_;
 
@@ -114,7 +114,7 @@ class HardwareInterfaceJointStates : public HardwareInterfaceBase
                                      const TwistControllerParams& params)
         : HardwareInterfaceBase(nh, params)
         {
-            ma_.assign(params.dof, MovingAverage(3));
+            ma_.assign(params.dof, MovingAvg_double_t(3));
             vel_last_.assign(1, std::numeric_limits<double>::quiet_NaN());
             vel_before_last_.assign(1, std::numeric_limits<double>::quiet_NaN());
             
@@ -136,7 +136,7 @@ class HardwareInterfaceJointStates : public HardwareInterfaceBase
                                    const KDL::JntArray& current_q);
 
     private:
-        std::vector<MovingAverage> ma_;
+        std::vector<MovingAvg_double_t> ma_;
         std::vector<double> vel_last_, vel_before_last_;
         ros::Time last_update_time_;
         

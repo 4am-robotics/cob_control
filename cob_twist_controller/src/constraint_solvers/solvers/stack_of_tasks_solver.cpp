@@ -32,11 +32,6 @@
 
 #include "cob_twist_controller/task_stack/task_stack_controller.h"
 
-
-
-#include "cob_obstacle_distance/PredictDistance.h"
-
-
 #include "cob_twist_controller/constraints/self_motion_magnitude.h"
 
 /*
@@ -63,20 +58,21 @@ Eigen::MatrixXd StackOfTasksSolver::solve(const Vector6d_t& in_cart_velocities,
     Eigen::MatrixXd jacobianPseudoInverse = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
     Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(jacobianPseudoInverse.rows(), this->jacobian_data_.cols());
     Eigen::MatrixXd projector = ident - jacobianPseudoInverse * this->jacobian_data_;
-    Eigen::MatrixXd partialSolution = jacobianPseudoInverse * in_cart_velocities;
-    Eigen::MatrixXd prediction_solution = Eigen::MatrixXd::Zero(partialSolution.rows(), 1);
+    Eigen::MatrixXd particular_solution = jacobianPseudoInverse * in_cart_velocities;
+    KDL::JntArrayVel predict_jnts_vel(joint_states.current_q_.rows());
     for(uint8_t i = 0; i < joint_states.current_q_.rows(); ++i)
     {
-        prediction_solution(i, 0) = partialSolution(i, 0) * 0.02 + joint_states.current_q_(i);
+        predict_jnts_vel.q(i) = particular_solution(i, 0) * 0.02 + joint_states.current_q_(i);
+        predict_jnts_vel.qdot(i) = particular_solution(i, 0);
     }
 
     for (std::set<ConstraintBase_t>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
     {
-        (*it)->update(joint_states, prediction_solution, this->jacobian_data_);
+        (*it)->update(joint_states, predict_jnts_vel, this->jacobian_data_);
         q_dot_0 = (*it)->getPartialValues();
         activation_gain = (*it)->getActivationGain();
         Eigen::MatrixXd tmpHomogeneousSolution = projector * q_dot_0;
-        magnitude = (*it)->getSelfMotionMagnitude(partialSolution, tmpHomogeneousSolution);
+        magnitude = (*it)->getSelfMotionMagnitude(particular_solution, tmpHomogeneousSolution);
         derivative_value = (*it)->getDerivativeValue();
 
         if(activation_gain > 0.0)

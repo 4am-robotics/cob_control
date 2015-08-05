@@ -97,7 +97,9 @@ inline void HardwareInterfacePosition::processResult(const KDL::JntArray& q_dot_
             // Simpson
             double integration_value = static_cast<double>(period.toSec() / 6.0 * (vel_before_last_[i] + 4.0 * (vel_before_last_[i] + vel_last_[i]) + vel_before_last_[i] + vel_last_[i] + q_dot_ik(i)) + current_q(i));
             ma_[i].addElement(integration_value);
-            pos_msg.data.push_back(ma_[i].calcWeightedMovingAverage());
+            double avg = 0.0;
+            ma_[i].calcWeightedMovingAverage(avg);
+            pos_msg.data.push_back(avg);
             
             //publish to interface
             pub_.publish(pos_msg);
@@ -141,7 +143,9 @@ inline void HardwareInterfaceJointStates::processResult(const KDL::JntArray& q_d
             // Simpson
             double integration_value = static_cast<double>(period.toSec() / 6.0 * (vel_before_last_[i] + 4.0 * (vel_before_last_[i] + vel_last_[i]) + vel_before_last_[i] + vel_last_[i] + q_dot_ik(i)) + current_q(i));
             ma_[i].addElement(integration_value);
-            pos_msg.data.push_back(ma_[i].calcWeightedMovingAverage());
+            double avg = 0.0;
+            ma_[i].calcWeightedMovingAverage(avg);
+            pos_msg.data.push_back(avg);
             
             vel_msg.data.push_back(q_dot_ik(i));
         }

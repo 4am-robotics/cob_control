@@ -135,6 +135,7 @@ int8_t ConstraintSolverFactory::resetAll(const TwistControllerParams& params)
 
     this->constraints_ = ConstraintsBuilder_t::createConstraints(params,
                                                                  this->jnt_to_jac_,
+                                                                 this->fk_solver_vel_,
                                                                  this->data_mediator_);
 
     if(!ConstraintSolverFactory::getSolverFactory(params, this->solver_factory_, this->task_stack_controller_))

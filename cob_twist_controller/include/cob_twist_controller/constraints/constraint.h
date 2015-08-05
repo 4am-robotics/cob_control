@@ -29,9 +29,13 @@
 #ifndef CONSTRAINT_H_
 #define CONSTRAINT_H_
 
+#include <kdl/chainfksolvervel_recursive.hpp>
+
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/constraints/constraint_base.h"
 #include "cob_twist_controller/callback_data_mediator.h"
+#include "cob_twist_controller/utils/moving_average.h"
+
 
 /* BEGIN ConstraintParamFactory *********************************************************************************/
 /// Creates constraint parameters and fills them with the values provided by CallbackDataMediator.
@@ -62,6 +66,7 @@ class ConstraintsBuilder
     public:
         static std::set<ConstraintBase_t> createConstraints(const TwistControllerParams& params,
                                                            KDL::ChainJntToJacSolver& jnt_to_jac_,
+                                                           KDL::ChainFkSolverVel_recursive& fk_solver_vel,
                                                            CallbackDataMediator& data_mediator);
 
     private:
@@ -80,9 +85,23 @@ class CollisionAvoidance : public ConstraintBase<T_PARAMS, PRIO>
         CollisionAvoidance(PRIO prio,
                            T_PARAMS constraint_params,
                            CallbackDataMediator& cbdm,
-                           KDL::ChainJntToJacSolver& jnt_to_jac) :
-            ConstraintBase<T_PARAMS, PRIO>(prio, constraint_params, cbdm), jnt_to_jac_(jnt_to_jac)
+                           KDL::ChainJntToJacSolver& jnt_to_jac,
+                           KDL::ChainFkSolverVel_recursive& fk_solver_vel) :
+            ConstraintBase<T_PARAMS, PRIO>(prio, constraint_params, cbdm),
+            jnt_to_jac_(jnt_to_jac),
+            fk_solver_vel_(fk_solver_vel),
+            mvg_avg_dist_vec_(6),
+            mvg_avg_distances_(6),
+            mvg_avg_coll_pnt_vec_(6)
+
         {
+//            std::deque<double> weighting;
+//            weighting.push_back(0.7); // exponential weighting with e^(0.699) series (3rd, 4th, 5th element in series result in 1)
+//            weighting.push_back(0.244);
+//            weighting.push_back(0.056);
+//            mvg_avg_dist_vec_.setWeighting(weighting);
+//            mvg_avg_distances_.setWeighting(weighting);
+//            mvg_avg_coll_pnt_vec_.setWeighting(weighting);
         }
 
         virtual ~CollisionAvoidance()
@@ -114,10 +133,15 @@ class CollisionAvoidance : public ConstraintBase<T_PARAMS, PRIO>
         double calcValue();
         double calcDerivativeValue();
         Eigen::VectorXd calcPartialValues();
+        double predictValue();
+        double getActivationThresholdWithBuffer() const;
 
         KDL::ChainJntToJacSolver& jnt_to_jac_;
+        KDL::ChainFkSolverVel_recursive& fk_solver_vel_;
 
-
+        MovingAverage<Eigen::Vector3d> mvg_avg_dist_vec_;
+        MovingAverage<Eigen::Vector3d> mvg_avg_coll_pnt_vec_;
+        MovingAvg_double_t mvg_avg_distances_;
 };
 /* END CollisionAvoidance ***************************************************************************************/
 
@@ -131,7 +155,11 @@ class JointLimitAvoidance : public ConstraintBase<T_PARAMS, PRIO>
         JointLimitAvoidance(PRIO prio,
                             T_PARAMS constraint_params,
                             CallbackDataMediator& cbdm)
-            : ConstraintBase<T_PARAMS, PRIO>(prio, constraint_params, cbdm)
+            : ConstraintBase<T_PARAMS, PRIO>(prio, constraint_params, cbdm),
+              abs_delta_max_(std::numeric_limits<double>::max()),
+              abs_delta_min_(std::numeric_limits<double>::max()),  // max. delta away from min
+              rel_max_(1.0), // 100% rel. range to max limit
+              rel_min_(1.0) // 100% rel. range to min limit
         {}
 
         virtual ~JointLimitAvoidance()
@@ -153,10 +181,11 @@ class JointLimitAvoidance : public ConstraintBase<T_PARAMS, PRIO>
         double calcDerivativeValue();
         Eigen::VectorXd calcPartialValues();
 
-        std::vector<uint8_t> active_idx_;
-        Eigen::VectorXd values_;
-        Eigen::VectorXd last_values_;
-        Eigen::VectorXd derivative_values_;
+        double abs_delta_max_;
+        double abs_delta_min_;
+        double rel_max_;
+        double rel_min_;
+
 };
 /* END JointLimitAvoidance **************************************************************************************/
 

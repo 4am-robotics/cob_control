@@ -138,7 +138,7 @@ bool CobTwistController::initialize()
 void CobTwistController::reinitServiceRegistration()
 {
     ROS_INFO("Reinit of Service registration!");
-    ros::ServiceClient client = nh_.serviceClient<cob_srvs::SetString>("obstacle_distance/registerPointOfInterest");
+    ros::ServiceClient client = nh_.serviceClient<cob_srvs::SetString>("obstacle_distance/registerFrameOfInterest");
     ROS_WARN_COND(twist_controller_params_.collision_check_frames.size() <= 0,
                   "There are no collision check frames for this manipulator. So nothing will be registered. Ensure parameters are set correctly.");
 
@@ -291,7 +291,7 @@ void CobTwistController::twistStampedCallback(const geometry_msgs::TwistStamped:
         frame.M = KDL::Rotation::Quaternion(transform_tf.getRotation().x(), transform_tf.getRotation().y(), transform_tf.getRotation().z(), transform_tf.getRotation().w());
     }
     catch (tf::TransformException& ex){
-        ROS_ERROR("%s",ex.what());
+        ROS_ERROR("CobTwistController::twistStampedCallback: \n%s",ex.what());
         return;
     }
 
@@ -382,7 +382,7 @@ void CobTwistController::odometryCallback(const nav_msgs::Odometry::ConstPtr& ms
     }
     catch (tf::TransformException& ex)
     {
-        ROS_ERROR("%s",ex.what());
+        ROS_ERROR("CobTwistController::odometryCallback: \n%s",ex.what());
         return;
     }
     

@@ -18,11 +18,6 @@ add_message_files(
   ObstacleDistances.msg
 )
 
-add_service_files(
-  FILES
-  PredictDistance.srv
-)
-
 generate_messages(
   DEPENDENCIES
   geometry_msgs
@@ -32,6 +27,7 @@ catkin_package(
    INCLUDE_DIRS include
    LIBRARIES parsers marker_shapes_management
    CATKIN_DEPENDS cob_srvs dynamic_reconfigure eigen_conversions geometry_msgs joint_state_publisher kdl_conversions kdl_parser message_runtime moveit_msgs robot_state_publisher roscpp roslib rospy rviz sensor_msgs shape_msgs std_msgs tf_conversions tf urdf visualization_msgs xacro
+   DEPENDS assimp
 )
 
 ### BUILD ###

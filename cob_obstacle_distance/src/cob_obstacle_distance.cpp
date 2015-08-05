@@ -43,7 +43,6 @@ int main(int argc, char** argv)
 {
     ros::init(argc, argv, "cob_obstacle_distance");
     ros::NodeHandle nh;
-    ros::Rate r(1.0);
     DistanceManager sm(nh);
 
     if (0 != sm.init())
@@ -54,15 +53,14 @@ int main(int argc, char** argv)
 
     ros::Subscriber jointstate_sub = nh.subscribe("joint_states", 1, &DistanceManager::jointstateCb, &sm);
     ros::Subscriber obstacle_sub = nh.subscribe("obstacle_distance/registerObstacle", 1, &DistanceManager::registerObstacle, &sm);
-    ros::ServiceServer registration_srv = nh.advertiseService("obstacle_distance/registerPointOfInterest" , &DistanceManager::registerPointOfInterest, &sm);
-    ros::ServiceServer distance_prediction_srv = nh.advertiseService("obstacle_distance/predictDistance" , &DistanceManager::predictDistance, &sm);
+    ros::ServiceServer registration_srv = nh.advertiseService("obstacle_distance/registerFrameOfInterest" , &DistanceManager::registerFrameOfInterest, &sm);
 
     //addTestObstacles(sm); // Comment in to see what happens
 
     std::thread t(&DistanceManager::transform, std::ref(sm));
     ROS_INFO_STREAM("Started transform thread.");
 
-    ros::Rate loop_rate(50);
+    ros::Rate loop_rate(30);
     while(ros::ok())
     {
         sm.calculate();

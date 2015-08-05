@@ -51,14 +51,14 @@ tf::StampedTransform CartesianControllerUtils::getStampedTransform(std::string t
     {
         try
         {
-            ros::Time now = ros::Time::now();
+            ros::Time now = ros::Time(0);
             tf_listener_.waitForTransform(target_frame, source_frame, now, ros::Duration(0.5));
             tf_listener_.lookupTransform(target_frame, source_frame, now, stamped_transform);
             transform = true;
         }
         catch (tf::TransformException& ex)
         {
-            ROS_ERROR("%s",ex.what());
+            ROS_ERROR("CartesianControllerUtils::getStampedTransform: \n%s",ex.what());
             ros::Duration(0.1).sleep();
         }
     }while(!transform);
@@ -77,8 +77,7 @@ void CartesianControllerUtils::transformPose(const std::string source_frame, con
     {
         try
         {
-            stamped_in.header.stamp = ros::Time::now();
-
+            stamped_in.header.stamp = ros::Time(0);
             tf_listener_.waitForTransform(target_frame, source_frame, stamped_in.header.stamp, ros::Duration(0.5));
             tf_listener_.transformPose(target_frame, stamped_in, stamped_out);
             pose_out = stamped_out.pose;
@@ -86,7 +85,7 @@ void CartesianControllerUtils::transformPose(const std::string source_frame, con
         }
         catch (tf::TransformException& ex)
         {
-            ROS_ERROR("%s",ex.what());
+            ROS_ERROR("CartesianControllerUtils::transformPose: \n%s",ex.what());
             ros::Duration(0.1).sleep();
         }
     }while(!transform);
