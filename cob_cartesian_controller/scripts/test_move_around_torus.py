@@ -35,7 +35,7 @@ Torus with Radius 0.25 should be placed here (world frame / e.g. odom combined):
 def move_test():
     # Move back down
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = -0.2
     goal.move_lin.y = 0
     goal.move_lin.z = -0.07
@@ -53,7 +53,7 @@ def move_test():
     
     # Move into the direction of the torso
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = 0.0
     goal.move_lin.y = 0.35
     goal.move_lin.z = 0
@@ -71,7 +71,7 @@ def move_test():
     
     rospy.loginfo("Try to move through")
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = 0.8
     goal.move_lin.y = 0.0
     goal.move_lin.z = 0
@@ -89,7 +89,7 @@ def move_test():
     
     rospy.loginfo("Try to move through")
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = 0.1
     goal.move_lin.y = 0.0
     goal.move_lin.z = 0
@@ -108,7 +108,7 @@ def move_test():
        
     rospy.loginfo("Try to move to robot")
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = 0.0
     goal.move_lin.y = 0.15
     goal.move_lin.z = 0
@@ -126,7 +126,7 @@ def move_test():
     
     rospy.loginfo("Try to move away from robot")
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = 0.0
     goal.move_lin.y = -0.3
     goal.move_lin.z = 0
@@ -145,7 +145,7 @@ def move_test():
     # Try to grap down wards in the torus
     rospy.loginfo("Try to move down behind torus")
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = 0.0
     goal.move_lin.y = 0.0
     goal.move_lin.z = -0.15
@@ -166,7 +166,7 @@ def move_test():
     # Try to grap up wards in the torus
     rospy.loginfo("Try to move up behind torus")
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = 0.0
     goal.move_lin.y = 0.0
     goal.move_lin.z = 0.35
@@ -186,7 +186,7 @@ def move_test():
     
     rospy.loginfo("Try to move down again")
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = 0.0
     goal.move_lin.y = 0.0
     goal.move_lin.z = -0.15
@@ -206,7 +206,7 @@ def move_test():
     
     rospy.loginfo("Try to move to robot")
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = 0.0
     goal.move_lin.y = 0.2
     goal.move_lin.z = 0.0
@@ -224,7 +224,7 @@ def move_test():
     
     rospy.loginfo("1) Try to move back")
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = -0.4
     goal.move_lin.y = 0.0
     goal.move_lin.z = 0.0
@@ -242,7 +242,7 @@ def move_test():
     
     rospy.loginfo("2) Try to move back")
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = -0.2
     goal.move_lin.y = 0.0
     goal.move_lin.z = 0.0
@@ -256,14 +256,10 @@ def move_test():
     client.send_goal(goal)
     client.wait_for_result()
 
-#     goal = CartesianControllerGoal()
-#     goal.name = "hold"
-#     goal.hold_time = 0.5
-#     client.send_goal(goal)
-#     client.wait_for_result()
+#     time.sleep(0.5)
 #     
 #     goal = CartesianControllerGoal()
-#     goal.name = "move_lin"
+#     goal.move_type = CartesianControllerGoal.LIN
 #     goal.move_lin.x = 0.0
 #     goal.move_lin.y = 0.3
 #     goal.move_lin.z = 0.0

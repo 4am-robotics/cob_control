@@ -16,7 +16,7 @@ if __name__ == '__main__':
     # Fill in the goal here
     goal = CartesianControllerGoal()
 
-    goal.name = "move_circ"
+    goal.move_type = CartesianControllerGoal.CIRC
     goal.move_circ.pose_center.position.x = 0.0
     goal.move_circ.pose_center.position.y = 0.7
     goal.move_circ.pose_center.position.z = 1.0

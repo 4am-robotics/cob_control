@@ -31,7 +31,7 @@
 
 
 bool TrajectoryProfileGeneratorLin::calculateProfile(std::vector<double>* path_matrix,
-                                                     double Se, double Se_roll, double Se_pitch, double Se_yaw,
+                                                     const double Se, const double Se_roll, const double Se_pitch, const double Se_yaw,
                                                      cob_cartesian_controller::MoveLinStruct& move_lin)
 {
     if(move_lin.profile.profile_type == cob_cartesian_controller::Profile::RAMP)
@@ -52,7 +52,7 @@ bool TrajectoryProfileGeneratorLin::calculateProfile(std::vector<double>* path_m
 }
 
 bool TrajectoryProfileGeneratorLin::calculateRampProfile(std::vector<double>* path_matrix,
-                                                         double Se, double Se_roll, double Se_pitch, double Se_yaw,
+                                                         const double Se, const double Se_roll, const double Se_pitch, const double Se_yaw,
                                                          cob_cartesian_controller::MoveLinStruct& move_lin)
 {
     std::vector<double> linear_path, roll_path, pitch_path, yaw_path;
@@ -135,16 +135,16 @@ bool TrajectoryProfileGeneratorLin::calculateRampProfile(std::vector<double>* pa
     yaw_path.resize(max_steps, yaw_path.back());
 
     // Put the interpolated paths into the path_matrix
-    path_matrix[0] = linear_path;
-    path_matrix[1] = roll_path;
-    path_matrix[2] = pitch_path;
-    path_matrix[3] = yaw_path;
+    path_matrix[LIN_INDEX] = linear_path;
+    path_matrix[ROLL_INDEX] = roll_path;
+    path_matrix[PITCH_INDEX] = pitch_path;
+    path_matrix[YAW_INDEX] = yaw_path;
     
     return true;
 }
 
 bool TrajectoryProfileGeneratorLin::calculateSinoidProfile(std::vector<double>* path_matrix,
-                                                           double Se, double Se_roll, double Se_pitch, double Se_yaw,
+                                                           const double Se, const double Se_roll, const double Se_pitch, const double Se_yaw,
                                                            cob_cartesian_controller::MoveLinStruct& move_lin)
 {
     std::vector<double> linear_path, roll_path, pitch_path, yaw_path;
@@ -227,15 +227,15 @@ bool TrajectoryProfileGeneratorLin::calculateSinoidProfile(std::vector<double>* 
     yaw_path.resize(max_steps, yaw_path.back());
 
     // Put the interpolated paths into the path_matrix
-    path_matrix[0] = linear_path;
-    path_matrix[1] = roll_path;
-    path_matrix[2] = pitch_path;
-    path_matrix[3] = yaw_path;
+    path_matrix[LIN_INDEX] = linear_path;
+    path_matrix[ROLL_INDEX] = roll_path;
+    path_matrix[PITCH_INDEX] = pitch_path;
+    path_matrix[YAW_INDEX] = yaw_path;
     
     return true;
 }
 
-bool TrajectoryProfileGeneratorLin::generateRampPath(std::vector<double>& path_array, double vel_max, double accl_max, double Se_max, int steps_max)
+bool TrajectoryProfileGeneratorLin::generateRampPath(std::vector<double>& path_array, double vel_max, double accl_max, const double Se_max, const int steps_max)
 {
     double tv, tb, te = 0.0;
     int steps_te, steps_tv, steps_tb = 0;
@@ -291,7 +291,7 @@ bool TrajectoryProfileGeneratorLin::generateRampPath(std::vector<double>& path_a
     return true;
 }
 
-bool TrajectoryProfileGeneratorLin::generateSinoidPath(std::vector<double>& path_array, double vel_max, double accl_max, double Se_max, int steps_max)
+bool TrajectoryProfileGeneratorLin::generateSinoidPath(std::vector<double>& path_array, double vel_max, double accl_max, const double Se_max, const int steps_max)
 {
     double tv, tb, te = 0.0;
     int steps_te, steps_tv, steps_tb = 0;
@@ -346,7 +346,7 @@ bool TrajectoryProfileGeneratorLin::generateSinoidPath(std::vector<double>& path
 }
 
 bool TrajectoryProfileGeneratorLin::generateRampPathWithTe(std::vector<double>& path_array, double te, 
-                                                           double accl_max, double Se_max, int steps_max, double start_angle)
+                                                           double accl_max, const double Se_max, const int steps_max, const double start_angle)
 {
     double tv,tb = 0.0;
     int steps_te, steps_tv, steps_tb = 0;
@@ -402,7 +402,7 @@ bool TrajectoryProfileGeneratorLin::generateRampPathWithTe(std::vector<double>& 
 }
 
 bool TrajectoryProfileGeneratorLin::generateSinoidPathWithTe(std::vector<double>& path_array, double te, 
-                                                    double accl_max, double Se_max, int steps_max, double start_angle)
+                                                    double accl_max, const double Se_max, const int steps_max, const double start_angle)
 {
     double tv,tb = 0.0;
     int steps_te, steps_tv, steps_tb = 0;

@@ -32,9 +32,9 @@
 int main(int argc, char **argv)
 {
 	ros::init (argc, argv, "cartesian_controller_node");
-	CartesianController *cc = new CartesianController();
+	CartesianController cc;
 	
-	if(!cc->initialize())
+	if(!cc.initialize())
 	{
 		ROS_ERROR("Initialization failed");
 		return -1;

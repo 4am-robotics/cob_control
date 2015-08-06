@@ -32,7 +32,6 @@
 #include <std_msgs/Float64MultiArray.h>
 #include <sensor_msgs/JointState.h>
 
-#include <limits>
 #include <boost/thread/mutex.hpp>
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
@@ -84,8 +83,6 @@ class HardwareInterfacePosition : public HardwareInterfaceBase
         : HardwareInterfaceBase(nh, params)
         {
             ma_.assign(params.dof, MovingAvg_double_t(3));
-            vel_last_.assign(1, std::numeric_limits<double>::quiet_NaN());
-            vel_before_last_.assign(1, std::numeric_limits<double>::quiet_NaN());
             
             last_update_time_ = ros::Time::now();
             pub_ = nh.advertise<std_msgs::Float64MultiArray>("joint_group_position_controller/command", 1);
@@ -115,8 +112,6 @@ class HardwareInterfaceJointStates : public HardwareInterfaceBase
         : HardwareInterfaceBase(nh, params)
         {
             ma_.assign(params.dof, MovingAvg_double_t(3));
-            vel_last_.assign(1, std::numeric_limits<double>::quiet_NaN());
-            vel_before_last_.assign(1, std::numeric_limits<double>::quiet_NaN());
             
             last_update_time_ = ros::Time::now();
             pub_ = nh.advertise<sensor_msgs::JointState>("joint_states", 1);

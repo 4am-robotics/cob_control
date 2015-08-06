@@ -46,11 +46,11 @@ public:
     ~TrajectoryProfileGeneratorCirc()
     {}
 
-    bool calculateProfile(std::vector<double>& path_array, double Se, cob_cartesian_controller::ProfileStruct profile);
+    bool calculateProfile(std::vector<double>& path_array, const double Se, cob_cartesian_controller::ProfileStruct& profile);
 
 private:
-    bool calculateRampProfile(std::vector<double>& path_array, double Se, cob_cartesian_controller::ProfileStruct profile);
-    bool calculateSinoidProfile(std::vector<double>& path_array, double Se, cob_cartesian_controller::ProfileStruct profile);
+    bool calculateRampProfile(std::vector<double>& path_array, const double Se, cob_cartesian_controller::ProfileStruct& profile);
+    bool calculateSinoidProfile(std::vector<double>& path_array, const double Se, cob_cartesian_controller::ProfileStruct& profile);
 
     double update_rate_;
     double t_ipo_;

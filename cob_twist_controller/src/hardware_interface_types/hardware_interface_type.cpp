@@ -89,8 +89,7 @@ inline void HardwareInterfacePosition::processResult(const KDL::JntArray& q_dot_
     ros::Duration period = now - last_update_time_;
     last_update_time_ = now;
 
-    ///check for proper initialization (quiet_NaN == quiet_NaN -> false)
-    if(vel_before_last_.front() == vel_before_last_.front())
+    if(!vel_before_last_.empty())
     {
         for(unsigned int i = 0; i < params_.dof; ++i)
         {
@@ -135,8 +134,7 @@ inline void HardwareInterfaceJointStates::processResult(const KDL::JntArray& q_d
     ros::Duration period = now - last_update_time_;
     last_update_time_ = now;
 
-    ///check for proper initialization (quiet_NaN == quiet_NaN -> false)
-    if(vel_before_last_.front() == vel_before_last_.front())
+    if(!vel_before_last_.empty())
     {
         for(unsigned int i = 0; i < params_.dof; ++i)
         {

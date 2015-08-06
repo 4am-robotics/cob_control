@@ -30,7 +30,7 @@
 #include <cob_cartesian_controller/Profile.h>
 
 
-bool TrajectoryProfileGeneratorCirc::calculateProfile(std::vector<double>& path_array, double Se, cob_cartesian_controller::ProfileStruct profile)
+bool TrajectoryProfileGeneratorCirc::calculateProfile(std::vector<double>& path_array, const double Se, cob_cartesian_controller::ProfileStruct& profile)
 {
     if(profile.profile_type == cob_cartesian_controller::Profile::RAMP)
     {
@@ -49,7 +49,7 @@ bool TrajectoryProfileGeneratorCirc::calculateProfile(std::vector<double>& path_
     }
 }
 
-bool TrajectoryProfileGeneratorCirc::calculateRampProfile(std::vector<double>& path_array, double Se, cob_cartesian_controller::ProfileStruct profile)
+bool TrajectoryProfileGeneratorCirc::calculateRampProfile(std::vector<double>& path_array, const double Se, cob_cartesian_controller::ProfileStruct& profile)
 {
     double vel_max = profile.vel;
     double accl_max = profile.accl;
@@ -105,7 +105,7 @@ bool TrajectoryProfileGeneratorCirc::calculateRampProfile(std::vector<double>& p
     return true;
 }
 
-bool TrajectoryProfileGeneratorCirc::calculateSinoidProfile(std::vector<double>& path_array, double Se, cob_cartesian_controller::ProfileStruct profile)
+bool TrajectoryProfileGeneratorCirc::calculateSinoidProfile(std::vector<double>& path_array, const double Se, cob_cartesian_controller::ProfileStruct& profile)
 {
     double vel_max = profile.vel;
     double accl_max = profile.accl;
