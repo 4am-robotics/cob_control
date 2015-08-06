@@ -34,8 +34,6 @@
 #include "cob_twist_controller/constraint_solvers/solvers/wln_joint_limit_avoidance_solver.h"
 #include "cob_twist_controller/constraint_solvers/solvers/weighted_least_norm_solver.h"
 #include "cob_twist_controller/constraint_solvers/solvers/gradient_projection_method_solver.h"
-#include "cob_twist_controller/constraint_solvers/solvers/stack_of_tasks_solver.h"
-#include "cob_twist_controller/constraint_solvers/solvers/stack_of_tasks_gpm_solver.h"
 #include "cob_twist_controller/constraint_solvers/solvers/task_priority_solver.h"
 #include "cob_twist_controller/constraint_solvers/solvers/dynamic_tasks_readjust_solver.h"
 
@@ -102,12 +100,6 @@ bool ConstraintSolverFactory::getSolverFactory(const TwistControllerParams& para
             break;
         case GPM:
             solver_factory.reset(new SolverFactory<GradientProjectionMethodSolver>(params, task_stack_controller));
-            break;
-        case TASK_STACK_NO_GPM:
-            solver_factory.reset(new SolverFactory<StackOfTasksSolver>(params, task_stack_controller));
-            break;
-        case TASK_STACK_GPM:
-            solver_factory.reset(new SolverFactory<StackOfTasksGPMSolver>(params, task_stack_controller));
             break;
         case TASK_2ND_PRIO:
             solver_factory.reset(new SolverFactory<TaskPrioritySolver>(params, task_stack_controller));
