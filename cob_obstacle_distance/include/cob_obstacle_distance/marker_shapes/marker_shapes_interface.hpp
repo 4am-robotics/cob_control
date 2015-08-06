@@ -42,19 +42,31 @@ class IMarkerShape
 {
     protected:
         static uint32_t class_ctr_;
+        bool is_drawn_;
+        visualization_msgs::Marker marker_;
+        geometry_msgs::Pose origin_;
 
     public:
          IMarkerShape();
          virtual uint32_t getId() const = 0;
          virtual void setColor(double color_r, double color_g, double color_b, double color_a = 1.0) = 0;
          virtual visualization_msgs::Marker getMarker() = 0;
-         virtual void setDrawn() = 0;
-         virtual bool isDrawn() const = 0;
          virtual void updatePose(const geometry_msgs::Vector3& pos, const geometry_msgs::Quaternion& quat) = 0;
          virtual void updatePose(const geometry_msgs::Pose& pose) = 0;
          virtual fcl::CollisionObject getCollisionObject() const = 0;
          virtual geometry_msgs::Pose getMarkerPose() const = 0;
          virtual geometry_msgs::Pose getOriginRelToFrame() const = 0;
+
+         inline void setDrawn()
+         {
+             this->is_drawn_ = true;
+         }
+
+         inline bool isDrawn() const
+         {
+             return this->is_drawn_;
+         }
+
          virtual ~IMarkerShape() {}
 };
 /* END IMarkerShape *********************************************************************************************/

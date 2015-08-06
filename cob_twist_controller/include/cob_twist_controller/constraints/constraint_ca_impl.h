@@ -109,7 +109,7 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calculate()
 
     const double pred_min_dist = this->predictValue();
     const double activation = this->getActivationThreshold();
-    const double critical = 0.5 * activation;
+    const double critical = 0.2 * activation;
     const double activation_buffer = this->getActivationThresholdWithBuffer();
 
     if(this->state_.getCurrent() == CRITICAL && pred_min_dist < d.min_distance)

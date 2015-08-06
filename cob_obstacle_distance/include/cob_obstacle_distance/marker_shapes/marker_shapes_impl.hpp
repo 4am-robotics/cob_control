@@ -37,7 +37,7 @@ template <typename T>
 MarkerShape<T>::MarkerShape(const std::string& root_frame, T& fcl_object,
       double x, double y, double z,
       double quat_x, double quat_y, double quat_z, double quat_w,
-      double color_r, double color_g, double color_b, double color_a) : fcl_marker_converter_(fcl_object), is_drawn_(false)
+      double color_r, double color_g, double color_b, double color_a) : fcl_marker_converter_(fcl_object)
 {
     this->init(root_frame, x, y, z, quat_x, quat_y, quat_z, quat_w, color_r, color_g, color_b, color_a);
 }
@@ -46,7 +46,7 @@ MarkerShape<T>::MarkerShape(const std::string& root_frame, T& fcl_object,
 template <typename T>
 MarkerShape<T>::MarkerShape(const std::string& root_frame, double x, double y, double z,
             double quat_x, double quat_y, double quat_z, double quat_w,
-            double color_r, double color_g, double color_b, double color_a) : is_drawn_(false)
+            double color_r, double color_g, double color_b, double color_a)
 {
     this->init(root_frame, x, y, z, quat_x, quat_y, quat_z, quat_w, color_r, color_g, color_b, color_a);
 }
@@ -92,8 +92,11 @@ void MarkerShape<T>::init(const std::string& root_frame, double x, double y, dou
     marker_.lifetime = ros::Duration();
 
     fcl_marker_converter_.assignValues(marker_);
-    fcl_marker_converter_.getBvhModel(this->bvh_);
-    this->bvh_.computeLocalAABB();
+
+    BVH_RSS_t bvh;
+    fcl_marker_converter_.getBvhModel(bvh);
+    this->ptr_fcl_bvh_.reset(new BVH_RSS_t(bvh));
+    this->ptr_fcl_bvh_->computeLocalAABB();
 }
 
 
@@ -124,20 +127,6 @@ inline visualization_msgs::Marker MarkerShape<T>::getMarker()
 
 
 template <typename T>
-inline void MarkerShape<T>::setDrawn()
-{
-    this->is_drawn_ = true;
-}
-
-
-template <typename T>
-inline bool MarkerShape<T>::isDrawn() const
-{
-    return this->is_drawn_;
-}
-
-
-template <typename T>
 fcl::CollisionObject MarkerShape<T>::getCollisionObject() const
 {
     fcl::Transform3f x(fcl::Quaternion3f(this->marker_.pose.orientation.w,
@@ -147,7 +136,7 @@ fcl::CollisionObject MarkerShape<T>::getCollisionObject() const
                        fcl::Vec3f(this->marker_.pose.position.x,
                                   this->marker_.pose.position.y,
                                   this->marker_.pose.position.z));
-    fcl::CollisionObject cobj(boost::shared_ptr<fcl::CollisionGeometry>(new BVH_RSS_t(this->bvh_)), x);
+    fcl::CollisionObject cobj(this->ptr_fcl_bvh_, x);
     return cobj;
 }
 

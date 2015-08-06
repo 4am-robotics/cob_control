@@ -90,18 +90,18 @@ class CollisionAvoidance : public ConstraintBase<T_PARAMS, PRIO>
             ConstraintBase<T_PARAMS, PRIO>(prio, constraint_params, cbdm),
             jnt_to_jac_(jnt_to_jac),
             fk_solver_vel_(fk_solver_vel),
-            mvg_avg_dist_vec_(6),
-            mvg_avg_distances_(6),
-            mvg_avg_coll_pnt_vec_(6)
+            mvg_avg_dist_vec_(3, false),
+            mvg_avg_distances_(3, false),
+            mvg_avg_coll_pnt_vec_(3, false)
 
         {
-//            std::deque<double> weighting;
-//            weighting.push_back(0.7); // exponential weighting with e^(0.699) series (3rd, 4th, 5th element in series result in 1)
-//            weighting.push_back(0.244);
-//            weighting.push_back(0.056);
-//            mvg_avg_dist_vec_.setWeighting(weighting);
-//            mvg_avg_distances_.setWeighting(weighting);
-//            mvg_avg_coll_pnt_vec_.setWeighting(weighting);
+            std::deque<double> weighting;
+            weighting.push_back(0.7); // exponential weighting with e^(0.699) series (3rd, 4th, 5th element in series result in 1)
+            weighting.push_back(0.244);
+            weighting.push_back(0.056);
+            mvg_avg_dist_vec_.setWeighting(weighting);
+            mvg_avg_distances_.setWeighting(weighting);
+            mvg_avg_coll_pnt_vec_.setWeighting(weighting);
         }
 
         virtual ~CollisionAvoidance()
