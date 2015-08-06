@@ -74,8 +74,8 @@ enum SolverTypes
     DEFAULT_SOLVER = cob_twist_controller::TwistController_DEFAULT_SOLVER,
     WLN = cob_twist_controller::TwistController_WLN,
     GPM = cob_twist_controller::TwistController_GPM,
+    STACK_OF_TASKS = cob_twist_controller::TwistController_STACK_OF_TASKS,
     TASK_2ND_PRIO = cob_twist_controller::TwistController_TASK_2ND_PRIO,
-    DYN_TASKS_READJ = cob_twist_controller::TwistController_DYN_TASKS_READJ,
 };
 
 enum ConstraintTypesCA
