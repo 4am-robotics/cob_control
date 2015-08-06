@@ -83,14 +83,13 @@ inline void HardwareInterfaceVelocity::processResult(const KDL::JntArray& q_dot_
 inline void HardwareInterfacePosition::processResult(const KDL::JntArray& q_dot_ik,
                                                      const KDL::JntArray& current_q)
 {
-    std_msgs::Float64MultiArray pos_msg;
-
     ros::Time now = ros::Time::now();
     ros::Duration period = now - last_update_time_;
     last_update_time_ = now;
 
     if(!vel_before_last_.empty())
     {
+        std_msgs::Float64MultiArray pos_msg;
         for(unsigned int i = 0; i < params_.dof; ++i)
         {
             // Simpson
@@ -99,10 +98,9 @@ inline void HardwareInterfacePosition::processResult(const KDL::JntArray& q_dot_
             double avg = 0.0;
             ma_[i].calcWeightedMovingAverage(avg);
             pos_msg.data.push_back(avg);
-            
-            //publish to interface
-            pub_.publish(pos_msg);
         }
+        //publish to interface
+        pub_.publish(pos_msg);
     }
     
     // Continuously shift the vectors for simpson integration
@@ -128,14 +126,13 @@ inline void HardwareInterfacePosition::processResult(const KDL::JntArray& q_dot_
 inline void HardwareInterfaceJointStates::processResult(const KDL::JntArray& q_dot_ik,
                                                         const KDL::JntArray& current_q)
 {
-    std_msgs::Float64MultiArray vel_msg, pos_msg;
-
     ros::Time now = ros::Time::now();
     ros::Duration period = now - last_update_time_;
     last_update_time_ = now;
 
     if(!vel_before_last_.empty())
     {
+        std_msgs::Float64MultiArray vel_msg, pos_msg;
         for(unsigned int i = 0; i < params_.dof; ++i)
         {
             // Simpson
