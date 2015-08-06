@@ -32,248 +32,6 @@ Torus with Radius 0.25 should be placed here (world frame / e.g. odom combined):
 
 '''
 
-def move_test():
-    # Move back down
-    goal = CartesianControllerGoal()
-    goal.move_type = CartesianControllerGoal.LIN
-    goal.move_lin.x = -0.2
-    goal.move_lin.y = 0
-    goal.move_lin.z = -0.07
-    goal.move_lin.roll = 0.0
-    goal.move_lin.pitch = 0.0
-    goal.move_lin.yaw = 0.0
-    goal.move_lin.profile.vel = 0.1
-    goal.move_lin.profile.accl = 0.2
-    goal.move_lin.profile.profile_type = Profile.SINOID
-    goal.move_lin.rotate_only = False
-    client.send_goal(goal)
-    client.wait_for_result()
-
-    time.sleep(0.1)    
-    
-    # Move into the direction of the torso
-    goal = CartesianControllerGoal()
-    goal.move_type = CartesianControllerGoal.LIN
-    goal.move_lin.x = 0.0
-    goal.move_lin.y = 0.35
-    goal.move_lin.z = 0
-    goal.move_lin.roll = 0.0
-    goal.move_lin.pitch = 0.0
-    goal.move_lin.yaw = 0.0
-    goal.move_lin.profile.vel = 0.1
-    goal.move_lin.profile.accl = 0.2
-    goal.move_lin.profile.profile_type = Profile.SINOID
-    goal.move_lin.rotate_only = False
-    client.send_goal(goal)
-    client.wait_for_result()
-    
-    time.sleep(0.1)
-    
-    rospy.loginfo("Try to move through")
-    goal = CartesianControllerGoal()
-    goal.move_type = CartesianControllerGoal.LIN
-    goal.move_lin.x = 0.8
-    goal.move_lin.y = 0.0
-    goal.move_lin.z = 0
-    goal.move_lin.roll = 0.0
-    goal.move_lin.pitch = 0.0
-    goal.move_lin.yaw = 0.0
-    goal.move_lin.profile.vel = 0.1
-    goal.move_lin.profile.accl = 0.2
-    goal.move_lin.profile.profile_type = Profile.SINOID
-    goal.move_lin.rotate_only = False
-    client.send_goal(goal)
-    client.wait_for_result()
-    
-    time.sleep(0.5)
-    
-    rospy.loginfo("Try to move through")
-    goal = CartesianControllerGoal()
-    goal.move_type = CartesianControllerGoal.LIN
-    goal.move_lin.x = 0.1
-    goal.move_lin.y = 0.0
-    goal.move_lin.z = 0
-    goal.move_lin.roll = 0.0
-    goal.move_lin.pitch = 0.0
-    goal.move_lin.yaw = 0.0
-    goal.move_lin.profile.vel = 0.05
-    goal.move_lin.profile.accl = 0.1
-    goal.move_lin.profile.profile_type = Profile.SINOID
-    goal.move_lin.rotate_only = False
-    client.send_goal(goal)
-    client.wait_for_result()
-    
-    time.sleep(0.5)
-    
-       
-    rospy.loginfo("Try to move to robot")
-    goal = CartesianControllerGoal()
-    goal.move_type = CartesianControllerGoal.LIN
-    goal.move_lin.x = 0.0
-    goal.move_lin.y = 0.15
-    goal.move_lin.z = 0
-    goal.move_lin.roll = 0.0
-    goal.move_lin.pitch = 0.0
-    goal.move_lin.yaw = 0.0
-    goal.move_lin.profile.vel = 0.1
-    goal.move_lin.profile.accl = 0.2
-    goal.move_lin.profile.profile_type = Profile.SINOID
-    goal.move_lin.rotate_only = False
-    client.send_goal(goal)
-    client.wait_for_result()
-    
-    time.sleep(0.1)
-    
-    rospy.loginfo("Try to move away from robot")
-    goal = CartesianControllerGoal()
-    goal.move_type = CartesianControllerGoal.LIN
-    goal.move_lin.x = 0.0
-    goal.move_lin.y = -0.3
-    goal.move_lin.z = 0
-    goal.move_lin.roll = 0.0
-    goal.move_lin.pitch = 0.0
-    goal.move_lin.yaw = 0.0
-    goal.move_lin.profile.vel = 0.1
-    goal.move_lin.profile.accl = 0.2
-    goal.move_lin.profile.profile_type = Profile.SINOID
-    goal.move_lin.rotate_only = False
-    client.send_goal(goal)
-    client.wait_for_result()
-    
-    time.sleep(0.1)
-    
-    # Try to grap down wards in the torus
-    rospy.loginfo("Try to move down behind torus")
-    goal = CartesianControllerGoal()
-    goal.move_type = CartesianControllerGoal.LIN
-    goal.move_lin.x = 0.0
-    goal.move_lin.y = 0.0
-    goal.move_lin.z = -0.15
-    goal.move_lin.roll = 0.0
-    goal.move_lin.pitch = -45.0
-    goal.move_lin.yaw = 0.0
-    goal.move_lin.profile.vel = 0.1
-    goal.move_lin.profile.accl = 0.2
-    goal.move_lin.profile.profile_type = Profile.SINOID
-    goal.move_lin.rotate_only = False
-    client.send_goal(goal)
-    client.wait_for_result()
-    result = client.get_result()
-    rospy.loginfo("Result: " + str(result))
-    
-    time.sleep(0.3)
-    
-    # Try to grap up wards in the torus
-    rospy.loginfo("Try to move up behind torus")
-    goal = CartesianControllerGoal()
-    goal.move_type = CartesianControllerGoal.LIN
-    goal.move_lin.x = 0.0
-    goal.move_lin.y = 0.0
-    goal.move_lin.z = 0.35
-    goal.move_lin.roll = 0.0
-    goal.move_lin.pitch = 45.0
-    goal.move_lin.yaw = 0.0
-    goal.move_lin.profile.vel = 0.1
-    goal.move_lin.profile.accl = 0.2
-    goal.move_lin.profile.profile_type = Profile.SINOID
-    goal.move_lin.rotate_only = False
-    client.send_goal(goal)
-    client.wait_for_result()
-    result = client.get_result()
-    rospy.loginfo("Result: " + str(result))
-    
-    time.sleep(0.3)
-    
-    rospy.loginfo("Try to move down again")
-    goal = CartesianControllerGoal()
-    goal.move_type = CartesianControllerGoal.LIN
-    goal.move_lin.x = 0.0
-    goal.move_lin.y = 0.0
-    goal.move_lin.z = -0.15
-    goal.move_lin.roll = 0.0
-    goal.move_lin.pitch = 0.0
-    goal.move_lin.yaw = 0.0
-    goal.move_lin.profile.vel = 0.1
-    goal.move_lin.profile.accl = 0.2
-    goal.move_lin.profile.profile_type = Profile.SINOID
-    goal.move_lin.rotate_only = False
-    client.send_goal(goal)
-    client.wait_for_result()
-    result = client.get_result()
-    rospy.loginfo("Result: " + str(result))
-    
-    time.sleep(0.3)
-    
-    rospy.loginfo("Try to move to robot")
-    goal = CartesianControllerGoal()
-    goal.move_type = CartesianControllerGoal.LIN
-    goal.move_lin.x = 0.0
-    goal.move_lin.y = 0.2
-    goal.move_lin.z = 0.0
-    goal.move_lin.roll = 0.0
-    goal.move_lin.pitch = 0.0
-    goal.move_lin.yaw = 0.0
-    goal.move_lin.profile.vel = 0.1
-    goal.move_lin.profile.accl = 0.2
-    goal.move_lin.profile.profile_type = Profile.SINOID
-    goal.move_lin.rotate_only = False
-    client.send_goal(goal)
-    client.wait_for_result()
-    
-    time.sleep(0.3)
-    
-    rospy.loginfo("1) Try to move back")
-    goal = CartesianControllerGoal()
-    goal.move_type = CartesianControllerGoal.LIN
-    goal.move_lin.x = -0.4
-    goal.move_lin.y = 0.0
-    goal.move_lin.z = 0.0
-    goal.move_lin.roll = 0.0
-    goal.move_lin.pitch = 0.0
-    goal.move_lin.yaw = 0.0
-    goal.move_lin.profile.vel = 0.1
-    goal.move_lin.profile.accl = 0.2
-    goal.move_lin.profile.profile_type = Profile.SINOID
-    goal.move_lin.rotate_only = False
-    client.send_goal(goal)
-    client.wait_for_result()
-    
-    time.sleep(0.3)
-    
-    rospy.loginfo("2) Try to move back")
-    goal = CartesianControllerGoal()
-    goal.move_type = CartesianControllerGoal.LIN
-    goal.move_lin.x = -0.2
-    goal.move_lin.y = 0.0
-    goal.move_lin.z = 0.0
-    goal.move_lin.roll = 0.0
-    goal.move_lin.pitch = 0.0
-    goal.move_lin.yaw = 0.0
-    goal.move_lin.profile.vel = 0.1
-    goal.move_lin.profile.accl = 0.2
-    goal.move_lin.profile.profile_type = Profile.SINOID
-    goal.move_lin.rotate_only = False
-    client.send_goal(goal)
-    client.wait_for_result()
-
-#     time.sleep(0.5)
-#     
-#     goal = CartesianControllerGoal()
-#     goal.move_type = CartesianControllerGoal.LIN
-#     goal.move_lin.x = 0.0
-#     goal.move_lin.y = 0.3
-#     goal.move_lin.z = 0.0
-#     goal.move_lin.roll = 0.0
-#     goal.move_lin.pitch = 0.0
-#     goal.move_lin.yaw = 0.0
-#     goal.move_lin.profile.vel = 0.1
-#     goal.move_lin.profile.accl = 0.2
-#     goal.move_lin.profile.profile_type = Profile.SINOID
-#     goal.move_lin.rotate_only = False
-#     client.send_goal(goal)
-#     client.wait_for_result()
-    
-    
 class MoveLin(object):
     
     def __init__(self, world, profile, rpy=(1.571, -0.0004, -0.0114,)): # keep ee orientation as started
@@ -291,10 +49,6 @@ class MoveLin(object):
             time.sleep(hold_duration)
         return success
     
-
-
-
-
 def move_around_torus():
     world = "odom_combined"
     profile = Profile()
@@ -318,8 +72,8 @@ def move_around_torus():
     ml.move('1st) Move down', [0.558, -0.607, 0.5], hold_duration=0.4) # leave some time for self-reconfig
     ml.move('2nd) Move down', [0.558, -0.607, 0.5], hold_duration=0.4) # leave some time for self-reconfig
     ml.move('3rd) Move down', [0.558, -0.607, 0.5], hold_duration=0.4) # leave some time for self-reconfig
-    # ml.move('Move up to center of torus', [0.558, -0.607, 0.93], hold_duration=0.3)
-    # ml.move('Move through torus again (behind)', [-0.09, -0.607, 0.93], hold_duration=0.3)
+    ml.move('Move up to center of torus', [0.558, -0.607, 0.93], hold_duration=0.3)
+    ml.move('Move through torus again (behind)', [-0.09, -0.607, 0.93], hold_duration=0.3)
     
 
 def init_dyn_recfg():
@@ -328,12 +82,12 @@ def init_dyn_recfg():
     
     cli.set_config_param(tcc.DAMP_METHOD, tcc.TwistController_MANIPULABILITY)
     cli.set_config_param(tcc.LAMBDA_MAX, 0.1)
-    cli.set_config_param(tcc.W_THRESH, 0.005)
+    cli.set_config_param(tcc.W_THRESH, 0.05)
     cli.set_config_param(tcc.SOLVER, tcc.TwistController_DYN_TASKS_READJ)
     cli.set_config_param(tcc.K_H, 1.0)
     
     cli.set_config_param(tcc.CONSTR_CA, tcc.TwistController_CA)
-    cli.set_config_param(tcc.K_H_CA, -20.0)
+    cli.set_config_param(tcc.K_H_CA, -1.9)
     cli.set_config_param(tcc.DAMP_CA, 0.000001)
     cli.set_config_param(tcc.ACTIV_THRESH_CA, 0.1)
     
@@ -348,6 +102,12 @@ def init_dyn_recfg():
     cli.set_config_param(tcc.ENF_POS_LIM, True)
     
     cli.update()
+    
+    time.sleep(1.0)
+    
+    cli.set_config_param(tcc.K_H_CA, -2.0)
+    cli.update()
+    
     cli.close()
 
 
@@ -365,4 +125,3 @@ if __name__ == '__main__':
     sss.move("arm_right", "home")
     
     move_around_torus()
-    
