@@ -75,7 +75,7 @@ void ShapesManager::draw(bool enforce_draw)
     for(MapIter_t iter = shapes_.begin(); iter != shapes_.end(); ++iter)
     {
         PtrIMarkerShape_t elem = iter->second;
-        if(!(elem->isDrawn()) || enforce_draw)
+        if(elem->isDrawable() && (!(elem->isDrawn()) || enforce_draw))
         {
             ROS_INFO_STREAM("Publishing marker #" << elem->getId() << std::endl);
             visualization_msgs::Marker marker = elem->getMarker();

@@ -51,8 +51,12 @@
 template <typename T_PARAMS, typename PRIO>
 std::string CollisionAvoidance<T_PARAMS, PRIO>::getTaskId() const
 {
+    const TwistControllerParams& params = this->constraint_params_.getParams();
+    const ObstacleDistanceInfo d = this->constraint_params_.current_distance_;
     std::ostringstream oss;
     oss << this->member_inst_cnt_;
+    oss << "_FrameOI#";
+    oss << d.frame_id;
     oss << "_";
     oss << this->priority_;
     std::string taskid = "CollisionAvoidance_" + oss.str();
@@ -109,7 +113,7 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calculate()
 
     const double pred_min_dist = this->predictValue();
     const double activation = this->getActivationThreshold();
-    const double critical = 0.2 * activation;
+    const double critical = 0.25 * activation;
     const double activation_buffer = this->getActivationThresholdWithBuffer();
 
     if(this->state_.getCurrent() == CRITICAL && pred_min_dist < d.min_distance)

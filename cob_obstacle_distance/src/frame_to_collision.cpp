@@ -131,6 +131,7 @@ bool FrameToCollision::initSelfCollision(XmlRpc::XmlRpcValue& self_collision_par
             // Create real obstacles now.
             PtrIMarkerShape_t ptr_obstacle;
             this->getMarkerShapeFromUrdf(Eigen::Vector3d(), Eigen::Quaterniond(), it->first, ptr_obstacle);
+            ptr_obstacle->setDrawable(false); // do not draw the marker in rviz again (are available in robot model->collision enabled...
             sm->addShape(it->first, ptr_obstacle);
         }
     }
