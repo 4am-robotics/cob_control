@@ -61,7 +61,7 @@ tf::StampedTransform CartesianControllerUtils::getStampedTransform(const std::st
             ROS_ERROR("CartesianControllerUtils::getStampedTransform: \n%s",ex.what());
             ros::Duration(0.1).sleep();
         }
-    }while(!transform);
+    }while(!transform && ros::ok());
     
     return stamped_transform;
 }
@@ -88,7 +88,7 @@ void CartesianControllerUtils::transformPose(const std::string source_frame, con
             ROS_ERROR("CartesianControllerUtils::transformPose: \n%s",ex.what());
             ros::Duration(0.1).sleep();
         }
-    }while(!transform);
+    }while(!transform && ros::ok());
 }
 
 

@@ -56,8 +56,8 @@ private:
     bool calculateRampProfile(std::vector<double>* path_matrix, const double Se, const double Se_roll, const double Se_pitch, const double Se_yaw, cob_cartesian_controller::MoveLinStruct& move_lin);
     bool calculateSinoidProfile(std::vector<double>* path_matrix, const double Se, const double Se_roll, const double Se_pitch, const double Se_yaw, cob_cartesian_controller::MoveLinStruct& move_lin);
 
-    bool generateRampPath(std::vector<double>& path_rray, double vel_max, double accel_max, const double Se_max, const int steps_max);
-    bool generateSinoidPath(std::vector<double>& path_rray, double vel_max, double accel_max, const double Se_max, const int steps_max);
+    bool generateRampPath(std::vector<double>& path_array, double vel_max, double accel_max, const double Se_max, const int steps_max);
+    bool generateSinoidPath(std::vector<double>& path_array, double vel_max, double accel_max, const double Se_max, const int steps_max);
 
     bool generateRampPathWithTe(std::vector<double>& path_array, double te, double accl_max, const double Se_max, const int steps_max, const double start_angle);
     bool generateSinoidPathWithTe(std::vector<double>& path_array, double te, double accl_max, const double Se_max, const int steps_max, const double start_angle);
