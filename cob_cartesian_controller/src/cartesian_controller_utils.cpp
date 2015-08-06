@@ -29,7 +29,7 @@
 #include <cob_cartesian_controller/cartesian_controller_utils.h>
 
 
-geometry_msgs::Pose CartesianControllerUtils::getPose(std::string target_frame, std::string source_frame)
+geometry_msgs::Pose CartesianControllerUtils::getPose(const std::string& target_frame, const std::string& source_frame)
 {
     geometry_msgs::Pose pose;
     tf::StampedTransform stamped_transform;
@@ -42,7 +42,7 @@ geometry_msgs::Pose CartesianControllerUtils::getPose(std::string target_frame, 
     return pose;
 }
 
-tf::StampedTransform CartesianControllerUtils::getStampedTransform(std::string target_frame, std::string source_frame)
+tf::StampedTransform CartesianControllerUtils::getStampedTransform(const std::string& target_frame, const std::string& source_frame)
 {
     tf::StampedTransform stamped_transform;
     bool transform = false;
@@ -61,7 +61,7 @@ tf::StampedTransform CartesianControllerUtils::getStampedTransform(std::string t
             ROS_ERROR("CartesianControllerUtils::getStampedTransform: \n%s",ex.what());
             ros::Duration(0.1).sleep();
         }
-    }while(!transform);
+    }while(!transform && ros::ok());
     
     return stamped_transform;
 }
@@ -88,7 +88,7 @@ void CartesianControllerUtils::transformPose(const std::string source_frame, con
             ROS_ERROR("CartesianControllerUtils::transformPose: \n%s",ex.what());
             ros::Duration(0.1).sleep();
         }
-    }while(!transform);
+    }while(!transform && ros::ok());
 }
 
 
@@ -98,7 +98,7 @@ void CartesianControllerUtils::transformPose(const std::string source_frame, con
 // ToDo: Can we simplify this check? 
 //      e.g. use stamped_transform.getOrigin().length() < epsilon
 //      what about orientation distance?
-bool CartesianControllerUtils::inEpsilonArea(tf::StampedTransform stamped_transform, double epsilon)
+bool CartesianControllerUtils::inEpsilonArea(const tf::StampedTransform& stamped_transform, const double epsilon)
 {
     double roll, pitch, yaw;
     stamped_transform.getBasis().getRPY(roll, pitch, yaw);
@@ -124,7 +124,7 @@ bool CartesianControllerUtils::inEpsilonArea(tf::StampedTransform stamped_transf
     }
 }
 
-void CartesianControllerUtils::poseToRPY(geometry_msgs::Pose pose, double& roll, double& pitch, double& yaw)
+void CartesianControllerUtils::poseToRPY(const geometry_msgs::Pose& pose, double& roll, double& pitch, double& yaw)
 {
     tf::Quaternion q;
     tf::quaternionMsgToTF(pose.orientation, q);

@@ -27,6 +27,7 @@
  ****************************************************************/
 #include <math.h>
 #include <algorithm>
+#include <boost/lexical_cast.hpp>
 
 #include <ros/ros.h>
 #include <std_srvs/Empty.h>
@@ -59,7 +60,7 @@ bool CartesianController::initialize()
     if(!nh_private.getParam("target_frame", target_frame_))
     {
         ROS_WARN("Parameter 'target_frame' not set. Using default 'cartesian_target'");
-        target_frame_ = "cartesian_target";
+        target_frame_ = DEFAULT_CARTESIAN_TARGET;
     }
 
 
@@ -74,8 +75,8 @@ bool CartesianController::initialize()
 
     action_name_ = "cartesian_trajectory_action";
     as_.reset(new SAS_CartesianControllerAction_t(nh_, action_name_, false));
-    as_->registerGoalCallback(boost::bind(&CartesianController::goalCB, this));
-    as_->registerPreemptCallback(boost::bind(&CartesianController::preemptCB, this));
+    as_->registerGoalCallback(boost::bind(&CartesianController::goalCallback, this));
+    as_->registerPreemptCallback(boost::bind(&CartesianController::preemptCallback, this));
     as_->start();
 
     ROS_INFO("...done!");
@@ -148,7 +149,7 @@ bool CartesianController::stopTracking()
 
 
 // MovePTP
-bool CartesianController::movePTP(geometry_msgs::Pose target_pose, double epsilon)
+bool CartesianController::movePTP(const geometry_msgs::Pose& target_pose, const double epsilon)
 {
     bool success = false;
     int reached_pos_counter = 0;
@@ -180,7 +181,7 @@ bool CartesianController::movePTP(geometry_msgs::Pose target_pose, double epsilo
             reached_pos_counter++;    // Count up if end effector position is in the epsilon area to avoid wrong values
         }
 
-        if(reached_pos_counter >= 2*update_rate_) //has been close enough to target for 2 seconds
+        if(reached_pos_counter >= static_cast<int>(2*update_rate_)) //has been close enough to target for 2 seconds
         {
             success = true;
             break;
@@ -252,7 +253,7 @@ bool CartesianController::posePathBroadcaster(const geometry_msgs::PoseArray& ca
 }
 
 
-void CartesianController::goalCB()
+void CartesianController::goalCallback()
 {
     geometry_msgs::PoseArray cartesian_path;
     cob_cartesian_controller::CartesianActionStruct action_struct;
@@ -261,7 +262,7 @@ void CartesianController::goalCB()
 
     action_struct = acceptGoal(as_->acceptNewGoal());
 
-    if(action_struct.name == "move_lin")
+    if(action_struct.move_type == cob_cartesian_controller::CartesianControllerGoal::LIN)
     {
         ROS_INFO("move_lin");
 
@@ -298,7 +299,7 @@ void CartesianController::goalCB()
         
         actionSuccess(true, "move_lin succeeded!");
     }
-    else if(action_struct.name == "move_circ")
+    else if(action_struct.move_type == cob_cartesian_controller::CartesianControllerGoal::CIRC)
     {
         ROS_INFO("move_circ");
         
@@ -387,32 +388,32 @@ cob_cartesian_controller::MoveCircStruct CartesianController::convertMoveCirc(co
 cob_cartesian_controller::CartesianActionStruct CartesianController::acceptGoal(boost::shared_ptr<const cob_cartesian_controller::CartesianControllerGoal> goal)
 {
     cob_cartesian_controller::CartesianActionStruct action_struct;
-    action_struct.name = goal->name;
+    action_struct.move_type = goal->move_type;
 
-    if(action_struct.name == "move_lin")
+    if(action_struct.move_type == cob_cartesian_controller::CartesianControllerGoal::LIN)
     {
         action_struct.move_lin = convertMoveLin(goal->move_lin);
     }
-    else if(action_struct.name == "move_circ")
+    else if(action_struct.move_type == cob_cartesian_controller::CartesianControllerGoal::CIRC)
     {
         action_struct.move_circ = convertMoveCirc(goal->move_circ);
     }
     else
     {
-        actionAbort(false, "Unknown trajectory action" + action_struct.name);
+        actionAbort(false, "Unknown trajectory action " + boost::lexical_cast<std::string>(action_struct.move_type));
     }
 
     return action_struct;
 }
 
-void CartesianController::preemptCB()
+void CartesianController::preemptCallback()
 {
     // De-Activate Tracking
     stopTracking();
     actionPreempt(true, "action preempted!");
 }
 
-void CartesianController::actionSuccess(bool success, std::string message)
+void CartesianController::actionSuccess(const bool success, const std::string& message)
 {
     ROS_INFO_STREAM("Goal succeeded: " << message);
     action_result_.success = success;
@@ -420,7 +421,7 @@ void CartesianController::actionSuccess(bool success, std::string message)
     as_->setSucceeded(action_result_, action_result_.message);
 }
 
-void CartesianController::actionPreempt(bool success, std::string message)
+void CartesianController::actionPreempt(const bool success, const std::string& message)
 {
     ROS_WARN_STREAM("Goal preempted: " << message);
     action_result_.success = success;
@@ -428,7 +429,7 @@ void CartesianController::actionPreempt(bool success, std::string message)
     as_->setPreempted(action_result_, action_result_.message);
 }
 
-void CartesianController::actionAbort(bool success, std::string message)
+void CartesianController::actionAbort(const bool success, const std::string& message)
 {
     ROS_ERROR_STREAM("Goal aborted: "  << message);
     action_result_.success = success;

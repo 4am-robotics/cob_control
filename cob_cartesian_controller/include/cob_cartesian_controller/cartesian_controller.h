@@ -47,6 +47,8 @@
 
 typedef actionlib::SimpleActionServer<cob_cartesian_controller::CartesianControllerAction> SAS_CartesianControllerAction_t;
 
+#define DEFAULT_CARTESIAN_TARGET "cartesian_target"
+
 class CartesianController
 {
 public:
@@ -54,18 +56,18 @@ public:
     
     // Main functions
     bool posePathBroadcaster(const geometry_msgs::PoseArray& cartesian_path);
-    bool movePTP(geometry_msgs::Pose target_pose, double epsilon);
+    bool movePTP(const geometry_msgs::Pose& target_pose, double epsilon);
     
     // Helper function
     bool startTracking();
     bool stopTracking();
 
     /// Action interface
-    void goalCB();
-    void preemptCB();
-    void actionSuccess(bool success, std::string message);
-    void actionPreempt(bool success, std::string message);
-    void actionAbort(bool success, std::string message);
+    void goalCallback();
+    void preemptCallback();
+    void actionSuccess(const bool success, const std::string& message);
+    void actionPreempt(const bool success, const std::string& message);
+    void actionAbort(const bool success, const std::string& message);
     
     cob_cartesian_controller::CartesianActionStruct acceptGoal(boost::shared_ptr<const cob_cartesian_controller::CartesianControllerGoal> goal);
     cob_cartesian_controller::MoveLinStruct convertMoveLin(const cob_cartesian_controller::MoveLin& move_lin_msg);

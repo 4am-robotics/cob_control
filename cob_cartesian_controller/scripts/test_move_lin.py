@@ -15,7 +15,7 @@ if __name__ == '__main__':
     # Fill in the goal here
     goal = CartesianControllerGoal()
     
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.pose_goal.position.x = -0.9
     goal.move_lin.pose_goal.position.y = 0.0
     goal.move_lin.pose_goal.position.z = 0.0

@@ -20,7 +20,7 @@ START FROM HOME_POSITION
 
 def move_test():
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = -0.2
     goal.move_lin.y = 0
     goal.move_lin.z = -0.2
@@ -36,7 +36,7 @@ def move_test():
 
    
 #     goal = CartesianControllerGoal()
-#     goal.name = "move_lin"
+#     goal.move_type = CartesianControllerGoal.LIN
 #     goal.move_lin.x = 0.0
 #     goal.move_lin.y = 0.0
 #     goal.move_lin.z = -0.2
@@ -52,7 +52,7 @@ def move_test():
     
     
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = 0.0
     goal.move_lin.y = 0.2
     goal.move_lin.z = 0
@@ -69,7 +69,7 @@ def move_test():
     rospy.sleep(0.5)
     
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = 0.65
     goal.move_lin.y = 0.0
     goal.move_lin.z = 0
@@ -86,7 +86,7 @@ def move_test():
     rospy.sleep(0.5)
     
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = 0.0
     goal.move_lin.y = 0.3
     goal.move_lin.z = 0
@@ -103,7 +103,7 @@ def move_test():
     rospy.sleep(0.5)
     
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = 0.0
     goal.move_lin.y = -0.25
     goal.move_lin.z = 0
@@ -122,7 +122,7 @@ def move_test():
     # Try to grap down wards in the torus
     rospy.loginfo("Try to move down behind torus")
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = 0.0
     goal.move_lin.y = 0.0
     goal.move_lin.z = -0.1
@@ -143,7 +143,7 @@ def move_test():
     # Try to grap up wards in the torus
     rospy.loginfo("Try to move up behind torus")
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = 0.0
     goal.move_lin.y = 0.0
     goal.move_lin.z = 0.4
@@ -163,7 +163,7 @@ def move_test():
     
     rospy.loginfo("Try to move down again")
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = 0.0
     goal.move_lin.y = 0.0
     goal.move_lin.z = -0.1
@@ -183,7 +183,7 @@ def move_test():
     
     rospy.loginfo("Try to move back")
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = -0.6
     goal.move_lin.y = 0.0
     goal.move_lin.z = 0.0
@@ -200,7 +200,7 @@ def move_test():
 #     rospy.sleep(0.5)
 #     
 #     goal = CartesianControllerGoal()
-#     goal.name = "move_lin"
+#     goal.move_type = CartesianControllerGoal.LIN
 #     goal.move_lin.x = 0.0
 #     goal.move_lin.y = 0.3
 #     goal.move_lin.z = 0.0
@@ -219,7 +219,7 @@ def move_test():
 
 def move_lin_x(client, length):
 #     goal = CartesianControllerGoal()
-#     goal.name = "move_lin"
+#     goal.move_type = CartesianControllerGoal.LIN
 #     goal.move_lin.x = length
 #     goal.move_lin.y = 0
 #     goal.move_lin.z = 0
@@ -241,7 +241,7 @@ def move_lin_x(client, length):
 # 
     # Attention: Changes the endeffector position with reference to the world_frame, but the orientation will be changed relatively to the current orientation. 
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = 0.5
     goal.move_lin.y = 0
     goal.move_lin.z = 0
@@ -260,7 +260,7 @@ def move_lin_x(client, length):
 def move_santa(client):
     # Step 1
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = -1.0
     goal.move_lin.y = 0
     goal.move_lin.z = 0
@@ -278,7 +278,7 @@ def move_santa(client):
     
     # Step 2
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = -0.5
     goal.move_lin.y = 0.5
     goal.move_lin.z = 0
@@ -296,7 +296,7 @@ def move_santa(client):
     
     # Step 3
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = 0.5
     goal.move_lin.y = 0.5
     goal.move_lin.z = 0
@@ -314,7 +314,7 @@ def move_santa(client):
     
     # Step 4
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = 1.0
     goal.move_lin.y = 0.0
     goal.move_lin.z = 0
@@ -332,7 +332,7 @@ def move_santa(client):
     
     # Step 5
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = 0.0
     goal.move_lin.y = -1.0
     goal.move_lin.z = 0
@@ -350,7 +350,7 @@ def move_santa(client):
 
     # Step 6
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = -1.0
     goal.move_lin.y = 1.0
     goal.move_lin.z = 0
@@ -368,7 +368,7 @@ def move_santa(client):
     
     # Step 7
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = 0.0
     goal.move_lin.y = -1.0
     goal.move_lin.z = 0
@@ -386,7 +386,7 @@ def move_santa(client):
     
     # Step 8
     goal = CartesianControllerGoal()
-    goal.name = "move_lin"
+    goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = 1.0
     goal.move_lin.y = 1.0
     goal.move_lin.z = 0
@@ -400,7 +400,7 @@ def move_santa(client):
     client.send_goal(goal)
     client.wait_for_result()
 
-#    goal.name = "move_lin"
+#    goal.move_type = CartesianControllerGoal.LIN
 #    goal.move_lin.x = -0.9
 #    goal.move_lin.y = 0
 #    goal.move_lin.z = 0
@@ -411,7 +411,7 @@ def move_santa(client):
 #
 #    goal.move_lin.profile.profile.vel = 0.2
 #    goal.move_lin.profile.profile.accl = 0.1
-#    goal.move_lin.profile.profile_type = 2 #SINOID
+#    goal.move_lin.profile.profile_type = Profile.SINOID
 
 if __name__ == '__main__':
     rospy.init_node('CartesianControllerAction_client')
