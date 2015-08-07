@@ -59,13 +59,16 @@ if __name__=="__main__":
             while not rospy.is_shutdown():
                 rate.sleep()
         except (KeyboardInterrupt, SystemExit) as e:
-            print('KeyboardInterrupt / SystemExit: ' + str(e))
+            rospy.loginfo('KeyboardInterrupt / SystemExit: ' + str(e))
             # save data
             for data_kraken in data_krakens: 
                 data_kraken.writeAllData()
         except rospy.ROSInterruptException as e:
-            print('ROSInterruptException: ' + str(e))
+            rospy.logwarn('ROSInterruptException: ' + str(e))
         except: 
-            print('Else exception.')
+            rospy.logerr('Else exception.')
+        else:
+            for data_kraken in data_krakens: 
+                data_kraken.writeAllData()
     else: 
         rospy.logerr('Failed to open DataKraken files.')
