@@ -226,9 +226,6 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
                                                                     d.frame_id);
         if (params.frame_names.end() != str_it)
         {
-            // Eigen::Vector3d collision_pnt_vector = d.nearest_point_frame_vector - d.frame_vector;
-            // Eigen::Vector3d distance_vec = d.nearest_point_frame_vector - d.nearest_point_obstacle_vector;
-
             Eigen::Vector3d collision_pnt_vector = Eigen::Vector3d::Zero();
             mvg_avg_coll_pnt_vec_.calcWeightedMovingAverage(collision_pnt_vector);
 
