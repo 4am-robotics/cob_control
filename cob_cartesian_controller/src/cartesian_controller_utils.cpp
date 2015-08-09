@@ -33,9 +33,9 @@ geometry_msgs::Pose CartesianControllerUtils::getPose(const std::string& target_
 {
     geometry_msgs::Pose pose;
     tf::StampedTransform stamped_transform;
-    
+
     stamped_transform = getStampedTransform(target_frame, source_frame);
-    
+
     tf::pointTFToMsg(stamped_transform.getOrigin(), pose.position);
     tf::quaternionTFToMsg(stamped_transform.getRotation(), pose.orientation);
 
@@ -46,7 +46,7 @@ tf::StampedTransform CartesianControllerUtils::getStampedTransform(const std::st
 {
     tf::StampedTransform stamped_transform;
     bool transform = false;
-    
+
     do
     {
         try
@@ -62,7 +62,7 @@ tf::StampedTransform CartesianControllerUtils::getStampedTransform(const std::st
             ros::Duration(0.1).sleep();
         }
     }while(!transform && ros::ok());
-    
+
     return stamped_transform;
 }
 
@@ -72,7 +72,7 @@ void CartesianControllerUtils::transformPose(const std::string source_frame, con
     geometry_msgs::PoseStamped stamped_in, stamped_out;
     stamped_in.header.frame_id = source_frame;
     stamped_in.pose = pose_in;
-    
+
     do
     {
         try
@@ -95,21 +95,21 @@ void CartesianControllerUtils::transformPose(const std::string source_frame, con
 /// Used to check whether the chain_tip_link is close to the target_frame
 /// 'stamped_transform' expreses the transform between the two frames.
 /// Thus inEpsilonArea() returns 'true' in case 'stamped_transform' is "smaller" than 'epsilon'
-// ToDo: Can we simplify this check? 
+// ToDo: Can we simplify this check?
 //      e.g. use stamped_transform.getOrigin().length() < epsilon
 //      what about orientation distance?
 bool CartesianControllerUtils::inEpsilonArea(const tf::StampedTransform& stamped_transform, const double epsilon)
 {
     double roll, pitch, yaw;
     stamped_transform.getBasis().getRPY(roll, pitch, yaw);
-    
+
     bool x_okay, y_okay, z_okay = false;
     bool roll_okay, pitch_okay, yaw_okay = false;
-       
+
     x_okay      = std::fabs(stamped_transform.getOrigin().x()) < epsilon;
     y_okay      = std::fabs(stamped_transform.getOrigin().y()) < epsilon;
     z_okay      = std::fabs(stamped_transform.getOrigin().z()) < epsilon;
-    
+
     roll_okay   = std::fabs(roll)  < epsilon;
     pitch_okay  = std::fabs(pitch) < epsilon;
     yaw_okay    = std::fabs(yaw)   < epsilon;
@@ -134,7 +134,7 @@ void CartesianControllerUtils::poseToRPY(const geometry_msgs::Pose& pose, double
 void CartesianControllerUtils::previewPath(const geometry_msgs::PoseArray& pose_array)
 {
     visualization_msgs::MarkerArray marker_array;
-    
+
     visualization_msgs::Marker marker;
     marker.type = visualization_msgs::Marker::ARROW;
     marker.lifetime = ros::Duration();
@@ -148,13 +148,13 @@ void CartesianControllerUtils::previewPath(const geometry_msgs::PoseArray& pose_
     marker.color.g = 0.0;
     marker.color.b = 1.0;
     marker.color.a = 1.0;
-    
+
     for(unsigned int i=0; i<pose_array.poses.size(); i++)
     {
         marker.id = i;
         marker.pose = pose_array.poses.at(i);
         marker_array.markers.push_back(marker);
     }
-    
+
     marker_pub_.publish(marker_array);
 }

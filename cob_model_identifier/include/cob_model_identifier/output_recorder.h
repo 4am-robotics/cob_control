@@ -64,7 +64,7 @@ public:
     void run();
     void stopRecording();
     void quit(int sig);
-    
+
     void jointstateCallback(const sensor_msgs::JointState::ConstPtr& msg);
     void twistCallback(const geometry_msgs::TwistStamped::ConstPtr& msg);
 

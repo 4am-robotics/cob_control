@@ -24,7 +24,7 @@ generate_messages(
 )
 
 catkin_package(
-  CATKIN_DEPENDS actionlib_msgs actionlib cob_srvs geometry_msgs message_runtime roscpp rospy std_msgs std_srvs tf visualization_msgs
+  CATKIN_DEPENDS actionlib_msgs actionlib cob_srvs geometry_msgs message_runtime roscpp std_msgs std_srvs tf visualization_msgs
   INCLUDE_DIRS include
   LIBRARIES profile_generator trajectory_interpolator cartesian_controller cartesian_controller_utils
 )
@@ -33,16 +33,19 @@ catkin_package(
 include_directories(include ${catkin_INCLUDE_DIRS})
 
 add_library(cartesian_controller_utils src/cartesian_controller_utils.cpp)
+add_dependencies(cartesian_controller_utils ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cartesian_controller_utils ${catkin_LIBRARIES})
 
 add_library(profile_generator src/trajectory_profile_generator/trajectory_profile_generator_lin.cpp src/trajectory_profile_generator/trajectory_profile_generator_circ.cpp)
-add_dependencies(profile_generator ${PROJECT_NAME}_gencpp)
+add_dependencies(profile_generator ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(profile_generator ${catkin_LIBRARIES})
 
 add_library(trajectory_interpolator src/trajectory_interpolator/trajectory_interpolator.cpp)
+add_dependencies(trajectory_interpolator ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(trajectory_interpolator profile_generator ${catkin_LIBRARIES})
 
 add_library(cartesian_controller src/cartesian_controller.cpp)
+add_dependencies(cartesian_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cartesian_controller trajectory_interpolator cartesian_controller_utils ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 add_executable(cartesian_controller_node src/cartesian_controller_node.cpp)

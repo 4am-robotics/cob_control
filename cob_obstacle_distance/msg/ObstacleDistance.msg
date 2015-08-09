@@ -6,7 +6,7 @@ string frame_of_interest
 # distance between the nearest points on obstacle and frame of interest
 float64 distance
 
-# Vector pointing to the origin of the frame (e.g. arm_right_7_link) 
+# Vector pointing to the origin of the frame (e.g. arm_right_7_link)
 geometry_msgs/Vector3 frame_vector
 
 # Vector pointing to the nearest point on the frame

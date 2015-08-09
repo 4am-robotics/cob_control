@@ -34,7 +34,7 @@ if __name__ == '__main__':
     goal.move_circ.profile.vel = 0.1
     goal.move_circ.profile.accl = 0.2
     goal.move_circ.profile.profile_type = Profile.SINOID
-    
+
     print goal
 
     # Send the goal

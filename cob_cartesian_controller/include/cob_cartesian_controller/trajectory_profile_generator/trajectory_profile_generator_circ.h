@@ -42,7 +42,7 @@ public:
         update_rate_ = update_rate;
         t_ipo_ = 1.0/update_rate;
     }
-    
+
     ~TrajectoryProfileGeneratorCirc()
     {}
 

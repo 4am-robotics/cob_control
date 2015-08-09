@@ -53,11 +53,11 @@ class CartesianController
 {
 public:
     bool initialize();
-    
+
     // Main functions
     bool posePathBroadcaster(const geometry_msgs::PoseArray& cartesian_path);
     bool movePTP(const geometry_msgs::Pose& target_pose, double epsilon);
-    
+
     // Helper function
     bool startTracking();
     bool stopTracking();
@@ -68,7 +68,7 @@ public:
     void actionSuccess(const bool success, const std::string& message);
     void actionPreempt(const bool success, const std::string& message);
     void actionAbort(const bool success, const std::string& message);
-    
+
     cob_cartesian_controller::CartesianActionStruct acceptGoal(boost::shared_ptr<const cob_cartesian_controller::CartesianControllerGoal> goal);
     cob_cartesian_controller::MoveLinStruct convertMoveLin(const cob_cartesian_controller::MoveLin& move_lin_msg);
     cob_cartesian_controller::MoveCircStruct convertMoveCirc(const cob_cartesian_controller::MoveCirc& move_circ_msg);
@@ -84,7 +84,7 @@ private:
 
     double update_rate_;
     std::string root_frame_, chain_tip_link_, target_frame_;
-    
+
     // HelperVars for movePTP
     bool reached_pos_;
 

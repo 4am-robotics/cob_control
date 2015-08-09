@@ -102,7 +102,7 @@ inline void HardwareInterfacePosition::processResult(const KDL::JntArray& q_dot_
         //publish to interface
         pub_.publish(pos_msg);
     }
-    
+
     // Continuously shift the vectors for simpson integration
     vel_before_last_.clear();
     for(unsigned int i=0; i < vel_last_.size(); ++i)
@@ -141,17 +141,17 @@ inline void HardwareInterfaceJointStates::processResult(const KDL::JntArray& q_d
             double avg = 0.0;
             ma_[i].calcWeightedMovingAverage(avg);
             pos_msg.data.push_back(avg);
-            
+
             vel_msg.data.push_back(q_dot_ik(i));
         }
         ///update JointState
         boost::mutex::scoped_lock lock(mutex_);
         js_msg_.position = pos_msg.data;
         js_msg_.velocity = vel_msg.data;
-        
+
         ///publishing takes place in separate thread
     }
-    
+
     // Continuously shift the vectors for simpson integration
     vel_before_last_.clear();
     for(unsigned int i=0; i < vel_last_.size(); ++i)

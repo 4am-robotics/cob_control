@@ -44,7 +44,7 @@ public:
     TrajectoryInterpolator(std::string root_frame, double update_rate)
     :   root_frame_(root_frame),
         trajectory_profile_generator_lin_(TrajectoryProfileGeneratorLin(update_rate)),
-        trajectory_profile_generator_circ_(TrajectoryProfileGeneratorCirc(update_rate))    
+        trajectory_profile_generator_circ_(TrajectoryProfileGeneratorCirc(update_rate))
     {}
 
     ~TrajectoryInterpolator(){}
@@ -58,7 +58,7 @@ public:
 private:
     TrajectoryProfileGeneratorLin trajectory_profile_generator_lin_;
     TrajectoryProfileGeneratorCirc trajectory_profile_generator_circ_;
-    
+
     std::string root_frame_;
 };
 

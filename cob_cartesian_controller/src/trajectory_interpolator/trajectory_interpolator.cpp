@@ -33,7 +33,7 @@ bool TrajectoryInterpolator::linearInterpolation(geometry_msgs::PoseArray& pose_
 {
     pose_array.header.stamp = ros::Time::now();
     pose_array.header.frame_id = root_frame_;
-    
+
     tf::Quaternion q;
     double start_roll, start_pitch, start_yaw;
     double end_roll, end_pitch, end_yaw;
@@ -100,7 +100,7 @@ bool TrajectoryInterpolator::circularInterpolation(geometry_msgs::PoseArray& pos
 {
     pose_array.header.stamp = ros::Time::now();
     pose_array.header.frame_id = root_frame_;
-    
+
     tf::Quaternion q;
     tf::Transform C, P, T;
 
@@ -152,7 +152,7 @@ bool TrajectoryInterpolator::circularInterpolation(geometry_msgs::PoseArray& pos
 
         // Calculate TCP Position
         P = C * T;
-        
+
         tf::pointTFToMsg(P.getOrigin(), pose.position);
         tf::quaternionTFToMsg(P.getRotation(), pose.orientation);
 

@@ -33,12 +33,12 @@ int main(int argc, char **argv)
 {
 	ros::init (argc, argv, "cartesian_controller_node");
 	CartesianController cc;
-	
+
 	if(!cc.initialize())
 	{
 		ROS_ERROR("Initialization failed");
 		return -1;
 	}
-	
+
 	ros::spin();
 }

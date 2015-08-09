@@ -22,12 +22,12 @@
  * \date Date of creation: July, 2015
  *
  * \brief
- *   Implementation of a dynamic_reconfigure client for twist_controller. 
+ *   Implementation of a dynamic_reconfigure client for twist_controller.
  *
 """
 import rospy
 from dynamic_reconfigure.client import Client
-from cob_twist_controller.cfg.TwistControllerConfig import * 
+from cob_twist_controller.cfg.TwistControllerConfig import *
 
 '''
 Available keys for the dynamic_reconfigure update call
@@ -75,23 +75,22 @@ BASE_RATIO = 'base_ratio'
 Class inherits from dynamic_reconfigure.client.Client and implements some wrapper methods
 '''
 class TwistControllerReconfigureClient(Client):
-    
+
     def __init__(self, timeout = None):
         super(TwistControllerReconfigureClient, self).__init__('twist_controller', timeout)
         self._current_config = {}
         self._update_config = {}
-        
+
     def init(self):
         self._current_config = self.get_configuration()
         self._update_config.clear()
-         
+
     def set_config_param(self, cfg_key, cfg_value):
-        if cfg_key in self._current_config: 
+        if cfg_key in self._current_config:
             self._update_config[cfg_key] = cfg_value
         else:
             rospy.logerr('Cannot update config with key {0}! Not available in current config.'.format(cfg_key))
-            
+
     def update(self):
         self.update_configuration(self._update_config)
         self._update_config.clear()
-        

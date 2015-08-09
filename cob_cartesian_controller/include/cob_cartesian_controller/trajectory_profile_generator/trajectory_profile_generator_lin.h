@@ -46,13 +46,13 @@ public:
         update_rate_ = update_rate;
         t_ipo_ = 1.0/update_rate;
     }
-    
+
     ~TrajectoryProfileGeneratorLin()
     {}
 
     bool calculateProfile(std::vector<double>* path_matrix, const double Se, const double Se_roll, const double Se_pitch, const double Se_yaw, cob_cartesian_controller::MoveLinStruct& move_lin);
 
-private:    
+private:
     bool calculateRampProfile(std::vector<double>* path_matrix, const double Se, const double Se_roll, const double Se_pitch, const double Se_yaw, cob_cartesian_controller::MoveLinStruct& move_lin);
     bool calculateSinoidProfile(std::vector<double>* path_matrix, const double Se, const double Se_roll, const double Se_pitch, const double Se_yaw, cob_cartesian_controller::MoveLinStruct& move_lin);
 
