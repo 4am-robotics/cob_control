@@ -69,7 +69,7 @@ public:
     {
         this->limiters_.reset(new LimiterContainer(this->params_, this->chain_));
         this->limiters_->init();
-        
+
         this->kinematic_extension_.reset(KinematicExtensionBuilder::createKinematicExtension(this->params_));
     }
 
@@ -78,7 +78,7 @@ public:
         this->limiters_.reset();
         this->kinematic_extension_.reset();
     };
-    
+
     /** CartToJnt for chain using SVD considering KinematicExtensions and various DampingMethods **/
     virtual int CartToJnt(const JointStates& joint_states,
                           const KDL::Twist& v_in,

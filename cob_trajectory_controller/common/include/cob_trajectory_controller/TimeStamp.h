@@ -2,7 +2,7 @@
  *
  * Copyright (c) 2010
  *
- * Fraunhofer Institute for Manufacturing Engineering	
+ * Fraunhofer Institute for Manufacturing Engineering
  * and Automation (IPA)
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -30,23 +30,23 @@
  *     * Redistributions in binary form must reproduce the above copyright
  *       notice, this list of conditions and the following disclaimer in the
  *       documentation and/or other materials provided with the distribution.
- *     * Neither the name of the Fraunhofer Institute for Manufacturing 
+ *     * Neither the name of the Fraunhofer Institute for Manufacturing
  *       Engineering and Automation (IPA) nor the names of its
  *       contributors may be used to endorse or promote products derived from
  *       this software without specific prior written permission.
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License LGPL as 
- * published by the Free Software Foundation, either version 3 of the 
+ * it under the terms of the GNU Lesser General Public License LGPL as
+ * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License LGPL for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public 
- * License LGPL along with this program. 
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License LGPL along with this program.
  * If not, see <http://www.gnu.org/licenses/>.
  *
  ****************************************************************/
@@ -57,9 +57,9 @@
 
 //-------------------------------------------------------------------
 
- 
+
 /** Measure system time with very high accuracy.
- * Use this class for measure system time accurately. Under Windows, it uses 
+ * Use this class for measure system time accurately. Under Windows, it uses
  * QueryPerformanceCounter(), which has a resolution of approx. one micro-second.
  * The difference between two time stamps can be calculated.
  */
@@ -93,7 +93,7 @@ public:
 
 	/// Checks if this time is before time "Time".
 	bool operator<(const TimeStamp& Time);
-	
+
 	/**
 	 * Gets seconds and nanoseconds of the timestamp.
 	 */
@@ -103,13 +103,13 @@ public:
 	 * Sets timestamp from seconds and nanoseconds.
 	 */
 	void setTimeStamp(const long& lSeconds, const long& lNanoSeconds);
-	
+
 
 protected:
 
 	/// Internal time stamp data.
 	timespec m_TimeStamp;
-	
+
 private:
 
 	/// Conversion timespec -> double

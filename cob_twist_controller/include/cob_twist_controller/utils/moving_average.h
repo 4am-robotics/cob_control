@@ -45,7 +45,7 @@ class MovingAverage
             size_ = size;
             calculateWeighting();
         }
-        
+
         void addElement(double element)
         {
             if(s_.size() < size_)
@@ -94,7 +94,7 @@ class MovingAverage
                 sum += weighting_[i];
                 j += 1.0;
             }
-            
+
             err = 1 - sum;
             std::deque<double>::iterator i = weighting_.begin();
             *i += err;

@@ -113,7 +113,7 @@ struct ActiveCartesianDimension
 {
     ActiveCartesianDimension():
         lin_x(0.0), lin_y(0.0), lin_z(0.0), rot_x(0.0), rot_y(0.0), rot_z(0.0) {}
-    
+
     double lin_x;
     double lin_y;
     double lin_z;
@@ -179,9 +179,9 @@ struct TwistControllerParams
     uint8_t dof;
     std::string chain_base_link;
     std::string chain_tip_link;
-    
+
     HardwareInterfaceTypes hardware_interface_type;
-    
+
     bool numerical_filtering;
     DampingMethodTypes damping_method;
     double damping_factor;
@@ -190,7 +190,7 @@ struct TwistControllerParams
     double beta;
     double eps_damping;
     double eps_truncation;
-    
+
     SolverTypes solver;
     uint32_t priority_main;
     double mu;
@@ -212,15 +212,15 @@ struct TwistControllerParams
     bool enforce_pos_limits;
     bool enforce_vel_limits;
     double tolerance;
-    
+
     // added limits from URDF file
     std::vector<double> limits_max;
     std::vector<double> limits_min;
     std::vector<double> limits_vel;
-    
+
     double max_vel_lin_base;
     double max_vel_rot_base;
-    
+
     bool base_compensation;
     KinematicExtensionTypes kinematic_extension;
     double base_ratio;

@@ -8,7 +8,7 @@
   <url type="website">http://ros.org/wiki/cob_footprint_observer</url>
   <!-- <url type="bugtracker"></url> -->
 
-  <maintainer email="mig@ipa.fhg.de">Matthias Gruhler</maintainer> 
+  <maintainer email="mig@ipa.fhg.de">Matthias Gruhler</maintainer>
   <author>Matthias Gruhler</author>
 
   <buildtool_depend>catkin</buildtool_depend>

@@ -45,14 +45,14 @@ class CartesianController
 public:
 	bool initialize();
 	void load();
-	
+
 	// Main functions
 	void pose_path_broadcaster(std::vector <geometry_msgs::Pose> *poseVector);
-	void linear_interpolation(std::vector <geometry_msgs::Pose> *poseVector,geometry_msgs::Pose, geometry_msgs::Pose,double,double,std::string,bool); 
+	void linear_interpolation(std::vector <geometry_msgs::Pose> *poseVector,geometry_msgs::Pose, geometry_msgs::Pose,double,double,std::string,bool);
 	void circular_interpolation(std::vector<geometry_msgs::Pose> *poseVector,double,double,double,double,double,double,double,double,double,double,double,std::string);
 	void move_ptp(geometry_msgs::Pose targetPose, double epsilon);
 	void hold_position(geometry_msgs::Pose);
-	
+
 	// Helper function
 	bool epsilon_area(double,double,double,double,double,double,double);
 	geometry_msgs::Pose getEndeffectorPose();
@@ -61,7 +61,7 @@ public:
 	void showLevel(tf::Transform,int,double,double,double,std::string);
 	void timerCallback(const ros::TimerEvent&);
 	void calculateProfile(std::vector<double>*,double,double,double,std::string);
-	void calculateProfileForAngularMovements(std::vector<double> *pathMatrix,double,double,double,double,double,double,double,double,double,std::string,bool);	
+	void calculateProfileForAngularMovements(std::vector<double> *pathMatrix,double,double,double,double,double,double,double,double,double,std::string,bool);
 	void generatePath(std::vector<double>*,double,double,double,double,int,std::string);
 	void generatePathWithTe(std::vector<double> *pathArray,double T_IPO, double te, double AcclMax,double Se_max, int steps_max,double start_angle,std::string profile);
 	void start_tracking();
@@ -70,7 +70,7 @@ public:
 
 private:
 	ros::NodeHandle nh_;
-	
+
 	// Publisher
 	ros::Publisher vis_pub_;
 	ros::Publisher path_pub_;
@@ -79,24 +79,24 @@ private:
 	ros::Publisher jerk_pub_;
 	ros::ServiceClient startTracking_;
 	ros::ServiceClient stopTracking_;
-	
+
 	//TF Broadcaster-Var
 	tf::TransformBroadcaster br_;
 	tf::Transform transform_;
 	tf::Quaternion q_;
 	tf::TransformListener listener_;
 	tf::StampedTransform currentEndeffectorStampedTransform_;
-	
+
 	// Var for PTP Movement and hold Position
 	bool reached_pos_,hold_;
-	
+
 	// yaml params
 	double update_rate_;
 	std::string stringPath_, fileName_;
 	std::string referenceFrame_,targetFrame_;
 	std::string chain_tip_link_;
 	const char* charPath_;
-	
+
 	int marker1_;
 };
 

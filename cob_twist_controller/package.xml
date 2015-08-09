@@ -27,7 +27,7 @@
   <depend>tf</depend>
   <depend>urdf</depend>
   <depend>visualization_msgs</depend>
-  
+
   <exec_depend>cob_frame_tracker</exec_depend>
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>rospy</exec_depend>

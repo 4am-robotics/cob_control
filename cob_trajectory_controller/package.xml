@@ -2,12 +2,12 @@
   <name>cob_trajectory_controller</name>
   <version>0.6.8</version>
   <description>This package provides a trajectory controller which controlls velocities for a chain of joints. This controller can be used e.g. with [[schunk_powercube_chain]].</description>
-  
+
   <license>LGPL</license>
 
   <url type="website">http://ros.org/wiki/cob_trajectory_controller</url>
   <!-- <url type="bugtracker"></url> -->
-  
+
   <maintainer email="aub@ipa.fhg.de">Alexander Bubeck</maintainer>
 
   <author>Alexander Bubeck</author>

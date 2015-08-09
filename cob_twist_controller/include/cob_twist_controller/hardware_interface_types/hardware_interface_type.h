@@ -46,7 +46,7 @@ class HardwareInterfaceBuilder
     public:
         HardwareInterfaceBuilder() {}
         ~HardwareInterfaceBuilder() {}
-        
+
         static HardwareInterfaceBase* createHardwareInterface(ros::NodeHandle& nh,
                                                const TwistControllerParams& params);
 };
@@ -89,7 +89,7 @@ class HardwareInterfacePosition : public HardwareInterfaceBase
                 vel_support_integration_point_.push_back(0.0);
                 vel_first_integration_point_.push_back(0.0);
             }
-            
+
             time_now_ = ros::Time::now();
             last_update_time_ = time_now_;
             integration_period_ = time_now_ - last_update_time_;
@@ -129,17 +129,17 @@ class HardwareInterfaceJointStates : public HardwareInterfaceBase
                 vel_support_integration_point_.push_back(0.0);
                 vel_first_integration_point_.push_back(0.0);
             }
-            
+
             time_now_ = ros::Time::now();
             last_update_time_ = time_now_;
             integration_period_ = time_now_ - last_update_time_;
             pub_ = nh.advertise<sensor_msgs::JointState>("joint_states", 1);
-            
+
             js_msg_.name = params_.joints;
             js_msg_.position.assign(params_.joints.size(), 0.0);
             js_msg_.velocity.assign(params_.joints.size(), 0.0);
             js_msg_.effort.assign(params_.joints.size(), 0.0);
-            
+
             js_timer_ = nh.createTimer(ros::Duration(1/60.0), &HardwareInterfaceJointStates::publishJointState, this);
             js_timer_.start();
         }
@@ -156,10 +156,10 @@ class HardwareInterfaceJointStates : public HardwareInterfaceBase
         ros::Duration integration_period_;
         ros::Time time_now_;
         ros::Time last_update_time_;
-        
+
         boost::mutex mutex_;
         sensor_msgs::JointState js_msg_;
-        
+
         ros::Timer js_timer_;
         void publishJointState(const ros::TimerEvent& event);
 

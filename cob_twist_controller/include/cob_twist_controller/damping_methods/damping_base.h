@@ -35,7 +35,7 @@ class DampingBase
 {
     public:
         virtual ~DampingBase() {}
-    
+
         virtual double getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
                                           const Eigen::MatrixXd& jacobian_data) const = 0;
 

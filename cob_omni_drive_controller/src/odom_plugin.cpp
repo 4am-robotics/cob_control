@@ -109,8 +109,8 @@ private:
     boost::mutex mutex_;
     geometry_msgs::TransformStamped odom_tf_;
     ros::Time stop_time_;
-  
-  
+
+
     void publish(const ros::TimerEvent&){
         if(!isRunning()) return;
 

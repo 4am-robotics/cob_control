@@ -22,7 +22,7 @@
  * \date Date of creation: June, 2015
  *
  * \brief
- *   This header contains the interface description for extending the 
+ *   This header contains the interface description for extending the
  *   kinematic chain with additional degrees of freedom, e.g. base_active or lookat
  *
  ****************************************************************/
@@ -40,12 +40,12 @@ class KinematicExtensionBase
         KinematicExtensionBase(const TwistControllerParams& params):
             params_(params)
         {}
-        
+
         virtual ~KinematicExtensionBase() {}
-        
+
         virtual KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain) = 0;
         virtual void processResultExtension(const KDL::JntArray& q_dot_ik) = 0;
-    
+
     protected:
         const TwistControllerParams& params_;
 
