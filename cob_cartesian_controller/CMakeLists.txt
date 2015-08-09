@@ -4,16 +4,16 @@ project(cob_cartesian_controller)
 find_package(catkin REQUIRED COMPONENTS cmake_modules cob_srvs geometry_msgs roscpp roslib std_msgs std_srvs tf visualization_msgs)
 
 catkin_package(
+  CATKIN_DEPENDS cob_srvs geometry_msgs roscpp roslib std_msgs std_srvs tf visualization_msgs
   INCLUDE_DIRS include
   LIBRARIES cartesian_controller
-  CATKIN_DEPENDS cob_srvs geometry_msgs roscpp roslib rospy std_msgs std_srvs tf visualization_msgs
 )
 
 ### BUILD ###
 include_directories(include ${catkin_INCLUDE_DIRS})
 
 add_library(cartesian_controller src/cartesian_controller.cpp)
-add_dependencies(cartesian_controller cob_srvs_gencpp)
+add_dependencies(cartesian_controller ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cartesian_controller ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 add_executable(cartesian_controller_node src/cartesian_controller_node.cpp)
@@ -28,8 +28,6 @@ install(TARGETS cartesian_controller cartesian_controller_node
 
 install(DIRECTORY include/${PROJECT_NAME}/
  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
- FILES_MATCHING PATTERN "*.h"
- PATTERN ".svn" EXCLUDE
 )
 
 install(DIRECTORY launch movement

@@ -50,7 +50,7 @@ public:
         }
 
         publish_timer_ = controller_nh.createTimer(ros::Duration(1/publish_rate), &OdometryController::publish, this);
-	service_reset_ = controller_nh.advertiseService("reset_odometry", &OdometryController::srv_reset, this);
+        service_reset_ = controller_nh.advertiseService("reset_odometry", &OdometryController::srv_reset, this);
 
         return true;
     }

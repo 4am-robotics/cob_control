@@ -13,15 +13,15 @@ endif()
 generate_dynamic_reconfigure_options(cfg/CollisionVelocityFilter.cfg)
 
 catkin_package(
-    CATKIN_DEPENDS cob_footprint_observer dynamic_reconfigure geometry_msgs nav_msgs roscpp tf visualization_msgs
+  CATKIN_DEPENDS cob_footprint_observer dynamic_reconfigure geometry_msgs nav_msgs roscpp tf visualization_msgs
+  INCLUDE_DIRS include
 )
 
 ### BUILD ###
 include_directories(include ${Boost_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
 
 add_executable(collision_velocity_filter src/cob_collision_velocity_filter.cpp src/velocity_limited_marker.cpp)
-add_dependencies(collision_velocity_filter ${${PROJECT_NAME}_EXPORTED_TARGETS})
-add_dependencies(collision_velocity_filter ${catkin}_EXPORTED_TARGETS})
+add_dependencies(collision_velocity_filter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(collision_velocity_filter ${catkin_LIBRARIES})
 
 ### INSTALL ###
