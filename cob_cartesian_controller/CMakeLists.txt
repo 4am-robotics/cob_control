@@ -24,9 +24,9 @@ generate_messages(
 )
 
 catkin_package(
+  CATKIN_DEPENDS actionlib_msgs actionlib cob_srvs geometry_msgs message_runtime roscpp rospy std_msgs std_srvs tf visualization_msgs
   INCLUDE_DIRS include
   LIBRARIES profile_generator trajectory_interpolator cartesian_controller cartesian_controller_utils
-  CATKIN_DEPENDS actionlib_msgs actionlib cob_srvs geometry_msgs message_runtime roscpp rospy std_msgs std_srvs tf visualization_msgs
 )
 
 ### BUILD ###
@@ -57,8 +57,6 @@ install(TARGETS profile_generator trajectory_interpolator cartesian_controller c
 
 install(DIRECTORY include/${PROJECT_NAME}/
  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
- FILES_MATCHING PATTERN "*.h"
- PATTERN ".svn" EXCLUDE
 )
 
 install(PROGRAMS scripts/test_move_lin.py scripts/test_move_circ.py scripts/test_move_santa.py

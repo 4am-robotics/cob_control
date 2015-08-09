@@ -14,21 +14,21 @@ inline double sqr(double x)
 }
 
 RefValJS_PTP_Trajectory::RefValJS_PTP_Trajectory(const trajectory_msgs::JointTrajectory& trajectory, double v_rad_s, double a_rad_s2, bool smooth)
-{	
+{
 	m_trajectory = trajectory;
 	m_length = 0;
 	//m_stepSize = 0.4;
 	m_stepSize = 0.0175; // 0.0175 rad = 1°
 	m_length_parts.clear();
 	m_s_parts.clear();
-	
+
 	if ( m_trajectory.points.size() < 1 )
 	{
 		throw std::runtime_error("Tried to create reference values for empty trajectory!");
 	}
-	
+
 	std::vector<std::vector<double> > zwischenPunkte;
-	
+
 	if (smooth == false)
 	{
 		// Maß dafür, wo groß die Rundung wird
@@ -61,7 +61,7 @@ RefValJS_PTP_Trajectory::RefValJS_PTP_Trajectory(const trajectory_msgs::JointTra
 			}
 		}
 		zwischenPunkte.push_back( m_trajectory.points.back().positions );
-	} else 
+	} else
 	{
 		zwischenPunkte.resize(trajectory.points.size());
 		for(unsigned int i = 0; i < trajectory.points.size(); i++)
@@ -70,9 +70,9 @@ RefValJS_PTP_Trajectory::RefValJS_PTP_Trajectory(const trajectory_msgs::JointTra
 		}
 	}
 	ROS_INFO("Calculated %lu zwischenPunkte", zwischenPunkte.size());
-	
+
 	m_TrajectorySpline.setCtrlPoints(zwischenPunkte);
-	
+
 	// Note: unlike the name of the function suggests, the distance between any two neigbouring points
 	// is not always the same!
 	if ( m_TrajectorySpline.ipoWithConstSampleDist(m_stepSize, m_SplinePoints)==false )
@@ -83,10 +83,10 @@ RefValJS_PTP_Trajectory::RefValJS_PTP_Trajectory(const trajectory_msgs::JointTra
 	}
 	m_SplinePoints = zwischenPunkte;
 	ROS_INFO("Calculated %lu splinepoints", m_SplinePoints.size());
-	
+
 	m_length_cumulated.clear();
 	m_length_cumulated.push_back(0.0);
-	
+
 	for (unsigned int i=0; i < m_SplinePoints.size()-1; i++)
 	{
 		std::vector<double> dist;
@@ -101,32 +101,32 @@ RefValJS_PTP_Trajectory::RefValJS_PTP_Trajectory(const trajectory_msgs::JointTra
 		m_length += norm(dist);
 		m_length_cumulated.push_back(m_length);
 	}
-	
+
 	m_param_length = m_TrajectorySpline.getMaxdPos();
 
 	for (unsigned int i=0; i < m_length_parts.size(); i++)
 	{
 		m_s_parts.push_back( m_length_parts[i] / m_length );
 	}
-	
+
 	m_v_rad_s = v_rad_s;
 	m_a_rad_s2 = a_rad_s2;
-	
-	/* Parameter für Beschl.begrenzte Fahrt: */	
+
+	/* Parameter für Beschl.begrenzte Fahrt: */
 	double a = fabs(m_a_rad_s2);
 	double v = fabs(m_v_rad_s);
-	
+
 	if (m_length > v*v/a)
 	{
 		// Phase mit konst. Geschw. wird erreicht:
 		m_T1 = m_T3 = v / a;
 		m_T2 = (m_length - v*v/a) / v;
-		
+
 		// Wegparameter s immer positiv, deswegen keine weitere Fallunterscheidung nötig:
 		m_sv2 = 1.0 / (m_T1 + m_T2);
 		m_sa1 = m_sv2 / m_T1;
 		m_sa3 = -m_sa1;
-	} 
+	}
 	else {
 		// Phase konst. Geschw. wird nicht erreicht:
 		m_T2 = 0.0;
@@ -135,10 +135,10 @@ RefValJS_PTP_Trajectory::RefValJS_PTP_Trajectory(const trajectory_msgs::JointTra
 		m_sv2 = 1.0 / m_T1;
 		m_sa1 = m_sv2 / m_T1;
 		m_sa3 = -m_sa1;
-		
+
 	}
 	// Bewegung vollständig charakterisiert.
-		
+
 }
 
 std::vector<double> RefValJS_PTP_Trajectory::r(double s) const
@@ -153,19 +153,19 @@ std::vector<double> RefValJS_PTP_Trajectory::r(double s) const
 	{
 		// since the Distances between the points of m_SplinePoints are not equal,
 		// we first need to find the last i where m_length_cumulated[i] is smaller than s*m_length
-		
+
 		// return the first index i, where m_length_cumulated[i] is not smaller s * m_length
 		// more information under: http://www.cplusplus.com/reference/algorithm/lower_bound/
 		//typedef std::vector<double> dvec;
-		
-		
+
+
 		vecd_it start = m_length_cumulated.begin();
 		vecd_it end = m_length_cumulated.end();
 		vecd_it it = upper_bound(start, end, s * m_length);
-		
+
 		int i = int(it-start) - 1;
 		double frac = (s * m_length - m_length_cumulated[i]) / m_length_parts[i];
-		
+
 
 		/*
 		int i = floor( s * m_param_length / m_stepSize);
@@ -192,7 +192,7 @@ double RefValJS_PTP_Trajectory::s(double t) const
 	else if (t >= m_T1 + m_T2)
 	{
 		return 0.5*m_sa1*m_T1*m_T1 + m_sv2*m_T2 + m_sv2*(t-m_T1-m_T2) + 0.5*m_sa3*sqr(t-m_T1-m_T2);
-	} 
+	}
 	else if (t >= m_T1)
 	{
 		return 0.5*m_sa1*m_T1*m_T1 + m_sv2*(t-m_T1);
@@ -211,7 +211,7 @@ double RefValJS_PTP_Trajectory::ds_dt(double t) const
 	else if (t >= m_T1 + m_T2)
 	{
 		return m_sv2 + m_sa3*(t-m_T1-m_T2);
-	} 
+	}
 	else if (t >= m_T1)
 	{
 		return m_sv2;
@@ -235,23 +235,23 @@ std::vector<double> RefValJS_PTP_Trajectory::dr_ds(double s) const
 	}
 	else
 	{
-		
+
 		vecd_it start = m_length_cumulated.begin();
 		vecd_it end = m_length_cumulated.end();
 		vecd_it it = upper_bound(start, end, s * m_length);
-		
-		int i = int(it-start) - 1;	
+
+		int i = int(it-start) - 1;
 		double frac = (s * m_length - m_length_cumulated[i]) / m_length_parts[i];
-		
-		
+
+
 		/*
 		int i = floor( s * m_param_length / m_stepSize);
 		double frac = s * m_param_length / m_stepSize - (double) i;
 		*/
-		
+
 		std::vector<double> vi;	// vi
 		std::vector<double> vii;// vi+1
-		
+
 		double step_s = m_stepSize / m_param_length;
 
 		if ( i == 0 )

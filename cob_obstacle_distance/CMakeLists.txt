@@ -24,10 +24,10 @@ generate_messages(
 )
 
 catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES parsers marker_shapes_management
   CATKIN_DEPENDS cob_srvs dynamic_reconfigure eigen_conversions geometry_msgs interactive_markers joint_state_publisher kdl_conversions kdl_parser message_runtime moveit_msgs robot_state_publisher roscpp roslib rospy rviz sensor_msgs shape_msgs std_msgs tf_conversions tf urdf visualization_msgs xacro
   DEPENDS assimp fcl
+  INCLUDE_DIRS include
+  LIBRARIES parsers marker_shapes_management
 )
 
 ### BUILD ###
@@ -36,7 +36,8 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${FCL_I
 add_library(parsers src/parsers/stl_parser.cpp src/parsers/mesh_parser.cpp)
 target_link_libraries(parsers assimp ${fcl_LIBRARIES} ${catkin_LIBRARIES})
 
-add_library(marker_shapes_management src/marker_shapes/marker_shapes_impl.cpp src/marker_shapes/marker_shapes_interface.cpp src/shapes_manager.cpp src/frame_to_collision.cpp) 
+add_library(marker_shapes_management src/marker_shapes/marker_shapes_impl.cpp src/marker_shapes/marker_shapes_interface.cpp src/shapes_manager.cpp src/frame_to_collision.cpp)
+add_dependencies(marker_shapes_management ${catkin_EXPORTED_TARGETS})
 target_link_libraries(marker_shapes_management parsers ${fcl_LIBRARIES} ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 
 add_executable(cob_obstacle_distance src/cob_obstacle_distance.cpp src/helpers/helper_functions.cpp src/distance_manager.cpp src/chainfk_solvers/advanced_chainfksolver_recursive.cpp)
@@ -56,8 +57,6 @@ install(TARGETS cob_obstacle_distance parsers marker_shapes_management debug_obs
 
 install(DIRECTORY include/cob_obstacle_distance/
  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
- FILES_MATCHING PATTERN "*.h,*.hpp"
- PATTERN ".svn" EXCLUDE
 )
 
 install(PROGRAMS scripts/example_obstacle_publisher_node.py scripts/test_obstacle_publisher_node.py

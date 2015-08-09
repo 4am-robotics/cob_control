@@ -38,13 +38,13 @@ if ( m_cThread.startJob(m_pRefVals) == false ) {						\
  ********************************************************************/
 
 
-genericArmCtrl::genericArmCtrl(int DOF, double PTPvel, double PTPacc, double maxError) 
+genericArmCtrl::genericArmCtrl(int DOF, double PTPvel, double PTPacc, double maxError)
 {
-	
+
 	m_DOF = DOF;
-	
+
 	m_pRefVals = NULL;
-	
+
 	isMoving = false;
 
 	//TODO: make configurable
@@ -59,14 +59,14 @@ genericArmCtrl::genericArmCtrl(int DOF, double PTPvel, double PTPacc, double max
 	m_TargetError = 0.02; // rad;
 	overlap_time = 0.4;
 	m_ExtraTime = 3;	// s
-	
+
 }
 
 
 genericArmCtrl::~genericArmCtrl()
 {
 	if (m_pRefVals != NULL)
-		delete m_pRefVals;	
+		delete m_pRefVals;
 }
 
 /********************************************************************
@@ -109,7 +109,7 @@ bool genericArmCtrl::moveThetas(std::vector<double> conf_goal, std::vector<doubl
 {
 	/* Prüfen ob Arm noch in Bewegung & Prüfen ob alte Sollwerte gelöscht werden müssen: */
 	STD_CHECK_PROCEDURE()
-	
+
 	/* Sollwerte generieren: */
 	double vel = 10000;
 	for	(unsigned int i = 0; i<m_vel_js.size(); i++)
@@ -133,7 +133,7 @@ bool genericArmCtrl::moveThetas(std::vector<double> conf_goal, std::vector<doubl
 
 	return true; //TODO when to return false?
 }
-	
+
 bool genericArmCtrl::moveTrajectory(trajectory_msgs::JointTrajectory pfad, std::vector<double> conf_current)
 {
 	/* Prüfen, ob erster Punkt nah genug an momentaner Position ist: */
@@ -149,10 +149,10 @@ bool genericArmCtrl::moveTrajectory(trajectory_msgs::JointTrajectory pfad, std::
 			return false;
 		}
 	}
-	
+
 	/* Prüfen ob Arm noch in Bewegung & Prüfen ob alte Sollwerte gelöscht werden müssen: */
 	STD_CHECK_PROCEDURE()
-	
+
 	/* Sollwerte generieren: */
 	double vel = m_vel_js.at(0);
 	for	(unsigned int i = 0; i<m_vel_js.size(); i++)
@@ -167,7 +167,7 @@ bool genericArmCtrl::moveTrajectory(trajectory_msgs::JointTrajectory pfad, std::
 			acc = m_acc_js.at(i);
 	}
 	m_pRefVals = new RefValJS_PTP_Trajectory(pfad, vel, acc, true);
-	
+
 	/* Regeljob starten: */
 	startTime_.SetNow();
 	isMoving = true;
@@ -231,7 +231,7 @@ bool genericArmCtrl::step(std::vector<double> current_pos, std::vector<double> &
 				last_q3 = m_pRefVals->r_t( t - (overlap_time/4.0) );
 			}
 		}
-		
+
 		double len = 0;
 		for(int i = 0; i < m_DOF; i++)
 		{

@@ -2,7 +2,7 @@
  *
  * Copyright (c) 2012
  *
- * Fraunhofer Institute for Manufacturing Engineering  
+ * Fraunhofer Institute for Manufacturing Engineering
  * and Automation (IPA)
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -10,9 +10,9 @@
  * Project name: care-o-bot
  * ROS stack name: cob_driver
  * ROS package name: cob_base_velocity_smoother
- *  							
+ *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- *  		
+ *
  * Author: Florian Mirus, email:Florian.Mirus@ipa.fhg.de
  *
  * Date of creation: May 2012
@@ -27,23 +27,23 @@
  *   * Redistributions in binary form must reproduce the above copyright
  *  	 notice, this list of conditions and the following disclaimer in the
  *  	 documentation and/or other materials provided with the distribution.
- *   * Neither the name of the Fraunhofer Institute for Manufacturing 
+ *   * Neither the name of the Fraunhofer Institute for Manufacturing
  *  	 Engineering and Automation (IPA) nor the names of its
  *  	 contributors may be used to endorse or promote products derived from
  *  	 this software without specific prior written permission.
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License LGPL as 
- * published by the Free Software Foundation, either version 3 of the 
+ * it under the terms of the GNU Lesser General Public License LGPL as
+ * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License LGPL for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public 
- * License LGPL along with this program. 
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License LGPL along with this program.
  * If not, see <http://www.gnu.org/licenses/>.
  *
  ****************************************************************/
@@ -52,11 +52,11 @@
 
 /****************************************************************
  * the ros navigation doesn't run very smoothly because acceleration is too high
- * --> cob has strong base motors and therefore reacts with shaking behavior 
+ * --> cob has strong base motors and therefore reacts with shaking behavior
  * (PR2 has much more mechanical damping)
  * solution: the additional node cob_base_velocity_smoother smooths the velocities
- * comming from ROS-navigation or teleoperation, by calculating the mean values of a certain number 
- * of past messages and limiting the acceleration under a given threshold. 
+ * comming from ROS-navigation or teleoperation, by calculating the mean values of a certain number
+ * of past messages and limiting the acceleration under a given threshold.
  * cob_base_velocity_smoother subsribes (input) and publishes (output) geometry_msgs::Twist.
  ****************************************************************/
 
@@ -80,7 +80,7 @@ bool cob_base_velocity_smoother::get_new_msg_received()
 cob_base_velocity_smoother::cob_base_velocity_smoother()
 {
 
-  // 
+  //
   m_mutex = PTHREAD_MUTEX_INITIALIZER;
   new_msg_received_ = false;
 
@@ -93,7 +93,7 @@ cob_base_velocity_smoother::cob_base_velocity_smoother()
 
   // subscriber
   geometry_msgs_sub_ = nh_.subscribe<geometry_msgs::Twist>("input", 1, boost::bind(&cob_base_velocity_smoother::geometryCallback, this, _1));
- 
+
   // get parameters from parameter server if possible or write default values to variables
   if( !pnh_.hasParam("circular_buffer_capacity") )
   {
@@ -112,7 +112,7 @@ cob_base_velocity_smoother::cob_base_velocity_smoother()
     ROS_WARN("No parameter maximal_time_delay_to_stop on parameter server. Using default [0.1 in s]");
   }
   pnh_.param("maximal_time_delay_to_stop", stop_delay_after_no_sub_, 0.1);
-  
+
   if( !pnh_.hasParam("thresh_max_acc") )
   {
     ROS_WARN("No parameter thresh_max_acc on parameter server. Using default [0.3 in m/s]");
@@ -162,7 +162,7 @@ cob_base_velocity_smoother::cob_base_velocity_smoother()
     cb_.push_front(zero_values_);
     cb_time_.push_front(now);
 
-  }	
+  }
 };
 
 // destructor
@@ -170,11 +170,11 @@ cob_base_velocity_smoother::~cob_base_velocity_smoother(){}
 
 // callback function to subsribe to the geometry messages cmd_vel and save them in a member variable
 void cob_base_velocity_smoother::geometryCallback(const geometry_msgs::Twist::ConstPtr &cmd_vel)
-{   
- 
+{
+
   sub_msg_ = *cmd_vel;
   set_new_msg_received(true);
- 
+
 }
 
 // calculation function called periodically in main
@@ -192,7 +192,7 @@ void cob_base_velocity_smoother::calculationStep(){
     // generate Output messages
     result = this->setOutput(now, sub_msg_);
     pub_.publish(result);
-    
+
     last = now;
     set_new_msg_received(false);
   }
@@ -309,7 +309,7 @@ bool cob_base_velocity_smoother::circBuffOutOfDate(ros::Time now)
   long unsigned int count=0;
 
   while( (count < cb_.size()) && (result == true) ){
-		
+
     double delay=(now.toSec() - cb_time_[count].toSec());
     if(delay < store_delay_){
       result = false;
@@ -355,7 +355,7 @@ double cob_base_velocity_smoother::meanValueX()
 
   }
   result /= size;
-	
+
   if(size > 1){
 
     double help_result = 0;
@@ -372,7 +372,7 @@ double cob_base_velocity_smoother::meanValueX()
 
     // calculate sum
     for(long unsigned int i=0; i<size; i++){
-		
+
       if(i != max_ind){
         help_result += cb_[i].linear.x;
       }
@@ -381,7 +381,7 @@ double cob_base_velocity_smoother::meanValueX()
   }
 
   return result;
-	
+
 };
 
 // functions to calculate the mean values for linear/y
@@ -414,7 +414,7 @@ double cob_base_velocity_smoother::meanValueY()
 
     // calculate sum
     for(long unsigned int i=0; i<size; i++){
-		
+
       if(i != max_ind){
         help_result += cb_[i].linear.y;
       }
@@ -423,7 +423,7 @@ double cob_base_velocity_smoother::meanValueY()
   }
 
   return result;
-	
+
 };
 
 // functions to calculate the mean values for angular/z
@@ -439,9 +439,9 @@ double cob_base_velocity_smoother::meanValueZ()
 
   }
   result /= size;
-	
+
   if(size > 1){
-		
+
     double help_result = 0;
     double max = cb_[0].angular.z;
     long unsigned int max_ind = 0;
@@ -465,7 +465,7 @@ double cob_base_velocity_smoother::meanValueZ()
   }
 
   return result;
-	
+
 };
 
 // function to make the loop rate availabe outside the class
@@ -492,8 +492,8 @@ void cob_base_velocity_smoother::limitAcceleration(ros::Time now, geometry_msgs:
 
   // limit the acceleration under thresh
   // only if cob_base_velocity_smoother has published a message yet
-	
-  double deltaTime = 0;	
+
+  double deltaTime = 0;
 
   if(cb_time_.size() > 1){
     deltaTime = now.toSec() - cb_time_[2].toSec();
@@ -506,7 +506,7 @@ void cob_base_velocity_smoother::limitAcceleration(ros::Time now, geometry_msgs:
       double deltaX = result.linear.x - cb_out_.front().linear.x;
 
       double deltaY = result.linear.y - cb_out_.front().linear.y;
-		
+
       double deltaZ = result.angular.z - cb_out_.front().angular.z;
 
       if( abs(deltaX) > acc_limit_){
