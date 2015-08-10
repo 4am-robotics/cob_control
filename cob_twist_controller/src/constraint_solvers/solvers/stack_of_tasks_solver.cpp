@@ -127,8 +127,6 @@ void StackOfTasksSolver::processState(std::set<ConstraintBase_t>::iterator& it,
     // only necessary for GPM sum because task stack is already sorted according to PRIOs.
     const double gpm_weighting = inv_constr_prio / inv_sum_of_prios;
 
-    ROS_WARN_STREAM("Weighting for current GPM constraint: " << gpm_weighting);
-
     if(cstate.isTransition())
     {
         if(cstate.getCurrent() == CRITICAL)

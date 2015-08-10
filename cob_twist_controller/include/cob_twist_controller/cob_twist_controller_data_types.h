@@ -45,9 +45,6 @@
 #define ACTIVATION_BUFFER 0.50 ///< means 50 % upper the activation threshold the activation gain function gets active
 #define ACTIVATION_BUFFER_JLA 3.0 ///< means 300 % upper the activation threshold the activation gain function gets active
 
-typedef Eigen::Matrix<double,6,Eigen::Dynamic> Matrix6Xd_t;
-typedef Eigen::Matrix<double,6,1> Vector6d_t;
-
 enum DampingMethodTypes
 {
     NO_DAMPING = cob_twist_controller::TwistController_NO_DAMPING,
@@ -122,14 +119,12 @@ struct ActiveCartesianDimension
     double rot_z;
 };
 
-
-struct ObstacleDistanceInfo
+struct ObstacleDistanceData
 {
-    double min_distance;
-    std::string frame_id;
-    Eigen::Vector3d frame_vector;
-    Eigen::Vector3d nearest_point_frame_vector;
-    Eigen::Vector3d nearest_point_obstacle_vector;
+        double min_distance;
+        Eigen::Vector3d frame_vector;
+        Eigen::Vector3d nearest_point_frame_vector;
+        Eigen::Vector3d nearest_point_obstacle_vector;
 };
 
 struct TwistControllerParams
@@ -284,5 +279,9 @@ class ConstraintState
         EN_ConstraintStates previous_;
         bool transition_;
 };
+
+typedef Eigen::Matrix<double,6,Eigen::Dynamic> Matrix6Xd_t;
+typedef Eigen::Matrix<double,6,1> Vector6d_t;
+typedef std::map<std::string, std::vector<ObstacleDistanceData> > ObstacleDistancesInfo_t;
 
 #endif /* COB_TWIST_CONTROLLER_DATA_TYPES_H_ */

@@ -272,8 +272,6 @@ void TaskStackController<PRIO>::activateTask(std::string task_id)
         if(it->id_ == task_id)
         {
             this->updateModificationTime(!it->is_active_);
-
-            ROS_INFO_STREAM("activateTask: " << task_id);
             it->is_active_ = true;
             break;
         }
@@ -286,7 +284,6 @@ void TaskStackController<PRIO>::deactivateTask(typename std::vector<Task<PRIO> >
     if(std::find(this->tasks_.begin(), this->tasks_.end(), it) != this->tasks_.end())
     {
         this->updateModificationTime(it->is_active_);
-
         it->is_active_ = false;
     }
 }
@@ -300,8 +297,6 @@ void TaskStackController<PRIO>::deactivateTask(std::string task_id)
         if(it->id_ == task_id)
         {
             this->updateModificationTime(it->is_active_);
-
-            ROS_INFO_STREAM("deactivateTask: " << task_id);
             it->is_active_ = false;
             break;
         }

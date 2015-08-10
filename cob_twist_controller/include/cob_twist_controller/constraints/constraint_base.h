@@ -82,34 +82,38 @@ class PriorityBase
             return priority_;
         }
 
+        /// Ensure priority class has overriddend double() operator.
         inline double getPriorityAsNum() const
         {
             return static_cast<double>(priority_);
         }
 
-        virtual double getCriticalValue() const = 0;
-        virtual double getActivationGain() const = 0;
-        virtual void calculate() = 0;
-        virtual double getValue() const = 0;
-        virtual double getPrediction() const = 0;
-
-        virtual double getDerivativeValue() const = 0;
-        virtual double getActivationThreshold() const = 0;
-        virtual Eigen::VectorXd getPartialValues() const = 0;
-        virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution,
-                                              const Eigen::MatrixXd& homogeneous_solution) const = 0;
-        virtual void update(const JointStates& joint_states, const KDL::JntArrayVel& joints_prediction, const Matrix6Xd_t& jacobian_data) = 0;
         virtual std::string getTaskId() const = 0;
-        virtual ConstraintState getState() const = 0;
-        virtual ConstraintTypes getType() const = 0;
-
+        virtual Task_t createTask() = 0;
         virtual Eigen::MatrixXd getTaskJacobian() const = 0;
         virtual Eigen::VectorXd getTaskDerivatives() const = 0;
 
-        virtual Task_t createTask() = 0;
+        virtual void calculate() = 0;
+        virtual double getValue() const = 0;
+        virtual double getDerivativeValue() const = 0;
+        virtual Eigen::VectorXd getPartialValues() const = 0;
+        virtual double getPrediction() const = 0;
+
+        virtual double getActivationGain() const = 0;
+        virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution,
+                                              const Eigen::MatrixXd& homogeneous_solution) const = 0;
+
+
+        virtual void update(const JointStates& joint_states, const KDL::JntArrayVel& joints_prediction, const Matrix6Xd_t& jacobian_data) = 0;
+
+        virtual ConstraintState getState() const = 0;
 
     protected:
         PRIO priority_;
+
+        virtual double getCriticalValue() const = 0;
+        virtual ConstraintTypes getType() const = 0;
+        virtual double getActivationThreshold() const = 0;
 };
 
 
@@ -148,52 +152,9 @@ class ConstraintBase : public PriorityBase<PRIO>
         virtual ~ConstraintBase()
         {}
 
-        virtual void calculate() = 0;
-        virtual double getActivationGain() const = 0;
-        virtual std::string getTaskId() const = 0;
         virtual ConstraintTypes getType() const = 0;
 
-        virtual double getCriticalValue() const
-        {
-            return 0.0;
-        }
-
-        virtual double getValue() const
-        {
-            return this->value_;
-        }
-
-        virtual double getPrediction() const
-        {
-            return this->prediction_value_;
-        }
-
-        virtual double getDerivativeValue() const
-        {
-            return this->derivative_value_;
-        }
-
-        virtual Eigen::VectorXd getPartialValues() const
-        {
-            return this->partial_values_;
-        }
-
-
-        virtual void update(const JointStates& joint_states, const KDL::JntArrayVel& joints_prediction, const Matrix6Xd_t& jacobian_data)
-        {
-            this->joint_states_ = joint_states;
-            this->jacobian_data_ = jacobian_data;
-            this->jnts_prediction_ = joints_prediction;
-            this->callback_data_mediator_.fill(this->constraint_params_);
-
-            this->calculate();
-        }
-
-
-        virtual ConstraintState getState() const
-        {
-            return this->state_;
-        }
+        virtual std::string getTaskId() const = 0;
 
         virtual Eigen::MatrixXd getTaskJacobian() const
         {
@@ -215,6 +176,44 @@ class ConstraintBase : public PriorityBase<PRIO>
             return task;
         }
 
+        virtual void calculate() = 0;
+
+        virtual double getValue() const
+        {
+            return this->value_;
+        }
+
+        virtual double getPrediction() const
+        {
+            return this->prediction_value_;
+        }
+
+        virtual double getDerivativeValue() const
+        {
+            return this->derivative_value_;
+        }
+
+        virtual Eigen::VectorXd getPartialValues() const
+        {
+            return this->partial_values_;
+        }
+
+        virtual void update(const JointStates& joint_states, const KDL::JntArrayVel& joints_prediction, const Matrix6Xd_t& jacobian_data)
+        {
+            this->joint_states_ = joint_states;
+            this->jacobian_data_ = jacobian_data;
+            this->jnts_prediction_ = joints_prediction;
+            this->callback_data_mediator_.fill(this->constraint_params_);
+            this->calculate();
+        }
+
+        virtual ConstraintState getState() const
+        {
+            return this->state_;
+        }
+
+        virtual double getActivationGain() const = 0;
+
     protected:
         ConstraintState state_;
         JointStates joint_states_;
@@ -233,6 +232,11 @@ class ConstraintBase : public PriorityBase<PRIO>
 
         uint32_t member_inst_cnt_;
         static uint32_t instance_ctr_;
+
+        virtual double getCriticalValue() const
+        {
+            return 0.0;
+        }
 };
 
 template <typename T_PARAMS, typename PRIO>

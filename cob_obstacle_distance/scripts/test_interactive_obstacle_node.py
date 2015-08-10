@@ -53,7 +53,7 @@ class InteractiveObstacle:
         self.interactive_box_pose.pose.position.z =  0.8
         self.interactive_box_pose.pose.orientation.w = 1.0
 
-        self.ia_server = InteractiveMarkerServer("marker_server")
+        self.ia_server = InteractiveMarkerServer("obstacle_marker_server")
         self.int_marker = InteractiveMarker()
         self.int_marker.header.frame_id = self.root_frame
         self.int_marker.pose = self.interactive_box_pose.pose

@@ -41,6 +41,7 @@
 #define FCL_RADIUS 0u
 #define FCL_CYL_LENGTH 1u
 
+#define MIN_DISTANCE 0.5 // [m]: filter for distances to be published!
 
 struct ShapeMsgTypeToVisMarkerType
 {

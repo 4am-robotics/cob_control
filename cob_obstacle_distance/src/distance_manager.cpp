@@ -256,11 +256,7 @@ void DistanceManager::calculate()
         ooi->updatePose(v3, quat);
 
         fcl::CollisionObject ooi_co = ooi->getCollisionObject();
-        fcl::DistanceResult dist_result;
-        bool setDistResult = false;
-        fcl::CollisionObject result_collision_obj = ooi_co;
         fcl::FCL_REAL last_dist = std::numeric_limits<fcl::FCL_REAL>::max();
-
         { // introduced the block to lock this critical section until block leaved.
             std::lock_guard<std::mutex> lock(obstacle_mgr_mtx_);
             for(ShapesManager::MapIter_t it = this->obstacle_mgr_->begin(); it != this->obstacle_mgr_->end(); ++it)
@@ -274,44 +270,37 @@ void DistanceManager::calculate()
 
                 PtrIMarkerShape_t obstacle = it->second;
                 fcl::CollisionObject collision_obj = obstacle->getCollisionObject();
-                fcl::DistanceResult tmpResult;
-                fcl::DistanceRequest distRequest(true, 5.0, 0.01);
-                fcl::FCL_REAL dist = fcl::distance(&ooi_co, &collision_obj, distRequest, tmpResult);
-                if (dist < last_dist)
+                fcl::DistanceResult dist_result;
+                fcl::DistanceRequest dist_request(true, 5.0, 0.01);
+                fcl::FCL_REAL dist = fcl::distance(&ooi_co, &collision_obj, dist_request, dist_result);
+
+
+                Eigen::Vector3d abs_obst_vector(dist_result.nearest_points[1][VEC_X],
+                                                dist_result.nearest_points[1][VEC_Y],
+                                                dist_result.nearest_points[1][VEC_Z]);
+                Eigen::Vector3d obst_vector = tmp_tf_cb_frame_bl * abs_obst_vector;
+
+                Eigen::Vector3d abs_jnt_pos_update(dist_result.nearest_points[0][VEC_X],
+                                                   dist_result.nearest_points[0][VEC_Y],
+                                                   dist_result.nearest_points[0][VEC_Z]);
+
+                // vector from arm base link frame to nearest collision point on frame
+                Eigen::Vector3d rel_base_link_frame_pos = tmp_tf_cb_frame_bl * abs_jnt_pos_update;
+                ROS_DEBUG_STREAM("Frame \"" << object_of_interest_name << "\": Minimal distance: " << dist_result.min_distance);
+                if(dist_result.min_distance < MIN_DISTANCE)
                 {
-                    setDistResult = true;
-                    dist_result = tmpResult;
-                    result_collision_obj = collision_obj;
-                    last_dist = dist;
+                    cob_obstacle_distance::ObstacleDistance od_msg;
+                    od_msg.distance = dist_result.min_distance;
+                    od_msg.frame_of_interest = object_of_interest_name;
+                    od_msg.header.frame_id = chain_base_link_;
+                    od_msg.header.stamp = ros::Time::now();
+                    od_msg.header.seq = seq_nr_;
+                    tf::vectorEigenToMsg(obst_vector, od_msg.nearest_point_obstacle_vector);
+                    tf::vectorEigenToMsg(rel_base_link_frame_pos, od_msg.nearest_point_frame_vector);
+                    tf::vectorEigenToMsg(chainbase2frame_pos, od_msg.frame_vector);
+                    obstacle_distances.distances.push_back(od_msg);
                 }
             }
-        }
-
-        if(setDistResult)
-        {
-            Eigen::Vector3d abs_obst_vector(dist_result.nearest_points[1][VEC_X],
-                                            dist_result.nearest_points[1][VEC_Y],
-                                            dist_result.nearest_points[1][VEC_Z]);
-            Eigen::Vector3d obst_vector = tmp_tf_cb_frame_bl * abs_obst_vector;
-
-            Eigen::Vector3d abs_jnt_pos_update(dist_result.nearest_points[0][VEC_X],
-                                               dist_result.nearest_points[0][VEC_Y],
-                                               dist_result.nearest_points[0][VEC_Z]);
-
-            // vector from arm base link frame to nearest collision point on frame
-            Eigen::Vector3d rel_base_link_frame_pos = tmp_tf_cb_frame_bl * abs_jnt_pos_update;
-            ROS_DEBUG_STREAM("Frame \"" << object_of_interest_name << "\": Minimal distance: " << dist_result.min_distance);
-
-            cob_obstacle_distance::ObstacleDistance od_msg;
-            od_msg.distance = dist_result.min_distance;
-            od_msg.frame_of_interest = object_of_interest_name;
-            od_msg.header.frame_id = chain_base_link_;
-            od_msg.header.stamp = ros::Time::now();
-            od_msg.header.seq = seq_nr_;
-            tf::vectorEigenToMsg(obst_vector, od_msg.nearest_point_obstacle_vector);
-            tf::vectorEigenToMsg(rel_base_link_frame_pos, od_msg.nearest_point_frame_vector);
-            tf::vectorEigenToMsg(chainbase2frame_pos, od_msg.frame_vector);
-            obstacle_distances.distances.push_back(od_msg);
         }
     }
 

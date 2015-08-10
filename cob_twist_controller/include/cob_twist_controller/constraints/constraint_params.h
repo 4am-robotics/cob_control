@@ -59,8 +59,7 @@ class ConstraintParamsBase
 class ConstraintParamsCA : public ConstraintParamsBase
 {
     public:
-
-        ObstacleDistanceInfo current_distance_;
+        std::vector<ObstacleDistanceData> current_distances_;
 
         ConstraintParamsCA(const TwistControllerParams& params,
                            const std::string& id = std::string())
@@ -70,7 +69,7 @@ class ConstraintParamsCA : public ConstraintParamsBase
         ConstraintParamsCA(const ConstraintParamsCA& cpca)
         : ConstraintParamsBase(cpca.tc_params_, cpca.id_)
         {
-            current_distance_ = cpca.current_distance_;
+            current_distances_ = cpca.current_distances_;
         }
 
         virtual ~ConstraintParamsCA()
