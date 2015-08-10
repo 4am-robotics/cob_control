@@ -61,9 +61,9 @@ class CobTwistController
 {
 private:
     ros::NodeHandle nh_;
-    
+
     ros::Subscriber jointstate_sub_;
-    
+
     ros::Subscriber twist_sub_;
     ros::Subscriber twist_stamped_sub_;
 
@@ -80,10 +80,11 @@ private:
     boost::shared_ptr<KDL::ChainFkSolverVel_recursive> jntToCartSolver_vel_;
     boost::shared_ptr<InverseDifferentialKinematicsSolver> p_inv_diff_kin_solver_;
     boost::shared_ptr<HardwareInterfaceBase> hardware_interface_;
-    
+
     CallbackDataMediator callback_data_mediator_;
 
     tf::TransformListener tf_listener_;
+
 
 
 public:
@@ -108,7 +109,7 @@ public:
     void checkSolverAndConstraints(cob_twist_controller::TwistControllerConfig& config);
     void jointstateCallback(const sensor_msgs::JointState::ConstPtr& msg);
     void odometryCallback(const nav_msgs::Odometry::ConstPtr& msg);
-    
+
     void twistCallback(const geometry_msgs::Twist::ConstPtr& msg);
     void twistStampedCallback(const geometry_msgs::TwistStamped::ConstPtr& msg);
 

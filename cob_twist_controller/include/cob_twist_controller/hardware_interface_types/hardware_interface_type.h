@@ -46,7 +46,7 @@ class HardwareInterfaceBuilder
     public:
         HardwareInterfaceBuilder() {}
         ~HardwareInterfaceBuilder() {}
-        
+
         static HardwareInterfaceBase* createHardwareInterface(ros::NodeHandle& nh,
                                                const TwistControllerParams& params);
 };
@@ -83,7 +83,7 @@ class HardwareInterfacePosition : public HardwareInterfaceBase
         : HardwareInterfaceBase(nh, params)
         {
             ma_.assign(params.dof, MovingAvg_double_t(3));
-            
+
             last_update_time_ = ros::Time::now();
             pub_ = nh.advertise<std_msgs::Float64MultiArray>("joint_group_position_controller/command", 1);
         }
@@ -112,15 +112,15 @@ class HardwareInterfaceJointStates : public HardwareInterfaceBase
         : HardwareInterfaceBase(nh, params)
         {
             ma_.assign(params.dof, MovingAvg_double_t(3));
-            
+
             last_update_time_ = ros::Time::now();
             pub_ = nh.advertise<sensor_msgs::JointState>("joint_states", 1);
-            
+
             js_msg_.name = params_.joints;
             js_msg_.position.assign(params_.joints.size(), 0.0);
             js_msg_.velocity.assign(params_.joints.size(), 0.0);
             js_msg_.effort.assign(params_.joints.size(), 0.0);
-            
+
             js_timer_ = nh.createTimer(ros::Duration(1/60.0), &HardwareInterfaceJointStates::publishJointState, this);
             js_timer_.start();
         }
@@ -134,10 +134,10 @@ class HardwareInterfaceJointStates : public HardwareInterfaceBase
         std::vector<MovingAvg_double_t> ma_;
         std::vector<double> vel_last_, vel_before_last_;
         ros::Time last_update_time_;
-        
+
         boost::mutex mutex_;
         sensor_msgs::JointState js_msg_;
-        
+
         ros::Timer js_timer_;
         void publishJointState(const ros::TimerEvent& event);
 

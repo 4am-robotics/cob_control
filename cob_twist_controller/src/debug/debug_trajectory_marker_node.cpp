@@ -61,15 +61,15 @@ public:
             ROS_ERROR("Failed to get parameter \"root_frame\".");
             return -1;
         }
-        
+
         this->base_link_ = "base_link";
-        
+
         if(!nh_.getParam("chain_tip_link", this->chain_tip_link_))
         {
             ROS_ERROR("Failed to get parameter \"chain_tip_link\".");
             return -2;
         }
-        
+
         ros::NodeHandle nh_private("~");
         if(!nh_private.getParam("target_frame", this->target_frame_))
         {
@@ -80,7 +80,7 @@ public:
 
         marker_pub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("trajectory_marker", 1, true);
         marker_timer_ = this->nh_.createTimer(ros::Duration(0.05), &DebugTrajectoryMarker::publishMarker, this);//20Hz
-        
+
         while(marker_pub_.getNumSubscribers() < 1)
         {
             if(ros::isShuttingDown())
@@ -90,24 +90,24 @@ public:
             ROS_WARN_STREAM("Please create a subscriber to '" + this->nh_.getNamespace() + "/trajectory_marker' topic (Type: visualization_msgs/MarkerArray)");
             ros::Duration(1.0).sleep();
         }
-        
+
         std_msgs::ColorRGBA green;
         green.g = green.a = 1.0;
         tip_marker_ = getMarker(green);
         tip_marker_.ns = "tip_marker";
-        
+
         std_msgs::ColorRGBA red;
         red.r = red.a = 1.0;
         target_marker_ = getMarker(red);
         target_marker_.ns = "target_marker";
-        
+
         std_msgs::ColorRGBA blue;
         blue.b = blue.a = 1.0;
         base_marker_ = getMarker(blue);
         base_marker_.ns = "base_marker";
-        
+
         marker_timer_.start();
-        
+
         return 0;
     }
 
@@ -115,7 +115,7 @@ public:
     {
         visualization_msgs::MarkerArray marker_array;
         geometry_msgs::Point point;
-        
+
         if(tf_listener_.frameExists(this->chain_tip_link_))
         {
             if(tip_marker_.points.size() > 10000)
@@ -126,7 +126,7 @@ public:
             tip_marker_.points.push_back(point);
             marker_array.markers.push_back(tip_marker_);
         }
-        
+
         if(tf_listener_.frameExists(this->target_frame_))
         {
             if(target_marker_.points.size() > 10000)
@@ -137,7 +137,7 @@ public:
             target_marker_.points.push_back(point);
             marker_array.markers.push_back(target_marker_);
         }
-        
+
         if(tf_listener_.frameExists(this->base_link_))
         {
             if(nh_.param("twist_controller/kinematic_extension", 0) == 1)//BASE_ACTIVE
@@ -151,7 +151,7 @@ public:
                 marker_array.markers.push_back(base_marker_);
             }
         }
-        
+
         if(!marker_array.markers.empty())
         {
             this->marker_pub_.publish(marker_array);
@@ -167,14 +167,14 @@ public:
         box_marker.id = 42;
         box_marker.header.stamp = ros::Time::now();
         box_marker.header.frame_id = this->root_frame_;
-        
+
         box_marker.scale.x = 0.01;
         box_marker.color = color;
         box_marker.pose.orientation.w = 1.0;
-        
+
         return box_marker;
     }
-    
+
     geometry_msgs::Point getPoint(std::string from, std::string to)
     {
         geometry_msgs::Point point;
@@ -184,7 +184,7 @@ public:
             ros::Time now = ros::Time::now();
             tf_listener_.waitForTransform(from, to, now, ros::Duration(0.5));
             tf_listener_.lookupTransform(from, to, now, transform);
-            
+
             point.x = transform.getOrigin().x();
             point.y = transform.getOrigin().y();
             point.z = transform.getOrigin().z();
@@ -193,7 +193,7 @@ public:
         {
             ROS_ERROR("%s",ex.what());
         }
-        
+
         return point;
     }
 
@@ -209,14 +209,14 @@ public:
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "debug_trajectory_marker_node");
-    
+
     DebugTrajectoryMarker dtm;
     if (dtm.init() != 0)
     {
         ROS_ERROR("Failed to initialize DebugTrajectoryMarker.");
         return -1;
     }
-    
+
     ros::spin();
 }
 

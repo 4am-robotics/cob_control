@@ -34,7 +34,7 @@ def move_test():
     client.send_goal(goal)
     client.wait_for_result()
 
-   
+
 #     goal = CartesianControllerGoal()
 #     goal.move_type = CartesianControllerGoal.LIN
 #     goal.move_lin.x = 0.0
@@ -49,8 +49,8 @@ def move_test():
 #     goal.move_lin.rotate_only = False
 #     client.send_goal(goal)
 #     client.wait_for_result()
-    
-    
+
+
     goal = CartesianControllerGoal()
     goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = 0.0
@@ -65,9 +65,9 @@ def move_test():
     goal.move_lin.rotate_only = False
     client.send_goal(goal)
     client.wait_for_result()
-    
+
     rospy.sleep(0.5)
-    
+
     goal = CartesianControllerGoal()
     goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = 0.65
@@ -82,9 +82,9 @@ def move_test():
     goal.move_lin.rotate_only = False
     client.send_goal(goal)
     client.wait_for_result()
-    
+
     rospy.sleep(0.5)
-    
+
     goal = CartesianControllerGoal()
     goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = 0.0
@@ -99,9 +99,9 @@ def move_test():
     goal.move_lin.rotate_only = False
     client.send_goal(goal)
     client.wait_for_result()
-    
+
     rospy.sleep(0.5)
-    
+
     goal = CartesianControllerGoal()
     goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = 0.0
@@ -116,9 +116,9 @@ def move_test():
     goal.move_lin.rotate_only = False
     client.send_goal(goal)
     client.wait_for_result()
-    
+
     rospy.sleep(0.5)
-    
+
     # Try to grap down wards in the torus
     rospy.loginfo("Try to move down behind torus")
     goal = CartesianControllerGoal()
@@ -137,9 +137,9 @@ def move_test():
     client.wait_for_result()
     result = client.get_result()
     rospy.loginfo("Result: " + str(result))
-    
+
     rospy.sleep(0.5)
-    
+
     # Try to grap up wards in the torus
     rospy.loginfo("Try to move up behind torus")
     goal = CartesianControllerGoal()
@@ -158,9 +158,9 @@ def move_test():
     client.wait_for_result()
     result = client.get_result()
     rospy.loginfo("Result: " + str(result))
-    
+
     rospy.sleep(0.5)
-    
+
     rospy.loginfo("Try to move down again")
     goal = CartesianControllerGoal()
     goal.move_type = CartesianControllerGoal.LIN
@@ -178,9 +178,9 @@ def move_test():
     client.wait_for_result()
     result = client.get_result()
     rospy.loginfo("Result: " + str(result))
-    
+
     rospy.sleep(0.5)
-    
+
     rospy.loginfo("Try to move back")
     goal = CartesianControllerGoal()
     goal.move_type = CartesianControllerGoal.LIN
@@ -198,7 +198,7 @@ def move_test():
     client.wait_for_result()
 
 #     rospy.sleep(0.5)
-#     
+#
 #     goal = CartesianControllerGoal()
 #     goal.move_type = CartesianControllerGoal.LIN
 #     goal.move_lin.x = 0.0
@@ -213,8 +213,8 @@ def move_test():
 #     goal.move_lin.rotate_only = False
 #     client.send_goal(goal)
 #     client.wait_for_result()
-    
-    
+
+
 
 
 def move_lin_x(client, length):
@@ -232,14 +232,14 @@ def move_lin_x(client, length):
 #     goal.move_lin.rotate_only = False
 #     client.send_goal(goal)
 #     client.wait_for_result()
-# 
+#
 #     print("Finished move_lin")
 
 #    rospy.sleep(2.0)
-#     
+#
 #     print("Finished Pause")
-# 
-    # Attention: Changes the endeffector position with reference to the world_frame, but the orientation will be changed relatively to the current orientation. 
+#
+    # Attention: Changes the endeffector position with reference to the world_frame, but the orientation will be changed relatively to the current orientation.
     goal = CartesianControllerGoal()
     goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.x = 0.5
@@ -273,9 +273,9 @@ def move_santa(client):
     goal.move_lin.rotate_only = False
     client.send_goal(goal)
     client.wait_for_result()
-    
+
     rospy.sleep(4.0)
-    
+
     # Step 2
     goal = CartesianControllerGoal()
     goal.move_type = CartesianControllerGoal.LIN
@@ -291,9 +291,9 @@ def move_santa(client):
     goal.move_lin.rotate_only = False
     client.send_goal(goal)
     client.wait_for_result()
-    
+
     rospy.sleep(4.0)
-    
+
     # Step 3
     goal = CartesianControllerGoal()
     goal.move_type = CartesianControllerGoal.LIN
@@ -309,9 +309,9 @@ def move_santa(client):
     goal.move_lin.rotate_only = False
     client.send_goal(goal)
     client.wait_for_result()
-    
+
     rospy.sleep(2.0)
-    
+
     # Step 4
     goal = CartesianControllerGoal()
     goal.move_type = CartesianControllerGoal.LIN
@@ -327,9 +327,9 @@ def move_santa(client):
     goal.move_lin.rotate_only = False
     client.send_goal(goal)
     client.wait_for_result()
-    
+
     rospy.sleep(2.0)
-    
+
     # Step 5
     goal = CartesianControllerGoal()
     goal.move_type = CartesianControllerGoal.LIN
@@ -345,7 +345,7 @@ def move_santa(client):
     goal.move_lin.rotate_only = False
     client.send_goal(goal)
     client.wait_for_result()
-    
+
     rospy.sleep(2.0)
 
     # Step 6
@@ -363,9 +363,9 @@ def move_santa(client):
     goal.move_lin.rotate_only = False
     client.send_goal(goal)
     client.wait_for_result()
-    
+
     rospy.sleep(2.0)
-    
+
     # Step 7
     goal = CartesianControllerGoal()
     goal.move_type = CartesianControllerGoal.LIN
@@ -381,9 +381,9 @@ def move_santa(client):
     goal.move_lin.rotate_only = False
     client.send_goal(goal)
     client.wait_for_result()
-    
+
     rospy.sleep(2.0)
-    
+
     # Step 8
     goal = CartesianControllerGoal()
     goal.move_type = CartesianControllerGoal.LIN
@@ -415,11 +415,11 @@ def move_santa(client):
 
 if __name__ == '__main__':
     rospy.init_node('CartesianControllerAction_client')
-    
+
     client = actionlib.SimpleActionClient('cartesian_trajectory_action', CartesianControllerAction)
     client.wait_for_server()
     #move_santa(client)
     #move_lin_x(client, -0.5)
-    
+
     move_test()
-    
+

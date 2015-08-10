@@ -60,7 +60,7 @@ if __name__=="__main__":
 #     
 #     pose = Pose()
 #     pose.position.x = 0.35
-#     pose.position.y = -0.35
+#     pose.position.y = -0.45
 #     pose.position.z = 0.8
 #     pose.orientation.x = 0.0; 
 #     pose.orientation.y = 0.0; 

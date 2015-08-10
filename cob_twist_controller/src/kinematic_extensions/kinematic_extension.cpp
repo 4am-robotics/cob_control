@@ -22,7 +22,7 @@
  * \date Date of creation: June, 2015
  *
  * \brief
- *   This header contains the interface description for extening the 
+ *   This header contains the interface description for extening the
  *   kinematic chain with additional degrees of freedom, e.g. base_active or lookat
  *
  ****************************************************************/
@@ -39,7 +39,7 @@
 KinematicExtensionBase* KinematicExtensionBuilder::createKinematicExtension(const TwistControllerParams& params)
 {
     KinematicExtensionBase* keb = NULL;
-    
+
     switch(params.kinematic_extension)
     {
         case NO_EXTENSION:
@@ -53,7 +53,7 @@ KinematicExtensionBase* KinematicExtensionBuilder::createKinematicExtension(cons
             keb = new KinematicExtensionNone(params);
             break;
     }
-    
+
     return keb;
 }
 /* END KinematicExtensionBuilder *******************************************************************************************/
@@ -86,7 +86,7 @@ KDL::Jacobian KinematicExtension6D::adjustJacobian(const KDL::Jacobian& jac_chai
 {
     KDL::Frame dummy;
     ActiveCartesianDimension active_dim;
-    
+
     return adjustJacobian6d(jac_chain, dummy, dummy, active_dim);
 }
 
@@ -97,7 +97,7 @@ KDL::Jacobian KinematicExtension6D::adjustJacobian6d(const KDL::Jacobian& jac_ch
 {
     ///compose jac_full considering kinematical extension
     KDL::Jacobian jac_full;
-    
+
     //ToDo: some of the variable names are not generic enough
     Eigen::Vector3d w_x_chain_base, w_y_chain_base, w_z_chain_base;
     Eigen::Vector3d tangential_vel_x, tangential_vel_y, tangential_vel_z;
@@ -193,14 +193,14 @@ KDL::Jacobian KinematicExtensionBaseActive::adjustJacobian(const KDL::Jacobian& 
     tf::StampedTransform bl_transform_ct, cb_transform_bl;
     KDL::Frame bl_frame_ct, cb_frame_bl;
     ActiveCartesianDimension active_dim;
-    
+
     ///get required transformations
     try
     {
         ros::Time now = ros::Time(0);
         tf_listener_.waitForTransform("base_link", params_.chain_tip_link, now, ros::Duration(0.5));
         tf_listener_.lookupTransform("base_link", params_.chain_tip_link,  now, bl_transform_ct);
-        
+
         tf_listener_.waitForTransform(params_.chain_base_link, "base_link", now, ros::Duration(0.5));
         tf_listener_.lookupTransform(params_.chain_base_link, "base_link", now, cb_transform_bl);
     }
@@ -214,8 +214,8 @@ KDL::Jacobian KinematicExtensionBaseActive::adjustJacobian(const KDL::Jacobian& 
 
     cb_frame_bl.p = KDL::Vector(cb_transform_bl.getOrigin().x(), cb_transform_bl.getOrigin().y(), cb_transform_bl.getOrigin().z());
     cb_frame_bl.M = KDL::Rotation::Quaternion(cb_transform_bl.getRotation().x(), cb_transform_bl.getRotation().y(), cb_transform_bl.getRotation().z(), cb_transform_bl.getRotation().w());
-    
-    
+
+
     ///active base can move in lin_x, lin_y and rot_z
     active_dim.lin_x=1;
     active_dim.lin_y=1;
@@ -234,14 +234,14 @@ KDL::Jacobian KinematicExtensionBaseActive::adjustJacobian(const KDL::Jacobian& 
 void KinematicExtensionBaseActive::processResultExtension(const KDL::JntArray& q_dot_ik)
 {
     geometry_msgs::Twist base_vel_msg;
-    
+
     base_vel_msg.linear.x = q_dot_ik(params_.dof);
     base_vel_msg.linear.y = q_dot_ik(params_.dof+1);
     base_vel_msg.linear.z = q_dot_ik(params_.dof+2);
     base_vel_msg.angular.x = q_dot_ik(params_.dof+3);
     base_vel_msg.angular.y = q_dot_ik(params_.dof+4);
     base_vel_msg.angular.z = q_dot_ik(params_.dof+5);
-    
+
     base_vel_pub_.publish(base_vel_msg);
 }
 /* END KinematicExtensionBaseActive **********************************************************************************************/

@@ -48,17 +48,17 @@ public:
     void transformPose(const std::string source_frame, const std::string target_frame, const geometry_msgs::Pose pose_in, geometry_msgs::Pose& pose_out);
     tf::StampedTransform getStampedTransform(const std::string& target_frame, const std::string& source_frame);
     geometry_msgs::Pose getPose(const std::string& target_frame, const std::string& source_frame);
-    
+
     bool inEpsilonArea(const tf::StampedTransform& stamped_transform, const double epsilon);
     void poseToRPY(const geometry_msgs::Pose& pose, double& roll, double& pitch, double& yaw);
-    
+
     void previewPath(const geometry_msgs::PoseArray& pose_array);
 
 
 private:
     ros::NodeHandle nh_;
     tf::TransformListener tf_listener_;
-    
+
     ros::Publisher marker_pub_;
 };
 

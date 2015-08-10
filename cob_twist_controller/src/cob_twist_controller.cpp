@@ -32,6 +32,7 @@
 #include <kdl_conversions/kdl_msg.h>
 #include <tf/transform_datatypes.h>
 #include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
 
 #include <Eigen/Dense>
 #include "cob_srvs/SetString.h"
@@ -165,7 +166,7 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
 {
     this->checkSolverAndConstraints(config);
     twist_controller_params_.hardware_interface_type = static_cast<HardwareInterfaceTypes>(config.hardware_interface_type);
-    
+
     twist_controller_params_.numerical_filtering = config.numerical_filtering;
     twist_controller_params_.damping_method = static_cast<DampingMethodTypes>(config.damping_method);
     twist_controller_params_.damping_factor = config.damping_factor;
@@ -173,7 +174,7 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     twist_controller_params_.w_threshold = config.w_threshold;
     twist_controller_params_.beta = config.beta;
     twist_controller_params_.eps_damping = config.eps_damping;
-    
+
     twist_controller_params_.solver = static_cast<SolverTypes>(config.solver);
     twist_controller_params_.priority_main = config.priority;
 
@@ -192,14 +193,14 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
 
     twist_controller_params_.mu = config.mu;
     twist_controller_params_.k_H = config.k_H;
-    
+
     twist_controller_params_.eps_truncation = config.eps_truncation;
-    
+
     twist_controller_params_.keep_direction = config.keep_direction;
     twist_controller_params_.enforce_pos_limits = config.enforce_pos_limits;
     twist_controller_params_.enforce_vel_limits = config.enforce_vel_limits;
     twist_controller_params_.tolerance = config.tolerance;
-    
+
     twist_controller_params_.base_compensation = config.base_compensation;
     twist_controller_params_.kinematic_extension = static_cast<KinematicExtensionTypes>(config.kinematic_extension);
     twist_controller_params_.base_ratio = config.base_ratio;
@@ -318,7 +319,7 @@ void CobTwistController::solveTwist(KDL::Twist twist)
     {
         twist = twist - twist_odometry_cb_;
     }
-    
+
     ret_ik = p_inv_diff_kin_solver_->CartToJnt(this->joint_states_,
                                                twist,
                                                q_dot_ik);
@@ -332,6 +333,8 @@ void CobTwistController::solveTwist(KDL::Twist twist)
         // Change between velocity and position interface
         this->hardware_interface_->processResult(q_dot_ik, this->joint_states_.current_q_);
     }
+
+
 }
 
 
@@ -385,7 +388,7 @@ void CobTwistController::odometryCallback(const nav_msgs::Odometry::ConstPtr& ms
         ROS_ERROR("CobTwistController::odometryCallback: \n%s",ex.what());
         return;
     }
-    
+
     try
     {
         // Calculate tangential twist for angular base movements v = w x r
@@ -411,3 +414,5 @@ void CobTwistController::odometryCallback(const nav_msgs::Odometry::ConstPtr& ms
 
     twist_odometry_cb_ = twist_odometry_transformed_cb;
 }
+
+

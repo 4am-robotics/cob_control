@@ -58,9 +58,6 @@ std::set<ConstraintBase_t> ConstraintsBuilder<PRIO>::createConstraints(const Twi
         typedef JointLimitAvoidance<ConstraintParamsJLA, PRIO> Jla_t;
 //        ConstraintParamsJLA params = ConstraintParamFactory<ConstraintParamsJLA>::createConstraintParams(twist_controller_params, data_mediator);
 //        // TODO: take care PRIO could be of different type than UINT32
-//        boost::shared_ptr<Jla_t > jla(new Jla_t(twist_controller_params.priority_jla, params, data_mediator));
-//        constraints.insert(boost::static_pointer_cast<PriorityBase<PRIO> >(jla));
-
         ConstraintParamsJLA params = ConstraintParamFactory<ConstraintParamsJLA>::createConstraintParams(twist_controller_params, data_mediator);
         uint32_t startPrio = twist_controller_params.priority_jla;
         for (uint32_t i = 0; i < twist_controller_params.joints.size(); ++i)
@@ -108,11 +105,13 @@ std::set<ConstraintBase_t> ConstraintsBuilder<PRIO>::createConstraints(const Twi
     if(CA_ON == twist_controller_params.constraint_ca)
     {
         typedef CollisionAvoidance<ConstraintParamsCA, PRIO> CollisionAvoidance_t;
-        uint32_t available_dists = data_mediator.obstacleDistancesCnt();
+        //uint32_t available_dists = data_mediator.obstacleDistancesCnt();
         uint32_t startPrio = twist_controller_params.priority_ca;
-        for (uint32_t i = 0; i < available_dists; ++i)
+
+        for(std::vector<std::string>::const_iterator it = twist_controller_params.collision_check_frames.begin();
+                it != twist_controller_params.collision_check_frames.end(); it++)
         {
-            ConstraintParamsCA params = ConstraintParamFactory<ConstraintParamsCA>::createConstraintParams(twist_controller_params, data_mediator);
+            ConstraintParamsCA params = ConstraintParamFactory<ConstraintParamsCA>::createConstraintParams(twist_controller_params, data_mediator, *it);
             // TODO: take care PRIO could be of different type than UINT32
             boost::shared_ptr<CollisionAvoidance_t > ca(new CollisionAvoidance_t(startPrio--, params, data_mediator, jnt_to_jac, fk_solver_vel));
             constraints.insert(boost::static_pointer_cast<PriorityBase<PRIO> >(ca));

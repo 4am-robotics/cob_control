@@ -83,7 +83,7 @@ def init_dyn_recfg():
     cli.set_config_param(tcc.DAMP_METHOD, tcc.TwistController_MANIPULABILITY)
     cli.set_config_param(tcc.LAMBDA_MAX, 0.1)
     cli.set_config_param(tcc.W_THRESH, 0.05)
-    cli.set_config_param(tcc.SOLVER, tcc.TwistController_DYN_TASKS_READJ)
+    cli.set_config_param(tcc.SOLVER, tcc.TwistController_STACK_OF_TASKS)
     cli.set_config_param(tcc.K_H, 1.0)
     
     cli.set_config_param(tcc.CONSTR_CA, tcc.TwistController_CA)

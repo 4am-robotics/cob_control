@@ -22,7 +22,7 @@
  * \date Date of creation: June, 2015
  *
  * \brief
- *   This header contains the interface description for extending the 
+ *   This header contains the interface description for extending the
  *   kinematic chain with additional degrees of freedom, e.g. base_active or lookat
  *
  ****************************************************************/
@@ -50,7 +50,7 @@ class KinematicExtensionBuilder
     public:
         KinematicExtensionBuilder() {}
         ~KinematicExtensionBuilder() {}
-        
+
         static KinematicExtensionBase* createKinematicExtension(const TwistControllerParams& params);
 };
 /* END KinematicExtensionBuilder *******************************************************************************************/
@@ -90,7 +90,7 @@ class KinematicExtension6D : public KinematicExtensionBase
 
         virtual KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain);
         virtual void processResultExtension(const KDL::JntArray& q_dot_ik) = 0;
-        
+
         KDL::Jacobian adjustJacobian6d(const KDL::Jacobian& jac_chain, const KDL::Frame full_frame, const KDL::Frame partial_frame, const ActiveCartesianDimension active_dim);
 };
 /* END KinematicExtension6D **********************************************************************************************/
@@ -105,7 +105,7 @@ class KinematicExtensionBaseActive : public KinematicExtension6D
         : KinematicExtension6D(params)
         {
             base_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("/base/twist_controller/command", 1);
-            
+
             //ToDo: I don't like this hack! Can we pass the tf_listner_ somehow?
             ///give tf_listener_ some time to fill buffer
             ros::Duration(0.5).sleep();
@@ -115,15 +115,15 @@ class KinematicExtensionBaseActive : public KinematicExtension6D
 
         virtual KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain);
         virtual void processResultExtension(const KDL::JntArray& q_dot_ik);
-        
-        
+
+
         void baseTwistCallback(const geometry_msgs::Twist::ConstPtr& msg);
-        
-    
+
+
     private:
         ros::NodeHandle nh_;
         tf::TransformListener tf_listener_;
-    
+
         ros::Publisher base_vel_pub_;
 };
 /* END KinematicExtensionBaseActive **********************************************************************************************/

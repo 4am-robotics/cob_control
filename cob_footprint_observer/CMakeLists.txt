@@ -19,15 +19,16 @@ generate_messages(
   DEPENDENCIES std_msgs geometry_msgs
 )
 
-catkin_package( 
-    CATKIN_DEPENDS geometry_msgs message_runtime roscpp std_msgs tf
+catkin_package(
+  CATKIN_DEPENDS geometry_msgs message_runtime roscpp std_msgs tf
+  INCLUDE_DIRS include
 )
 
 ### BUILD ###
 include_directories(include ${Boost_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
 
 add_executable(footprint_observer src/cob_footprint_observer.cpp)
-add_dependencies(footprint_observer ${${PROJECT_NAME}_EXPORTED_TARGETS})
+add_dependencies(footprint_observer ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(footprint_observer ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 ### INSTALL ###

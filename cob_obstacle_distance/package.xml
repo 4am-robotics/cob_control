@@ -1,5 +1,4 @@
-<?xml version="1.0"?>
-<package>
+<package format="2">
   <name>cob_obstacle_distance</name>
   <version>0.0.1</version>
   <description>The cob_obstacle_distance package</description>
@@ -11,56 +10,36 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend>assimp</build_depend>
-  <build_depend>cmake_modules</build_depend>
-  <build_depend>cob_srvs</build_depend>
-  <build_depend>dynamic_reconfigure</build_depend>
-  <build_depend>eigen_conversions</build_depend>
-  <build_depend>eigen</build_depend>
-  <build_depend>fcl</build_depend>
-  <build_depend>geometry_msgs</build_depend>
-  <build_depend>interactive_markers</build_depend>
-  <build_depend>kdl_conversions</build_depend>
-  <build_depend>kdl_parser</build_depend>
   <build_depend>message_generation</build_depend>
-  <build_depend>moveit_msgs</build_depend>
-  <build_depend>orocos_kdl</build_depend>
-  <build_depend>roscpp</build_depend>
-  <build_depend>roslib</build_depend>
-  <build_depend>sensor_msgs</build_depend>
-  <build_depend>shape_msgs</build_depend>
-  <build_depend>std_msgs</build_depend>
-  <build_depend>tf_conversions</build_depend>
-  <build_depend>tf</build_depend>
-  <build_depend>urdf</build_depend>
-  <build_depend>visualization_msgs</build_depend>
-  
-  <run_depend>assimp</run_depend>
-  <run_depend>cob_srvs</run_depend>
-  <run_depend>dynamic_reconfigure</run_depend>
-  <run_depend>eigen_conversions</run_depend>
-  <run_depend>eigen</run_depend>
-  <run_depend>fcl</run_depend>
-  <run_depend>geometry_msgs</run_depend>
-  <run_depend>interactive_markers</run_depend>
-  <run_depend>joint_state_publisher</run_depend>
-  <run_depend>kdl_conversions</run_depend>
-  <run_depend>kdl_parser</run_depend>
-  <run_depend>message_runtime</run_depend>
-  <run_depend>moveit_msgs</run_depend>
-  <run_depend>orocos_kdl</run_depend>
-  <run_depend>robot_state_publisher</run_depend>
-  <run_depend>roscpp</run_depend>
-  <run_depend>roslib</run_depend>
-  <run_depend>rospy</run_depend>
-  <run_depend>rviz</run_depend>
-  <run_depend>sensor_msgs</run_depend>
-  <run_depend>shape_msgs</run_depend>
-  <run_depend>std_msgs</run_depend>
-  <run_depend>tf_conversions</run_depend>
-  <run_depend>tf</run_depend>
-  <run_depend>urdf</run_depend>
-  <run_depend>visualization_msgs</run_depend>
-  <run_depend>xacro</run_depend>
+  <exec_depend>message_runtime</exec_depend>
+
+  <depend>assimp</depend>
+  <depend>cmake_modules</depend>
+  <depend>cob_srvs</depend>
+  <depend>dynamic_reconfigure</depend>
+  <depend>eigen_conversions</depend>
+  <depend>eigen</depend>
+  <depend>fcl</depend>
+  <depend>geometry_msgs</depend>
+  <depend>interactive_markers</depend>
+  <depend>kdl_conversions</depend>
+  <depend>kdl_parser</depend>
+  <depend>moveit_msgs</depend>
+  <depend>orocos_kdl</depend>
+  <depend>roscpp</depend>
+  <depend>roslib</depend>
+  <depend>sensor_msgs</depend>
+  <depend>shape_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>tf_conversions</depend>
+  <depend>tf</depend>
+  <depend>urdf</depend>
+  <depend>visualization_msgs</depend>
+
+  <exec_depend>joint_state_publisher</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>rviz</exec_depend>
+  <exec_depend>xacro</exec_depend>
 
 </package>

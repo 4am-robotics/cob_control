@@ -13,14 +13,14 @@
 
 #include <vector>
 
- 
+
 class RefVal_JS
 {
 	public:
 		virtual std::vector<double> r(double s) const=0;
 		virtual double s(double t) const=0;
 		virtual std::vector<double> r_t(double t) const { return r( s(t) ); }
-		
+
 		virtual std::vector<double> dr_ds(double s) const=0;
 		virtual double ds_dt(double t) const=0;
 		virtual std::vector<double> dr_dt(double t) const
@@ -31,9 +31,9 @@ class RefVal_JS
 				dr.at(i) = dr_ds( s(t) ).at(i) * ds_dt( t );
 			return dr;
 		}
-				
+
 		virtual std::vector<double> getLast() const { return r_t( getTotalTime() ); }
-		
+
 		virtual double getTotalTime() const=0;
 };
 

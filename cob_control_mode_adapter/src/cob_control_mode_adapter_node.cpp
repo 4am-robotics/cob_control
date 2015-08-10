@@ -28,7 +28,7 @@ public:
 
         //wait for services from controller manager
         while (not ros::service::waitForService("controller_manager/load_controller", ros::Duration(5.0))){;}
-        
+
         if(ros::service::exists("controller_manager/load_controller", false))
         {
             load_client_ = nh_.serviceClient<controller_manager_msgs::LoadController>("controller_manager/load_controller");
@@ -274,7 +274,7 @@ public:
             {
                 if(current_control_mode_==POSITION)
                 {
-                    ROS_INFO("Have not heard a pos command for %f seconds, switched back to trajectory_controller", period_pos.toSec());        
+                    ROS_INFO("Have not heard a pos command for %f seconds, switched back to trajectory_controller", period_pos.toSec());
                 }
                 else
                 {

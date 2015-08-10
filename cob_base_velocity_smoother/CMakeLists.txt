@@ -10,13 +10,15 @@ else()
 endif()
 
 catkin_package(
-    CATKIN_DEPENDS geometry_msgs roscpp std_msgs
+  CATKIN_DEPENDS geometry_msgs roscpp std_msgs
+  INCLUDE_DIRS include
 )
 
 ### BUILD ###
 include_directories(include/cob_base_velocity_smoother ${Boost_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
 
 add_executable(${PROJECT_NAME} src/cob_base_velocity_smoother.cpp)
+add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 ### INSTALL ###

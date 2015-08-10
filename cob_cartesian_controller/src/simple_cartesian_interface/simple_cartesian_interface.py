@@ -15,7 +15,7 @@ def move_lin(pose_goal, frame_id, profile, rotate_only=False):
     success = client.wait_for_server(rospy.Duration(2.0))
     if(not success):
         return (success, "ActionServer not available within timeout")
-    
+
     goal = CartesianControllerGoal()
     goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.pose_goal = pose_goal
@@ -23,7 +23,7 @@ def move_lin(pose_goal, frame_id, profile, rotate_only=False):
     goal.move_lin.rotate_only = rotate_only
     goal.move_lin.profile = profile
     # print goal
-    
+
     client.send_goal(goal)
     print "goal sent"
     state = client.get_state()
@@ -39,7 +39,7 @@ def move_circ(pose_center, frame_id, start_angle, end_angle, radius, profile, ro
     success = client.wait_for_server(rospy.Duration(2.0))
     if(not success):
         return (success, "ActionServer not available within timeout")
-    
+
     goal = CartesianControllerGoal()
     goal.move_type = CartesianControllerGoal.CIRC
     goal.move_circ.pose_center = pose_center
@@ -50,7 +50,7 @@ def move_circ(pose_center, frame_id, start_angle, end_angle, radius, profile, ro
     goal.move_circ.radius = radius
     goal.move_circ.profile = profile
     print goal
-    
+
     client.send_goal(goal)
     print "goal sent"
     state = client.get_state()

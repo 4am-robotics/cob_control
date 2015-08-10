@@ -51,7 +51,6 @@
 template <typename T_PARAMS, typename PRIO>
 std::string CollisionAvoidance<T_PARAMS, PRIO>::getTaskId() const
 {
-    const TwistControllerParams& params = this->constraint_params_.getParams();
     const ObstacleDistanceInfo d = this->constraint_params_.current_distance_;
     std::ostringstream oss;
     oss << this->member_inst_cnt_;
@@ -161,7 +160,7 @@ double CollisionAvoidance<T_PARAMS, PRIO>::calcValue()
 template <typename T_PARAMS, typename PRIO>
 double CollisionAvoidance<T_PARAMS, PRIO>::predictValue()
 {
-    const TwistControllerParams& params = this->constraint_params_.getParams();
+    const TwistControllerParams& params = this->constraint_params_.tc_params_;
     const ObstacleDistanceInfo d = this->constraint_params_.current_distance_;
     this->prediction_value_ = std::numeric_limits<double>::max();
 
@@ -216,7 +215,7 @@ template <typename T_PARAMS, typename PRIO>
 Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
 {
     Eigen::VectorXd partial_values = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
-    const TwistControllerParams& params = this->constraint_params_.getParams();
+    const TwistControllerParams& params = this->constraint_params_.tc_params_;
     int size_of_frames = params.frame_names.size();
     ObstacleDistanceInfo d = this->constraint_params_.current_distance_;
     if (this->getActivationThresholdWithBuffer() > d.min_distance)
@@ -292,7 +291,7 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
 template <typename T_PARAMS, typename PRIO>
 double CollisionAvoidance<T_PARAMS, PRIO>::getActivationThreshold() const
 {
-    const TwistControllerParams& params = this->constraint_params_.getParams();
+    const TwistControllerParams& params = this->constraint_params_.tc_params_;
     return params.activation_threshold_ca; // in [m]
 }
 
@@ -301,7 +300,7 @@ double CollisionAvoidance<T_PARAMS, PRIO>::getActivationThreshold() const
 template <typename T_PARAMS, typename PRIO>
 double CollisionAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const
 {
-    const TwistControllerParams& params = this->constraint_params_.getParams();
+    const TwistControllerParams& params = this->constraint_params_.tc_params_;
     double magnitude = 0.0;
     double activation = this->getActivationThreshold();
     ObstacleDistanceInfo d = this->constraint_params_.current_distance_;
@@ -346,7 +345,7 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::getTaskDerivatives() const
 template <typename T_PARAMS, typename PRIO>
 Task_t CollisionAvoidance<T_PARAMS, PRIO>::createTask()
 {
-    const TwistControllerParams& params = this->constraint_params_.getParams();
+    const TwistControllerParams& params = this->constraint_params_.tc_params_;
     TwistControllerParams adapted_params;
     adapted_params.damping_method = CONSTANT;
     adapted_params.damping_factor = params.damping_ca;

@@ -9,10 +9,10 @@ const double RefValJS_PTP::weigths[] = { 1.5, 1.5, 1.0, 1.0, 0.8, 0.8, 0.7 };
 
 
 RefValJS_PTP::RefValJS_PTP(const std::vector<double>& start, const std::vector<double>& ziel, double v_rad_s, double a_rad_s2)
-{	
+{
 	m_start = start;
 	m_ziel = ziel;
-	
+
 	m_direction.resize(start.size());
 	for(unsigned int i = 0; i < start.size(); i++)
 		m_direction.at(i) = ziel.at(i) - start.at(i);
@@ -30,25 +30,25 @@ RefValJS_PTP::RefValJS_PTP(const std::vector<double>& start, const std::vector<d
 
 	//m_length = (max>min)?max:min;
 	m_length = norm(m_direction);
-	
+
 	m_v_rad_s = v_rad_s;
 	m_a_rad_s2 = a_rad_s2;
-	
-	/* Parameter für Beschl.begrenzte Fahrt: */	
+
+	/* Parameter für Beschl.begrenzte Fahrt: */
 	double a = fabs(m_a_rad_s2);
 	double v = fabs(m_v_rad_s);
-	
+
 	if (m_length > v*v/a)
 	{
 		// Phase mit konst. Geschw. wird erreicht:
 		m_T1 = m_T3 = v / a;
 		m_T2 = (m_length - v*v/a) / v;
-		
+
 		// Wegparameter s immer positiv, deswegen keine weitere Fallunterscheidung nötig:
 		m_sv2 = 1.0 / (m_T1 + m_T2);
 		m_sa1 = m_sv2 / m_T1;
 		m_sa3 = -m_sa1;
-	} 
+	}
 	else {
 		// Phase konst. Geschw. wird nicht erreicht:
 		m_T2 = 0.0;
@@ -57,13 +57,13 @@ RefValJS_PTP::RefValJS_PTP(const std::vector<double>& start, const std::vector<d
 		m_sv2 = 1.0 / m_T1;
 		m_sa1 = m_sv2 / m_T1;
 		m_sa3 = -m_sa1;
-		
+
 	}
 	// Bewegung vollständig charakterisiert.
-		
+
 }
 
-	
+
 std::vector<double> RefValJS_PTP::r(double s) const
 {
 	std::vector<double> soll;
@@ -91,7 +91,7 @@ double RefValJS_PTP::s(double t) const
 	else if (t >= m_T1 + m_T2)
 	{
 		return 0.5*m_sa1*m_T1*m_T1 + m_sv2*m_T2 + m_sv2*(t-m_T1-m_T2) + 0.5*m_sa3*sqr(t-m_T1-m_T2);
-	} 
+	}
 	else if (t >= m_T1)
 	{
 		return 0.5*m_sa1*m_T1*m_T1 + m_sv2*(t-m_T1);
@@ -110,7 +110,7 @@ double RefValJS_PTP::ds_dt(double t) const
 	else if (t >= m_T1 + m_T2)
 	{
 		return m_sv2 + m_sa3*(t-m_T1-m_T2);
-	} 
+	}
 	else if (t >= m_T1)
 	{
 		return m_sv2;

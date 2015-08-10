@@ -45,7 +45,7 @@ namespace cob_cartesian_controller
     {
         geometry_msgs::Pose start, end;
         bool rotate_only;
-        
+
         ProfileStruct profile;
     };
 
@@ -55,7 +55,7 @@ namespace cob_cartesian_controller
         double start_angle, end_angle;
         double radius;
         bool rotate_only;
-        
+
         ProfileStruct profile;
     };
 

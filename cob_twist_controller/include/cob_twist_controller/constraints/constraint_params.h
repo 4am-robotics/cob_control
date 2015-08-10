@@ -41,19 +41,16 @@ class ConstraintParamsBase
 {
     public:
 
-        ConstraintParamsBase(const TwistControllerParams& params) : params_(params)
+        ConstraintParamsBase(const TwistControllerParams& params,
+                             const std::string& id = std::string()) : tc_params_(params), id_(id)
         {}
 
         ~ConstraintParamsBase()
         {}
 
-        const TwistControllerParams& getParams() const
-        {
-            return this->params_;
-        }
 
-    protected:
-        const TwistControllerParams& params_;
+        const std::string id_;
+        const TwistControllerParams& tc_params_;
 };
 /* END ConstraintParamsBase *************************************************************************************/
 
@@ -65,12 +62,13 @@ class ConstraintParamsCA : public ConstraintParamsBase
 
         ObstacleDistanceInfo current_distance_;
 
-        ConstraintParamsCA(const TwistControllerParams& params)
-        : ConstraintParamsBase(params)
+        ConstraintParamsCA(const TwistControllerParams& params,
+                           const std::string& id = std::string())
+        : ConstraintParamsBase(params, id)
         {}
 
         ConstraintParamsCA(const ConstraintParamsCA& cpca)
-        : ConstraintParamsBase(cpca.params_)
+        : ConstraintParamsBase(cpca.tc_params_, cpca.id_)
         {
             current_distance_ = cpca.current_distance_;
         }
@@ -87,13 +85,14 @@ class ConstraintParamsJLA : public ConstraintParamsBase
 {
     public:
 
-        ConstraintParamsJLA(const TwistControllerParams& params)
-        : ConstraintParamsBase(params), joint_idx_(-1)
+        ConstraintParamsJLA(const TwistControllerParams& params,
+                            const std::string& id = std::string())
+        : ConstraintParamsBase(params, id), joint_idx_(-1)
         {
         }
 
         ConstraintParamsJLA(const ConstraintParamsJLA& cpjla)
-        : ConstraintParamsBase(cpjla.params_), joint_(cpjla.joint_), joint_idx_(cpjla.joint_idx_)
+        : ConstraintParamsBase(cpjla.tc_params_, cpjla.id_), joint_(cpjla.joint_), joint_idx_(cpjla.joint_idx_)
         {}
 
         virtual ~ConstraintParamsJLA()

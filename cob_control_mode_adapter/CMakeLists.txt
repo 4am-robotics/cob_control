@@ -5,15 +5,13 @@ find_package(catkin REQUIRED COMPONENTS control_msgs controller_manager_msgs ros
 
 find_package(Boost REQUIRED COMPONENTS thread)
 
-catkin_package(
-  CATKIN_DEPENDS control_msgs controller_manager_msgs roscpp std_msgs
-)
+catkin_package()
 
 ### BUILD ###
 include_directories(${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
 add_executable(cob_control_mode_adapter_node src/cob_control_mode_adapter_node.cpp)
-add_dependencies(cob_control_mode_adapter_node controller_manager_msgs_gencpp)
+add_dependencies(cob_control_mode_adapter_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cob_control_mode_adapter_node ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 ### INSTALL ###

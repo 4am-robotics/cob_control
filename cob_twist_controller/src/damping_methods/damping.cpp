@@ -98,7 +98,7 @@ double DampingManipulability::getDampingFactor(const Eigen::VectorXd& sorted_sin
     double d = prod.determinant();
     double w = std::sqrt(std::abs(d));
     double damping_factor;
-    
+
     if (w < w_threshold)
     {
         double tmp_w = (1 - w / w_threshold);

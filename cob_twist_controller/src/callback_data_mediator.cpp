@@ -50,23 +50,30 @@ bool CallbackDataMediator::fill(ConstraintParamsCA& params_ca)
 {
     boost::mutex::scoped_lock lock(distances_to_obstacles_lock_);
     bool success = false;
-    if (this->obstacle_distances_.end() != this->it_distances)
+//    if (this->obstacle_distances_.end() != this->it_distances)
+//    {
+//        params_ca.current_distance_.frame_id = this->it_distances->frame_id;
+//        params_ca.current_distance_.min_distance = this->it_distances->min_distance;
+//        params_ca.current_distance_.frame_vector = this->it_distances->frame_vector;
+//        params_ca.current_distance_.nearest_point_frame_vector = this->it_distances->nearest_point_frame_vector;
+//        params_ca.current_distance_.nearest_point_obstacle_vector = this->it_distances->nearest_point_obstacle_vector;
+//        this->it_distances++;
+//
+//        // Let the iterator point to the first element again -> Returns the same elements again until callback occurred.
+//        if (this->obstacle_distances_.end() == this->it_distances)
+//        {
+//            this->it_distances = this->obstacle_distances_.begin();
+//        }
+//
+//        success = true;
+//    }
+
+    for(ObstacleDistancesIter_t it = this->obstacle_distances_.begin(); it != this->obstacle_distances_.end(); it++)
     {
-        params_ca.current_distance_.frame_id = this->it_distances->frame_id;
-        params_ca.current_distance_.min_distance = this->it_distances->min_distance;
-        params_ca.current_distance_.frame_vector = this->it_distances->frame_vector;
-        params_ca.current_distance_.nearest_point_frame_vector = this->it_distances->nearest_point_frame_vector;
-        params_ca.current_distance_.nearest_point_obstacle_vector = this->it_distances->nearest_point_obstacle_vector;
-        this->it_distances++;
 
-        // Let the iterator point to the first element again -> Returns the same elements again until callback occurred.
-        if (this->obstacle_distances_.end() == this->it_distances)
-        {
-            this->it_distances = this->obstacle_distances_.begin();
-        }
-
-        success = true;
     }
+
+
 
     return success;
 }

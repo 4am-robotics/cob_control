@@ -45,9 +45,10 @@ class ConstraintParamFactory
 {
     public:
         static T createConstraintParams(const TwistControllerParams& twist_controller_params,
-                                        CallbackDataMediator& data_mediator)
+                                        CallbackDataMediator& data_mediator,
+                                        const std::string& id = std::string())
         {
-            T params(twist_controller_params);
+            T params(twist_controller_params, id);
             data_mediator.fill(params);
             return params;
         }

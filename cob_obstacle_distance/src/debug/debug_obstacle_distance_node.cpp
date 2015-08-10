@@ -51,7 +51,7 @@ public:
             ROS_ERROR("Failed to get parameter \"chain_base_link\".");
             return -1;
         }
-        
+
         marker_pub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("obstacle_distance/debug", 1, true);
         obstacle_distances_sub_ = this->nh_.subscribe("obstacle_distance", 1, &DebugObstacleDistance::obstacleDistancesCallback, this);
 
@@ -62,7 +62,7 @@ public:
     void obstacleDistancesCallback(const cob_obstacle_distance::ObstacleDistances::ConstPtr& msg)
     {
         visualization_msgs::MarkerArray marker_array;
-        
+
         for(unsigned int i=0; i<msg->distances.size(); i++)
         {
             //show distance vector as arrow
@@ -93,8 +93,8 @@ public:
             marker_vector.points.push_back(start);
             marker_vector.points.push_back(end);
             marker_array.markers.push_back(marker_vector);
-            
-            
+
+
             //show distance as text
             visualization_msgs::Marker marker_distance;
             marker_distance.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
@@ -104,18 +104,18 @@ public:
             marker_distance.id = 69;
             marker_distance.header.frame_id = msg->distances[i].frame_of_interest;
             marker_distance.text = boost::lexical_cast<std::string>(boost::format("%.2f") % msg->distances[i].distance);
-            
+
             marker_distance.scale.x = 0.1;
             marker_distance.scale.y = 0.1;
             marker_distance.scale.z = 0.1;
-            
+
             marker_distance.color.a = 1.0;
             marker_distance.color.r = 1.0;
             marker_distance.color.g = 1.0;
             marker_distance.color.b = 1.0;
-            
+
             marker_distance.pose.position.x = 0.15;
-            
+
             marker_array.markers.push_back(marker_distance);
         }
 
@@ -133,14 +133,14 @@ public:
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "debug_obstacle_distance_node");
-    
+
     DebugObstacleDistance dod;
     if (dod.init() != 0)
     {
         ROS_ERROR("Failed to initialize DebugDistanceManager.");
         return -1;
     }
-    
+
     ros::spin();
 }
 
