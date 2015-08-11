@@ -3,8 +3,11 @@ project(cob_cartesian_controller)
 
 find_package(catkin REQUIRED COMPONENTS cmake_modules cob_srvs geometry_msgs roscpp roslib std_msgs std_srvs tf visualization_msgs)
 
+find_package(TinyXML REQUIRED)
+
 catkin_package(
   CATKIN_DEPENDS cob_srvs geometry_msgs roscpp roslib std_msgs std_srvs tf visualization_msgs
+  DEPENDS TinyXML
   INCLUDE_DIRS include
   LIBRARIES cartesian_controller
 )

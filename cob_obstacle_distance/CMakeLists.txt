@@ -13,6 +13,9 @@ add_definitions(${EIGEN_DEFINITIONS})
 find_package(fcl REQUIRED)
 find_package(orocos_kdl REQUIRED)
 
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(ASSIMP assimp)
+
 ### Message Generation ###
 add_message_files(
   FILES
