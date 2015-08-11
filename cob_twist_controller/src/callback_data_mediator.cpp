@@ -46,6 +46,7 @@ bool CallbackDataMediator::fill(ConstraintParamsCA& params_ca)
     boost::mutex::scoped_lock lock(distances_to_obstacles_lock_);
     bool success = false;
     double last_min_distance = std::numeric_limits<double>::max();
+    params_ca.current_distances_.clear();
     for(ObstacleDistancesIter_t it = this->obstacle_distances_.begin(); it != this->obstacle_distances_.end(); it++)
     {
         if(it->first == params_ca.id_) // select the appropriate distances for frame id of interest

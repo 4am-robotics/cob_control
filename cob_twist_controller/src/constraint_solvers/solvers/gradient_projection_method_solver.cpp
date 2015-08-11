@@ -57,10 +57,6 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Vector6d_t& inCartVe
         Eigen::MatrixXd tmpHomogeneousSolution = projector * q_dot_0;
         activation_gain = (*it)->getActivationGain(); // contribution of the homo. solution to the part. solution
         double constraint_k_H = (*it)->getSelfMotionMagnitude(particular_solution, tmpHomogeneousSolution); // gain of homogenous solution (if active)
-
-        ROS_INFO_STREAM("activation_gain: " << activation_gain);
-        ROS_INFO_STREAM("smm: " << constraint_k_H);
-
         homogeneous_solution += (constraint_k_H * activation_gain * tmpHomogeneousSolution);
     }
 

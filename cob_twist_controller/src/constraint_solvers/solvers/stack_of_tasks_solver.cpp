@@ -96,7 +96,6 @@ Eigen::MatrixXd StackOfTasksSolver::solve(const Vector6d_t& in_cart_velocities,
     TaskSetIter_t it = this->task_stack_controller_.beginTaskIter();
     while((it = this->task_stack_controller_.nextActiveTask()) != this->task_stack_controller_.getTasksEnd())
     {
-        ROS_INFO_STREAM("id: " << it->id_);
         Eigen::MatrixXd J_task = it->task_jacobian_;
         Eigen::MatrixXd J_temp = J_task * projector_i;
         Eigen::VectorXd v_task = it->task_;

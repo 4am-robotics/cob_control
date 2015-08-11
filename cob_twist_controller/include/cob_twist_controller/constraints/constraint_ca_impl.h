@@ -54,7 +54,7 @@ std::string CollisionAvoidance<T_PARAMS, PRIO>::getTaskId() const
     const std::string frame_id = this->constraint_params_.id_;
     std::ostringstream oss;
     oss << this->member_inst_cnt_;
-    oss << "_FrameOI#";
+    oss << "_";
     oss << frame_id;
     oss << "_";
     oss << this->priority_;
@@ -117,18 +117,13 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calculate()
     this->calcPartialValues();
 
     const double pred_min_dist = this->predictValue();
-
     const double activation = this->getActivationThreshold();
-
-
     const double critical = 0.25 * activation;
-
     const double activation_buffer = this->getActivationThresholdWithBuffer();
-
     const double crit_min_distance = this->getCriticalValue();
     if(this->state_.getCurrent() == CRITICAL && pred_min_dist < crit_min_distance)
     {
-        ROS_WARN_STREAM(this->constraint_params_.id_ << "Current state is CRITICAL but prediction is smaller than current dist -> Stay in CRIT.");
+        ROS_WARN_STREAM(this->constraint_params_.id_ << "Current state is CRITICAL but prediction " << pred_min_dist << " is smaller than current dist " << crit_min_distance << " -> Stay in CRIT.");
     }
     else if(crit_min_distance < critical || pred_min_dist < critical)
     {
@@ -173,7 +168,11 @@ double CollisionAvoidance<T_PARAMS, PRIO>::calcValue()
         }
     }
 
-    this->values_ = Eigen::VectorXd::Zero(relevant_values.size());
+    if(relevant_values.size() > 0)
+    {
+        this->values_ = Eigen::VectorXd::Zero(relevant_values.size());
+    }
+
     for(uint32_t idx = 0; idx < relevant_values.size(); ++idx)
     {
         this->values_(idx) = relevant_values.at(idx);
@@ -280,7 +279,6 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
     {
         if (this->getActivationThresholdWithBuffer() > it->min_distance)
         {
-
             if (params.frame_names.end() != str_it)
             {
                 Eigen::Vector3d collision_pnt_vector = it->nearest_point_frame_vector - it->frame_vector;

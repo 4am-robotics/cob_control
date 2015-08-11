@@ -61,7 +61,7 @@ bool FrameToCollision::ignoreSelfCollisionPart(const std::string& frame_of_inter
 {
     if(this->self_collision_frames_.count(self_collision_obstacle_frame) <= 0)
     {
-        return true;
+        return false;
     }
 
     std::vector<std::string>::iterator sca_begin = this->self_collision_frames_[self_collision_obstacle_frame].begin();
