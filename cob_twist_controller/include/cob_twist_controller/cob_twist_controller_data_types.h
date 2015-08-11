@@ -57,6 +57,7 @@ enum HardwareInterfaceTypes
 {
     VELOCITY_INTERFACE = cob_twist_controller::TwistController_VELOCITY_INTERFACE,
     POSITION_INTERFACE = cob_twist_controller::TwistController_POSITION_INTERFACE,
+    TRAJECTORY_INTERFACE = cob_twist_controller::TwistController_TRAJECTORY_INTERFACE,
     JOINT_STATE_INTERFACE = cob_twist_controller::TwistController_JOINT_STATE_INTERFACE,
 };
 

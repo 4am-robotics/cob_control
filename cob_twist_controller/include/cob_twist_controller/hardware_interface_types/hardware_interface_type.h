@@ -31,6 +31,7 @@
 
 #include <std_msgs/Float64MultiArray.h>
 #include <sensor_msgs/JointState.h>
+#include <trajectory_msgs/JointTrajectory.h>
 
 #include <boost/thread/mutex.hpp>
 
@@ -102,8 +103,36 @@ class HardwareInterfacePosition : public HardwareInterfaceBase
 /* END HardwareInterfacePosition **********************************************************************************************/
 
 
+/* BEGIN HardwareInterfaceTrajectory ****************************************************************************************/
+/// Class providing a HardwareInterface publishing a JointTrajectory.
+class HardwareInterfaceTrajectory : public HardwareInterfaceBase
+{
+    public:
+        HardwareInterfaceTrajectory(ros::NodeHandle& nh,
+                                  const TwistControllerParams& params)
+        : HardwareInterfaceBase(nh, params)
+        {
+            ma_.assign(params.dof, MovingAvg_double_t(3));
+
+            last_update_time_ = ros::Time::now();
+            pub_ = nh.advertise<trajectory_msgs::JointTrajectory>("joint_trajectory_controller/command", 1);
+        }
+
+        ~HardwareInterfaceTrajectory() {}
+
+        virtual void processResult(const KDL::JntArray& q_dot_ik,
+                                   const KDL::JntArray& current_q);
+
+    private:
+        std::vector<MovingAvg_double_t> ma_;
+        std::vector<double> vel_last_, vel_before_last_;
+        ros::Time last_update_time_;
+
+};
+/* END HardwareInterfaceTrajectory **********************************************************************************************/
+
 /* BEGIN HardwareInterfaceJointStates ****************************************************************************************/
-/// Class providing a HardwareInterface publishing joint_states.
+/// Class providing a HardwareInterface publishing JointStates.
 class HardwareInterfaceJointStates : public HardwareInterfaceBase
 {
     public:

@@ -44,6 +44,9 @@ HardwareInterfaceBase* HardwareInterfaceBuilder::createHardwareInterface(ros::No
         case POSITION_INTERFACE:
             ib = new HardwareInterfacePosition(nh, params);
             break;
+        case TRAJECTORY_INTERFACE:
+            ib = new HardwareInterfaceTrajectory(nh, params);
+            break;
         case JOINT_STATE_INTERFACE:
             ib = new HardwareInterfaceJointStates(nh, params);
             break;
@@ -117,6 +120,65 @@ inline void HardwareInterfacePosition::processResult(const KDL::JntArray& q_dot_
     }
 }
 /* END HardwareInterfacePosition ******************************************************************************************/
+
+
+/* BEGIN HardwareInterfaceTrajectory ****************************************************************************************/
+/**
+ * Method processing the result using integration method (Simpson) and publishing to the 'joint_trajectory_controller/command' topic.
+ */
+inline void HardwareInterfaceTrajectory::processResult(const KDL::JntArray& q_dot_ik,
+                                                       const KDL::JntArray& current_q)
+{
+    ros::Time now = ros::Time::now();
+    ros::Duration period = now - last_update_time_;
+    last_update_time_ = now;
+
+    if(!vel_before_last_.empty())
+    {
+        std::vector<double> positions;
+        for(unsigned int i = 0; i < params_.dof; ++i)
+        {
+            // Simpson
+            double integration_value = static_cast<double>(period.toSec() / 6.0 * (vel_before_last_[i] + 4.0 * (vel_before_last_[i] + vel_last_[i]) + vel_before_last_[i] + vel_last_[i] + q_dot_ik(i)) + current_q(i));
+            ma_[i].addElement(integration_value);
+            double avg = 0.0;
+            ma_[i].calcWeightedMovingAverage(avg);
+            positions.push_back(avg);
+        }
+        
+        trajectory_msgs::JointTrajectoryPoint traj_point;
+        traj_point.positions = positions;
+        for(unsigned int i=0; i < q_dot_ik.rows(); ++i)
+        {
+            traj_point.velocities.push_back(q_dot_ik(i));
+        }
+        traj_point.accelerations.assign(params_.dof, 0.0);
+        traj_point.effort.assign(params_.dof, 0.0);
+        traj_point.time_from_start = period;    //Maybe we need a longer time_from_start?
+        
+        trajectory_msgs::JointTrajectory traj_msg;
+        traj_msg.header.stamp = now;
+        traj_msg.joint_names = params_.joints;
+        traj_msg.points.push_back(traj_point);
+        
+        //publish to interface
+        pub_.publish(traj_msg);
+    }
+
+    // Continuously shift the vectors for simpson integration
+    vel_before_last_.clear();
+    for(unsigned int i=0; i < vel_last_.size(); ++i)
+    {
+        vel_before_last_.push_back(vel_last_[i]);
+    }
+
+    vel_last_.clear();
+    for(unsigned int i=0; i < q_dot_ik.rows(); ++i)
+    {
+        vel_last_.push_back(q_dot_ik(i));
+    }
+}
+/* END HardwareInterfaceTrajectory ******************************************************************************************/
 
 
 /* BEGIN HardwareInterfaceJointStates ****************************************************************************************/
