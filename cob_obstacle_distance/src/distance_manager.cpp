@@ -261,7 +261,8 @@ void DistanceManager::calculate()
             std::lock_guard<std::mutex> lock(obstacle_mgr_mtx_);
             for(ShapesManager::MapIter_t it = this->obstacle_mgr_->begin(); it != this->obstacle_mgr_->end(); ++it)
             {
-                if(this->frame_to_collision_.ignoreSelfCollisionPart(object_of_interest_name, it->first))
+                const std::string obstacle_id = it->first;
+                if(this->frame_to_collision_.ignoreSelfCollisionPart(object_of_interest_name, obstacle_id))
                 {
                     // Ignore elements that can never be in collision
                     // (specified in parameter and parent / child frames)
@@ -292,6 +293,7 @@ void DistanceManager::calculate()
                     cob_obstacle_distance::ObstacleDistance od_msg;
                     od_msg.distance = dist_result.min_distance;
                     od_msg.frame_of_interest = object_of_interest_name;
+                    od_msg.obstacle_id = obstacle_id;
                     od_msg.header.frame_id = chain_base_link_;
                     od_msg.header.stamp = ros::Time::now();
                     od_msg.header.seq = seq_nr_;

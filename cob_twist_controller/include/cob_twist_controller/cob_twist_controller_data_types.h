@@ -30,6 +30,7 @@
 #define COB_TWIST_CONTROLLER_DATA_TYPES_H_
 
 #include <vector>
+#include <map>
 #include <stdint.h>
 #include <Eigen/Core>
 #include <Eigen/LU> // necessary to use several methods on EIGEN Matrices.
@@ -144,7 +145,6 @@ struct TwistControllerParams
 
             solver(WLN),
             priority_main(500),
-            mu(-2.0),
             k_H(1.0),
 
             constraint_jla(JLA_ON),
@@ -190,7 +190,6 @@ struct TwistControllerParams
 
     SolverTypes solver;
     uint32_t priority_main;
-    double mu;
     double k_H;
 
     ConstraintTypesCA constraint_ca;
@@ -227,12 +226,6 @@ struct TwistControllerParams
 
     // added a vector that contains all frames of interest for collision checking.
     std::vector<std::string> collision_check_frames;
-
-
-
-
-
-    KDL::Chain chain_;
 };
 
 enum EN_ConstraintStates

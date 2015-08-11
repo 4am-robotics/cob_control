@@ -1,7 +1,11 @@
 Header header
 
-# Registration name of the frame of interest
+# Collision pair: frame of interest and obstacle
+## Registration name of the frame of interest
 string frame_of_interest
+
+## Registration name of the obstacle
+string obstacle_id
 
 # distance between the nearest points on obstacle and frame of interest
 float64 distance

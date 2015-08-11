@@ -45,7 +45,6 @@ EPS_TRUNC = 'eps_truncation'
 
 SOLVER = 'solver'
 PRIO = 'priority'
-MU = 'mu'
 K_H = 'k_H'
 
 CONSTR_JLA = 'constraint_jla'

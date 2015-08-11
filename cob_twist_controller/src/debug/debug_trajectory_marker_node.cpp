@@ -70,16 +70,14 @@ public:
             return -2;
         }
 
-        ros::NodeHandle nh_private("~");
-        if(!nh_private.getParam("target_frame", this->target_frame_))
+        if(!nh_.getParam("frame_tracker/tracking_frame", this->target_frame_))
         {
-            ROS_ERROR_STREAM("Please provide a '~target_frame' parameter in this node's private namespace.");
-            ROS_ERROR_STREAM("Most likely '~target_frame' is desired to be the same as either '" << nh_.getNamespace() << "/tracking_frame' or '" << nh_.getNamespace() << "/cartesian_controller/target_frame'");
+            ROS_ERROR_STREAM("Please provide a 'frame_tracker/tracking_frame' parameter in this node's namespace.");
             return -3;
         }
 
         marker_pub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("trajectory_marker", 1, true);
-        marker_timer_ = this->nh_.createTimer(ros::Duration(0.05), &DebugTrajectoryMarker::publishMarker, this);//20Hz
+        marker_timer_ = this->nh_.createTimer(ros::Duration(0.1), &DebugTrajectoryMarker::publishMarker, this);
 
         while(marker_pub_.getNumSubscribers() < 1)
         {

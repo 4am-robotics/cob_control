@@ -191,7 +191,6 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     twist_controller_params_.activation_threshold_ca = config.activation_threshold_ca; // in [m]
     twist_controller_params_.damping_ca = config.damping_ca;
 
-    twist_controller_params_.mu = config.mu;
     twist_controller_params_.k_H = config.k_H;
 
     twist_controller_params_.eps_truncation = config.eps_truncation;

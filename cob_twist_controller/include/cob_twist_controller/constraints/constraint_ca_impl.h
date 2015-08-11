@@ -39,13 +39,13 @@
 #include <kdl/chainjnttojacsolver.hpp>
 #include <kdl/jntarray.hpp>
 
+#include <eigen_conversions/eigen_kdl.h>
+
 #include "cob_twist_controller/constraints/constraint.h"
 #include "cob_twist_controller/constraints/constraint_params.h"
 
 #include "cob_twist_controller/damping_methods/damping.h"
 #include "cob_twist_controller/inverse_jacobian_calculations/inverse_jacobian_calculation.h"
-
-#include <eigen_conversions/eigen_kdl.h>
 
 /* BEGIN CollisionAvoidance *************************************************************************************/
 template <typename T_PARAMS, typename PRIO>
@@ -112,6 +112,8 @@ double CollisionAvoidance<T_PARAMS, PRIO>::getActivationGain() const
 template <typename T_PARAMS, typename PRIO>
 void CollisionAvoidance<T_PARAMS, PRIO>::calculate()
 {
+    const TwistControllerParams& params = this->constraint_params_.tc_params_;
+
     this->calcValue();
     this->calcDerivativeValue();
     this->calcPartialValues();
