@@ -3,6 +3,8 @@ project(cob_base_velocity_smoother)
 
 find_package(catkin REQUIRED COMPONENTS geometry_msgs roscpp std_msgs)
 
+find_package(Boost REQUIRED)
+
 if(CMAKE_COMPILER_IS_GNUCXX)
   add_definitions(-std=gnu++0x)
 else()
@@ -11,6 +13,7 @@ endif()
 
 catkin_package(
   CATKIN_DEPENDS geometry_msgs roscpp std_msgs
+  DEPENDS Boost
   INCLUDE_DIRS include
 )
 

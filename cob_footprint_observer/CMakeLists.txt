@@ -3,6 +3,8 @@ project(cob_footprint_observer)
 
 find_package(catkin REQUIRED COMPONENTS geometry_msgs message_generation roscpp std_msgs tf)
 
+find_package(Boost REQUIRED)
+
 if(CMAKE_COMPILER_IS_GNUCXX)
   add_definitions(-std=gnu++0x)
 else()
@@ -21,6 +23,7 @@ generate_messages(
 
 catkin_package(
   CATKIN_DEPENDS geometry_msgs message_runtime roscpp std_msgs tf
+  DEPENDS Boost
   INCLUDE_DIRS include
 )
 

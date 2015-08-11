@@ -13,7 +13,8 @@
   <build_depend>message_generation</build_depend>
   <exec_depend>message_runtime</exec_depend>
 
-  <depend>assimp</depend>
+  <depend>assimp-dev</depend>
+  <depend>boost</depend>
   <depend>cmake_modules</depend>
   <depend>cob_srvs</depend>
   <depend>dynamic_reconfigure</depend>
@@ -26,6 +27,7 @@
   <depend>kdl_parser</depend>
   <depend>moveit_msgs</depend>
   <depend>orocos_kdl</depend>
+  <depend>pkg-config</depend>
   <depend>roscpp</depend>
   <depend>roslib</depend>
   <depend>sensor_msgs</depend>

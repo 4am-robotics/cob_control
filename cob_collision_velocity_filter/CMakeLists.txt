@@ -3,6 +3,8 @@ project(cob_collision_velocity_filter)
 
 find_package(catkin REQUIRED COMPONENTS cob_footprint_observer dynamic_reconfigure geometry_msgs nav_msgs roscpp tf visualization_msgs)
 
+find_package(Boost REQUIRED)
+
 if(CMAKE_COMPILER_IS_GNUCXX)
   add_definitions(-std=gnu++0x)
 else()
@@ -14,6 +16,7 @@ generate_dynamic_reconfigure_options(cfg/CollisionVelocityFilter.cfg)
 
 catkin_package(
   CATKIN_DEPENDS cob_footprint_observer dynamic_reconfigure geometry_msgs nav_msgs roscpp tf visualization_msgs
+  DEPENDS Boost
   INCLUDE_DIRS include
 )
 

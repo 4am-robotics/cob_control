@@ -7,6 +7,7 @@ find_package(Boost REQUIRED)
 
 catkin_package(
   CATKIN_DEPENDS angles controller_interface geometry_msgs hardware_interface nav_msgs sensor_msgs std_srvs tf urdf
+  DEPENDS Boost
   INCLUDE_DIRS include
   LIBRARIES cob_omni_drive_geom cob_omni_drive_controller
 )
@@ -17,7 +18,7 @@ include_directories(include src ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 add_library(cob_omni_drive_geom src/UndercarriageCtrlGeom.cpp src/param_parser.cpp)
 
 add_library(cob_omni_drive_controller src/odom_plugin.cpp src/control_plugin.cpp)
-add_dependencies(cob_omni_drive_controller cob_omni_drive_controller_generate_messages_cpp)
+add_dependencies(cob_omni_drive_controller ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cob_omni_drive_controller cob_omni_drive_geom ${catkin_LIBRARIES})
 
 ### INSTALL ###
