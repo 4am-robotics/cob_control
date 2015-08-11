@@ -3,6 +3,8 @@ project(cob_frame_tracker)
 
 find_package(catkin REQUIRED COMPONENTS actionlib_msgs cob_srvs control_toolbox dynamic_reconfigure geometry_msgs interactive_markers kdl_parser message_generation roscpp sensor_msgs std_msgs std_srvs tf visualization_msgs)
 
+find_package(Boost REQUIRED)
+
 find_package(orocos_kdl REQUIRED)
 
 ### Message Generation ###
@@ -22,6 +24,7 @@ generate_messages(
 
 catkin_package(
   CATKIN_DEPENDS actionlib_msgs cob_srvs control_toolbox dynamic_reconfigure geometry_msgs interactive_markers kdl_parser message_runtime roscpp sensor_msgs std_msgs std_srvs tf visualization_msgs
+  DEPENDS Boost
   INCLUDE_DIRS include
   LIBRARIES cob_frame_tracker interactive_frame_target
 )

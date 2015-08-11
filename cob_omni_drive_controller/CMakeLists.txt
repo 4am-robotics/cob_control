@@ -7,6 +7,7 @@ find_package(Boost REQUIRED)
 
 catkin_package(
   CATKIN_DEPENDS angles controller_interface geometry_msgs hardware_interface nav_msgs sensor_msgs std_srvs tf urdf
+  DEPENDS Boost
   INCLUDE_DIRS include
   LIBRARIES cob_omni_drive_geom cob_omni_drive_controller
 )
