@@ -61,12 +61,12 @@ bool FrameToCollision::ignoreSelfCollisionPart(const std::string& frame_of_inter
 {
     if(this->self_collision_frames_.count(self_collision_obstacle_frame) <= 0)
     {
-        return false;
+        return true;
     }
 
     std::vector<std::string>::iterator sca_begin = this->self_collision_frames_[self_collision_obstacle_frame].begin();
     std::vector<std::string>::iterator sca_end = this->self_collision_frames_[self_collision_obstacle_frame].end();
-    return std::find(sca_begin, sca_end, frame_of_interest) != sca_end;
+    return std::find(sca_begin, sca_end, frame_of_interest) == sca_end; // if not found return true
 }
 
 
@@ -111,22 +111,9 @@ bool FrameToCollision::initSelfCollision(XmlRpc::XmlRpcValue& self_collision_par
 
     if(success)
     {
-        ROS_INFO("Additional ignore links: ");
         for(MapIter_t it = this->self_collision_frames_.begin(); it != this->self_collision_frames_.end(); it++)
         {
-            PtrConstLink_t link = this->model_.getLink(it->first);
-            if(NULL != link)
-            {
-                PtrLink_t p_link = link->getParent();
-                ROS_INFO_STREAM("Current link: " << it->first);
-                ROS_INFO_STREAM(" Parent link to be ignored: " << p_link->name);
-                it->second.push_back(p_link->name);
-                for(PtrLink_t c_link : link->child_links)
-                {
-                    ROS_INFO_STREAM("  Child link to be ignored: " << c_link->name);
-                    it->second.push_back(c_link->name);
-                }
-            }
+            ROS_INFO_STREAM("Create self-collision obstacle for: " << it->first);
 
             // Create real obstacles now.
             PtrIMarkerShape_t ptr_obstacle;

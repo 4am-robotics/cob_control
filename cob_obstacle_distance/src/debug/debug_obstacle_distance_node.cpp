@@ -123,7 +123,7 @@ public:
             marker_distance.ns = it->first;
             marker_distance.id = 69;
             marker_distance.header.frame_id = it->second.frame_of_interest;
-            marker_distance.text = boost::lexical_cast<std::string>(boost::format("%.2f") % it->second.distance);
+            marker_distance.text = boost::lexical_cast<std::string>(boost::format("%.3f") % it->second.distance);
 
             marker_distance.scale.x = 0.1;
             marker_distance.scale.y = 0.1;
