@@ -125,10 +125,18 @@ int8_t ConstraintSolverFactory::resetAll(const TwistControllerParams& params)
         return -1; // error
     }
 
+    this->constraints_.clear();
     this->constraints_ = ConstraintsBuilder_t::createConstraints(params,
                                                                  this->jnt_to_jac_,
                                                                  this->fk_solver_vel_,
                                                                  this->data_mediator_);
+
+    for (std::set<ConstraintBase_t>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
+    {
+        ROS_INFO_STREAM((*it)->getTaskId());
+    }
+
+
 
     if(!ConstraintSolverFactory::getSolverFactory(params, this->solver_factory_, this->task_stack_controller_))
     {

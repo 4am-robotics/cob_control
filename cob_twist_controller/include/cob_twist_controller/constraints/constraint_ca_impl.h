@@ -248,8 +248,8 @@ double CollisionAvoidance<T_PARAMS, PRIO>::predictValue()
 template <typename T_PARAMS, typename PRIO>
 double CollisionAvoidance<T_PARAMS, PRIO>::calcDerivativeValue()
 {
-    this->derivative_value_ = -0.1 * this->value_; // exponential decay
-    this->derivative_values_ = -0.1 * this->values_;
+    this->derivative_value_ = -0.2 * this->value_; // exponential decay experimentally chosen -1.0
+    this->derivative_values_ = -0.2 * this->values_;
     return this->derivative_value_;
 }
 
@@ -371,15 +371,22 @@ double CollisionAvoidance<T_PARAMS, PRIO>::getActivationThreshold() const
 
 /// Returns a value for magnitude
 template <typename T_PARAMS, typename PRIO>
-double CollisionAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(double current_cost_func_value) const
+double CollisionAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(double current_distance_value) const
 {
     const TwistControllerParams& params = this->constraint_params_.tc_params_;
     const double activation = this->getActivationThresholdWithBuffer();
     double magnitude = 0.0;
 
-    if (current_cost_func_value < activation && current_cost_func_value > 0.0)
+    if (current_distance_value < activation)
     {
-        magnitude = pow(activation / current_cost_func_value, 2.0) - 1.0;
+        if(current_distance_value > 0.0)
+        {
+            magnitude = pow(activation / current_distance_value, 2.0) - 1.0;
+        }
+        else
+        {
+            magnitude = activation / 0.000001; // strong magnitude
+        }
     }
 
     double k_H = params.k_H_ca;

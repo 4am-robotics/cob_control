@@ -52,7 +52,6 @@ class StackOfTasksSolver : public ConstraintSolver<>
 
         virtual ~StackOfTasksSolver()
         {
-            this->clearConstraints();
         }
 
         /**
@@ -62,22 +61,7 @@ class StackOfTasksSolver : public ConstraintSolver<>
         virtual Eigen::MatrixXd solve(const Vector6d_t& in_cart_velocities,
                                       const JointStates& joint_states);
 
-        /**
-         * Set all created constraints in a (priorized) set.
-         * @param constraints: All constraints ordered according to priority.
-         */
-        virtual void setConstraints(std::set<ConstraintBase_t>& constraints)
-        {
-            this->constraints_ = constraints;
-        }
 
-        /**
-         * Calls destructor on all objects and clears the set
-         */
-        void clearConstraints()
-        {
-            this->constraints_.clear();
-        }
 
         /**
          * Process the state of the constraint and update the sum_of_gradient.
@@ -89,9 +73,6 @@ class StackOfTasksSolver : public ConstraintSolver<>
                           Eigen::VectorXd& sum_of_gradient);
 
     protected:
-
-        /// set inserts sorted (default less operator); if element has already been added it returns an iterator on it.
-        std::set<ConstraintBase_t> constraints_;
         ros::Time last_time_;
         EN_ConstraintStates global_constraint_state_;
         double in_cart_vel_damping_;

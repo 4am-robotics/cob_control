@@ -56,6 +56,7 @@ class DataKraken(object):
         self.data_class_ = data_class
         self.data_rows_ = []
         self.subscriber_ = None
+        self.start_ = None
 
     def open(self):
         success = False
@@ -101,8 +102,10 @@ class JointStateDataKraken(DataKraken):
 
     def callback(self, data):
         if self.init_:
+            self.start_ = datetime.datetime.now()
             header = []
-            header.append('time')
+            header.append('time stamp')
+            header.append('time delta')
             for name in data.name:
                 header.append(name + '_position')
             for name in data.name:
@@ -110,8 +113,12 @@ class JointStateDataKraken(DataKraken):
             self.data_rows_.append(header)
             self.init_ = False
 
+        now = datetime.datetime.now()
+        delta = now - self.start_
+
         data_row = []
-        data_row.append(datetime.datetime.now().strftime(DATE_TIME_FMT))
+        data_row.append(now.strftime(DATE_TIME_FMT))
+        data_row.append('%.3f' % delta.total_seconds())
         data_row.extend(list(data.position))
         data_row.extend(list(data.velocity))
         self.data_rows_.append(data_row)
@@ -126,8 +133,10 @@ class ObstacleDistanceDataKraken(DataKraken):
 
     def callback(self, data):
         if self.init_:
+            self.start_ = datetime.datetime.now()
             header = []
-            header.append('time')
+            header.append('time stamp')
+            header.append('time delta')
             header.append('frame_of_interest')
             header.append('obstacle')
             header.append('distance')
@@ -143,9 +152,10 @@ class ObstacleDistanceDataKraken(DataKraken):
             self.data_rows_.append(header)
             self.init_ = False
 
-        dataset_timestamp = datetime.datetime.now().strftime(DATE_TIME_FMT)
+        now = datetime.datetime.now()
+        delta = now - self.start_
         for elem in data.distances:
-            data_row = [dataset_timestamp]
+            data_row = [now.strftime(DATE_TIME_FMT), '%.3f' % delta.total_seconds()]
             data_row.append(elem.frame_of_interest)
             data_row.append(elem.obstacle_id)
             data_row.append(elem.distance)
@@ -170,8 +180,10 @@ class TwistDataKraken(DataKraken):
 
     def callback(self, data):
         if self.init_:
+            self.start_ = datetime.datetime.now()
             header = []
-            header.append(data.header.frame_id + '_time')
+            header.append(data.header.frame_id + '_time stamp')
+            header.append(data.header.frame_id + '_time delta')
             header.append(data.header.frame_id + '_linear_x')
             header.append(data.header.frame_id + '_linear_y')
             header.append(data.header.frame_id + '_linear_z')
@@ -181,7 +193,12 @@ class TwistDataKraken(DataKraken):
             self.data_rows_.append(header)
             self.init_ = False
         data_row = []
-        data_row.append(datetime.datetime.now().strftime(DATE_TIME_FMT))
+
+        now = datetime.datetime.now()
+        delta = now - self.start_
+        data_row.append(now.strftime(DATE_TIME_FMT))
+        data_row.append('%.3f' % delta.total_seconds())
+
         data_row.append(data.twist.linear.x)
         data_row.append(data.twist.linear.y)
         data_row.append(data.twist.linear.z)
@@ -200,14 +217,20 @@ class JointVelocityDataKraken(DataKraken):
 
     def callback(self, data):
         if self.init_:
+            self.start_ = datetime.datetime.now()
             header = []
-            header.append('time')
+            header.append('time stamp')
+            header.append('time delta')
             for idx, jointvel in enumerate(data.data):
                 header.append(str(idx + 1))
             self.data_rows_.append(header)
             self.init_ = False
         data_row = []
-        data_row.append(datetime.datetime.now().strftime(DATE_TIME_FMT))
+        now = datetime.datetime.now()
+        delta = now - self.start_
+        data_row.append(now.strftime(DATE_TIME_FMT))
+        data_row.append('%.3f' % delta.total_seconds())
+
         for jointvel in data.data:
             data_row.append(jointvel)
         self.data_rows_.append(data_row)
@@ -246,8 +269,10 @@ class FrameTrackingDataKraken(DataKraken):
 
     def callback(self, data):
         if self.init_:
+            self.start_ = datetime.datetime.now()
             header = []
-            header.append('time')
+            header.append('time stamp')
+            header.append('time delta')
             for frame in (self.chain_tip_link_, self.tracking_frame_):
                 header.append('x Trans ' + self.root_frame_ + ' to ' + frame)
                 header.append('y Trans ' + self.root_frame_ + ' to ' + frame)
@@ -280,9 +305,14 @@ class FrameTrackingDataKraken(DataKraken):
         except Exception as e:
             print('Exception tracking_frame_: ' + str(e))
 
+
         if rpy_root_tip is not None and rpy_root_track is not None:
             data_row = []
-            data_row.append(datetime.datetime.now().strftime(DATE_TIME_FMT))
+
+            now = datetime.datetime.now()
+            delta = now - self.start_
+            data_row.append(now.strftime(DATE_TIME_FMT))
+            data_row.append('%.3f' % delta.total_seconds())
 
             data_row.extend(trans_root_tip)
             data_row.extend(quat_root_tip)

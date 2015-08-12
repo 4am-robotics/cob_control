@@ -267,7 +267,7 @@ Task_t JointLimitAvoidance<T_PARAMS, PRIO>::createTask()
 
 /* END JointLimitAvoidance **************************************************************************************/
 
-/* BEGIN 2nd JointLimitAvoidance ************************************************************************************/
+/* BEGIN JointLimitAvoidance (keep joints in the middle between max and min limit) ******************************/
 template <typename T_PARAMS, typename PRIO>
 std::string JointLimitAvoidanceMid<T_PARAMS, PRIO>::getTaskId() const
 {
@@ -388,7 +388,7 @@ ConstraintTypes JointLimitAvoidanceMid<T_PARAMS, PRIO>::getType() const
 {
     return JLA_MID;
 }
-/* END 2nd JointLimitAvoidance **************************************************************************************/
+/* END JointLimitAvoidance (keep joints in the middle between max and min limit) ************************************/
 
 /* BEGIN JointLimitAvoidanceIneq ************************************************************************************/
 template <typename T_PARAMS, typename PRIO>
@@ -491,14 +491,6 @@ void JointLimitAvoidanceIneq<T_PARAMS, PRIO>::calculate()
     {
         this->state_.setState(DANGER); // GPM always active!
     }
-//    else if(rel_val < activation)
-//    {
-//        this->state_.setState(DANGER); // GPM
-//    }
-//    else
-//    {
-//        this->state_.setState(NORMAL);
-//    }
 }
 
 /// Calculate values of the JLA cost function.
