@@ -61,10 +61,21 @@
 
 typedef actionlib::SimpleActionServer<cob_frame_tracker::FrameTrackingAction> SAS_FrameTrackingAction_t;
 
+struct HoldTf
+{
+    tf::StampedTransform transform_tf;
+    bool hold;
+};
+
+
 class CobFrameTracker
 {
 public:
-    CobFrameTracker() {;}
+    CobFrameTracker()
+    {
+        ht_.hold = false;
+    }
+
     ~CobFrameTracker()
     {
         jntToCartSolver_vel_.reset();
@@ -76,10 +87,14 @@ public:
     void run(const ros::TimerEvent& event);
 
     void jointstateCallback(const sensor_msgs::JointState::ConstPtr& msg);
-    void publishTwist(ros::Duration period);
+    void publishTwist(ros::Duration period, bool do_publish = true);
 
     bool startTrackingCallback(cob_srvs::SetString::Request& request, cob_srvs::SetString::Response& response);
     bool stopTrackingCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
+
+    bool getTransform(const std::string& target_frame, const std::string& source_frame, tf::StampedTransform& stamped_tf);
+
+    void publishHoldTwist(const ros::Duration& period);
 
     /// Action interface
     void goalCB();
@@ -88,6 +103,8 @@ public:
     void action_abort();
 
 private:
+    HoldTf ht_;
+
     double update_rate_;
     ros::Timer timer_;
 
@@ -145,6 +162,8 @@ private:
     bool checkInfinitesimalTwist(const KDL::Twist current);
     bool checkCartDistanceViolation(const double dist, const double rot);
     bool checkTwistViolation(const KDL::Twist current, const KDL::Twist target);
+
+    int checkServiceCallStatus();
 
     bool stop_on_goal_;
     double tracking_duration_;
