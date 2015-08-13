@@ -11,11 +11,7 @@ else()
   add_definitions(-std=c++0x)
 endif()
 
-catkin_package(
-  CATKIN_DEPENDS geometry_msgs roscpp std_msgs
-  DEPENDS Boost
-  INCLUDE_DIRS include
-)
+catkin_package()
 
 ### BUILD ###
 include_directories(include/cob_base_velocity_smoother ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
@@ -29,8 +25,4 @@ install(TARGETS cob_base_velocity_smoother
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-install(DIRECTORY include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )

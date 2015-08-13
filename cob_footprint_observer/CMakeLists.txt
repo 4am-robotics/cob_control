@@ -18,13 +18,11 @@ add_service_files(
 )
 
 generate_messages(
-  DEPENDENCIES std_msgs geometry_msgs
+  DEPENDENCIES geometry_msgs std_msgs
 )
 
 catkin_package(
-  CATKIN_DEPENDS geometry_msgs message_runtime roscpp std_msgs tf
-  DEPENDS Boost
-  INCLUDE_DIRS include
+  CATKIN_DEPENDS geometry_msgs message_runtime std_msgs
 )
 
 ### BUILD ###
@@ -39,8 +37,4 @@ install(TARGETS footprint_observer
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-install(DIRECTORY include/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )

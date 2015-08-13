@@ -10,11 +10,7 @@ generate_dynamic_reconfigure_options(
   cfg/CobTrajectoryController.cfg
 )
 
-catkin_package(
-  CATKIN_DEPENDS actionlib cob_srvs control_msgs dynamic_reconfigure roscpp sensor_msgs std_msgs std_srvs trajectory_msgs
-  DEPENDS Boost
-  INCLUDE_DIRS common/include
-)
+catkin_package()
 
 ### BUILD ###
 include_directories(common/include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
@@ -28,8 +24,4 @@ install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-install(DIRECTORY common/include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )

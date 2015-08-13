@@ -10,12 +10,7 @@ add_definitions(${EIGEN_DEFINITIONS})
 
 find_package(TinyXML REQUIRED)
 
-catkin_package(
-  CATKIN_DEPENDS geometry_msgs kdl_parser roscpp sensor_msgs std_srvs tf
-  DEPENDS Boost TinyXML
-  INCLUDE_DIRS include
-  LIBRARIES output_recorder
-)
+catkin_package()
 
 ### BUILD ###
 include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
@@ -28,14 +23,10 @@ add_executable(output_recorder_node src/output_recorder_node.cpp)
 target_link_libraries(output_recorder_node output_recorder ${catkin_LIBRARIES})
 
 ### INSTALL ###
-install(TARGETS output_recorder_node output_recorder
+install(TARGETS output_recorder_node
  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-install(DIRECTORY include/${PROJECT_NAME}/
- DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
 
 install(PROGRAMS scripts/input_series_twist.py
