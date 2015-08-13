@@ -113,7 +113,6 @@ class PriorityBase
 
         virtual double getCriticalValue() const = 0;
         virtual ConstraintTypes getType() const = 0;
-        virtual double getActivationThreshold() const = 0;
 };
 
 

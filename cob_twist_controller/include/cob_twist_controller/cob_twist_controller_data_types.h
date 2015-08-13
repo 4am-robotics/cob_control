@@ -39,12 +39,9 @@
 
 #define MAX_CRIT true
 #define MIN_CRIT false
-#define MAIN_TASK_PRIO 200u
 #define DEFAULT_CYCLE 0.02
 #define ZERO_THRESHOLD 1.0e-9  ///< used for numerical 0.0 threshold
 #define DIV0_SAFE 1.0e-6 ///< used for division in case of DIV/0
-#define ACTIVATION_BUFFER 0.50 ///< means 50 % upper the activation threshold the activation gain function gets active
-#define ACTIVATION_BUFFER_JLA 3.0 ///< means 300 % upper the activation threshold the activation gain function gets active
 
 enum DampingMethodTypes
 {
@@ -128,6 +125,13 @@ struct ObstacleDistanceData
         Eigen::Vector3d nearest_point_obstacle_vector;
 };
 
+struct ConstraintThresholds
+{
+    double activation;
+    double activation_with_buffer;
+    double critical;
+};
+
 struct TwistControllerParams
 {
     TwistControllerParams() :
@@ -150,12 +154,10 @@ struct TwistControllerParams
             constraint_jla(JLA_ON),
             priority_jla(50),
             k_H_jla(-10.0),
-            activation_threshold_jla(10.0),
             damping_jla(0.000001),
 
             constraint_ca(CA_OFF),
             priority_ca(100),
-            activation_threshold_ca(0.1),
             damping_ca(0.000001),
             k_H_ca(2.0),
 
@@ -170,7 +172,13 @@ struct TwistControllerParams
             kinematic_extension(NO_EXTENSION),
             base_ratio(0.0)
             {
+                this->thresholds_ca.activation = 0.1;
+                this->thresholds_ca.critical = 0.025;
+                this->thresholds_ca.activation_with_buffer = this->thresholds_ca.activation * 1.5; // best experienced value
 
+                this->thresholds_jla.activation = 0.1;
+                this->thresholds_jla.critical = 0.05;
+                this->thresholds_jla.activation_with_buffer = this->thresholds_jla.activation * 4.0; // best experienced value
             }
 
     uint8_t dof;
@@ -195,14 +203,14 @@ struct TwistControllerParams
     ConstraintTypesCA constraint_ca;
     uint32_t priority_ca;
     double k_H_ca;
-    double activation_threshold_ca;
     double damping_ca;
+    ConstraintThresholds thresholds_ca;
 
     ConstraintTypesJLA constraint_jla;
     uint32_t priority_jla;
     double k_H_jla;
-    double activation_threshold_jla;
     double damping_jla;
+    ConstraintThresholds thresholds_jla;
 
     bool keep_direction;
     bool enforce_pos_limits;

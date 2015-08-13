@@ -82,9 +82,10 @@ double CollisionAvoidance<T_PARAMS, PRIO>::getCriticalValue() const
 template <typename T_PARAMS, typename PRIO>
 double CollisionAvoidance<T_PARAMS, PRIO>::getActivationGain(double current_cost_func_value) const
 {
+    const TwistControllerParams& params = this->constraint_params_.tc_params_;
     double activation_gain;
-    const double activation = this->getActivationThreshold();
-    const double activation_buffer_region = this->getActivationThresholdWithBuffer();
+    const double activation = params.thresholds_ca.activation;
+    const double activation_buffer_region = params.thresholds_ca.activation_with_buffer;
 
     if (current_cost_func_value < activation) // activation == d_m
     {
@@ -119,19 +120,20 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calculate()
     this->calcPartialValues();
 
     const double pred_min_dist = this->predictValue();
-    const double activation = this->getActivationThreshold();
-    const double critical = 0.25 * activation;
-    const double activation_buffer = this->getActivationThresholdWithBuffer();
+    const double activation = params.thresholds_ca.activation;
+    const double critical = params.thresholds_ca.critical;
+    const double activation_buffer = params.thresholds_ca.activation_with_buffer;
     const double crit_min_distance = this->getCriticalValue();
+
     if(this->state_.getCurrent() == CRITICAL && pred_min_dist < crit_min_distance)
     {
-        ROS_WARN_STREAM(this->constraint_params_.id_ << "Current state is CRITICAL but prediction " << pred_min_dist << " is smaller than current dist " << crit_min_distance << " -> Stay in CRIT.");
+        ROS_WARN_STREAM(this->getTaskId() << ": Current state is CRITICAL but prediction " << pred_min_dist << " is smaller than current dist " << crit_min_distance << " -> Stay in CRIT.");
     }
     else if(crit_min_distance < critical || pred_min_dist < critical)
     {
         if(pred_min_dist < critical)
         {
-            ROS_WARN_STREAM(this->constraint_params_.id_ << "pred_min_dist < critical!!!");
+            ROS_WARN_STREAM(this->getTaskId() << ": pred_min_dist < critical!!!");
         }
 
         this->state_.setState(CRITICAL);
@@ -146,26 +148,21 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calculate()
     }
 }
 
-template <typename T_PARAMS, typename PRIO>
-double CollisionAvoidance<T_PARAMS, PRIO>::getActivationThresholdWithBuffer() const
-{
-    return this->getActivationThreshold() * (1.0 + ACTIVATION_BUFFER);
-}
-
 
 template <typename T_PARAMS, typename PRIO>
 double CollisionAvoidance<T_PARAMS, PRIO>::calcValue()
 {
+    const TwistControllerParams& params = this->constraint_params_.tc_params_;
     std::vector<double> relevant_values;
     for(std::vector<ObstacleDistanceData>::const_iterator it = this->constraint_params_.current_distances_.begin();
             it != this->constraint_params_.current_distances_.end();
             ++it)
     {
-        if (this->getActivationThresholdWithBuffer() > it->min_distance)
+        if (params.thresholds_ca.activation_with_buffer > it->min_distance)
         {
             const double activation_gain = this->getActivationGain(it->min_distance);
             const double magnitude = std::abs(this->getSelfMotionMagnitude(it->min_distance)); // important only for task!
-            double value = activation_gain * magnitude * pow(it->min_distance - this->getActivationThresholdWithBuffer(), 2.0);
+            double value = activation_gain * magnitude * pow(it->min_distance - params.thresholds_ca.activation_with_buffer, 2.0);
             relevant_values.push_back(value);
         }
     }
@@ -242,13 +239,10 @@ double CollisionAvoidance<T_PARAMS, PRIO>::predictValue()
 }
 
 
-
-
-
 template <typename T_PARAMS, typename PRIO>
 double CollisionAvoidance<T_PARAMS, PRIO>::calcDerivativeValue()
 {
-    this->derivative_value_ = -0.2 * this->value_; // exponential decay experimentally chosen -1.0
+    this->derivative_value_ = -0.2 * this->value_; // exponential decay experimentally chosen -0.1
     this->derivative_values_ = -0.2 * this->values_;
     return this->derivative_value_;
 }
@@ -279,7 +273,7 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
             it != this->constraint_params_.current_distances_.end();
             ++it)
     {
-        if (this->getActivationThresholdWithBuffer() > it->min_distance)
+        if (params.thresholds_ca.activation_with_buffer > it->min_distance)
         {
             if (params.frame_names.end() != str_it)
             {
@@ -331,7 +325,7 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
                 const double denom = it->min_distance > 0.0 ? it->min_distance : DIV0_SAFE;
                 const double activation_gain = this->getActivationGain(it->min_distance);
                 const double magnitude = this->getSelfMotionMagnitude(it->min_distance);
-                partial_values = (2.0 * ((it->min_distance - this->getActivationThresholdWithBuffer()) / denom) * term_2nd);
+                partial_values = (2.0 * ((it->min_distance - params.thresholds_ca.activation_with_buffer) / denom) * term_2nd);
                 // only consider the gain for the partial values, because of GPM, not for the task jacobian!
                 sum_partial_values += (activation_gain * magnitude * partial_values);
                 vec_partial_values.push_back(partial_values);
@@ -360,21 +354,12 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
 }
 
 
-/// Returns the threshold of the cost function to become active.
-template <typename T_PARAMS, typename PRIO>
-double CollisionAvoidance<T_PARAMS, PRIO>::getActivationThreshold() const
-{
-    const TwistControllerParams& params = this->constraint_params_.tc_params_;
-    return params.activation_threshold_ca; // in [m]
-}
-
-
 /// Returns a value for magnitude
 template <typename T_PARAMS, typename PRIO>
 double CollisionAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(double current_distance_value) const
 {
     const TwistControllerParams& params = this->constraint_params_.tc_params_;
-    const double activation = this->getActivationThresholdWithBuffer();
+    const double activation = params.thresholds_ca.activation_with_buffer;
     double magnitude = 0.0;
 
     if (current_distance_value < activation)

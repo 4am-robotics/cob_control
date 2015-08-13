@@ -181,14 +181,21 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     twist_controller_params_.constraint_jla = static_cast<ConstraintTypesJLA>(config.constraint_jla);
     twist_controller_params_.priority_jla = config.priority_jla;
     twist_controller_params_.k_H_jla = config.k_H_jla;
-    double activation_in_percent = config.activation_threshold_jla; // in [%]
-    twist_controller_params_.activation_threshold_jla = activation_in_percent / 100.0;
+    const double activation_jla_in_percent = config.activation_threshold_jla;
+    const double activation_buffer_jla_in_percent = config.activation_buffer_jla;
+    const double critical_jla_in_percent = config.critical_threshold_jla;
+    twist_controller_params_.thresholds_jla.activation =  activation_jla_in_percent / 100.0;
+    twist_controller_params_.thresholds_jla.activation_with_buffer = twist_controller_params_.thresholds_jla.activation * (1.0 + activation_buffer_jla_in_percent / 100.0);
+    twist_controller_params_.thresholds_jla.critical =  critical_jla_in_percent / 100.0;
     twist_controller_params_.damping_jla = config.damping_jla;
 
     twist_controller_params_.constraint_ca = static_cast<ConstraintTypesCA>(config.constraint_ca);
     twist_controller_params_.priority_ca = config.priority_ca;
     twist_controller_params_.k_H_ca = config.k_H_ca;
-    twist_controller_params_.activation_threshold_ca = config.activation_threshold_ca; // in [m]
+    const double activaton_buffer_ca_in_percent = config.activation_buffer_ca;
+    twist_controller_params_.thresholds_ca.activation = config.activation_threshold_ca; // in [m]
+    twist_controller_params_.thresholds_ca.activation_with_buffer = twist_controller_params_.thresholds_ca.activation * (1.0 + activaton_buffer_ca_in_percent / 100.0);
+    twist_controller_params_.thresholds_ca.critical = config.critical_threshold_ca; // in [m]
     twist_controller_params_.damping_ca = config.damping_ca;
 
     twist_controller_params_.k_H = config.k_H;

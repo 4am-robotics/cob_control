@@ -92,7 +92,7 @@ Eigen::MatrixXd StackOfTasksSolver::solve(const Vector6d_t& in_cart_velocities,
     t.db_ = this->damping_;
     this->task_stack_controller_.addTask(t);
 
-    ROS_INFO_STREAM("============== Task output ============= with main task damping: " << this->in_cart_vel_damping_);
+    // ROS_INFO_STREAM("============== Task output ============= with main task damping: " << this->in_cart_vel_damping_);
     TaskSetIter_t it = this->task_stack_controller_.beginTaskIter();
     while((it = this->task_stack_controller_.nextActiveTask()) != this->task_stack_controller_.getTasksEnd())
     {
