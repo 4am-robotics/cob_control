@@ -3,7 +3,7 @@ project(cob_collision_velocity_filter)
 
 find_package(catkin REQUIRED COMPONENTS cob_footprint_observer dynamic_reconfigure geometry_msgs nav_msgs roscpp tf visualization_msgs)
 
-find_package(Boost REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system)
 
 if(CMAKE_COMPILER_IS_GNUCXX)
   add_definitions(-std=gnu++0x)
@@ -21,11 +21,11 @@ catkin_package(
 )
 
 ### BUILD ###
-include_directories(include ${Boost_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
 add_executable(collision_velocity_filter src/cob_collision_velocity_filter.cpp src/velocity_limited_marker.cpp)
 add_dependencies(collision_velocity_filter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(collision_velocity_filter ${catkin_LIBRARIES})
+target_link_libraries(collision_velocity_filter ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 ### INSTALL ###
 install(TARGETS collision_velocity_filter

@@ -3,7 +3,7 @@ project(cob_base_velocity_smoother)
 
 find_package(catkin REQUIRED COMPONENTS geometry_msgs roscpp std_msgs)
 
-find_package(Boost REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system)
 
 if(CMAKE_COMPILER_IS_GNUCXX)
   add_definitions(-std=gnu++0x)
@@ -18,11 +18,11 @@ catkin_package(
 )
 
 ### BUILD ###
-include_directories(include/cob_base_velocity_smoother ${Boost_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
+include_directories(include/cob_base_velocity_smoother ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
 add_executable(${PROJECT_NAME} src/cob_base_velocity_smoother.cpp)
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${BOOST_LIBRARIES})
 
 ### INSTALL ###
 install(TARGETS cob_base_velocity_smoother

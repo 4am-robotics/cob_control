@@ -3,7 +3,7 @@ project(cob_footprint_observer)
 
 find_package(catkin REQUIRED COMPONENTS geometry_msgs message_generation roscpp std_msgs tf)
 
-find_package(Boost REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system)
 
 if(CMAKE_COMPILER_IS_GNUCXX)
   add_definitions(-std=gnu++0x)
@@ -28,7 +28,7 @@ catkin_package(
 )
 
 ### BUILD ###
-include_directories(include ${Boost_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
 add_executable(footprint_observer src/cob_footprint_observer.cpp)
 add_dependencies(footprint_observer ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
