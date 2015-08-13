@@ -420,6 +420,12 @@ void DistanceManager::registerObstacle(const moveit_msgs::CollisionObject::Const
         return;
     }
 
+    if(msg->operation == msg->ADD && this->obstacle_mgr_->count(msg->id) > 0)
+    {
+        ROS_ERROR_STREAM("Element " << msg->id << " exists already. ADD not allowed!");
+        return;
+    }
+
     try
     {
         ros::Time time = ros::Time(0);
@@ -471,7 +477,12 @@ void DistanceManager::buildObstacleMesh(const moveit_msgs::CollisionObject::Cons
         for(uint32_t i = 0; i < m_size; ++i)
         {
             std_msgs::ColorRGBA c;
+            //c.a = DEFAULT_COL_ALPHA;
             c.a = 1.0;
+            c.r = 0.0;
+            c.g = 0.0;
+            c.b = 0.0;
+
             geometry_msgs::Pose p = msg->mesh_poses[i];
 
             tf::Pose tf_p;
@@ -543,8 +554,6 @@ void DistanceManager::buildObstaclePrimitive(const moveit_msgs::CollisionObject:
         ROS_INFO("ADD obstacle");
         for(uint32_t i = 0; i < p_size; ++i)
         {
-            std_msgs::ColorRGBA c;
-            c.a = 1.0;
             shape_msgs::SolidPrimitive sp = msg->primitives[i];
             geometry_msgs::Pose p = msg->primitive_poses[i];
             tf::Pose tf_p;

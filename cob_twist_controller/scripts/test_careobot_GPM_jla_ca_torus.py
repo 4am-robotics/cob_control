@@ -32,6 +32,7 @@ import subprocess
 
 from simple_script_server.simple_script_server import simple_script_server
 import twist_controller_config as tcc
+from dynamic_reconfigure.client import Client
 
 from data_collection import JointStateDataKraken
 from data_collection import ObstacleDistanceDataKraken
@@ -48,7 +49,7 @@ def init_dyn_recfg():
     cli.set_config_param(tcc.DAMP_METHOD, tcc.TwistController_MANIPULABILITY)
     cli.set_config_param(tcc.LAMBDA_MAX, 0.1)
     cli.set_config_param(tcc.W_THRESH, 0.05)
-    cli.set_config_param(tcc.SOLVER, tcc.TwistController_STACK_OF_TASKS)
+    cli.set_config_param(tcc.SOLVER, tcc.TwistController_GPM)
     cli.set_config_param(tcc.K_H, 1.0)
 
     cli.set_config_param(tcc.CONSTR_CA, tcc.TwistController_CA)
@@ -64,7 +65,7 @@ def init_dyn_recfg():
     cli.set_config_param(tcc.KIN_EXT, tcc.TwistController_NO_EXTENSION)
     cli.set_config_param(tcc.KEEP_DIR, True)
     cli.set_config_param(tcc.ENF_VEL_LIM, True)
-    cli.set_config_param(tcc.ENF_POS_LIM, True)
+    cli.set_config_param(tcc.ENF_POS_LIM, False)  # To show that joint pos limits are violated if possible.
 
     cli.update()
     cli.close()
@@ -78,11 +79,11 @@ def init_dyn_recfg():
 def init_pos():
     sss = simple_script_server()
     sss.move("arm_right", "home")
-    sss.move("arm_right", "home")
+    sss.move("arm_right", [[-0.039928546971938594, 0.7617065276699337, 0.01562043859727158, -1.7979678396373568, 0.013899422367821046, 1.0327319085987252, 0.021045294231647915]])
 
 
 if __name__ == "__main__":
-    rospy.init_node("test_careobot_st_jla_ca_sphere")
+    rospy.init_node("test_careobot_st_jla_ca_torus")
 
     base_dir = '/home/fxm-mb/bag-files/2015_08_06/'
     if rospy.has_param('~base_dir'):
@@ -110,16 +111,14 @@ if __name__ == "__main__":
 
     t = time.localtime()
     launch_time_stamp = time.strftime("%Y%m%d_%H_%M_%S", t)
-
-    command = 'rosbag play ' + base_dir + 'careobot_st_jla_ca_sphere.bag'
-    # command = 'rosbag play -u 10 ' + base_dir + 'careobot_st_jla_ca_sphere.bag'
+    command = 'rosbag play ' + base_dir + 'careobot_st_jla_ca.bag'
 
     data_krakens = [
-                    JointStateDataKraken(base_dir + 'joint_state_data_' + launch_time_stamp + '.csv'),
-                    ObstacleDistanceDataKraken(base_dir + 'obst_dist_data_' + launch_time_stamp + '.csv'),
-                    TwistDataKraken(base_dir + 'twist_data_' + launch_time_stamp + '.csv'),
-                    JointVelocityDataKraken(base_dir + 'joint_vel_data_' + launch_time_stamp + '.csv'),
-                    FrameTrackingDataKraken(base_dir + 'frame_tracking_data_' + launch_time_stamp + '.csv', root_frame, chain_tip_link, tracking_frame), ]
+                    JointStateDataKraken(base_dir + 'careobot_GPM_jla_ca_joint_state_data_' + launch_time_stamp + '.csv'),
+                    ObstacleDistanceDataKraken(base_dir + 'careobot_GPM_jla_ca_obst_dist_data_' + launch_time_stamp + '.csv'),
+                    TwistDataKraken(base_dir + 'careobot_GPM_jla_ca_twist_data_' + launch_time_stamp + '.csv'),
+                    JointVelocityDataKraken(base_dir + 'careobot_GPM_jla_ca_joint_vel_data_' + launch_time_stamp + '.csv'),
+                    FrameTrackingDataKraken(base_dir + 'careobot_GPM_jla_ca_frame_tracking_data_' + launch_time_stamp + '.csv', root_frame, chain_tip_link, tracking_frame), ]
 
     init_pos()
     init_dyn_recfg()

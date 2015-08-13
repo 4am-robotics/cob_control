@@ -147,7 +147,7 @@ bool FrameToCollision::getMarkerShapeFromUrdf(const Eigen::Vector3d& abs_pos,
         tf::quaternionEigenToMsg(quat_pos, pose.orientation);
 
         std_msgs::ColorRGBA col;
-        col.a = 1.0;
+        col.a = DEFAULT_COL_ALPHA;
         col.r = 1.0;
         if(NULL != link->collision && NULL != link->collision->geometry)
         {
@@ -263,7 +263,7 @@ bool FrameToCollision::getMarkerShapeFromType(const uint32_t& shape_type,
     fcl::Cylinder c(dimension(FCL_RADIUS), dimension(FCL_CYL_LENGTH));
 
     std_msgs::ColorRGBA col;
-    col.a = 1.0;
+    col.a = DEFAULT_COL_ALPHA;  // Just for test and taking pictures -> make robot arm visible behind obstacle.
     col.r = 1.0;
     col.g = 0.0;
     col.b = 0.0;

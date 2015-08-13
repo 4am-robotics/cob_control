@@ -43,6 +43,8 @@
 
 #define MIN_DISTANCE 0.5 // [m]: filter for distances to be published!
 
+#define DEFAULT_COL_ALPHA 0.5 // MoveIt! CollisionGeometry does not provide color -> Therefore use default value. 0.5 = Test for taking pictures -> robot arm should be visible behind obstacle
+
 struct ShapeMsgTypeToVisMarkerType
 {
     public:

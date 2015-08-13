@@ -242,8 +242,8 @@ double CollisionAvoidance<T_PARAMS, PRIO>::predictValue()
 template <typename T_PARAMS, typename PRIO>
 double CollisionAvoidance<T_PARAMS, PRIO>::calcDerivativeValue()
 {
-    this->derivative_value_ = -0.2 * this->value_; // exponential decay experimentally chosen -0.1
-    this->derivative_values_ = -0.2 * this->values_;
+    this->derivative_value_ = -0.1 * this->value_; // exponential decay experimentally chosen -0.1
+    this->derivative_values_ = -0.1 * this->values_;
     return this->derivative_value_;
 }
 

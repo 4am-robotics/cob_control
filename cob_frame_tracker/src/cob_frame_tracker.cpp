@@ -202,6 +202,7 @@ void CobFrameTracker::run(const ros::TimerEvent& event)
             int status = checkServiceCallStatus();
             if(status < 0)
             {
+
                 this->publishHoldTwist(period);
             }
 
@@ -219,12 +220,12 @@ void CobFrameTracker::publishHoldTwist(const ros::Duration& period)
 
     if(!this->ht_.hold)
     {
-        ROS_INFO_STREAM(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> Empty twist          <<<<<<<<<<<<<<<<<<<<<<<");
+        ROS_WARN_STREAM("Publishing empty twist");
         ht_.hold = this->getTransform(chain_base_, chain_tip_link_, ht_.transform_tf);
     }
     else
     {
-        ROS_INFO_STREAM("Hold posture twist");
+        ROS_WARN_STREAM("Publishing hold posture twist");
         tf::StampedTransform new_tf;
         if(this->getTransform(chain_base_, chain_tip_link_, new_tf))
         {
@@ -489,17 +490,16 @@ int CobFrameTracker::checkServiceCallStatus()
 
     if(distance_violation)
     {
-        ROS_ERROR_STREAM("distance_violation");
         abortion_counter_++;
     }
     else
     {
-        ROS_INFO_STREAM("distance ok");
         abortion_counter_ = abortion_counter_ > 0 ? abortion_counter_ - 1 : 0;
     }
 
     if(abortion_counter_ >= max_abortions_)
     {
+        ROS_ERROR_STREAM("Abortion active!!!");
         abortion_counter_ = max_abortions_;
         status = -1;
     }
@@ -617,8 +617,6 @@ bool CobFrameTracker::checkInfinitesimalTwist(const KDL::Twist current)
 /** checks whether the Cartesian distance between tip and target frame is ok **/
 bool CobFrameTracker::checkCartDistanceViolation(const double dist, const double rot)
 {
-    ROS_WARN_STREAM("dist = " << dist);
-
     if (dist > cart_min_dist_threshold_lin_)
     {
         return true;
