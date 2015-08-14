@@ -419,20 +419,14 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::getTaskDerivatives() const
 template <typename T_PARAMS, typename PRIO>
 Task_t CollisionAvoidance<T_PARAMS, PRIO>::createTask()
 {
-    const TwistControllerParams& params = this->constraint_params_.tc_params_;
-    TwistControllerParams adapted_params;
-    adapted_params.damping_method = CONSTANT;
-    adapted_params.damping_factor = params.damping_ca;
-    adapted_params.eps_truncation = 0.0;
-
     Task_t task(this->getPriority(),
                 this->getTaskId(),
                 this->getTaskJacobian(),
                 this->getTaskDerivatives(),
                 this->getType());
 
-    task.tcp_ = adapted_params;
-    task.db_.reset(DampingBuilder::createDamping(adapted_params));
+    task.tcp_ = this->adaptDampingParamsForTask(this->constraint_params_.tc_params_.damping_ca);
+    task.db_.reset(DampingBuilder::createDamping(task.tcp_));
 
     return task;
 }
