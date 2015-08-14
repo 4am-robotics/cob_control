@@ -225,24 +225,16 @@ Eigen::VectorXd JointLimitAvoidance<T_PARAMS, PRIO>::getTaskDerivatives() const
 template <typename T_PARAMS, typename PRIO>
 Task_t JointLimitAvoidance<T_PARAMS, PRIO>::createTask()
 {
-    const TwistControllerParams& params = this->constraint_params_.tc_params_;
-    TwistControllerParams adapted_params;
-    adapted_params.damping_method = CONSTANT;
-    adapted_params.damping_factor = params.damping_jla;
-    adapted_params.eps_truncation = 0.0;
-    adapted_params.numerical_filtering = false;
-
     Eigen::MatrixXd cost_func_jac = this->getTaskJacobian();
     Eigen::VectorXd derivs = this->getTaskDerivatives();
-
     Task_t task(this->getPriority(),
                 this->getTaskId(),
                 cost_func_jac,
                 derivs,
                 this->getType());
 
-    task.tcp_ = adapted_params;
-    task.db_ = boost::shared_ptr<DampingBase>(DampingBuilder::createDamping(adapted_params));
+    task.tcp_ = this->adaptDampingParamsForTask(this->constraint_params_.tc_params_.damping_jla);
+    task.db_ = boost::shared_ptr<DampingBase>(DampingBuilder::createDamping(task.tcp_));
     return task;
 }
 
@@ -566,24 +558,16 @@ Eigen::VectorXd JointLimitAvoidanceIneq<T_PARAMS, PRIO>::getTaskDerivatives() co
 template <typename T_PARAMS, typename PRIO>
 Task_t JointLimitAvoidanceIneq<T_PARAMS, PRIO>::createTask()
 {
-    const TwistControllerParams& params = this->constraint_params_.tc_params_;
-    TwistControllerParams adapted_params;
-    adapted_params.damping_method = CONSTANT;
-    adapted_params.damping_factor = params.damping_jla;
-    adapted_params.eps_truncation = 0.0;
-    adapted_params.numerical_filtering = false;
-
     Eigen::MatrixXd cost_func_jac = this->getTaskJacobian();
     Eigen::VectorXd derivs = this->getTaskDerivatives();
-
     Task_t task(this->getPriority(),
                 this->getTaskId(),
                 cost_func_jac,
                 derivs,
                 this->getType());
 
-    task.tcp_ = adapted_params;
-    task.db_ = boost::shared_ptr<DampingBase>(DampingBuilder::createDamping(adapted_params));
+    task.tcp_ = this->adaptDampingParamsForTask(this->constraint_params_.tc_params_.damping_jla);
+    task.db_ = boost::shared_ptr<DampingBase>(DampingBuilder::createDamping(task.tcp_));
     return task;
 }
 
