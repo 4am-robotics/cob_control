@@ -3,7 +3,7 @@ project(cob_base_velocity_smoother)
 
 find_package(catkin REQUIRED COMPONENTS geometry_msgs roscpp std_msgs)
 
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED)
 
 if(CMAKE_COMPILER_IS_GNUCXX)
   add_definitions(-std=gnu++0x)

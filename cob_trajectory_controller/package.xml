@@ -15,7 +15,6 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>actionlib</depend>
-  <depend>boost</depend>
   <depend>cob_srvs</depend>
   <depend>control_msgs</depend>
   <depend>dynamic_reconfigure</depend>

@@ -3,7 +3,7 @@ project(cob_omni_drive_controller)
 
 find_package(catkin REQUIRED COMPONENTS angles controller_interface geometry_msgs hardware_interface nav_msgs sensor_msgs std_srvs tf urdf)
 
-find_package(Boost REQUIRED COMPONENTS system thread)
+find_package(Boost REQUIRED COMPONENTS thread)
 
 catkin_package(
   CATKIN_DEPENDS angles controller_interface geometry_msgs hardware_interface nav_msgs sensor_msgs std_srvs tf urdf

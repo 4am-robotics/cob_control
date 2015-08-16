@@ -3,7 +3,7 @@ project(cob_model_identifier)
 
 find_package(catkin REQUIRED COMPONENTS cmake_modules geometry_msgs kdl_parser roscpp sensor_msgs std_srvs tf)
 
-find_package(Boost REQUIRED COMPONENTS system thread)
+find_package(Boost REQUIRED COMPONENTS thread)
 
 find_package(Eigen REQUIRED)
 add_definitions(${EIGEN_DEFINITIONS})
