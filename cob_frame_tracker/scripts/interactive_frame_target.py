@@ -18,7 +18,7 @@ class InteractiveFrameTarget:
 	def __init__(self):
 		self.br = tf.TransformBroadcaster()
 		self.listener = tf.TransformListener()
-		
+
 		#get this from the frame_tracker parameters
 		if rospy.has_param('cartesian_controller/chain_tip_link'):
 			self.active_frame = rospy.get_param("cartesian_controller/chain_tip_link")
@@ -35,7 +35,7 @@ class InteractiveFrameTarget:
 		else:
 			rospy.logerr("No root_frame specified. Setting to 'base_link'!")
 			self.root_frame = "base_link"
-		
+
 		if rospy.has_param('cartesian_controller/movable_trans'):
 			self.movable_trans = rospy.get_param("cartesian_controller/movable_trans")
 		else:
@@ -46,32 +46,32 @@ class InteractiveFrameTarget:
 		else:
 			rospy.logerr("No movable_rot specified. Setting True!")
 			self.movable_rot = True
-		
-		
+
+
 		self.tracking = False
 		print "Waiting for StartTrackingServer..."
 		rospy.wait_for_service('frame_tracker/start_tracking')
 		print "...done!"
 		self.start_tracking_client = rospy.ServiceProxy('frame_tracker/start_tracking', SetString)
-		
+
 		print "Waiting for StopTrackingServer..."
 		rospy.wait_for_service('frame_tracker/stop_tracking')
 		print "...done!"
 		self.stop_tracking_client = rospy.ServiceProxy('frame_tracker/stop_tracking', Empty)
-		
-		
+
+
 		self.target_pose = PoseStamped()
 		self.target_pose.header.stamp = rospy.Time.now()
 		self.target_pose.header.frame_id = self.root_frame
 		self.target_pose.pose.orientation.w = 1.0
-		
+
 		##give tf_listener some time to fill cache
 		#try:
 			#rospy.sleep(1.0)
 		#except rospy.ROSInterruptException as e:
 			##print "ROSInterruptException"
 			#pass
-		
+
 		transform_available = False
 		while not transform_available:
 			try:
@@ -85,15 +85,15 @@ class InteractiveFrameTarget:
 					pass
 				continue
 			transform_available = True
-		
+
 		self.target_pose.pose.position.x = trans[0]
 		self.target_pose.pose.position.y = trans[1]
 		self.target_pose.pose.position.z = trans[2]
 		self.target_pose.pose.orientation.x = rot[0]
-		self.target_pose.pose.orientation.y = rot[1] 
+		self.target_pose.pose.orientation.y = rot[1]
 		self.target_pose.pose.orientation.z = rot[2]
 		self.target_pose.pose.orientation.w = rot[3]
-		
+
 		self.ia_server = InteractiveMarkerServer("marker_server")
 		self.int_marker = InteractiveMarker()
 		self.int_marker.header.frame_id = self.root_frame
@@ -101,7 +101,7 @@ class InteractiveFrameTarget:
 		self.int_marker.name = "interactive_target"
 		self.int_marker.description = self.tracking_frame
 		self.int_marker.scale = 0.8
-		
+
 		# create a grey box marker
 		box_marker = Marker()
 		box_marker.type = Marker.CUBE
@@ -118,7 +118,7 @@ class InteractiveFrameTarget:
 		control_3d.interaction_mode = InteractiveMarkerControl.MOVE_ROTATE_3D
 		control_3d.markers.append( box_marker )
 		self.int_marker.controls.append(control_3d)
-		
+
 		control = InteractiveMarkerControl()
 		control.always_visible = True
 		control.orientation.w = 1
@@ -157,10 +157,10 @@ class InteractiveFrameTarget:
 			control.orientation.z = 1
 			control.interaction_mode = InteractiveMarkerControl.ROTATE_AXIS
 			self.int_marker.controls.append(deepcopy(control))
-			
-		
+
+
 		self.ia_server.insert(self.int_marker, self.marker_fb)
-		
+
 		#create menu
 		self.menu_handler = MenuHandler()
 		self.menu_handler.insert( "StartTracking", callback=self.start_tracking )
@@ -180,7 +180,7 @@ class InteractiveFrameTarget:
 		self.ia_server.insert(self.int_marker_menu, self.menu_fb)
 		self.menu_handler.apply( self.ia_server, self.int_marker_menu.name )
 		self.ia_server.applyChanges()
-	
+
 	def start_tracking(self, fb):
 		#print "start_tracking pressed"
 		try:
@@ -190,7 +190,7 @@ class InteractiveFrameTarget:
 		except rospy.ServiceException, e:
 			print "Service call failed: %s"%e
 			self.tracking = False
-	
+
 	def stop_tracking(self, fb):
 		#print "stop_tracking pressed"
 		try:
@@ -200,12 +200,12 @@ class InteractiveFrameTarget:
 		except rospy.ServiceException, e:
 			print "Service call failed: %s"%e
 			self.tracking = False
-	
+
 	def reset_tracking(self, fb):
 		#print "reset_tracking pressed"
 		self.stop_tracking(fb)
 		self.update_marker()
-		
+
 	def update_marker(self):
 		transform_available = False
 		while not transform_available:
@@ -220,7 +220,7 @@ class InteractiveFrameTarget:
 					pass
 				continue
 			transform_available = True
-		
+
 		reset_pose = PoseStamped()
 		reset_pose.header.frame_id = self.root_frame
 		reset_pose.header.stamp = rospy.Time.now()
@@ -228,17 +228,17 @@ class InteractiveFrameTarget:
 		reset_pose.pose.position.y = trans[1]
 		reset_pose.pose.position.z = trans[2]
 		reset_pose.pose.orientation.x = rot[0]
-		reset_pose.pose.orientation.y = rot[1] 
+		reset_pose.pose.orientation.y = rot[1]
 		reset_pose.pose.orientation.z = rot[2]
 		reset_pose.pose.orientation.w = rot[3]
-		
+
 		self.target_pose = reset_pose
 		self.ia_server.setPose(self.int_marker.name, reset_pose.pose);
 		self.ia_server.applyChanges()
-	
+
 	def menu_fb(self, fb):
 		pass
-	
+
 	def marker_fb(self, fb):
 		#p = feedback.pose.position
 		#print feedback.marker_name + " is now at " + str(p.x) + ", " + str(p.y) + ", " + str(p.z)
@@ -249,16 +249,16 @@ class InteractiveFrameTarget:
  	def run(self):
 		if(not self.tracking):
 			self.update_marker()
-		
+
 		self.br.sendTransform(
-			(self.target_pose.pose.position.x, self.target_pose.pose.position.y, self.target_pose.pose.position.z), 
-			(self.target_pose.pose.orientation.x, self.target_pose.pose.orientation.y, self.target_pose.pose.orientation.z, self.target_pose.pose.orientation.w), 
+			(self.target_pose.pose.position.x, self.target_pose.pose.position.y, self.target_pose.pose.position.z),
+			(self.target_pose.pose.orientation.x, self.target_pose.pose.orientation.y, self.target_pose.pose.orientation.z, self.target_pose.pose.orientation.w),
 			rospy.Time.now(), self.tracking_frame, self.target_pose.header.frame_id)
 
 
 if __name__ == "__main__":
 	rospy.init_node("interactive_frame_target")
-	
+
 	ilt = InteractiveFrameTarget()
 
 	r = rospy.Rate(50)

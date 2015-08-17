@@ -81,7 +81,7 @@ class cob_trajectory_controller_node
 private:
     ros::NodeHandle n_;
     ros::NodeHandle n_private_;
-    
+
     ros::Publisher joint_vel_pub_;
     ros::Subscriber controller_state_;
     ros::Subscriber operation_mode_;
@@ -91,7 +91,7 @@ private:
     ros::ServiceClient srvClient_SetOperationMode;
 
     actionlib::SimpleActionServer<control_msgs::FollowJointTrajectoryAction> as_;
-  
+
     std::string action_name_;
     std::string current_operation_mode_;
     std::vector<std::string> JointNames_;
@@ -149,7 +149,7 @@ public:
             ROS_ERROR("Parameter 'joint_names' not set");
         }
         DOF = JointNames_.size();
-        
+
         if (n_private_.hasParam("ptp_vel"))
         {
             n_private_.getParam("ptp_vel", PTPvel);
@@ -174,22 +174,22 @@ public:
         ROS_INFO("starting controller with DOF: %d PTPvel: %f PTPAcc: %f maxError %f", DOF, PTPvel, PTPacc, maxError);
         traj_generator_ = new genericArmCtrl(DOF, PTPvel, PTPacc, maxError);
         traj_generator_->overlap_time = overlap_time;
-        
+
         as_.start();
     }
 
     double getFrequency()
     {
         double frequency;
-        if (n_private_.hasParam("frequency"))                                                                   
-        {                                                                                                     
-            n_private_.getParam("frequency", frequency);                                                              
-            ROS_INFO("Setting controller frequency to %f HZ", frequency);                                       
-        }                                                                                                     
-        else                                                                                                    
-        {                                                                                                     
-            frequency = 100; //Hz                                                                               
-            ROS_WARN("Parameter 'frequency' not available, setting to default value: %f Hz", frequency);          
+        if (n_private_.hasParam("frequency"))
+        {
+            n_private_.getParam("frequency", frequency);
+            ROS_INFO("Setting controller frequency to %f HZ", frequency);
+        }
+        else
+        {
+            frequency = 100; //Hz
+            ROS_WARN("Parameter 'frequency' not available, setting to default value: %f Hz", frequency);
         }
         return frequency;
     }
@@ -197,7 +197,7 @@ public:
     bool srvCallback_Stop(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
     {
         ROS_INFO("Stopping trajectory controller.");
-        
+
         // stop trajectory controller
         executing_ = false;
         res.success = true;
@@ -205,7 +205,7 @@ public:
         failure_ = true;
         return true;
     }
-    
+
     bool srvCallback_setVel(cob_srvs::SetFloat::Request &req, cob_srvs::SetFloat::Response &res)
     {
         ROS_INFO("Setting velocity to %f", req.data);
@@ -213,7 +213,7 @@ public:
         res.success = true;
         return true;
     }
-    
+
     bool srvCallback_setAcc(cob_srvs::SetFloat::Request &req, cob_srvs::SetFloat::Response &res)
     {
         ROS_INFO("Setting acceleration to %f", req.data);
@@ -226,7 +226,7 @@ public:
     {
         current_operation_mode_ = message->data;
     }
-    
+
     void state_callback(const control_msgs::JointTrajectoryControllerStatePtr& message)
     {
         std::vector<double> positions = message->actual.positions;
@@ -254,9 +254,9 @@ public:
                 {
                     rejected_ = true;
                     return;
-                }  
+                }
             }
-            
+
             std::vector<double> traj_start;
             if(preemted_ == true) //Calculate trajectory for runtime modification of trajectories
             {
@@ -344,11 +344,11 @@ public:
                     traj_generator_->moveTrajectory(temp_traj, traj_start);
                 }
             }
-            
+
             executing_ = true;
             startposition_ = q_current;
             preemted_ = false;
-            
+
         }
         else //suspend current movement and start new one
         {
@@ -367,7 +367,7 @@ public:
     }
 
 
-    void executeFollowTrajectory(const control_msgs::FollowJointTrajectoryGoalConstPtr &goal) 
+    void executeFollowTrajectory(const control_msgs::FollowJointTrajectoryGoalConstPtr &goal)
     {
         ROS_INFO("Received new goal trajectory with %lu points",goal->trajectory.points.size());
         spawnTrajector(goal->trajectory);
@@ -384,7 +384,7 @@ public:
         rejected_ = false;
         failure_ = false;
     }
-    
+
     void run()
     {
         if(executing_)
@@ -421,7 +421,7 @@ public:
                 {
                     target_joint_vel.data.push_back(des_vel.at(i));
                 }
-                
+
                 //send everything
                 joint_vel_pub_.publish(target_joint_vel);
             }
@@ -446,7 +446,7 @@ public:
             watchdog_counter++;
         }
     }
-    
+
 };
 
 

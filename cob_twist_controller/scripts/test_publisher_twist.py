@@ -4,10 +4,10 @@ import rospy
 import math
 from geometry_msgs.msg import Twist
 
- 
+
 def twistPub():
   rospy.init_node("test_publisher_twist", anonymous=True)
-  
+
   pub = rospy.Publisher("twist_controller/command_twist", Twist, queue_size=1)
   twist_msg =  Twist()
 
@@ -17,9 +17,9 @@ def twistPub():
   twist_msg.angular.x = 0
   twist_msg.angular.y = 0
   twist_msg.angular.z = 0
-   
+
   r = rospy.Rate(50)
-  
+
   while not rospy.is_shutdown():
     pub.publish(twist_msg)
     r.sleep()

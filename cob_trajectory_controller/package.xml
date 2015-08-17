@@ -1,40 +1,27 @@
-<package>
+<package format="2">
   <name>cob_trajectory_controller</name>
   <version>0.6.8</version>
   <description>This package provides a trajectory controller which controlls velocities for a chain of joints. This controller can be used e.g. with [[schunk_powercube_chain]].</description>
-  
+
   <license>LGPL</license>
 
   <url type="website">http://ros.org/wiki/cob_trajectory_controller</url>
   <!-- <url type="bugtracker"></url> -->
-  
+
   <maintainer email="aub@ipa.fhg.de">Alexander Bubeck</maintainer>
 
   <author>Alexander Bubeck</author>
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend>actionlib</build_depend>
-  <build_depend>cmake_modules</build_depend>
-  <build_depend>cob_srvs</build_depend>
-  <build_depend>control_msgs</build_depend>
-  <build_depend>dynamic_reconfigure</build_depend>
-  <build_depend>orocos_kdl</build_depend>
-  <build_depend>roscpp</build_depend>
-  <build_depend>sensor_msgs</build_depend>
-  <build_depend>std_msgs</build_depend>
-  <build_depend>std_srvs</build_depend>
-  <build_depend>trajectory_msgs</build_depend>
-
-  <run_depend>actionlib</run_depend>
-  <run_depend>cob_srvs</run_depend>
-  <run_depend>control_msgs</run_depend>
-  <run_depend>dynamic_reconfigure</run_depend>
-  <run_depend>orocos_kdl</run_depend>
-  <run_depend>roscpp</run_depend>
-  <run_depend>sensor_msgs</run_depend>
-  <run_depend>std_msgs</run_depend>
-  <run_depend>std_srvs</run_depend>
-  <run_depend>trajectory_msgs</run_depend>
+  <depend>actionlib</depend>
+  <depend>cob_srvs</depend>
+  <depend>control_msgs</depend>
+  <depend>dynamic_reconfigure</depend>
+  <depend>roscpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
+  <depend>trajectory_msgs</depend>
 
 </package>

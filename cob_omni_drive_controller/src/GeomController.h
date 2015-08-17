@@ -12,7 +12,7 @@ protected:
     std::vector<typename Interface::ResourceHandleType> steer_joints_, drive_joints_;
     std::vector<typename Controller::WheelState> wheel_states_;
     boost::scoped_ptr<Controller> geom_;
-public:    
+public:
     bool init(Interface* hw, ros::NodeHandle& controller_nh){
 
         std::vector<typename Controller::WheelParams> wheel_params;
@@ -46,7 +46,7 @@ public:
             wheel_states_[i].dVelGearDriveRadS = drive_joints_[i].getVelocity();
         }
         geom_->updateWheelStates(wheel_states_);
-    }    
+    }
 };
 
 

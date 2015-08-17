@@ -158,7 +158,7 @@ bool make_wheel_struct(XmlRpc::XmlRpcValue &wheel_list){
     }else if(wheel_list.getType() !=  XmlRpc::XmlRpcValue::TypeStruct){
         return false;
     }
-    
+
     return wheel_list.size() > 0;
 }
 
@@ -209,5 +209,5 @@ bool parseWheelParams(std::vector<UndercarriageCtrl::WheelParams> &params, const
     return parseWheels(params, nh, read_urdf);
 }
 
-    
+
 }

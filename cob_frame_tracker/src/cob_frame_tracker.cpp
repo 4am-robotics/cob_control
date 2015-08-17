@@ -44,13 +44,13 @@ bool CobFrameTracker::initialize()
 	ros::NodeHandle nh_;
 	ros::NodeHandle nh_tracker("frame_tracker");
 	ros::NodeHandle nh_twist("twist_controller");
-	
+
 	///get params
 	if (nh_tracker.hasParam("update_rate"))
 	{	nh_tracker.getParam("update_rate", update_rate_);	}
 	else
 	{	update_rate_ = 68.0;	}	//hz
-	
+
 	if (nh_.hasParam("chain_base_link"))
 	{
 		nh_.getParam("chain_base_link", chain_base_);
@@ -60,7 +60,7 @@ bool CobFrameTracker::initialize()
 		ROS_ERROR("No chain_base_link specified. Aborting!");
 		return false;
 	}
-	
+
 	if (nh_.hasParam("chain_tip_link"))
 	{
 		nh_.getParam("chain_tip_link", chain_tip_link_);
@@ -70,33 +70,33 @@ bool CobFrameTracker::initialize()
 		ROS_ERROR("No chain_tip_link specified. Aborting!");
 		return false;
 	}
-	
+
 	if(!nh_.getParam("joint_names", joints_))
 	{
 		ROS_ERROR("Parameter 'joint_names' not set");
 		return false;
 	}
 	dof_ = joints_.size();
-	
+
 	KDL::Tree tree;
 	if (!kdl_parser::treeFromParam("/robot_description", tree)){
 		ROS_ERROR("Failed to construct kdl tree");
 		return false;
 	}
-	
+
 	tree.getChain(chain_base_, chain_tip_link_, chain_);
 	if(chain_.getNrOfJoints() == 0)
 	{
 		ROS_ERROR("Failed to initialize kinematic chain");
 		return false;
 	}
-	
+
 	//initialize variables and current joint values and velocities
 	last_q_ = KDL::JntArray(chain_.getNrOfJoints());
 	last_q_dot_ = KDL::JntArray(chain_.getNrOfJoints());
 	q_temp = last_q_;
 	q_dot_temp = last_q_dot_;
-	
+
 	if (nh_tracker.hasParam("movable_trans"))
 	{	nh_tracker.getParam("movable_trans", movable_trans_);	}
 	else
@@ -105,17 +105,17 @@ bool CobFrameTracker::initialize()
 	{	nh_tracker.getParam("movable_rot", movable_rot_);	}
 	else
 	{	movable_rot_ = true;	}
-	
+
 	if (nh_tracker.hasParam("max_vel_lin"))
 	{	nh_tracker.getParam("max_vel_lin", max_vel_lin_);	}
 	else
 	{	max_vel_lin_ = 10.0;	}	//m/sec
-	
+
 	if (nh_tracker.hasParam("max_vel_rot"))
 	{	nh_tracker.getParam("max_vel_rot", max_vel_rot_);	}
 	else
 	{	max_vel_rot_ = 6.28;	}	//rad/sec
-	
+
 	// Load PID Controller using gains set on parameter server
 	pid_controller_trans_x_.init(ros::NodeHandle(nh_tracker, "pid_trans_x"));
 	pid_controller_trans_x_.reset();
@@ -123,18 +123,18 @@ bool CobFrameTracker::initialize()
 	pid_controller_trans_y_.reset();
 	pid_controller_trans_z_.init(ros::NodeHandle(nh_tracker, "pid_trans_z"));
 	pid_controller_trans_z_.reset();
-	
+
 	pid_controller_rot_x_.init(ros::NodeHandle(nh_tracker, "pid_rot_x"));
 	pid_controller_rot_x_.reset();
 	pid_controller_rot_y_.init(ros::NodeHandle(nh_tracker, "pid_rot_y"));
 	pid_controller_rot_y_.reset();
 	pid_controller_rot_z_.init(ros::NodeHandle(nh_tracker, "pid_rot_z"));
 	pid_controller_rot_z_.reset();
-	
+
 	tracking_ = false;
 	tracking_goal_ = false;
 	tracking_frame_ = chain_tip_link_;
-	
+
 	//ABORTION CRITERIA:
 	cart_min_dist_threshold_lin_ = 0.01;
 	cart_min_dist_threshold_rot_ = 0.01;
@@ -142,20 +142,20 @@ bool CobFrameTracker::initialize()
 	twist_dead_threshold_rot_ = 0.05;
 	twist_deviation_threshold_lin_ = 0.5;
 	twist_deviation_threshold_rot_ = 0.5;
-	
+
 	cart_distance_ = 0.0;
 	rot_distance_ = 0.0;
-	
+
 	current_twist_.Zero();
 	target_twist_.Zero();
-	
+
 	abortion_counter_ = 0;
 	max_abortions_ = update_rate_;	//if tracking fails for 1 minute
-	
+
 	reconfigure_server_.reset(new dynamic_reconfigure::Server<cob_frame_tracker::FrameTrackerConfig>(reconfig_mutex_, nh_tracker));
 	reconfigure_server_->setCallback(boost::bind(&CobFrameTracker::reconfigure_callback,   this, _1, _2));
-	
-	
+
+
 	///initialize ROS interfaces
 	jointstate_sub = nh_.subscribe("joint_states", 1, &CobFrameTracker::jointstate_cb, this);
 	twist_pub_ = nh_twist.advertise<geometry_msgs::TwistStamped> ("command_twist_stamped", 1);
@@ -168,24 +168,24 @@ bool CobFrameTracker::initialize()
 	as_->registerGoalCallback(boost::bind(&CobFrameTracker::goalCB, this));
 	as_->registerPreemptCallback(boost::bind(&CobFrameTracker::preemptCB, this));
 	as_->start();
-	
+
 	timer_ = nh_.createTimer(ros::Duration(1/update_rate_), &CobFrameTracker::run, this);
 	timer_.start();
-	
+
 	return true;
 }
 
 void CobFrameTracker::run(const ros::TimerEvent& event)
 {
 	ros::Duration period = event.current_real - event.last_real;
-	
+
 	if(tracking_)
 	{
 		// tracking on goal or tracking because of service call
 		if (tracking_goal_)
 		{
 			int status = checkStatus();
-			
+
 			if (status > 0)
 			{
 				action_success();
@@ -200,7 +200,7 @@ void CobFrameTracker::run(const ros::TimerEvent& event)
 				if (as_->isActive()){ as_->publishFeedback(action_feedback_); }
 			}
 		}
-		
+
 		publish_twist(period);
 	}
 }
@@ -210,7 +210,7 @@ void CobFrameTracker::publish_twist(ros::Duration period)
 	tf::StampedTransform transform_tf;
 	geometry_msgs::TwistStamped twist_msg;
 	double roll, pitch, yaw;
-	
+
 	try
 	{
 		tf_listener_.lookupTransform(chain_tip_link_, tracking_frame_, ros::Time(0), transform_tf);
@@ -219,26 +219,26 @@ void CobFrameTracker::publish_twist(ros::Duration period)
 		ROS_ERROR("%s",ex.what());
 		return;
 	}
-	
+
 	if(movable_trans_)
 	{
 		twist_msg.twist.linear.x = pid_controller_trans_x_.computeCommand(transform_tf.getOrigin().x(), period);
 		twist_msg.twist.linear.y = pid_controller_trans_y_.computeCommand(transform_tf.getOrigin().y(), period);
 		twist_msg.twist.linear.z = pid_controller_trans_z_.computeCommand(transform_tf.getOrigin().z(), period);
 	}
-	
+
 	if(movable_rot_)
 	{
 		///ToDo: Consider angular error as RPY or Quaternion?
 		///ToDo: What to do about sign conversion (pi->-pi) in angular rotation?
-		
+
 		twist_msg.twist.angular.x = pid_controller_rot_x_.computeCommand(transform_tf.getRotation().x(), period);
 		twist_msg.twist.angular.y = pid_controller_rot_y_.computeCommand(transform_tf.getRotation().y(), period);
 		twist_msg.twist.angular.z = pid_controller_rot_z_.computeCommand(transform_tf.getRotation().z(), period);
 	}
-	
+
 	twist_msg.header.frame_id = chain_tip_link_;
-	
+
 	/////debug only
 	//if(std::fabs(transform_tf.getOrigin().x()) >= max_vel_lin_)
 		//ROS_WARN("Twist.linear.x: %f exceeds limit %f", transform_tf.getOrigin().x(), max_vel_lin_);
@@ -252,7 +252,7 @@ void CobFrameTracker::publish_twist(ros::Duration period)
 		//ROS_WARN("Twist.angular.y: %f exceeds limit %f", transform_tf.getOrigin().y(), max_vel_rot_);
 	//if(std::fabs(transform_tf.getOrigin().z()) >= max_vel_rot_)
 		//ROS_WARN("Twist.angular.z: %f exceeds limit %f", transform_tf.getOrigin().z(), max_vel_rot_);
-	
+
 	//twist_msg.twist.linear.x = copysign(std::min(max_vel_lin_, std::fabs(transform_tf.getOrigin().x())),transform_tf.getOrigin().x());
 	//twist_msg.twist.linear.y = copysign(std::min(max_vel_lin_, std::fabs(transform_tf.getOrigin().y())),transform_tf.getOrigin().y());
 	//twist_msg.twist.linear.z = copysign(std::min(max_vel_lin_, std::fabs(transform_tf.getOrigin().z())),transform_tf.getOrigin().z());
@@ -265,7 +265,7 @@ void CobFrameTracker::publish_twist(ros::Duration period)
 	////rot distance
 	////TODO: change to cartesian rot
 	//rot_distance_ = 2* acos(transform_msg.transform.rotation.w);
-	
+
 	//get target_twist
 	target_twist_.vel.x(twist_msg.twist.linear.x);
 	target_twist_.vel.y(twist_msg.twist.linear.y);
@@ -292,7 +292,7 @@ bool CobFrameTracker::start_tracking_cb(cob_srvs::SetString::Request& request, c
 		tracking_ = true;
 		tracking_goal_ = false;
 		tracking_frame_ = request.data;
-		
+
 		response.success = true;
 		return true;
 	}
@@ -310,7 +310,7 @@ bool CobFrameTracker::stop_tracking_cb(std_srvs::Empty::Request& request, std_sr
 		ROS_INFO("CobFrameTracker stopped successfully");
 		tracking_ = false;
 		tracking_frame_ = chain_tip_link_;
-		
+
 		//publish zero Twist for stopping
 		geometry_msgs::TwistStamped twist_msg;
 		twist_msg.header.frame_id = chain_tip_link_;
@@ -349,7 +349,7 @@ void CobFrameTracker::preemptCB()
 	tracking_ = false;
 	tracking_goal_ = false;
 	tracking_frame_ = chain_tip_link_;
-	
+
 	//publish zero Twist for stopping
 	geometry_msgs::TwistStamped twist_msg;
 	twist_msg.header.frame_id = chain_tip_link_;
@@ -360,11 +360,11 @@ void CobFrameTracker::action_success()
 {
 	ROS_INFO("Goal succeeded!");
 	as_->setSucceeded(action_result_, action_result_.message);
-	
+
 	tracking_ = false;
 	tracking_goal_ = false;
 	tracking_frame_ = chain_tip_link_;
-	
+
 	//publish zero Twist for stopping
 	geometry_msgs::TwistStamped twist_msg;
 	twist_msg.header.frame_id = chain_tip_link_;
@@ -379,7 +379,7 @@ void CobFrameTracker::action_abort()
 	tracking_ = false;
 	tracking_goal_ = false;
 	tracking_frame_ = chain_tip_link_;
-	
+
 	//publish zero Twist for stopping
 	geometry_msgs::TwistStamped twist_msg;
 	twist_msg.header.frame_id = chain_tip_link_;
@@ -389,18 +389,18 @@ void CobFrameTracker::action_abort()
 int CobFrameTracker::checkStatus()
 {
 	int status = 0;
-	
+
 	if(ros::Time::now() > tracking_start_time_ + ros::Duration(tracking_duration_))
 	{
 		action_result_.success = true;
 		action_result_.message = std::string("Successfully tracked goal for %f seconds", tracking_duration_);
 		status = 1;
 	}
-	
+
 	bool infinitesimal_twist = checkInfinitesimalTwist(current_twist_);
 	bool distance_violation = checkCartDistanceViolation(cart_distance_, 0.0);
 	bool twist_violation = checkTwistViolation(current_twist_, target_twist_);
-	
+
 	if(stop_on_goal_)
 	{
 		///ToDo: better metric for when goal is reached
@@ -411,19 +411,19 @@ int CobFrameTracker::checkStatus()
 			status = 2;
 		}
 	}
-	
+
 	if(distance_violation || twist_violation)
 	{
 		abortion_counter_++;
 	}
-	
+
 	if(abortion_counter_ > max_abortions_)
 	{
 		action_result_.success = false;
 		action_result_.message = "Constraints violated. Action aborted";
 		status = -1;
 	}
-	
+
 	return status;
 }
 
@@ -504,7 +504,7 @@ bool CobFrameTracker::checkInfinitesimalTwist(const KDL::Twist current)
 	{
 		return false;
 	}
-	
+
 	///all twist velocities are <= dead_threshold -> twist is infinitesimal
 	return true;
 }
@@ -520,7 +520,7 @@ bool CobFrameTracker::checkCartDistanceViolation(const double dist, const double
 	{
 		return true;
 	}
-	
+
 	///Cartesian distance is acceptable -> no violation
 	return false;
 }
@@ -552,7 +552,7 @@ bool CobFrameTracker::checkTwistViolation(const KDL::Twist current, const KDL::T
 	{
 		return true;
 	}
-	
+
 	///Cartesian Twist distance is acceptable -> no violation
 	return false;
 }

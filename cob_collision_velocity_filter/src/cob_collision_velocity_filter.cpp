@@ -2,7 +2,7 @@
  *
  * Copyright (c) 2012
  *
- * Fraunhofer Institute for Manufacturing Engineering  
+ * Fraunhofer Institute for Manufacturing Engineering
  * and Automation (IPA)
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -10,9 +10,9 @@
  * Project name: care-o-bot
  * ROS stack name: cob_navigation
  * ROS package name: cob_collision_velocity_filter
- *  							
+ *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- *  		
+ *
  * Author: Matthias Gruhler, email:Matthias.Gruhler@ipa.fhg.de
  *
  * Date of creation: February 2012
@@ -27,23 +27,23 @@
  *   * Redistributions in binary form must reproduce the above copyright
  *  	 notice, this list of conditions and the following disclaimer in the
  *  	 documentation and/or other materials provided with the distribution.
- *   * Neither the name of the Fraunhofer Institute for Manufacturing 
+ *   * Neither the name of the Fraunhofer Institute for Manufacturing
  *  	 Engineering and Automation (IPA) nor the names of its
  *  	 contributors may be used to endorse or promote products derived from
  *  	 this software without specific prior written permission.
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License LGPL as 
- * published by the Free Software Foundation, either version 3 of the 
+ * it under the terms of the GNU Lesser General Public License LGPL as
+ * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License LGPL for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public 
- * License LGPL along with this program. 
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License LGPL along with this program.
  * If not, see <http://www.gnu.org/licenses/>.
  *
  ****************************************************************/
@@ -65,14 +65,14 @@ CollisionVelocityFilter::CollisionVelocityFilter()
   nh_.param("costmap_parameter_source",costmap_parameter_source, std::string("/local_costmap_node/costmap"));
 
   ros::NodeHandle local_costmap_nh_(costmap_parameter_source);
-  
+
   nh_.param("costmap_obstacle_treshold", costmap_obstacle_treshold_, 50);
 
   // implementation of topics to publish (command for base and list of relevant obstacles)
   topic_pub_command_ = nh_.advertise<geometry_msgs::Twist>("command", 1);
   topic_pub_relevant_obstacles_ = nh_.advertise<nav_msgs::OccupancyGrid>("relevant_obstacles_grid", 1);
 
-  // subscribe to twist-movement of teleop 
+  // subscribe to twist-movement of teleop
   joystick_velocity_sub_ = nh_.subscribe<geometry_msgs::Twist>("teleop_twist", 1, boost::bind(&CollisionVelocityFilter::joystickVelocityCB, this, _1));
   // subscribe to the costmap to receive inflated cells
   obstacles_sub_ = nh_.subscribe<nav_msgs::OccupancyGrid>("obstacles", 1, boost::bind(&CollisionVelocityFilter::obstaclesCB, this, _1));
@@ -130,7 +130,7 @@ CollisionVelocityFilter::CollisionVelocityFilter()
 
   //load the robot footprint from the parameter server if its available in the local costmap namespace
   robot_footprint_ = loadRobotFootprint(local_costmap_nh_);
-  if(robot_footprint_.size() > 4) 
+  if(robot_footprint_.size() > 4)
     ROS_WARN("You have set more than 4 points as robot_footprint, cob_collision_velocity_filter can deal only with rectangular footprints so far!");
 
   // try to geht the max_acceleration values from the parameter server
@@ -190,7 +190,7 @@ void CollisionVelocityFilter::obstaclesCB(const nav_msgs::OccupancyGrid::ConstPt
 }
 
 // timer callback for periodically checking footprint
-void CollisionVelocityFilter::getFootprintServiceCB(const ros::TimerEvent&) 
+void CollisionVelocityFilter::getFootprintServiceCB(const ros::TimerEvent&)
 {
   cob_footprint_observer::GetFootprint srv = cob_footprint_observer::GetFootprint();
   // check if service is reachable
@@ -224,7 +224,7 @@ void CollisionVelocityFilter::getFootprintServiceCB(const ros::TimerEvent&)
     }
 
     pthread_mutex_unlock(&m_mutex);
-  
+
   } else {
     ROS_WARN("Cannot reach service /get_footprint");
   }
@@ -358,8 +358,8 @@ void CollisionVelocityFilter::performControllerStep() {
   }
   else
   {
-    // publish adjusted velocity 
-    topic_pub_command_.publish(cmd_vel);  
+    // publish adjusted velocity
+    topic_pub_command_.publish(cmd_vel);
   }
   return;
 }
@@ -381,7 +381,7 @@ void CollisionVelocityFilter::obstacleHandler() {
   bool cur_obstacle_relevant;
   geometry_msgs::Point cur_obstacle_robot;
   geometry_msgs::Point zero_position;
-  zero_position.x=0.0f;  
+  zero_position.x=0.0f;
   zero_position.y=0.0f;
   zero_position.z=0.0f;
   bool use_circumscribed=true, use_tube=true;
@@ -406,7 +406,7 @@ void CollisionVelocityFilter::obstacleHandler() {
     if( fabs(robot_twist_angular_.z) <= use_circumscribed_threshold_) {
       use_circumscribed = false;
     } //when tube filter running, disable circum-filter in a wider range of rot-velocities
-  } 
+  }
 
   //Calculation of tube in driving-dir considered for obstacle avoidence
   double velocity_angle=0.0f, velocity_ortho_angle;
@@ -456,7 +456,7 @@ void CollisionVelocityFilter::obstacleHandler() {
       relevant_obstacles_.data.push_back(0);
     }
     else {
-      
+
       // calculate cell in 2D space where robot is is point (0, 0)
       geometry_msgs::Point cell;
       cell.x = (i%(int)(last_costmap_received_.info.width))*last_costmap_received_.info.resolution + last_costmap_received_.info.origin.position.x;
@@ -464,7 +464,7 @@ void CollisionVelocityFilter::obstacleHandler() {
       cell.z = 0.0f;
 
       cur_obstacle_relevant = false;
-      cur_distance_to_center = getDistance2d(zero_position, cell); 
+      cur_distance_to_center = getDistance2d(zero_position, cell);
       //check whether current obstacle lies inside the circumscribed_radius of the robot -> prevent collisions while rotating
       if(use_circumscribed && cur_distance_to_center <= circumscribed_radius) {
         cur_obstacle_robot = cell;
@@ -486,7 +486,7 @@ void CollisionVelocityFilter::obstacleHandler() {
           if(obstacle_dist_vel_dir <= tube_left_border && obstacle_dist_vel_dir >= tube_right_border) {
             //found obstacle that lies inside of observation tube
 
-            if( sign(obstacle_dist_vel_dir) >= 0) { 
+            if( sign(obstacle_dist_vel_dir) >= 0) {
               if(cos(obstacle_delta_theta_robot) * cur_distance_to_center >= tube_left_origin) {
                 //relevant obstacle in tube found
                 cur_obstacle_relevant = true;

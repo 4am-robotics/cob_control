@@ -1,4 +1,4 @@
-<package>
+<package format="2">
   <name>cob_base_velocity_smoother</name>
   <version>0.6.8</version>
   <description>The 'cob_base_velocity_smoother' reads velocity messages and publishes messages of the same type for "smoothed" velocity to avoid shaking behavior.</description>
@@ -13,12 +13,9 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend>geometry_msgs</build_depend>
-  <build_depend>roscpp</build_depend>
-  <build_depend>std_msgs</build_depend>
-
-  <run_depend>geometry_msgs</run_depend>
-  <run_depend>roscpp</run_depend>
-  <run_depend>std_msgs</run_depend>
+  <depend>boost</depend>
+  <depend>geometry_msgs</depend>
+  <depend>roscpp</depend>
+  <depend>std_msgs</depend>
 
 </package>

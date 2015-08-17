@@ -4,10 +4,10 @@ import rospy
 import math
 from geometry_msgs.msg import TwistStamped
 
- 
+
 def twistPub():
   rospy.init_node("test_publisher_twist_stamped", anonymous=True)
-  
+
   pub = rospy.Publisher("twist_controller/command_twist_stamped", TwistStamped, queue_size=1)
   twist_stamped_msg =  TwistStamped()
 
@@ -20,9 +20,9 @@ def twistPub():
   twist_stamped_msg.twist.angular.x = 0
   twist_stamped_msg.twist.angular.y = 0
   twist_stamped_msg.twist.angular.z = 0
-   
+
   r = rospy.Rate(50)
-  
+
   while not rospy.is_shutdown():
     twist_stamped_msg.header.stamp = rospy.Time.now()
     pub.publish(twist_stamped_msg)

@@ -1,5 +1,5 @@
 //-----------------------------------------------
-// Neobotix 
+// Neobotix
 /***********************************************************************
  *                                                                     *
  *  written by Felix Geibel May 2009                                   *
@@ -48,9 +48,9 @@ public:
     bool ipoWithConstSampleDist(double dIpoDist, std::vector<PointND>& ipoVec);
 
     bool ipoWithNumSamples(int iNumPts, std::vector<PointND>& ipoVec);
-    
+
     void eval(double dPos, PointND& point);
-    
+
     double getMaxdPos() const { return m_dLength; }
 
 private:
@@ -137,7 +137,7 @@ void BSplineND<PointND>::setCtrlPoints(const std::vector<PointND>& ctrlPointVec 
     {
         m_KnotVec[i+iNumCtrlPoint] = d;
     }
-    
+
     // This is not the arc-length but the maximum of the spline parameter.
     // eval(m_dLength, Point) should return the last point of the spline
     m_dLength = d;
@@ -176,8 +176,8 @@ bool BSplineND<PointND>::ipoWithConstSampleDist(double dIpoDist, std::vector<Poi
         ipoVec = m_CtrlPointVec;
         return false;
     }
-    
-    // Felix: Dies ist falsch? m_KnotVec.back() enthält nicht die tatsächliche 
+
+    // Felix: Dies ist falsch? m_KnotVec.back() enthält nicht die tatsächliche
     // Bogenlänge entlang des Splines. Folge: Ergebnisvektor ist am Ende abge-
     // schnitten.
     iNumOfPoints = m_KnotVec.back() / dIpoDist + 2;
@@ -322,7 +322,7 @@ double BSplineND<PointND>::evalBasis(double u, unsigned int i, int n)
         double N;
         double dNum1, dNum2;
         double dDen1, dDen2;
-        
+
         dDen1 = u - m_KnotVec[i];
         dNum1 = m_KnotVec[i+n-1] - m_KnotVec[i];
 

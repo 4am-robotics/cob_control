@@ -15,18 +15,18 @@
 
 class genericArmCtrl
 {
-	public: 
-		
+	public:
+
 		genericArmCtrl(int DOF, double PTPvel = 0.7, double PTPacc = 0.2, double maxError = 0.7);
 		~genericArmCtrl();
-		
+
 		std::vector<double> GetPTPvel() const;
 		std::vector<double> GetPTPacc() const;
 		void SetPTPvel(double vel);
 		void SetPTPacc(double acc);
 
 		double overlap_time;
-	
+
 		// void stop(); --> TODO: better reset
 
 		bool step(std::vector<double> current_pos, std::vector<double> & desired_vel);
@@ -38,9 +38,9 @@ class genericArmCtrl
 //		bool movePos(AbsPos position);
 
 		int m_DOF;
-		
+
 		RefVal_JS* m_pRefVals;
-		
+
 		std::vector<double> m_vel_js;
 		std::vector<double> last_q;
 		std::vector<double> last_q1;

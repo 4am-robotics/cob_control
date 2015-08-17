@@ -70,25 +70,25 @@ public:
 							double y_dot_rot_in, double y_dot_rot_out,
 							double z_dot_rot_in, double z_dot_rot_out,
 							double x_lin_out, double y_lin_out, double z_lin_out,double x_rot_out,double y_rot_out,double z_rot_out);
-						 
+
 	double calculateRLS(double processInput, double processOutput,int modellorder);
 	void printModel(double a1, double b1, std::string axis);
 	geometry_msgs::Pose getEndeffectorPose();
 	geometry_msgs::Pose getTrackingFramePosition();
 
-	void euler(std::vector<double> *out, double in, double dt);	
+	void euler(std::vector<double> *out, double in, double dt);
 	void writeToMFile(std::string fileName,std::vector<double> *dot_in,std::vector<double> *dot_out,std::vector<double> *pos_out,std::vector<double> *dot_integrated);
 	void stepResponsePlot(std::string fileName,std::vector<double> *in, std::vector<double> *x_lin_out,std::vector<double> *y_lin_out,std::vector<double> *z_lin_out,std::vector<double> *x_rot_out,std::vector<double> *y_rot_out,std::vector<double> *z_rot_out);
-	
+
 	void stop_recording();
 	void quit(int sig);
 
-	
-	
+
+
 private:
 	ros::NodeHandle nh_;
 	ros::Subscriber twist_sub_,jointstate_sub_;
-	
+
 	/// KDL Conversion
 	KDL::Chain chain_;
 	std::string output_file_path_;
@@ -100,38 +100,38 @@ private:
 	KDL::ChainFkSolverVel_recursive* jntToCartSolver_vel_;
 	unsigned int dof_;
 	KDL::Vector vector_vel_,vector_rot_;
-	
+
 	/// Outputs
 	// Velocity
 	std::vector<double> x_dot_lin_vec_out_	,y_dot_lin_vec_out_	,z_dot_lin_vec_out_;
 	std::vector<double> x_dot_rot_vec_out_	,y_dot_rot_vec_out_	,z_dot_rot_vec_out_;
-		
+
 	// Position
 	std::vector<double> x_lin_vec_out_		,y_lin_vec_out_		,z_lin_vec_out_;
 	std::vector<double> x_rot_vec_out_		,y_rot_vec_out_		,z_rot_vec_out_;
-	
-	
+
+
 	double q_x_lin_out	,q_y_lin_out	,q_z_lin_out;
-	
+
 	/// Inputs
 	std::vector<double> x_dot_lin_vec_in_	,y_dot_lin_vec_in_	,z_dot_lin_vec_in_;
 	std::vector<double> x_dot_rot_vec_in_	,y_dot_rot_vec_in_	,z_dot_rot_vec_in_;
-	
+
 	double x_dot_lin_in_,y_dot_lin_in_,z_dot_lin_in_;
 	double x_dot_rot_in_,y_dot_rot_in_,z_dot_rot_in_;
 	double q_x_lin_in,q_y_lin_in,q_z_lin_in;
-	
+
 	bool finished_recording_;
-	
+
 	/// Transform Listener
 	tf::TransformListener listener_;
-	
+
 	/// Euler Integration
 	double dt_;
-	
+
 	bool start_;
 	std::vector <double> timeVec;
-	
+
 	/// For Keyboard commands
 	char c;
 	int kfd;

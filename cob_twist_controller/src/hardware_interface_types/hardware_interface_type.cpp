@@ -101,8 +101,8 @@ inline void HardwareInterfacePosition::processResult(const KDL::JntArray& q_dot_
         }
     }
     last_update_time_ = time_now_;
-    
-    
+
+
     // Initialize the velocity vectors in the first and second iteration
     if(iteration_counter_ == 0)
     {
@@ -136,7 +136,7 @@ inline void HardwareInterfacePosition::processResult(const KDL::JntArray& q_dot_
         {
             vel_support_integration_point_.push_back(vel_msg.data[i]);
         }
-        
+
         //publish to interface
         pub_.publish(pos_msg);
     }
@@ -174,8 +174,8 @@ inline void HardwareInterfaceJointStates::processResult(const KDL::JntArray& q_d
         }
     }
     last_update_time_ = time_now_;
-    
-    
+
+
     // Initialize the velocity vectors in the first and second iteration
     if(iteration_counter_ == 0)
     {
@@ -209,13 +209,13 @@ inline void HardwareInterfaceJointStates::processResult(const KDL::JntArray& q_d
         {
             vel_support_integration_point_.push_back(vel_msg.data[i]);
         }
-        
+
         ///update JointState
         boost::mutex::scoped_lock lock(mutex_);
         //js_msg_.header.stamp = ros::Time::now();
         js_msg_.position = pos_msg.data;
         js_msg_.velocity = vel_msg.data;
-        
+
         ///publishing takes place in separate thread
     }
 

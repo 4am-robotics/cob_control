@@ -11,7 +11,7 @@ class CobControlModeAdapter
     void initialize()
     {
       bool success = false;
-      
+
       joint_names_.clear();
       current_controller_names_.clear();
       traj_controller_names_.clear();
@@ -19,16 +19,16 @@ class CobControlModeAdapter
       vel_controller_names_.clear();
       last_pos_command_=ros::Time();
       last_vel_command_=ros::Time();
-      
+
       has_traj_controller_ = false;
       has_pos_controller_ = false;
       has_vel_controller_ = false;
-      
+
       current_control_mode_=NONE;
-      
+
       //wait for services from controller manager
       while (not ros::service::waitForService("controller_manager/load_controller", ros::Duration(5.0))){;}
-        
+
       if(ros::service::exists("controller_manager/load_controller", false))
       {
         load_client_ = nh_.serviceClient<controller_manager_msgs::LoadController>("controller_manager/load_controller");
@@ -38,7 +38,7 @@ class CobControlModeAdapter
         ROS_ERROR("...Load service not available!");
         return;
       }
-      
+
       while (not ros::service::waitForService("controller_manager/switch_controller", ros::Duration(5.0))){;}
 
       if(ros::service::exists("controller_manager/switch_controller", false))
@@ -50,7 +50,7 @@ class CobControlModeAdapter
         ROS_ERROR("...Load service not available!");
         return;
       }
-      
+
       std::string param="max_command_silence";
       if (nh_.hasParam(param))
       {
@@ -61,7 +61,7 @@ class CobControlModeAdapter
         ROS_ERROR("Parameter %s not set, using default 0.3s...", param.c_str());
         max_command_silence_=0.3;
       }
-      
+
       // List of controlled joints
       param="joint_names";
       if(!nh_.getParam(param, joint_names_))
@@ -69,28 +69,28 @@ class CobControlModeAdapter
         ROS_ERROR("Parameter %s not set, shutting down node...", param.c_str());
         nh_.shutdown();
       }
-      
+
       if(nh_.hasParam("joint_trajectory_controller"))
       {
         has_traj_controller_ = true;
         traj_controller_names_.push_back("joint_trajectory_controller");
         ROS_DEBUG_STREAM(nh_.getNamespace() << " supports 'joint_trajectory_controller'");
       }
-      
+
       if(nh_.hasParam("joint_group_position_controller"))
-      {   
+      {
         has_pos_controller_ = true;
         pos_controller_names_.push_back("joint_group_position_controller");
         ROS_DEBUG_STREAM(nh_.getNamespace() << " supports 'joint_group_position_controller'");
       }
-      
+
       if(nh_.hasParam("joint_group_velocity_controller"))
-      {   
+      {
         has_vel_controller_ = true;
         vel_controller_names_.push_back("joint_group_velocity_controller");
         ROS_DEBUG_STREAM(nh_.getNamespace() << " supports 'joint_group_velocity_controller'");
       }
-      
+
       //load all required controllers
       if(has_traj_controller_)
       {
@@ -115,32 +115,32 @@ class CobControlModeAdapter
         }
         cmd_vel_sub_ = nh_.subscribe("joint_group_velocity_controller/command", 1, &CobControlModeAdapter::cmd_vel_cb, this);
       }
-      
+
       //start position controllers
       //if(has_pos_controller_)
       //{
         //success = switch_controller(pos_controller_names_, current_controller_names_);
         //current_control_mode_=POSITION;
       //}
-      
+
       //start velocity controllers
       //if(has_vel_controller_)
       //{
         //success = switch_controller(vel_controller_names_, current_controller_names_);
         //current_control_mode_=VELOCITY;
       //}
-      
+
       //start trajectory controller by default
       if(has_traj_controller_)
       {
         success = switch_controller(traj_controller_names_, current_controller_names_);
         current_control_mode_=TRAJECTORY;
       }
-      
+
       update_rate = 100;  //[hz]
       timer = nh_.createTimer(ros::Duration(1/update_rate), &CobControlModeAdapter::update, this);
     }
-    
+
     bool load_controller(std::string load_controller)
     {
       controller_manager_msgs::LoadController load_srv;
@@ -204,20 +204,20 @@ class CobControlModeAdapter
       boost::mutex::scoped_lock lock(mutex_);
       last_pos_command_=ros::Time::now();
     }
-    
+
     void cmd_vel_cb(const std_msgs::Float64MultiArray::ConstPtr& msg)
     {
       boost::mutex::scoped_lock lock(mutex_);
       last_vel_command_=ros::Time::now();
     }
-    
-    
-    
+
+
+
 
     void update(const ros::TimerEvent& event)
     {
       boost::mutex::scoped_lock lock(mutex_);
-      
+
       ros::Duration period_vel = event.current_real - last_vel_command_;
       ros::Duration period_pos = event.current_real - last_pos_command_;
 
@@ -256,14 +256,14 @@ class CobControlModeAdapter
         {
             if(current_control_mode_==POSITION)
             {
-                ROS_INFO("Have not heard a pos command for %f seconds, switched back to trajectory_controller", period_pos.toSec());    
+                ROS_INFO("Have not heard a pos command for %f seconds, switched back to trajectory_controller", period_pos.toSec());
             }
             else
             {
                   ROS_INFO("Have not heard a vel command for %f seconds, switched back to trajectory_controller", period_vel.toSec());
             }
             bool success = switch_controller(traj_controller_names_, current_controller_names_);
-            
+
             if(success)
             {
                 current_control_mode_=TRAJECTORY;
@@ -278,12 +278,12 @@ class CobControlModeAdapter
 
   private:
     ros::NodeHandle nh_;
-    
+
     ros::Timer timer;
     double update_rate;
-    
+
     std::vector< std::string > joint_names_;
-    
+
     enum{
         NONE, VELOCITY, POSITION, TRAJECTORY
     } current_control_mode_;
@@ -291,17 +291,17 @@ class CobControlModeAdapter
     std::vector< std::string > traj_controller_names_;
     std::vector< std::string > pos_controller_names_;
     std::vector< std::string > vel_controller_names_;
-    
+
     bool has_traj_controller_;
     bool has_pos_controller_;
     bool has_vel_controller_;
 
     ros::Subscriber cmd_pos_sub_;
     ros::Subscriber cmd_vel_sub_;
-    
+
     ros::ServiceClient load_client_;
     ros::ServiceClient switch_client_;
-    
+
     double max_command_silence_;
     ros::Time last_pos_command_;
     ros::Time last_vel_command_;
@@ -314,7 +314,7 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "cob_control_mode_adapter_node");
   ros::AsyncSpinner spinner(0);
   spinner.start();
-  
+
   CobControlModeAdapter* ccma = new CobControlModeAdapter();
   ccma->initialize();
 
