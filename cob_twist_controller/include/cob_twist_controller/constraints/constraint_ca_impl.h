@@ -262,7 +262,7 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
     Eigen::VectorXd partial_values = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
     Eigen::VectorXd sum_partial_values = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
     const TwistControllerParams& params = this->constraint_params_.tc_params_;
-    int size_of_frames = params.frame_names.size();
+    int32_t size_of_joints = params.joints.size();
     std::vector<Eigen::VectorXd> vec_partial_values;
 
     std::vector<std::string>::const_iterator str_it = std::find(params.frame_names.begin(),
@@ -299,8 +299,7 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
                 uint32_t idx = str_it - params.frame_names.begin();
                 uint32_t frame_number = idx + 1; // segment nr not index represents frame number
 
-                KDL::Jacobian new_jac_chain(size_of_frames);
-
+                KDL::Jacobian new_jac_chain(size_of_joints);
                 KDL::JntArray ja = this->joint_states_.current_q_;
                 if(0 != this->jnt_to_jac_.JntToJac(ja, new_jac_chain, frame_number))
                 {

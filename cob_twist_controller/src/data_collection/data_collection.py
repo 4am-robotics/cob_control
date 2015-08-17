@@ -37,6 +37,8 @@ import abc
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Float64MultiArray
 from geometry_msgs.msg import TwistStamped
+from geometry_msgs.msg import Twist
+from nav_msgs.msg import Odometry
 from cob_obstacle_distance.msg import ObstacleDistances
 import tf
 
@@ -173,23 +175,41 @@ class ObstacleDistanceDataKraken(DataKraken):
 
 class TwistDataKraken(DataKraken):
 
-    def __init__(self, file_path):
-        super(TwistDataKraken, self).__init__(
-            file_path, 'twist_controller/command_twist_stamped', TwistStamped)
+    def __init__(self, file_path, for_base = False, use_twist_stamped = True):
+        self.use_twist_stamped_ = use_twist_stamped
+
+        if for_base:
+            super(TwistDataKraken, self).__init__(
+                file_path, '/base/twist_controller/command', Twist)
+        else:
+            if self.use_twist_stamped_:
+                super(TwistDataKraken, self).__init__(
+                    file_path, 'twist_controller/command_twist_stamped', TwistStamped)
+            else:
+                super(TwistDataKraken, self).__init__(
+                    file_path, 'twist_controller/command_twist', Twist)
         self.init_ = True
 
     def callback(self, data):
+        if self.use_twist_stamped_:
+            frame_id = data.header.frame_id + '_'
+            twist_data = data.twist
+        else:
+            frame_id = ''
+            twist_data = data
+
         if self.init_:
             self.start_ = datetime.datetime.now()
             header = []
-            header.append(data.header.frame_id + '_time stamp')
-            header.append(data.header.frame_id + '_time delta')
-            header.append(data.header.frame_id + '_linear_x')
-            header.append(data.header.frame_id + '_linear_y')
-            header.append(data.header.frame_id + '_linear_z')
-            header.append(data.header.frame_id + '_angular_x')
-            header.append(data.header.frame_id + '_angular_y')
-            header.append(data.header.frame_id + '_angular_z')
+
+            header.append(frame_id + 'time stamp')
+            header.append(frame_id + 'time delta')
+            header.append(frame_id + 'linear_x')
+            header.append(frame_id + 'linear_y')
+            header.append(frame_id + 'linear_z')
+            header.append(frame_id + 'angular_x')
+            header.append(frame_id + 'angular_y')
+            header.append(frame_id + 'angular_z')
             self.data_rows_.append(header)
             self.init_ = False
         data_row = []
@@ -198,13 +218,12 @@ class TwistDataKraken(DataKraken):
         delta = now - self.start_
         data_row.append(now.strftime(DATE_TIME_FMT))
         data_row.append('%.3f' % delta.total_seconds())
-
-        data_row.append(data.twist.linear.x)
-        data_row.append(data.twist.linear.y)
-        data_row.append(data.twist.linear.z)
-        data_row.append(data.twist.angular.x)
-        data_row.append(data.twist.angular.y)
-        data_row.append(data.twist.angular.z)
+        data_row.append(twist_data.linear.x)
+        data_row.append(twist_data.linear.y)
+        data_row.append(twist_data.linear.z)
+        data_row.append(twist_data.angular.x)
+        data_row.append(twist_data.angular.y)
+        data_row.append(twist_data.angular.z)
         self.data_rows_.append(data_row)
 
 
@@ -323,4 +342,63 @@ class FrameTrackingDataKraken(DataKraken):
             data_row.extend(rpy_root_track)
 
             self.data_rows_.append(data_row)
+
+
+class OdometryDataKraken(DataKraken):
+
+    def __init__(self, file_path):
+        super(OdometryDataKraken, self).__init__(
+            file_path, '/base/odometry_controller/odometry', Odometry)
+        self.init_ = True
+
+    def callback(self, data):
+        if self.init_:
+            self.start_ = datetime.datetime.now()
+            header = []
+            header.append(data.header.frame_id + '_time stamp')
+            header.append(data.header.frame_id + '_time delta')
+            header.append(data.header.frame_id + '_pos_x')
+            header.append(data.header.frame_id + '_pos_y')
+            header.append(data.header.frame_id + '_pos_z')
+            header.append(data.header.frame_id + '_quat_x')
+            header.append(data.header.frame_id + '_quat_y')
+            header.append(data.header.frame_id + '_quat_z')
+            header.append(data.header.frame_id + '_quat_w')
+            header.append(data.header.frame_id + '_roll')
+            header.append(data.header.frame_id + '_pitch')
+            header.append(data.header.frame_id + '_yaw')
+            header.append(data.header.frame_id + '_twist_linear_x')
+            header.append(data.header.frame_id + '_twist_linear_y')
+            header.append(data.header.frame_id + '_twist_linear_z')
+            header.append(data.header.frame_id + '_twist_angular_x')
+            header.append(data.header.frame_id + '_twist_angular_y')
+            header.append(data.header.frame_id + '_twist_angular_z')
+            self.data_rows_.append(header)
+            self.init_ = False
+        data_row = []
+
+        now = datetime.datetime.now()
+        delta = now - self.start_
+        data_row.append(now.strftime(DATE_TIME_FMT))
+        data_row.append('%.3f' % delta.total_seconds())
+
+        rpy = tf.transformations.euler_from_quaternion((data.pose.pose.orientation.x, data.pose.pose.orientation.y, data.pose.pose.orientation.z, data.pose.pose.orientation.w,))
+        data_row.append(data.pose.pose.position.x)
+        data_row.append(data.pose.pose.position.y)
+        data_row.append(data.pose.pose.position.z)
+        data_row.append(data.pose.pose.orientation.x)
+        data_row.append(data.pose.pose.orientation.y)
+        data_row.append(data.pose.pose.orientation.z)
+        data_row.append(data.pose.pose.orientation.w)
+        data_row.append(rpy[0])
+        data_row.append(rpy[1])
+        data_row.append(rpy[2])
+        data_row.append(data.twist.twist.linear.x)
+        data_row.append(data.twist.twist.linear.y)
+        data_row.append(data.twist.twist.linear.z)
+        data_row.append(data.twist.twist.angular.x)
+        data_row.append(data.twist.twist.angular.y)
+        data_row.append(data.twist.twist.angular.z)
+        self.data_rows_.append(data_row)
+
 

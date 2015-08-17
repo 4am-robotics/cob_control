@@ -46,30 +46,36 @@ def init_dyn_recfg():
     cli.init()
     cli.set_config_param(tcc.HW_IF_TYPE, tcc.TwistController_VELOCITY_INTERFACE)
 
+    cli.set_config_param(tcc.NUM_FILT, False)
     cli.set_config_param(tcc.DAMP_METHOD, tcc.TwistController_MANIPULABILITY)
     cli.set_config_param(tcc.LAMBDA_MAX, 0.1)
     cli.set_config_param(tcc.W_THRESH, 0.05)
+    cli.set_config_param(tcc.EPS_TRUNC, 0.001)
 
-    cli.set_config_param(tcc.PRIO_CA, 100)
-    cli.set_config_param(tcc.PRIO_JLA, 50)
+    cli.set_config_param(tcc.PRIO_CA, 50)
+    cli.set_config_param(tcc.PRIO_JLA, 100)  # change priorities now CA constraint has highest prio
 
-    cli.set_config_param(tcc.SOLVER, tcc.TwistController_GPM)
+    cli.set_config_param(tcc.SOLVER, tcc.TwistController_STACK_OF_TASKS)
     cli.set_config_param(tcc.K_H, 1.0)
 
     cli.set_config_param(tcc.CONSTR_CA, tcc.TwistController_CA)
-    cli.set_config_param(tcc.K_H_CA, -2.0)
+    cli.set_config_param(tcc.K_H_CA, -1.0)
     cli.set_config_param(tcc.DAMP_CA, 0.000001)
-    cli.set_config_param(tcc.ACTIV_THRESH_CA, 0.1)
+    cli.set_config_param(tcc.ACTIV_THRESH_CA, 0.2)
+    cli.set_config_param(tcc.ACTIV_BUF_CA, 50.0)
+    cli.set_config_param(tcc.CRIT_THRESH_CA, 0.1)
 
     cli.set_config_param(tcc.CONSTR_JLA, tcc.TwistController_JLA)
-    cli.set_config_param(tcc.K_H_JLA, -1.0)
-    cli.set_config_param(tcc.DAMP_JLA, 0.00001)
+    cli.set_config_param(tcc.K_H_JLA, -0.5)
+    cli.set_config_param(tcc.DAMP_JLA, 0.000001)
     cli.set_config_param(tcc.ACTIV_THRESH_JLA, 10.0)
+    cli.set_config_param(tcc.ACTIV_BUF_JLA, 300.0)
+    cli.set_config_param(tcc.CRIT_THRESH_JLA, 5.0)
 
     cli.set_config_param(tcc.KIN_EXT, tcc.TwistController_NO_EXTENSION)
     cli.set_config_param(tcc.KEEP_DIR, True)
     cli.set_config_param(tcc.ENF_VEL_LIM, True)
-    cli.set_config_param(tcc.ENF_POS_LIM, False)  # To show that joint pos limits are violated if possible.
+    cli.set_config_param(tcc.ENF_POS_LIM, True)
 
     cli.update()
     cli.close()
@@ -82,14 +88,14 @@ def init_dyn_recfg():
 
 def init_pos():
     sss = simple_script_server()
-    sss.move("arm_right", "home")
-    sss.move("arm_right", [[-0.039928546971938594, 0.7617065276699337, 0.01562043859727158, -1.7979678396373568, 0.013899422367821046, 1.0327319085987252, 0.021045294231647915]])
+    # sss.move("arm_right", [[-0.039928546971938594, 0.7617065276699337, 0.01562043859727158, -1.7979678396373568, 0.013899422367821046, 1.0327319085987252, 0.021045294231647915]])
+    sss.move("arm_left", [[2.274847163975995, -0.08568661652370757, -0.8273207226405264, -1.9404110013940103, 1.306315205401929, 1.5627416614617742, -1.1199725164070955], ])
 
 
 if __name__ == "__main__":
-    rospy.init_node("test_careobot_st_jla_ca_torus")
+    rospy.init_node("test_careobot_st_jla_ca_selfcollision_arm_left")
 
-    base_dir = '/home/fxm-mb/bag-files/2015_08_06/'
+    base_dir = '/home/fxm-mb/bag-files/arm_left_selfcollision/'
     if rospy.has_param('~base_dir'):
         base_dir = rospy.get_param('~base_dir')
     else:
@@ -115,14 +121,14 @@ if __name__ == "__main__":
 
     t = time.localtime()
     launch_time_stamp = time.strftime("%Y%m%d_%H_%M_%S", t)
-    command = 'rosbag play ' + base_dir + 'careobot_st_jla_ca.bag'
+    command = 'rosbag play ' + base_dir + 'arm_left_to_head_direct_JLA.bag'
 
     data_krakens = [
-                    JointStateDataKraken(base_dir + 'careobot_GPM_jla_ca_joint_state_data_' + launch_time_stamp + '.csv'),
-                    ObstacleDistanceDataKraken(base_dir + 'careobot_GPM_jla_ca_obst_dist_data_' + launch_time_stamp + '.csv'),
-                    TwistDataKraken(base_dir + 'careobot_GPM_jla_ca_twist_data_' + launch_time_stamp + '.csv'),
-                    JointVelocityDataKraken(base_dir + 'careobot_GPM_jla_ca_joint_vel_data_' + launch_time_stamp + '.csv'),
-                    FrameTrackingDataKraken(base_dir + 'careobot_GPM_jla_ca_frame_tracking_data_' + launch_time_stamp + '.csv', root_frame, chain_tip_link, tracking_frame), ]
+                    JointStateDataKraken(base_dir + 'careobot_st_jla_sca_joint_state_data_' + launch_time_stamp + '.csv'),
+                    ObstacleDistanceDataKraken(base_dir + 'careobot_st_jla_sca_obst_dist_data_' + launch_time_stamp + '.csv'),
+                    TwistDataKraken(base_dir + 'careobot_st_jla_sca_twist_data_' + launch_time_stamp + '.csv'),
+                    JointVelocityDataKraken(base_dir + 'careobot_st_jla_sca_joint_vel_data_' + launch_time_stamp + '.csv'),
+                    FrameTrackingDataKraken(base_dir + 'careobot_st_jla_sca_frame_tracking_data_' + launch_time_stamp + '.csv', root_frame, chain_tip_link, tracking_frame), ]
 
     init_pos()
     init_dyn_recfg()
@@ -132,25 +138,8 @@ if __name__ == "__main__":
         status_open = status_open and data_kraken.open()
     if status_open:
         rospy.loginfo('Subscribers started for data collection ... \nPress CTRL+C to stop program and write data to the file.')
-
-        traj_marker_command = 'rosrun cob_twist_controller debug_trajectory_marker_node __ns:=' + rospy.get_namespace()
-        traj_marker_pid = subprocess.Popen(traj_marker_command, stdin = subprocess.PIPE, shell = True)
         pid = subprocess.Popen(command, stdin = subprocess.PIPE, cwd = base_dir, shell = True)
-
-        # pid.wait()
-        time.sleep(1.5)  # give time to switch mode back
-
-        if traj_marker_pid.poll() is not None:
-            rospy.logerr("traj_marker_pid returned code. Aborting ...")
-            pid.send_signal(subprocess.signal.SIGINT)
-            pid.kill()
-            # traj_marker_pid.send_signal(subprocess.signal.SIGINT)
-            traj_marker_pid.send_signal(subprocess.signal.CTRL_C_EVENT)
-            traj_marker_pid.kill()
-            exit()
-
         time.sleep(0.5)  # give time to switch mode back
-
         rate = rospy.Rate(10)
         try:
             while not rospy.is_shutdown():
@@ -171,24 +160,13 @@ if __name__ == "__main__":
         else:
             for data_kraken in data_krakens:
                 data_kraken.writeAllData()
-
         try:
             # pid.send_signal(subprocess.signal.SIGINT)
             pid.kill()
             pid.send_signal(subprocess.signal.SIGINT)
         except Exception as e:
             rospy.logerr('Failed to stop rosbag play due to exception: ' + str(e))
-        try:
-            traj_marker_pid.kill()
-            traj_marker_pid.send_signal(subprocess.signal.SIGINT)
-        except Exception as e:
-            rospy.logerr('Failed to stop debug_trajectory_marker_node due to exception: ' + str(e))
     else:
         rospy.logerr('Failed to open DataKraken files.')
-
-
-
-
-
 
 

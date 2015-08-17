@@ -37,7 +37,7 @@ if __name__ == "__main__":
     rospy.init_node("simple_obstacle_pub")
     root_frame = "/odom_combined"
 
-    pub = rospy.Publisher("/arm_right/obstacle_distance/registerObstacle", CollisionObject, queue_size = 1)
+    pub = rospy.Publisher("obstacle_distance/registerObstacle", CollisionObject, queue_size = 1)
 
     while pub.get_num_connections() < 1:
         if rospy.is_shutdown():
@@ -82,8 +82,8 @@ if __name__ == "__main__":
      # y.type.db = "package://cob_gazebo_objects/Media/models/milk.dae"
     y.type.db = "package://cob_twist_controller/files/torus_0_25_inner_rad.stl"
     # y.type.db = "package://cob_twist_controller/files/untitled.dae"
-    y.operation = CollisionObject.ADD
-    # y.operation = CollisionObject.REMOVE
+    # y.operation = CollisionObject.ADD
+    y.operation = CollisionObject.REMOVE
 
     pose = Pose()
     pose.position.x = 0.25

@@ -48,18 +48,26 @@ def init_dyn_recfg():
     cli.set_config_param(tcc.DAMP_METHOD, tcc.TwistController_MANIPULABILITY)
     cli.set_config_param(tcc.LAMBDA_MAX, 0.1)
     cli.set_config_param(tcc.W_THRESH, 0.05)
+
+    cli.set_config_param(tcc.PRIO_CA, 100)
+    cli.set_config_param(tcc.PRIO_JLA, 50)
+
     cli.set_config_param(tcc.SOLVER, tcc.TwistController_STACK_OF_TASKS)
     cli.set_config_param(tcc.K_H, 1.0)
 
     cli.set_config_param(tcc.CONSTR_CA, tcc.TwistController_CA)
     cli.set_config_param(tcc.K_H_CA, -2.0)
-    cli.set_config_param(tcc.DAMP_CA, 0.000001)
     cli.set_config_param(tcc.ACTIV_THRESH_CA, 0.1)
+    cli.set_config_param(tcc.ACTIV_BUF_CA, 50.0)
+    cli.set_config_param(tcc.CRIT_THRESH_CA, 0.025)
+    cli.set_config_param(tcc.DAMP_CA, 0.000001)
 
     cli.set_config_param(tcc.CONSTR_JLA, tcc.TwistController_JLA)
     cli.set_config_param(tcc.K_H_JLA, -1.0)
-    cli.set_config_param(tcc.DAMP_JLA, 0.00001)
     cli.set_config_param(tcc.ACTIV_THRESH_JLA, 10.0)
+    cli.set_config_param(tcc.ACTIV_BUF_JLA, 300.0)
+    cli.set_config_param(tcc.CRIT_THRESH_JLA, 5.0)
+    cli.set_config_param(tcc.DAMP_JLA, 0.00001)
 
     cli.set_config_param(tcc.KIN_EXT, tcc.TwistController_NO_EXTENSION)
     cli.set_config_param(tcc.KEEP_DIR, True)
