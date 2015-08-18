@@ -131,11 +131,6 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calculate()
     }
     else if(crit_min_distance < critical || pred_min_dist < critical)
     {
-        if(pred_min_dist < critical)
-        {
-            ROS_WARN_STREAM(this->getTaskId() << ": pred_min_dist < critical!!!");
-        }
-
         this->state_.setState(CRITICAL);
     }
     else if(crit_min_distance < activation_buffer)
