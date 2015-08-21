@@ -93,7 +93,7 @@ double CollisionAvoidance<T_PARAMS, PRIO>::getActivationGain(double current_cost
     }
     else if(current_cost_func_value < activation_buffer_region) // activation_buffer_region == d_i
     {
-        activation_gain = 0.5 * (1.0 - cos(M_PI * (current_cost_func_value - activation) / (activation_buffer_region - activation)));
+        activation_gain = 0.5 * (1.0 + cos(M_PI * (current_cost_func_value - activation) / (activation_buffer_region - activation)));
     }
     else
     {
@@ -353,18 +353,18 @@ template <typename T_PARAMS, typename PRIO>
 double CollisionAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(double current_distance_value) const
 {
     const TwistControllerParams& params = this->constraint_params_.tc_params_;
-    const double activation = params.thresholds_ca.activation_with_buffer;
+    const double activation_with_buffer = params.thresholds_ca.activation_with_buffer;
     double magnitude = 0.0;
 
-    if (current_distance_value < activation)
+    if (current_distance_value < activation_with_buffer)
     {
         if(current_distance_value > 0.0)
         {
-            magnitude = pow(activation / current_distance_value, 2.0) - 1.0;
+            magnitude = pow(activation_with_buffer / current_distance_value, 2.0) - 1.0;
         }
         else
         {
-            magnitude = activation / 0.000001; // strong magnitude
+            magnitude = activation_with_buffer / 0.000001; // strong magnitude
         }
     }
 

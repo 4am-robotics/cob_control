@@ -77,7 +77,7 @@ double JointLimitAvoidance<T_PARAMS, PRIO>::getActivationGain() const
     }
     else if(rel_delta < activation_buffer_region)
     {
-        activation_gain = 0.5 * (1.0 - cos(M_PI * (rel_delta - activation_threshold) / (activation_buffer_region - activation_threshold)));
+        activation_gain = 0.5 * (1.0 + cos(M_PI * (rel_delta - activation_threshold) / (activation_buffer_region - activation_threshold)));
     }
     else
     {
@@ -393,7 +393,7 @@ double JointLimitAvoidanceIneq<T_PARAMS, PRIO>::getActivationGain() const
     }
     else if(rel_delta < activation_buffer_region) // activation_buffer_region == d_i
     {
-        activation_gain = 0.5 * (1.0 - cos(M_PI * (rel_delta - activation_threshold) / (activation_buffer_region - activation_threshold)));
+        activation_gain = 0.5 * (1.0 + cos(M_PI * (rel_delta - activation_threshold) / (activation_buffer_region - activation_threshold)));
     }
     else
     {
