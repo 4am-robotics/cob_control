@@ -118,7 +118,8 @@ bool FrameToCollision::initSelfCollision(XmlRpc::XmlRpcValue& self_collision_par
             // Create real obstacles now.
             PtrIMarkerShape_t ptr_obstacle;
             this->getMarkerShapeFromUrdf(Eigen::Vector3d(), Eigen::Quaterniond(), it->first, ptr_obstacle);
-            ptr_obstacle->setDrawable(false); // do not draw the marker in rviz again (are available in robot model->collision enabled...
+            //ptr_obstacle->setDrawable(false); // do not draw the marker in rviz again (are available in robot model->collision enabled...
+            ptr_obstacle->setDrawable(true); // do not draw the marker in rviz again (are available in robot model->collision enabled...
             sm->addShape(it->first, ptr_obstacle);
         }
     }
@@ -145,16 +146,12 @@ bool FrameToCollision::getMarkerShapeFromUrdf(const Eigen::Vector3d& abs_pos,
         geometry_msgs::Pose pose;
         tf::pointEigenToMsg(abs_pos, pose.position);
         tf::quaternionEigenToMsg(quat_pos, pose.orientation);
-
-        std_msgs::ColorRGBA col;
-        col.a = 1.0;
-        col.r = 1.0;
         if(NULL != link->collision && NULL != link->collision->geometry)
         {
             this->poseURDFToMsg(link->collision->origin, pose);
             this->createSpecificMarkerShape(frame_of_interest,
                                             pose,
-                                            col,
+                                            g_shapeMsgTypeToVisMarkerType.obstacle_color_,
                                             link->collision->geometry,
                                             segment_of_interest_marker_shape);
         }
@@ -165,7 +162,7 @@ bool FrameToCollision::getMarkerShapeFromUrdf(const Eigen::Vector3d& abs_pos,
             this->poseURDFToMsg(link->visual->origin, pose);
             this->createSpecificMarkerShape(frame_of_interest,
                                             pose,
-                                            col,
+                                            g_shapeMsgTypeToVisMarkerType.obstacle_color_,
                                             link->visual->geometry,
                                             segment_of_interest_marker_shape);
         }
@@ -261,13 +258,6 @@ bool FrameToCollision::getMarkerShapeFromType(const uint32_t& shape_type,
     fcl::Box b(dimension(FCL_BOX_X), dimension(FCL_BOX_Y), dimension(FCL_BOX_Z));
     fcl::Sphere s(dimension(FCL_RADIUS));
     fcl::Cylinder c(dimension(FCL_RADIUS), dimension(FCL_CYL_LENGTH));
-
-    std_msgs::ColorRGBA col;
-    col.a = 1.0;
-    col.r = 1.0;
-    col.g = 0.0;
-    col.b = 0.0;
-
     uint32_t loc_shape_type = shape_type;
     std::string mesh_resource;
     if(visualization_msgs::Marker::MESH_RESOURCE == loc_shape_type)
@@ -294,19 +284,19 @@ bool FrameToCollision::getMarkerShapeFromType(const uint32_t& shape_type,
     switch(loc_shape_type)
     {
         case visualization_msgs::Marker::CUBE:
-            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Box>(this->root_frame_id_, b, pose, col));
+            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Box>(this->root_frame_id_, b, pose, g_shapeMsgTypeToVisMarkerType.obstacle_color_));
             break;
         case visualization_msgs::Marker::SPHERE:
-            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Sphere>(this->root_frame_id_, s, pose, col));
+            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Sphere>(this->root_frame_id_, s, pose, g_shapeMsgTypeToVisMarkerType.obstacle_color_));
             break;
         case visualization_msgs::Marker::CYLINDER:
-            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Cylinder>(this->root_frame_id_, c, pose, col));
+            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Cylinder>(this->root_frame_id_, c, pose, g_shapeMsgTypeToVisMarkerType.obstacle_color_));
             break;
         case visualization_msgs::Marker::MESH_RESOURCE:
             segment_of_interest_marker_shape.reset(new MarkerShape<BVH_RSS_t>(this->root_frame_id_,
                                                                               mesh_resource,
                                                                               pose,
-                                                                              col));
+                                                                              g_shapeMsgTypeToVisMarkerType.obstacle_color_));
             break;
         default:
            ROS_ERROR("Failed to process request due to unknown shape type: %d", loc_shape_type);

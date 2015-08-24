@@ -118,7 +118,8 @@ bool InteractiveFrameTarget::initialize()
     int_marker_.pose.orientation.w = target_pose_.getRotation().getW();
     int_marker_.name = "interactive_target";
     //int_marker_.description = tracking_frame_;
-    int_marker_.scale = 0.5;
+    //int_marker_.scale = 0.5;
+    int_marker_.scale = 0.2;
 
     visualization_msgs::InteractiveMarkerControl control;
     control.always_visible = true;
@@ -126,15 +127,19 @@ bool InteractiveFrameTarget::initialize()
     control.orientation.x = 1;
     control.orientation.y = 0;
     control.orientation.z = 0;
+
     visualization_msgs::Marker box_marker;
     box_marker.type = visualization_msgs::Marker::CUBE;
-    box_marker.scale.x = 0.1;
-    box_marker.scale.y = 0.1;
-    box_marker.scale.z = 0.1;
+    // box_marker.scale.x = 0.1;
+    // box_marker.scale.y = 0.1;
+    // box_marker.scale.z = 0.1;
+    box_marker.scale.x = 0.085;
+    box_marker.scale.y = 0.085;
+    box_marker.scale.z = 0.085;
     box_marker.color.r = 0.0;
     box_marker.color.g = 0.5;
     box_marker.color.b = 0.5;
-    box_marker.color.a = 1.0;
+    box_marker.color.a = 0.5;
     visualization_msgs::InteractiveMarkerControl control_3d;
     control_3d.always_visible = true;
     if(movable_trans_)
@@ -193,18 +198,19 @@ bool InteractiveFrameTarget::initialize()
 
     int_marker_menu_.header.frame_id = tracking_frame_;
     int_marker_menu_.name = "marker_menu";
-    int_marker_menu_.pose.position.y = 0.5;
+    // int_marker_menu_.pose.position.y = 0.5;
+    int_marker_menu_.pose.position.y = 0.3;
     visualization_msgs::Marker menu_marker;
-    menu_marker.scale.x = 0.15;
-    menu_marker.scale.y = 0.15;
-    menu_marker.scale.z = 0.15;
+    menu_marker.scale.x = 0.05;
+    menu_marker.scale.y = 0.05;
+    menu_marker.scale.z = 0.05;
     //menu_marker.type = visualization_msgs::Marker::SPHERE;
     menu_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
     menu_marker.text = nh_.getNamespace() + "_menu";
-    menu_marker.color.r = 1.0;
-    menu_marker.color.g = 1.0;
-    menu_marker.color.b = 0.0;
-    menu_marker.color.a = 1.0;
+    menu_marker.color.r = 0.0;
+    menu_marker.color.g = 0.0;
+    menu_marker.color.b = 1.0;
+    menu_marker.color.a = 0.85;
 
     visualization_msgs::InteractiveMarkerControl control_menu;
     control_menu.always_visible = true;

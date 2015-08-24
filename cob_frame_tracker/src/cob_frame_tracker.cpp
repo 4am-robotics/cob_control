@@ -39,6 +39,7 @@
 #include <kdl/jntarray.hpp>
 #include <kdl/jntarrayvel.hpp>
 
+
 bool CobFrameTracker::initialize()
 {
     ros::NodeHandle nh_;
@@ -178,8 +179,7 @@ void CobFrameTracker::run(const ros::TimerEvent& event)
 
     if(tracking_)
     {
-        // tracking on goal or tracking because of service call
-        if (tracking_goal_)
+        if (tracking_goal_) // tracking on action goal.
         {
             int status = checkStatus();
 
@@ -197,23 +197,77 @@ void CobFrameTracker::run(const ros::TimerEvent& event)
                 if (as_->isActive()){ as_->publishFeedback(action_feedback_); }
             }
         }
+        else // tracking on service call
+        {
+            int status = checkServiceCallStatus();
+            if(status < 0)
+            {
 
-        publishTwist(period);
+                this->publishHoldTwist(period);
+            }
+
+            ht_.hold = abortion_counter_ >= max_abortions_; // only for service call in case of action ht_.hold = false. What to do with actions?
+        }
+
+        publishTwist(period, !ht_.hold); // if not publishing then just update data!
     }
 }
 
-void CobFrameTracker::publishTwist(ros::Duration period)
+void CobFrameTracker::publishHoldTwist(const ros::Duration& period)
+{
+    geometry_msgs::TwistStamped twist_msg;
+    twist_msg.header.frame_id = chain_tip_link_;
+
+    if(!this->ht_.hold)
+    {
+        ROS_WARN_STREAM("Publishing empty twist");
+        ht_.hold = this->getTransform(chain_base_, chain_tip_link_, ht_.transform_tf);
+    }
+    else
+    {
+        ROS_WARN_STREAM("Publishing hold posture twist");
+        tf::StampedTransform new_tf;
+        if(this->getTransform(chain_base_, chain_tip_link_, new_tf))
+        {
+            twist_msg.header.frame_id = chain_tip_link_;
+            twist_msg.twist.linear.x = pid_controller_trans_x_.computeCommand(ht_.transform_tf.getOrigin().x() - new_tf.getOrigin().x(), period);
+            twist_msg.twist.linear.y = pid_controller_trans_y_.computeCommand(ht_.transform_tf.getOrigin().y() - new_tf.getOrigin().y(), period);
+            twist_msg.twist.linear.z = pid_controller_trans_z_.computeCommand(ht_.transform_tf.getOrigin().z() - new_tf.getOrigin().z(), period);
+
+            twist_msg.twist.angular.x = pid_controller_rot_x_.computeCommand(ht_.transform_tf.getRotation().x() - new_tf.getRotation().x(), period);
+            twist_msg.twist.angular.y = pid_controller_rot_y_.computeCommand(ht_.transform_tf.getRotation().y() - new_tf.getRotation().y(), period);
+            twist_msg.twist.angular.z = pid_controller_rot_z_.computeCommand(ht_.transform_tf.getRotation().z() - new_tf.getRotation().z(), period);
+        }
+    }
+
+    twist_pub_.publish(twist_msg);
+}
+
+
+bool CobFrameTracker::getTransform(const std::string& target_frame, const std::string& source_frame, tf::StampedTransform& stamped_tf)
+{
+    bool success = true;
+    try
+    {
+        tf_listener_.lookupTransform(target_frame, source_frame, ros::Time(0), stamped_tf);
+    }
+    catch (tf::TransformException& ex){
+        ROS_ERROR("CobFrameTracker::getTransform: \n%s",ex.what());
+        success = false;
+    }
+
+    return success;
+}
+
+
+void CobFrameTracker::publishTwist(ros::Duration period, bool do_publish)
 {
     tf::StampedTransform transform_tf;
     geometry_msgs::TwistStamped twist_msg;
     double roll, pitch, yaw;
 
-    try
+    if(!this->getTransform(chain_tip_link_, tracking_frame_, transform_tf))
     {
-        tf_listener_.lookupTransform(chain_tip_link_, tracking_frame_, ros::Time(0), transform_tf);
-    }
-    catch (tf::TransformException& ex){
-        ROS_ERROR("CobFrameTracker::publishTwist: \n%s",ex.what());
         return;
     }
 
@@ -259,6 +313,7 @@ void CobFrameTracker::publishTwist(ros::Duration period)
 
     //eukl distance
     cart_distance_ = sqrt(pow(transform_tf.getOrigin().x(),2) + pow(transform_tf.getOrigin().y(),2) + pow(transform_tf.getOrigin().z(),2));
+
     ////rot distance
     ////TODO: change to cartesian rot
     //rot_distance_ = 2* acos(transform_msg.transform.rotation.w);
@@ -271,7 +326,8 @@ void CobFrameTracker::publishTwist(ros::Duration period)
     target_twist_.rot.y(twist_msg.twist.angular.y);
     target_twist_.rot.z(twist_msg.twist.angular.z);
 
-    twist_pub_.publish(twist_msg);
+    if(do_publish)
+        twist_pub_.publish(twist_msg);
 }
 
 bool CobFrameTracker::startTrackingCallback(cob_srvs::SetString::Request& request, cob_srvs::SetString::Response& response)
@@ -411,6 +467,7 @@ int CobFrameTracker::checkStatus()
 
     if(distance_violation || twist_violation)
     {
+        ROS_ERROR_STREAM("distance_violation || twist_violation");
         abortion_counter_++;
     }
 
@@ -423,6 +480,57 @@ int CobFrameTracker::checkStatus()
 
     return status;
 }
+
+
+int CobFrameTracker::checkServiceCallStatus()
+{
+    int status = 0;
+
+    bool distance_violation = checkCartDistanceViolation(cart_distance_, 0.0);
+
+    if(distance_violation)
+    {
+        abortion_counter_++;
+    }
+    else
+    {
+        abortion_counter_ = abortion_counter_ > 0 ? abortion_counter_ - 1 : 0;
+    }
+
+    if(abortion_counter_ >= max_abortions_)
+    {
+        ROS_ERROR_STREAM("Abortion active!!!");
+        abortion_counter_ = max_abortions_;
+        status = -1;
+    }
+
+    return status;
+}
+
+
+
+//bool distance_violation = checkCartDistanceViolation(cart_distance_, 0.0);
+//if(distance_violation)
+//{
+//    ROS_ERROR_STREAM("distance_violation");
+//    abortion_counter_++;
+//}
+//else
+//{
+//    ROS_INFO_STREAM("distance ok");
+//    abortion_counter_ = abortion_counter_ > 0 ? abortion_counter_ - 1 : 0;
+//}
+//
+//if(abortion_counter_ > max_abortions_)
+//{
+//    abortion_counter_ = max_abortions_;
+//    this->publishHoldTwist(period);
+//}
+//}
+//
+//ht_.hold = abortion_counter_ >= max_abortions_;
+//publishTwist(period, !ht_.hold); // if not publishing then just update data!
+
 
 void CobFrameTracker::jointstateCallback(const sensor_msgs::JointState::ConstPtr& msg)
 {

@@ -354,11 +354,16 @@ void DistanceManager::transformSelfCollisionFrames(const std::string frame_name)
                 tf::StampedTransform stamped_transform;
                 geometry_msgs::Transform msg_transform;
                 tf_listener_.lookupTransform(root_frame_id_, frame_name, time, stamped_transform);
-                tf::transformTFToMsg(stamped_transform, msg_transform);
+                // tf::transformTFToMsg(stamped_transform, msg_transform);
 
                 PtrIMarkerShape_t shape_ptr;
                 if(this->obstacle_mgr_->getShape(frame_name, shape_ptr))
                 {
+                    geometry_msgs::Pose origin_p = shape_ptr->getOriginRelToFrame();
+                    tf::Transform tf_origin_pose;
+                    tf::poseMsgToTF(origin_p, tf_origin_pose);
+                    tf::Transform updated_pose = tf::Transform(stamped_transform) * tf_origin_pose;
+                    tf::transformTFToMsg(updated_pose, msg_transform);
                     shape_ptr->updatePose(msg_transform.translation, msg_transform.rotation);
                 }
             }
@@ -420,6 +425,12 @@ void DistanceManager::registerObstacle(const moveit_msgs::CollisionObject::Const
         return;
     }
 
+    if(msg->operation == msg->ADD && this->obstacle_mgr_->count(msg->id) > 0)
+    {
+        ROS_ERROR_STREAM("Element " << msg->id << " exists already. ADD not allowed!");
+        return;
+    }
+
     try
     {
         ros::Time time = ros::Time(0);
@@ -470,23 +481,18 @@ void DistanceManager::buildObstacleMesh(const moveit_msgs::CollisionObject::Cons
         ROS_INFO("ADD obstacle");
         for(uint32_t i = 0; i < m_size; ++i)
         {
-            std_msgs::ColorRGBA c;
-            c.a = 1.0;
             geometry_msgs::Pose p = msg->mesh_poses[i];
-
             tf::Pose tf_p;
             tf::poseMsgToTF(p, tf_p);
             tf::Pose new_tf_p = transform * tf_p;
             tf::poseTFToMsg(new_tf_p, p);
-
             PtrIMarkerShape_t sptr_Bvh;
-
             if(package_file_name.length() > 0)
             {
                 sptr_Bvh.reset(new MarkerShape<BVH_RSS_t>(this->root_frame_id_,
                                                           package_file_name,
                                                           p,
-                                                          c));
+                                                          g_shapeMsgTypeToVisMarkerType.obstacle_color_));
             }
             else
             {
@@ -494,7 +500,7 @@ void DistanceManager::buildObstacleMesh(const moveit_msgs::CollisionObject::Cons
                 sptr_Bvh.reset(new MarkerShape<BVH_RSS_t>(this->root_frame_id_,
                                                           m,
                                                           p,
-                                                          c));
+                                                          g_shapeMsgTypeToVisMarkerType.obstacle_color_));
             }
 
             this->addObstacle(msg->id, sptr_Bvh);
@@ -543,8 +549,6 @@ void DistanceManager::buildObstaclePrimitive(const moveit_msgs::CollisionObject:
         ROS_INFO("ADD obstacle");
         for(uint32_t i = 0; i < p_size; ++i)
         {
-            std_msgs::ColorRGBA c;
-            c.a = 1.0;
             shape_msgs::SolidPrimitive sp = msg->primitives[i];
             geometry_msgs::Pose p = msg->primitive_poses[i];
             tf::Pose tf_p;

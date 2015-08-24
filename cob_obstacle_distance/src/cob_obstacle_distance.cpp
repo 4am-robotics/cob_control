@@ -32,6 +32,7 @@
 #include <fstream>
 #include <thread>
 
+#include "cob_obstacle_distance/obstacle_distance_data_types.hpp"
 #include "cob_obstacle_distance/distance_manager.hpp"
 #include "cob_obstacle_distance/marker_shapes/marker_shapes.hpp"
 

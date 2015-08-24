@@ -30,14 +30,18 @@ import time
 import rospy
 import subprocess
 
+from controller_manager_msgs.srv import SwitchController
+
 from simple_script_server.simple_script_server import simple_script_server
 import twist_controller_config as tcc
+from dynamic_reconfigure.client import Client
 
 from data_collection import JointStateDataKraken
 from data_collection import ObstacleDistanceDataKraken
 from data_collection import TwistDataKraken
 from data_collection import JointVelocityDataKraken
 from data_collection import FrameTrackingDataKraken
+from data_collection import OdometryDataKraken
 
 # has to be startet with ns param: rosrun cob_twist_controller collect_twist_control_eval_data.py __ns:=arm_right
 def init_dyn_recfg():
@@ -45,9 +49,10 @@ def init_dyn_recfg():
     cli.init()
     cli.set_config_param(tcc.HW_IF_TYPE, tcc.TwistController_VELOCITY_INTERFACE)
 
-    cli.set_config_param(tcc.DAMP_METHOD, tcc.TwistController_MANIPULABILITY)
-    cli.set_config_param(tcc.LAMBDA_MAX, 0.1)
-    cli.set_config_param(tcc.W_THRESH, 0.05)
+    cli.set_config_param(tcc.NUM_FILT, False)
+    cli.set_config_param(tcc.DAMP_METHOD, tcc.TwistController_CONSTANT)
+    cli.set_config_param(tcc.DAMP_FACT, 0.2)
+    cli.set_config_param(tcc.EPS_TRUNC, 0.001)
 
     cli.set_config_param(tcc.PRIO_CA, 100)
     cli.set_config_param(tcc.PRIO_JLA, 50)
@@ -56,9 +61,9 @@ def init_dyn_recfg():
     cli.set_config_param(tcc.K_H, 1.0)
 
     cli.set_config_param(tcc.CONSTR_CA, tcc.TwistController_CA)
-    cli.set_config_param(tcc.K_H_CA, -2.0)
+    cli.set_config_param(tcc.K_H_CA, -1.0)
     cli.set_config_param(tcc.ACTIV_THRESH_CA, 0.1)
-    cli.set_config_param(tcc.ACTIV_BUF_CA, 50.0)
+    cli.set_config_param(tcc.ACTIV_BUF_CA, 25.0)
     cli.set_config_param(tcc.CRIT_THRESH_CA, 0.025)
     cli.set_config_param(tcc.DAMP_CA, 0.000001)
 
@@ -69,30 +74,38 @@ def init_dyn_recfg():
     cli.set_config_param(tcc.CRIT_THRESH_JLA, 5.0)
     cli.set_config_param(tcc.DAMP_JLA, 0.00001)
 
-    cli.set_config_param(tcc.KIN_EXT, tcc.TwistController_NO_EXTENSION)
+    cli.set_config_param(tcc.KIN_EXT, tcc.TwistController_BASE_ACTIVE)
+    cli.set_config_param(tcc.BASE_RATIO, 0.05)
     cli.set_config_param(tcc.KEEP_DIR, True)
     cli.set_config_param(tcc.ENF_VEL_LIM, True)
-    cli.set_config_param(tcc.ENF_POS_LIM, True)
+    cli.set_config_param(tcc.ENF_POS_LIM, False)  # To show that joint pos limits are violated if possible.
 
     cli.update()
     cli.close()
 
     cli = Client('frame_tracker')
-    ft_param = {'cart_min_dist_threshold_lin' : 0.2, 'cart_min_dist_threshold_rot' : 0.2}
+    ft_param = {'cart_min_dist_threshold_lin' : 5.0, 'cart_min_dist_threshold_rot' : 5.0}
     cli.update_configuration(ft_param)
     cli.close()
 
 
 def init_pos():
+    # Trick to move base back to odom_combined
+    switch_controller = rospy.ServiceProxy('/base/controller_manager/switch_controller', SwitchController)
+    print(switch_controller(None, ['odometry_controller', ], 1))  # switch off
+    time.sleep(1.0)
+    print(switch_controller(['odometry_controller', ], None, 1))  # switch on
+    time.sleep(1.0)
+
     sss = simple_script_server()
-    sss.move("arm_right", "home")
-    sss.move("arm_right", "home")
+    sss.move("arm_left", "side")  # for better pics
+    sss.move("arm_right", [[0.6849513492283021, 0.9811503738420306, -0.05053975117653131, -1.4680375957626568, -0.0824580145043452, 0.4964406318714998, -0.5817382519875354]])
 
 
 if __name__ == "__main__":
-    rospy.init_node("test_careobot_st_jla_ca_sphere")
+    rospy.init_node("test_careobot_st_jla_ca_torus")
 
-    base_dir = '/home/fxm-mb/bag-files/2015_08_06/'
+    base_dir = '/home/fxm-mb/bag-files/base_active_arm_right/'
     if rospy.has_param('~base_dir'):
         base_dir = rospy.get_param('~base_dir')
     else:
@@ -118,19 +131,23 @@ if __name__ == "__main__":
 
     t = time.localtime()
     launch_time_stamp = time.strftime("%Y%m%d_%H_%M_%S", t)
-
-    command = 'rosbag play ' + base_dir + 'careobot_st_jla_ca_sphere.bag'
-    # command = 'rosbag play -u 10 ' + base_dir + 'careobot_st_jla_ca_sphere.bag'
+    command = 'rosbag play ' + base_dir + 'base_active_arm_right.bag'
 
     data_krakens = [
-                    JointStateDataKraken(base_dir + 'joint_state_data_' + launch_time_stamp + '.csv'),
-                    ObstacleDistanceDataKraken(base_dir + 'obst_dist_data_' + launch_time_stamp + '.csv'),
-                    TwistDataKraken(base_dir + 'twist_data_' + launch_time_stamp + '.csv'),
-                    JointVelocityDataKraken(base_dir + 'joint_vel_data_' + launch_time_stamp + '.csv'),
-                    FrameTrackingDataKraken(base_dir + 'frame_tracking_data_' + launch_time_stamp + '.csv', root_frame, chain_tip_link, tracking_frame), ]
+                    JointStateDataKraken(base_dir + 'careobot_base_joint_state_data_' + launch_time_stamp + '.csv'),
+                    ObstacleDistanceDataKraken(base_dir + 'careobot_base_obst_dist_data_' + launch_time_stamp + '.csv'),
+                    TwistDataKraken(base_dir + 'careobot_base_twist_data_' + launch_time_stamp + '.csv', True, False),
+                    TwistDataKraken(base_dir + 'careobot_base_twist_controller_commanded_twist_data_' + launch_time_stamp + '.csv', False, False),
+                    JointVelocityDataKraken(base_dir + 'careobot_base_joint_vel_data_' + launch_time_stamp + '.csv'),
+                    OdometryDataKraken(base_dir + 'careobot_base_odometry_data_' + launch_time_stamp + '.csv'),
+                    ]
 
     init_pos()
     init_dyn_recfg()
+
+
+    exit()
+
 
     status_open = True
     for data_kraken in data_krakens:
@@ -138,22 +155,7 @@ if __name__ == "__main__":
     if status_open:
         rospy.loginfo('Subscribers started for data collection ... \nPress CTRL+C to stop program and write data to the file.')
 
-        traj_marker_command = 'rosrun cob_twist_controller debug_trajectory_marker_node __ns:=' + rospy.get_namespace()
-        traj_marker_pid = subprocess.Popen(traj_marker_command, stdin = subprocess.PIPE, shell = True)
         pid = subprocess.Popen(command, stdin = subprocess.PIPE, cwd = base_dir, shell = True)
-
-        # pid.wait()
-        time.sleep(1.5)  # give time to switch mode back
-
-        if traj_marker_pid.poll() is not None:
-            rospy.logerr("traj_marker_pid returned code. Aborting ...")
-            pid.send_signal(subprocess.signal.SIGINT)
-            pid.kill()
-            # traj_marker_pid.send_signal(subprocess.signal.SIGINT)
-            traj_marker_pid.send_signal(subprocess.signal.CTRL_C_EVENT)
-            traj_marker_pid.kill()
-            exit()
-
         time.sleep(0.5)  # give time to switch mode back
 
         rate = rospy.Rate(10)
@@ -183,11 +185,6 @@ if __name__ == "__main__":
             pid.send_signal(subprocess.signal.SIGINT)
         except Exception as e:
             rospy.logerr('Failed to stop rosbag play due to exception: ' + str(e))
-        try:
-            traj_marker_pid.kill()
-            traj_marker_pid.send_signal(subprocess.signal.SIGINT)
-        except Exception as e:
-            rospy.logerr('Failed to stop debug_trajectory_marker_node due to exception: ' + str(e))
     else:
         rospy.logerr('Failed to open DataKraken files.')
 
