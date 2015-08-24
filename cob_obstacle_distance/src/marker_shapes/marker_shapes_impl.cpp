@@ -27,6 +27,8 @@
  *
  ****************************************************************/
 
+#include <string>
+
 #include "cob_obstacle_distance/marker_shapes/marker_shapes.hpp"
 #include "cob_obstacle_distance/parsers/mesh_parser.hpp"
 
@@ -38,7 +40,7 @@ MarkerShape<BVH_RSS_t>::MarkerShape(const std::string& root_frame,
 {
     this->ptr_fcl_bvh_.reset(new BVH_RSS_t());
     this->ptr_fcl_bvh_->beginModel();
-    for(shape_msgs::MeshTriangle tri : mesh.triangles)
+    for (shape_msgs::MeshTriangle tri : mesh.triangles)
     {
         uint32_t v_idx_1 = tri.vertex_indices.elems[0];
         uint32_t v_idx_2 = tri.vertex_indices.elems[1];
@@ -67,7 +69,7 @@ MarkerShape<BVH_RSS_t>::MarkerShape(const std::string& root_frame,
     marker_.ns = g_marker_namespace;
     marker_.action = visualization_msgs::Marker::ADD;
     marker_.id = IMarkerShape::class_ctr_;
-    marker_.mesh_resource = ""; // TODO: Not given in this case: can happen e.g. when moveit_msgs/CollisionObject was given!
+    marker_.mesh_resource = "";  // TODO: Not given in this case: can happen e.g. when moveit_msgs/CollisionObject was given!
 
     marker_.lifetime = ros::Duration();
 }
@@ -89,7 +91,7 @@ void MarkerShape<BVH_RSS_t>::init(const std::string& mesh_resource, const std::s
     MeshParser sp(mesh_resource);
     this->ptr_fcl_bvh_.reset(new BVH_RSS_t());
 
-    if(0 != sp.createBVH(this->ptr_fcl_bvh_))
+    if (0 != sp.createBVH(this->ptr_fcl_bvh_))
     {
         ROS_ERROR("Could not create BVH model!");
     }

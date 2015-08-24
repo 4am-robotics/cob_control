@@ -30,7 +30,7 @@ public:
         double x = 0.0;
 
         double a = 0.6, b = 0.4, c = 0, d = 0;      // torso_2dof
-        
+
         std_msgs::Float64MultiArray command_msg;
         command_msg.data.assign(dof_, 0.0);
 
@@ -38,13 +38,13 @@ public:
         {
             time = ros::Time::now();
             x = (time - start_time).toSec();
-            
+
             double vel = a*sin(b*x+c) + d;
-            
+
             command_msg.data[idx_] = vel;
-            
+
             output_pub_.publish(command_msg);
-            
+
             ros::spinOnce();
             r.sleep();
         }

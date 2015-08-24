@@ -25,21 +25,21 @@
  *   Implementation of the FrameToCollision management class.
  ****************************************************************/
 
+#include <string>
+#include <vector>
+
 #include <cob_obstacle_distance/link_to_collision.hpp>
 #include <eigen_conversions/eigen_msg.h>
 #include <visualization_msgs/Marker.h>
 
 
-
 LinkToCollision::LinkToCollision() : success_(true)
 {
-
 }
 
 
 LinkToCollision::~LinkToCollision()
 {
-
 }
 
 
@@ -59,14 +59,14 @@ void LinkToCollision::poseURDFToMsg(const urdf::Pose& urdf_pose, geometry_msgs::
 bool LinkToCollision::ignoreSelfCollisionPart(const std::string& link_of_interest,
                                               const std::string& self_collision_obstacle_link)
 {
-    if(this->self_collision_map_.count(self_collision_obstacle_link) <= 0)
+    if (this->self_collision_map_.count(self_collision_obstacle_link) <= 0)
     {
         return false;
     }
 
     std::vector<std::string>::iterator sca_begin = this->self_collision_map_[self_collision_obstacle_link].begin();
     std::vector<std::string>::iterator sca_end = this->self_collision_map_[self_collision_obstacle_link].end();
-    return std::find(sca_begin, sca_end, link_of_interest) == sca_end; // if not found return true
+    return std::find(sca_begin, sca_end, link_of_interest) == sca_end;  // if not found return true
 }
 
 
@@ -97,7 +97,7 @@ bool LinkToCollision::initSelfCollision(XmlRpc::XmlRpcValue& self_collision_para
             std::vector<std::string> empty_vec;
             this->self_collision_map_[it->first] = empty_vec;
             ROS_ASSERT(it->second.getType() == XmlRpc::XmlRpcValue::TypeArray);
-            for(int j=0; j < it->second.size(); ++j)
+            for (int j=0; j < it->second.size(); ++j)
             {
                 ROS_ASSERT(it->second[j].getType() == XmlRpc::XmlRpcValue::TypeString);
                 this->self_collision_map_[it->first].push_back(it->second[j]);
@@ -109,16 +109,16 @@ bool LinkToCollision::initSelfCollision(XmlRpc::XmlRpcValue& self_collision_para
         success = false;
     }
 
-    if(success)
+    if (success)
     {
-        for(MapIter_t it = this->self_collision_map_.begin(); it != this->self_collision_map_.end(); it++)
+        for (MapIter_t it = this->self_collision_map_.begin(); it != this->self_collision_map_.end(); it++)
         {
             ROS_INFO_STREAM("Create self-collision obstacle for: " << it->first);
 
             // Create real obstacles now.
             PtrIMarkerShape_t ptr_obstacle;
             this->getMarkerShapeFromUrdf(Eigen::Vector3d(), Eigen::Quaterniond(), it->first, ptr_obstacle);
-            ptr_obstacle->setDrawable(false); // do not draw the marker in rviz again (are available in robot model->collision enabled...
+            ptr_obstacle->setDrawable(false);  // do not draw the marker in rviz again (are available in robot model->collision enabled...
             sm->addShape(it->first, ptr_obstacle);
         }
     }
@@ -132,7 +132,7 @@ bool LinkToCollision::getMarkerShapeFromUrdf(const Eigen::Vector3d& abs_pos,
                                              const std::string& link_of_interest,
                                              PtrIMarkerShape_t& segment_of_interest_marker_shape)
 {
-    if(!this->success_)
+    if (!this->success_)
     {
         ROS_ERROR("FrameToCollision object has not been initialized correctly.");
         return false;
@@ -140,12 +140,12 @@ bool LinkToCollision::getMarkerShapeFromUrdf(const Eigen::Vector3d& abs_pos,
 
     bool local_success = true;
     PtrConstLink_t link = this->model_.getLink(link_of_interest);
-    if(NULL != link)
+    if (NULL != link)
     {
         geometry_msgs::Pose pose;
         tf::pointEigenToMsg(abs_pos, pose.position);
         tf::quaternionEigenToMsg(quat_pos, pose.orientation);
-        if(NULL != link->collision && NULL != link->collision->geometry)
+        if (NULL != link->collision && NULL != link->collision->geometry)
         {
             this->poseURDFToMsg(link->collision->origin, pose);
             this->createSpecificMarkerShape(link_of_interest,
@@ -154,7 +154,7 @@ bool LinkToCollision::getMarkerShapeFromUrdf(const Eigen::Vector3d& abs_pos,
                                             link->collision->geometry,
                                             segment_of_interest_marker_shape);
         }
-        else if(NULL != link->visual && NULL != link->visual->geometry)
+        else if (NULL != link->visual && NULL != link->visual->geometry)
         {
             ROS_WARN_STREAM("Could not find a collision or collision geometry for " << link_of_interest <<
                             ". Trying to create the shape from visual.");
@@ -194,7 +194,7 @@ void LinkToCollision::createSpecificMarkerShape(const std::string& link_of_inter
                                                 const PtrGeometry_t& geometry,
                                                 PtrIMarkerShape_t& segment_of_interest_marker_shape)
 {
-    if(urdf::Geometry::MESH == geometry->type)
+    if (urdf::Geometry::MESH == geometry->type)
     {
         std_msgs::ColorRGBA test_col;
         test_col.a = 0.0;
@@ -206,7 +206,7 @@ void LinkToCollision::createSpecificMarkerShape(const std::string& link_of_inter
                                                                           pose,
                                                                           col));
     }
-    else if(urdf::Geometry::BOX == geometry->type)
+    else if (urdf::Geometry::BOX == geometry->type)
     {
         PtrBox_t urdf_box = boost::static_pointer_cast<urdf::Box>(geometry);
         fcl::Box b(urdf_box->dim.x,
@@ -220,7 +220,7 @@ void LinkToCollision::createSpecificMarkerShape(const std::string& link_of_inter
         // segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Box>(this->root_frame_id_, b, pose, col));
         segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Box>(this->root_frame_id_, b, pose, test_col));
     }
-    else if(urdf::Geometry::SPHERE == geometry->type)
+    else if (urdf::Geometry::SPHERE == geometry->type)
     {
         std_msgs::ColorRGBA test_col;
         test_col.a = 1.0;
@@ -230,7 +230,7 @@ void LinkToCollision::createSpecificMarkerShape(const std::string& link_of_inter
         fcl::Sphere s(urdf_sphere->radius);
         segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Sphere>(this->root_frame_id_, s, pose, test_col));
     }
-    else if(urdf::Geometry::CYLINDER == geometry->type)
+    else if (urdf::Geometry::CYLINDER == geometry->type)
     {
         std_msgs::ColorRGBA test_col;
         test_col.a = 1.0;
@@ -277,10 +277,10 @@ bool LinkToCollision::getMarkerShapeFromType(const uint32_t& shape_type,
     fcl::Cylinder c(dimension(FCL_RADIUS), dimension(FCL_CYL_LENGTH));
     uint32_t loc_shape_type = shape_type;
     std::string mesh_resource;
-    if(visualization_msgs::Marker::MESH_RESOURCE == loc_shape_type)
+    if (visualization_msgs::Marker::MESH_RESOURCE == loc_shape_type)
     {
         PtrConstLink_t link = this->model_.getLink(link_of_interest);
-        if(this->success_ &&
+        if (this->success_ &&
                 NULL != link &&
                 NULL != link->collision &&
                 NULL != link->collision->geometry &&
@@ -299,7 +299,7 @@ bool LinkToCollision::getMarkerShapeFromType(const uint32_t& shape_type,
 
     std_msgs::ColorRGBA test_col;
 
-    switch(loc_shape_type)
+    switch (loc_shape_type)
     {
         case visualization_msgs::Marker::CUBE:
             test_col.a = 1.0;
@@ -328,6 +328,5 @@ bool LinkToCollision::getMarkerShapeFromType(const uint32_t& shape_type,
     }
 
     return true;
-
 }
 

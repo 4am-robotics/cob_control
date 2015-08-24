@@ -28,6 +28,8 @@
 #ifndef COB_FRAME_TRACKER_H
 #define COB_FRAME_TRACKER_H
 
+#include <string>
+#include <vector>
 #include <math.h>
 #include <algorithm>
 #include <ros/ros.h>
@@ -117,8 +119,8 @@ private:
     std::string chain_base_link_;
     std::string chain_tip_link_;
     std::string lookat_focus_frame_;
-    std::string tracking_frame_;    //the frame tracking the target (i.e. chain_tip or lookat_focus)
-    std::string target_frame_;      //the frame to be tracked
+    std::string tracking_frame_;    // the frame tracking the target (i.e. chain_tip or lookat_focus)
+    std::string target_frame_;      // the frame to be tracked
 
     double max_vel_lin_;
     double max_vel_rot_;
@@ -129,11 +131,11 @@ private:
     bool movable_trans_;
     bool movable_rot_;
 
-    control_toolbox::Pid pid_controller_trans_x_;       /**< Internal PID controller. */
+    control_toolbox::Pid pid_controller_trans_x_;       /** < Internal PID controller. */
     control_toolbox::Pid pid_controller_trans_y_;
     control_toolbox::Pid pid_controller_trans_z_;
 
-    control_toolbox::Pid pid_controller_rot_x_;         /**< Internal PID controller. */
+    control_toolbox::Pid pid_controller_rot_x_;         /** < Internal PID controller. */
     control_toolbox::Pid pid_controller_rot_y_;
     control_toolbox::Pid pid_controller_rot_z_;
 

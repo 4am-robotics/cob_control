@@ -53,12 +53,12 @@ public:
         double x = time.toSec() - start_time.toSec();
         double old_pos = -99;
 
-        //double a = 0.6, b = 1.0, c = 0, d = 0;    // lwa4d
-        double a = 0.6, b = 0.4, c = 0, d = 0;      // torso_2dof
-        euler_q_(idx_) = a*sin(b*x+c) + d;          // correct initial value
+        // double a = 0.6, b = 1.0, c = 0, d = 0;    // lwa4d
+        double a = 0.6, b = 0.4, c = 0, d = 0;       // torso_2dof
+        euler_q_(idx_) = a*sin(b*x+c) + d;           // correct initial value
 
         trajectory_msgs::JointTrajectoryPoint traj_point;
-        traj_point.positions.assign(dof_,0.0);
+        traj_point.positions.assign(dof_, 0.0);
         // traj_point.velocities.assign(dof_,0.0);
 
         std::vector<std::string> joint_names;

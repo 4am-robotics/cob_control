@@ -25,6 +25,10 @@
  *   Source from http://www.sgh1.net/b4/cpp-read-stl-file
  *
  */
+
+#include <string>
+#include <vector>
+
 #include <boost/filesystem.hpp>
 #include <ros/ros.h>
 #include <fstream>
@@ -57,26 +61,26 @@ int8_t StlParser::read(std::vector<TriangleSupport>& tri_vec)
         return -1;
     }
 
-    //read 80 byte header
+    // read 80 byte header
     myFile.read(header_info, 80);
     ROS_DEBUG_STREAM("header: " << header_info);
 
-    //read 4-byte ulong
+    // read 4-byte ulong
     myFile.read(nTri, 4);
     nTriLong = *((uint32_t*) nTri);
     ROS_DEBUG_STREAM("Number of Triangles: " << nTriLong);
 
-    //now read in all the triangles
-    for(int i = 0; i < nTriLong; i++)
+    // now read in all the triangles
+    for (int i = 0; i < nTriLong; i++)
     {
         char facet[50];
-        if(myFile)
+        if (myFile)
         {
-            //read one 50-byte triangle
+            // read one 50-byte triangle
             myFile.read(facet, 50);
 
-            //populate each point of the triangle
-            //facet + 12 skips the triangle's unit normal
+            // populate each point of the triangle
+            // facet + 12 skips the triangle's unit normal
 
             TriangleSupport t;
             t.a = this->toVec3f(facet + 12);
@@ -118,9 +122,11 @@ fcl::Vec3f StlParser::toVec3f(char* facet)
  */
 double StlParser::toDouble(char* facet, uint8_t start_idx)
 {
-    char f1[4] = {facet[start_idx],
-        facet[start_idx + 1],facet[start_idx + 2],facet[start_idx + 3]};
-    float f_val = *((float*) f1 );
+    char f1[4] = {  facet[start_idx],
+                    facet[start_idx + 1],
+                    facet[start_idx + 2],
+                    facet[start_idx + 3]};
+    float f_val = *((float*) f1);
     double d_val = static_cast<double>(f_val);
     return d_val;
 }

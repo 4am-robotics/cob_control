@@ -42,7 +42,7 @@ AdvancedChainFkSolverPos_recursive::AdvancedChainFkSolverPos_recursive(const KDL
 int AdvancedChainFkSolverPos_recursive::JntToCart(const KDL::JntArray& q_in, KDL::Frame& p_out, int seg_nr)
 {
     unsigned int segmentNr;
-    if(seg_nr < 0)
+    if (seg_nr < 0)
     {
         segmentNr = this->chain_.getNrOfSegments();
     }
@@ -53,21 +53,21 @@ int AdvancedChainFkSolverPos_recursive::JntToCart(const KDL::JntArray& q_in, KDL
 
     p_out = KDL::Frame::Identity();
 
-    if(q_in.rows() != this->chain_.getNrOfJoints())
+    if (q_in.rows() != this->chain_.getNrOfJoints())
     {
         return -1;
     }
-    else if(segmentNr > this->chain_.getNrOfSegments())
+    else if (segmentNr > this->chain_.getNrOfSegments())
     {
         return -1;
     }
     else
     {
         this->segment_pos_.clear();
-        int j=0;
-        for(unsigned int i=0;i<segmentNr;i++)
+        int j = 0;
+        for (unsigned int i = 0; i < segmentNr; i++)
         {
-            if(this->chain_.getSegment(i).getJoint().getType() != KDL::Joint::None)
+            if (this->chain_.getSegment(i).getJoint().getType() != KDL::Joint::None)
             {
                 p_out = p_out * this->chain_.getSegment(i).pose(q_in(j));
                 j++;
@@ -77,7 +77,7 @@ int AdvancedChainFkSolverPos_recursive::JntToCart(const KDL::JntArray& q_in, KDL
                 p_out = p_out * this->chain_.getSegment(i).pose(0.0);
             }
 
-            this->segment_pos_.push_back(KDL::Frame(p_out)); // store copies not references
+            this->segment_pos_.push_back(KDL::Frame(p_out));  // store copies not references
         }
         return 0;
     }
@@ -105,9 +105,8 @@ void AdvancedChainFkSolverPos_recursive::dumpAllSegmentPostures() const
 {
     uint16_t id = 0;
     ROS_INFO_STREAM("=== Dump all Jnt Postures ===");
-    for(FrameVector_t::const_iterator it = this->segment_pos_.begin(); it != this->segment_pos_.end(); ++it)
+    for (FrameVector_t::const_iterator it = this->segment_pos_.begin(); it != this->segment_pos_.end(); ++it)
     {
-
         ROS_INFO_STREAM("Segment " << id++ << ". Position: " << std::endl <<
                         it->p.x() << std::endl <<
                         it->p.y() << std::endl <<
@@ -139,9 +138,9 @@ AdvancedChainFkSolverVel_recursive::AdvancedChainFkSolverVel_recursive(const KDL
 int AdvancedChainFkSolverVel_recursive::JntToCart(const KDL::JntArrayVel& q_in, KDL::FrameVel& out, int seg_nr)
 {
     unsigned int segmentNr;
-    if(seg_nr < 0)
+    if (seg_nr < 0)
     {
-        segmentNr=this->chain_.getNrOfSegments();
+        segmentNr = this->chain_.getNrOfSegments();
     }
     else
     {
@@ -150,31 +149,32 @@ int AdvancedChainFkSolverVel_recursive::JntToCart(const KDL::JntArrayVel& q_in, 
 
     out = KDL::FrameVel::Identity();
 
-    if(!(q_in.q.rows() == this->chain_.getNrOfJoints() && q_in.qdot.rows() == this->chain_.getNrOfJoints()))
+    if (!(q_in.q.rows() == this->chain_.getNrOfJoints() && q_in.qdot.rows() == this->chain_.getNrOfJoints()))
     {
         ROS_ERROR("Rows do not match!");
         return -1;
     }
-    else if(segmentNr > this->chain_.getNrOfSegments())
+    else if (segmentNr > this->chain_.getNrOfSegments())
     {
         return -2;
     }
     else
     {
         this->segment_vel_.clear();
-        int j=0;
+        int j = 0;
         for (unsigned int i = 0; i < segmentNr; ++i)
         {
-            //Calculate new Frame_base_ee
-            if(this->chain_.getSegment(i).getJoint().getType() != KDL::Joint::None){
+            // Calculate new Frame_base_ee
+            if (this->chain_.getSegment(i).getJoint().getType() != KDL::Joint::None)
+            {
                 out = out * KDL::FrameVel(this->chain_.getSegment(i).pose(q_in.q(j)),
-                                          this->chain_.getSegment(i).twist(q_in.q(j),q_in.qdot(j)));
-                j++; //Only increase jointnr if the segment has a joint
+                                          this->chain_.getSegment(i).twist(q_in.q(j), q_in.qdot(j)));
+                j++;  // Only increase jointnr if the segment has a joint
             }
             else
             {
                 out = out * KDL::FrameVel(this->chain_.getSegment(i).pose(0.0),
-                                 this->chain_.getSegment(i).twist(0.0,0.0));
+                                 this->chain_.getSegment(i).twist(0.0, 0.0));
             }
 
             this->segment_vel_.push_back(KDL::FrameVel(out));

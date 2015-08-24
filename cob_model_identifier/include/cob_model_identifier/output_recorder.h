@@ -31,6 +31,7 @@
 
 #include <termios.h>
 #include <signal.h>
+#include <string>
 #include <vector>
 
 #include <ros/ros.h>
@@ -85,7 +86,7 @@ public:
     void stepResponsePlot(std::string file_name, std::vector<double>* in,
                           std::vector<double>* x_lin_out, std::vector<double>* y_lin_out, std::vector<double>* z_lin_out,
                           std::vector<double>* x_rot_out, std::vector<double>* y_rot_out, std::vector<double>* z_rot_out);
-    void writeToMFile(std::string file_name, std::vector<double>* dot_in, std::vector<double>* dot_out,std::vector<double>* pos_out, std::vector<double>* dot_integrated);
+    void writeToMFile(std::string file_name, std::vector<double>* dot_in, std::vector<double>* dot_out, std::vector<double>* pos_out, std::vector<double>* dot_integrated);
 
 private:
     ros::NodeHandle nh_;
