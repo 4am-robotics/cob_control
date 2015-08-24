@@ -54,7 +54,7 @@
 #include "cob_obstacle_distance/shapes_manager.hpp"
 #include "cob_obstacle_distance/obstacle_distance_data_types.hpp"
 
-class FrameToCollision
+class LinkToCollision
 {
     private:
         typedef boost::shared_ptr<const urdf::Link> PtrConstLink_t;
@@ -98,8 +98,8 @@ class FrameToCollision
     public:
         typedef std::unordered_map<std::string, std::vector<std::string> > MapSelfCollisions_t;
 
-        FrameToCollision();
-        ~FrameToCollision();
+        LinkToCollision();
+        ~LinkToCollision();
 
         inline MapSelfCollisions_t::iterator getSelfCollisionsIterBegin()
         {

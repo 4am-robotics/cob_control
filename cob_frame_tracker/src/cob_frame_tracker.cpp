@@ -508,30 +508,6 @@ int CobFrameTracker::checkServiceCallStatus()
 }
 
 
-
-//bool distance_violation = checkCartDistanceViolation(cart_distance_, 0.0);
-//if(distance_violation)
-//{
-//    ROS_ERROR_STREAM("distance_violation");
-//    abortion_counter_++;
-//}
-//else
-//{
-//    ROS_INFO_STREAM("distance ok");
-//    abortion_counter_ = abortion_counter_ > 0 ? abortion_counter_ - 1 : 0;
-//}
-//
-//if(abortion_counter_ > max_abortions_)
-//{
-//    abortion_counter_ = max_abortions_;
-//    this->publishHoldTwist(period);
-//}
-//}
-//
-//ht_.hold = abortion_counter_ >= max_abortions_;
-//publishTwist(period, !ht_.hold); // if not publishing then just update data!
-
-
 void CobFrameTracker::jointstateCallback(const sensor_msgs::JointState::ConstPtr& msg)
 {
     KDL::JntArray q_temp = last_q_;

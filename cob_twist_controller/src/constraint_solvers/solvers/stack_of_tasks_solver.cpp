@@ -130,11 +130,8 @@ void StackOfTasksSolver::processState(std::set<ConstraintBase_t>::iterator& it,
     {
         if(cstate.getCurrent() == CRITICAL)
         {
-            // Eigen::MatrixXd J_task0 = q_dot_0.transpose();
             // "global" weighting k_H for all constraint tasks.
-            //Eigen::VectorXd task = this->params_.k_H * activation_gain * magnitude * derivative_value * Eigen::VectorXd::Identity(1, 1);
             Task_t t = (*it)->createTask();
-            //double factor = this->params_.k_H * activation_gain * std::abs(magnitude);
             double factor = activation_gain * std::abs(magnitude);
             t.task_ = factor * t.task_;
             this->task_stack_controller_.addTask(t);

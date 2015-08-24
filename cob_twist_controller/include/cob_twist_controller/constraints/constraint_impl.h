@@ -105,7 +105,6 @@ std::set<ConstraintBase_t> ConstraintsBuilder<PRIO>::createConstraints(const Twi
     if(CA_ON == twist_controller_params.constraint_ca)
     {
         typedef CollisionAvoidance<ConstraintParamsCA, PRIO> CollisionAvoidance_t;
-        //uint32_t available_dists = data_mediator.obstacleDistancesCnt();
         uint32_t startPrio = twist_controller_params.priority_ca;
 
         for(std::vector<std::string>::const_iterator it = twist_controller_params.collision_check_frames.begin();
