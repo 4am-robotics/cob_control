@@ -22,7 +22,6 @@
   <depend>eigen</depend>
   <depend>fcl</depend>
   <depend>geometry_msgs</depend>
-  <depend>interactive_markers</depend>
   <depend>kdl_conversions</depend>
   <depend>kdl_parser</depend>
   <depend>moveit_msgs</depend>
@@ -38,6 +37,7 @@
   <depend>urdf</depend>
   <depend>visualization_msgs</depend>
 
+  <exec_depend>interactive_markers</exec_depend>
   <exec_depend>joint_state_publisher</exec_depend>
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>rospy</exec_depend>
