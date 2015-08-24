@@ -48,7 +48,6 @@ MarkerShape<BVH_RSS_t>::MarkerShape(const std::string& root_frame,
         fcl::Vec3f v2(mesh.vertices[v_idx_2].x, mesh.vertices[v_idx_2].y, mesh.vertices[v_idx_2].z);
         fcl::Vec3f v3(mesh.vertices[v_idx_3].x, mesh.vertices[v_idx_3].y, mesh.vertices[v_idx_3].z);
 
-        //this->fcl_bvh_.addTriangle(v1, v2, v3);
         this->ptr_fcl_bvh_->addTriangle(v1, v2, v3);
     }
 
@@ -119,6 +118,7 @@ void MarkerShape<BVH_RSS_t>::init(const std::string& mesh_resource, const std::s
     marker_.action = visualization_msgs::Marker::ADD;
     marker_.id = IMarkerShape::class_ctr_;
     marker_.mesh_resource = mesh_resource;
+    marker_.mesh_use_embedded_materials = true;
 
     marker_.lifetime = ros::Duration();
 }

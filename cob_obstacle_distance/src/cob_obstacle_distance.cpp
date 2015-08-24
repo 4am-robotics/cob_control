@@ -54,7 +54,7 @@ int main(int argc, char** argv)
 
     ros::Subscriber jointstate_sub = nh.subscribe("joint_states", 1, &DistanceManager::jointstateCb, &sm);
     ros::Subscriber obstacle_sub = nh.subscribe("obstacle_distance/registerObstacle", 1, &DistanceManager::registerObstacle, &sm);
-    ros::ServiceServer registration_srv = nh.advertiseService("obstacle_distance/registerFrameOfInterest" , &DistanceManager::registerFrameOfInterest, &sm);
+    ros::ServiceServer registration_srv = nh.advertiseService("obstacle_distance/registerLinkOfInterest" , &DistanceManager::registerLinkOfInterest, &sm);
 
     //addTestObstacles(sm); // Comment in to see what happens
 

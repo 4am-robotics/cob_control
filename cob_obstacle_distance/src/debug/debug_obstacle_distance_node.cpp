@@ -66,7 +66,7 @@ public:
 
         for(uint32_t i=0; i<msg->distances.size(); i++)
         {
-            const std::string id = msg->distances[i].frame_of_interest;
+            const std::string id = msg->distances[i].link_of_interest;
             if(relevant_obstacle_distances.count(id) > 0)
             {
                 if(relevant_obstacle_distances[id].distance > msg->distances[i].distance)
@@ -122,7 +122,6 @@ public:
             marker_distance.action = visualization_msgs::Marker::ADD;
             marker_distance.ns = it->first;
             marker_distance.id = 69;
-            // marker_distance.header.frame_id = it->second.frame_of_interest;
             marker_distance.header.frame_id = chain_base_link_;
             marker_distance.text = boost::lexical_cast<std::string>(boost::format("%.3f") % it->second.distance);
 

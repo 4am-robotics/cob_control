@@ -77,7 +77,7 @@ void CallbackDataMediator::distancesToObstaclesCallback(const cob_obstacle_dista
         tf::vectorMsgToEigen(it->frame_vector, d.frame_vector);
         tf::vectorMsgToEigen(it->nearest_point_frame_vector, d.nearest_point_frame_vector);
         tf::vectorMsgToEigen(it->nearest_point_obstacle_vector, d.nearest_point_obstacle_vector);
-        this->obstacle_distances_[it->frame_of_interest].push_back(d);
+        this->obstacle_distances_[it->link_of_interest].push_back(d);
     }
 
 }

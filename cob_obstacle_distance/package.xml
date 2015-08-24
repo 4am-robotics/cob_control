@@ -3,6 +3,7 @@
   <version>0.0.1</version>
   <description>The cob_obstacle_distance package</description>
 
+  <author email="fxm@ipa.fhg.de">Felix Messmer</author>
   <author email="fxm-mb@ipa.fhg.de">Marco Bezzon</author>
   <maintainer email="fxm-mb@ipa.fhg.de">Marco Bezzon</maintainer>
 

@@ -82,8 +82,8 @@ if __name__ == "__main__":
      # y.type.db = "package://cob_gazebo_objects/Media/models/milk.dae"
     y.type.db = "package://cob_twist_controller/files/torus_0_25_inner_rad.stl"
     # y.type.db = "package://cob_twist_controller/files/untitled.dae"
-    # y.operation = CollisionObject.ADD
-    y.operation = CollisionObject.REMOVE
+    y.operation = CollisionObject.ADD
+    # y.operation = CollisionObject.REMOVE
 
     pose = Pose()
     pose.position.x = 0.25
