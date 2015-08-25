@@ -4,6 +4,15 @@ Changelog for package cob_omni_drive_controller
 
 Forthcoming
 -----------
+* boost revision
+* explicit dependency to boost
+* more dependency fixes according to review comments
+* explicit dependency to boost
+* remove trailing whitespaces
+* migrate to package format 2
+* sort dependencies
+* review dependencies
+* Contributors: ipa-fxm
 
 0.6.8 (2015-06-17)
 ------------------

@@ -4,6 +4,21 @@ Changelog for package cob_model_identifier
 
 Forthcoming
 -----------
+* boost revision
+* do not install headers in executable-only packages
+* explicit dependency to boost
+* more dependency fixes according to review comments
+* explicit dependency to boost
+* more fixes for migration afer merge
+* remove trailing whitespaces
+* migrate to package format 2
+* cleanup
+* sort dependencies
+* update with ipa320
+* review dependencies
+* code styling cob_model_identifier
+* beautify and code-review
+* Contributors: ipa-fxm
 
 0.6.8 (2015-06-17)
 ------------------
