@@ -2,8 +2,8 @@
 Changelog for package cob_trajectory_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.9 (2015-08-25)
+------------------
 * boost revision
 * do not install headers in executable-only packages
 * explicit dependency to boost

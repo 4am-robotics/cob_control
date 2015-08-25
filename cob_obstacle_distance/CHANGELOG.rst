@@ -2,8 +2,8 @@
 Changelog for package cob_obstacle_distance
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.9 (2015-08-25)
+------------------
 * review dependencies
 * authors in package xml
 * Merge branch 'test_of_feature_with_adapt_frame_tracker' of github.com:ipa-fxm-mb/cob_control into test_of_feature
