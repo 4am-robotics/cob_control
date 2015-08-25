@@ -3,7 +3,7 @@ project(cob_frame_tracker)
 
 find_package(catkin REQUIRED COMPONENTS actionlib_msgs actionlib cob_srvs control_toolbox dynamic_reconfigure geometry_msgs interactive_markers kdl_parser message_generation roscpp sensor_msgs std_msgs std_srvs tf visualization_msgs)
 
-find_package(Boost REQUIRED)
+find_package(Boost REQUIRED COMPONENTS thread)
 
 find_package(orocos_kdl REQUIRED)
 

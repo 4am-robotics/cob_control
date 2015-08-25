@@ -118,7 +118,6 @@ class CollisionAvoidance : public ConstraintBase<T_PARAMS, PRIO>
         double calcDerivativeValue();
         Eigen::VectorXd calcPartialValues();
         double predictValue();
-        virtual double getActivationThreshold() const;
         double getActivationThresholdWithBuffer() const;
 
         KDL::ChainJntToJacSolver& jnt_to_jac_;
@@ -164,7 +163,6 @@ class JointLimitAvoidance : public ConstraintBase<T_PARAMS, PRIO>
 
     private:
         virtual ConstraintTypes getType() const;
-        virtual double getActivationThreshold() const;
         double calcValue();
         double calcDerivativeValue();
         Eigen::VectorXd calcPartialValues();
@@ -202,7 +200,6 @@ class JointLimitAvoidanceMid : public ConstraintBase<T_PARAMS, PRIO>
 
     private:
         virtual ConstraintTypes getType() const;
-        virtual double getActivationThreshold() const;
         double calcValue();
         double calcDerivativeValue();
         Eigen::VectorXd calcPartialValues();
@@ -241,7 +238,6 @@ class JointLimitAvoidanceIneq : public ConstraintBase<T_PARAMS, PRIO>
 
     private:
         virtual ConstraintTypes getType() const;
-        virtual double getActivationThreshold() const;
         double calcValue();
         double calcDerivativeValue();
         Eigen::VectorXd calcPartialValues();

@@ -64,8 +64,10 @@ std::string JointLimitAvoidance<T_PARAMS, PRIO>::getTaskId() const
 template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidance<T_PARAMS, PRIO>::getActivationGain() const
 {
-    const double activation_threshold = this->getActivationThreshold();
-    const double activation_buffer_region = activation_threshold * (1.0 + ACTIVATION_BUFFER_JLA);
+    const TwistControllerParams& params = this->constraint_params_.tc_params_;
+    const double activation_threshold = params.thresholds_jla.activation;
+    const double activation_buffer_region = params.thresholds_jla.activation_with_buffer; // %
+
     double activation_gain;
     const double rel_delta = this->rel_min_ < this->rel_max_ ? this->rel_min_ : this->rel_max_;
 
@@ -75,7 +77,7 @@ double JointLimitAvoidance<T_PARAMS, PRIO>::getActivationGain() const
     }
     else if(rel_delta < activation_buffer_region)
     {
-        activation_gain = 0.5 * (1.0 - cos(M_PI * (rel_delta - activation_threshold) / (activation_buffer_region - activation_threshold)));
+        activation_gain = 0.5 * (1.0 + cos(M_PI * (rel_delta - activation_threshold) / (activation_buffer_region - activation_threshold)));
     }
     else
     {
@@ -108,7 +110,6 @@ void JointLimitAvoidance<T_PARAMS, PRIO>::calculate()
 
     const double rel_val = this->rel_max_ < this->rel_min_ ? this->rel_max_ : this->rel_min_;
 
-
     this->calcValue();
     this->calcPartialValues();
     this->calcDerivativeValue();
@@ -116,28 +117,16 @@ void JointLimitAvoidance<T_PARAMS, PRIO>::calculate()
     // Compute prediction
     const double pred_delta_max = std::abs(limit_max - this->jnts_prediction_.q(joint_idx));
     const double pred_rel_max = std::abs(pred_delta_max / limit_max);
-
     const double pred_delta_min = std::abs(this->jnts_prediction_.q(joint_idx) - limit_min);
     const double pred_rel_min = std::abs(pred_delta_min / limit_min);
-
     const double pred_rel_val = pred_rel_max < pred_rel_min ? pred_rel_max : pred_rel_min;
 
-
-
-    const double activation = this->getActivationThreshold();
-    const double critical = activation * 0.5;
-
-//    ROS_WARN_STREAM(this->getTaskId());
-//    ROS_WARN_STREAM("joint pos: " << joint_pos);
-//    ROS_WARN_STREAM("Limit min: " << limit_min);
-//    ROS_WARN_STREAM("Limit max: " << limit_max);
-//    ROS_WARN_STREAM("Rel. val from limit: " << rel_val);
-
-
+    const double activation = params.thresholds_jla.activation;
+    const double critical = params.thresholds_jla.critical;
 
     if(this->state_.getCurrent() == CRITICAL && pred_rel_val < rel_val)
     {
-        ROS_WARN_STREAM("JLA_Current state is CRITICAL but prediction is smaller than current rel_val -> Stay in CRIT.");
+        ROS_WARN_STREAM(this->getTaskId() << ": Current state is CRITICAL but prediction is smaller than current rel_val -> Stay in CRIT.");
     }
     else if(rel_val < critical || pred_rel_val < critical)
     {
@@ -198,14 +187,6 @@ Eigen::VectorXd JointLimitAvoidance<T_PARAMS, PRIO>::calcPartialValues()
 }
 
 
-/// Returns the threshold of the cost function to become active.
-template <typename T_PARAMS, typename PRIO>
-double JointLimitAvoidance<T_PARAMS, PRIO>::getActivationThreshold() const
-{
-    const TwistControllerParams& params = this->constraint_params_.tc_params_;
-    return params.activation_threshold_jla;
-}
-
 /// Returns a value for k_H to weight the partial values for GPM e.g.
 template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const
@@ -244,30 +225,22 @@ Eigen::VectorXd JointLimitAvoidance<T_PARAMS, PRIO>::getTaskDerivatives() const
 template <typename T_PARAMS, typename PRIO>
 Task_t JointLimitAvoidance<T_PARAMS, PRIO>::createTask()
 {
-    const TwistControllerParams& params = this->constraint_params_.tc_params_;
-    TwistControllerParams adapted_params;
-    adapted_params.damping_method = CONSTANT;
-    adapted_params.damping_factor = params.damping_jla;
-    adapted_params.eps_truncation = 0.0;
-    adapted_params.numerical_filtering = false;
-
     Eigen::MatrixXd cost_func_jac = this->getTaskJacobian();
     Eigen::VectorXd derivs = this->getTaskDerivatives();
-
     Task_t task(this->getPriority(),
                 this->getTaskId(),
                 cost_func_jac,
                 derivs,
                 this->getType());
 
-    task.tcp_ = adapted_params;
-    task.db_ = boost::shared_ptr<DampingBase>(DampingBuilder::createDamping(adapted_params));
+    task.tcp_ = this->adaptDampingParamsForTask(this->constraint_params_.tc_params_.damping_jla);
+    task.db_ = boost::shared_ptr<DampingBase>(DampingBuilder::createDamping(task.tcp_));
     return task;
 }
 
 /* END JointLimitAvoidance **************************************************************************************/
 
-/* BEGIN 2nd JointLimitAvoidance ************************************************************************************/
+/* BEGIN JointLimitAvoidance (keep joints in the middle between max and min limit) ******************************/
 template <typename T_PARAMS, typename PRIO>
 std::string JointLimitAvoidanceMid<T_PARAMS, PRIO>::getTaskId() const
 {
@@ -367,13 +340,6 @@ Eigen::VectorXd JointLimitAvoidanceMid<T_PARAMS, PRIO>::calcPartialValues()
 }
 
 
-/// Returns the threshold of the cost function to become active.
-template <typename T_PARAMS, typename PRIO>
-double JointLimitAvoidanceMid<T_PARAMS, PRIO>::getActivationThreshold() const
-{
-    return 0.0;
-}
-
 /// Returns a value for k_H to weight the partial values for GPM e.g.
 template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidanceMid<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const
@@ -388,7 +354,7 @@ ConstraintTypes JointLimitAvoidanceMid<T_PARAMS, PRIO>::getType() const
 {
     return JLA_MID;
 }
-/* END 2nd JointLimitAvoidance **************************************************************************************/
+/* END JointLimitAvoidance (keep joints in the middle between max and min limit) ************************************/
 
 /* BEGIN JointLimitAvoidanceIneq ************************************************************************************/
 template <typename T_PARAMS, typename PRIO>
@@ -405,8 +371,9 @@ std::string JointLimitAvoidanceIneq<T_PARAMS, PRIO>::getTaskId() const
 template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidanceIneq<T_PARAMS, PRIO>::getActivationGain() const
 {
-    const double activation_threshold = this->getActivationThreshold();  // %
-    const double activation_buffer_region = activation_threshold * (1.0 + ACTIVATION_BUFFER); // %
+    const TwistControllerParams& params = this->constraint_params_.tc_params_;
+    const double activation_threshold = params.thresholds_jla.activation;  // %
+    const double activation_buffer_region = params.thresholds_jla.activation_with_buffer; // %
     double activation_gain;
     double rel_delta;
 
@@ -426,7 +393,7 @@ double JointLimitAvoidanceIneq<T_PARAMS, PRIO>::getActivationGain() const
     }
     else if(rel_delta < activation_buffer_region) // activation_buffer_region == d_i
     {
-        activation_gain = 0.5 * (1.0 - cos(M_PI * (rel_delta - activation_threshold) / (activation_buffer_region - activation_threshold)));
+        activation_gain = 0.5 * (1.0 + cos(M_PI * (rel_delta - activation_threshold) / (activation_buffer_region - activation_threshold)));
     }
     else
     {
@@ -471,18 +438,18 @@ void JointLimitAvoidanceIneq<T_PARAMS, PRIO>::calculate()
 
     this->prediction_value_ = pred_rel_max < pred_rel_min ? pred_rel_max : pred_rel_min;
 
-    double activation = this->getActivationThreshold();
-    double critical = 0.4 * activation;
+    double activation = params.thresholds_jla.activation;
+    double critical = params.thresholds_jla.critical; // before param: 0.4 * activation
 
     if(this->state_.getCurrent() == CRITICAL && this->prediction_value_ < rel_val)
     {
-        ROS_WARN_STREAM("JLA_Current state is CRITICAL but prediction is smaller than current rel_val -> Stay in CRIT.");
+        ROS_WARN_STREAM(this->getTaskId() << ": Current state is CRITICAL but prediction is smaller than current rel_val -> Stay in CRIT.");
     }
     else if(rel_val < critical || this->prediction_value_ < critical)
     {
         if(this->prediction_value_ < critical)
         {
-            ROS_WARN_STREAM("pred_val < critical!!!");
+            ROS_WARN_STREAM(this->getTaskId() << ": pred_val < critical!!!");
         }
 
         this->state_.setState(CRITICAL); // -> avoid HW destruction.
@@ -491,14 +458,6 @@ void JointLimitAvoidanceIneq<T_PARAMS, PRIO>::calculate()
     {
         this->state_.setState(DANGER); // GPM always active!
     }
-//    else if(rel_val < activation)
-//    {
-//        this->state_.setState(DANGER); // GPM
-//    }
-//    else
-//    {
-//        this->state_.setState(NORMAL);
-//    }
 }
 
 /// Calculate values of the JLA cost function.
@@ -544,14 +503,6 @@ Eigen::VectorXd JointLimitAvoidanceIneq<T_PARAMS, PRIO>::calcPartialValues()
 }
 
 
-/// Returns the threshold of the cost function to become active.
-template <typename T_PARAMS, typename PRIO>
-double JointLimitAvoidanceIneq<T_PARAMS, PRIO>::getActivationThreshold() const
-{
-    const TwistControllerParams& params = this->constraint_params_.tc_params_;
-    return params.activation_threshold_jla;
-}
-
 /// Returns a value for k_H to weight the partial values for GPM e.g.
 template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidanceIneq<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const
@@ -560,13 +511,13 @@ double JointLimitAvoidanceIneq<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eig
     const TwistControllerParams& params = this->constraint_params_.tc_params_;
     if(this->abs_delta_max_ > this->abs_delta_min_ && this->rel_min_ > 0.0)
     {
-        factor = (this->getActivationThreshold() * 1.1 / this->rel_min_) - 1.0;
+        factor = (params.thresholds_jla.activation * 1.1 / this->rel_min_) - 1.0;
     }
     else
     {
         if(this->rel_max_ > 0.0)
         {
-            factor = (this->getActivationThreshold() * 1.1 / this->rel_max_) - 1.0;
+            factor = (params.thresholds_jla.activation * 1.1 / this->rel_max_) - 1.0;
         }
         else
         {
@@ -607,24 +558,16 @@ Eigen::VectorXd JointLimitAvoidanceIneq<T_PARAMS, PRIO>::getTaskDerivatives() co
 template <typename T_PARAMS, typename PRIO>
 Task_t JointLimitAvoidanceIneq<T_PARAMS, PRIO>::createTask()
 {
-    const TwistControllerParams& params = this->constraint_params_.tc_params_;
-    TwistControllerParams adapted_params;
-    adapted_params.damping_method = CONSTANT;
-    adapted_params.damping_factor = params.damping_jla;
-    adapted_params.eps_truncation = 0.0;
-    adapted_params.numerical_filtering = false;
-
     Eigen::MatrixXd cost_func_jac = this->getTaskJacobian();
     Eigen::VectorXd derivs = this->getTaskDerivatives();
-
     Task_t task(this->getPriority(),
                 this->getTaskId(),
                 cost_func_jac,
                 derivs,
                 this->getType());
 
-    task.tcp_ = adapted_params;
-    task.db_ = boost::shared_ptr<DampingBase>(DampingBuilder::createDamping(adapted_params));
+    task.tcp_ = this->adaptDampingParamsForTask(this->constraint_params_.tc_params_.damping_jla);
+    task.db_ = boost::shared_ptr<DampingBase>(DampingBuilder::createDamping(task.tcp_));
     return task;
 }
 

@@ -51,10 +51,6 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const JointStates& joint_stat
     Vector6d_t v_in_vec;
     tf::twistKDLToEigen(v_in, v_in_vec);
 
-
-
-    params_.chain_ = this->chain_;
-
     Eigen::MatrixXd qdot_out_vec;
     retStat = constraint_solver_factory_.calculateJointVelocities(this->jac_.data,
                                                                   v_in_vec,

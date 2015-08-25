@@ -32,6 +32,7 @@
 #include <fstream>
 #include <thread>
 
+#include "cob_obstacle_distance/obstacle_distance_data_types.hpp"
 #include "cob_obstacle_distance/distance_manager.hpp"
 #include "cob_obstacle_distance/marker_shapes/marker_shapes.hpp"
 
@@ -53,14 +54,14 @@ int main(int argc, char** argv)
 
     ros::Subscriber jointstate_sub = nh.subscribe("joint_states", 1, &DistanceManager::jointstateCb, &sm);
     ros::Subscriber obstacle_sub = nh.subscribe("obstacle_distance/registerObstacle", 1, &DistanceManager::registerObstacle, &sm);
-    ros::ServiceServer registration_srv = nh.advertiseService("obstacle_distance/registerFrameOfInterest" , &DistanceManager::registerFrameOfInterest, &sm);
+    ros::ServiceServer registration_srv = nh.advertiseService("obstacle_distance/registerLinkOfInterest" , &DistanceManager::registerLinkOfInterest, &sm);
 
     //addTestObstacles(sm); // Comment in to see what happens
 
     std::thread t(&DistanceManager::transform, std::ref(sm));
     ROS_INFO_STREAM("Started transform thread.");
 
-    ros::Rate loop_rate(15);
+    ros::Rate loop_rate(20);
     while(ros::ok())
     {
         sm.calculate();

@@ -66,7 +66,7 @@ public:
 
         for(uint32_t i=0; i<msg->distances.size(); i++)
         {
-            const std::string id = msg->distances[i].frame_of_interest;
+            const std::string id = msg->distances[i].link_of_interest;
             if(relevant_obstacle_distances.count(id) > 0)
             {
                 if(relevant_obstacle_distances[id].distance > msg->distances[i].distance)
@@ -88,7 +88,7 @@ public:
             //show distance vector as arrow
             visualization_msgs::Marker marker_vector;
             marker_vector.type = visualization_msgs::Marker::ARROW;
-            marker_vector.lifetime = ros::Duration();
+            marker_vector.lifetime = ros::Duration(0.5);
             marker_vector.action = visualization_msgs::Marker::ADD;
             marker_vector.ns = it->first;
             marker_vector.id = 42;
@@ -118,11 +118,11 @@ public:
             //show distance as text
             visualization_msgs::Marker marker_distance;
             marker_distance.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-            marker_distance.lifetime = ros::Duration();
+            marker_distance.lifetime = ros::Duration(0.5);
             marker_distance.action = visualization_msgs::Marker::ADD;
             marker_distance.ns = it->first;
             marker_distance.id = 69;
-            marker_distance.header.frame_id = it->second.frame_of_interest;
+            marker_distance.header.frame_id = chain_base_link_;
             marker_distance.text = boost::lexical_cast<std::string>(boost::format("%.3f") % it->second.distance);
 
             marker_distance.scale.x = 0.1;
@@ -130,11 +130,17 @@ public:
             marker_distance.scale.z = 0.1;
 
             marker_distance.color.a = 1.0;
-            marker_distance.color.r = 1.0;
-            marker_distance.color.g = 1.0;
-            marker_distance.color.b = 1.0;
+//            marker_distance.color.r = 1.0;
+//            marker_distance.color.g = 1.0;
+//            marker_distance.color.b = 1.0;
+            marker_distance.color.r = 0.0;
+            marker_distance.color.g = 0.0;
+            marker_distance.color.b = 0.0;
 
-            marker_distance.pose.position.x = 0.15;
+            marker_distance.pose.position.x = it->second.nearest_point_frame_vector.x;
+            marker_distance.pose.position.y = it->second.nearest_point_frame_vector.y + 0.05;
+            marker_distance.pose.position.z = it->second.nearest_point_frame_vector.z;
+
 
             marker_array.markers.push_back(marker_distance);
         }

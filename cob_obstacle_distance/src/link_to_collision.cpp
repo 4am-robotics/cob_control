@@ -25,25 +25,25 @@
  *   Implementation of the FrameToCollision management class.
  ****************************************************************/
 
+#include <cob_obstacle_distance/link_to_collision.hpp>
 #include <eigen_conversions/eigen_msg.h>
 #include <visualization_msgs/Marker.h>
 
-#include "cob_obstacle_distance/frame_to_collision.hpp"
 
 
-FrameToCollision::FrameToCollision() : success_(true)
+LinkToCollision::LinkToCollision() : success_(true)
 {
 
 }
 
 
-FrameToCollision::~FrameToCollision()
+LinkToCollision::~LinkToCollision()
 {
 
 }
 
 
-void FrameToCollision::poseURDFToMsg(const urdf::Pose& urdf_pose, geometry_msgs::Pose& msg_pose)
+void LinkToCollision::poseURDFToMsg(const urdf::Pose& urdf_pose, geometry_msgs::Pose& msg_pose)
 {
     msg_pose.position.x = urdf_pose.position.x;
     msg_pose.position.y = urdf_pose.position.y;
@@ -56,7 +56,7 @@ void FrameToCollision::poseURDFToMsg(const urdf::Pose& urdf_pose, geometry_msgs:
 }
 
 
-bool FrameToCollision::ignoreSelfCollisionPart(const std::string& frame_of_interest,
+bool LinkToCollision::ignoreSelfCollisionPart(const std::string& frame_of_interest,
                                                const std::string& self_collision_obstacle_frame)
 {
     if(this->self_collision_frames_.count(self_collision_obstacle_frame) <= 0)
@@ -70,7 +70,7 @@ bool FrameToCollision::ignoreSelfCollisionPart(const std::string& frame_of_inter
 }
 
 
-bool FrameToCollision::initFile(const std::string& root_frame_id, const std::string& urdf_file_name)
+bool LinkToCollision::initFile(const std::string& root_frame_id, const std::string& urdf_file_name)
 {
     this->root_frame_id_ = root_frame_id;
     this->success_ = this->model_.initFile(urdf_file_name);
@@ -78,7 +78,7 @@ bool FrameToCollision::initFile(const std::string& root_frame_id, const std::str
 }
 
 
-bool FrameToCollision::initParameter(const std::string& root_frame_id, const std::string& urdf_param)
+bool LinkToCollision::initParameter(const std::string& root_frame_id, const std::string& urdf_param)
 {
     this->root_frame_id_ = root_frame_id;
     this->success_ = this->model_.initParam(urdf_param);
@@ -86,7 +86,7 @@ bool FrameToCollision::initParameter(const std::string& root_frame_id, const std
 }
 
 
-bool FrameToCollision::initSelfCollision(XmlRpc::XmlRpcValue& self_collision_params, boost::scoped_ptr<ShapesManager>& sm)
+bool LinkToCollision::initSelfCollision(XmlRpc::XmlRpcValue& self_collision_params, boost::scoped_ptr<ShapesManager>& sm)
 {
     bool success = true;
     ROS_ASSERT(self_collision_params.getType() == XmlRpc::XmlRpcValue::TypeStruct);
@@ -127,7 +127,7 @@ bool FrameToCollision::initSelfCollision(XmlRpc::XmlRpcValue& self_collision_par
 }
 
 
-bool FrameToCollision::getMarkerShapeFromUrdf(const Eigen::Vector3d& abs_pos,
+bool LinkToCollision::getMarkerShapeFromUrdf(const Eigen::Vector3d& abs_pos,
                                               const Eigen::Quaterniond& quat_pos,
                                               const std::string& frame_of_interest,
                                               PtrIMarkerShape_t& segment_of_interest_marker_shape)
@@ -145,16 +145,12 @@ bool FrameToCollision::getMarkerShapeFromUrdf(const Eigen::Vector3d& abs_pos,
         geometry_msgs::Pose pose;
         tf::pointEigenToMsg(abs_pos, pose.position);
         tf::quaternionEigenToMsg(quat_pos, pose.orientation);
-
-        std_msgs::ColorRGBA col;
-        col.a = 1.0;
-        col.r = 1.0;
         if(NULL != link->collision && NULL != link->collision->geometry)
         {
             this->poseURDFToMsg(link->collision->origin, pose);
             this->createSpecificMarkerShape(frame_of_interest,
                                             pose,
-                                            col,
+                                            g_shapeMsgTypeToVisMarkerType.obstacle_color_,
                                             link->collision->geometry,
                                             segment_of_interest_marker_shape);
         }
@@ -165,7 +161,7 @@ bool FrameToCollision::getMarkerShapeFromUrdf(const Eigen::Vector3d& abs_pos,
             this->poseURDFToMsg(link->visual->origin, pose);
             this->createSpecificMarkerShape(frame_of_interest,
                                             pose,
-                                            col,
+                                            g_shapeMsgTypeToVisMarkerType.obstacle_color_,
                                             link->visual->geometry,
                                             segment_of_interest_marker_shape);
         }
@@ -192,7 +188,7 @@ bool FrameToCollision::getMarkerShapeFromUrdf(const Eigen::Vector3d& abs_pos,
 }
 
 
-void FrameToCollision::createSpecificMarkerShape(const std::string& frame_of_interest,
+void LinkToCollision::createSpecificMarkerShape(const std::string& frame_of_interest,
                                                  const geometry_msgs::Pose& pose,
                                                  const std_msgs::ColorRGBA& col,
                                                  const PtrGeometry_t& geometry,
@@ -200,6 +196,10 @@ void FrameToCollision::createSpecificMarkerShape(const std::string& frame_of_int
 {
     if(urdf::Geometry::MESH == geometry->type)
     {
+        std_msgs::ColorRGBA test_col;
+        test_col.a = 0.0;
+        test_col.r = 0.0;
+
         PtrMesh_t mesh = boost::static_pointer_cast<urdf::Mesh>(geometry);
         segment_of_interest_marker_shape.reset(new MarkerShape<BVH_RSS_t>(this->root_frame_id_,
                                                                           mesh->filename,
@@ -212,19 +212,33 @@ void FrameToCollision::createSpecificMarkerShape(const std::string& frame_of_int
         fcl::Box b(urdf_box->dim.x,
                    urdf_box->dim.y,
                    urdf_box->dim.z);
-        segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Box>(this->root_frame_id_, b, pose, col));
+
+        std_msgs::ColorRGBA test_col;
+        test_col.a = 1.0;
+        test_col.r = 1.0;
+
+        // segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Box>(this->root_frame_id_, b, pose, col));
+        segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Box>(this->root_frame_id_, b, pose, test_col));
     }
     else if(urdf::Geometry::SPHERE == geometry->type)
     {
+        std_msgs::ColorRGBA test_col;
+        test_col.a = 1.0;
+        test_col.b = 1.0;
+
         PtrSphere_t urdf_sphere = boost::static_pointer_cast<urdf::Sphere>(geometry);
         fcl::Sphere s(urdf_sphere->radius);
-        segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Sphere>(this->root_frame_id_, s, pose, col));
+        segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Sphere>(this->root_frame_id_, s, pose, test_col));
     }
     else if(urdf::Geometry::CYLINDER == geometry->type)
     {
+        std_msgs::ColorRGBA test_col;
+        test_col.a = 1.0;
+        test_col.g = 1.0;
+
         PtrCylinder_t urdf_cyl = boost::static_pointer_cast<urdf::Cylinder>(geometry);
         fcl::Cylinder c(urdf_cyl->radius, urdf_cyl->length);
-        segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Cylinder>(this->root_frame_id_, c, pose, col));
+        segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Cylinder>(this->root_frame_id_, c, pose, test_col));
     }
     else
     {
@@ -233,7 +247,7 @@ void FrameToCollision::createSpecificMarkerShape(const std::string& frame_of_int
 }
 
 
-bool FrameToCollision::getMarkerShapeFromType(const uint32_t& shape_type,
+bool LinkToCollision::getMarkerShapeFromType(const uint32_t& shape_type,
                                               const Eigen::Vector3d& abs_pos,
                                               const Eigen::Quaterniond& quat_pos,
                                               const std::string& frame_of_interest,
@@ -251,7 +265,7 @@ bool FrameToCollision::getMarkerShapeFromType(const uint32_t& shape_type,
 }
 
 
-bool FrameToCollision::getMarkerShapeFromType(const uint32_t& shape_type,
+bool LinkToCollision::getMarkerShapeFromType(const uint32_t& shape_type,
                             const geometry_msgs::Pose& pose,
                             const std::string& frame_of_interest,
                             const Eigen::Vector3d& dimension,
@@ -261,13 +275,6 @@ bool FrameToCollision::getMarkerShapeFromType(const uint32_t& shape_type,
     fcl::Box b(dimension(FCL_BOX_X), dimension(FCL_BOX_Y), dimension(FCL_BOX_Z));
     fcl::Sphere s(dimension(FCL_RADIUS));
     fcl::Cylinder c(dimension(FCL_RADIUS), dimension(FCL_CYL_LENGTH));
-
-    std_msgs::ColorRGBA col;
-    col.a = 1.0;
-    col.r = 1.0;
-    col.g = 0.0;
-    col.b = 0.0;
-
     uint32_t loc_shape_type = shape_type;
     std::string mesh_resource;
     if(visualization_msgs::Marker::MESH_RESOURCE == loc_shape_type)
@@ -291,22 +298,30 @@ bool FrameToCollision::getMarkerShapeFromType(const uint32_t& shape_type,
         }
     }
 
+    std_msgs::ColorRGBA test_col;
+
     switch(loc_shape_type)
     {
         case visualization_msgs::Marker::CUBE:
-            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Box>(this->root_frame_id_, b, pose, col));
+            test_col.a = 1.0;
+            test_col.r = 1.0;
+            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Box>(this->root_frame_id_, b, pose, test_col));
             break;
         case visualization_msgs::Marker::SPHERE:
-            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Sphere>(this->root_frame_id_, s, pose, col));
+            test_col.a = 1.0;
+            test_col.b = 1.0;
+            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Sphere>(this->root_frame_id_, s, pose, test_col));
             break;
         case visualization_msgs::Marker::CYLINDER:
-            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Cylinder>(this->root_frame_id_, c, pose, col));
+            test_col.a = 1.0;
+            test_col.g = 1.0;
+            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Cylinder>(this->root_frame_id_, c, pose, test_col));
             break;
         case visualization_msgs::Marker::MESH_RESOURCE:
             segment_of_interest_marker_shape.reset(new MarkerShape<BVH_RSS_t>(this->root_frame_id_,
                                                                               mesh_resource,
                                                                               pose,
-                                                                              col));
+                                                                              test_col));
             break;
         default:
            ROS_ERROR("Failed to process request due to unknown shape type: %d", loc_shape_type);

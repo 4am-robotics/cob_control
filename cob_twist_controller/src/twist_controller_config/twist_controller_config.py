@@ -45,19 +45,22 @@ EPS_TRUNC = 'eps_truncation'
 
 SOLVER = 'solver'
 PRIO = 'priority'
-MU = 'mu'
 K_H = 'k_H'
 
 CONSTR_JLA = 'constraint_jla'
 PRIO_JLA = 'priority_jla'
 K_H_JLA = 'k_H_jla'
 ACTIV_THRESH_JLA = 'activation_threshold_jla'
+ACTIV_BUF_JLA = 'activation_buffer_jla'
+CRIT_THRESH_JLA = 'critical_threshold_jla'
 DAMP_JLA = 'damping_jla'
 
 CONSTR_CA = 'constraint_ca'
 PRIO_CA = 'priority_ca'
 K_H_CA = 'k_H_ca'
 ACTIV_THRESH_CA = 'activation_threshold_ca'
+ACTIV_BUF_CA = 'activation_buffer_ca'
+CRIT_THRESH_CA = 'critical_threshold_ca'
 DAMP_CA = 'damping_ca'
 
 KEEP_DIR = 'keep_direction'
