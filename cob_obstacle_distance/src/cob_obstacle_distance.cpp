@@ -32,6 +32,7 @@
 #include <fstream>
 #include <thread>
 
+#include "cob_obstacle_distance/obstacle_distance_data_types.hpp"
 #include "cob_obstacle_distance/distance_manager.hpp"
 #include "cob_obstacle_distance/marker_shapes/marker_shapes.hpp"
 
@@ -43,7 +44,6 @@ int main(int argc, char** argv)
 {
     ros::init(argc, argv, "cob_obstacle_distance");
     ros::NodeHandle nh;
-    ros::Rate r(1.0);
     DistanceManager sm(nh);
 
     if (0 != sm.init())
@@ -54,8 +54,7 @@ int main(int argc, char** argv)
 
     ros::Subscriber jointstate_sub = nh.subscribe("joint_states", 1, &DistanceManager::jointstateCb, &sm);
     ros::Subscriber obstacle_sub = nh.subscribe("obstacle_distance/registerObstacle", 1, &DistanceManager::registerObstacle, &sm);
-    ros::ServiceServer registration_srv = nh.advertiseService("obstacle_distance/registerPointOfInterest" , &DistanceManager::registerPointOfInterest, &sm);
-    ros::ServiceServer distance_prediction_srv = nh.advertiseService("obstacle_distance/predictDistance" , &DistanceManager::predictDistance, &sm);
+    ros::ServiceServer registration_srv = nh.advertiseService("obstacle_distance/registerLinkOfInterest" , &DistanceManager::registerLinkOfInterest, &sm);
 
     //addTestObstacles(sm); // Comment in to see what happens
 

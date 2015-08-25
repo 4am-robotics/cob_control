@@ -1,7 +1,0 @@
-<?xml version="1.0" ?>
-<Movement>
-	<Move move="hold" time="2"/>
-	<Move move="move_circ" x_center="0" y_center="0.7" z_center="1" roll_center="0" pitch_center="0" yaw_center="0" r="0.3"
-	startangle="0" endangle="90" vel="0.1" accl="0.2" profile="sinoide"/>
-	<Move move="hold" time="2"/>
-</Movement>

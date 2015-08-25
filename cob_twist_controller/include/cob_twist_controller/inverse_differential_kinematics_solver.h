@@ -28,8 +28,8 @@
 #ifndef INVERSE_DIFFERENTIAL_KINEMATICS_SOLVER_H
 #define INVERSE_DIFFERENTIAL_KINEMATICS_SOLVER_H
 
-#include <kdl/chainiksolver.hpp>
 #include <kdl/chainjnttojacsolver.hpp>
+#include <kdl/chainfksolvervel_recursive.hpp>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
@@ -64,8 +64,9 @@ public:
         chain_(chain),
         jac_(chain_.getNrOfJoints()),
         jnt2jac_(chain_),
+        fk_solver_vel_(chain_),
         callback_data_mediator_(data_mediator),
-        constraint_solver_factory_(data_mediator, jnt2jac_, task_stack_controller_)
+        constraint_solver_factory_(data_mediator, jnt2jac_, fk_solver_vel_, task_stack_controller_)
     {
         this->limiters_.reset(new LimiterContainer(this->params_, this->chain_));
         this->limiters_->init();
@@ -89,6 +90,7 @@ public:
 private:
     const KDL::Chain chain_;
     KDL::Jacobian jac_;
+    KDL::ChainFkSolverVel_recursive fk_solver_vel_;
     KDL::ChainJntToJacSolver jnt2jac_;
     TwistControllerParams params_;
     CallbackDataMediator& callback_data_mediator_;

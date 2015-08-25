@@ -62,11 +62,21 @@ class ConstraintSolver
         }
 
         /**
-         * Method to initialize the solver if necessary
+         * Set all created constraints in a (priorized) set.
+         * @param constraints: All constraints ordered according to priority.
          */
-        virtual void setConstraints(std::set<ConstraintBase_t>& constraints)
+        inline void setConstraints(std::set<ConstraintBase_t>& constraints)
         {
+            this->constraints_.clear();
+            this->constraints_ = constraints;
+        }
 
+        /**
+         * Calls destructor on all objects and clears the set
+         */
+        inline void clearConstraints()
+        {
+            this->constraints_.clear();
         }
 
         /**
@@ -77,7 +87,10 @@ class ConstraintSolver
             this->jacobian_data_ = jacobian_data;
         }
 
-        virtual ~ConstraintSolver() {}
+        virtual ~ConstraintSolver()
+        {
+            this->clearConstraints();
+        }
 
     protected:
 
@@ -86,11 +99,13 @@ class ConstraintSolver
         {
         }
 
+        /// set inserts sorted (default less operator); if element has already been added it returns an iterator on it.
+        std::set<ConstraintBase_t> constraints_; ///< Set of constraints.
         const TwistControllerParams& params_; ///< References the inv. diff. kin. solver parameters.
         Matrix6Xd_t jacobian_data_; ///< References the current Jacobian (matrix data only).
         boost::shared_ptr<DampingBase> damping_; ///< The currently set damping method.
         PINV pinv_calc_; ///< An instance that helps solving the inverse of the Jacobian.
-        TaskStackController_t& task_stack_controller_;
+        TaskStackController_t& task_stack_controller_; ///< Reference to the task stack controller.
 };
 
 #endif /* CONSTRAINT_SOLVER_BASE_H_ */

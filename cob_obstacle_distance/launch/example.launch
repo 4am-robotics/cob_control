@@ -11,7 +11,7 @@
   </node>
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
     <param name="publish_frequency" type="double" value="50.0" />
-    <param name="tf_prefix" type="string" value="" />
+    <param name="tf_prefix" type="str" value="" />
   </node>
 
   <!-- controllers -->
@@ -25,13 +25,14 @@
 
   <!-- spawn example obstacle -->
   <node ns="arm" name="example_obstacle_publisher" pkg="cob_obstacle_distance" type="example_obstacle_publisher_node.py" output="screen"/>
+  <node ns="arm" name="interactive_obstacle_publisher" pkg="cob_obstacle_distance" type="test_interactive_obstacle_node.py" output="screen"/>
 
   <!-- rviz visualization -->
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find cob_obstacle_distance)/launch/rviz_config.rviz" />
 
 <!--
   for activation execute the following command on a terminal:
-  'rosservice call /arm/obstacle_distance/registerPointOfInterest "data: 'arm_7_link'"'
+  'rosservice call /arm/obstacle_distance/registerFrameOfInterest "data: 'arm_7_link'"'
 -->
 
 

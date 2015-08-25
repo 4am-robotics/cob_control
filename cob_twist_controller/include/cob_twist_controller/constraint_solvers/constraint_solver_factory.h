@@ -31,6 +31,7 @@
 #include <Eigen/Core>
 #include <Eigen/SVD>
 #include <kdl/jntarray.hpp>
+#include <kdl/chainfksolvervel_recursive.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
@@ -49,8 +50,12 @@ class ConstraintSolverFactory
          */
         ConstraintSolverFactory(CallbackDataMediator& data_mediator,
                                 KDL::ChainJntToJacSolver& jnt_to_jac,
+                                KDL::ChainFkSolverVel_recursive& fk_solver_vel,
                                 TaskStackController_t& task_stack_controller) :
-            data_mediator_(data_mediator), jnt_to_jac_(jnt_to_jac), task_stack_controller_(task_stack_controller)
+            data_mediator_(data_mediator),
+            jnt_to_jac_(jnt_to_jac),
+            task_stack_controller_(task_stack_controller),
+            fk_solver_vel_(fk_solver_vel)
         {
             this->solver_factory_.reset();
             this->damping_method_.reset();
@@ -91,6 +96,8 @@ class ConstraintSolverFactory
     private:
         CallbackDataMediator& data_mediator_;
         KDL::ChainJntToJacSolver& jnt_to_jac_;
+        KDL::ChainFkSolverVel_recursive& fk_solver_vel_;
+
         boost::shared_ptr<ISolverFactory> solver_factory_;
         boost::shared_ptr<DampingBase> damping_method_;
         std::set<ConstraintBase_t> constraints_;

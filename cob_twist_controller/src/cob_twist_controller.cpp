@@ -32,6 +32,7 @@
 #include <kdl_conversions/kdl_msg.h>
 #include <tf/transform_datatypes.h>
 #include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
 
 #include <Eigen/Dense>
 #include "cob_srvs/SetString.h"
@@ -138,7 +139,7 @@ bool CobTwistController::initialize()
 void CobTwistController::reinitServiceRegistration()
 {
     ROS_INFO("Reinit of Service registration!");
-    ros::ServiceClient client = nh_.serviceClient<cob_srvs::SetString>("obstacle_distance/registerPointOfInterest");
+    ros::ServiceClient client = nh_.serviceClient<cob_srvs::SetString>("obstacle_distance/registerLinkOfInterest");
     ROS_WARN_COND(twist_controller_params_.collision_check_frames.size() <= 0,
                   "There are no collision check frames for this manipulator. So nothing will be registered. Ensure parameters are set correctly.");
 
@@ -180,17 +181,23 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     twist_controller_params_.constraint_jla = static_cast<ConstraintTypesJLA>(config.constraint_jla);
     twist_controller_params_.priority_jla = config.priority_jla;
     twist_controller_params_.k_H_jla = config.k_H_jla;
-    double activation_in_percent = config.activation_threshold_jla; // in [%]
-    twist_controller_params_.activation_threshold_jla = activation_in_percent / 100.0;
+    const double activation_jla_in_percent = config.activation_threshold_jla;
+    const double activation_buffer_jla_in_percent = config.activation_buffer_jla;
+    const double critical_jla_in_percent = config.critical_threshold_jla;
+    twist_controller_params_.thresholds_jla.activation =  activation_jla_in_percent / 100.0;
+    twist_controller_params_.thresholds_jla.activation_with_buffer = twist_controller_params_.thresholds_jla.activation * (1.0 + activation_buffer_jla_in_percent / 100.0);
+    twist_controller_params_.thresholds_jla.critical =  critical_jla_in_percent / 100.0;
     twist_controller_params_.damping_jla = config.damping_jla;
 
     twist_controller_params_.constraint_ca = static_cast<ConstraintTypesCA>(config.constraint_ca);
     twist_controller_params_.priority_ca = config.priority_ca;
     twist_controller_params_.k_H_ca = config.k_H_ca;
-    twist_controller_params_.activation_threshold_ca = config.activation_threshold_ca; // in [m]
+    const double activaton_buffer_ca_in_percent = config.activation_buffer_ca;
+    twist_controller_params_.thresholds_ca.activation = config.activation_threshold_ca; // in [m]
+    twist_controller_params_.thresholds_ca.activation_with_buffer = twist_controller_params_.thresholds_ca.activation * (1.0 + activaton_buffer_ca_in_percent / 100.0);
+    twist_controller_params_.thresholds_ca.critical = config.critical_threshold_ca; // in [m]
     twist_controller_params_.damping_ca = config.damping_ca;
 
-    twist_controller_params_.mu = config.mu;
     twist_controller_params_.k_H = config.k_H;
 
     twist_controller_params_.eps_truncation = config.eps_truncation;
@@ -266,6 +273,13 @@ void CobTwistController::checkSolverAndConstraints(cob_twist_controller::TwistCo
         warning = true;
     }
 
+    if(twist_controller_params_.tolerance <= DIV0_SAFE)
+    {
+        ROS_ERROR("The tolerance for enforce limits is smaller than DIV/0 threshold. Therefore both enforce_limits are set to false!");
+        twist_controller_params_.enforce_pos_limits = config.enforce_pos_limits = false;
+        twist_controller_params_.enforce_vel_limits = config.enforce_vel_limits = false;
+    }
+
     if(!warning)
     {
         ROS_INFO("Parameters seem to be ok.");
@@ -291,7 +305,7 @@ void CobTwistController::twistStampedCallback(const geometry_msgs::TwistStamped:
         frame.M = KDL::Rotation::Quaternion(transform_tf.getRotation().x(), transform_tf.getRotation().y(), transform_tf.getRotation().z(), transform_tf.getRotation().w());
     }
     catch (tf::TransformException& ex){
-        ROS_ERROR("%s",ex.what());
+        ROS_ERROR("CobTwistController::twistStampedCallback: \n%s",ex.what());
         return;
     }
 
@@ -332,6 +346,8 @@ void CobTwistController::solveTwist(KDL::Twist twist)
         // Change between velocity and position interface
         this->hardware_interface_->processResult(q_dot_ik, this->joint_states_.current_q_);
     }
+
+
 }
 
 
@@ -382,7 +398,7 @@ void CobTwistController::odometryCallback(const nav_msgs::Odometry::ConstPtr& ms
     }
     catch (tf::TransformException& ex)
     {
-        ROS_ERROR("%s",ex.what());
+        ROS_ERROR("CobTwistController::odometryCallback: \n%s",ex.what());
         return;
     }
 
@@ -411,3 +427,5 @@ void CobTwistController::odometryCallback(const nav_msgs::Odometry::ConstPtr& ms
 
     twist_odometry_cb_ = twist_odometry_transformed_cb;
 }
+
+

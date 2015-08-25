@@ -1,10 +1,9 @@
-
 /*!
  *****************************************************************
  * \file
  *
  * \note
- *   Copyright (c) 2014 \n
+ *   Copyright (c) 2015 \n
  *   Fraunhofer Institute for Manufacturing Engineering
  *   and Automation (IPA) \n\n
  *
@@ -18,86 +17,85 @@
  *   ROS package name: cob_cartesian_controller
  *
  * \author
- *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de
+ *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de / christoph.mark@gmail.com
  *
- * \date Date of creation: August, 2014
+ * \date Date of creation: July, 2015
  *
  * \brief
  *   ...
  *
  ****************************************************************/
+
 #ifndef CARTESIAN_CONTROLLER_H
 #define CARTESIAN_CONTROLLER_H
 
-#include <vector>
-#include <tinyxml.h>
-
 #include <ros/ros.h>
-#include <std_msgs/Float64.h>
-#include <geometry_msgs/Pose.h>
-#include <visualization_msgs/Marker.h>
-#include <tf/transform_broadcaster.h>
-#include <tf/transform_listener.h>
+#include <vector>
+#include <string.h>
+#include <boost/shared_ptr.hpp>
 
+#include <tf/transform_listener.h>
+#include <tf/transform_broadcaster.h>
+#include <tf/transform_datatypes.h>
+
+#include <actionlib/server/simple_action_server.h>
+#include <cob_cartesian_controller/CartesianControllerAction.h>
+
+#include <cob_cartesian_controller/trajectory_interpolator/trajectory_interpolator.h>
+#include <cob_cartesian_controller/cartesian_controller_data_types.h>
+#include <cob_cartesian_controller/cartesian_controller_utils.h>
+
+typedef actionlib::SimpleActionServer<cob_cartesian_controller::CartesianControllerAction> SAS_CartesianControllerAction_t;
+
+#define DEFAULT_CARTESIAN_TARGET "cartesian_target"
 
 class CartesianController
 {
 public:
-	bool initialize();
-	void load();
+    bool initialize();
 
-	// Main functions
-	void pose_path_broadcaster(std::vector <geometry_msgs::Pose> *poseVector);
-	void linear_interpolation(std::vector <geometry_msgs::Pose> *poseVector,geometry_msgs::Pose, geometry_msgs::Pose,double,double,std::string,bool);
-	void circular_interpolation(std::vector<geometry_msgs::Pose> *poseVector,double,double,double,double,double,double,double,double,double,double,double,std::string);
-	void move_ptp(geometry_msgs::Pose targetPose, double epsilon);
-	void hold_position(geometry_msgs::Pose);
+    // Main functions
+    bool posePathBroadcaster(const geometry_msgs::PoseArray& cartesian_path);
+    bool movePTP(const geometry_msgs::Pose& target_pose, double epsilon);
 
-	// Helper function
-	bool epsilon_area(double,double,double,double,double,double,double);
-	geometry_msgs::Pose getEndeffectorPose();
-	void showMarker(tf::StampedTransform,int,double,double,double,std::string);
-	void showDot(double,double,double,int,double,double,double,std::string);
-	void showLevel(tf::Transform,int,double,double,double,std::string);
-	void timerCallback(const ros::TimerEvent&);
-	void calculateProfile(std::vector<double>*,double,double,double,std::string);
-	void calculateProfileForAngularMovements(std::vector<double> *pathMatrix,double,double,double,double,double,double,double,double,double,std::string,bool);
-	void generatePath(std::vector<double>*,double,double,double,double,int,std::string);
-	void generatePathWithTe(std::vector<double> *pathArray,double T_IPO, double te, double AcclMax,double Se_max, int steps_max,double start_angle,std::string profile);
-	void start_tracking();
-	void stop_tracking();
-	void PoseToRPY(geometry_msgs::Pose pose,double &roll, double &pitch, double &yaw);
+    // Helper function
+    bool startTracking();
+    bool stopTracking();
+
+    /// Action interface
+    void goalCallback();
+    void preemptCallback();
+    void actionSuccess(const bool success, const std::string& message);
+    void actionPreempt(const bool success, const std::string& message);
+    void actionAbort(const bool success, const std::string& message);
+
+    cob_cartesian_controller::CartesianActionStruct acceptGoal(boost::shared_ptr<const cob_cartesian_controller::CartesianControllerGoal> goal);
+    cob_cartesian_controller::MoveLinStruct convertMoveLin(const cob_cartesian_controller::MoveLin& move_lin_msg);
+    cob_cartesian_controller::MoveCircStruct convertMoveCirc(const cob_cartesian_controller::MoveCirc& move_circ_msg);
 
 private:
-	ros::NodeHandle nh_;
+    ros::NodeHandle nh_;
+    tf::TransformListener tf_listener_;
+    tf::TransformBroadcaster tf_broadcaster_;
 
-	// Publisher
-	ros::Publisher vis_pub_;
-	ros::Publisher path_pub_;
-	ros::Publisher speed_pub_;
-	ros::Publisher accl_pub_;
-	ros::Publisher jerk_pub_;
-	ros::ServiceClient startTracking_;
-	ros::ServiceClient stopTracking_;
+    ros::ServiceClient start_tracking_;
+    ros::ServiceClient stop_tracking_;
+    bool tracking_;
 
-	//TF Broadcaster-Var
-	tf::TransformBroadcaster br_;
-	tf::Transform transform_;
-	tf::Quaternion q_;
-	tf::TransformListener listener_;
-	tf::StampedTransform currentEndeffectorStampedTransform_;
+    double update_rate_;
+    std::string root_frame_, chain_tip_link_, target_frame_;
 
-	// Var for PTP Movement and hold Position
-	bool reached_pos_,hold_;
+    // HelperVars for movePTP
+    bool reached_pos_;
 
-	// yaml params
-	double update_rate_;
-	std::string stringPath_, fileName_;
-	std::string referenceFrame_,targetFrame_;
-	std::string chain_tip_link_;
-	const char* charPath_;
+    /// Action interface
+    std::string action_name_;
+    boost::shared_ptr<SAS_CartesianControllerAction_t> as_;
+    cob_cartesian_controller::CartesianControllerFeedback action_feedback_;
+    cob_cartesian_controller::CartesianControllerResult action_result_;
 
-	int marker1_;
+    CartesianControllerUtils utils_;
+    boost::shared_ptr< TrajectoryInterpolator > trajectory_interpolator_;
 };
 
 #endif

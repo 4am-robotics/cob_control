@@ -30,75 +30,70 @@
 #define COB_TWIST_CONTROLLER_DATA_TYPES_H_
 
 #include <vector>
+#include <map>
 #include <stdint.h>
 #include <Eigen/Core>
 #include <Eigen/LU> // necessary to use several methods on EIGEN Matrices.
 #include <kdl/chainjnttojacsolver.hpp>
+#include <cob_twist_controller/TwistControllerConfig.h>
 
 #define MAX_CRIT true
 #define MIN_CRIT false
-#define MAIN_TASK_PRIO 200u
 #define DEFAULT_CYCLE 0.02
 #define ZERO_THRESHOLD 1.0e-9  ///< used for numerical 0.0 threshold
 #define DIV0_SAFE 1.0e-6 ///< used for division in case of DIV/0
-#define ACTIVATION_BUFFER 0.05 ///< means 5 % upper the activation threshold the activation gain function gets active
-
-typedef Eigen::Matrix<double,6,Eigen::Dynamic> Matrix6Xd_t;
-typedef Eigen::Matrix<double,6,1> Vector6d_t;
 
 enum DampingMethodTypes
 {
-    NO_DAMPING = 0,
-    CONSTANT = 1,
-    MANIPULABILITY = 2,
-    LEAST_SINGULAR_VALUE = 3,
+    NO_DAMPING = cob_twist_controller::TwistController_NO_DAMPING,
+    CONSTANT = cob_twist_controller::TwistController_CONSTANT,
+    MANIPULABILITY = cob_twist_controller::TwistController_MANIPULABILITY,
+    LEAST_SINGULAR_VALUE = cob_twist_controller::TwistController_LEAST_SINGULAR_VALUE,
 };
 
 enum HardwareInterfaceTypes
 {
-    VELOCITY_INTERFACE = 0,
-    POSITION_INTERFACE = 1,
-    JOINT_STATE_INTERFACE = 2,
+    VELOCITY_INTERFACE = cob_twist_controller::TwistController_VELOCITY_INTERFACE,
+    POSITION_INTERFACE = cob_twist_controller::TwistController_POSITION_INTERFACE,
+    JOINT_STATE_INTERFACE = cob_twist_controller::TwistController_JOINT_STATE_INTERFACE,
 };
 
 enum KinematicExtensionTypes
 {
-    NO_EXTENSION = 0,
-    BASE_ACTIVE = 1,
+    NO_EXTENSION = cob_twist_controller::TwistController_NO_EXTENSION,
+    BASE_ACTIVE = cob_twist_controller::TwistController_BASE_ACTIVE,
 };
 
 enum SolverTypes
 {
-    DEFAULT_SOLVER = 0,
-    WLN,
-    GPM,
-    TASK_STACK_NO_GPM,
-    TASK_STACK_GPM,
-    TASK_2ND_PRIO,
-    DYN_TASKS_READJ,
-};
-
-enum ConstraintTypes
-{
-    None = 0,
-    CA,
-    JLA,
-    JLA_MID,
-    JLA_INEQ,
+    DEFAULT_SOLVER = cob_twist_controller::TwistController_DEFAULT_SOLVER,
+    WLN = cob_twist_controller::TwistController_WLN,
+    GPM = cob_twist_controller::TwistController_GPM,
+    STACK_OF_TASKS = cob_twist_controller::TwistController_STACK_OF_TASKS,
+    TASK_2ND_PRIO = cob_twist_controller::TwistController_TASK_2ND_PRIO,
 };
 
 enum ConstraintTypesCA
 {
-    CA_OFF = 0,
-    CA_ON,
+    CA_OFF = cob_twist_controller::TwistController_CA_OFF,
+    CA_ON = cob_twist_controller::TwistController_CA,
 };
 
 enum ConstraintTypesJLA
 {
-    JLA_OFF = 0,
-    JLA_ON,
-    JLA_MID_ON,
-    JLA_INEQ_ON,
+    JLA_OFF = cob_twist_controller::TwistController_JLA_OFF,
+    JLA_ON = cob_twist_controller::TwistController_JLA,
+    JLA_MID_ON = cob_twist_controller::TwistController_JLA_MID,
+    JLA_INEQ_ON = cob_twist_controller::TwistController_JLA_INEQ,
+};
+
+enum ConstraintTypes
+{
+    None,
+    CA,
+    JLA,
+    JLA_MID,
+    JLA_INEQ,
 };
 
 struct JointStates
@@ -122,12 +117,19 @@ struct ActiveCartesianDimension
     double rot_z;
 };
 
-struct ObstacleDistanceInfo
+struct ObstacleDistanceData
 {
-    double min_distance;
-    Eigen::Vector3d distance_vec;
-    std::string frame_id;
-    Eigen::Vector3d collision_pnt_vector;
+        double min_distance;
+        Eigen::Vector3d frame_vector;
+        Eigen::Vector3d nearest_point_frame_vector;
+        Eigen::Vector3d nearest_point_obstacle_vector;
+};
+
+struct ConstraintThresholds
+{
+    double activation;
+    double activation_with_buffer;
+    double critical;
 };
 
 struct TwistControllerParams
@@ -147,18 +149,15 @@ struct TwistControllerParams
 
             solver(WLN),
             priority_main(500),
-            mu(-2.0),
             k_H(1.0),
 
             constraint_jla(JLA_ON),
             priority_jla(50),
             k_H_jla(-10.0),
-            activation_threshold_jla(10.0),
             damping_jla(0.000001),
 
             constraint_ca(CA_OFF),
             priority_ca(100),
-            activation_threshold_ca(0.1),
             damping_ca(0.000001),
             k_H_ca(2.0),
 
@@ -173,7 +172,13 @@ struct TwistControllerParams
             kinematic_extension(NO_EXTENSION),
             base_ratio(0.0)
             {
+                this->thresholds_ca.activation = 0.1;
+                this->thresholds_ca.critical = 0.025;
+                this->thresholds_ca.activation_with_buffer = this->thresholds_ca.activation * 1.5; // best experienced value
 
+                this->thresholds_jla.activation = 0.1;
+                this->thresholds_jla.critical = 0.05;
+                this->thresholds_jla.activation_with_buffer = this->thresholds_jla.activation * 4.0; // best experienced value
             }
 
     uint8_t dof;
@@ -193,20 +198,19 @@ struct TwistControllerParams
 
     SolverTypes solver;
     uint32_t priority_main;
-    double mu;
     double k_H;
 
     ConstraintTypesCA constraint_ca;
     uint32_t priority_ca;
     double k_H_ca;
-    double activation_threshold_ca;
     double damping_ca;
+    ConstraintThresholds thresholds_ca;
 
     ConstraintTypesJLA constraint_jla;
     uint32_t priority_jla;
     double k_H_jla;
-    double activation_threshold_jla;
     double damping_jla;
+    ConstraintThresholds thresholds_jla;
 
     bool keep_direction;
     bool enforce_pos_limits;
@@ -228,13 +232,13 @@ struct TwistControllerParams
     std::vector<std::string> frame_names;
     std::vector<std::string> joints;
 
-    // added a vector to contain all frames of interest for collision checking.
+    // added a vector that contains all frames of interest for collision checking.
     std::vector<std::string> collision_check_frames;
 };
 
 enum EN_ConstraintStates
 {
-    NORMAL,
+    NORMAL = 0,
     DANGER,
     CRITICAL,
 };
@@ -276,5 +280,9 @@ class ConstraintState
         EN_ConstraintStates previous_;
         bool transition_;
 };
+
+typedef Eigen::Matrix<double,6,Eigen::Dynamic> Matrix6Xd_t;
+typedef Eigen::Matrix<double,6,1> Vector6d_t;
+typedef std::map<std::string, std::vector<ObstacleDistanceData> > ObstacleDistancesInfo_t;
 
 #endif /* COB_TWIST_CONTROLLER_DATA_TYPES_H_ */

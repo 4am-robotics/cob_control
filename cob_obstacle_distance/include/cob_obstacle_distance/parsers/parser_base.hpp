@@ -72,6 +72,9 @@ class ParserBase
 
         template <typename T>
         int8_t createBVH(fcl::BVHModel<T>& bvh);
+
+        template <typename T>
+        int8_t createBVH(boost::shared_ptr<fcl::BVHModel<T> > ptr_bvh);
 };
 
 
@@ -96,6 +99,27 @@ int8_t ParserBase::createBVH(fcl::BVHModel<T>& bvh)
 
         bvh.endModel();
         bvh.computeLocalAABB();
+        success = 0;
+    }
+
+    return success;
+}
+
+template <typename T>
+int8_t ParserBase::createBVH(boost::shared_ptr<fcl::BVHModel<T> > ptr_bvh)
+{
+    int8_t success = -1;
+    std::vector<TriangleSupport> tri_vec;
+    if(0 == this->read(tri_vec))
+    {
+        ptr_bvh->beginModel();
+        for(TriangleSupport t :  tri_vec)
+        {
+            ptr_bvh->addTriangle(t.a, t.b, t.c);
+        }
+
+        ptr_bvh->endModel();
+        ptr_bvh->computeLocalAABB();
         success = 0;
     }
 

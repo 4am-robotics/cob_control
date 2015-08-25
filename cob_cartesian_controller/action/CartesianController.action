@@ -1,0 +1,16 @@
+# goal definition
+uint8 LIN=1
+uint8 CIRC=2
+uint8 move_type
+
+cob_cartesian_controller/MoveLin move_lin
+cob_cartesian_controller/MoveCirc move_circ
+
+---
+# result definition
+bool success
+string message
+---
+# Define a feedback message
+uint8 state
+string message

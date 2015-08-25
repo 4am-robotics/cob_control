@@ -34,10 +34,8 @@
 #include "cob_twist_controller/constraint_solvers/solvers/wln_joint_limit_avoidance_solver.h"
 #include "cob_twist_controller/constraint_solvers/solvers/weighted_least_norm_solver.h"
 #include "cob_twist_controller/constraint_solvers/solvers/gradient_projection_method_solver.h"
-#include "cob_twist_controller/constraint_solvers/solvers/stack_of_tasks_solver.h"
-#include "cob_twist_controller/constraint_solvers/solvers/stack_of_tasks_gpm_solver.h"
 #include "cob_twist_controller/constraint_solvers/solvers/task_priority_solver.h"
-#include "cob_twist_controller/constraint_solvers/solvers/dynamic_tasks_readjust_solver.h"
+#include "cob_twist_controller/constraint_solvers/solvers/stack_of_tasks_solver.h"
 
 #include "cob_twist_controller/damping_methods/damping.h"
 
@@ -103,17 +101,11 @@ bool ConstraintSolverFactory::getSolverFactory(const TwistControllerParams& para
         case GPM:
             solver_factory.reset(new SolverFactory<GradientProjectionMethodSolver>(params, task_stack_controller));
             break;
-        case TASK_STACK_NO_GPM:
+        case STACK_OF_TASKS:
             solver_factory.reset(new SolverFactory<StackOfTasksSolver>(params, task_stack_controller));
-            break;
-        case TASK_STACK_GPM:
-            solver_factory.reset(new SolverFactory<StackOfTasksGPMSolver>(params, task_stack_controller));
             break;
         case TASK_2ND_PRIO:
             solver_factory.reset(new SolverFactory<TaskPrioritySolver>(params, task_stack_controller));
-            break;
-        case DYN_TASKS_READJ:
-            solver_factory.reset(new SolverFactory<DynamicTasksReadjustSolver>(params, task_stack_controller));
             break;
         default:
             ROS_ERROR("Returning NULL factory due to constraint solver creation error. There is no solver method for %d implemented.",
@@ -133,9 +125,18 @@ int8_t ConstraintSolverFactory::resetAll(const TwistControllerParams& params)
         return -1; // error
     }
 
+    this->constraints_.clear();
     this->constraints_ = ConstraintsBuilder_t::createConstraints(params,
                                                                  this->jnt_to_jac_,
+                                                                 this->fk_solver_vel_,
                                                                  this->data_mediator_);
+
+    for (std::set<ConstraintBase_t>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
+    {
+        ROS_INFO_STREAM((*it)->getTaskId());
+    }
+
+
 
     if(!ConstraintSolverFactory::getSolverFactory(params, this->solver_factory_, this->task_stack_controller_))
     {

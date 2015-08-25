@@ -22,34 +22,36 @@
  * \date Date of creation: June, 2015
  *
  * \brief
- *   This header contains the description of stack of tasks solver
- *   Implements methods from constraint_solver_base
+ *   This header contains the description of an priority based
+ *   task solver with additional gradient projection.
  *
  ****************************************************************/
-#ifndef STACK_OF_TASKS_SOLVER_H_
-#define STACK_OF_TASKS_SOLVER_H_
+#ifndef DYNAMIC_TASKS_READJUST_SOLVER_H_
+#define DYNAMIC_TASKS_READJUST_SOLVER_H_
 
 #include <set>
-#include "ros/ros.h"
+#include <ros/ros.h>
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/constraint_solvers/solvers/constraint_solver_base.h"
 
-
 #include "cob_twist_controller/constraints/constraint_base.h"
 #include "cob_twist_controller/constraints/constraint.h"
+
+#define START_CNT 40.0
 
 class StackOfTasksSolver : public ConstraintSolver<>
 {
     public:
         StackOfTasksSolver(const TwistControllerParams& params, TaskStackController_t& task_stack_controller)
-                           : ConstraintSolver(params, task_stack_controller)
+                           : ConstraintSolver(params, task_stack_controller), in_cart_vel_damping_(1.0)
         {
+            this->last_time_ = ros::Time::now();
+            this->global_constraint_state_ = NORMAL;
         }
 
         virtual ~StackOfTasksSolver()
         {
-            this->clearConstraints();
         }
 
         /**
@@ -59,27 +61,21 @@ class StackOfTasksSolver : public ConstraintSolver<>
         virtual Eigen::MatrixXd solve(const Vector6d_t& in_cart_velocities,
                                       const JointStates& joint_states);
 
-        /**
-         * Set all created constraints in a (priorized) set.
-         * @param constraints: All constraints ordered according to priority.
-         */
-        virtual void setConstraints(std::set<ConstraintBase_t>& constraints)
-        {
-            this->constraints_ = constraints;
-        }
+
 
         /**
-         * Calls destructor on all objects and clears the set
+         * Process the state of the constraint and update the sum_of_gradient.
          */
-        void clearConstraints()
-        {
-            this->constraints_.clear();
-        }
+        void processState(std::set<ConstraintBase_t>::iterator& it,
+                          const Eigen::MatrixXd& projector,
+                          const Eigen::MatrixXd& particular_solution,
+                          double inv_sum_of_prios,
+                          Eigen::VectorXd& sum_of_gradient);
 
     protected:
-
-        /// set inserts sorted (default less operator); if element has already been added it returns an iterator on it.
-        std::set<ConstraintBase_t> constraints_;
+        ros::Time last_time_;
+        EN_ConstraintStates global_constraint_state_;
+        double in_cart_vel_damping_;
 };
 
-#endif /* STACK_OF_TASKS_SOLVER_H_ */
+#endif /* DYNAMIC_TASKS_READJUST_SOLVER_H_ */

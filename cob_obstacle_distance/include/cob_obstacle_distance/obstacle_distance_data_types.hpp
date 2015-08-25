@@ -41,17 +41,26 @@
 #define FCL_RADIUS 0u
 #define FCL_CYL_LENGTH 1u
 
+#define MIN_DISTANCE 0.5 // [m]: filter for distances to be published!
+
+#define DEFAULT_COL_ALPHA 0.6 // MoveIt! CollisionGeometry does not provide color -> Therefore use default value. 0.5 = Test for taking pictures -> robot arm should be visible behind obstacle
 
 struct ShapeMsgTypeToVisMarkerType
 {
     public:
         std::unordered_map<uint8_t, uint32_t> map_;
+        std_msgs::ColorRGBA obstacle_color_;
 
         ShapeMsgTypeToVisMarkerType()
         {
             map_[shape_msgs::SolidPrimitive::BOX] = visualization_msgs::Marker::CUBE;
             map_[shape_msgs::SolidPrimitive::SPHERE] = visualization_msgs::Marker::SPHERE;
             map_[shape_msgs::SolidPrimitive::CYLINDER] = visualization_msgs::Marker::CYLINDER;
+
+            obstacle_color_.r = 1.0;
+            obstacle_color_.g = 0.0;
+            obstacle_color_.b = 0.0;
+            obstacle_color_.a = DEFAULT_COL_ALPHA;
         }
 };
 

@@ -30,6 +30,8 @@
 #include <ros/ros.h>
 #include <eigen_conversions/eigen_kdl.h>
 
+#include <kdl/chainfksolvervel_recursive.hpp>
+
 /**
  * Solve the inverse kinematics problem at the first order differential level.
  */

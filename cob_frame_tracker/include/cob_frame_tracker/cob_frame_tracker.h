@@ -32,149 +32,158 @@
 #include <algorithm>
 #include <ros/ros.h>
 
-#include <std_srvs/Empty.h>
-#include <cob_srvs/SetString.h>
+#include <std_msgs/String.h>
+#include <std_msgs/Float64.h>
+#include <std_msgs/Float64MultiArray.h>
 #include <sensor_msgs/JointState.h>
 #include <geometry_msgs/Twist.h>
+#include <std_srvs/Empty.h>
+#include <cob_srvs/SetString.h>
+
+#include <actionlib/server/simple_action_server.h>
+#include <cob_frame_tracker/FrameTrackerConfig.h>
+#include <cob_frame_tracker/FrameTrackingAction.h>
 
 #include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
 
-#include <cob_frame_tracker/FrameTrackerConfig.h>
-#include <cob_frame_tracker/FrameTrackingAction.h>
-
-#include <control_toolbox/pid.h>
-#include <kdl/frames.hpp>
-#include <kdl_parser/kdl_parser.hpp>
-
-#include <std_msgs/Float64MultiArray.h>
-#include <std_msgs/Float64.h>
-#include <std_msgs/String.h>
-
-#include <actionlib/server/simple_action_server.h>
 #include <kdl_parser/kdl_parser.hpp>
 #include <kdl/chainiksolvervel_pinv.hpp>
 #include <kdl/chainfksolvervel_recursive.hpp>
+#include <kdl/frames.hpp>
 #include <kdl/jntarray.hpp>
 #include <kdl/jntarrayvel.hpp>
 
+#include <control_toolbox/pid.h>
+#include <dynamic_reconfigure/server.h>
 #include <boost/thread/mutex.hpp>
 
-#include <dynamic_reconfigure/server.h>
 
-#include <control_toolbox/pid.h>
+typedef actionlib::SimpleActionServer<cob_frame_tracker::FrameTrackingAction> SAS_FrameTrackingAction_t;
 
-typedef actionlib::SimpleActionServer<cob_frame_tracker::FrameTrackingAction> tSAS_FrameTrackingAction;
+struct HoldTf
+{
+    tf::StampedTransform transform_tf;
+    bool hold;
+};
+
 
 class CobFrameTracker
 {
 public:
-	CobFrameTracker() {;}
-	~CobFrameTracker()
-	{
-	    jntToCartSolver_vel_.reset();
-	    as_.reset();
-	    reconfigure_server_.reset();
-	}
+    CobFrameTracker()
+    {
+        ht_.hold = false;
+    }
 
-	bool initialize();
-	void run(const ros::TimerEvent& event);
+    ~CobFrameTracker()
+    {
+        jntToCartSolver_vel_.reset();
+        as_.reset();
+        reconfigure_server_.reset();
+    }
 
-	void jointstate_cb(const sensor_msgs::JointState::ConstPtr& msg);
-	void publish_twist(ros::Duration period);
-	bool start_tracking_cb(cob_srvs::SetString::Request& request, cob_srvs::SetString::Response& response);
-	bool stop_tracking_cb(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
+    bool initialize();
+    void run(const ros::TimerEvent& event);
 
-	/// Action interface
-	void goalCB();
-	void preemptCB();
-	void action_success();
-	void action_abort();
+    void jointstateCallback(const sensor_msgs::JointState::ConstPtr& msg);
+    void publishTwist(ros::Duration period, bool do_publish = true);
+
+    bool startTrackingCallback(cob_srvs::SetString::Request& request, cob_srvs::SetString::Response& response);
+    bool stopTrackingCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
+
+    bool getTransform(const std::string& target_frame, const std::string& source_frame, tf::StampedTransform& stamped_tf);
+
+    void publishHoldTwist(const ros::Duration& period);
+
+    /// Action interface
+    void goalCB();
+    void preemptCB();
+    void action_success();
+    void action_abort();
 
 private:
-	double update_rate_;
-	ros::Timer timer_;
+    HoldTf ht_;
 
-	bool tracking_;
-	bool tracking_goal_;
-	std::string tracking_frame_;
-	std::string chain_tip_link_;
+    double update_rate_;
+    ros::Timer timer_;
 
-	double max_vel_lin_;
-	double max_vel_rot_;
+    bool tracking_;
+    bool tracking_goal_;
+    std::string tracking_frame_;
+    std::string chain_tip_link_;
 
-	std::vector<std::string> joints_;
-	unsigned int dof_;
+    double max_vel_lin_;
+    double max_vel_rot_;
 
-	bool movable_trans_;
-	bool movable_rot_;
+    std::vector<std::string> joints_;
+    unsigned int dof_;
 
-	control_toolbox::Pid pid_controller_trans_x_;       /**< Internal PID controller. */
-	control_toolbox::Pid pid_controller_trans_y_;
-	control_toolbox::Pid pid_controller_trans_z_;
+    bool movable_trans_;
+    bool movable_rot_;
 
-	control_toolbox::Pid pid_controller_rot_x_;         /**< Internal PID controller. */
-	control_toolbox::Pid pid_controller_rot_y_;
-	control_toolbox::Pid pid_controller_rot_z_;
+    control_toolbox::Pid pid_controller_trans_x_;       /**< Internal PID controller. */
+    control_toolbox::Pid pid_controller_trans_y_;
+    control_toolbox::Pid pid_controller_trans_z_;
 
-	/// KDL Conversion
-	KDL::Chain chain_;
-	KDL::JntArray q_temp;
-	KDL::JntArray q_dot_temp;
-	KDL::JntArray last_q_;
-	KDL::JntArray last_q_dot_;
-	boost::shared_ptr<KDL::ChainFkSolverVel_recursive> jntToCartSolver_vel_;
-	KDL::Vector vector_vel_,vector_rot_;
-	std::string chain_base_;
-	std::string chain_tip_;
-	std::string robot_desc_string;
+    control_toolbox::Pid pid_controller_rot_x_;         /**< Internal PID controller. */
+    control_toolbox::Pid pid_controller_rot_y_;
+    control_toolbox::Pid pid_controller_rot_z_;
 
-	/// ROS interface
-	tf::TransformListener tf_listener_;
+    /// KDL Conversion
+    KDL::Chain chain_;
+    KDL::JntArray last_q_;
+    KDL::JntArray last_q_dot_;
+    boost::shared_ptr<KDL::ChainFkSolverVel_recursive> jntToCartSolver_vel_;
+    std::string chain_base_;
+    std::string chain_tip_;
 
-	ros::Subscriber jointstate_sub;
-	ros::Publisher twist_pub_;
+    tf::TransformListener tf_listener_;
 
-	ros::ServiceServer start_server_;
-	ros::ServiceServer stop_server_;
+    ros::Subscriber jointstate_sub_;
+    ros::Publisher twist_pub_;
 
-	/// Action interface
-	std::string action_name_;
-	boost::shared_ptr<tSAS_FrameTrackingAction> as_;
+    ros::ServiceServer start_server_;
+    ros::ServiceServer stop_server_;
 
-	cob_frame_tracker::FrameTrackingFeedback action_feedback_;
-	cob_frame_tracker::FrameTrackingResult action_result_;
+    /// Action interface
+    std::string action_name_;
+    boost::shared_ptr<SAS_FrameTrackingAction_t> as_;
 
-	boost::recursive_mutex reconfig_mutex_;
-	boost::shared_ptr< dynamic_reconfigure::Server<cob_frame_tracker::FrameTrackerConfig> > reconfigure_server_;
-	void reconfigure_callback(cob_frame_tracker::FrameTrackerConfig &config, uint32_t level);
+    cob_frame_tracker::FrameTrackingFeedback action_feedback_;
+    cob_frame_tracker::FrameTrackingResult action_result_;
 
-	/// ABORTION CRITERIA:
-	int checkStatus();
-	bool checkInfinitesimalTwist(const KDL::Twist current);
-	bool checkCartDistanceViolation(const double dist, const double rot);
-	bool checkTwistViolation(const KDL::Twist current, const KDL::Twist target);
+    boost::recursive_mutex reconfig_mutex_;
+    boost::shared_ptr< dynamic_reconfigure::Server<cob_frame_tracker::FrameTrackerConfig> > reconfigure_server_;
+    void reconfigureCallback(cob_frame_tracker::FrameTrackerConfig& config, uint32_t level);
 
-	bool stop_on_goal_;
-	double tracking_duration_;
-	ros::Time tracking_start_time_;
+    /// ABORTION CRITERIA:
+    int checkStatus();
+    bool checkInfinitesimalTwist(const KDL::Twist current);
+    bool checkCartDistanceViolation(const double dist, const double rot);
+    bool checkTwistViolation(const KDL::Twist current, const KDL::Twist target);
 
-	double cart_min_dist_threshold_lin_;
-	double cart_min_dist_threshold_rot_;
-	double twist_dead_threshold_lin_;
-	double twist_dead_threshold_rot_;
-	double twist_deviation_threshold_lin_;
-	double twist_deviation_threshold_rot_;
+    int checkServiceCallStatus();
 
-	KDL::Twist current_twist_;
-	KDL::Twist target_twist_;
+    bool stop_on_goal_;
+    double tracking_duration_;
+    ros::Time tracking_start_time_;
 
-	double cart_distance_;
-	double rot_distance_;
+    double cart_min_dist_threshold_lin_;
+    double cart_min_dist_threshold_rot_;
+    double twist_dead_threshold_lin_;
+    double twist_dead_threshold_rot_;
+    double twist_deviation_threshold_lin_;
+    double twist_deviation_threshold_rot_;
 
-	unsigned int abortion_counter_;
-	unsigned int max_abortions_;
+    KDL::Twist current_twist_;
+    KDL::Twist target_twist_;
+
+    double cart_distance_;
+    double rot_distance_;
+
+    unsigned int abortion_counter_;
+    unsigned int max_abortions_;
 };
 
 #endif
-

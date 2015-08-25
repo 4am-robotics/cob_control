@@ -33,11 +33,6 @@
 
 #include <eigen_conversions/eigen_msg.h>
 
-CallbackDataMediator::CallbackDataMediator()
-{
-    this->it_distances = this->obstacle_distances_.end();
-}
-
 /// Counts all currently available distances to obstacles.
 uint32_t CallbackDataMediator::obstacleDistancesCnt()
 {
@@ -50,21 +45,15 @@ bool CallbackDataMediator::fill(ConstraintParamsCA& params_ca)
 {
     boost::mutex::scoped_lock lock(distances_to_obstacles_lock_);
     bool success = false;
-    if (this->obstacle_distances_.end() != this->it_distances)
+    double last_min_distance = std::numeric_limits<double>::max();
+    params_ca.current_distances_.clear();
+    for(ObstacleDistancesIter_t it = this->obstacle_distances_.begin(); it != this->obstacle_distances_.end(); it++)
     {
-        params_ca.current_distance_.distance_vec = this->it_distances->distance_vec;
-        params_ca.current_distance_.frame_id = this->it_distances->frame_id;
-        params_ca.current_distance_.min_distance = this->it_distances->min_distance;
-        params_ca.current_distance_.collision_pnt_vector = this->it_distances->collision_pnt_vector;
-        this->it_distances++;
-
-        // Let the iterator point to the first element again -> Returns the same elements again until callback occurred.
-        if (this->obstacle_distances_.end() == this->it_distances)
+        if(it->first == params_ca.id_) // select the appropriate distances for frame id of interest
         {
-            this->it_distances = this->obstacle_distances_.begin();
+            params_ca.current_distances_ = it->second; // copy all distances for frame to current distances of param struct
+            success = true;
         }
-
-        success = true;
     }
 
     return success;
@@ -83,17 +72,12 @@ void CallbackDataMediator::distancesToObstaclesCallback(const cob_obstacle_dista
     this->obstacle_distances_.clear();
     for(cob_obstacle_distance::ObstacleDistances::_distances_type::const_iterator it = msg->distances.begin(); it != msg->distances.end(); it++)
     {
-        ObstacleDistanceInfo d;
+        ObstacleDistanceData d;
         d.min_distance = it->distance;
-
-        d.distance_vec << it->distance_vector.x,
-                          it->distance_vector.y,
-                          it->distance_vector.z;
-        tf::vectorMsgToEigen(it->collision_pnt_vector, d.collision_pnt_vector);
-
-        d.frame_id = it->header.frame_id;
-        this->obstacle_distances_.push_back(d);
+        tf::vectorMsgToEigen(it->frame_vector, d.frame_vector);
+        tf::vectorMsgToEigen(it->nearest_point_frame_vector, d.nearest_point_frame_vector);
+        tf::vectorMsgToEigen(it->nearest_point_obstacle_vector, d.nearest_point_obstacle_vector);
+        this->obstacle_distances_[it->link_of_interest].push_back(d);
     }
 
-    this->it_distances = this->obstacle_distances_.begin();
 }

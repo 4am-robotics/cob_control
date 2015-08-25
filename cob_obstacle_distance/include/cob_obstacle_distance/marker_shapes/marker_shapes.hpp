@@ -41,6 +41,9 @@
 #include "cob_obstacle_distance/fcl_marker_converter.hpp"
 #include "cob_obstacle_distance/marker_shapes/marker_shapes_interface.hpp"
 
+#include <fcl/distance.h>
+#include <fcl/collision_data.h>
+
 static const std::string g_marker_namespace = "collision_object";
 
 /* BEGIN MarkerShape ********************************************************************************************/
@@ -50,11 +53,8 @@ template
 class MarkerShape : public IMarkerShape
 {
     private:
-        BVH_RSS_t bvh_;
-        bool is_drawn_;
         FclMarkerConverter<T> fcl_marker_converter_;
-        visualization_msgs::Marker marker_;
-        geometry_msgs::Pose origin_;
+        boost::shared_ptr<BVH_RSS_t> ptr_fcl_bvh_;
 
         void init(const std::string& root_frame, double x, double y, double z,
                   double quat_x, double quat_y, double quat_z, double quat_w,
@@ -99,16 +99,6 @@ class MarkerShape : public IMarkerShape
          */
         inline visualization_msgs::Marker getMarker();
 
-        /**
-         * Set drawn when marker is published.
-         */
-        inline void setDrawn();
-
-        /**
-         * @return True if marker has already been published.
-         */
-        inline bool isDrawn() const;
-
         inline void updatePose(const geometry_msgs::Vector3& pos, const geometry_msgs::Quaternion& quat);
 
         inline void updatePose(const geometry_msgs::Pose& pose);
@@ -129,10 +119,7 @@ template <>
 class MarkerShape<BVH_RSS_t> : public IMarkerShape
 {
     private:
-        bool is_drawn_;
-        BVH_RSS_t fcl_bvh_;
-        visualization_msgs::Marker marker_;
-        geometry_msgs::Pose origin_;
+        boost::shared_ptr<BVH_RSS_t> ptr_fcl_bvh_;
 
         void init(const std::string& root_frame, const std::string& mesh_resource, double x, double y, double z,
                   double quat_x, double quat_y, double quat_z, double quat_w,
@@ -174,16 +161,6 @@ class MarkerShape<BVH_RSS_t> : public IMarkerShape
          * @return Gets the visualization marker of this MarkerShape.
          */
         inline visualization_msgs::Marker getMarker();
-
-        /**
-         * Set drawn when marker is published.
-         */
-        inline void setDrawn();
-
-        /**
-         * @return True if marker has already been published.
-         */
-        inline bool isDrawn() const;
 
         inline void updatePose(const geometry_msgs::Vector3& pos, const geometry_msgs::Quaternion& quat);
 

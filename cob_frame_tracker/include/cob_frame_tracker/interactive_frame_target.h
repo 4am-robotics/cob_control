@@ -46,46 +46,45 @@
 class InteractiveFrameTarget
 {
 public:
-	InteractiveFrameTarget() {;}
-	~InteractiveFrameTarget() {;}
+    InteractiveFrameTarget() {;}
+    ~InteractiveFrameTarget() {;}
 
-	bool initialize();
+    bool initialize();
 
-	ros::NodeHandle nh_;
-	tf::TransformListener tf_listener_;
-	tf::TransformBroadcaster tf_broadcaster_;
+    ros::NodeHandle nh_;
+    tf::TransformListener tf_listener_;
+    tf::TransformBroadcaster tf_broadcaster_;
 
 private:
-	ros::Timer timer_;
-	double update_rate_;
+    ros::Timer timer_;
+    double update_rate_;
 
-	std::string chain_tip_link_;		//twists with respect to this frame
-	std::string tracking_frame_;	//goal frame
-	std::string root_frame_;
+    std::string chain_tip_link_;    //twists with respect to this frame
+    std::string tracking_frame_;    //goal frame
+    std::string root_frame_;
 
-	bool movable_trans_;
-	bool movable_rot_;
+    bool movable_trans_;
+    bool movable_rot_;
 
-	interactive_markers::InteractiveMarkerServer* ia_server_;
-	visualization_msgs::InteractiveMarker int_marker_;
-	visualization_msgs::InteractiveMarker int_marker_menu_;
-	interactive_markers::MenuHandler menu_handler_;
+    interactive_markers::InteractiveMarkerServer* ia_server_;
+    visualization_msgs::InteractiveMarker int_marker_;
+    visualization_msgs::InteractiveMarker int_marker_menu_;
+    interactive_markers::MenuHandler menu_handler_;
 
-	bool tracking_;
-	tf::StampedTransform target_pose_;
-	boost::mutex mutex_;
+    bool tracking_;
+    tf::StampedTransform target_pose_;
+    boost::mutex mutex_;
 
-	ros::ServiceClient start_tracking_client_;
-	ros::ServiceClient stop_tracking_client_;
+    ros::ServiceClient start_tracking_client_;
+    ros::ServiceClient stop_tracking_client_;
 
-	void update_marker();
-	void send_transform(const ros::TimerEvent& event);
-	void start_tracking( const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback );
-	void stop_tracking( const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback );
-	void reset_tracking( const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback );
-	void menu_fb( const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback );
-	void marker_fb( const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback );
+    void updateMarker();
+    void sendTransform(const ros::TimerEvent& event);
+    void startTracking( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback );
+    void stopTracking( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback );
+    void resetTracking( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback );
+    void menuFeedback( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback );
+    void markerFeedback( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback );
 };
 
 #endif
-

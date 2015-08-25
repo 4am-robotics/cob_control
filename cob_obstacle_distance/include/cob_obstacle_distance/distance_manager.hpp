@@ -34,6 +34,7 @@
 #include <thread>
 #include <mutex>
 #include <boost/scoped_ptr.hpp>
+#include <cob_obstacle_distance/link_to_collision.hpp>
 
 #include <ros/ros.h>
 
@@ -51,13 +52,11 @@
 #include <sensor_msgs/JointState.h>
 #include <moveit_msgs/CollisionObject.h>
 #include "cob_srvs/SetString.h"
-#include "cob_obstacle_distance/PredictDistance.h"
 
 #include "cob_obstacle_distance/marker_shapes/marker_shapes.hpp"
 #include "cob_obstacle_distance/shapes_manager.hpp"
 #include "cob_obstacle_distance/chainfk_solvers/advanced_chainfksolver_recursive.hpp"
 #include "cob_obstacle_distance/obstacle_distance_data_types.hpp"
-#include "cob_obstacle_distance/frame_to_collision.hpp"
 
 
 class DistanceManager
@@ -89,7 +88,7 @@ class DistanceManager
         KDL::JntArray last_q_;
         KDL::JntArray last_q_dot_;
 
-        FrameToCollision frame_to_collision_;
+        LinkToCollision link_to_collision_;
 
         static uint32_t seq_nr_;
 
@@ -176,9 +175,9 @@ class DistanceManager
         /**
          * Thread that runs endless to listen to transforms for the self collision parts of the robot.
          * This will directly update the self collision obstacle pose.
-         * @param frame_name The frame name of the self collision checking part. Similar to link name in URDF.
+         * @param link_name The link name of the self collision checking part. Similar to link name in URDF.
          */
-        void transformSelfCollisionFrames(const std::string frame_name);
+        void transformSelfCollisionFrames(const std::string link_name);
 
         /**
          * Calculate the distances between the objects of interest (reference frames at KDL::segments) and obstacles.
@@ -192,17 +191,8 @@ class DistanceManager
          * @param response Success message.
          * @return Registration service call successfull or not.
          */
-        bool registerPointOfInterest(cob_srvs::SetString::Request& request,
+        bool registerLinkOfInterest(cob_srvs::SetString::Request& request,
                                      cob_srvs::SetString::Response& response);
-
-        /**
-         * Service to execute a prediction on future joint configuration.
-         * @param request Consists of frames of interest and the future joint config.
-         * @param response Success status and message.
-         * @return State of success.
-         */
-        bool predictDistance(cob_obstacle_distance::PredictDistance::Request& request,
-                             cob_obstacle_distance::PredictDistance::Response& response);
 
         /**
          * Get method with mutex access on transform data.

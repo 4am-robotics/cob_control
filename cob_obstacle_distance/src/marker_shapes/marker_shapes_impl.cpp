@@ -35,9 +35,9 @@ MarkerShape<BVH_RSS_t>::MarkerShape(const std::string& root_frame,
                                     const shape_msgs::Mesh& mesh,
                                     const geometry_msgs::Pose& pose,
                                     const std_msgs::ColorRGBA& col)
-                                    : is_drawn_(false)
 {
-    this->fcl_bvh_.beginModel();
+    this->ptr_fcl_bvh_.reset(new BVH_RSS_t());
+    this->ptr_fcl_bvh_->beginModel();
     for(shape_msgs::MeshTriangle tri : mesh.triangles)
     {
         uint32_t v_idx_1 = tri.vertex_indices.elems[0];
@@ -48,11 +48,11 @@ MarkerShape<BVH_RSS_t>::MarkerShape(const std::string& root_frame,
         fcl::Vec3f v2(mesh.vertices[v_idx_2].x, mesh.vertices[v_idx_2].y, mesh.vertices[v_idx_2].z);
         fcl::Vec3f v3(mesh.vertices[v_idx_3].x, mesh.vertices[v_idx_3].y, mesh.vertices[v_idx_3].z);
 
-        this->fcl_bvh_.addTriangle(v1, v2, v3);
+        this->ptr_fcl_bvh_->addTriangle(v1, v2, v3);
     }
 
-    this->fcl_bvh_.endModel();
-    this->fcl_bvh_.computeLocalAABB();
+    this->ptr_fcl_bvh_->endModel();
+    this->ptr_fcl_bvh_->computeLocalAABB();
 
     marker_.pose = pose;
     marker_.color = col;
@@ -77,7 +77,6 @@ MarkerShape<BVH_RSS_t>::MarkerShape(const std::string& root_frame, const std::st
       double x, double y, double z,
       double quat_x, double quat_y, double quat_z, double quat_w,
       double color_r, double color_g, double color_b, double color_a)
-      : is_drawn_(false)
 {
     this->init(mesh_resource, root_frame, x, y, z, quat_x, quat_y, quat_z, quat_w, color_r, color_g, color_b, color_a);
 }
@@ -88,7 +87,9 @@ void MarkerShape<BVH_RSS_t>::init(const std::string& mesh_resource, const std::s
           double color_r, double color_g, double color_b, double color_a)
 {
     MeshParser sp(mesh_resource);
-    if(0 != sp.createBVH(this->fcl_bvh_))
+    this->ptr_fcl_bvh_.reset(new BVH_RSS_t());
+
+    if(0 != sp.createBVH(this->ptr_fcl_bvh_))
     {
         ROS_ERROR("Could not create BVH model!");
     }
@@ -117,6 +118,7 @@ void MarkerShape<BVH_RSS_t>::init(const std::string& mesh_resource, const std::s
     marker_.action = visualization_msgs::Marker::ADD;
     marker_.id = IMarkerShape::class_ctr_;
     marker_.mesh_resource = mesh_resource;
+    marker_.mesh_use_embedded_materials = true;
 
     marker_.lifetime = ros::Duration();
 }
@@ -171,18 +173,6 @@ inline visualization_msgs::Marker MarkerShape<BVH_RSS_t>::getMarker()
 }
 
 
-inline void MarkerShape<BVH_RSS_t>::setDrawn()
-{
-    this->is_drawn_ = true;
-}
-
-
-inline bool MarkerShape<BVH_RSS_t>::isDrawn() const
-{
-    return this->is_drawn_;
-}
-
-
 fcl::CollisionObject MarkerShape<BVH_RSS_t>::getCollisionObject() const
 {
     fcl::Transform3f x(fcl::Quaternion3f(this->marker_.pose.orientation.w,
@@ -192,7 +182,8 @@ fcl::CollisionObject MarkerShape<BVH_RSS_t>::getCollisionObject() const
                        fcl::Vec3f(this->marker_.pose.position.x,
                                   this->marker_.pose.position.y,
                                   this->marker_.pose.position.z));
-    fcl::CollisionObject cobj(boost::shared_ptr<fcl::CollisionGeometry>(new BVH_RSS_t(fcl_bvh_)), x);
+
+    fcl::CollisionObject cobj(this->ptr_fcl_bvh_, x);
     return cobj;
 }
 

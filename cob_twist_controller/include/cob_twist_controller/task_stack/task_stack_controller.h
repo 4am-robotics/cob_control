@@ -117,6 +117,7 @@ class TaskStackController
         TaskStackController()
         {
             this->active_task_iter_ = this->tasks_.begin();
+            this->modification_time_ = ros::Time(0);
         }
 
         void clearAllTasks();
@@ -140,16 +141,24 @@ class TaskStackController
         typename std::vector<Task<PRIO> >::iterator beginTaskIter();
 
         int countActiveTasks() const;
+        ros::Time getLastModificationTime() const;
 
     private:
+
+        void updateModificationTime(bool change);
+
+
         // Use a vector instead of a set here. Set stores const references ->
         // so they cannot be changed.
         std::vector<Task<PRIO> > tasks_;
 
         TypedIter_t active_task_iter_;
 
+        ros::Time modification_time_;
+
 
 };
+
 
 template <typename PRIO>
 int TaskStackController<PRIO>::countActiveTasks() const
@@ -207,16 +216,26 @@ void TaskStackController<PRIO>::addTask(Task<PRIO> t)
         {
             this->tasks_.insert(mem_it, t);
         }
+
+        this->updateModificationTime(true);
     }
 }
 
 template <typename PRIO>
 void TaskStackController<PRIO>::activateAllTasks()
 {
+    bool change = false;
     for(TypedIter_t it = this->tasks_.begin(); it != this->tasks_.end(); it++)
     {
+        if(!it->is_active_)
+        {
+            change = true;
+        }
+
         it->is_active_ = true;
     }
+
+    this->updateModificationTime(change);
 }
 
 template <typename PRIO>
@@ -225,6 +244,8 @@ void TaskStackController<PRIO>::activateHighestPrioTask()
     TypedIter_t it = this->tasks_.begin();
     if(this->tasks_.end() != it)
     {
+        this->updateModificationTime(!it->is_active_);
+
         ROS_WARN_STREAM("Activation of highest prio task in stack: " << it->id_);
         it->is_active_ = true;
     }
@@ -250,7 +271,7 @@ void TaskStackController<PRIO>::activateTask(std::string task_id)
     {
         if(it->id_ == task_id)
         {
-            ROS_INFO_STREAM("activateTask: " << task_id);
+            this->updateModificationTime(!it->is_active_);
             it->is_active_ = true;
             break;
         }
@@ -262,6 +283,7 @@ void TaskStackController<PRIO>::deactivateTask(typename std::vector<Task<PRIO> >
 {
     if(std::find(this->tasks_.begin(), this->tasks_.end(), it) != this->tasks_.end())
     {
+        this->updateModificationTime(it->is_active_);
         it->is_active_ = false;
     }
 }
@@ -274,7 +296,7 @@ void TaskStackController<PRIO>::deactivateTask(std::string task_id)
     {
         if(it->id_ == task_id)
         {
-            ROS_INFO_STREAM("deactivateTask: " << task_id);
+            this->updateModificationTime(it->is_active_);
             it->is_active_ = false;
             break;
         }
@@ -284,10 +306,18 @@ void TaskStackController<PRIO>::deactivateTask(std::string task_id)
 template <typename PRIO>
 void TaskStackController<PRIO>::deactivateAllTasks()
 {
+    bool change = false;
     for (TypedIter_t it = this->tasks_.begin(); it != this->tasks_.end(); it++)
     {
+        if(it->is_active_)
+        {
+            change = true;
+        }
+
         it->is_active_ = false;
     }
+
+    this->updateModificationTime(change);
 }
 
 
@@ -324,11 +354,30 @@ void TaskStackController<PRIO>::clearAllTasks()
 {
     this->tasks_.clear();
     this->active_task_iter_ = this->tasks_.end();
+    this->updateModificationTime(true);
 }
 
 
+template <typename PRIO>
+ros::Time TaskStackController<PRIO>::getLastModificationTime() const
+{
+    return this->modification_time_;
+}
+
+
+template <typename PRIO>
+void TaskStackController<PRIO>::updateModificationTime(bool change)
+{
+    if(change)
+    {
+        this->modification_time_ = ros::Time::now();
+    }
+}
+
+// -------------------- typedefs ---------------------------
 typedef TaskStackController<uint32_t> TaskStackController_t;
 typedef Task<uint32_t> Task_t;
 typedef std::vector<Task_t >::iterator TaskSetIter_t;
 
 #endif /* TASK_STACK_CONTROLLER_H_ */
+
