@@ -48,10 +48,10 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Vector6d_t& inCartVe
     Eigen::MatrixXd homogeneous_solution = Eigen::MatrixXd::Zero(particular_solution.rows(), particular_solution.cols());
     KDL::JntArrayVel predict_jnts_vel(joint_states.current_q_.rows());
 
-    ROS_INFO_STREAM("===== task output =======");
+    // ROS_INFO_STREAM("===== task output =======");
     for (std::set<ConstraintBase_t>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
     {
-        ROS_INFO_STREAM("task id: " << (*it)->getTaskId());
+        // ROS_INFO_STREAM("task id: " << (*it)->getTaskId());
         (*it)->update(joint_states, predict_jnts_vel, this->jacobian_data_);
         Eigen::VectorXd q_dot_0 = (*it)->getPartialValues();
         Eigen::MatrixXd tmpHomogeneousSolution = projector * q_dot_0;
