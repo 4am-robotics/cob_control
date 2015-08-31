@@ -2,8 +2,8 @@
 Changelog for package cob_trajectory_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.10 (2015-08-31)
+-------------------
 * fix CMakeLists
 * Contributors: ipa-fxm
 
