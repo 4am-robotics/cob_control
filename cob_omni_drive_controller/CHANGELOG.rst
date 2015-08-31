@@ -2,6 +2,9 @@
 Changelog for package cob_omni_drive_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.6.9 (2015-08-25)
 ------------------
 * boost revision
