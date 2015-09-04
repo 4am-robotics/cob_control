@@ -2,8 +2,16 @@
 Changelog for package cob_control
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.10 (2015-08-31)
+-------------------
+
+0.6.9 (2015-08-25)
+------------------
+* migrate to package format 2
+* sort dependencies
+* review dependencies
+* add missing run_depends to meta-package
+* Contributors: ipa-fxm
 
 0.6.8 (2015-06-17)
 ------------------
