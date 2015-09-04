@@ -1,11 +1,10 @@
 <package format="2">
   <name>cob_obstacle_distance</name>
-  <version>0.0.1</version>
+  <version>0.6.10</version>
   <description>The cob_obstacle_distance package</description>
 
-  <author email="fxm@ipa.fhg.de">Felix Messmer</author>
   <author email="fxm-mb@ipa.fhg.de">Marco Bezzon</author>
-  <maintainer email="fxm-mb@ipa.fhg.de">Marco Bezzon</maintainer>
+  <maintainer email="fxm@ipa.fhg.de">Felix Messmer</maintainer>
 
   <license>LGPL</license>
 
@@ -23,7 +22,6 @@
   <depend>eigen</depend>
   <depend>fcl</depend>
   <depend>geometry_msgs</depend>
-  <depend>interactive_markers</depend>
   <depend>kdl_conversions</depend>
   <depend>kdl_parser</depend>
   <depend>moveit_msgs</depend>
@@ -39,6 +37,7 @@
   <depend>urdf</depend>
   <depend>visualization_msgs</depend>
 
+  <exec_depend>interactive_markers</exec_depend>
   <exec_depend>joint_state_publisher</exec_depend>
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>rospy</exec_depend>

@@ -2,8 +2,20 @@
 Changelog for package cob_collision_velocity_filter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.10 (2015-08-31)
+-------------------
+
+0.6.9 (2015-08-25)
+------------------
+* boost revision
+* do not install headers in executable-only packages
+* explicit dependency to boost
+* explicit dependency to boost
+* remove trailing whitespaces
+* migrate to package format 2
+* sort dependencies
+* review dependencies
+* Contributors: ipa-fxm
 
 0.6.8 (2015-06-17)
 ------------------
