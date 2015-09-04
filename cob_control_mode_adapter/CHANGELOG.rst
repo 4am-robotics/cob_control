@@ -2,8 +2,20 @@
 Changelog for package cob_control_mode_adapter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.10 (2015-08-31)
+-------------------
+
+0.6.9 (2015-08-25)
+------------------
+* more dependency fixes according to review comments
+* explicit dependency to boost
+* more fixes for migration afer merge
+* remove trailing whitespaces
+* migrate to package format 2
+* sort dependencies
+* review dependencies
+* code styling cob_control_mode_adapter
+* Contributors: ipa-fxm
 
 0.6.8 (2015-06-17)
 ------------------

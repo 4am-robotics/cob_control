@@ -2,8 +2,57 @@
 Changelog for package cob_cartesian_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.10 (2015-08-31)
+-------------------
+
+0.6.9 (2015-08-25)
+------------------
+* Corrections integrated from PR: [WIP] Finalizing/Testing of TwistController features (`#51 <https://github.com/ipa-fxm/cob_control/issues/51>`_). Renaming from frame_to_collision to link_to_collision.
+* boost revision
+* more dependency fixes according to review comments
+* Resolved merge conflicts.
+* more fixes for migration afer merge
+* merge with package_xml_2
+* remove trailing whitespaces
+* migrate to package format 2
+* - Removed unnecessary function.
+  - Prepared configuration params.
+* resolve possible endless-loop
+* consider PR review comments
+* review dependencies
+* updates from ipa-fxm-mb
+* updates from ipa320
+* Implemented Python package to set dyn_reconfigure params. Made test_move_around_torus use of this class.
+* missing add_dependencies
+* sort dependencies
+* review dependencies
+* print result, use sci in test scripts
+* Created test, Removed commends, Removed output.
+* Fixed bugs in cartesian_controller: waitFor last available transform else extrapolation error; send always a new constructed StampedTransform instead of using an already existent one, else end-effector is decoupled from manipulator and other confusing things happen...; Added responsible node to tf error msg.
+* fix cartesian_interface
+* first draft for python interface
+* re-work message structure use pose and frame_id, proper handling transformation to root_frame
+* added publisher for path preview
+* split and restructure ProfileGenerator
+* simplify data_type conversion, cleanup
+* re-work of ActionServer: more failure handling
+* draft for example
+* replace .prog files with according .py scripts, use rospy.sleep() instead of holdPosition action
+* get rid of holdPosition, replaced by rospy.sleep()
+* restructure and simplify cartesian_controller_utils, beautification
+* Further tests and adaptations for test.
+* Made cob_cartesian_controller work again: Added CartesianController::convertMoveLinRelToAbs method again (why removed?)
+* Added generated const from .cfg; Styling
+* Merge with code style fixes.
+* code styling cob_cartesian_controller
+* renamed variable
+* restructured cartesian controller with action interface
+* added action server
+* fix install tags
+* restructured functions
+* added headers..
+* restructured
+* Contributors: ipa-fxm, ipa-fxm-cm, ipa-fxm-mb
 
 0.6.8 (2015-06-17)
 ------------------
