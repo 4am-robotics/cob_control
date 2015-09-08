@@ -44,8 +44,8 @@ public:
         controller_nh.getParam("broadcast_tf", broadcast_tf);
 
         if(broadcast_tf){
-            odom_tf_.header.frame_id = "/odom_combined";
-            odom_tf_.child_frame_id = "/base_footprint";
+            odom_tf_.header.frame_id = "robot_1/odom_combined";
+            odom_tf_.child_frame_id = "robot_1/base_footprint";
             tf_broadcast_odometry_.reset(new tf::TransformBroadcaster);
         }
 
