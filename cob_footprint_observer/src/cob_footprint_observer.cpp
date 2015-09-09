@@ -94,6 +94,11 @@ FootprintObserver::FootprintObserver() :
   if(!nh_.hasParam("robot_base_frame")) ROS_WARN("No parameter robot_base_frame on parameter server. Using default [/base_link].");
   nh_.param("robot_base_frame", robot_base_frame_, std::string("/base_link"));
 
+  // resolve the name using the tf_prefix
+  std::string tf_prefix = tf::getPrefixParam(nh_);
+  frames_to_check_ = tf::resolve(tf_prefix,frames_to_check_);
+  robot_base_frame_ = tf::resolve(tf_prefix,robot_base_frame_);
+
   last_tf_missing_ = ros::Time::now();
 }
 

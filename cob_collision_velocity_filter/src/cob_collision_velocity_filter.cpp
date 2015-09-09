@@ -64,7 +64,7 @@ CollisionVelocityFilter::CollisionVelocityFilter()
   if(!nh_.hasParam("costmap_parameter_source")) ROS_WARN("Checking default source [/local_costmap_node/costmap] for costmap parameters");
   nh_.param("costmap_parameter_source",costmap_parameter_source, std::string("/local_costmap_node/costmap"));
 
-  // costmap_parameter_source = ros::names::resolve(costmap_parameter_source); // resolve the name using the node's namespace
+  costmap_parameter_source = ros::names::resolve(costmap_parameter_source); // resolve the name using the node's namespace
   ros::NodeHandle local_costmap_nh_(costmap_parameter_source);
 
   nh_.param("costmap_obstacle_treshold", costmap_obstacle_treshold_, 50);
