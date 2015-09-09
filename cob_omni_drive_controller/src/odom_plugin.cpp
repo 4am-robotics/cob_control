@@ -12,6 +12,8 @@
 
 #include "GeomController.h"
 
+#include <tf/transform_listener.h>
+
 namespace cob_omni_drive_controller
 {
 
@@ -44,8 +46,10 @@ public:
         controller_nh.getParam("broadcast_tf", broadcast_tf);
 
         if(broadcast_tf){
-            odom_tf_.header.frame_id = "robot_1/odom_combined";
-            odom_tf_.child_frame_id = "robot_1/base_footprint";
+            std::string tf_prefix = tf::getPrefixParam(controller_nh);
+            odom_tf_.header.frame_id = tf::resolve(tf_prefix,"odom_combined");
+            odom_tf_.child_frame_id = tf::resolve(tf_prefix,"base_footprint");
+
             tf_broadcast_odometry_.reset(new tf::TransformBroadcaster);
         }
 
