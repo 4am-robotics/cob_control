@@ -96,7 +96,15 @@ FootprintObserver::FootprintObserver() :
 
   // resolve the name using the tf_prefix
   std::string tf_prefix = tf::getPrefixParam(nh_);
-  frames_to_check_ = tf::resolve(tf_prefix,frames_to_check_);
+  std::string frame;
+  std::stringstream ss;
+  ss << frames_to_check_;
+  frames_to_check_.clear();
+
+  while(ss >> frame){
+    frames_to_check_ += tf::resolve(tf_prefix,frame) + " ";
+  }
+
   robot_base_frame_ = tf::resolve(tf_prefix,robot_base_frame_);
 
   last_tf_missing_ = ros::Time::now();
