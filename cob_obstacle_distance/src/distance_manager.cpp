@@ -84,8 +84,8 @@ int DistanceManager::init()
     obstacle_mgr_.reset(new ShapesManager(this->marker_pub_));
     object_of_interest_mgr_.reset(new ShapesManager(this->marker_pub_));
     KDL::Tree robot_structure;
-    if (!kdl_parser::treeFromParam("/robot_description", robot_structure)){
-        ROS_ERROR("Failed to construct kdl tree from parameter '/robot_description'.");
+    if (!kdl_parser::treeFromParam("robot_description", robot_structure)){
+        ROS_ERROR("Failed to construct kdl tree from parameter 'robot_description'.");
         return -1;
     }
 
@@ -130,9 +130,9 @@ int DistanceManager::init()
     adv_chn_fk_solver_vel_.reset(new AdvancedChainFkSolverVel_recursive(chain_));
     last_q_ = KDL::JntArray(chain_.getNrOfJoints());
     last_q_dot_ = KDL::JntArray(chain_.getNrOfJoints());
-    if(!this->link_to_collision_.initParameter(this->root_frame_id_, "/robot_description"))
+    if(!this->link_to_collision_.initParameter(this->root_frame_id_, "robot_description"))
     {
-        ROS_ERROR("Failed to initialize robot model from URDF by parameter \"/robot_description\".");
+        ROS_ERROR("Failed to initialize robot model from URDF by parameter \"robot_description\".");
         return -6;
     }
     else

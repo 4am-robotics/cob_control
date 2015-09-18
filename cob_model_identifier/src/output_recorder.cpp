@@ -65,7 +65,7 @@ bool OutputRecorder::initialize()
 
     ///parse robot_description and generate KDL chains
     KDL::Tree my_tree;
-    if (!kdl_parser::treeFromParam("/robot_description", my_tree))
+    if (!kdl_parser::treeFromParam("robot_description", my_tree))
     {
         ROS_ERROR("Failed to construct kdl tree");
         return false;

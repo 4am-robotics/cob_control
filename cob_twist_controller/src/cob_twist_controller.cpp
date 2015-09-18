@@ -72,7 +72,7 @@ bool CobTwistController::initialize()
 
     ///parse robot_description and generate KDL chains
     KDL::Tree my_tree;
-    if (!kdl_parser::treeFromParam("/robot_description", my_tree)){
+    if (!kdl_parser::treeFromParam("robot_description", my_tree)){
         ROS_ERROR("Failed to construct kdl tree");
         return false;
     }
@@ -86,7 +86,7 @@ bool CobTwistController::initialize()
 
     ///parse robot_description and set velocity limits
     urdf::Model model;
-    if (!model.initParam("/robot_description"))
+    if (!model.initParam("robot_description"))
     {
         ROS_ERROR("Failed to parse urdf file for JointLimits");
         return false;

@@ -79,7 +79,7 @@ bool CobFrameTracker::initialize()
     }
 
     KDL::Tree tree;
-    if (!kdl_parser::treeFromParam("/robot_description", tree))
+    if (!kdl_parser::treeFromParam("robot_description", tree))
     {
         ROS_ERROR("Failed to construct kdl tree");
         return false;
