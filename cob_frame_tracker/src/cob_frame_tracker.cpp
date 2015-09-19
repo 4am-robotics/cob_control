@@ -202,12 +202,10 @@ void CobFrameTracker::run(const ros::TimerEvent& event)
             int status = checkServiceCallStatus();
             if(status < 0)
             {
-
-                ROS_WARN_STREAM("TrackingStatus: " << status);
-                //this->publishHoldTwist(period);
+                this->publishHoldTwist(period);
             }
 
-            //ht_.hold = abortion_counter_ >= max_abortions_; // only for service call in case of action ht_.hold = false. What to do with actions?
+            ht_.hold = abortion_counter_ >= max_abortions_; // only for service call in case of action ht_.hold = false. What to do with actions?
         }
 
         publishTwist(period, !ht_.hold); // if not publishing then just update data!
@@ -221,7 +219,7 @@ void CobFrameTracker::publishHoldTwist(const ros::Duration& period)
 
     if(!this->ht_.hold)
     {
-        ROS_WARN_STREAM("Publishing empty twist");
+        ROS_WARN_STREAM("Publishing zero twist");
         ht_.hold = this->getTransform(chain_base_, chain_tip_link_, ht_.transform_tf);
     }
     else
