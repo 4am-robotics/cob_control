@@ -219,7 +219,7 @@ void DistanceManager::calculate()
                                                                     object_of_interest_name);
         if(this->segments_.end() == str_it)
         {
-            ROS_ERROR_STREAM("Could not find: " << object_of_interest_name << ". Continue ...");
+            ROS_ERROR_STREAM("Could not find: " << object_of_interest_name << ". Skipping it ...");
             continue;
         }
 
@@ -403,14 +403,14 @@ void DistanceManager::jointstateCb(const sensor_msgs::JointState::ConstPtr& msg)
     }
     else
     {
-        ROS_ERROR("Failed to jointstate_cb");
+        ROS_ERROR("jointstateCb: received unexpected 'joint_states'");
     }
 }
 
 
 void DistanceManager::registerObstacle(const moveit_msgs::CollisionObject::ConstPtr& msg)
 {
-    ROS_INFO_STREAM("Called register obstacle");
+    ROS_INFO_STREAM("registerObstacle: new registration");
     std::lock_guard<std::mutex> lock(obstacle_mgr_mtx_);
 
     const std::string frame_id = msg->header.frame_id;
@@ -476,7 +476,6 @@ void DistanceManager::buildObstacleMesh(const moveit_msgs::CollisionObject::Cons
 
     if(msg->ADD == msg->operation)
     {
-        ROS_INFO("ADD obstacle");
         for(uint32_t i = 0; i < m_size; ++i)
         {
             geometry_msgs::Pose p = msg->mesh_poses[i];
@@ -506,7 +505,6 @@ void DistanceManager::buildObstacleMesh(const moveit_msgs::CollisionObject::Cons
     }
     else if(msg->MOVE == msg->operation)
     {
-        ROS_INFO("MOVE obstacle");
         PtrIMarkerShape_t sptr;
         for(uint32_t i = 0; i < m_size; ++i)
         {
@@ -523,7 +521,6 @@ void DistanceManager::buildObstacleMesh(const moveit_msgs::CollisionObject::Cons
     }
     else if(msg->REMOVE == msg->operation)
     {
-        ROS_INFO("REMOVE obstacle");
         this->obstacle_mgr_->removeShape(msg->id);
     }
     else
@@ -544,7 +541,6 @@ void DistanceManager::buildObstaclePrimitive(const moveit_msgs::CollisionObject:
 
     if(msg->ADD == msg->operation)
     {
-        ROS_INFO("ADD obstacle");
         for(uint32_t i = 0; i < p_size; ++i)
         {
             shape_msgs::SolidPrimitive sp = msg->primitives[i];
@@ -588,7 +584,6 @@ void DistanceManager::buildObstaclePrimitive(const moveit_msgs::CollisionObject:
     }
     else if(msg->MOVE == msg->operation)
     {
-        ROS_INFO("MOVE obstacle");
         PtrIMarkerShape_t sptr;
         for(uint32_t i = 0; i < p_size; ++i)
         {
@@ -605,7 +600,6 @@ void DistanceManager::buildObstaclePrimitive(const moveit_msgs::CollisionObject:
     }
     else if(msg->REMOVE == msg->operation)
     {
-        ROS_INFO("REMOVE obstacle");
         this->obstacle_mgr_->removeShape(msg->id);
     }
     else
@@ -621,7 +615,7 @@ bool DistanceManager::registerLinkOfInterest(cob_srvs::SetString::Request& reque
     if(this->object_of_interest_mgr_->count(request.data) > 0)
     {
         response.success = true;
-        response.message = "Element " + request.data + " already existent.";
+        response.message = "Element " + request.data + " already registered.";
     }
     else
     {
@@ -634,18 +628,18 @@ bool DistanceManager::registerLinkOfInterest(cob_srvs::SetString::Request& reque
             {
                 this->addObjectOfInterest(request.data, ooi);
                 response.success = true;
-                response.message = "Successfully inserted element " + request.data + ".";
+                response.message = "Successfully registered element " + request.data + ".";
             }
             else
             {
                 response.success = false;
-                response.message = "Failed to insert element " + request.data + "!";
+                response.message = "Failed to register element " + request.data + "!";
             }
         }
         catch(...)
         {
             response.success = false;
-            response.message = "Failed to insert element " + request.data + "!";
+            response.message = "Failed to register element " + request.data + "!";
             ROS_ERROR_STREAM(response.message);
         }
     }

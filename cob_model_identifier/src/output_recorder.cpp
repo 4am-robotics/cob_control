@@ -308,7 +308,7 @@ void OutputRecorder::jointstateCallback(const sensor_msgs::JointState::ConstPtr&
     }
     else
     {
-        ROS_WARN("cout != joint_size()");
+        ROS_ERROR("jointstateCallback: received unexpected 'joint_states'");
     }
 }
 
