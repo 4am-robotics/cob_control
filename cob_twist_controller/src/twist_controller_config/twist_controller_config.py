@@ -70,7 +70,6 @@ TOL = 'tolerance'
 MAX_VEL_LIN_BASE = 'max_vel_lin_base'
 MAX_VEL_ROT_BASE = 'max_vel_rot_base'
 
-BASE_COMP = 'base_compensation'
 KIN_EXT = 'kinematic_extension'
 BASE_RATIO = 'base_ratio'
 

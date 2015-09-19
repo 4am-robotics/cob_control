@@ -45,6 +45,9 @@ KinematicExtensionBase* KinematicExtensionBuilder::createKinematicExtension(cons
         case NO_EXTENSION:
             keb = new KinematicExtensionNone(params);
             break;
+        case BASE_COMPENSATION:
+            //nothing to do here for BASE_COMPENSATION
+            break;
         case BASE_ACTIVE:
             keb = new KinematicExtensionBaseActive(params);
             break;
