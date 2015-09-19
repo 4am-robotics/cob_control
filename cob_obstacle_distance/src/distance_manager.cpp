@@ -137,23 +137,23 @@ int DistanceManager::init()
     }
     else
     {
-        XmlRpc::XmlRpcValue sca;
+        XmlRpc::XmlRpcValue scm;
         bool success = false;
-        if(nh_.getParam("self_collision_frames", sca))
+        if(nh_.getParam("self_collision_map", scm))
         {
-            success = this->link_to_collision_.initSelfCollision(sca, obstacle_mgr_);
+            success = this->link_to_collision_.initSelfCollision(scm, obstacle_mgr_);
         }
 
         if(!success)
         {
-            ROS_WARN("No self collision frames found. ");
+            ROS_WARN("Parameter 'self_collision_map' not found or map empty.");
         }
 
         for(LinkToCollision::MapSelfCollisions_t::iterator it = this->link_to_collision_.getSelfCollisionsIterBegin();
                 it != this->link_to_collision_.getSelfCollisionsIterEnd();
                 it++)
         {
-            self_collision_transform_threads_.push_back(std::thread(&DistanceManager::transformSelfCollisionFrames, this, it->first));
+            self_collision_transform_threads_.push_back(std::thread(&DistanceManager::transformSelfCollisionLinks, this, it->first));
         }
     }
 
@@ -338,10 +338,10 @@ void DistanceManager::transform()
 }
 
 
-void DistanceManager::transformSelfCollisionFrames(const std::string link_name)
+void DistanceManager::transformSelfCollisionLinks(const std::string link_name)
 {
 
-    ROS_INFO_STREAM("Starting transformation listener thread for frame / link name: " << link_name);
+    ROS_INFO_STREAM("Starting transform_listener thread for link name: " << link_name);
     while(!this->stop_sca_threads_)
     {
         try

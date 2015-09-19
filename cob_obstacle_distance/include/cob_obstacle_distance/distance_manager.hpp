@@ -177,7 +177,7 @@ class DistanceManager
          * This will directly update the self collision obstacle pose.
          * @param link_name The link name of the self collision checking part. Similar to link name in URDF.
          */
-        void transformSelfCollisionFrames(const std::string link_name);
+        void transformSelfCollisionLinks(const std::string link_name);
 
         /**
          * Calculate the distances between the objects of interest (reference frames at KDL::segments) and obstacles.
@@ -186,13 +186,13 @@ class DistanceManager
         void calculate();
 
         /**
-         * Registers a new point of interest at a given frame id.
-         * @param request The service request for registration of a point of interest (i.e. reference frame id corresponding to segment)
+         * Registers a new link of interest for distance computation.
+         * @param request The service request for registration of a new link of interest (e.g. link name)
          * @param response Success message.
          * @return Registration service call successfull or not.
          */
         bool registerLinkOfInterest(cob_srvs::SetString::Request& request,
-                                     cob_srvs::SetString::Response& response);
+                                    cob_srvs::SetString::Response& response);
 
         /**
          * Get method with mutex access on transform data.

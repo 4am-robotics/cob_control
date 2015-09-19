@@ -232,8 +232,8 @@ struct TwistControllerParams
     std::vector<std::string> frame_names;
     std::vector<std::string> joints;
 
-    // added a vector that contains all frames of interest for collision checking.
-    std::vector<std::string> collision_check_frames;
+    // vector of links of the chain to be considered for collision avoidance
+    std::vector<std::string> collision_check_links;
 };
 
 enum EN_ConstraintStates
