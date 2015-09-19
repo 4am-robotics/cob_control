@@ -62,6 +62,7 @@ enum HardwareInterfaceTypes
 enum KinematicExtensionTypes
 {
     NO_EXTENSION = cob_twist_controller::TwistController_NO_EXTENSION,
+    BASE_COMPENSATION = cob_twist_controller::TwistController_BASE_COMPENSATION,
     BASE_ACTIVE = cob_twist_controller::TwistController_BASE_ACTIVE,
 };
 
@@ -169,7 +170,6 @@ struct TwistControllerParams
             max_vel_lin_base(0.5),
             max_vel_rot_base(0.5),
 
-            base_compensation(false),
             kinematic_extension(NO_EXTENSION),
             base_ratio(0.0)
             {
@@ -226,15 +226,14 @@ struct TwistControllerParams
     double max_vel_lin_base;
     double max_vel_rot_base;
 
-    bool base_compensation;
     KinematicExtensionTypes kinematic_extension;
     double base_ratio;
 
     std::vector<std::string> frame_names;
     std::vector<std::string> joints;
 
-    // added a vector that contains all frames of interest for collision checking.
-    std::vector<std::string> collision_check_frames;
+    // vector of links of the chain to be considered for collision avoidance
+    std::vector<std::string> collision_check_links;
 };
 
 enum EN_ConstraintStates

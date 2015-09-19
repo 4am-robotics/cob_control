@@ -75,17 +75,14 @@ class HardwareInterfaceVelocity : public HardwareInterfaceBase
 
 
 /* BEGIN HardwareInterfacePosition ****************************************************************************************/
-/// Class providing a HardwareInterface publishing positions.
-class HardwareInterfacePosition : public HardwareInterfaceBase
+/// Class providing a HardwareInterface publishing JointGroupPositionCommands.
+class HardwareInterfacePosition : public HardwareInterfacePositionBase
 {
     public:
         HardwareInterfacePosition(ros::NodeHandle& nh,
                                   const TwistControllerParams& params)
-        : HardwareInterfaceBase(nh, params)
+        : HardwareInterfacePositionBase(nh, params, 3)
         {
-            ma_.assign(params.dof, MovingAvg_double_t(3));
-
-            last_update_time_ = ros::Time::now();
             pub_ = nh.advertise<std_msgs::Float64MultiArray>("joint_group_position_controller/command", 1);
         }
 
@@ -94,27 +91,19 @@ class HardwareInterfacePosition : public HardwareInterfaceBase
         virtual void processResult(const KDL::JntArray& q_dot_ik,
                                    const KDL::JntArray& current_q);
 
-    private:
-        std::vector<MovingAvg_double_t> ma_;
-        std::vector<double> vel_last_, vel_before_last_;
-        ros::Time last_update_time_;
-
 };
 /* END HardwareInterfacePosition **********************************************************************************************/
 
 
 /* BEGIN HardwareInterfaceTrajectory ****************************************************************************************/
 /// Class providing a HardwareInterface publishing a JointTrajectory.
-class HardwareInterfaceTrajectory : public HardwareInterfaceBase
+class HardwareInterfaceTrajectory : public HardwareInterfacePositionBase
 {
     public:
         HardwareInterfaceTrajectory(ros::NodeHandle& nh,
-                                  const TwistControllerParams& params)
-        : HardwareInterfaceBase(nh, params)
+                                    const TwistControllerParams& params)
+        : HardwareInterfacePositionBase(nh, params, 3)
         {
-            ma_.assign(params.dof, MovingAvg_double_t(3));
-
-            last_update_time_ = ros::Time::now();
             pub_ = nh.advertise<trajectory_msgs::JointTrajectory>("joint_trajectory_controller/command", 1);
         }
 
@@ -122,27 +111,18 @@ class HardwareInterfaceTrajectory : public HardwareInterfaceBase
 
         virtual void processResult(const KDL::JntArray& q_dot_ik,
                                    const KDL::JntArray& current_q);
-
-    private:
-        std::vector<MovingAvg_double_t> ma_;
-        std::vector<double> vel_last_, vel_before_last_;
-        ros::Time last_update_time_;
-
 };
 /* END HardwareInterfaceTrajectory **********************************************************************************************/
 
 /* BEGIN HardwareInterfaceJointStates ****************************************************************************************/
 /// Class providing a HardwareInterface publishing JointStates.
-class HardwareInterfaceJointStates : public HardwareInterfaceBase
+class HardwareInterfaceJointStates : public HardwareInterfacePositionBase
 {
     public:
         HardwareInterfaceJointStates(ros::NodeHandle& nh,
                                      const TwistControllerParams& params)
-        : HardwareInterfaceBase(nh, params)
+        : HardwareInterfacePositionBase(nh, params, 3)
         {
-            ma_.assign(params.dof, MovingAvg_double_t(3));
-
-            last_update_time_ = ros::Time::now();
             pub_ = nh.advertise<sensor_msgs::JointState>("joint_states", 1);
 
             js_msg_.name = params_.joints;
@@ -160,10 +140,6 @@ class HardwareInterfaceJointStates : public HardwareInterfaceBase
                                    const KDL::JntArray& current_q);
 
     private:
-        std::vector<MovingAvg_double_t> ma_;
-        std::vector<double> vel_last_, vel_before_last_;
-        ros::Time last_update_time_;
-
         boost::mutex mutex_;
         sensor_msgs::JointState js_msg_;
 

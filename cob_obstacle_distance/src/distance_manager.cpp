@@ -137,23 +137,23 @@ int DistanceManager::init()
     }
     else
     {
-        XmlRpc::XmlRpcValue sca;
+        XmlRpc::XmlRpcValue scm;
         bool success = false;
-        if(nh_.getParam("self_collision_frames", sca))
+        if(nh_.getParam("self_collision_map", scm))
         {
-            success = this->link_to_collision_.initSelfCollision(sca, obstacle_mgr_);
+            success = this->link_to_collision_.initSelfCollision(scm, obstacle_mgr_);
         }
 
         if(!success)
         {
-            ROS_WARN("No self collision frames found. ");
+            ROS_WARN("Parameter 'self_collision_map' not found or map empty.");
         }
 
         for(LinkToCollision::MapSelfCollisions_t::iterator it = this->link_to_collision_.getSelfCollisionsIterBegin();
                 it != this->link_to_collision_.getSelfCollisionsIterEnd();
                 it++)
         {
-            self_collision_transform_threads_.push_back(std::thread(&DistanceManager::transformSelfCollisionFrames, this, it->first));
+            self_collision_transform_threads_.push_back(std::thread(&DistanceManager::transformSelfCollisionLinks, this, it->first));
         }
     }
 
@@ -219,7 +219,7 @@ void DistanceManager::calculate()
                                                                     object_of_interest_name);
         if(this->segments_.end() == str_it)
         {
-            ROS_ERROR_STREAM("Could not find: " << object_of_interest_name << ". Continue ...");
+            ROS_ERROR_STREAM("Could not find: " << object_of_interest_name << ". Skipping it ...");
             continue;
         }
 
@@ -338,10 +338,10 @@ void DistanceManager::transform()
 }
 
 
-void DistanceManager::transformSelfCollisionFrames(const std::string link_name)
+void DistanceManager::transformSelfCollisionLinks(const std::string link_name)
 {
 
-    ROS_INFO_STREAM("Starting transformation listener thread for frame / link name: " << link_name);
+    ROS_INFO_STREAM("Starting transform_listener thread for link name: " << link_name);
     while(!this->stop_sca_threads_)
     {
         try
@@ -403,14 +403,14 @@ void DistanceManager::jointstateCb(const sensor_msgs::JointState::ConstPtr& msg)
     }
     else
     {
-        ROS_ERROR("Failed to jointstate_cb");
+        ROS_ERROR("jointstateCb: received unexpected 'joint_states'");
     }
 }
 
 
 void DistanceManager::registerObstacle(const moveit_msgs::CollisionObject::ConstPtr& msg)
 {
-    ROS_INFO_STREAM("Called register obstacle");
+    ROS_INFO_STREAM("registerObstacle: new registration");
     std::lock_guard<std::mutex> lock(obstacle_mgr_mtx_);
 
     const std::string frame_id = msg->header.frame_id;
@@ -476,7 +476,6 @@ void DistanceManager::buildObstacleMesh(const moveit_msgs::CollisionObject::Cons
 
     if(msg->ADD == msg->operation)
     {
-        ROS_INFO("ADD obstacle");
         for(uint32_t i = 0; i < m_size; ++i)
         {
             geometry_msgs::Pose p = msg->mesh_poses[i];
@@ -506,7 +505,6 @@ void DistanceManager::buildObstacleMesh(const moveit_msgs::CollisionObject::Cons
     }
     else if(msg->MOVE == msg->operation)
     {
-        ROS_INFO("MOVE obstacle");
         PtrIMarkerShape_t sptr;
         for(uint32_t i = 0; i < m_size; ++i)
         {
@@ -523,7 +521,6 @@ void DistanceManager::buildObstacleMesh(const moveit_msgs::CollisionObject::Cons
     }
     else if(msg->REMOVE == msg->operation)
     {
-        ROS_INFO("REMOVE obstacle");
         this->obstacle_mgr_->removeShape(msg->id);
     }
     else
@@ -544,7 +541,6 @@ void DistanceManager::buildObstaclePrimitive(const moveit_msgs::CollisionObject:
 
     if(msg->ADD == msg->operation)
     {
-        ROS_INFO("ADD obstacle");
         for(uint32_t i = 0; i < p_size; ++i)
         {
             shape_msgs::SolidPrimitive sp = msg->primitives[i];
@@ -588,7 +584,6 @@ void DistanceManager::buildObstaclePrimitive(const moveit_msgs::CollisionObject:
     }
     else if(msg->MOVE == msg->operation)
     {
-        ROS_INFO("MOVE obstacle");
         PtrIMarkerShape_t sptr;
         for(uint32_t i = 0; i < p_size; ++i)
         {
@@ -605,7 +600,6 @@ void DistanceManager::buildObstaclePrimitive(const moveit_msgs::CollisionObject:
     }
     else if(msg->REMOVE == msg->operation)
     {
-        ROS_INFO("REMOVE obstacle");
         this->obstacle_mgr_->removeShape(msg->id);
     }
     else
@@ -621,7 +615,7 @@ bool DistanceManager::registerLinkOfInterest(cob_srvs::SetString::Request& reque
     if(this->object_of_interest_mgr_->count(request.data) > 0)
     {
         response.success = true;
-        response.message = "Element " + request.data + " already existent.";
+        response.message = "Element " + request.data + " already registered.";
     }
     else
     {
@@ -634,18 +628,18 @@ bool DistanceManager::registerLinkOfInterest(cob_srvs::SetString::Request& reque
             {
                 this->addObjectOfInterest(request.data, ooi);
                 response.success = true;
-                response.message = "Successfully inserted element " + request.data + ".";
+                response.message = "Successfully registered element " + request.data + ".";
             }
             else
             {
                 response.success = false;
-                response.message = "Failed to insert element " + request.data + "!";
+                response.message = "Failed to register element " + request.data + "!";
             }
         }
         catch(...)
         {
             response.success = false;
-            response.message = "Failed to insert element " + request.data + "!";
+            response.message = "Failed to register element " + request.data + "!";
             ROS_ERROR_STREAM(response.message);
         }
     }

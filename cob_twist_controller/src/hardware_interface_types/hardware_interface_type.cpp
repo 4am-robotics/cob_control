@@ -86,37 +86,12 @@ inline void HardwareInterfaceVelocity::processResult(const KDL::JntArray& q_dot_
 inline void HardwareInterfacePosition::processResult(const KDL::JntArray& q_dot_ik,
                                                      const KDL::JntArray& current_q)
 {
-    ros::Time now = ros::Time::now();
-    ros::Duration period = now - last_update_time_;
-    last_update_time_ = now;
-
-    if(!vel_before_last_.empty())
+    if(updateIntegration(q_dot_ik, current_q))
     {
+        ///publish to interface
         std_msgs::Float64MultiArray pos_msg;
-        for(unsigned int i = 0; i < params_.dof; ++i)
-        {
-            // Simpson
-            double integration_value = static_cast<double>(period.toSec() / 6.0 * (vel_before_last_[i] + 4.0 * (vel_before_last_[i] + vel_last_[i]) + vel_before_last_[i] + vel_last_[i] + q_dot_ik(i)) + current_q(i));
-            ma_[i].addElement(integration_value);
-            double avg = 0.0;
-            ma_[i].calcWeightedMovingAverage(avg);
-            pos_msg.data.push_back(avg);
-        }
-        //publish to interface
+        pos_msg.data = pos;
         pub_.publish(pos_msg);
-    }
-
-    // Continuously shift the vectors for simpson integration
-    vel_before_last_.clear();
-    for(unsigned int i=0; i < vel_last_.size(); ++i)
-    {
-        vel_before_last_.push_back(vel_last_[i]);
-    }
-
-    vel_last_.clear();
-    for(unsigned int i=0; i < q_dot_ik.rows(); ++i)
-    {
-        vel_last_.push_back(q_dot_ik(i));
     }
 }
 /* END HardwareInterfacePosition ******************************************************************************************/
@@ -129,53 +104,23 @@ inline void HardwareInterfacePosition::processResult(const KDL::JntArray& q_dot_
 inline void HardwareInterfaceTrajectory::processResult(const KDL::JntArray& q_dot_ik,
                                                        const KDL::JntArray& current_q)
 {
-    ros::Time now = ros::Time::now();
-    ros::Duration period = now - last_update_time_;
-    last_update_time_ = now;
-
-    if(!vel_before_last_.empty())
+    if(updateIntegration(q_dot_ik, current_q))
     {
-        std::vector<double> positions;
-        for(unsigned int i = 0; i < params_.dof; ++i)
-        {
-            // Simpson
-            double integration_value = static_cast<double>(period.toSec() / 6.0 * (vel_before_last_[i] + 4.0 * (vel_before_last_[i] + vel_last_[i]) + vel_before_last_[i] + vel_last_[i] + q_dot_ik(i)) + current_q(i));
-            ma_[i].addElement(integration_value);
-            double avg = 0.0;
-            ma_[i].calcWeightedMovingAverage(avg);
-            positions.push_back(avg);
-        }
-        
+        ///publish to interface
         trajectory_msgs::JointTrajectoryPoint traj_point;
-        traj_point.positions = positions;
-        for(unsigned int i=0; i < q_dot_ik.rows(); ++i)
-        {
-            traj_point.velocities.push_back(q_dot_ik(i));
-        }
+        traj_point.positions = pos;
+        traj_point.velocities = vel;
         traj_point.accelerations.assign(params_.dof, 0.0);
         traj_point.effort.assign(params_.dof, 0.0);
-        traj_point.time_from_start = period;    //Maybe we need a longer time_from_start?
+        traj_point.time_from_start = now_ - last_update_time_;  //Maybe we need a longer time_from_start?
         
         trajectory_msgs::JointTrajectory traj_msg;
-        traj_msg.header.stamp = now;
+        traj_msg.header.stamp = now_;
         traj_msg.joint_names = params_.joints;
         traj_msg.points.push_back(traj_point);
         
         //publish to interface
         pub_.publish(traj_msg);
-    }
-
-    // Continuously shift the vectors for simpson integration
-    vel_before_last_.clear();
-    for(unsigned int i=0; i < vel_last_.size(); ++i)
-    {
-        vel_before_last_.push_back(vel_last_[i]);
-    }
-
-    vel_last_.clear();
-    for(unsigned int i=0; i < q_dot_ik.rows(); ++i)
-    {
-        vel_last_.push_back(q_dot_ik(i));
     }
 }
 /* END HardwareInterfaceTrajectory ******************************************************************************************/
@@ -188,43 +133,14 @@ inline void HardwareInterfaceTrajectory::processResult(const KDL::JntArray& q_do
 inline void HardwareInterfaceJointStates::processResult(const KDL::JntArray& q_dot_ik,
                                                         const KDL::JntArray& current_q)
 {
-    ros::Time now = ros::Time::now();
-    ros::Duration period = now - last_update_time_;
-    last_update_time_ = now;
-
-    if(!vel_before_last_.empty())
+    if(updateIntegration(q_dot_ik, current_q))
     {
-        std_msgs::Float64MultiArray vel_msg, pos_msg;
-        for(unsigned int i = 0; i < params_.dof; ++i)
-        {
-            // Simpson
-            double integration_value = static_cast<double>(period.toSec() / 6.0 * (vel_before_last_[i] + 4.0 * (vel_before_last_[i] + vel_last_[i]) + vel_before_last_[i] + vel_last_[i] + q_dot_ik(i)) + current_q(i));
-            ma_[i].addElement(integration_value);
-            double avg = 0.0;
-            ma_[i].calcWeightedMovingAverage(avg);
-            pos_msg.data.push_back(avg);
-
-            vel_msg.data.push_back(q_dot_ik(i));
-        }
         ///update JointState
         boost::mutex::scoped_lock lock(mutex_);
-        js_msg_.position = pos_msg.data;
-        js_msg_.velocity = vel_msg.data;
+        js_msg_.position = pos;
+        js_msg_.velocity = vel;
 
         ///publishing takes place in separate thread
-    }
-
-    // Continuously shift the vectors for simpson integration
-    vel_before_last_.clear();
-    for(unsigned int i=0; i < vel_last_.size(); ++i)
-    {
-        vel_before_last_.push_back(vel_last_[i]);
-    }
-
-    vel_last_.clear();
-    for(unsigned int i=0; i < q_dot_ik.rows(); ++i)
-    {
-        vel_last_.push_back(q_dot_ik(i));
     }
 }
 

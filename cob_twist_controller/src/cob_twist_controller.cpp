@@ -63,11 +63,11 @@ bool CobTwistController::initialize()
         return false;
     }
 
-    // Frames of Interest
-    if(!nh_twist.getParam("collision_check_frames", twist_controller_params_.collision_check_frames))
+    // links of the chain to be considered for collision avoidance
+    if(!nh_twist.getParam("collision_check_links", twist_controller_params_.collision_check_links))
     {
-        ROS_WARN_STREAM("Parameter vector 'collision_check_frames' not set. Collision Avoidance constraint will not do anything.");
-        twist_controller_params_.collision_check_frames.clear();
+        ROS_WARN_STREAM("Parameter 'collision_check_links' not set. Collision Avoidance constraint will not do anything.");
+        twist_controller_params_.collision_check_links.clear();
     }
 
     ///parse robot_description and generate KDL chains
@@ -140,11 +140,11 @@ void CobTwistController::reinitServiceRegistration()
 {
     ROS_INFO("Reinit of Service registration!");
     ros::ServiceClient client = nh_.serviceClient<cob_srvs::SetString>("obstacle_distance/registerLinkOfInterest");
-    ROS_WARN_COND(twist_controller_params_.collision_check_frames.size() <= 0,
-                  "There are no collision check frames for this manipulator. So nothing will be registered. Ensure parameters are set correctly.");
+    ROS_WARN_COND(twist_controller_params_.collision_check_links.size() <= 0,
+                  "No collision_check_links set for this chain. Nothing will be registered. Ensure parameters are set correctly.");
 
-    for(std::vector<std::string>::const_iterator it = twist_controller_params_.collision_check_frames.begin();
-            it != twist_controller_params_.collision_check_frames.end();
+    for(std::vector<std::string>::const_iterator it = twist_controller_params_.collision_check_links.begin();
+            it != twist_controller_params_.collision_check_links.end();
             it++)
     {
         ROS_INFO_STREAM("Trying to register for " << *it);
@@ -207,7 +207,6 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     twist_controller_params_.enforce_vel_limits = config.enforce_vel_limits;
     twist_controller_params_.tolerance = config.tolerance;
 
-    twist_controller_params_.base_compensation = config.base_compensation;
     twist_controller_params_.kinematic_extension = static_cast<KinematicExtensionTypes>(config.kinematic_extension);
     twist_controller_params_.base_ratio = config.base_ratio;
 
@@ -229,15 +228,6 @@ void CobTwistController::checkSolverAndConstraints(cob_twist_controller::TwistCo
     SolverTypes solver = static_cast<SolverTypes>(config.solver);
     ConstraintTypesJLA ct_jla = static_cast<ConstraintTypesJLA>(config.constraint_jla);
     ConstraintTypesCA ct_ca = static_cast<ConstraintTypesCA>(config.constraint_ca);
-    bool base_compensation = config.base_compensation;
-    KinematicExtensionTypes ket = static_cast<KinematicExtensionTypes>(config.kinematic_extension);
-
-    if(base_compensation && BASE_ACTIVE == ket)
-    {
-        ROS_ERROR("Base cannot be active and compensated at the same time! Setting base compensation back to false ...");
-        config.base_compensation = twist_controller_params_.base_compensation = false;
-        warning = true;
-    }
 
     if(DEFAULT_SOLVER == solver && (JLA_OFF != ct_jla || CA_OFF != ct_ca))
     {
@@ -328,7 +318,7 @@ void CobTwistController::solveTwist(KDL::Twist twist)
     int ret_ik;
     KDL::JntArray q_dot_ik(chain_.getNrOfJoints());
 
-    if(twist_controller_params_.base_compensation)
+    if(twist_controller_params_.kinematic_extension == BASE_COMPENSATION)
     {
         twist = twist - twist_odometry_cb_;
     }

@@ -202,7 +202,6 @@ void CobFrameTracker::run(const ros::TimerEvent& event)
             int status = checkServiceCallStatus();
             if(status < 0)
             {
-
                 this->publishHoldTwist(period);
             }
 
@@ -220,7 +219,7 @@ void CobFrameTracker::publishHoldTwist(const ros::Duration& period)
 
     if(!this->ht_.hold)
     {
-        ROS_WARN_STREAM("Publishing empty twist");
+        ROS_WARN_STREAM("Publishing zero twist");
         ht_.hold = this->getTransform(chain_base_, chain_tip_link_, ht_.transform_tf);
     }
     else
