@@ -31,8 +31,6 @@
 #include <geometry_msgs/TwistStamped.h>
 #include <sensor_msgs/Joy.h>
 
-#include <kdl_conversions/kdl_msg.h>
-#include <tf/transform_datatypes.h>
 #include <boost/thread/mutex.hpp>
 
 class SpacenavCommander
@@ -50,13 +48,23 @@ public:
         }
         else
         {
-            ROS_WARN("No root_frame specified. Setting to 'base_link'!");
+            ROS_WARN("No 'root_frame' specified. Setting to 'base_link'!");
             root_frame_ = "base_link";
+        }
+        if (nh_.hasParam("chain_tip_link"))
+        {
+            nh_.getParam("chain_tip_link", tip_frame_);
+        }
+        else
+        {
+            ROS_ERROR("No 'chain_tip_link' specified. Using 'root_frame' instead!");
+            tip_frame_ = root_frame_;
         }
         
         //could be made a parameter or even dynamically reconfigurable
-        scaling_factor_ = 10.0;
+        scaling_factor_ = 0.1;
         dead_man_enabled_ = false;
+        frame_id_ = root_frame_;
     }
 
     ~SpacenavCommander()
@@ -67,43 +75,52 @@ public:
     void joySpacenavCallback(const sensor_msgs::Joy::ConstPtr& msg)
     {
         boost::mutex::scoped_lock lock(mutex_);
-        if(msg->buttons[0] && msg->buttons[1])
+        
+        if(msg->buttons[0]) //dead man
         {
             dead_man_enabled_ = true;
         }
         else
         {
+            //publish one last zero-twist
+            if(dead_man_enabled_)
+            {
+                geometry_msgs::TwistStamped ts;
+                ts.header.frame_id = root_frame_;
+                ts.header.stamp = ros::Time::now();
+                twist_pub_.publish(ts);
+            }
             dead_man_enabled_ = false;
+        }
+        
+        if(msg->buttons[1]) //root_frame/tip_frame selection
+        {
+            frame_id_ = root_frame_;
+        }
+        else
+        {
+            frame_id_ = tip_frame_;
         }
     }
 
     /// Receive Twist from a 6d input device (e.g. 3DConnexion SpaceNavigator)
     void twistSpacenavCallback(const geometry_msgs::Twist::ConstPtr& msg)
-    {
-        KDL::Twist twist;
-        tf::twistMsgToKDL(*msg, twist);
-        geometry_msgs::TwistStamped ts;
-        
+    {        
         boost::mutex::scoped_lock lock(mutex_);
+        
         if(dead_man_enabled_)
         {
-            if(twist != KDL::Twist::Zero())
-            {
-                ts.header.frame_id = root_frame_;
-                ts.header.stamp = ros::Time::now();
-                ts.twist.linear.x = msg->linear.x / scaling_factor_;
-                ts.twist.linear.y = msg->linear.y / scaling_factor_;
-                ts.twist.linear.z = msg->linear.z / scaling_factor_;
-                ts.twist.angular.x = msg->angular.x / scaling_factor_;
-                ts.twist.angular.y = msg->angular.y / scaling_factor_;
-                ts.twist.angular.z = msg->angular.z / scaling_factor_;
-                
-                twist_pub_.publish(ts);
-            }
-            else
-            {
-                ROS_DEBUG("ZeroTwist received");
-            }
+            geometry_msgs::TwistStamped ts;
+            ts.header.frame_id = frame_id_;
+            ts.header.stamp = ros::Time::now();
+            ts.twist.linear.x = scaling_factor_ * msg->linear.x;
+            ts.twist.linear.y = scaling_factor_ * msg->linear.y;
+            ts.twist.linear.z = scaling_factor_ * msg->linear.z;
+            ts.twist.angular.x = scaling_factor_ * msg->angular.x;
+            ts.twist.angular.y = scaling_factor_ * msg->angular.y;
+            ts.twist.angular.z = scaling_factor_ * msg->angular.z;
+            
+            twist_pub_.publish(ts);
         }
     }
     
@@ -116,7 +133,7 @@ private:
     bool dead_man_enabled_;
     boost::mutex mutex_;
     double scaling_factor_;
-    std::string root_frame_;
+    std::string root_frame_, tip_frame_, frame_id_;
 };
 
 
