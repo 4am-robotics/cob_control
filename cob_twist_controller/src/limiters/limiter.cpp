@@ -114,7 +114,7 @@ LimiterContainer::~LimiterContainer()
 
 /* BEGIN LimiterAllJointPositions *******************************************************************************/
 /**
- * Checks the positions of the joints whether the are in tolerance or not. If not the corresponding velocities vector is scaled.
+ * Checks the positions of the joints whether they are in tolerance or not. If not the corresponding velocities vector is scaled.
  * This function multiplies the velocities that result from the IK with a limits-dependent factor in case the joint positions violate the specified tolerance.
  * The factor is calculated by using the cosine function to provide a smooth transition from 1 to zero.
  * Factor is applied on all joint velocities (although only one joint has exceeded its limits), so that the direction of the desired twist is not changed.
@@ -124,7 +124,6 @@ KDL::JntArray LimiterAllJointPositions::enforceLimits(const KDL::JntArray& q_dot
 {
     KDL::JntArray scaled_q_dot(q_dot_ik.rows()); // according to KDL: all elements in data have 0 value;
     double tolerance = this->tc_params_.tolerance / 180.0 * M_PI;
-
 
     double factor = 0.0;
     bool tolerance_surpassed = false;
@@ -159,7 +158,7 @@ KDL::JntArray LimiterAllJointPositions::enforceLimits(const KDL::JntArray& q_dot
 
     if (tolerance_surpassed)
     {
-        ROS_ERROR("Tolerance surpassed: Enforcing limits FOR ALL JOINT POSITIONS with factor = %f", factor);
+        ROS_ERROR_STREAM_THROTTLE(1, "Tolerance surpassed: Enforcing limits FOR ALL JOINT POSITIONS with factor = " << factor);
         for(int i = 0; i < q_dot_ik.rows() ; i++)
         {
             scaled_q_dot(i) = q_dot_ik(i) / factor;
@@ -179,7 +178,7 @@ KDL::JntArray LimiterAllJointPositions::enforceLimits(const KDL::JntArray& q_dot
 
 /* BEGIN LimiterAllJointVelocities ******************************************************************************/
 /**
- * Enforce limits on all joint velocities to keep direction (former known as normalize_velocities).
+ * Enforce limits on all joint velocities to keep direction.
  * Limits all velocities according to the limits_vel vector if necessary.
  */
 KDL::JntArray LimiterAllJointVelocities::enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const
@@ -231,7 +230,7 @@ KDL::JntArray LimiterAllJointVelocities::enforceLimits(const KDL::JntArray& q_do
 
     if(max_factor > 1.0)
     {
-        ROS_WARN("Tolerance surpassed: Enforcing limits FOR ALL JOINT VELOCITIES with factor = %f", max_factor);
+        ROS_WARN_STREAM_THROTTLE(1, "Tolerance surpassed: Enforcing limits FOR ALL JOINT VELOCITIES with factor = " << max_factor);
         for(uint8_t i = 0; i < this->tc_params_.dof; ++i)
         {
             q_dot_norm(i) = q_dot_ik(i) / max_factor;
