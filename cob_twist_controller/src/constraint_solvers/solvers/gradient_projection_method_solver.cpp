@@ -40,11 +40,16 @@
 Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Vector6d_t& inCartVelocities,
                                                       const JointStates& joint_states)
 {
+    //ToDo: wrong usage of wording (particular solution vs. homogeneous solution)?
+    //jpi * v -> homogeneous_solution
+    //P*q_0 -> particular_solution 
+    
     double activation_gain;
-    Eigen::MatrixXd jacobianPseudoInverse = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
-    Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(jacobianPseudoInverse.rows(), this->jacobian_data_.cols());
-    Eigen::MatrixXd projector = ident - jacobianPseudoInverse * this->jacobian_data_;
-    Eigen::MatrixXd particular_solution = jacobianPseudoInverse * inCartVelocities;
+    Eigen::MatrixXd damped_jpi = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
+    Eigen::MatrixXd jpi = pinv_calc_.calculate(this->jacobian_data_);
+    Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(jpi.rows(), this->jacobian_data_.cols());
+    Eigen::MatrixXd projector = ident - jpi * this->jacobian_data_;
+    Eigen::MatrixXd particular_solution = damped_jpi * inCartVelocities;
     Eigen::MatrixXd homogeneous_solution = Eigen::MatrixXd::Zero(particular_solution.rows(), particular_solution.cols());
     KDL::JntArrayVel predict_jnts_vel(joint_states.current_q_.rows());
 
