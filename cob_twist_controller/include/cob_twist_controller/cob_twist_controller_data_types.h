@@ -51,7 +51,7 @@ enum DampingMethodTypes
     LEAST_SINGULAR_VALUE = cob_twist_controller::TwistController_LEAST_SINGULAR_VALUE,
 };
 
-enum HardwareInterfaceTypes
+enum ControllerInterfaceTypes
 {
     VELOCITY_INTERFACE = cob_twist_controller::TwistController_VELOCITY_INTERFACE,
     POSITION_INTERFACE = cob_twist_controller::TwistController_POSITION_INTERFACE,
@@ -138,7 +138,7 @@ struct TwistControllerParams
 {
     TwistControllerParams() :
             dof(0),
-            hardware_interface_type(VELOCITY_INTERFACE),
+            controller_interface(VELOCITY_INTERFACE),
 
             numerical_filtering(false),
             damping_method(MANIPULABILITY),
@@ -186,7 +186,7 @@ struct TwistControllerParams
     std::string chain_base_link;
     std::string chain_tip_link;
 
-    HardwareInterfaceTypes hardware_interface_type;
+    ControllerInterfaceTypes controller_interface;
 
     bool numerical_filtering;
     DampingMethodTypes damping_method;

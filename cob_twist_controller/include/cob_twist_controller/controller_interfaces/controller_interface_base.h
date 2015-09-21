@@ -23,27 +23,27 @@
  *
  * \brief
  *   This header contains the interface description of all available
- *   hardware interface types (position/velocity).
+ *   controller interfaces (Velocity/Position/Trajectory/JointStates).
  *
  ****************************************************************/
-#ifndef HARDWARE_INTERFACE_TYPE_BASE_H_
-#define HARDWARE_INTERFACE_TYPE_BASE_H_
+#ifndef CONTROLLER_INTERFACE_BASE_H_
+#define CONTROLLER_INTERFACE_BASE_H_
 
 #include "ros/ros.h"
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 
-/// Base class for hardware interfaces types.
-class HardwareInterfaceBase
+/// Base class for controller interfaces.
+class ControllerInterfaceBase
 {
     public:
-        HardwareInterfaceBase(ros::NodeHandle& nh,
-                              const TwistControllerParams& params):
+        ControllerInterfaceBase(ros::NodeHandle& nh,
+                                const TwistControllerParams& params):
             nh_(nh),
             params_(params)
         {}
 
-        virtual ~HardwareInterfaceBase() {}
+        virtual ~ControllerInterfaceBase() {}
 
         virtual void processResult(const KDL::JntArray& q_dot_ik,
                                    const KDL::JntArray& current_q) = 0;
@@ -55,20 +55,20 @@ class HardwareInterfaceBase
         ros::Publisher pub_;
 };
 
-/// Base class for hardware interface types using position integration
-class HardwareInterfacePositionBase : public HardwareInterfaceBase
+/// Base class for controller interfaces using position integration
+class ControllerInterfacePositionBase : public ControllerInterfaceBase
 {
     public:
-        HardwareInterfacePositionBase(ros::NodeHandle& nh,
-                                      const TwistControllerParams& params,
-                                      const uint16_t ma_size)
-        : HardwareInterfaceBase(nh, params)
+        ControllerInterfacePositionBase(ros::NodeHandle& nh,
+                                        const TwistControllerParams& params,
+                                        const uint16_t ma_size)
+        : ControllerInterfaceBase(nh, params)
         {
             ma_.assign(params.dof, MovingAvg_double_t(ma_size));
             last_update_time_ = ros::Time::now();
         }
 
-        ~HardwareInterfacePositionBase() {}
+        ~ControllerInterfacePositionBase() {}
 
         virtual void processResult(const KDL::JntArray& q_dot_ik,
                                    const KDL::JntArray& current_q) = 0;
@@ -131,4 +131,4 @@ class HardwareInterfacePositionBase : public HardwareInterfaceBase
 };
 
 
-#endif /* HARDWARE_INTERFACE_TYPE_BASE_H_ */
+#endif /* CONTROLLER_INTERFACE_BASE_H_ */

@@ -32,7 +32,7 @@ from cob_twist_controller.cfg.TwistControllerConfig import *
 '''
 Available keys for the dynamic_reconfigure update call
 '''
-HW_IF_TYPE = 'hardware_interface_type'
+CTRL_IF = 'controller_interface'
 
 NUM_FILT = 'numerical_filtering'
 DAMP_METHOD = 'damping_method'

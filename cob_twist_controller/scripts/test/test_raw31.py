@@ -54,7 +54,7 @@ pub = rospy.Publisher('/arm/joint_trajectory_controller/command', JointTrajector
 def init_dyn_recfg():
     cli = tcc.TwistControllerReconfigureClient()
     cli.init()
-    cli.set_config_param(tcc.HW_IF_TYPE, tcc.TwistController_VELOCITY_INTERFACE)
+    cli.set_config_param(tcc.CTRL_IF, tcc.TwistController_VELOCITY_INTERFACE)
 
     cli.set_config_param(tcc.NUM_FILT, False)
     cli.set_config_param(tcc.DAMP_METHOD, tcc.TwistController_MANIPULABILITY)

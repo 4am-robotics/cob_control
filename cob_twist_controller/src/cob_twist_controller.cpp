@@ -133,7 +133,7 @@ bool CobTwistController::initialize()
 
     odometry_sub_ = nh_.subscribe("/base/odometry_controller/odometry", 1, &CobTwistController::odometryCallback, this);
 
-    this->hardware_interface_.reset(HardwareInterfaceBuilder::createHardwareInterface(this->nh_, this->twist_controller_params_));
+    this->controller_interface_.reset(ControllerInterfaceBuilder::createControllerInterface(this->nh_, this->twist_controller_params_));
 
     ROS_INFO("...initialized!");
     return true;
@@ -166,7 +166,7 @@ void CobTwistController::reinitServiceRegistration()
 void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControllerConfig& config, uint32_t level)
 {
     this->checkSolverAndConstraints(config);
-    twist_controller_params_.hardware_interface_type = static_cast<HardwareInterfaceTypes>(config.hardware_interface_type);
+    twist_controller_params_.controller_interface = static_cast<ControllerInterfaceTypes>(config.controller_interface);
 
     twist_controller_params_.numerical_filtering = config.numerical_filtering;
     twist_controller_params_.damping_method = static_cast<DampingMethodTypes>(config.damping_method);
@@ -212,7 +212,7 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     twist_controller_params_.base_ratio = config.base_ratio;
 
 
-    this->hardware_interface_.reset(HardwareInterfaceBuilder::createHardwareInterface(this->nh_, this->twist_controller_params_));
+    this->controller_interface_.reset(ControllerInterfaceBuilder::createControllerInterface(this->nh_, this->twist_controller_params_));
 
     p_inv_diff_kin_solver_->resetAll(this->twist_controller_params_);
 
@@ -334,8 +334,7 @@ void CobTwistController::solveTwist(KDL::Twist twist)
     }
     else
     {
-        // Change between velocity and position interface
-        this->hardware_interface_->processResult(q_dot_ik, this->joint_states_.current_q_);
+        this->controller_interface_->processResult(q_dot_ik, this->joint_states_.current_q_);
     }
 
 

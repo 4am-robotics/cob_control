@@ -26,46 +26,46 @@
  *
  ****************************************************************/
 
-#include "cob_twist_controller/hardware_interface_types/hardware_interface_type.h"
+#include "cob_twist_controller/controller_interfaces/controller_interface.h"
 
-/* BEGIN HardwareInterfaceBuilder *****************************************************************************************/
+/* BEGIN ControllerInterfaceBuilder *****************************************************************************************/
 /**
- * Static builder method to create hardware interface based on given parameterization.
+ * Static builder method to create controller interface based on given parameterization.
  */
-HardwareInterfaceBase* HardwareInterfaceBuilder::createHardwareInterface(ros::NodeHandle& nh,
-                                                                         const TwistControllerParams& params)
+ControllerInterfaceBase* ControllerInterfaceBuilder::createControllerInterface(ros::NodeHandle& nh,
+                                                                               const TwistControllerParams& params)
 {
-    HardwareInterfaceBase* ib = NULL;
-    switch(params.hardware_interface_type)
+    ControllerInterfaceBase* ib = NULL;
+    switch(params.controller_interface)
     {
         case VELOCITY_INTERFACE:
-            ib = new HardwareInterfaceVelocity(nh, params);
+            ib = new ControllerInterfaceVelocity(nh, params);
             break;
         case POSITION_INTERFACE:
-            ib = new HardwareInterfacePosition(nh, params);
+            ib = new ControllerInterfacePosition(nh, params);
             break;
         case TRAJECTORY_INTERFACE:
-            ib = new HardwareInterfaceTrajectory(nh, params);
+            ib = new ControllerInterfaceTrajectory(nh, params);
             break;
         case JOINT_STATE_INTERFACE:
-            ib = new HardwareInterfaceJointStates(nh, params);
+            ib = new ControllerInterfaceJointStates(nh, params);
             break;
         default:
-            ROS_ERROR("HardwareInterface %d not defined! Using default: 'VELOCITY_INTERFACE'!", params.hardware_interface_type);
-            ib = new HardwareInterfaceVelocity(nh, params);
+            ROS_ERROR("ControllerInterface %d not defined! Using default: 'VELOCITY_INTERFACE'!", params.controller_interface);
+            ib = new ControllerInterfaceVelocity(nh, params);
             break;
     }
 
     return ib;
 }
-/* END HardwareInterfaceBuilder *******************************************************************************************/
+/* END ControllerInterfaceBuilder *******************************************************************************************/
 
-/* BEGIN HardwareInterfaceVelocity ********************************************************************************************/
+/* BEGIN ControllerInterfaceVelocity ********************************************************************************************/
 /**
  * Method processing the result by publishing to the 'joint_group_velocity_controller/command' topic.
  */
-inline void HardwareInterfaceVelocity::processResult(const KDL::JntArray& q_dot_ik,
-                                                     const KDL::JntArray& current_q)
+inline void ControllerInterfaceVelocity::processResult(const KDL::JntArray& q_dot_ik,
+                                                       const KDL::JntArray& current_q)
 {
     std_msgs::Float64MultiArray vel_msg;
 
@@ -76,15 +76,15 @@ inline void HardwareInterfaceVelocity::processResult(const KDL::JntArray& q_dot_
 
     pub_.publish(vel_msg);
 }
-/* END HardwareInterfaceVelocity **********************************************************************************************/
+/* END ControllerInterfaceVelocity **********************************************************************************************/
 
 
-/* BEGIN HardwareInterfacePosition ****************************************************************************************/
+/* BEGIN ControllerInterfacePosition ****************************************************************************************/
 /**
  * Method processing the result using integration method (Simpson) and publishing to the 'joint_group_position_controller/command' topic.
  */
-inline void HardwareInterfacePosition::processResult(const KDL::JntArray& q_dot_ik,
-                                                     const KDL::JntArray& current_q)
+inline void ControllerInterfacePosition::processResult(const KDL::JntArray& q_dot_ik,
+                                                       const KDL::JntArray& current_q)
 {
     if(updateIntegration(q_dot_ik, current_q))
     {
@@ -94,15 +94,15 @@ inline void HardwareInterfacePosition::processResult(const KDL::JntArray& q_dot_
         pub_.publish(pos_msg);
     }
 }
-/* END HardwareInterfacePosition ******************************************************************************************/
+/* END ControllerInterfacePosition ******************************************************************************************/
 
 
-/* BEGIN HardwareInterfaceTrajectory ****************************************************************************************/
+/* BEGIN ControllerInterfaceTrajectory ****************************************************************************************/
 /**
  * Method processing the result using integration method (Simpson) and publishing to the 'joint_trajectory_controller/command' topic.
  */
-inline void HardwareInterfaceTrajectory::processResult(const KDL::JntArray& q_dot_ik,
-                                                       const KDL::JntArray& current_q)
+inline void ControllerInterfaceTrajectory::processResult(const KDL::JntArray& q_dot_ik,
+                                                         const KDL::JntArray& current_q)
 {
     if(updateIntegration(q_dot_ik, current_q))
     {
@@ -123,15 +123,15 @@ inline void HardwareInterfaceTrajectory::processResult(const KDL::JntArray& q_do
         pub_.publish(traj_msg);
     }
 }
-/* END HardwareInterfaceTrajectory ******************************************************************************************/
+/* END ControllerInterfaceTrajectory ******************************************************************************************/
 
 
-/* BEGIN HardwareInterfaceJointStates ****************************************************************************************/
+/* BEGIN ControllerInterfaceJointStates ****************************************************************************************/
 /**
  * Method processing the result using integration method (Simpson) updating the internal JointState.
  */
-inline void HardwareInterfaceJointStates::processResult(const KDL::JntArray& q_dot_ik,
-                                                        const KDL::JntArray& current_q)
+inline void ControllerInterfaceJointStates::processResult(const KDL::JntArray& q_dot_ik,
+                                                          const KDL::JntArray& current_q)
 {
     if(updateIntegration(q_dot_ik, current_q))
     {
@@ -144,7 +144,7 @@ inline void HardwareInterfaceJointStates::processResult(const KDL::JntArray& q_d
     }
 }
 
-void HardwareInterfaceJointStates::publishJointState(const ros::TimerEvent& event)
+void ControllerInterfaceJointStates::publishJointState(const ros::TimerEvent& event)
 /**
  * Timer callback publishing the internal JointState to the 'joint_state' topic.
  */
@@ -154,4 +154,4 @@ void HardwareInterfaceJointStates::publishJointState(const ros::TimerEvent& even
     pub_.publish(js_msg_);
 }
 
-/* END HardwareInterfaceJointStates ******************************************************************************************/
+/* END ControllerInterfaceJointStates ******************************************************************************************/
