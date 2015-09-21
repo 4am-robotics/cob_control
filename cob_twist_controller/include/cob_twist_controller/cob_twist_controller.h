@@ -54,7 +54,7 @@
 #include <cob_twist_controller/TwistControllerConfig.h>
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include <cob_twist_controller/inverse_differential_kinematics_solver.h>
-#include "cob_twist_controller/hardware_interface_types/hardware_interface_type.h"
+#include "cob_twist_controller/controller_interfaces/controller_interface.h"
 #include "cob_twist_controller/callback_data_mediator.h"
 
 class CobTwistController
@@ -69,6 +69,7 @@ private:
 
     ros::Subscriber odometry_sub_;
 
+    ros::ServiceClient register_link_client_;
     ros::Subscriber obstacle_distance_sub_;
 
     KDL::Chain chain_;
@@ -79,7 +80,7 @@ private:
 
     boost::shared_ptr<KDL::ChainFkSolverVel_recursive> jntToCartSolver_vel_;
     boost::shared_ptr<InverseDifferentialKinematicsSolver> p_inv_diff_kin_solver_;
-    boost::shared_ptr<HardwareInterfaceBase> hardware_interface_;
+    boost::shared_ptr<ControllerInterfaceBase> controller_interface_;
 
     CallbackDataMediator callback_data_mediator_;
 
@@ -96,7 +97,7 @@ public:
     {
         this->jntToCartSolver_vel_.reset();
         this->p_inv_diff_kin_solver_.reset();
-        this->hardware_interface_.reset();
+        this->controller_interface_.reset();
         this->reconfigure_server_.reset();
     }
 

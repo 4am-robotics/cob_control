@@ -104,6 +104,9 @@ bool CobTwistController::initialize()
     {
         twist_controller_params_.frame_names.push_back(chain_.getSegment(i).getName());
     }
+    register_link_client_ = nh_.serviceClient<cob_srvs::SetString>("obstacle_distance/registerLinkOfInterest");
+    ROS_WARN("Waiting for ServiceServer 'obstacle_distance/registerLinkOfInterest'...");
+    register_link_client_.waitForExistence();
 
     ///initialize configuration control solver
     p_inv_diff_kin_solver_.reset(new InverseDifferentialKinematicsSolver(twist_controller_params_, chain_, callback_data_mediator_));
@@ -130,7 +133,7 @@ bool CobTwistController::initialize()
 
     odometry_sub_ = nh_.subscribe("/base/odometry_controller/odometry", 1, &CobTwistController::odometryCallback, this);
 
-    this->hardware_interface_.reset(HardwareInterfaceBuilder::createHardwareInterface(this->nh_, this->twist_controller_params_));
+    this->controller_interface_.reset(ControllerInterfaceBuilder::createControllerInterface(this->nh_, this->twist_controller_params_));
 
     ROS_INFO("...initialized!");
     return true;
@@ -138,8 +141,6 @@ bool CobTwistController::initialize()
 
 void CobTwistController::reinitServiceRegistration()
 {
-    ROS_INFO("Reinit of Service registration!");
-    ros::ServiceClient client = nh_.serviceClient<cob_srvs::SetString>("obstacle_distance/registerLinkOfInterest");
     ROS_WARN_COND(twist_controller_params_.collision_check_links.size() <= 0,
                   "No collision_check_links set for this chain. Nothing will be registered. Ensure parameters are set correctly.");
 
@@ -150,7 +151,7 @@ void CobTwistController::reinitServiceRegistration()
         ROS_INFO_STREAM("Trying to register for " << *it);
         cob_srvs::SetString r;
         r.request.data = *it;
-        if (client.call(r))
+        if (register_link_client_.call(r))
         {
             ROS_INFO_STREAM("Called registration service with success: " << int(r.response.success) << ". Got message: " << r.response.message);
         }
@@ -165,7 +166,7 @@ void CobTwistController::reinitServiceRegistration()
 void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControllerConfig& config, uint32_t level)
 {
     this->checkSolverAndConstraints(config);
-    twist_controller_params_.hardware_interface_type = static_cast<HardwareInterfaceTypes>(config.hardware_interface_type);
+    twist_controller_params_.controller_interface = static_cast<ControllerInterfaceTypes>(config.controller_interface);
 
     twist_controller_params_.numerical_filtering = config.numerical_filtering;
     twist_controller_params_.damping_method = static_cast<DampingMethodTypes>(config.damping_method);
@@ -211,7 +212,7 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     twist_controller_params_.base_ratio = config.base_ratio;
 
 
-    this->hardware_interface_.reset(HardwareInterfaceBuilder::createHardwareInterface(this->nh_, this->twist_controller_params_));
+    this->controller_interface_.reset(ControllerInterfaceBuilder::createControllerInterface(this->nh_, this->twist_controller_params_));
 
     p_inv_diff_kin_solver_->resetAll(this->twist_controller_params_);
 
@@ -333,8 +334,7 @@ void CobTwistController::solveTwist(KDL::Twist twist)
     }
     else
     {
-        // Change between velocity and position interface
-        this->hardware_interface_->processResult(q_dot_ik, this->joint_states_.current_q_);
+        this->controller_interface_->processResult(q_dot_ik, this->joint_states_.current_q_);
     }
 
 
