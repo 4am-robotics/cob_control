@@ -104,6 +104,9 @@ bool CobTwistController::initialize()
     {
         twist_controller_params_.frame_names.push_back(chain_.getSegment(i).getName());
     }
+    register_link_client_ = nh_.serviceClient<cob_srvs::SetString>("obstacle_distance/registerLinkOfInterest");
+    ROS_WARN("Waiting for ServiceServer 'obstacle_distance/registerLinkOfInterest'...");
+    register_link_client_.waitForExistence();
 
     ///initialize configuration control solver
     p_inv_diff_kin_solver_.reset(new InverseDifferentialKinematicsSolver(twist_controller_params_, chain_, callback_data_mediator_));
@@ -138,8 +141,6 @@ bool CobTwistController::initialize()
 
 void CobTwistController::reinitServiceRegistration()
 {
-    ROS_INFO("Reinit of Service registration!");
-    ros::ServiceClient client = nh_.serviceClient<cob_srvs::SetString>("obstacle_distance/registerLinkOfInterest");
     ROS_WARN_COND(twist_controller_params_.collision_check_links.size() <= 0,
                   "No collision_check_links set for this chain. Nothing will be registered. Ensure parameters are set correctly.");
 
@@ -150,7 +151,7 @@ void CobTwistController::reinitServiceRegistration()
         ROS_INFO_STREAM("Trying to register for " << *it);
         cob_srvs::SetString r;
         r.request.data = *it;
-        if (client.call(r))
+        if (register_link_client_.call(r))
         {
             ROS_INFO_STREAM("Called registration service with success: " << int(r.response.success) << ". Got message: " << r.response.message);
         }
