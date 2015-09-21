@@ -79,12 +79,13 @@ int DistanceManager::init()
     this->stop_sca_threads_ = false;
 
     // Latched and continue in case there is no subscriber at the moment for a marker
-    this->marker_pub_ = this->nh_.advertise<visualization_msgs::Marker>("obstacle_distance/marker", 1, true);
+    this->marker_pub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("obstacle_distance/marker", 10, true);
     this->obstacle_distances_pub_ = this->nh_.advertise<cob_obstacle_distance::ObstacleDistances>("obstacle_distance", 1);
     obstacle_mgr_.reset(new ShapesManager(this->marker_pub_));
     object_of_interest_mgr_.reset(new ShapesManager(this->marker_pub_));
     KDL::Tree robot_structure;
-    if (!kdl_parser::treeFromParam("/robot_description", robot_structure)){
+    if (!kdl_parser::treeFromParam("/robot_description", robot_structure))
+    {
         ROS_ERROR("Failed to construct kdl tree from parameter '/robot_description'.");
         return -1;
     }
@@ -186,15 +187,15 @@ void DistanceManager::addObjectOfInterest(const std::string& id, PtrIMarkerShape
 }
 
 
-void DistanceManager::drawObstacles(bool enforceDraw)
+void DistanceManager::drawObstacles()
 {
-    this->obstacle_mgr_->draw(enforceDraw);
+    this->obstacle_mgr_->draw();
 }
 
 
-void DistanceManager::drawObjectsOfInterest(bool enforceDraw)
+void DistanceManager::drawObjectsOfInterest()
 {
-    this->object_of_interest_mgr_->draw(enforceDraw);
+    this->object_of_interest_mgr_->draw();
 }
 
 
@@ -410,7 +411,6 @@ void DistanceManager::jointstateCb(const sensor_msgs::JointState::ConstPtr& msg)
 
 void DistanceManager::registerObstacle(const moveit_msgs::CollisionObject::ConstPtr& msg)
 {
-    ROS_INFO_STREAM("registerObstacle: new registration");
     std::lock_guard<std::mutex> lock(obstacle_mgr_mtx_);
 
     const std::string frame_id = msg->header.frame_id;
@@ -419,13 +419,13 @@ void DistanceManager::registerObstacle(const moveit_msgs::CollisionObject::Const
 
     if(msg->meshes.size() > 0 && msg->primitives.size() > 0)
     {
-        ROS_ERROR_STREAM("Can either build mesh or primitive but not both in one message for one id.");
+        ROS_ERROR_STREAM("registerObstacle: Can either build mesh or primitive but not both in one message for one id.");
         return;
     }
 
     if(msg->operation == msg->ADD && this->obstacle_mgr_->count(msg->id) > 0)
     {
-        ROS_ERROR_STREAM("Element " << msg->id << " exists already. ADD not allowed!");
+        ROS_ERROR_STREAM("registerObstacle: Element " << msg->id << " exists already. ADD not allowed!");
         return;
     }
 
@@ -453,7 +453,7 @@ void DistanceManager::registerObstacle(const moveit_msgs::CollisionObject::Const
         this->buildObstaclePrimitive(msg, frame_transform_root);
     }
 
-    this->drawObstacles(true);
+    this->drawObstacles();
 }
 
 

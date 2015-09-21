@@ -69,6 +69,7 @@ private:
 
     ros::Subscriber odometry_sub_;
 
+    ros::ServiceClient register_link_client_;
     ros::Subscriber obstacle_distance_sub_;
 
     KDL::Chain chain_;

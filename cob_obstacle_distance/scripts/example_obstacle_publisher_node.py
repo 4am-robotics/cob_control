@@ -54,7 +54,6 @@ if __name__=="__main__":
     x.id = "Funny Sphere"
     x.header.frame_id = frame_id
     x.operation = CollisionObject.ADD
-
     sphere = SolidPrimitive()
     sphere.type = SolidPrimitive.SPHERE
     sphere.dimensions.append(0.1) # radius
@@ -69,11 +68,10 @@ if __name__=="__main__":
     pose.orientation.z = 0.0;
     pose.orientation.w = 1.0;
     x.primitive_poses.append(pose)
-
     pub.publish(x)
+    time.sleep(1.0)
 
     # Now publish a mesh and use the db field for the mesh-resource name
-    time.sleep(1.5)
     y = CollisionObject()
     y.id = "Funny Mesh"
     y.header.frame_id = frame_id
@@ -89,7 +87,7 @@ if __name__=="__main__":
     pose.orientation.z = 0.0;
     pose.orientation.w = 1.0;
     y.mesh_poses.append(pose)
-
     pub.publish(y)
+    time.sleep(1.0)
 
     rospy.spin()

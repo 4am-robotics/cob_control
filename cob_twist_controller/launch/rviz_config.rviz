@@ -129,14 +129,6 @@ Visualization Manager:
         tip_marker: true
       Queue Size: 100
       Value: true
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /arm/obstacle_distance/marker
-      Name: ObstacleMarker
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: true
   Enabled: true
   Global Options:
     Background Color: 141; 141; 141
@@ -194,5 +186,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1200
-  X: 164
-  Y: 127
+  X: 154
+  Y: 117

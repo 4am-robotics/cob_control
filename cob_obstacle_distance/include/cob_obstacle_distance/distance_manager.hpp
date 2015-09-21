@@ -138,15 +138,13 @@ class DistanceManager
 
         /**
          * Simply draw all obstacle markers in RVIZ.
-         * @param enforceDraw Draw again, also marker already exists.
          */
-        void drawObstacles(bool enforceDraw = false);
+        void drawObstacles();
 
         /**
          * Simply draw all object of interest markers in RVIZ.
-         * @param enforceDraw Draw again, also marker already exists.
          */
-        void drawObjectsOfInterest(bool enforceDraw = false);
+        void drawObjectsOfInterest();
 
         /**
          * Updates the joint states.

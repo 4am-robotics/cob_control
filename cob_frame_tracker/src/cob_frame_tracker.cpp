@@ -212,37 +212,6 @@ void CobFrameTracker::run(const ros::TimerEvent& event)
     }
 }
 
-void CobFrameTracker::publishHoldTwist(const ros::Duration& period)
-{
-    geometry_msgs::TwistStamped twist_msg;
-    twist_msg.header.frame_id = chain_tip_link_;
-
-    if(!this->ht_.hold)
-    {
-        ROS_WARN_STREAM("Publishing zero twist");
-        ht_.hold = this->getTransform(chain_base_, chain_tip_link_, ht_.transform_tf);
-    }
-    else
-    {
-        ROS_WARN_STREAM("Publishing hold posture twist");
-        tf::StampedTransform new_tf;
-        if(this->getTransform(chain_base_, chain_tip_link_, new_tf))
-        {
-            twist_msg.header.frame_id = chain_tip_link_;
-            twist_msg.twist.linear.x = pid_controller_trans_x_.computeCommand(ht_.transform_tf.getOrigin().x() - new_tf.getOrigin().x(), period);
-            twist_msg.twist.linear.y = pid_controller_trans_y_.computeCommand(ht_.transform_tf.getOrigin().y() - new_tf.getOrigin().y(), period);
-            twist_msg.twist.linear.z = pid_controller_trans_z_.computeCommand(ht_.transform_tf.getOrigin().z() - new_tf.getOrigin().z(), period);
-
-            twist_msg.twist.angular.x = pid_controller_rot_x_.computeCommand(ht_.transform_tf.getRotation().x() - new_tf.getRotation().x(), period);
-            twist_msg.twist.angular.y = pid_controller_rot_y_.computeCommand(ht_.transform_tf.getRotation().y() - new_tf.getRotation().y(), period);
-            twist_msg.twist.angular.z = pid_controller_rot_z_.computeCommand(ht_.transform_tf.getRotation().z() - new_tf.getRotation().z(), period);
-        }
-    }
-
-    twist_pub_.publish(twist_msg);
-}
-
-
 bool CobFrameTracker::getTransform(const std::string& target_frame, const std::string& source_frame, tf::StampedTransform& stamped_tf)
 {
     bool success = true;
@@ -250,7 +219,8 @@ bool CobFrameTracker::getTransform(const std::string& target_frame, const std::s
     {
         tf_listener_.lookupTransform(target_frame, source_frame, ros::Time(0), stamped_tf);
     }
-    catch (tf::TransformException& ex){
+    catch (tf::TransformException& ex)
+    {
         ROS_ERROR("CobFrameTracker::getTransform: \n%s",ex.what());
         success = false;
     }
@@ -258,6 +228,13 @@ bool CobFrameTracker::getTransform(const std::string& target_frame, const std::s
     return success;
 }
 
+void CobFrameTracker::publishZeroTwist()
+{
+    //publish zero Twist for stopping
+    geometry_msgs::TwistStamped twist_msg;
+    twist_msg.header.frame_id = chain_tip_link_;
+    twist_pub_.publish(twist_msg);
+}
 
 void CobFrameTracker::publishTwist(ros::Duration period, bool do_publish)
 {
@@ -329,18 +306,48 @@ void CobFrameTracker::publishTwist(ros::Duration period, bool do_publish)
         twist_pub_.publish(twist_msg);
 }
 
+void CobFrameTracker::publishHoldTwist(const ros::Duration& period)
+{
+    geometry_msgs::TwistStamped twist_msg;
+    twist_msg.header.frame_id = chain_tip_link_;
+
+    if(!this->ht_.hold)
+    {
+        ROS_ERROR_STREAM_THROTTLE(1, "Abortion active: Publishing zero twist");
+        ht_.hold = this->getTransform(chain_base_, chain_tip_link_, ht_.transform_tf);
+    }
+    else
+    {
+        ROS_ERROR_STREAM_THROTTLE(1, "Abortion active: Publishing hold posture twist");
+        tf::StampedTransform new_tf;
+        if(this->getTransform(chain_base_, chain_tip_link_, new_tf))
+        {
+            twist_msg.header.frame_id = chain_tip_link_;
+            twist_msg.twist.linear.x = pid_controller_trans_x_.computeCommand(ht_.transform_tf.getOrigin().x() - new_tf.getOrigin().x(), period);
+            twist_msg.twist.linear.y = pid_controller_trans_y_.computeCommand(ht_.transform_tf.getOrigin().y() - new_tf.getOrigin().y(), period);
+            twist_msg.twist.linear.z = pid_controller_trans_z_.computeCommand(ht_.transform_tf.getOrigin().z() - new_tf.getOrigin().z(), period);
+
+            twist_msg.twist.angular.x = pid_controller_rot_x_.computeCommand(ht_.transform_tf.getRotation().x() - new_tf.getRotation().x(), period);
+            twist_msg.twist.angular.y = pid_controller_rot_y_.computeCommand(ht_.transform_tf.getRotation().y() - new_tf.getRotation().y(), period);
+            twist_msg.twist.angular.z = pid_controller_rot_z_.computeCommand(ht_.transform_tf.getRotation().z() - new_tf.getRotation().z(), period);
+        }
+    }
+
+    twist_pub_.publish(twist_msg);
+}
+
 bool CobFrameTracker::startTrackingCallback(cob_srvs::SetString::Request& request, cob_srvs::SetString::Response& response)
 {
     if (tracking_)
     {
-        ROS_INFO("CobFrameTracker start was denied! FrameTracker is already tracking a goal");
+        ROS_ERROR("CobFrameTracker start was denied! FrameTracker is already tracking a goal");
         response.success = false;
         response.message = "FrameTracker is already tracking goal!";
         return false;
     }
     else
     {
-        ROS_INFO("CobFrameTracker started WITHOUT SECURITY MONITORING");
+        ROS_INFO("CobFrameTracker started with CART_DIST_SECURITY MONITORING enabled");
         tracking_ = true;
         tracking_goal_ = false;
         tracking_frame_ = request.data;
@@ -356,22 +363,19 @@ bool CobFrameTracker::stopTrackingCallback(std_srvs::Empty::Request& request, st
     {
         if (tracking_goal_)
         {
-            ROS_INFO("CobFrameTracker stop was denied because TrackingAction is tracking a goal. You must send 'cancel goal' to the action server instead.");
+            ROS_ERROR("CobFrameTracker stop was denied because TrackingAction is tracking a goal. You must send 'cancel goal' to the action server instead.");
             return false;
         }
         ROS_INFO("CobFrameTracker stopped successfully");
         tracking_ = false;
         tracking_frame_ = chain_tip_link_;
 
-        //publish zero Twist for stopping
-        geometry_msgs::TwistStamped twist_msg;
-        twist_msg.header.frame_id = chain_tip_link_;
-        twist_pub_.publish(twist_msg);
+        publishZeroTwist();
         return true;
     }
     else
     {
-        ROS_INFO("CobFrameTracker stop denied because nothing was tracked.");
+        ROS_WARN("CobFrameTracker stop denied because nothing was tracked.");
         return false;
     }
 }
@@ -394,7 +398,7 @@ void CobFrameTracker::goalCB()
 
 void CobFrameTracker::preemptCB()
 {
-    ROS_INFO("Received a preemption request");
+    ROS_WARN("Received a preemption request");
     action_result_.success = true;
     action_result_.message = "Action has been preempted";
     as_->setPreempted(action_result_);
@@ -402,10 +406,7 @@ void CobFrameTracker::preemptCB()
     tracking_goal_ = false;
     tracking_frame_ = chain_tip_link_;
 
-    //publish zero Twist for stopping
-    geometry_msgs::TwistStamped twist_msg;
-    twist_msg.header.frame_id = chain_tip_link_;
-    twist_pub_.publish(twist_msg);
+    publishZeroTwist();
 }
 
 void CobFrameTracker::action_success()
@@ -417,25 +418,19 @@ void CobFrameTracker::action_success()
     tracking_goal_ = false;
     tracking_frame_ = chain_tip_link_;
 
-    //publish zero Twist for stopping
-    geometry_msgs::TwistStamped twist_msg;
-    twist_msg.header.frame_id = chain_tip_link_;
-    twist_pub_.publish(twist_msg);
+    publishZeroTwist();
 }
 
 void CobFrameTracker::action_abort()
 {
-    ROS_INFO("Goal aborted");
+    ROS_WARN("Goal aborted");
     as_->setAborted(action_result_, action_result_.message);
 
     tracking_ = false;
     tracking_goal_ = false;
     tracking_frame_ = chain_tip_link_;
 
-    //publish zero Twist for stopping
-    geometry_msgs::TwistStamped twist_msg;
-    twist_msg.header.frame_id = chain_tip_link_;
-    twist_pub_.publish(twist_msg);
+    publishZeroTwist();
 }
 
 int CobFrameTracker::checkStatus()
@@ -498,7 +493,6 @@ int CobFrameTracker::checkServiceCallStatus()
 
     if(abortion_counter_ >= max_abortions_)
     {
-        ROS_ERROR_STREAM("Abortion active!!!");
         abortion_counter_ = max_abortions_;
         status = -1;
     }
@@ -541,7 +535,7 @@ void CobFrameTracker::jointstateCallback(const sensor_msgs::JointState::ConstPtr
         }
         else
         {
-            ROS_WARN("ChainFkSolverVel failed!");
+            ROS_ERROR("ChainFkSolverVel failed!");
         }
         ///---------------------------------------------------------------------
     }
