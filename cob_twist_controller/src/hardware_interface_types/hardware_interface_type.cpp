@@ -109,13 +109,13 @@ inline void HardwareInterfaceTrajectory::processResult(const KDL::JntArray& q_do
         ///publish to interface
         trajectory_msgs::JointTrajectoryPoint traj_point;
         traj_point.positions = pos;
-        traj_point.velocities = vel;
-        traj_point.accelerations.assign(params_.dof, 0.0);
-        traj_point.effort.assign(params_.dof, 0.0);
-        traj_point.time_from_start = now_ - last_update_time_;  //Maybe we need a longer time_from_start?
+        //traj_point.velocities = vel;
+        //traj_point.accelerations.assign(params_.dof, 0.0);
+        //traj_point.effort.assign(params_.dof, 0.0);
+        traj_point.time_from_start = ros::Duration(0.05);  //ToDo: find good value
         
         trajectory_msgs::JointTrajectory traj_msg;
-        traj_msg.header.stamp = now_;
+        //traj_msg.header.stamp = ros::Time::now();
         traj_msg.joint_names = params_.joints;
         traj_msg.points.push_back(traj_point);
         

@@ -76,7 +76,7 @@ class HardwareInterfacePositionBase : public HardwareInterfaceBase
         bool updateIntegration(const KDL::JntArray& q_dot_ik,
                                const KDL::JntArray& current_q)
         {
-            ros::Time now_ = ros::Time::now();
+            now_ = ros::Time::now();
             ros::Duration period = now_ - last_update_time_;
             last_update_time_ = now_;
 
