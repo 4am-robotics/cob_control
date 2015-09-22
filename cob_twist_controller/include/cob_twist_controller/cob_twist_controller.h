@@ -69,6 +69,8 @@ private:
 
     ros::Subscriber odometry_sub_;
 
+    ros::Publisher twist_direction_pub_;
+
     ros::ServiceClient register_link_client_;
     ros::Subscriber obstacle_distance_sub_;
 
@@ -115,6 +117,7 @@ public:
     void twistStampedCallback(const geometry_msgs::TwistStamped::ConstPtr& msg);
 
     void solveTwist(KDL::Twist twist);
+    void visualizeTwist(KDL::Twist twist);
 
     boost::recursive_mutex reconfig_mutex_;
     boost::shared_ptr< dynamic_reconfigure::Server<cob_twist_controller::TwistControllerConfig> > reconfigure_server_;

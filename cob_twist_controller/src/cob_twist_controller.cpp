@@ -32,7 +32,6 @@
 #include <kdl_conversions/kdl_msg.h>
 #include <tf/transform_datatypes.h>
 #include <visualization_msgs/Marker.h>
-#include <visualization_msgs/MarkerArray.h>
 
 #include <Eigen/Dense>
 #include "cob_srvs/SetString.h"
@@ -135,6 +134,9 @@ bool CobTwistController::initialize()
 
     this->controller_interface_.reset(ControllerInterfaceBuilder::createControllerInterface(this->nh_, this->twist_controller_params_));
 
+    ///publisher for visualizing current twist direction
+    twist_direction_pub_ = nh_.advertise<visualization_msgs::Marker>("twist_direction",1);
+    
     ROS_INFO("...initialized!");
     return true;
 }
@@ -316,7 +318,8 @@ void CobTwistController::twistCallback(const geometry_msgs::Twist::ConstPtr& msg
 /// Orientation of twist is with respect to chain_base coordinate system
 void CobTwistController::solveTwist(KDL::Twist twist)
 {
-    int ret_ik;
+    visualizeTwist(twist);
+    
     KDL::JntArray q_dot_ik(chain_.getNrOfJoints());
 
     if(twist_controller_params_.kinematic_extension == BASE_COMPENSATION)
@@ -324,7 +327,7 @@ void CobTwistController::solveTwist(KDL::Twist twist)
         twist = twist - twist_odometry_cb_;
     }
 
-    ret_ik = p_inv_diff_kin_solver_->CartToJnt(this->joint_states_,
+    int ret_ik = p_inv_diff_kin_solver_->CartToJnt(this->joint_states_,
                                                twist,
                                                q_dot_ik);
 
@@ -336,10 +339,49 @@ void CobTwistController::solveTwist(KDL::Twist twist)
     {
         this->controller_interface_->processResult(q_dot_ik, this->joint_states_.current_q_);
     }
-
-
 }
 
+void CobTwistController::visualizeTwist(KDL::Twist twist)
+{
+    //orientation is wrt chain_base_link - ToDo: transform according orientation
+    tf::StampedTransform transform_tf;
+    try{
+        tf_listener_.lookupTransform(twist_controller_params_.chain_base_link, twist_controller_params_.chain_tip_link, ros::Time(0), transform_tf);
+    }
+    catch (tf::TransformException& ex){
+        ROS_ERROR("CobTwistController::visualizeTwist: \n%s",ex.what());
+        return;
+    }
+    
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = twist_controller_params_.chain_base_link;
+    marker.header.stamp = ros::Time::now();
+    marker.ns = "twist_direction";
+    marker.id = 0;
+    marker.type = visualization_msgs::Marker::ARROW;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.lifetime = ros::Duration(1.0);
+    marker.pose.orientation.w = 1.0;
+
+    marker.scale.x = 0.02;
+    marker.scale.y = 0.02;
+    marker.scale.z = 0.02;
+
+    marker.color.r = 1.0f;
+    marker.color.g = 1.0f;
+    marker.color.b = 0.0f;
+    marker.color.a = 1.0;
+    
+    marker.points.resize(2);
+    marker.points[0].x = transform_tf.getOrigin().x();
+    marker.points[0].y = transform_tf.getOrigin().y();
+    marker.points[0].z = transform_tf.getOrigin().z();
+    marker.points[1].x = transform_tf.getOrigin().x() + 5.0*twist.vel.x();
+    marker.points[1].y = transform_tf.getOrigin().y() + 5.0*twist.vel.y();
+    marker.points[1].z = transform_tf.getOrigin().z() + 5.0*twist.vel.z();
+
+    twist_direction_pub_.publish(marker);
+}
 
 void CobTwistController::jointstateCallback(const sensor_msgs::JointState::ConstPtr& msg)
 {
@@ -417,5 +459,3 @@ void CobTwistController::odometryCallback(const nav_msgs::Odometry::ConstPtr& ms
 
     twist_odometry_cb_ = twist_odometry_transformed_cb;
 }
-
-
