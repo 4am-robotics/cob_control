@@ -71,7 +71,8 @@ bool CobTwistController::initialize()
 
     ///parse robot_description and generate KDL chains
     KDL::Tree my_tree;
-    if (!kdl_parser::treeFromParam("/robot_description", my_tree)){
+    if (!kdl_parser::treeFromParam("/robot_description", my_tree))
+    {
         ROS_ERROR("Failed to construct kdl tree");
         return false;
     }
@@ -350,7 +351,6 @@ void CobTwistController::solveTwist(KDL::Twist twist)
 
 void CobTwistController::visualizeTwist(KDL::Twist twist)
 {
-    //orientation is wrt chain_base_link - ToDo: transform according orientation
     tf::StampedTransform transform_tf;
     try
     {

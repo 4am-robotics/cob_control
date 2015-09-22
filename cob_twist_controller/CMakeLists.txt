@@ -66,8 +66,12 @@ add_executable(debug_trajectory_marker_node src/debug/debug_trajectory_marker_no
 add_dependencies(debug_trajectory_marker_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(debug_trajectory_marker_node ${catkin_LIBRARIES})
 
+add_executable(debug_evaluate_jointstates_node src/debug/debug_evaluate_jointstates_node.cpp)
+add_dependencies(debug_evaluate_jointstates_node ${catkin_EXPORTED_TARGETS})
+target_link_libraries(debug_evaluate_jointstates_node ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
+
 ### INSTALL ###
-install(TARGETS cob_twist_controller_node damping_methods inv_calculations constraint_solvers limiters controller_interfaces kinematic_extensions inverse_differential_kinematics_solver twist_controller debug_trajectory_marker_node
+install(TARGETS cob_twist_controller_node damping_methods inv_calculations constraint_solvers limiters controller_interfaces kinematic_extensions inverse_differential_kinematics_solver twist_controller debug_trajectory_marker_node debug_evaluate_jointstates_node
  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

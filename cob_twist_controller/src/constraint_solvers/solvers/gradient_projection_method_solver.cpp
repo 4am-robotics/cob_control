@@ -44,7 +44,6 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Vector6d_t& inCartVe
     //jpi * v -> homogeneous_solution
     //P*q_0 -> particular_solution 
     
-    double activation_gain;
     Eigen::MatrixXd damped_jpi = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
     Eigen::MatrixXd jpi = pinv_calc_.calculate(this->jacobian_data_);
     Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(jpi.rows(), this->jacobian_data_.cols());
@@ -60,11 +59,23 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Vector6d_t& inCartVe
         (*it)->update(joint_states, predict_jnts_vel, this->jacobian_data_);
         Eigen::VectorXd q_dot_0 = (*it)->getPartialValues();
         Eigen::MatrixXd tmpHomogeneousSolution = projector * q_dot_0;
-        activation_gain = (*it)->getActivationGain(); // contribution of the homo. solution to the part. solution
+        double activation_gain = (*it)->getActivationGain(); // contribution of the homo. solution to the part. solution
         double constraint_k_H = (*it)->getSelfMotionMagnitude(particular_solution, tmpHomogeneousSolution); // gain of homogenous solution (if active)
         homogeneous_solution += (constraint_k_H * activation_gain * tmpHomogeneousSolution);
     }
 
     Eigen::MatrixXd qdots_out = particular_solution + this->params_.k_H * homogeneous_solution; // weighting with k_H is done in loop
+    
+    //std::stringstream ss_part;
+    //ss_part << "particular_solution: ";
+    //for(unsigned int i=0; i<particular_solution.rows(); i++)
+    //{   ss_part << particular_solution(i,0) << " , ";    }
+    //ROS_INFO_STREAM(ss_part.str());
+    //std::stringstream ss_hom;
+    //ss_hom << "homogeneous_solution: ";
+    //for(unsigned int i=0; i<homogeneous_solution.rows(); i++)
+    //{   ss_hom << homogeneous_solution(i,0) << " , ";    }
+    //ROS_INFO_STREAM(ss_hom.str());
+    
     return qdots_out;
 }

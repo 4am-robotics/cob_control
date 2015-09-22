@@ -201,10 +201,6 @@ public:
 
 
 
-
-
-
-
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "debug_trajectory_marker_node");
@@ -218,4 +214,3 @@ int main(int argc, char** argv)
 
     ros::spin();
 }
-
