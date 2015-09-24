@@ -43,11 +43,12 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Vector6d_t& inCartVe
     //ToDo: wrong usage of wording (particular solution vs. homogeneous solution)?
     //jpi * v -> homogeneous_solution
     //P*q_0 -> particular_solution 
-    
+
     Eigen::MatrixXd damped_jpi = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
     Eigen::MatrixXd jpi = pinv_calc_.calculate(this->jacobian_data_);
     Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(jpi.rows(), this->jacobian_data_.cols());
-    Eigen::MatrixXd projector = ident - jpi * this->jacobian_data_;
+    //Eigen::MatrixXd projector = ident - jpi * this->jacobian_data_;
+    Eigen::MatrixXd projector = ident - damped_jpi * this->jacobian_data_;
     Eigen::MatrixXd particular_solution = damped_jpi * inCartVelocities;
     Eigen::MatrixXd homogeneous_solution = Eigen::MatrixXd::Zero(particular_solution.rows(), particular_solution.cols());
     KDL::JntArrayVel predict_jnts_vel(joint_states.current_q_.rows());
@@ -65,17 +66,23 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Vector6d_t& inCartVe
     }
 
     Eigen::MatrixXd qdots_out = particular_solution + this->params_.k_H * homogeneous_solution; // weighting with k_H is done in loop
-    
-    //std::stringstream ss_part;
-    //ss_part << "particular_solution: ";
-    //for(unsigned int i=0; i<particular_solution.rows(); i++)
-    //{   ss_part << particular_solution(i,0) << " , ";    }
-    //ROS_INFO_STREAM(ss_part.str());
-    //std::stringstream ss_hom;
-    //ss_hom << "homogeneous_solution: ";
-    //for(unsigned int i=0; i<homogeneous_solution.rows(); i++)
-    //{   ss_hom << homogeneous_solution(i,0) << " , ";    }
-    //ROS_INFO_STREAM(ss_hom.str());
-    
+
+    std::stringstream ss_part;
+    ss_part << "particular_solution: ";
+    for(unsigned int i=0; i<particular_solution.rows(); i++)
+    {   ss_part << particular_solution(i,0) << " , ";    }
+    ROS_INFO_STREAM(ss_part.str());
+    std::stringstream ss_hom;
+    ss_hom << "homogeneous_solution: ";
+    for(unsigned int i=0; i<homogeneous_solution.rows(); i++)
+    {   ss_hom << homogeneous_solution(i,0) << " , ";    }
+    ROS_INFO_STREAM(ss_hom.str());
+    Vector6d_t resultingCartVelocities = this->jacobian_data_ * qdots_out;
+    std::stringstream ss_fk;
+    ss_fk << "resultingCartVelocities: ";
+    for(unsigned int i=0; i<resultingCartVelocities.rows(); i++)
+    {   ss_fk << resultingCartVelocities(i,0) << " , ";    }
+    ROS_INFO_STREAM(ss_fk.str());
+
     return qdots_out;
 }
