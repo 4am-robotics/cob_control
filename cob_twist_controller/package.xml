@@ -36,6 +36,7 @@
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
   <depend>tf</depend>
+  <depend>trajectory_msgs</depend>
   <depend>urdf</depend>
   <depend>visualization_msgs</depend>
 

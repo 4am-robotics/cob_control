@@ -52,7 +52,7 @@ public:
             return -1;
         }
 
-        marker_pub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("obstacle_distance/debug", 1, true);
+        marker_pub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("obstacle_distance/distance_markers", 1, true);
         obstacle_distances_sub_ = this->nh_.subscribe("obstacle_distance", 1, &DebugObstacleDistance::obstacleDistancesCallback, this);
 
         return 0;
@@ -130,9 +130,9 @@ public:
             marker_distance.scale.z = 0.1;
 
             marker_distance.color.a = 1.0;
-//            marker_distance.color.r = 1.0;
-//            marker_distance.color.g = 1.0;
-//            marker_distance.color.b = 1.0;
+            //marker_distance.color.r = 1.0;
+            //marker_distance.color.g = 1.0;
+            //marker_distance.color.b = 1.0;
             marker_distance.color.r = 0.0;
             marker_distance.color.g = 0.0;
             marker_distance.color.b = 0.0;

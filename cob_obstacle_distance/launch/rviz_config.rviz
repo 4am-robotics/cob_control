@@ -113,7 +113,7 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
-    - Class: rviz/Marker
+    - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /arm/obstacle_distance/marker
       Name: ObstacleMarker
@@ -123,10 +123,10 @@ Visualization Manager:
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /arm/obstacle_distance/debug
+      Marker Topic: /arm/obstacle_distance/distance_markers
       Name: ObstacleVectors
       Namespaces:
-        arm_7_link: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/InteractiveMarkers
@@ -136,7 +136,7 @@ Visualization Manager:
       Show Axes: false
       Show Descriptions: true
       Show Visual Aids: false
-      Update Topic: /arm/marker_server/update
+      Update Topic: /arm/obstacle_marker_server/update
       Value: true
   Enabled: true
   Global Options:
@@ -195,5 +195,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1200
-  X: 360
-  Y: 31
+  X: 350
+  Y: 21

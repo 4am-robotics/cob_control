@@ -139,7 +139,7 @@ class ObstacleDistanceDataKraken(DataKraken):
             header = []
             header.append('time stamp')
             header.append('time delta')
-            header.append('frame_of_interest')
+            header.append('link_of_interest')
             header.append('obstacle')
             header.append('distance')
             header.append('frame_vector_x')
@@ -158,7 +158,7 @@ class ObstacleDistanceDataKraken(DataKraken):
         delta = now - self.start_
         for elem in data.distances:
             data_row = [now.strftime(DATE_TIME_FMT), '%.3f' % delta.total_seconds()]
-            data_row.append(elem.frame_of_interest)
+            data_row.append(elem.link_of_interest)
             data_row.append(elem.obstacle_id)
             data_row.append(elem.distance)
             data_row.append(elem.frame_vector.x)

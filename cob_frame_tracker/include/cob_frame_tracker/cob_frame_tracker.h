@@ -87,13 +87,14 @@ public:
     void run(const ros::TimerEvent& event);
 
     void jointstateCallback(const sensor_msgs::JointState::ConstPtr& msg);
-    void publishTwist(ros::Duration period, bool do_publish = true);
 
     bool startTrackingCallback(cob_srvs::SetString::Request& request, cob_srvs::SetString::Response& response);
     bool stopTrackingCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
 
     bool getTransform(const std::string& target_frame, const std::string& source_frame, tf::StampedTransform& stamped_tf);
 
+    void publishZeroTwist();
+    void publishTwist(ros::Duration period, bool do_publish = true);
     void publishHoldTwist(const ros::Duration& period);
 
     /// Action interface

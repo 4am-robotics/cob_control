@@ -51,16 +51,18 @@ enum DampingMethodTypes
     LEAST_SINGULAR_VALUE = cob_twist_controller::TwistController_LEAST_SINGULAR_VALUE,
 };
 
-enum HardwareInterfaceTypes
+enum ControllerInterfaceTypes
 {
     VELOCITY_INTERFACE = cob_twist_controller::TwistController_VELOCITY_INTERFACE,
     POSITION_INTERFACE = cob_twist_controller::TwistController_POSITION_INTERFACE,
+    TRAJECTORY_INTERFACE = cob_twist_controller::TwistController_TRAJECTORY_INTERFACE,
     JOINT_STATE_INTERFACE = cob_twist_controller::TwistController_JOINT_STATE_INTERFACE,
 };
 
 enum KinematicExtensionTypes
 {
     NO_EXTENSION = cob_twist_controller::TwistController_NO_EXTENSION,
+    BASE_COMPENSATION = cob_twist_controller::TwistController_BASE_COMPENSATION,
     BASE_ACTIVE = cob_twist_controller::TwistController_BASE_ACTIVE,
 };
 
@@ -136,7 +138,7 @@ struct TwistControllerParams
 {
     TwistControllerParams() :
             dof(0),
-            hardware_interface_type(VELOCITY_INTERFACE),
+            controller_interface(VELOCITY_INTERFACE),
 
             numerical_filtering(false),
             damping_method(MANIPULABILITY),
@@ -168,7 +170,6 @@ struct TwistControllerParams
             max_vel_lin_base(0.5),
             max_vel_rot_base(0.5),
 
-            base_compensation(false),
             kinematic_extension(NO_EXTENSION),
             base_ratio(0.0)
             {
@@ -185,7 +186,7 @@ struct TwistControllerParams
     std::string chain_base_link;
     std::string chain_tip_link;
 
-    HardwareInterfaceTypes hardware_interface_type;
+    ControllerInterfaceTypes controller_interface;
 
     bool numerical_filtering;
     DampingMethodTypes damping_method;
@@ -225,15 +226,14 @@ struct TwistControllerParams
     double max_vel_lin_base;
     double max_vel_rot_base;
 
-    bool base_compensation;
     KinematicExtensionTypes kinematic_extension;
     double base_ratio;
 
     std::vector<std::string> frame_names;
     std::vector<std::string> joints;
 
-    // added a vector that contains all frames of interest for collision checking.
-    std::vector<std::string> collision_check_frames;
+    // vector of links of the chain to be considered for collision avoidance
+    std::vector<std::string> collision_check_links;
 };
 
 enum EN_ConstraintStates

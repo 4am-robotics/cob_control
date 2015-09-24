@@ -30,7 +30,7 @@
 
 /* BEGIN IMarkerShape *******************************************************************************************/
 /// Interface class marking methods that have to be implemented in derived classes.
-IMarkerShape::IMarkerShape() : is_drawn_(false), drawable_(true)
+IMarkerShape::IMarkerShape()
 {
     class_ctr_++;
 }

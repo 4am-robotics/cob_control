@@ -1,13 +1,22 @@
 function homogeneous_solver_test(m,n)
-  disp("--------- Least Square solution !!! ----------------");
+  disp("--------- DLS solution !!! ----------------");
   J = rand(m,n)
   r=rank(J)
   [U,S,V]=svd(J);
   I = eye(n,n);
   S_pinv=zeros(n,m);
   
+  w_threshold = 0.05;
+  lambda_max = 0.5;
+  manip_meas = sqrt(abs(det(J * J')))
+  factor = 0.0;
+  if manip_meas < w_threshold
+    tmp_w = (1 - manip_meas / w_threshold);
+    factor = lambda_max * tmp_w * tmp_w 
+  endif
+  
   for k=1:r
-    S_pinv(k,k)=1/S(k,k);
+    S_pinv(k,k)= S(k,k) / (S(k,k) * S(k,k) + factor * factor);
   end
   S_pinv;
   J_pinv = V*S_pinv*transpose(U);

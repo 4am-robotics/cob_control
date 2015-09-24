@@ -40,6 +40,13 @@ class IPseudoinverseCalculator
 
         /**
          * Pure virtual method for calculation of the pseudoinverse
+         * @param jacobian The Jacobi matrix.
+         * @return A pseudoinverse Jacobian
+         */
+        virtual Eigen::MatrixXd calculate(const Eigen::MatrixXd& jacobian) const = 0;
+
+        /**
+         * Pure virtual method for calculation of the pseudoinverse (allows to consider damping and truncation)
          * @param params The parameters from parameter server.
          * @param db The damping method.
          * @param jacobian The Jacobi matrix.
