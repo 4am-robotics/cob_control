@@ -71,17 +71,17 @@ class LinkToCollision
         urdf::Model model_;
         bool success_;
         std::string root_frame_id_;
-        std::unordered_map<std::string, std::vector<std::string> > self_collision_frames_; /// first: key of part to be checked with, second ignore links
+        std::unordered_map<std::string, std::vector<std::string> > self_collision_map_; /// first: link to be considered 'obstacle', second: links of component to be considered for self-collision checking
 
         /**
          * Private method to create a specific marker shape for the output pointer.
-         * @param frame_of_interest The frame of interest name (link name).
+         * @param link_of_interest The name of the link of interest.
          * @param pose The pose of the frame (root of the frame).
          * @param col The color.
          * @param geometry A pointer to a URDF geometry object.
          * @param segment_of_interest_marker_shape The pointer for that a marker shape shall be created.
          */
-        void createSpecificMarkerShape(const std::string& frame_of_interest,
+        void createSpecificMarkerShape(const std::string& link_of_interest,
                                        const geometry_msgs::Pose& pose,
                                        const std_msgs::ColorRGBA& col,
                                        const PtrGeometry_t& geometry,
@@ -103,15 +103,15 @@ class LinkToCollision
 
         inline MapSelfCollisions_t::iterator getSelfCollisionsIterBegin()
         {
-            return this->self_collision_frames_.begin();
+            return this->self_collision_map_.begin();
         }
 
         inline MapSelfCollisions_t::iterator getSelfCollisionsIterEnd()
         {
-            return this->self_collision_frames_.end();
+            return this->self_collision_map_.end();
         }
 
-        bool ignoreSelfCollisionPart(const std::string& frame_of_interest, const std::string& self_collision_obstacle_frame);
+        bool ignoreSelfCollisionPart(const std::string& link_of_interest, const std::string& self_collision_obstacle_link);
 
         /**
          * Initialize the FrameToCollision model by an URDF file.
@@ -141,17 +141,17 @@ class LinkToCollision
 
 
         /**
-         * Tries to find the given frame_of_interest in the links parsed from URDF.
+         * Tries to find the given link_of_interest in the links parsed from URDF.
          * According to the data there a MarkerShape is created and will be assigned to the pointer.
          * @param abs_pos The absolute position (from root frame) of the shape.
          * @param quat_pos The orientation (from root frame) of the shape.
-         * @param frame_of_interest The name of the frame of interest (e.g. link name).
+         * @param link_of_interest The name of the link of interest.
          * @param segment_of_interest_marker_shape The pointer for that a marker shape shall be created.
          * @return State of success.
          */
         bool getMarkerShapeFromUrdf(const Eigen::Vector3d& abs_pos,
                                     const Eigen::Quaterniond& quat_pos,
-                                    const std::string& frame_of_interest,
+                                    const std::string& link_of_interest,
                                     PtrIMarkerShape_t& segment_of_interest_marker_shape);
 
         /**
@@ -160,14 +160,14 @@ class LinkToCollision
          * @param shape_type The type of the shape (visualization_marker types).
          * @param abs_pos The absolute position (from root frame) of the shape.
          * @param quat_pos The orientation (from root frame) of the shape.
-         * @param frame_of_interest The name of the frame of interest (e.g. link name if shape_type MESH_RESOURCE else only for id).
+         * @param link_of_interest The name of the link of interest (e.g. link name if shape_type MESH_RESOURCE else only for id).
          * @param segment_of_interest_marker_shape The pointer for that a marker shape shall be created.
          * @return State of success.
          */
         bool getMarkerShapeFromType(const uint32_t& shape_type,
                                     const Eigen::Vector3d& abs_pos,
                                     const Eigen::Quaterniond& quat_pos,
-                                    const std::string& frame_of_interest,
+                                    const std::string& link_of_interest,
                                     const Eigen::Vector3d& dimension,
                                     PtrIMarkerShape_t& segment_of_interest_marker_shape);
 
@@ -175,13 +175,13 @@ class LinkToCollision
          * Tries to create a MarkerShape by a given shape_type (similar to above but with pose).
          * @param shape_type The type of the shape (visualization_marker types).
          * @param pose The pose of the shape (with respect to the root_frame).
-         * @param frame_of_interest The name of the frame of interest (e.g. link name if shape_type MESH_RESOURCE else only for id).
+         * @param link_of_interest The name of the link of interest (e.g. link name if shape_type MESH_RESOURCE else only for id).
          * @param segment_of_interest_marker_shape The pointer for that a marker shape shall be created.
          * @return State of success.
          */
         bool getMarkerShapeFromType(const uint32_t& shape_type,
                                     const geometry_msgs::Pose& pose,
-                                    const std::string& frame_of_interest,
+                                    const std::string& link_of_interest,
                                     const Eigen::Vector3d& dimension,
                                     PtrIMarkerShape_t& segment_of_interest_marker_shape);
 

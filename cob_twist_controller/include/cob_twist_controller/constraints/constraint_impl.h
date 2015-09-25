@@ -107,8 +107,8 @@ std::set<ConstraintBase_t> ConstraintsBuilder<PRIO>::createConstraints(const Twi
         typedef CollisionAvoidance<ConstraintParamsCA, PRIO> CollisionAvoidance_t;
         uint32_t startPrio = twist_controller_params.priority_ca;
 
-        for(std::vector<std::string>::const_iterator it = twist_controller_params.collision_check_frames.begin();
-                it != twist_controller_params.collision_check_frames.end(); it++)
+        for(std::vector<std::string>::const_iterator it = twist_controller_params.collision_check_links.begin();
+                it != twist_controller_params.collision_check_links.end(); it++)
         {
             ConstraintParamsCA params = ConstraintParamFactory<ConstraintParamsCA>::createConstraintParams(twist_controller_params, data_mediator, *it);
             // TODO: take care PRIO could be of different type than UINT32
