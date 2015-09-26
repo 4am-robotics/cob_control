@@ -108,6 +108,24 @@ class LimiterAllJointVelocities : public LimiterBase
 };
 /* END LimiterAllJointVelocities *********************************************************************************/
 
+/* BEGIN LimiterAllJointAccelerations ****************************************************************************/
+/// Class for joint acceleration limiter (all scaled to keep direction), implementing interface methods.
+class LimiterAllJointAccelerations : public LimiterBase
+{
+    public:
+        /**
+         * Specific implementation of enforceLimits-method.
+         * See base class LimiterBase for more details on params and returns.
+         */
+        virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const;
+
+        LimiterAllJointAccelerations(const TwistControllerParams& tc_params, const KDL::Chain& chain) :
+            LimiterBase(tc_params, chain)
+        {
+        }
+};
+/* END LimiterAllJointAccelerations ******************************************************************************/
+
 /* BEGIN LimiterIndividualJointPositions *************************************************************************/
 /// Class for a limiter, declaring a method to limit joint positions individually
 class LimiterIndividualJointPositions : public LimiterBase
@@ -143,5 +161,23 @@ class LimiterIndividualJointVelocities : public LimiterBase
         }
 };
 /* END LimiterIndividualJointVelocities *************************************************************************/
+
+/* BEGIN LimiterIndividualJointAccelerations ***********************************************************************/
+/// Class for joint acceleration limiter (individually scaled -> changes direction), implementing interface methods.
+class LimiterIndividualJointAccelerations : public LimiterBase
+{
+    public:
+        /**
+         * Specific implementation of enforceLimits-method.
+         * See base class LimiterBase for more details on params and returns.
+         */
+        virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const;
+
+        LimiterIndividualJointAccelerations(const TwistControllerParams& tc_params, const KDL::Chain& chain) :
+            LimiterBase(tc_params, chain)
+        {
+        }
+};
+/* END LimiterIndividualJointAccelerations *************************************************************************/
 
 #endif /* LIMITER_H_ */

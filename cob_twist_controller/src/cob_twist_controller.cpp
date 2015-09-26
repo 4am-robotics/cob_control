@@ -56,7 +56,7 @@ bool CobTwistController::initialize()
         return false;
     }
 
-    if (!nh_.getParam("chain_tip_link", twist_controller_params_.chain_tip_link))
+    if(!nh_.getParam("chain_tip_link", twist_controller_params_.chain_tip_link))
     {
         ROS_ERROR("Parameter 'chain_tip_link' not set");
         return false;
@@ -71,7 +71,7 @@ bool CobTwistController::initialize()
 
     ///parse robot_description and generate KDL chains
     KDL::Tree my_tree;
-    if (!kdl_parser::treeFromParam("/robot_description", my_tree))
+    if(!kdl_parser::treeFromParam("/robot_description", my_tree))
     {
         ROS_ERROR("Failed to construct kdl tree");
         return false;
@@ -86,21 +86,31 @@ bool CobTwistController::initialize()
 
     ///parse robot_description and set velocity limits
     urdf::Model model;
-    if (!model.initParam("/robot_description"))
+    if(!model.initParam("/robot_description"))
     {
         ROS_ERROR("Failed to parse urdf file for JointLimits");
         return false;
     }
 
-    for(unsigned int i=0; i < twist_controller_params_.dof; i++)
+    for(uint16_t i=0; i < twist_controller_params_.dof; i++)
     {
-        twist_controller_params_.limits_vel.push_back(model.getJoint(twist_controller_params_.joints[i])->limits->velocity);
         twist_controller_params_.limits_min.push_back(model.getJoint(twist_controller_params_.joints[i])->limits->lower);
         twist_controller_params_.limits_max.push_back(model.getJoint(twist_controller_params_.joints[i])->limits->upper);
+        twist_controller_params_.limits_vel.push_back(model.getJoint(twist_controller_params_.joints[i])->limits->velocity);
+    }
+
+    if((!nh_twist.getParam("limits_acc", twist_controller_params_.limits_acc)) || (twist_controller_params_.limits_acc.size() != twist_controller_params_.dof))
+    {
+        ROS_ERROR("Parameter 'limits_acc' not set or dimensions do not match! Using default for each joint: 10.0 [rad/s2]");
+        for(uint16_t i=0; i < twist_controller_params_.dof; i++)
+        {
+            //std::numeric_limits<double>::max() as default?
+            twist_controller_params_.limits_acc.push_back(10.0);
+        }
     }
 
     twist_controller_params_.frame_names.clear();
-    for (uint16_t i = 0; i < chain_.getNrOfSegments(); ++i)
+    for(uint16_t i = 0; i < chain_.getNrOfSegments(); ++i)
     {
         twist_controller_params_.frame_names.push_back(chain_.getSegment(i).getName());
     }
@@ -209,7 +219,8 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     twist_controller_params_.keep_direction = config.keep_direction;
     twist_controller_params_.enforce_pos_limits = config.enforce_pos_limits;
     twist_controller_params_.enforce_vel_limits = config.enforce_vel_limits;
-    twist_controller_params_.tolerance = config.tolerance;
+    twist_controller_params_.enforce_acc_limits = config.enforce_acc_limits;
+    twist_controller_params_.limits_tolerance = config.limits_tolerance;
 
     twist_controller_params_.kinematic_extension = static_cast<KinematicExtensionTypes>(config.kinematic_extension);
     twist_controller_params_.base_ratio = config.base_ratio;
@@ -267,11 +278,12 @@ void CobTwistController::checkSolverAndConstraints(cob_twist_controller::TwistCo
         warning = true;
     }
 
-    if(twist_controller_params_.tolerance <= DIV0_SAFE)
+    if(twist_controller_params_.limits_tolerance <= DIV0_SAFE)
     {
-        ROS_ERROR("The tolerance for enforce limits is smaller than DIV/0 threshold. Therefore both enforce_limits are set to false!");
+        ROS_ERROR("The limits_tolerance for enforce limits is smaller than DIV/0 threshold. Therefore both enforce_limits are set to false!");
         twist_controller_params_.enforce_pos_limits = config.enforce_pos_limits = false;
         twist_controller_params_.enforce_vel_limits = config.enforce_vel_limits = false;
+        twist_controller_params_.enforce_acc_limits = config.enforce_acc_limits = false;
     }
 
     if(!warning)
@@ -397,9 +409,9 @@ void CobTwistController::jointstateCallback(const sensor_msgs::JointState::Const
     KDL::JntArray q_dot_temp = this->joint_states_.current_q_dot_;
     int count = 0;
 
-    for(unsigned int j = 0; j < twist_controller_params_.dof; j++)
+    for(uint16_t j = 0; j < twist_controller_params_.dof; j++)
     {
-        for(unsigned int i = 0; i < msg->name.size(); i++)
+        for(uint16_t i = 0; i < msg->name.size(); i++)
         {
             if(strcmp(msg->name[i].c_str(), twist_controller_params_.joints[j].c_str()) == 0)
             {

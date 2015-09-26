@@ -166,7 +166,8 @@ struct TwistControllerParams
             keep_direction(true),
             enforce_pos_limits(true),
             enforce_vel_limits(true),
-            tolerance(5.0),
+            enforce_acc_limits(true),
+            limits_tolerance(5.0),
             max_vel_lin_base(0.5),
             max_vel_rot_base(0.5),
 
@@ -216,12 +217,14 @@ struct TwistControllerParams
     bool keep_direction;
     bool enforce_pos_limits;
     bool enforce_vel_limits;
-    double tolerance;
+    bool enforce_acc_limits;
+    double limits_tolerance;
 
     // added limits from URDF file
     std::vector<double> limits_max;
     std::vector<double> limits_min;
     std::vector<double> limits_vel;
+    std::vector<double> limits_acc;
 
     double max_vel_lin_base;
     double max_vel_rot_base;
