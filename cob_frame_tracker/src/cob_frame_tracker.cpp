@@ -42,7 +42,6 @@
 
 bool CobFrameTracker::initialize()
 {
-    ros::NodeHandle nh_;
     ros::NodeHandle nh_tracker("frame_tracker");
     ros::NodeHandle nh_twist("twist_controller");
 
@@ -79,7 +78,13 @@ bool CobFrameTracker::initialize()
     }
 
     KDL::Tree tree;
-    if (!kdl_parser::treeFromParam("robot_description", tree))
+    std::string robot_description_param;
+    if (!nh_.searchParam("robot_description", robot_description_param))
+    {
+        ROS_ERROR("Parameter 'robot_description' not found");
+        return false;
+    }
+    if (!kdl_parser::treeFromParam(robot_description_param, tree))
     {
         ROS_ERROR("Failed to construct kdl tree");
         return false;
@@ -217,7 +222,7 @@ bool CobFrameTracker::getTransform(const std::string& target_frame, const std::s
     bool success = true;
     try
     {
-        tf_listener_.lookupTransform(target_frame, source_frame, ros::Time(0), stamped_tf);
+        tf_listener_.lookupTransform(tf_listener_.resolve(target_frame), tf_listener_.resolve(source_frame), ros::Time(0), stamped_tf);
     }
     catch (tf::TransformException& ex)
     {

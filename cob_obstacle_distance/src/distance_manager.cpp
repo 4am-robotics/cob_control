@@ -85,7 +85,13 @@ int DistanceManager::init()
     object_of_interest_mgr_.reset(new ShapesManager(this->marker_pub_));
     KDL::Tree robot_structure;
 
-    if (!kdl_parser::treeFromParam("robot_description", robot_structure))
+    std::string robot_description_param;
+    if (!nh_.searchParam("robot_description", robot_description_param))
+    {
+        ROS_ERROR("Parameter 'robot_description' not found");
+        return false;
+    }
+    if (!kdl_parser::treeFromParam(robot_description_param, robot_structure))
     {
         ROS_ERROR("Failed to construct kdl tree from parameter 'robot_description'.");
         return -1;
@@ -132,7 +138,7 @@ int DistanceManager::init()
     adv_chn_fk_solver_vel_.reset(new AdvancedChainFkSolverVel_recursive(chain_));
     last_q_ = KDL::JntArray(chain_.getNrOfJoints());
     last_q_dot_ = KDL::JntArray(chain_.getNrOfJoints());
-    if(!this->link_to_collision_.initParameter(this->root_frame_id_, "robot_description"))
+    if(!this->link_to_collision_.initParameter(this->root_frame_id_, robot_description_param))
     {
         ROS_ERROR("Failed to initialize robot model from URDF by parameter \"robot_description\".");
         return -6;
@@ -323,10 +329,10 @@ void DistanceManager::transform()
         {
             tf::StampedTransform cb_transform_bl;
             ros::Time time = ros::Time(0);
-            if(tf_listener_.waitForTransform(chain_base_link_, root_frame_id_, time, ros::Duration(5.0)))
+            if(tf_listener_.waitForTransform(tf_listener_.resolve(chain_base_link_), tf_listener_.resolve(root_frame_id_), time, ros::Duration(5.0)))
             {
                 std::lock_guard<std::mutex> lock(mtx_);
-                tf_listener_.lookupTransform(chain_base_link_, root_frame_id_, time, cb_transform_bl);
+                tf_listener_.lookupTransform(tf_listener_.resolve(chain_base_link_), tf_listener_.resolve(root_frame_id_), time, cb_transform_bl);
                 tf::transformTFToEigen(cb_transform_bl, tf_cb_frame_bl_);
             }
         }
@@ -349,13 +355,12 @@ void DistanceManager::transformSelfCollisionLinks(const std::string link_name)
         try
         {
             ros::Time time = ros::Time(0);
-            // https://github.com/ros-visualization/rviz/issues/702: TF listener is thread safe
-            if(tf_listener_.waitForTransform(root_frame_id_, link_name, time, ros::Duration(5.0)))
+            if(tf_listener_.waitForTransform(tf_listener_.resolve(root_frame_id_), tf_listener_.resolve(link_name), time, ros::Duration(5.0)))
             {
                 std::lock_guard<std::mutex> lock(obstacle_mgr_mtx_);
                 tf::StampedTransform stamped_transform;
                 geometry_msgs::Transform msg_transform;
-                tf_listener_.lookupTransform(root_frame_id_, link_name, time, stamped_transform);
+                tf_listener_.lookupTransform(tf_listener_.resolve(root_frame_id_), tf_listener_.resolve(link_name), time, stamped_transform);
                 PtrIMarkerShape_t shape_ptr;
                 if(this->obstacle_mgr_->getShape(link_name, shape_ptr))
                 {
@@ -433,8 +438,8 @@ void DistanceManager::registerObstacle(const moveit_msgs::CollisionObject::Const
     try
     {
         ros::Time time = ros::Time(0);
-        tf_listener_.waitForTransform(root_frame_id_, msg->header.frame_id, time, ros::Duration(0.5));
-        tf_listener_.lookupTransform(root_frame_id_, msg->header.frame_id, time, frame_transform_root);
+        tf_listener_.waitForTransform(tf_listener_.resolve(root_frame_id_), tf_listener_.resolve(msg->header.frame_id), time, ros::Duration(0.5));
+        tf_listener_.lookupTransform(tf_listener_.resolve(root_frame_id_), tf_listener_.resolve(msg->header.frame_id), time, frame_transform_root);
         tf::transformTFToEigen(frame_transform_root, tf_frame_root);
     }
     catch (tf::TransformException& ex)
