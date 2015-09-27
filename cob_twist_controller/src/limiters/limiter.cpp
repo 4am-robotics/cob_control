@@ -96,7 +96,7 @@ void LimiterContainer::init()
  */
 void LimiterContainer::eraseAll()
 {
-    for (uint32_t cnt = 0; cnt < this->limiters_.capacity(); ++cnt)
+    for (uint32_t cnt = 0; cnt < this->limiters_.size(); ++cnt)
     {
         const LimiterBase* lb = this->limiters_[cnt];
         delete(lb);
@@ -209,7 +209,7 @@ KDL::JntArray LimiterAllJointVelocities::enforceLimits(const KDL::JntArray& q_do
         tmpLimits.push_back(this->tc_params_.max_vel_rot_base); // BaseRotZ limit
     }
 
-    for(uint16_t i=0; i < i < maxDof; ++i)
+    for(uint16_t i=0; i < maxDof; ++i)
     {
         if(max_factor < std::fabs(q_dot_ik(i) / tmpLimits[i]))
         {
@@ -221,7 +221,7 @@ KDL::JntArray LimiterAllJointVelocities::enforceLimits(const KDL::JntArray& q_do
     if(max_factor > 1.0)
     {
         ROS_WARN_STREAM_THROTTLE(1, "Tolerance surpassed: Enforcing limits FOR ALL JOINT VELOCITIES with factor = " << max_factor);
-        for(uint16_t i=0; i < i < maxDof; ++i)
+        for(uint16_t i=0; i < maxDof; ++i)
         {
             q_dot_norm(i) = q_dot_ik(i) / max_factor;
         }
@@ -242,6 +242,7 @@ KDL::JntArray LimiterAllJointAccelerations::enforceLimits(const KDL::JntArray& q
     double max_factor = 1.0;
 
     //ToDo
+    ROS_WARN("LAJA: enforceLimits");
 
     return q_dot_norm;
 }
@@ -336,6 +337,7 @@ KDL::JntArray LimiterIndividualJointAccelerations::enforceLimits(const KDL::JntA
     double max_factor = 1.0;
 
     //ToDo
+    ROS_WARN("LIJA: enforceLimits");
 
     return q_dot_norm;
 }

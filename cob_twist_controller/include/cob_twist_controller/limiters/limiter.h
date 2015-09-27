@@ -51,9 +51,7 @@ class LimiterContainer : public LimiterBase
 
         LimiterContainer(const TwistControllerParams& tc_params, const KDL::Chain& chain)
             : LimiterBase(tc_params, chain)
-        {
-
-        }
+        {}
 
     protected:
         std::vector<const LimiterBase*> limiters_;
@@ -85,8 +83,7 @@ class LimiterAllJointPositions : public LimiterBase
 
         LimiterAllJointPositions(const TwistControllerParams& tc_params, const KDL::Chain& chain) :
             LimiterBase(tc_params, chain)
-        {
-        }
+        {}
 };
 /* END LimiterAllJointPositions **********************************************************************************/
 
@@ -103,8 +100,7 @@ class LimiterAllJointVelocities : public LimiterBase
 
         LimiterAllJointVelocities(const TwistControllerParams& tc_params, const KDL::Chain& chain) :
             LimiterBase(tc_params, chain)
-        {
-        }
+        {}
 };
 /* END LimiterAllJointVelocities *********************************************************************************/
 
@@ -121,8 +117,7 @@ class LimiterAllJointAccelerations : public LimiterBase
 
         LimiterAllJointAccelerations(const TwistControllerParams& tc_params, const KDL::Chain& chain) :
             LimiterBase(tc_params, chain)
-        {
-        }
+        {}
 };
 /* END LimiterAllJointAccelerations ******************************************************************************/
 
@@ -139,8 +134,7 @@ class LimiterIndividualJointPositions : public LimiterBase
 
         LimiterIndividualJointPositions(const TwistControllerParams& tc_params, const KDL::Chain& chain) :
             LimiterBase(tc_params, chain)
-        {
-        }
+        {}
 };
 /* END LimiterIndividualJointPositions **************************************************************************/
 
@@ -157,8 +151,7 @@ class LimiterIndividualJointVelocities : public LimiterBase
 
         LimiterIndividualJointVelocities(const TwistControllerParams& tc_params, const KDL::Chain& chain) :
             LimiterBase(tc_params, chain)
-        {
-        }
+        {}
 };
 /* END LimiterIndividualJointVelocities *************************************************************************/
 
@@ -175,8 +168,7 @@ class LimiterIndividualJointAccelerations : public LimiterBase
 
         LimiterIndividualJointAccelerations(const TwistControllerParams& tc_params, const KDL::Chain& chain) :
             LimiterBase(tc_params, chain)
-        {
-        }
+        {}
 };
 /* END LimiterIndividualJointAccelerations *************************************************************************/
 

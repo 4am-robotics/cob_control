@@ -136,8 +136,6 @@ int8_t ConstraintSolverFactory::resetAll(const TwistControllerParams& params)
         ROS_INFO_STREAM((*it)->getTaskId());
     }
 
-
-
     if(!ConstraintSolverFactory::getSolverFactory(params, this->solver_factory_, this->task_stack_controller_))
     {
         return -2;

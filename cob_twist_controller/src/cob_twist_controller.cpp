@@ -115,8 +115,6 @@ bool CobTwistController::initialize()
         twist_controller_params_.frame_names.push_back(chain_.getSegment(i).getName());
     }
     register_link_client_ = nh_.serviceClient<cob_srvs::SetString>("obstacle_distance/registerLinkOfInterest");
-    ROS_WARN("Waiting for ServiceServer 'obstacle_distance/registerLinkOfInterest'...");
-    register_link_client_.waitForExistence();
 
     ///initialize configuration control solver
     p_inv_diff_kin_solver_.reset(new InverseDifferentialKinematicsSolver(twist_controller_params_, chain_, callback_data_mediator_));
@@ -276,6 +274,16 @@ void CobTwistController::checkSolverAndConstraints(cob_twist_controller::TwistCo
         config.constraint_jla = static_cast<int>(twist_controller_params_.constraint_jla);
         config.constraint_ca = static_cast<int>(twist_controller_params_.constraint_ca);
         warning = true;
+    }
+
+    if(CA_OFF != ct_ca)
+    {
+        if(!register_link_client_.exists())
+        {
+            ROS_WARN("ServiceServer 'obstacle_distance/registerLinkOfInterest' does not exist. CA not possible");
+            twist_controller_params_.constraint_ca = CA_OFF;
+            config.constraint_ca = static_cast<int>(twist_controller_params_.constraint_ca);
+        }
     }
 
     if(twist_controller_params_.limits_tolerance <= DIV0_SAFE)
