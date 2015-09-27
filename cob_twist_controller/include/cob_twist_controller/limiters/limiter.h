@@ -40,7 +40,7 @@ class LimiterContainer : public LimiterBase
          * Specific implementation of enforceLimits-method.
          * See base class LimiterBase for more details on params and returns.
          */
-        virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const;
+        virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const JointStates& joint_states) const;
 
         /**
          * Initialization for the container.
@@ -79,7 +79,7 @@ class LimiterAllJointPositions : public LimiterBase
          * Specific implementation of enforceLimits-method.
          * See base class LimiterBase for more details on params and returns.
          */
-        virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const;
+        virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const JointStates& joint_states) const;
 
         LimiterAllJointPositions(const TwistControllerParams& tc_params, const KDL::Chain& chain) :
             LimiterBase(tc_params, chain)
@@ -96,7 +96,7 @@ class LimiterAllJointVelocities : public LimiterBase
          * Specific implementation of enforceLimits-method.
          * See base class LimiterBase for more details on params and returns.
          */
-        virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const;
+        virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const JointStates& joint_states) const;
 
         LimiterAllJointVelocities(const TwistControllerParams& tc_params, const KDL::Chain& chain) :
             LimiterBase(tc_params, chain)
@@ -113,7 +113,7 @@ class LimiterAllJointAccelerations : public LimiterBase
          * Specific implementation of enforceLimits-method.
          * See base class LimiterBase for more details on params and returns.
          */
-        virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const;
+        virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const JointStates& joint_states) const;
 
         LimiterAllJointAccelerations(const TwistControllerParams& tc_params, const KDL::Chain& chain) :
             LimiterBase(tc_params, chain)
@@ -130,7 +130,7 @@ class LimiterIndividualJointPositions : public LimiterBase
          * Specific implementation of enforceLimits-method.
          * See base class LimiterBase for more details on params and returns.
          */
-        virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const;
+        virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const JointStates& joint_states) const;
 
         LimiterIndividualJointPositions(const TwistControllerParams& tc_params, const KDL::Chain& chain) :
             LimiterBase(tc_params, chain)
@@ -147,7 +147,7 @@ class LimiterIndividualJointVelocities : public LimiterBase
          * Specific implementation of enforceLimits-method.
          * See base class LimiterBase for more details on params and returns.
          */
-        virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const;
+        virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const JointStates& joint_states) const;
 
         LimiterIndividualJointVelocities(const TwistControllerParams& tc_params, const KDL::Chain& chain) :
             LimiterBase(tc_params, chain)
@@ -164,7 +164,7 @@ class LimiterIndividualJointAccelerations : public LimiterBase
          * Specific implementation of enforceLimits-method.
          * See base class LimiterBase for more details on params and returns.
          */
-        virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const;
+        virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const JointStates& joint_states) const;
 
         LimiterIndividualJointAccelerations(const TwistControllerParams& tc_params, const KDL::Chain& chain) :
             LimiterBase(tc_params, chain)
