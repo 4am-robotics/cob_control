@@ -66,6 +66,7 @@ class ControllerInterfacePositionBase : public ControllerInterfaceBase
         {
             ma_.assign(params.dof, MovingAvg_double_t(ma_size));
             last_update_time_ = ros::Time::now();
+            last_period_ = ros::Duration(0.0);
         }
 
         ~ControllerInterfacePositionBase() {}
@@ -78,15 +79,15 @@ class ControllerInterfacePositionBase : public ControllerInterfaceBase
         {
             now_ = ros::Time::now();
             ros::Duration period = now_ - last_update_time_;
-            last_update_time_ = now_;
 
             bool value_valid = false;
             pos.clear();
             vel.clear();
 
             //ToDo: Test this and find good threshold
-            if(period.toSec() > 0.1)
+            if(period.toSec() > 2*last_period_.toSec()) //missed about a cycle
             {
+                ROS_WARN("reset Integration");
                 //resetting outdated values
                 vel_last_.clear();
                 vel_before_last_.clear();
@@ -120,6 +121,8 @@ class ControllerInterfacePositionBase : public ControllerInterfaceBase
                 vel_last_.push_back(q_dot_ik(i));
             }
 
+            last_update_time_ = now_;
+            last_period_ = period;
             return value_valid;
         }
 
@@ -127,6 +130,7 @@ class ControllerInterfacePositionBase : public ControllerInterfaceBase
         std::vector<MovingAvg_double_t> ma_;
         std::vector<double> vel_last_, vel_before_last_;
         ros::Time now_, last_update_time_;
+        ros::Duration last_period_;
         std::vector<double> pos, vel;
 };
 
