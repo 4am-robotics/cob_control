@@ -31,10 +31,8 @@
 
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
-
 #include <tf/transform_listener.h>
 #include <tf/tf.h>
-
 #include <Eigen/Geometry>
 
 #include "cob_twist_controller/kinematic_extensions/kinematic_extension_base.h"
@@ -47,9 +45,7 @@ class KinematicExtensionDOF : public KinematicExtensionBase
     public:
         KinematicExtensionDOF(const TwistControllerParams& params)
         : KinematicExtensionBase(params)
-        {
-            //nothing to do here
-        }
+        {}
 
         ~KinematicExtensionDOF() {}
 
@@ -61,7 +57,7 @@ class KinematicExtensionDOF : public KinematicExtensionBase
 /* END KinematicExtensionDOF **********************************************************************************************/
 
 /* BEGIN KinematicExtensionBaseActive ****************************************************************************************/
-/// Class implementing the a mobile base KinematicExtension with Cartesian DoFs (lin_x, lin_y, rot_z) enabled (i.e. 2D).
+/// Class implementing a mobile base KinematicExtension with Cartesian DoFs (lin_x, lin_y, rot_z) enabled (i.e. 2D).
 class KinematicExtensionBaseActive : public KinematicExtensionDOF
 {
     public:
@@ -80,9 +76,7 @@ class KinematicExtensionBaseActive : public KinematicExtensionDOF
         virtual KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain);
         virtual void processResultExtension(const KDL::JntArray& q_dot_ik);
 
-
         void baseTwistCallback(const geometry_msgs::Twist::ConstPtr& msg);
-
 
     private:
         ros::NodeHandle nh_;

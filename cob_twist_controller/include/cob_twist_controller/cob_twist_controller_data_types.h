@@ -33,8 +33,8 @@
 #include <map>
 #include <stdint.h>
 #include <Eigen/Core>
-#include <Eigen/LU> // necessary to use several methods on EIGEN Matrices.
-#include <kdl/chainjnttojacsolver.hpp>
+#include <Eigen/LU>
+#include <kdl/jntarray.hpp>
 #include <cob_twist_controller/TwistControllerConfig.h>
 
 #define MAX_CRIT true
@@ -64,6 +64,7 @@ enum KinematicExtensionTypes
     NO_EXTENSION = cob_twist_controller::TwistController_NO_EXTENSION,
     BASE_COMPENSATION = cob_twist_controller::TwistController_BASE_COMPENSATION,
     BASE_ACTIVE = cob_twist_controller::TwistController_BASE_ACTIVE,
+    COB_TORSO = cob_twist_controller::TwistController_COB_TORSO,
 };
 
 enum SolverTypes
@@ -149,7 +150,7 @@ struct TwistControllerParams
             eps_damping(0.003),
             eps_truncation(0.001),
 
-            solver(WLN),
+            solver(GPM),
             priority_main(500),
             k_H(1.0),
 
@@ -158,7 +159,7 @@ struct TwistControllerParams
             k_H_jla(-10.0),
             damping_jla(0.000001),
 
-            constraint_ca(CA_OFF),
+            constraint_ca(CA_ON),
             priority_ca(100),
             damping_ca(0.000001),
             k_H_ca(2.0),

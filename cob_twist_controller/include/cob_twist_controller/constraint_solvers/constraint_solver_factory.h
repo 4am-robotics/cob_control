@@ -31,6 +31,7 @@
 #include <Eigen/Core>
 #include <Eigen/SVD>
 #include <kdl/jntarray.hpp>
+#include <kdl/chainjnttojacsolver.hpp>
 #include <kdl/chainfksolvervel_recursive.hpp>
 #include <boost/shared_ptr.hpp>
 

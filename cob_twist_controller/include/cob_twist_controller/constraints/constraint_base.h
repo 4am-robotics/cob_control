@@ -50,7 +50,6 @@ template
 class PriorityBase
 {
     public:
-
         PriorityBase(PRIO prio) : priority_(prio)
         {}
 
@@ -127,7 +126,6 @@ template
 class ConstraintBase : public PriorityBase<PRIO>
 {
     public:
-
         /**
          * @param prio A priority value / object.
          * @param q The joint states.
@@ -213,7 +211,6 @@ class ConstraintBase : public PriorityBase<PRIO>
         }
 
         virtual double getActivationGain() const = 0;
-
 
     protected:
         ConstraintState state_;

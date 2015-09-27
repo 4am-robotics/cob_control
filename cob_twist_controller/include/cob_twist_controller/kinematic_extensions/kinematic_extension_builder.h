@@ -30,7 +30,6 @@
 #define KINEMATIC_EXTENSION_BUILDER_H_
 
 #include <ros/ros.h>
-
 #include <Eigen/Geometry>
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"

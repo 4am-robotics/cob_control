@@ -50,6 +50,9 @@ KinematicExtensionBase* KinematicExtensionBuilder::createKinematicExtension(cons
         case BASE_ACTIVE:
             keb = new KinematicExtensionBaseActive(params);
             break;
+        case COB_TORSO:
+            keb = new KinematicExtensionTorso(params);
+            break;
         default:
             ROS_ERROR("KinematicExtension %d not defined! Using default: 'NO_EXTENSION'!", params.kinematic_extension);
             keb = new KinematicExtensionNone(params);

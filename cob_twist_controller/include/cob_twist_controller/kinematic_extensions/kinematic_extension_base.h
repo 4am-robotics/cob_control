@@ -49,7 +49,6 @@ class KinematicExtensionBase
 
     protected:
         const TwistControllerParams& params_;
-
 };
 
 #endif /* KINEMATIC_EXTENSION_BASE_H_ */

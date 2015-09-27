@@ -30,7 +30,11 @@
 #define KINEMATIC_EXTENSION_URDF_H_
 
 #include <ros/ros.h>
+#include <std_msgs/Float64MultiArray.h>
+#include <sensor_msgs/JointState.h>
 
+#include <kdl_parser/kdl_parser.hpp>
+#include <kdl/chainjnttojacsolver.hpp>
 #include <Eigen/Geometry>
 
 #include "cob_twist_controller/kinematic_extensions/kinematic_extension_base.h"
@@ -43,18 +47,52 @@ class KinematicExtensionURDF : public KinematicExtensionBase
     public:
         KinematicExtensionURDF(const TwistControllerParams& params)
         : KinematicExtensionBase(params)
-        {
-            //nothing to do here
-        }
+        {}
 
         ~KinematicExtensionURDF() {}
 
-        virtual KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain);
-        virtual void processResultExtension(const KDL::JntArray& q_dot_ik) = 0;
+        virtual KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain) = 0;
+        virtual void processResultExtension(const KDL::JntArray& q_dot_ik);
 
-        KDL::Jacobian adjustJacobianUrdf(const KDL::Jacobian& jac_chain, const KDL::Frame full_frame, const KDL::Frame partial_frame);
+        void jointstateCallback(const sensor_msgs::JointState::ConstPtr& msg);
+        bool initUrdfExtension(std::string chain_base, std::string chain_tip);
+
+    protected:
+        ros::NodeHandle nh_;
+        ros::Publisher command_pub_;
+        ros::Subscriber joint_state_sub_;
+
+        std::vector<std::string> joint_names_;
+        JointStates joint_states_;
+        KDL::ChainJntToJacSolver* p_jnt2jac_;
 };
 /* END KinematicExtensionURDF **********************************************************************************************/
 
+
+/* BEGIN KinematicExtensionTorso ****************************************************************************************/
+/// Class implementing a KinematicExtension for Torso based on URDF.
+class KinematicExtensionTorso : public KinematicExtensionURDF
+{
+    public:
+        KinematicExtensionTorso(const TwistControllerParams& params)
+        : KinematicExtensionURDF(params)
+        {
+            std::string chain_base = "torso_base_link";
+            std::string chain_tip = "torso_center_link";
+            
+            if(!initUrdfExtension(chain_base, chain_tip))
+            {
+                ROS_ERROR("Initialization failed");
+            }
+
+            joint_state_sub_ = nh_.subscribe("torso/joint_states", 1, &KinematicExtensionURDF::jointstateCallback, dynamic_cast<KinematicExtensionURDF*>( this ));
+            command_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("torso/joint_group_velocity_controller/command", 1);
+        }
+
+        ~KinematicExtensionTorso() {}
+        
+        KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain);
+};
+/* END KinematicExtensionTorso **********************************************************************************************/
 
 #endif /* KINEMATIC_EXTENSION_URDF_H_ */

@@ -29,6 +29,7 @@
 #ifndef CONSTRAINT_H_
 #define CONSTRAINT_H_
 
+#include <kdl/chainjnttojacsolver.hpp>
 #include <kdl/chainfksolvervel_recursive.hpp>
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
@@ -91,8 +92,7 @@ class CollisionAvoidance : public ConstraintBase<T_PARAMS, PRIO>
             ConstraintBase<T_PARAMS, PRIO>(prio, constraint_params, cbdm),
             jnt_to_jac_(jnt_to_jac),
             fk_solver_vel_(fk_solver_vel)
-        {
-        }
+        {}
 
         virtual ~CollisionAvoidance()
         {}
@@ -126,8 +126,6 @@ class CollisionAvoidance : public ConstraintBase<T_PARAMS, PRIO>
         Eigen::MatrixXd task_jacobian_;
         Eigen::VectorXd values_;
         Eigen::VectorXd derivative_values_;
-
-
 };
 /* END CollisionAvoidance ***************************************************************************************/
 
@@ -171,7 +169,6 @@ class JointLimitAvoidance : public ConstraintBase<T_PARAMS, PRIO>
         double abs_delta_min_;
         double rel_max_;
         double rel_min_;
-
 };
 /* END JointLimitAvoidance **************************************************************************************/
 
@@ -220,8 +217,7 @@ class JointLimitAvoidanceIneq : public ConstraintBase<T_PARAMS, PRIO>
               abs_delta_min_(std::numeric_limits<double>::max()),
               rel_max_(1.0),
               rel_min_(1.0)
-        {
-        }
+        {}
 
         virtual ~JointLimitAvoidanceIneq()
         {}
