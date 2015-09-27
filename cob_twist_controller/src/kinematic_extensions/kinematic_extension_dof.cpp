@@ -27,76 +27,26 @@
  *
  ****************************************************************/
 
-#include "cob_twist_controller/kinematic_extensions/kinematic_extension.h"
-
 #include <eigen_conversions/eigen_kdl.h>
+#include "cob_twist_controller/kinematic_extensions/kinematic_extension_dof.h"
 
 
-/* BEGIN KinematicExtensionBuilder *****************************************************************************************/
-/**
- * Static builder method to create kinematic extensions based on given parameterization.
- */
-KinematicExtensionBase* KinematicExtensionBuilder::createKinematicExtension(const TwistControllerParams& params)
-{
-    KinematicExtensionBase* keb = NULL;
-
-    switch(params.kinematic_extension)
-    {
-        case NO_EXTENSION:
-            keb = new KinematicExtensionNone(params);
-            break;
-        case BASE_COMPENSATION:
-            //nothing to do here for BASE_COMPENSATION
-            break;
-        case BASE_ACTIVE:
-            keb = new KinematicExtensionBaseActive(params);
-            break;
-        default:
-            ROS_ERROR("KinematicExtension %d not defined! Using default: 'NO_EXTENSION'!", params.kinematic_extension);
-            keb = new KinematicExtensionNone(params);
-            break;
-    }
-
-    return keb;
-}
-/* END KinematicExtensionBuilder *******************************************************************************************/
-
-
-/* BEGIN KinematicExtensionNone ********************************************************************************************/
-/**
- * Method adjusting the Jacobian used in inverse differential computation. No changes applied.
- */
-KDL::Jacobian KinematicExtensionNone::adjustJacobian(const KDL::Jacobian& jac_chain)
-{
-    return jac_chain;
-}
-
-/**
- * Method processing the partial result realted to the kinematic extension. Nothing to be done.
- */
-void KinematicExtensionNone::processResultExtension(const KDL::JntArray& q_dot_ik)
-{
-    return;
-}
-/* END KinematicExtensionNone **********************************************************************************************/
-
-
-/* BEGIN KinematicExtension6D ********************************************************************************************/
+/* BEGIN KinematicExtensionDOF ********************************************************************************************/
 /**
  * Method adjusting the Jacobian used in inverse differential computation. All Cartesian DoFs are disabled.
  */
-KDL::Jacobian KinematicExtension6D::adjustJacobian(const KDL::Jacobian& jac_chain)
+KDL::Jacobian KinematicExtensionDOF::adjustJacobian(const KDL::Jacobian& jac_chain)
 {
     KDL::Frame dummy;
     ActiveCartesianDimension active_dim;
 
-    return adjustJacobian6d(jac_chain, dummy, dummy, active_dim);
+    return adjustJacobianDof(jac_chain, dummy, dummy, active_dim);
 }
 
 /**
  * Helper function adjusting the Jacobian used in inverse differential computation based on the Cartesian DoFs enabled in 'adjustJacobian()'.
  */
-KDL::Jacobian KinematicExtension6D::adjustJacobian6d(const KDL::Jacobian& jac_chain, const KDL::Frame full_frame, const KDL::Frame partial_frame, const ActiveCartesianDimension active_dim)
+KDL::Jacobian KinematicExtensionDOF::adjustJacobianDof(const KDL::Jacobian& jac_chain, const KDL::Frame full_frame, const KDL::Frame partial_frame, const ActiveCartesianDimension active_dim)
 {
     ///compose jac_full considering kinematical extension
     KDL::Jacobian jac_full;
@@ -184,7 +134,7 @@ KDL::Jacobian KinematicExtension6D::adjustJacobian6d(const KDL::Jacobian& jac_ch
 
     return jac_full;
 }
-/* END KinematicExtension6D **********************************************************************************************/
+/* END KinematicExtensionDOF **********************************************************************************************/
 
 
 /* BEGIN KinematicExtensionBaseActive ********************************************************************************************/
@@ -228,7 +178,7 @@ KDL::Jacobian KinematicExtensionBaseActive::adjustJacobian(const KDL::Jacobian& 
     active_dim.rot_y=0;
     active_dim.rot_z=1;
 
-    return adjustJacobian6d(jac_chain, bl_frame_ct, cb_frame_bl, active_dim);
+    return adjustJacobianDof(jac_chain, bl_frame_ct, cb_frame_bl, active_dim);
 }
 
 /**

@@ -29,9 +29,10 @@
 #ifndef KINEMATIC_EXTENSION_BASE_H_
 #define KINEMATIC_EXTENSION_BASE_H_
 
-#include "ros/ros.h"
+#include <ros/ros.h>
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
+
 
 /// Base class for kinematic extensions.
 class KinematicExtensionBase

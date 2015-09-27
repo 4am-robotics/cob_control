@@ -25,12 +25,12 @@
  *   This package provides the implementation of an inverse kinematics solver.
  *
  ****************************************************************/
-#include "cob_twist_controller/inverse_differential_kinematics_solver.h"
 
 #include <ros/ros.h>
 #include <eigen_conversions/eigen_kdl.h>
-
 #include <kdl/chainfksolvervel_recursive.hpp>
+
+#include "cob_twist_controller/inverse_differential_kinematics_solver.h"
 
 /**
  * Solve the inverse kinematics problem at the first order differential level.

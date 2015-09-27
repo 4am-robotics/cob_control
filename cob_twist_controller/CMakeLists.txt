@@ -46,7 +46,7 @@ add_library(controller_interfaces src/controller_interfaces/controller_interface
 add_dependencies(controller_interfaces ${catkin_EXPORTED_TARGETS})
 target_link_libraries(controller_interfaces ${catkin_LIBRARIES})
 
-add_library(kinematic_extensions src/kinematic_extensions/kinematic_extension.cpp)
+add_library(kinematic_extensions src/kinematic_extensions/kinematic_extension_builder.cpp src/kinematic_extensions/kinematic_extension_dof.cpp src/kinematic_extensions/kinematic_extension_urdf.cpp)
 add_dependencies(kinematic_extensions ${catkin_EXPORTED_TARGETS})
 target_link_libraries(kinematic_extensions ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 

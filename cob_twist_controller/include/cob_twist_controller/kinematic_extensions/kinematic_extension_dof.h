@@ -26,14 +26,10 @@
  *   kinematic chain with additional degrees of freedom, e.g. base_active or lookat
  *
  ****************************************************************/
-#ifndef KINEMATIC_EXTENSION_H_
-#define KINEMATIC_EXTENSION_H_
-
-#include "cob_twist_controller/kinematic_extensions/kinematic_extension_base.h"
-
+#ifndef KINEMATIC_EXTENSION_DOF_H_
+#define KINEMATIC_EXTENSION_DOF_H_
 
 #include <ros/ros.h>
-
 #include <geometry_msgs/Twist.h>
 
 #include <tf/transform_listener.h>
@@ -41,68 +37,36 @@
 
 #include <Eigen/Geometry>
 
+#include "cob_twist_controller/kinematic_extensions/kinematic_extension_base.h"
 
 
-/* BEGIN KinematicExtensionBuilder *****************************************************************************************/
-/// Class providing a static method to create kinematic extension objects.
-class KinematicExtensionBuilder
-{
-    public:
-        KinematicExtensionBuilder() {}
-        ~KinematicExtensionBuilder() {}
-
-        static KinematicExtensionBase* createKinematicExtension(const TwistControllerParams& params);
-};
-/* END KinematicExtensionBuilder *******************************************************************************************/
-
-
-/* BEGIN KinematicExtensionNone ****************************************************************************************/
-/// Class implementing the interface in case KinematicExtension is disabled.
-class KinematicExtensionNone : public KinematicExtensionBase
-{
-    public:
-        KinematicExtensionNone(const TwistControllerParams& params)
-        : KinematicExtensionBase(params)
-        {
-            //nothing to do
-        }
-
-        ~KinematicExtensionNone() {}
-
-        virtual KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain);
-        virtual void processResultExtension(const KDL::JntArray& q_dot_ik);
-};
-/* END KinematicExtensionNone **********************************************************************************************/
-
-
-/* BEGIN KinematicExtension6D ****************************************************************************************/
+/* BEGIN KinematicExtensionDOF ****************************************************************************************/
 /// Abstract Helper Class to be used for Cartesian KinematicExtensions based on enabled DoFs.
-class KinematicExtension6D : public KinematicExtensionBase
+class KinematicExtensionDOF : public KinematicExtensionBase
 {
     public:
-        KinematicExtension6D(const TwistControllerParams& params)
+        KinematicExtensionDOF(const TwistControllerParams& params)
         : KinematicExtensionBase(params)
         {
             //nothing to do here
         }
 
-        ~KinematicExtension6D() {}
+        ~KinematicExtensionDOF() {}
 
         virtual KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain);
         virtual void processResultExtension(const KDL::JntArray& q_dot_ik) = 0;
 
-        KDL::Jacobian adjustJacobian6d(const KDL::Jacobian& jac_chain, const KDL::Frame full_frame, const KDL::Frame partial_frame, const ActiveCartesianDimension active_dim);
+        KDL::Jacobian adjustJacobianDof(const KDL::Jacobian& jac_chain, const KDL::Frame full_frame, const KDL::Frame partial_frame, const ActiveCartesianDimension active_dim);
 };
-/* END KinematicExtension6D **********************************************************************************************/
-
+/* END KinematicExtensionDOF **********************************************************************************************/
 
 /* BEGIN KinematicExtensionBaseActive ****************************************************************************************/
 /// Class implementing the a mobile base KinematicExtension with Cartesian DoFs (lin_x, lin_y, rot_z) enabled (i.e. 2D).
-class KinematicExtensionBaseActive : public KinematicExtension6D
+class KinematicExtensionBaseActive : public KinematicExtensionDOF
 {
     public:
         KinematicExtensionBaseActive(const TwistControllerParams& params)
-        : KinematicExtension6D(params)
+        : KinematicExtensionDOF(params)
         {
             base_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("/base/twist_controller/command", 1);
 
@@ -128,4 +92,4 @@ class KinematicExtensionBaseActive : public KinematicExtension6D
 };
 /* END KinematicExtensionBaseActive **********************************************************************************************/
 
-#endif /* KINEMATIC_EXTENSION_H_ */
+#endif /* KINEMATIC_EXTENSION_DOF_H_ */
