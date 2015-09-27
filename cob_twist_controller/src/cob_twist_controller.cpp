@@ -99,13 +99,13 @@ bool CobTwistController::initialize()
         twist_controller_params_.limits_vel.push_back(model.getJoint(twist_controller_params_.joints[i])->limits->velocity);
     }
 
+    //ToDo: get this from joint_limits.yaml?
     if((!nh_twist.getParam("limits_acc", twist_controller_params_.limits_acc)) || (twist_controller_params_.limits_acc.size() != twist_controller_params_.dof))
     {
-        ROS_ERROR("Parameter 'limits_acc' not set or dimensions do not match! Using default for each joint: 10.0 [rad/s2]");
+        ROS_ERROR("Parameter 'limits_acc' not set or dimensions do not match! Not limiting acceleration!");
         for(uint16_t i=0; i < twist_controller_params_.dof; i++)
         {
-            //std::numeric_limits<double>::max() as default?
-            twist_controller_params_.limits_acc.push_back(10.0);
+            twist_controller_params_.limits_acc.push_back(std::numeric_limits<double>::max());
         }
     }
 

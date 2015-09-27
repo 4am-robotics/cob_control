@@ -166,7 +166,7 @@ struct TwistControllerParams
             keep_direction(true),
             enforce_pos_limits(true),
             enforce_vel_limits(true),
-            enforce_acc_limits(true),
+            enforce_acc_limits(false),
             limits_tolerance(5.0),
             max_vel_lin_base(0.5),
             max_vel_rot_base(0.5),

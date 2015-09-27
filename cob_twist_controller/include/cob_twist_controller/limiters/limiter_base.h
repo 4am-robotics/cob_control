@@ -50,7 +50,7 @@ class LimiterBase
          * @param joint_states The current joint states structure.
          * @return Scaled joint velocities vector.
          */
-        virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const JointStates& joint_states) const = 0;
+        virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const JointStates& joint_states) = 0;
 
     protected:
         const TwistControllerParams& tc_params_;

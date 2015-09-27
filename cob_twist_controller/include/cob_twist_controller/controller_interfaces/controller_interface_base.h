@@ -65,7 +65,7 @@ class ControllerInterfacePositionBase : public ControllerInterfaceBase
         : ControllerInterfaceBase(nh, params)
         {
             ma_.assign(params.dof, MovingAvg_double_t(ma_size));
-            last_update_time_ = ros::Time::now();
+            last_update_time_ = ros::Time(0.0);
             last_period_ = ros::Duration(0.0);
         }
 
