@@ -309,9 +309,9 @@ void FootprintObserver::checkFootprint(){
   bool missing_frame_exists = false;
   while(ss >> frame){
     // get transform between robot base frame and frame
-    if(tf_listener_.canTransform(robot_base_frame_, frame, ros::Time(0))) {
+    if(tf_listener_.canTransform(tf_listener_.resolve(robot_base_frame_), tf_listener_.resolve(frame), ros::Time(0))) {
       tf::StampedTransform transform;
-      tf_listener_.lookupTransform(robot_base_frame_, frame, ros::Time(0), transform);
+      tf_listener_.lookupTransform(tf_listener_.resolve(robot_base_frame_), tf_listener_.resolve(frame), ros::Time(0), transform);
 
       tf::Vector3 frame_position = transform.getOrigin();
 

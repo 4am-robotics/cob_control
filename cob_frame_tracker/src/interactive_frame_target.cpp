@@ -96,7 +96,7 @@ bool InteractiveFrameTarget::initialize()
     {
         try
         {
-            tf_listener_.lookupTransform(root_frame_, chain_tip_link_, ros::Time(), target_pose_);
+            tf_listener_.lookupTransform(tf_listener_.resolve(root_frame_), tf_listener_.resolve(chain_tip_link_), ros::Time(), target_pose_);
             transform_available = true;
         }
         catch (tf::TransformException& ex)
@@ -240,7 +240,7 @@ void InteractiveFrameTarget::updateMarker()
     while(!transform_available)
     {
         try{
-            tf_listener_.lookupTransform(root_frame_, chain_tip_link_, ros::Time(), target_pose_);
+            tf_listener_.lookupTransform(tf_listener_.resolve(root_frame_), tf_listener_.resolve(chain_tip_link_), ros::Time(), target_pose_);
             transform_available = true;
         }
         catch (tf::TransformException& ex){

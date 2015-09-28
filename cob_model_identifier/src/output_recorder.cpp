@@ -65,7 +65,13 @@ bool OutputRecorder::initialize()
 
     ///parse robot_description and generate KDL chains
     KDL::Tree my_tree;
-    if (!kdl_parser::treeFromParam("robot_description", my_tree))
+    std::string robot_description_param;
+    if (!nh_.searchParam("robot_description", robot_description_param))
+    {
+        ROS_ERROR("Parameter 'robot_description' not found");
+        return false;
+    }
+    if (!kdl_parser::treeFromParam(robot_description_param, my_tree))
     {
         ROS_ERROR("Failed to construct kdl tree");
         return false;
@@ -333,7 +339,7 @@ geometry_msgs::Pose OutputRecorder::getEndeffectorPose()
     // Get transformation
     try
     {
-        listener_.lookupTransform(chain_base_link_, chain_tip_link_, ros::Time(0), stampedTransform);
+        tf_listener_.lookupTransform(tf_listener_.resolve(chain_base_link_), tf_listener_.resolve(chain_tip_link_), ros::Time(0), stampedTransform);
     }
     catch (tf::TransformException& ex)
     {
