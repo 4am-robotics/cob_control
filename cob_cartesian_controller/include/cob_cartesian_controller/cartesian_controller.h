@@ -96,6 +96,7 @@ private:
 
     CartesianControllerUtils utils_;
     boost::shared_ptr< TrajectoryInterpolator > trajectory_interpolator_;
+
 };
 
 #endif

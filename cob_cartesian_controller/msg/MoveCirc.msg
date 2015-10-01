@@ -6,5 +6,3 @@ float64 end_angle
 float64 radius
 
 bool rotate_only
-
-cob_cartesian_controller/Profile profile

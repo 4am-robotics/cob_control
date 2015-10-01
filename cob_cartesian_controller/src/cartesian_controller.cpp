@@ -197,12 +197,12 @@ bool CartesianController::movePTP(const geometry_msgs::Pose& target_pose, const 
 // Broadcasting interpolated Cartesian path
 bool CartesianController::posePathBroadcaster(const geometry_msgs::PoseArray& cartesian_path)
 {
-    bool success = false;
+    bool success = true;
     double epsilon = 0.1;
     int failure_counter = 0;
     ros::Rate rate(update_rate_);
     tf::Transform transform;
-    for(int i = 0; i < cartesian_path.poses.size()-1; i++)
+    for(int i = 0; i < cartesian_path.poses.size(); i++)
     {
         if(!as_->isActive())
         {
@@ -267,7 +267,7 @@ void CartesianController::goalCallback()
         ROS_INFO("move_lin");
 
         // Interpolate path
-        if(!trajectory_interpolator_->linearInterpolation(cartesian_path, action_struct.move_lin))
+        if(!trajectory_interpolator_->linearInterpolation(cartesian_path, action_struct))
         {
             actionAbort(false, "Failed to do interpolation for 'move_lin'");
             return;
@@ -279,7 +279,7 @@ void CartesianController::goalCallback()
         // Activate Tracking
         if(!startTracking())
         {
-            actionAbort(false, "Failed to start traccking");
+            actionAbort(false, "Failed to start tracking");
             return;
         }
 
@@ -293,7 +293,7 @@ void CartesianController::goalCallback()
         // De-Activate Tracking
         if(!stopTracking())
         {
-            actionAbort(false, "Failed to stop traccking");
+            actionAbort(false, "Failed to stop tracking");
             return;
         }
 
@@ -303,7 +303,7 @@ void CartesianController::goalCallback()
     {
         ROS_INFO("move_circ");
 
-        if(!trajectory_interpolator_->circularInterpolation(cartesian_path, action_struct.move_circ))
+        if(!trajectory_interpolator_->circularInterpolation(cartesian_path, action_struct))
         {
             actionAbort(false, "Failed to do interpolation for 'move_circ'");
             return;
@@ -315,7 +315,7 @@ void CartesianController::goalCallback()
         // Activate Tracking
         if(!startTracking())
         {
-            actionAbort(false, "Failed to start traccking");
+            actionAbort(false, "Failed to start tracking");
             return;
         }
 
@@ -336,7 +336,7 @@ void CartesianController::goalCallback()
         // De-Activate Tracking
         if(!stopTracking())
         {
-            actionAbort(false, "Failed to stop traccking");
+            actionAbort(false, "Failed to stop tracking");
             return;
         }
 
@@ -355,16 +355,13 @@ cob_cartesian_controller::MoveLinStruct CartesianController::convertMoveLin(cons
     start = utils_.getPose(root_frame_, chain_tip_link_);   //current tcp pose
     utils_.transformPose(move_lin_msg.frame_id, root_frame_, move_lin_msg.pose_goal, end);
 
-    cob_cartesian_controller::MoveLinStruct move_lin_struct;
-    move_lin_struct.rotate_only          = move_lin_msg.rotate_only;
-    move_lin_struct.profile.vel          = move_lin_msg.profile.vel;
-    move_lin_struct.profile.accl         = move_lin_msg.profile.accl;
-    move_lin_struct.profile.profile_type = move_lin_msg.profile.profile_type;
+    cob_cartesian_controller::MoveLinStruct move_lin;
+    move_lin.rotate_only = move_lin_msg.rotate_only;
 
-    move_lin_struct.start = start;
-    move_lin_struct.end = end;
+    move_lin.start = start;
+    move_lin.end = end;
 
-    return move_lin_struct;
+    return move_lin;
 }
 
 cob_cartesian_controller::MoveCircStruct CartesianController::convertMoveCirc(const cob_cartesian_controller::MoveCirc& move_circ_msg)
@@ -372,23 +369,27 @@ cob_cartesian_controller::MoveCircStruct CartesianController::convertMoveCirc(co
     geometry_msgs::Pose center;
     utils_.transformPose(move_circ_msg.frame_id, root_frame_, move_circ_msg.pose_center, center);
 
-    cob_cartesian_controller::MoveCircStruct move_circ_struct;
-    move_circ_struct.start_angle           = move_circ_msg.start_angle;
-    move_circ_struct.end_angle             = move_circ_msg.end_angle;
-    move_circ_struct.radius                = move_circ_msg.radius;
-    move_circ_struct.profile.vel           = move_circ_msg.profile.vel;
-    move_circ_struct.profile.accl          = move_circ_msg.profile.accl;
-    move_circ_struct.profile.profile_type  = move_circ_msg.profile.profile_type;
+    cob_cartesian_controller::MoveCircStruct move_circ;
+    move_circ.start_angle           = move_circ_msg.start_angle;
+    move_circ.end_angle             = move_circ_msg.end_angle;
+    move_circ.radius                = move_circ_msg.radius;
 
-    move_circ_struct.pose_center = center;
 
-    return move_circ_struct;
+    move_circ.pose_center = center;
+
+    return move_circ;
 }
 
 cob_cartesian_controller::CartesianActionStruct CartesianController::acceptGoal(boost::shared_ptr<const cob_cartesian_controller::CartesianControllerGoal> goal)
 {
     cob_cartesian_controller::CartesianActionStruct action_struct;
     action_struct.move_type = goal->move_type;
+
+    action_struct.profile.vel           = goal->profile.vel;
+    action_struct.profile.accl          = goal->profile.accl;
+    action_struct.profile.profile_type  = goal->profile.profile_type;
+    action_struct.profile.t_ipo         = 1/update_rate_;
+
 
     if(action_struct.move_type == cob_cartesian_controller::CartesianControllerGoal::LIN)
     {
@@ -400,6 +401,7 @@ cob_cartesian_controller::CartesianActionStruct CartesianController::acceptGoal(
     }
     else
     {
+
         actionAbort(false, "Unknown trajectory action " + boost::lexical_cast<std::string>(action_struct.move_type));
     }
 
