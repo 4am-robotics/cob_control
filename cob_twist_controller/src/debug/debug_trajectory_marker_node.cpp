@@ -32,6 +32,7 @@
 #include <tf/transform_listener.h>
 #include <std_msgs/ColorRGBA.h>
 #include <visualization_msgs/MarkerArray.h>
+#include <cob_twist_controller/TwistControllerConfig.h>
 
 class DebugTrajectoryMarker
 {
@@ -138,7 +139,7 @@ public:
 
         if(tf_listener_.frameExists(this->base_link_))
         {
-            if(nh_.param("twist_controller/kinematic_extension", 0) == 1)//BASE_ACTIVE
+            if(nh_.param("twist_controller/kinematic_extension", 0) == cob_twist_controller::TwistController_BASE_ACTIVE)
             {
                 if(base_marker_.points.size() > 10000)
                 {
@@ -200,10 +201,6 @@ public:
 
 
 
-
-
-
-
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "debug_trajectory_marker_node");
@@ -217,4 +214,3 @@ int main(int argc, char** argv)
 
     ros::spin();
 }
-

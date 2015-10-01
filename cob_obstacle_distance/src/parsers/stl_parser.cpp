@@ -59,12 +59,12 @@ int8_t StlParser::read(std::vector<TriangleSupport>& tri_vec)
 
     //read 80 byte header
     myFile.read(header_info, 80);
-    ROS_INFO_STREAM("header: " << header_info);
+    ROS_DEBUG_STREAM("header: " << header_info);
 
     //read 4-byte ulong
     myFile.read(nTri, 4);
     nTriLong = *((uint32_t*) nTri);
-    ROS_INFO_STREAM("Number of Triangles: " << nTriLong);
+    ROS_DEBUG_STREAM("Number of Triangles: " << nTriLong);
 
     //now read in all the triangles
     for(int i = 0; i < nTriLong; i++)

@@ -32,6 +32,7 @@
 #include <ros/ros.h>
 #include <unordered_map>
 
+#include <visualization_msgs/MarkerArray.h>
 #include "cob_obstacle_distance/marker_shapes/marker_shapes_interface.hpp"
 
 /// Class to manage fcl::Shapes and connect with RVIZ marker type.
@@ -78,9 +79,8 @@ class ShapesManager
 
         /**
          * Draw the marker managed by the ShapesManager
-         * @param enforce_draw Enforce drawing also in case of marker has already been drawn.
          */
-        void draw(bool enforce_draw = false);
+        void draw();
 
         /**
          * Clear the managed shapes.

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(cob_twist_controller)
 
-find_package(catkin REQUIRED COMPONENTS cmake_modules cob_obstacle_distance cob_srvs dynamic_reconfigure eigen_conversions geometry_msgs kdl_conversions kdl_parser nav_msgs roscpp sensor_msgs std_msgs tf urdf visualization_msgs)
+find_package(catkin REQUIRED COMPONENTS cmake_modules cob_obstacle_distance cob_srvs dynamic_reconfigure eigen_conversions geometry_msgs kdl_conversions kdl_parser nav_msgs roscpp sensor_msgs std_msgs tf trajectory_msgs urdf visualization_msgs)
 
 find_package(Boost REQUIRED COMPONENTS thread)
 
@@ -20,7 +20,7 @@ catkin_package(
   CATKIN_DEPENDS cob_obstacle_distance cob_srvs dynamic_reconfigure eigen_conversions geometry_msgs kdl_conversions kdl_parser nav_msgs roscpp sensor_msgs std_msgs tf urdf visualization_msgs
   DEPENDS Boost
   INCLUDE_DIRS include
-  LIBRARIES damping_methods inv_calculations constraint_solvers limiters hardware_interfaces kinematic_extensions inverse_differential_kinematics_solver twist_controller
+  LIBRARIES damping_methods inv_calculations constraint_solvers limiters controller_interfaces kinematic_extensions inverse_differential_kinematics_solver twist_controller
 )
 
 ### BUILD ###
@@ -42,9 +42,9 @@ target_link_libraries(constraint_solvers damping_methods inv_calculations)
 add_library(limiters src/limiters/limiter.cpp)
 target_link_libraries(limiters ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 
-add_library(hardware_interfaces src/hardware_interface_types/hardware_interface_type.cpp)
-add_dependencies(hardware_interfaces ${catkin_EXPORTED_TARGETS})
-target_link_libraries(hardware_interfaces ${catkin_LIBRARIES})
+add_library(controller_interfaces src/controller_interfaces/controller_interface.cpp)
+add_dependencies(controller_interfaces ${catkin_EXPORTED_TARGETS})
+target_link_libraries(controller_interfaces ${catkin_LIBRARIES})
 
 add_library(kinematic_extensions src/kinematic_extensions/kinematic_extension.cpp)
 add_dependencies(kinematic_extensions ${catkin_EXPORTED_TARGETS})
@@ -56,7 +56,7 @@ target_link_libraries(inverse_differential_kinematics_solver constraint_solvers 
 
 add_library(twist_controller src/cob_twist_controller.cpp)
 add_dependencies(twist_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(twist_controller inverse_differential_kinematics_solver limiters hardware_interfaces ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
+target_link_libraries(twist_controller inverse_differential_kinematics_solver limiters controller_interfaces ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 
 add_executable(cob_twist_controller_node src/cob_twist_controller_node.cpp)
 add_dependencies(cob_twist_controller_node ${catkin_EXPORTED_TARGETS})
@@ -66,8 +66,12 @@ add_executable(debug_trajectory_marker_node src/debug/debug_trajectory_marker_no
 add_dependencies(debug_trajectory_marker_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(debug_trajectory_marker_node ${catkin_LIBRARIES})
 
+add_executable(debug_evaluate_jointstates_node src/debug/debug_evaluate_jointstates_node.cpp)
+add_dependencies(debug_evaluate_jointstates_node ${catkin_EXPORTED_TARGETS})
+target_link_libraries(debug_evaluate_jointstates_node ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
+
 ### INSTALL ###
-install(TARGETS cob_twist_controller_node damping_methods inv_calculations constraint_solvers limiters hardware_interfaces kinematic_extensions inverse_differential_kinematics_solver twist_controller debug_trajectory_marker_node
+install(TARGETS cob_twist_controller_node damping_methods inv_calculations constraint_solvers limiters controller_interfaces kinematic_extensions inverse_differential_kinematics_solver twist_controller debug_trajectory_marker_node debug_evaluate_jointstates_node
  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

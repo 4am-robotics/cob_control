@@ -72,8 +72,8 @@ int8_t MeshParser::read(std::vector<TriangleSupport>& tri_vec)
     aiMesh** mesh = scene->mMeshes;
     aiVector3D* vertex = mesh[0]->mVertices; // point to the first vertex
 
-    ROS_INFO_STREAM("mesh[0]->mNumVertices: " << mesh[0]->mNumVertices);
-    ROS_INFO_STREAM("mesh[0]->mNumFaces: " << mesh[0]->mNumFaces); // num of faces == num of triangles in STL
+    ROS_DEBUG_STREAM("mesh[0]->mNumVertices: " << mesh[0]->mNumVertices);
+    ROS_DEBUG_STREAM("mesh[0]->mNumFaces: " << mesh[0]->mNumFaces); // num of faces == num of triangles in STL
 
     //now read in all the triangles
     for(uint32_t i = 0; i < mesh[0]->mNumFaces; ++i)

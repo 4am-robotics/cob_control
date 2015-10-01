@@ -32,7 +32,6 @@
 #include <kdl_conversions/kdl_msg.h>
 #include <tf/transform_datatypes.h>
 #include <visualization_msgs/Marker.h>
-#include <visualization_msgs/MarkerArray.h>
 
 #include <Eigen/Dense>
 #include "cob_srvs/SetString.h"
@@ -63,16 +62,17 @@ bool CobTwistController::initialize()
         return false;
     }
 
-    // Frames of Interest
-    if(!nh_twist.getParam("collision_check_frames", twist_controller_params_.collision_check_frames))
+    // links of the chain to be considered for collision avoidance
+    if(!nh_twist.getParam("collision_check_links", twist_controller_params_.collision_check_links))
     {
-        ROS_WARN_STREAM("Parameter vector 'collision_check_frames' not set. Collision Avoidance constraint will not do anything.");
-        twist_controller_params_.collision_check_frames.clear();
+        ROS_WARN_STREAM("Parameter 'collision_check_links' not set. Collision Avoidance constraint will not do anything.");
+        twist_controller_params_.collision_check_links.clear();
     }
 
     ///parse robot_description and generate KDL chains
     KDL::Tree my_tree;
-    if (!kdl_parser::treeFromParam("/robot_description", my_tree)){
+    if (!kdl_parser::treeFromParam("/robot_description", my_tree))
+    {
         ROS_ERROR("Failed to construct kdl tree");
         return false;
     }
@@ -104,6 +104,9 @@ bool CobTwistController::initialize()
     {
         twist_controller_params_.frame_names.push_back(chain_.getSegment(i).getName());
     }
+    register_link_client_ = nh_.serviceClient<cob_srvs::SetString>("obstacle_distance/registerLinkOfInterest");
+    ROS_WARN("Waiting for ServiceServer 'obstacle_distance/registerLinkOfInterest'...");
+    register_link_client_.waitForExistence();
 
     ///initialize configuration control solver
     p_inv_diff_kin_solver_.reset(new InverseDifferentialKinematicsSolver(twist_controller_params_, chain_, callback_data_mediator_));
@@ -130,27 +133,28 @@ bool CobTwistController::initialize()
 
     odometry_sub_ = nh_.subscribe("/base/odometry_controller/odometry", 1, &CobTwistController::odometryCallback, this);
 
-    this->hardware_interface_.reset(HardwareInterfaceBuilder::createHardwareInterface(this->nh_, this->twist_controller_params_));
+    this->controller_interface_.reset(ControllerInterfaceBuilder::createControllerInterface(this->nh_, this->twist_controller_params_));
 
+    ///publisher for visualizing current twist direction
+    twist_direction_pub_ = nh_.advertise<visualization_msgs::Marker>("twist_direction",1);
+    
     ROS_INFO("...initialized!");
     return true;
 }
 
 void CobTwistController::reinitServiceRegistration()
 {
-    ROS_INFO("Reinit of Service registration!");
-    ros::ServiceClient client = nh_.serviceClient<cob_srvs::SetString>("obstacle_distance/registerLinkOfInterest");
-    ROS_WARN_COND(twist_controller_params_.collision_check_frames.size() <= 0,
-                  "There are no collision check frames for this manipulator. So nothing will be registered. Ensure parameters are set correctly.");
+    ROS_WARN_COND(twist_controller_params_.collision_check_links.size() <= 0,
+                  "No collision_check_links set for this chain. Nothing will be registered. Ensure parameters are set correctly.");
 
-    for(std::vector<std::string>::const_iterator it = twist_controller_params_.collision_check_frames.begin();
-            it != twist_controller_params_.collision_check_frames.end();
+    for(std::vector<std::string>::const_iterator it = twist_controller_params_.collision_check_links.begin();
+            it != twist_controller_params_.collision_check_links.end();
             it++)
     {
         ROS_INFO_STREAM("Trying to register for " << *it);
         cob_srvs::SetString r;
         r.request.data = *it;
-        if (client.call(r))
+        if (register_link_client_.call(r))
         {
             ROS_INFO_STREAM("Called registration service with success: " << int(r.response.success) << ". Got message: " << r.response.message);
         }
@@ -165,7 +169,7 @@ void CobTwistController::reinitServiceRegistration()
 void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControllerConfig& config, uint32_t level)
 {
     this->checkSolverAndConstraints(config);
-    twist_controller_params_.hardware_interface_type = static_cast<HardwareInterfaceTypes>(config.hardware_interface_type);
+    twist_controller_params_.controller_interface = static_cast<ControllerInterfaceTypes>(config.controller_interface);
 
     twist_controller_params_.numerical_filtering = config.numerical_filtering;
     twist_controller_params_.damping_method = static_cast<DampingMethodTypes>(config.damping_method);
@@ -207,12 +211,11 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     twist_controller_params_.enforce_vel_limits = config.enforce_vel_limits;
     twist_controller_params_.tolerance = config.tolerance;
 
-    twist_controller_params_.base_compensation = config.base_compensation;
     twist_controller_params_.kinematic_extension = static_cast<KinematicExtensionTypes>(config.kinematic_extension);
     twist_controller_params_.base_ratio = config.base_ratio;
 
 
-    this->hardware_interface_.reset(HardwareInterfaceBuilder::createHardwareInterface(this->nh_, this->twist_controller_params_));
+    this->controller_interface_.reset(ControllerInterfaceBuilder::createControllerInterface(this->nh_, this->twist_controller_params_));
 
     p_inv_diff_kin_solver_->resetAll(this->twist_controller_params_);
 
@@ -229,15 +232,6 @@ void CobTwistController::checkSolverAndConstraints(cob_twist_controller::TwistCo
     SolverTypes solver = static_cast<SolverTypes>(config.solver);
     ConstraintTypesJLA ct_jla = static_cast<ConstraintTypesJLA>(config.constraint_jla);
     ConstraintTypesCA ct_ca = static_cast<ConstraintTypesCA>(config.constraint_ca);
-    bool base_compensation = config.base_compensation;
-    KinematicExtensionTypes ket = static_cast<KinematicExtensionTypes>(config.kinematic_extension);
-
-    if(base_compensation && BASE_ACTIVE == ket)
-    {
-        ROS_ERROR("Base cannot be active and compensated at the same time! Setting base compensation back to false ...");
-        config.base_compensation = twist_controller_params_.base_compensation = false;
-        warning = true;
-    }
 
     if(DEFAULT_SOLVER == solver && (JLA_OFF != ct_jla || CA_OFF != ct_ca))
     {
@@ -300,7 +294,8 @@ void CobTwistController::twistStampedCallback(const geometry_msgs::TwistStamped:
     KDL::Frame frame;
     KDL::Twist twist, twist_transformed;
 
-    try{
+    try
+    {
         tf_listener_.lookupTransform(twist_controller_params_.chain_base_link, msg->header.frame_id, ros::Time(0), transform_tf);
         frame.M = KDL::Rotation::Quaternion(transform_tf.getRotation().x(), transform_tf.getRotation().y(), transform_tf.getRotation().z(), transform_tf.getRotation().w());
     }
@@ -325,15 +320,19 @@ void CobTwistController::twistCallback(const geometry_msgs::Twist::ConstPtr& msg
 /// Orientation of twist is with respect to chain_base coordinate system
 void CobTwistController::solveTwist(KDL::Twist twist)
 {
-    int ret_ik;
+    ros::Time start, end;
+    start = ros::Time::now();
+
+    visualizeTwist(twist);
+
     KDL::JntArray q_dot_ik(chain_.getNrOfJoints());
 
-    if(twist_controller_params_.base_compensation)
+    if(twist_controller_params_.kinematic_extension == BASE_COMPENSATION)
     {
         twist = twist - twist_odometry_cb_;
     }
 
-    ret_ik = p_inv_diff_kin_solver_->CartToJnt(this->joint_states_,
+    int ret_ik = p_inv_diff_kin_solver_->CartToJnt(this->joint_states_,
                                                twist,
                                                q_dot_ik);
 
@@ -343,13 +342,54 @@ void CobTwistController::solveTwist(KDL::Twist twist)
     }
     else
     {
-        // Change between velocity and position interface
-        this->hardware_interface_->processResult(q_dot_ik, this->joint_states_.current_q_);
+        this->controller_interface_->processResult(q_dot_ik, this->joint_states_.current_q_);
     }
 
-
+    end = ros::Time::now();
+    //ROS_INFO_STREAM("solveTwist took " << (end-start).toSec() << " seconds");
 }
 
+void CobTwistController::visualizeTwist(KDL::Twist twist)
+{
+    tf::StampedTransform transform_tf;
+    try
+    {
+        tf_listener_.lookupTransform(twist_controller_params_.chain_base_link, twist_controller_params_.chain_tip_link, ros::Time(0), transform_tf);
+    }
+    catch (tf::TransformException& ex){
+        ROS_ERROR("CobTwistController::visualizeTwist: \n%s",ex.what());
+        return;
+    }
+
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = twist_controller_params_.chain_base_link;
+    marker.header.stamp = ros::Time::now();
+    marker.ns = "twist_direction";
+    marker.id = 0;
+    marker.type = visualization_msgs::Marker::ARROW;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.lifetime = ros::Duration(1.0);
+    marker.pose.orientation.w = 1.0;
+
+    marker.scale.x = 0.02;
+    marker.scale.y = 0.02;
+    marker.scale.z = 0.02;
+
+    marker.color.r = 1.0f;
+    marker.color.g = 1.0f;
+    marker.color.b = 0.0f;
+    marker.color.a = 1.0;
+
+    marker.points.resize(2);
+    marker.points[0].x = transform_tf.getOrigin().x();
+    marker.points[0].y = transform_tf.getOrigin().y();
+    marker.points[0].z = transform_tf.getOrigin().z();
+    marker.points[1].x = transform_tf.getOrigin().x() + 5.0*twist.vel.x();
+    marker.points[1].y = transform_tf.getOrigin().y() + 5.0*twist.vel.y();
+    marker.points[1].z = transform_tf.getOrigin().z() + 5.0*twist.vel.z();
+
+    twist_direction_pub_.publish(marker);
+}
 
 void CobTwistController::jointstateCallback(const sensor_msgs::JointState::ConstPtr& msg)
 {
@@ -386,7 +426,8 @@ void CobTwistController::odometryCallback(const nav_msgs::Odometry::ConstPtr& ms
     KDL::Frame cb_frame_bl;
     tf::StampedTransform cb_transform_bl, bl_transform_ct;
 
-    try{
+    try
+    {
         tf_listener_.waitForTransform(twist_controller_params_.chain_base_link, "base_link", ros::Time(0), ros::Duration(0.5));
         tf_listener_.lookupTransform(twist_controller_params_.chain_base_link, "base_link", ros::Time(0), cb_transform_bl);
 
@@ -427,5 +468,3 @@ void CobTwistController::odometryCallback(const nav_msgs::Odometry::ConstPtr& ms
 
     twist_odometry_cb_ = twist_odometry_transformed_cb;
 }
-
-
