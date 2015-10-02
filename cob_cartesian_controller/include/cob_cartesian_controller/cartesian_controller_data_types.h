@@ -46,7 +46,7 @@ namespace cob_cartesian_controller
     struct ProfileTimings
     {
         double tb, te, tv;
-        unsigned int steps_tb, steps_te, steps_tv, max_steps;
+        unsigned int steps_tb, steps_te, steps_tv;
     };
 
     struct MoveLinStruct
@@ -154,11 +154,15 @@ namespace cob_cartesian_controller
                            PathArray &pa2,
                            PathArray &pa3,
                            PathArray &pa4)
+//                           PathArray &pa5,
+//                           PathArray &pa6)
                 {
                     pm_.push_back(pa1);
                     pm_.push_back(pa2);
                     pm_.push_back(pa3);
                     pm_.push_back(pa4);
+//                    pm_.push_back(pa5);
+//                    pm_.push_back(pa6);
                 }
                 ~PathMatrix()
                 {
@@ -183,11 +187,11 @@ namespace cob_cartesian_controller
     {
         std::vector<double> tmp;
         PathArray temp(0, 0, 0.0, tmp);
-        for(int j = 0; j<4; j++)
+        for(int j = 0; j<pm_.size(); j++)
         {
-            for(int i = 0; i<3; i++)
+            for(int i = 0; i<pm_.size()-1; i++)
             {
-                if(pm_[i].getSe() < pm_[i+1].getSe())
+                if(std::fabs(pm_[i].getSe()) < std::fabs(pm_[i+1].getSe()))
                 {
                     temp = pm_[i];
                     pm_[i] = pm_[i+1];

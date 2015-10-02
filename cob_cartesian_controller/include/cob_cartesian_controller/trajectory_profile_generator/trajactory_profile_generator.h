@@ -55,14 +55,14 @@ class  TrajectoryProfileRamp: public TrajectoryProfileBase
         ~TrajectoryProfileRamp() {}
 
         virtual void getProfileTimings(double Se_max, double accl, double vel);
-        virtual void generatePath(cob_cartesian_controller::PathArray &pa);
+        virtual bool generatePath(cob_cartesian_controller::PathArray &pa);
         virtual bool calculateProfile(std::vector<double>* path_matrix,
                                       double Se, double Se_roll, double Se_pitch, double Se_yaw,
                                       geometry_msgs::Pose start);
 
 
 
-    protected:
+    private:
         cob_cartesian_controller::ProfileTimings pt_;
 };
 /* END TrajectoryProfileRamp **********************************************************************************************/
@@ -80,12 +80,12 @@ class TrajectoryProfileSinoid : public TrajectoryProfileBase
         ~TrajectoryProfileSinoid() {}
 
         virtual void getProfileTimings(double Se_max, double accl, double vel);
-        virtual void generatePath(cob_cartesian_controller::PathArray &pa);
+        virtual bool generatePath(cob_cartesian_controller::PathArray &pa);
         virtual bool calculateProfile(std::vector<double>* path_matrix,
                                       double Se, double Se_roll, double Se_pitch, double Se_yaw,
                                       geometry_msgs::Pose start);
 
-    protected:
+    private:
         cob_cartesian_controller::ProfileTimings pt_;
 };
 /* END TrajectoryProfileSinoid **********************************************************************************************/

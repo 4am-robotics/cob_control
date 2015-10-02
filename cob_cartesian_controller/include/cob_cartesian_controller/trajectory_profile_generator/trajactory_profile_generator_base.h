@@ -50,7 +50,7 @@ class TrajectoryProfileBase
         virtual void getProfileTimings(double Se_max, double accl, double vel) = 0;
 
     private:
-        virtual void generatePath(cob_cartesian_controller::PathArray &pa) = 0;
+        virtual bool generatePath(cob_cartesian_controller::PathArray &pa) = 0;
     protected:
         const cob_cartesian_controller::CartesianActionStruct &params_;
         double vel_max_;
