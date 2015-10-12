@@ -229,7 +229,8 @@ KDL::JntArray LimiterAllJointAccelerations::enforceLimits(const KDL::JntArray& q
     KDL::JntArray q_dot_norm(q_dot_ik);
     double max_factor = 1.0;
 
-    if(period.toSec() > 2*last_period_.toSec())  //missed about a cycle
+    //if(period.toSec() > 2*last_period_.toSec())  //missed about a cycle
+    if(period.toSec() > ros::Duration(0.1).toSec())  //expecting at least 10Hz
     {
         ROS_WARN("resetting acceleration limiter");
         SetToZero(q_dot_norm);
@@ -238,16 +239,40 @@ KDL::JntArray LimiterAllJointAccelerations::enforceLimits(const KDL::JntArray& q
     {
         for(uint16_t i=0; i < this->tc_params_.dof; ++i)
         {
-            double tmp_acc = (joint_states.current_q_dot_(i) - q_dot_ik(i)) / period.toSec();
-            if(max_factor < std::fabs(tmp_acc / this->tc_params_.limits_acc[i]))
+            double acc_ik = (q_dot_ik(i) - last_q_dot_ik_(i)) / period.toSec();    //open-loop
+            double acc = std::min(this->tc_params_.limits_acc[i], std::fabs(acc_ik));
+            //double vel = 0.0;
+            //if(q_dot_ik(i) >= last_q_dot_ik_(i))
+            //{
+                //vel = last_q_dot_ik_(i) + acc*(period.toSec());
+            //}
+            //else
+            //{
+                //vel = last_q_dot_ik_(i) - acc*(period.toSec());
+            //}
+            //double factor = (q_dot_ik(i) - last_q_dot_ik(i)) / (vel - last_q_dot_ik(i));
+            double factor = 0.0;
+            if(q_dot_ik(i) >= last_q_dot_ik_(i))
             {
-                max_factor = std::fabs(tmp_acc / this->tc_params_.limits_acc[i]);
+                factor = (q_dot_ik(i) - last_q_dot_ik_(i)) / acc*(period.toSec());
             }
+            else
+            {
+                factor = (q_dot_ik(i) - last_q_dot_ik_(i)) / - acc*(period.toSec());
+            }
+
+            if(max_factor < factor)
+            {
+                max_factor = factor;
+            }
+            ROS_INFO_STREAM("AccelerationLimiter " << i << ": last_vel " << last_q_dot_ik_(i) << ", vel " << q_dot_ik(i));
+            ROS_INFO_STREAM("AccelerationLimiter " << i << ": acc_max " << this->tc_params_.limits_acc[i] << ", acc_ik " << acc_ik << ", factor " << factor);
         }
 
         if(max_factor > 1.0)
         {
-            ROS_WARN_STREAM_THROTTLE(1, "Acceleration limit surpassed: Scaling ALL VELOCITIES with factor = " << max_factor);
+            //ROS_WARN_STREAM_THROTTLE(1, "Acceleration limit surpassed: Scaling ALL VELOCITIES with factor = " << max_factor);
+            ROS_WARN_STREAM("Acceleration limit surpassed: Scaling ALL VELOCITIES with factor = " << max_factor);
             for(uint16_t i=0; i < q_dot_ik.rows(); ++i)
             {
                 q_dot_norm(i) = q_dot_ik(i) / max_factor;
@@ -255,6 +280,7 @@ KDL::JntArray LimiterAllJointAccelerations::enforceLimits(const KDL::JntArray& q
         }
     }
 
+    last_q_dot_ik_ = q_dot_norm;
     last_update_time_ = now;
     last_period_ = period;
     return q_dot_norm;
@@ -350,7 +376,8 @@ KDL::JntArray LimiterIndividualJointAccelerations::enforceLimits(const KDL::JntA
     KDL::JntArray q_dot_norm(q_dot_ik);
     double max_factor = 1.0;
 
-    if(period.toSec() > 2*last_period_.toSec())  //missed about a cycle
+    //if(period.toSec() > 2*last_period_.toSec())  //missed about a cycle
+    if(period.toSec() > ros::Duration(0.1).toSec())  //expecting at least 10Hz
     {
         ROS_WARN("resetting acceleration limiter");
         SetToZero(q_dot_norm);
@@ -359,16 +386,36 @@ KDL::JntArray LimiterIndividualJointAccelerations::enforceLimits(const KDL::JntA
     {
         for(uint16_t i=0; i < this->tc_params_.dof; ++i)
         {
-            max_factor = 1.0;
-            double tmp_acc = (joint_states.current_q_dot_(i) - q_dot_ik(i)) / period.toSec();
-            if(max_factor < std::fabs(tmp_acc / this->tc_params_.limits_acc[i]))
+            double acc_ik = (q_dot_ik(i) - last_q_dot_ik_(i)) / period.toSec();    //open-loop
+            double acc = std::min(this->tc_params_.limits_acc[i], std::fabs(acc_ik));
+            //double vel = 0.0;
+            //if(q_dot_ik(i) >= last_q_dot_ik_(i))
+            //{
+                //vel = last_q_dot_ik_(i) + acc*(period.toSec());
+            //}
+            //else
+            //{
+                //vel = last_q_dot_ik_(i) - acc*(period.toSec());
+            //}
+            //double factor = (q_dot_ik(i) - last_q_dot_ik(i)) / (vel - last_q_dot_ik(i));
+            double factor = 0.0;
+            if(q_dot_ik(i) >= last_q_dot_ik_(i))
             {
-                max_factor = std::fabs(tmp_acc / this->tc_params_.limits_acc[i]);
+                factor = (q_dot_ik(i) - last_q_dot_ik_(i)) / acc*(period.toSec());
+            }
+            else
+            {
+                factor = (q_dot_ik(i) - last_q_dot_ik_(i)) / - acc*(period.toSec());
+            }
+
+            if(max_factor < factor)
+            {
                 q_dot_norm(i) = q_dot_ik(i) / max_factor;
             }
         }
     }
 
+    last_q_dot_ik_ = q_dot_norm;
     last_update_time_ = now;
     last_period_ = period;
     return q_dot_norm;

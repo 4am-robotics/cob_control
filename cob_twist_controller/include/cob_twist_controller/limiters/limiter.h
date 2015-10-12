@@ -118,11 +118,13 @@ class LimiterAllJointAccelerations : public LimiterBase
         LimiterAllJointAccelerations(const TwistControllerParams& tc_params, const KDL::Chain& chain) :
             LimiterBase(tc_params, chain)
         {
+            last_q_dot_ik_.resize(tc_params.dof);
             last_update_time_ = ros::Time(0.0);
             last_period_ = ros::Duration(0.0);
         }
 
     private:
+        KDL::JntArray last_q_dot_ik_;
         ros::Time last_update_time_;
         ros::Duration last_period_;
 };
@@ -176,11 +178,13 @@ class LimiterIndividualJointAccelerations : public LimiterBase
         LimiterIndividualJointAccelerations(const TwistControllerParams& tc_params, const KDL::Chain& chain) :
             LimiterBase(tc_params, chain)
         {
+            last_q_dot_ik_.resize(tc_params.dof);
             last_update_time_ = ros::Time(0.0);
             last_period_ = ros::Duration(0.0);
         }
 
     private:
+        KDL::JntArray last_q_dot_ik_;
         ros::Time last_update_time_;
         ros::Duration last_period_;
 };
