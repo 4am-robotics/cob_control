@@ -87,13 +87,13 @@ class KinematicExtensionTorso : public KinematicExtensionURDF
                 ROS_ERROR("Initialization failed");
             }
 
-            joint_state_sub_ = nh_.subscribe("torso/joint_states", 1, &KinematicExtensionURDF::jointstateCallback, dynamic_cast<KinematicExtensionURDF*>(this));
-            command_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("torso/joint_group_velocity_controller/command", 1);
+            joint_state_sub_ = nh_.subscribe("/torso/joint_states", 1, &KinematicExtensionURDF::jointstateCallback, dynamic_cast<KinematicExtensionURDF*>(this));
+            command_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("/torso/joint_group_velocity_controller/command", 1);
         }
 
         ~KinematicExtensionTorso() {}
 
-        KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain);
+        virtual KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain);
 };
 /* END KinematicExtensionTorso **********************************************************************************************/
 

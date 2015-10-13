@@ -54,6 +54,10 @@ bool KinematicExtensionURDF::initUrdfExtension(std::string chain_base, std::stri
     {
         joint_names_.push_back(chain.getSegment(i).getJoint().getName());
     }
+    this->joint_states_.last_q_.resize(chain.getNrOfJoints());
+    this->joint_states_.last_q_dot_.resize(chain.getNrOfJoints());
+    this->joint_states_.current_q_.resize(chain.getNrOfJoints());
+    this->joint_states_.current_q_dot_.resize(chain.getNrOfJoints());
 
     p_jnt2jac_ = new KDL::ChainJntToJacSolver(chain);
     return true;
@@ -94,8 +98,7 @@ void KinematicExtensionURDF::jointstateCallback(const sensor_msgs::JointState::C
 KDL::Jacobian KinematicExtensionTorso::adjustJacobian(const KDL::Jacobian& jac_chain)
 {
     /// compose jac_full considering kinematical extension
-    KDL::Jacobian jac_full;
-    KDL::Jacobian jac_extension;
+    KDL::Jacobian jac_extension(joint_names_.size());
 
     /// calculate Jacobian for extension
     p_jnt2jac_->JntToJac(joint_states_.current_q_, jac_extension);
@@ -107,7 +110,7 @@ KDL::Jacobian KinematicExtensionTorso::adjustJacobian(const KDL::Jacobian& jac_c
     Matrix6Xd_t jac_full_matrix;
     jac_full_matrix.resize(6, jac_chain.data.cols() + jac_extension.data.cols());
     jac_full_matrix << jac_chain.data, jac_extension.data;
-    jac_full.resize(jac_chain.data.cols() + jac_extension.data.cols());
+    KDL::Jacobian jac_full(jac_chain.data.cols() + jac_extension.data.cols());
     jac_full.data << jac_full_matrix;
 
     return jac_full;
