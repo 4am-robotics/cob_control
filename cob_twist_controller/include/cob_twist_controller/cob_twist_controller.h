@@ -104,7 +104,6 @@ public:
     }
 
     bool initialize();
-    void run();
 
     void reinitServiceRegistration();
 

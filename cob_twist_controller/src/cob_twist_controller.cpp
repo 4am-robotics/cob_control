@@ -115,6 +115,7 @@ bool CobTwistController::initialize()
         twist_controller_params_.frame_names.push_back(chain_.getSegment(i).getName());
     }
     register_link_client_ = nh_.serviceClient<cob_srvs::SetString>("obstacle_distance/registerLinkOfInterest");
+    register_link_client_.waitForExistence(ros::Duration(2.0));
 
     ///initialize configuration control solver
     p_inv_diff_kin_solver_.reset(new InverseDifferentialKinematicsSolver(twist_controller_params_, chain_, callback_data_mediator_));
@@ -146,7 +147,7 @@ bool CobTwistController::initialize()
     ///publisher for visualizing current twist direction
     twist_direction_pub_ = nh_.advertise<visualization_msgs::Marker>("twist_direction",1);
     
-    ROS_INFO("...initialized!");
+    ROS_INFO_STREAM(nh_.getNamespace() << "/twist_controller...initialized!");
     return true;
 }
 
@@ -298,13 +299,6 @@ void CobTwistController::checkSolverAndConstraints(cob_twist_controller::TwistCo
     {
         ROS_INFO("Parameters seem to be ok.");
     }
-}
-
-
-void CobTwistController::run()
-{
-    ROS_INFO("cob_twist_controller...spinning");
-    ros::spin();
 }
 
 /// Orientation of twist_stamped_msg is with respect to coordinate system given in header.frame_id

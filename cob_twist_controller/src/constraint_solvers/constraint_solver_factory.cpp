@@ -131,9 +131,9 @@ int8_t ConstraintSolverFactory::resetAll(const TwistControllerParams& params)
                                                                  this->fk_solver_vel_,
                                                                  this->data_mediator_);
 
-    for (std::set<ConstraintBase_t>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
+    for(std::set<ConstraintBase_t>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
     {
-        ROS_INFO_STREAM((*it)->getTaskId());
+        ROS_DEBUG_STREAM((*it)->getTaskId());
     }
 
     if(!ConstraintSolverFactory::getSolverFactory(params, this->solver_factory_, this->task_stack_controller_))

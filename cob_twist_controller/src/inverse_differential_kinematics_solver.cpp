@@ -66,7 +66,7 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const JointStates& joint_stat
 
 
     ///limiters shut be applied here in order to be able to consider the additional DoFs within "AllLimit", too
-    qdot_out_full = this->limiters_->enforceLimits(qdot_out_full, joint_states);
+    qdot_out_full = this->limiters_->enforceLimits(qdot_out_full, joint_states.current_q_);
 
     ///process result for kinematical extension
     this->kinematic_extension_->processResultExtension(qdot_out_full);

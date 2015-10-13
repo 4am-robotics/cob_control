@@ -47,10 +47,10 @@ class LimiterBase
          * The intention is to implement a method which enforces limits to the q_dot_out vector according to
          * the calculated joint velocities and / or joint positions.
          * @param q_dot_ik The calculated joint velocities vector which has to be checked for limits.
-         * @param joint_states The current joint states structure.
+         * @param q The last known joint positions.
          * @return Scaled joint velocities vector.
          */
-        virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const JointStates& joint_states) = 0;
+        virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const = 0;
 
     protected:
         const TwistControllerParams& tc_params_;
