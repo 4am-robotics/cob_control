@@ -3,10 +3,10 @@
 
 int main(int argc, char **argv)
 {
-    ros::init (argc, argv, "cob_twist_controller_node");
+    ros::init(argc, argv, "cob_twist_controller_node");
     CobTwistController* cob_twist_controller = new CobTwistController();
 
-    if(!cob_twist_controller->initialize())
+    if (!cob_twist_controller->initialize())
     {
         ROS_ERROR("Failed to initialize TwistController");
         return -1;

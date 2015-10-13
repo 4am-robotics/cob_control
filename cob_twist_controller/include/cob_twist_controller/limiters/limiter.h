@@ -25,11 +25,13 @@
  *   This header contains the class definitions of all limiter implementations.
  *
  ****************************************************************/
-#ifndef LIMITER_H_
-#define LIMITER_H_
+
+#ifndef COB_TWIST_CONTROLLER_LIMITERS_LIMITER_H
+#define COB_TWIST_CONTROLLER_LIMITERS_LIMITER_H
+
+#include <vector>
 
 #include "cob_twist_controller/limiters/limiter_base.h"
-#include <vector>
 
 /* BEGIN LimiterContainer *******************************************************************************/
 /// Container for limiters, implementing interface methods.
@@ -172,4 +174,4 @@ class LimiterIndividualJointAccelerations : public LimiterBase
 };
 /* END LimiterIndividualJointAccelerations *************************************************************************/
 
-#endif /* LIMITER_H_ */
+#endif  // COB_TWIST_CONTROLLER_LIMITERS_LIMITER_H

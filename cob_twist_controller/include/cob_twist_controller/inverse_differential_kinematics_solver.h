@@ -25,8 +25,9 @@
  *   This package provides the definitions of an inverse kinematics solver.
  *
  ****************************************************************/
-#ifndef INVERSE_DIFFERENTIAL_KINEMATICS_SOLVER_H
-#define INVERSE_DIFFERENTIAL_KINEMATICS_SOLVER_H
+
+#ifndef COB_TWIST_CONTROLLER_INVERSE_DIFFERENTIAL_KINEMATICS_SOLVER_H
+#define COB_TWIST_CONTROLLER_INVERSE_DIFFERENTIAL_KINEMATICS_SOLVER_H
 
 #include <kdl/chainjnttojacsolver.hpp>
 #include <kdl/chainfksolvervel_recursive.hpp>
@@ -99,6 +100,6 @@ private:
     ConstraintSolverFactory constraint_solver_factory_;
 
     TaskStackController_t task_stack_controller_;
-
 };
-#endif // INVERSE_DIFFERENTIAL_KINEMATICS_SOLVER_H
+
+#endif  // COB_TWIST_CONTROLLER_INVERSE_DIFFERENTIAL_KINEMATICS_SOLVER_H

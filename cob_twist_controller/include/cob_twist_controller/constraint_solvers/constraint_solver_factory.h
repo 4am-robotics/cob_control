@@ -1,4 +1,4 @@
-/*
+/*!
  *****************************************************************
  * \file
  *
@@ -25,9 +25,11 @@
  *   This header contains the description of a class providing a static method to create constraint solver factory objects.
  *
  ****************************************************************/
-#ifndef CONSTRAINT_SOLVER_FACTORY_BUILDER_H_
-#define CONSTRAINT_SOLVER_FACTORY_BUILDER_H_
 
+#ifndef COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_CONSTRAINT_SOLVER_FACTORY_H
+#define COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_CONSTRAINT_SOLVER_FACTORY_H
+
+#include <set>
 #include <Eigen/Core>
 #include <Eigen/SVD>
 #include <kdl/jntarray.hpp>
@@ -42,7 +44,6 @@
 class ConstraintSolverFactory
 {
     public:
-
         /**
          * Ctor of ConstraintSolverFactoryBuilder.
          * @param data_mediator: Reference to an callback data mediator.
@@ -104,4 +105,4 @@ class ConstraintSolverFactory
         TaskStackController_t& task_stack_controller_;
 };
 
-#endif /* CONSTRAINT_SOLVER_FACTORY_BUILDER_H_ */
+#endif  // COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_CONSTRAINT_SOLVER_FACTORY_H

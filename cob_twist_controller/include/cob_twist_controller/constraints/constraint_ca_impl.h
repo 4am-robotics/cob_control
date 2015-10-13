@@ -26,15 +26,17 @@
  *
  ****************************************************************/
 
-#ifndef CONSTRAINT_CA_IMPL_H_
-#define CONSTRAINT_CA_IMPL_H_
+#ifndef COB_TWIST_CONTROLLER_CONSTRAINTS_CONSTRAINT_CA_IMPL_H
+#define COB_TWIST_CONTROLLER_CONSTRAINTS_CONSTRAINT_CA_IMPL_H
 
+#include <vector>
+#include <string>
+#include <limits>
 #include <sstream>
+#include <ros/ros.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/pointer_cast.hpp>
-
-#include <ros/ros.h>
 
 #include <kdl/chainjnttojacsolver.hpp>
 #include <kdl/jntarray.hpp>
@@ -66,11 +68,11 @@ template <typename T_PARAMS, typename PRIO>
 double CollisionAvoidance<T_PARAMS, PRIO>::getCriticalValue() const
 {
     double min_distance = std::numeric_limits<double>::max();
-    for(std::vector<ObstacleDistanceData>::const_iterator it = this->constraint_params_.current_distances_.begin();
-            it != this->constraint_params_.current_distances_.end();
-            ++it)
+    for (std::vector<ObstacleDistanceData>::const_iterator it = this->constraint_params_.current_distances_.begin();
+         it != this->constraint_params_.current_distances_.end();
+         ++it)
     {
-        if(it->min_distance < min_distance)
+        if (it->min_distance < min_distance)
         {
             min_distance = it->min_distance;
         }
@@ -87,11 +89,11 @@ double CollisionAvoidance<T_PARAMS, PRIO>::getActivationGain(double current_cost
     const double activation = params.thresholds_ca.activation;
     const double activation_buffer_region = params.thresholds_ca.activation_with_buffer;
 
-    if (current_cost_func_value < activation) // activation == d_m
+    if (current_cost_func_value < activation)  // activation == d_m
     {
         activation_gain = 1.0;
     }
-    else if(current_cost_func_value < activation_buffer_region) // activation_buffer_region == d_i
+    else if (current_cost_func_value < activation_buffer_region)  // activation_buffer_region == d_i
     {
         activation_gain = 0.5 * (1.0 + cos(M_PI * (current_cost_func_value - activation) / (activation_buffer_region - activation)));
     }
@@ -102,7 +104,6 @@ double CollisionAvoidance<T_PARAMS, PRIO>::getActivationGain(double current_cost
 
     return activation_gain;
 }
-
 
 template <typename T_PARAMS, typename PRIO>
 double CollisionAvoidance<T_PARAMS, PRIO>::getActivationGain() const
@@ -125,15 +126,15 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calculate()
     const double activation_buffer = params.thresholds_ca.activation_with_buffer;
     const double crit_min_distance = this->getCriticalValue();
 
-    if(this->state_.getCurrent() == CRITICAL && pred_min_dist < crit_min_distance)
+    if (this->state_.getCurrent() == CRITICAL && pred_min_dist < crit_min_distance)
     {
         ROS_WARN_STREAM(this->getTaskId() << ": Current state is CRITICAL but prediction " << pred_min_dist << " is smaller than current dist " << crit_min_distance << " -> Stay in CRIT.");
     }
-    else if(crit_min_distance < critical || pred_min_dist < critical)
+    else if (crit_min_distance < critical || pred_min_dist < critical)
     {
         this->state_.setState(CRITICAL);
     }
-    else if(crit_min_distance < activation_buffer)
+    else if (crit_min_distance < activation_buffer)
     {
         this->state_.setState(DANGER);
     }
@@ -143,31 +144,30 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calculate()
     }
 }
 
-
 template <typename T_PARAMS, typename PRIO>
 double CollisionAvoidance<T_PARAMS, PRIO>::calcValue()
 {
     const TwistControllerParams& params = this->constraint_params_.tc_params_;
     std::vector<double> relevant_values;
-    for(std::vector<ObstacleDistanceData>::const_iterator it = this->constraint_params_.current_distances_.begin();
+    for (std::vector<ObstacleDistanceData>::const_iterator it = this->constraint_params_.current_distances_.begin();
             it != this->constraint_params_.current_distances_.end();
             ++it)
     {
         if (params.thresholds_ca.activation_with_buffer > it->min_distance)
         {
             const double activation_gain = this->getActivationGain(it->min_distance);
-            const double magnitude = std::abs(this->getSelfMotionMagnitude(it->min_distance)); // important only for task!
+            const double magnitude = std::abs(this->getSelfMotionMagnitude(it->min_distance));  // important only for task!
             double value = activation_gain * magnitude * pow(it->min_distance - params.thresholds_ca.activation_with_buffer, 2.0);
             relevant_values.push_back(value);
         }
     }
 
-    if(relevant_values.size() > 0)
+    if (relevant_values.size() > 0)
     {
         this->values_ = Eigen::VectorXd::Zero(relevant_values.size());
     }
 
-    for(uint32_t idx = 0; idx < relevant_values.size(); ++idx)
+    for (uint32_t idx = 0; idx < relevant_values.size(); ++idx)
     {
         this->values_(idx) = relevant_values.at(idx);
     }
@@ -188,19 +188,19 @@ double CollisionAvoidance<T_PARAMS, PRIO>::predictValue()
                                                                 this->constraint_params_.id_);
     if (params.frame_names.end() != str_it)
     {
-        if(this->constraint_params_.current_distances_.size() > 0)
+        if (this->constraint_params_.current_distances_.size() > 0)
         {
-            uint32_t frame_number = (str_it - params.frame_names.begin()) + 1; // segment nr not index represents frame number
+            uint32_t frame_number = (str_it - params.frame_names.begin()) + 1;  // segment nr not index represents frame number
             KDL::FrameVel frame_vel;
 
             // Calculate prediction for pos and vel
-            if(0 != this->fk_solver_vel_.JntToCart(this->jnts_prediction_, frame_vel, frame_number))
+            if (0 != this->fk_solver_vel_.JntToCart(this->jnts_prediction_, frame_vel, frame_number))
             {
                 ROS_ERROR_STREAM("Could not calculate twist for frame: " << frame_number);
                 return std::numeric_limits<double>::max();
             }
 
-            KDL::Twist twist = frame_vel.GetTwist(); // predicted frame twist
+            KDL::Twist twist = frame_vel.GetTwist();  // predicted frame twist
 
             Eigen::Vector3d pred_twist_vel;
             tf::vectorKDLToEigen(twist.vel, pred_twist_vel);
@@ -210,10 +210,10 @@ double CollisionAvoidance<T_PARAMS, PRIO>::predictValue()
 
             std::vector<ObstacleDistanceData>::const_iterator it = this->constraint_params_.current_distances_.begin();
             ObstacleDistanceData critical_data = *it;
-            for( ; it != this->constraint_params_.current_distances_.end();
+            for ( ; it != this->constraint_params_.current_distances_.end();
                    ++it)
             {
-                if(it->min_distance < critical_data.min_distance)
+                if (it->min_distance < critical_data.min_distance)
                 {
                     critical_data = *it;
                 }
@@ -233,16 +233,13 @@ double CollisionAvoidance<T_PARAMS, PRIO>::predictValue()
     return this->prediction_value_;
 }
 
-
 template <typename T_PARAMS, typename PRIO>
 double CollisionAvoidance<T_PARAMS, PRIO>::calcDerivativeValue()
 {
-    this->derivative_value_ = -0.1 * this->value_; // exponential decay experimentally chosen -0.1
+    this->derivative_value_ = -0.1 * this->value_;  // exponential decay experimentally chosen -0.1
     this->derivative_values_ = -0.1 * this->values_;
     return this->derivative_value_;
 }
-
-
 
 /**
  * Calculate the partial values for each obstacle with the current link.
@@ -264,7 +261,7 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
                                                                 params.frame_names.end(),
                                                                 this->constraint_params_.id_);
 
-    for(std::vector<ObstacleDistanceData>::const_iterator it = this->constraint_params_.current_distances_.begin();
+    for (std::vector<ObstacleDistanceData>::const_iterator it = this->constraint_params_.current_distances_.begin();
             it != this->constraint_params_.current_distances_.end();
             ++it)
     {
@@ -275,16 +272,14 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
                 Eigen::Vector3d collision_pnt_vector = it->nearest_point_frame_vector - it->frame_vector;
                 Eigen::Vector3d distance_vec = it->nearest_point_frame_vector - it->nearest_point_obstacle_vector;
 
-                /*
-                 * Create a skew-symm matrix as transformation between the segment root and the critical point.
-                 */
+                // Create a skew-symm matrix as transformation between the segment root and the critical point.
                 Eigen::Matrix3d skew_symm;
                 skew_symm <<    0.0,                        collision_pnt_vector.z(), -collision_pnt_vector.y(),
                                 -collision_pnt_vector.z(),  0.0,                       collision_pnt_vector.x(),
                                  collision_pnt_vector.y(), -collision_pnt_vector.x(),  0.0;
 
                 Eigen::Matrix3d ident = Eigen::Matrix3d::Identity();
-                Eigen::Matrix<double,6,6> T;
+                Eigen::Matrix<double, 6, 6> T;
                 T.block(0, 0, 3, 3) << ident;
                 T.block(0, 3, 3, 3) << skew_symm;
                 T.block(3, 0, 3, 3) << Eigen::Matrix3d::Zero();
@@ -292,11 +287,11 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
                 // ****************************************************************************************************
 
                 uint32_t idx = str_it - params.frame_names.begin();
-                uint32_t frame_number = idx + 1; // segment nr not index represents frame number
+                uint32_t frame_number = idx + 1;  // segment nr not index represents frame number
 
                 KDL::Jacobian new_jac_chain(size_of_joints);
                 KDL::JntArray ja = this->joint_states_.current_q_;
-                if(0 != this->jnt_to_jac_.JntToJac(ja, new_jac_chain, frame_number))
+                if (0 != this->jnt_to_jac_.JntToJac(ja, new_jac_chain, frame_number))
                 {
                     ROS_ERROR_STREAM("Failed to calculate JntToJac.");
                     return sum_partial_values;
@@ -311,8 +306,8 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
                         crit_pnt_jac.row(2);
 
                 double vec_norm = distance_vec.norm();
-                vec_norm = vec_norm > 0.0 ? vec_norm : DIV0_SAFE;
-                Eigen::VectorXd term_2nd = (m_transl.transpose()) * (distance_vec / vec_norm); // use the unit vector only for direction!
+                vec_norm = (vec_norm > 0.0) ? vec_norm : DIV0_SAFE;
+                Eigen::VectorXd term_2nd = (m_transl.transpose()) * (distance_vec / vec_norm);  // use the unit vector only for direction!
 
                 // Gradient of the cost function from: Strasse O., Escande A., Mansard N. et al.
                 // "Real-Time (Self)-Collision Avoidance Task on a HRP-2 Humanoid Robot", 2008 IEEE International Conference
@@ -331,13 +326,12 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
         }
     }
 
-    if(vec_partial_values.size() > 0)
+    if (vec_partial_values.size() > 0)
     {
         this->task_jacobian_.resize(vec_partial_values.size(), this->jacobian_data_.cols());
     }
 
-
-    for(uint32_t idx = 0; idx < vec_partial_values.size(); ++idx)
+    for (uint32_t idx = 0; idx < vec_partial_values.size(); ++idx)
     {
         this->task_jacobian_.block(idx, 0, 1, this->jacobian_data_.cols()) = vec_partial_values.at(idx).transpose();
     }
@@ -346,7 +340,6 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
     this->partial_values_ = sum_partial_values;
     return this->partial_values_;
 }
-
 
 /// Returns a value for magnitude
 template <typename T_PARAMS, typename PRIO>
@@ -358,21 +351,19 @@ double CollisionAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(double current
 
     if (current_distance_value < activation_with_buffer)
     {
-        if(current_distance_value > 0.0)
+        if (current_distance_value > 0.0)
         {
             magnitude = pow(activation_with_buffer / current_distance_value, 2.0) - 1.0;
         }
         else
         {
-            magnitude = activation_with_buffer / 0.000001; // strong magnitude
+            magnitude = activation_with_buffer / 0.000001;  // strong magnitude
         }
     }
 
     double k_H = params.k_H_ca;
     return k_H * magnitude;
 }
-
-
 
 /// Returns a value for k_H to weight the partial values for GPM e.g.
 template <typename T_PARAMS, typename PRIO>
@@ -406,7 +397,6 @@ Eigen::MatrixXd CollisionAvoidance<T_PARAMS, PRIO>::getTaskJacobian() const
 template <typename T_PARAMS, typename PRIO>
 Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::getTaskDerivatives() const
 {
-    //return Eigen::VectorXd::Identity(1, 1) * this->derivative_value_;
     return this->derivative_values_;
 }
 
@@ -424,7 +414,6 @@ Task_t CollisionAvoidance<T_PARAMS, PRIO>::createTask()
 
     return task;
 }
-
 /* END CollisionAvoidance ***************************************************************************************/
 
-#endif /* CONSTRAINT_CA_IMPL_H_ */
+#endif  // COB_TWIST_CONTROLLER_CONSTRAINTS_CONSTRAINT_CA_IMPL_H

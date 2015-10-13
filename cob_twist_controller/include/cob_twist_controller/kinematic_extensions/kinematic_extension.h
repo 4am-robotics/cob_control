@@ -26,22 +26,17 @@
  *   kinematic chain with additional degrees of freedom, e.g. base_active or lookat
  *
  ****************************************************************/
-#ifndef KINEMATIC_EXTENSION_H_
-#define KINEMATIC_EXTENSION_H_
 
-#include "cob_twist_controller/kinematic_extensions/kinematic_extension_base.h"
-
+#ifndef COB_TWIST_CONTROLLER_KINEMATIC_EXTENSIONS_KINEMATIC_EXTENSION_H
+#define COB_TWIST_CONTROLLER_KINEMATIC_EXTENSIONS_KINEMATIC_EXTENSION_H
 
 #include <ros/ros.h>
-
 #include <geometry_msgs/Twist.h>
-
-#include <tf/transform_listener.h>
 #include <tf/tf.h>
-
+#include <tf/transform_listener.h>
 #include <Eigen/Geometry>
 
-
+#include "cob_twist_controller/kinematic_extensions/kinematic_extension_base.h"
 
 /* BEGIN KinematicExtensionBuilder *****************************************************************************************/
 /// Class providing a static method to create kinematic extension objects.
@@ -61,11 +56,9 @@ class KinematicExtensionBuilder
 class KinematicExtensionNone : public KinematicExtensionBase
 {
     public:
-        KinematicExtensionNone(const TwistControllerParams& params)
+        explicit KinematicExtensionNone(const TwistControllerParams& params)
         : KinematicExtensionBase(params)
-        {
-            //nothing to do
-        }
+        {}
 
         ~KinematicExtensionNone() {}
 
@@ -80,11 +73,9 @@ class KinematicExtensionNone : public KinematicExtensionBase
 class KinematicExtension6D : public KinematicExtensionBase
 {
     public:
-        KinematicExtension6D(const TwistControllerParams& params)
+        explicit KinematicExtension6D(const TwistControllerParams& params)
         : KinematicExtensionBase(params)
-        {
-            //nothing to do here
-        }
+        {}
 
         ~KinematicExtension6D() {}
 
@@ -101,13 +92,13 @@ class KinematicExtension6D : public KinematicExtensionBase
 class KinematicExtensionBaseActive : public KinematicExtension6D
 {
     public:
-        KinematicExtensionBaseActive(const TwistControllerParams& params)
+        explicit KinematicExtensionBaseActive(const TwistControllerParams& params)
         : KinematicExtension6D(params)
         {
             base_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("/base/twist_controller/command", 1);
 
-            //ToDo: I don't like this hack! Can we pass the tf_listner_ somehow?
-            ///give tf_listener_ some time to fill buffer
+            // ToDo: I don't like this hack! Can we pass the tf_listner_ somehow?
+            /// give tf_listener_ some time to fill buffer
             ros::Duration(0.5).sleep();
         }
 
@@ -116,9 +107,7 @@ class KinematicExtensionBaseActive : public KinematicExtension6D
         virtual KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain);
         virtual void processResultExtension(const KDL::JntArray& q_dot_ik);
 
-
         void baseTwistCallback(const geometry_msgs::Twist::ConstPtr& msg);
-
 
     private:
         ros::NodeHandle nh_;
@@ -128,4 +117,4 @@ class KinematicExtensionBaseActive : public KinematicExtension6D
 };
 /* END KinematicExtensionBaseActive **********************************************************************************************/
 
-#endif /* KINEMATIC_EXTENSION_H_ */
+#endif  // COB_TWIST_CONTROLLER_KINEMATIC_EXTENSIONS_KINEMATIC_EXTENSION_H

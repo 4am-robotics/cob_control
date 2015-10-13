@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(cob_twist_controller)
 
-find_package(catkin REQUIRED COMPONENTS cmake_modules cob_obstacle_distance cob_srvs dynamic_reconfigure eigen_conversions geometry_msgs kdl_conversions kdl_parser nav_msgs roscpp sensor_msgs std_msgs tf trajectory_msgs urdf visualization_msgs)
+find_package(catkin REQUIRED COMPONENTS cmake_modules cob_obstacle_distance cob_srvs dynamic_reconfigure eigen_conversions geometry_msgs kdl_conversions kdl_parser nav_msgs roscpp roslint sensor_msgs std_msgs tf trajectory_msgs urdf visualization_msgs)
 
 find_package(Boost REQUIRED COMPONENTS thread)
 
@@ -69,6 +69,8 @@ target_link_libraries(debug_trajectory_marker_node ${catkin_LIBRARIES})
 add_executable(debug_evaluate_jointstates_node src/debug/debug_evaluate_jointstates_node.cpp)
 add_dependencies(debug_evaluate_jointstates_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(debug_evaluate_jointstates_node ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
+
+roslint_cpp()
 
 ### INSTALL ###
 install(TARGETS cob_twist_controller_node damping_methods inv_calculations constraint_solvers limiters controller_interfaces kinematic_extensions inverse_differential_kinematics_solver twist_controller debug_trajectory_marker_node debug_evaluate_jointstates_node

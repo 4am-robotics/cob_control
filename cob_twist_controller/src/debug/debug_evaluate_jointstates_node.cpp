@@ -25,6 +25,8 @@
  *   Debug node for publishing various information based on current JointState
  *
  ****************************************************************/
+
+#include <string>
 #include <ros/ros.h>
 
 #include <sensor_msgs/JointState.h>
@@ -41,38 +43,36 @@
 #include <Eigen/Dense>
 #include <kdl_conversions/kdl_msg.h>
 
-
 class DebugEvaluateJointStates
 {
+    ros::NodeHandle nh_;
+    ros::Subscriber jointstate_sub_;
+    ros::Publisher manipulability_pub_;
+    ros::Publisher twist_current_pub_;
 
-ros::NodeHandle nh_;
-ros::Subscriber jointstate_sub_;
-ros::Publisher manipulability_pub_;
-ros::Publisher twist_current_pub_;
+    std::string chain_base_link_;
+    std::string chain_tip_link_;
 
-std::string chain_base_link_;
-std::string chain_tip_link_;
-
-KDL::Chain chain_;
-KDL::ChainFkSolverVel_recursive* p_fksolver_vel_;
-KDL::ChainJntToJacSolver* p_jnt2jac_;
+    KDL::Chain chain_;
+    KDL::ChainFkSolverVel_recursive* p_fksolver_vel_;
+    KDL::ChainJntToJacSolver* p_jnt2jac_;
 
 public:
     int init()
     {
-        if(!nh_.getParam("chain_base_link", this->chain_base_link_))
+        if (!nh_.getParam("chain_base_link", this->chain_base_link_))
         {
             ROS_ERROR("Failed to get parameter \"chain_base_link\".");
             return -1;
         }
 
-        if(!nh_.getParam("chain_tip_link", this->chain_tip_link_))
+        if (!nh_.getParam("chain_tip_link", this->chain_tip_link_))
         {
             ROS_ERROR("Failed to get parameter \"chain_tip_link\".");
             return -2;
         }
 
-        ///parse robot_description and generate KDL chains
+        /// parse robot_description and generate KDL chains
         KDL::Tree my_tree;
         if (!kdl_parser::treeFromParam("/robot_description", my_tree))
         {
@@ -81,7 +81,7 @@ public:
         }
 
         my_tree.getChain(this->chain_base_link_, this->chain_tip_link_, chain_);
-        if(chain_.getNrOfJoints() == 0)
+        if (chain_.getNrOfJoints() == 0)
         {
             ROS_ERROR("Failed to initialize kinematic chain");
             return -4;
@@ -90,7 +90,7 @@ public:
         p_fksolver_vel_ = new KDL::ChainFkSolverVel_recursive(chain_);
         p_jnt2jac_ = new KDL::ChainJntToJacSolver(chain_);
 
-        ///initialize ROS interfaces
+        /// initialize ROS interfaces
         jointstate_sub_ = nh_.subscribe("joint_states", 1, &DebugEvaluateJointStates::jointstateCallback, this);
         manipulability_pub_ = nh_.advertise<std_msgs::Float64> ("debug/manipulability", 1);
         twist_current_pub_ = nh_.advertise<geometry_msgs::Twist> ("debug/twist_current", 1);
@@ -103,26 +103,26 @@ public:
         KDL::JntArray q = KDL::JntArray(chain_.getNrOfJoints());
         KDL::JntArray q_dot = KDL::JntArray(chain_.getNrOfJoints());
 
-        for(unsigned int i = 0; i < msg->name.size(); i++)
+        for (unsigned int i = 0; i < msg->name.size(); i++)
         {
             q(i) = msg->position[i];
             q_dot(i) = msg->velocity[i];
         }
 
-        ///compute current twist
+        /// compute current twist
         KDL::FrameVel FrameVel;
         KDL::JntArrayVel jntArrayVel = KDL::JntArrayVel(q, q_dot);
-        if(p_fksolver_vel_->JntToCart(jntArrayVel, FrameVel, -1) >= 0)
+        if (p_fksolver_vel_->JntToCart(jntArrayVel, FrameVel, -1) >= 0)
         {
             geometry_msgs::Twist twist_msg;
             tf::twistKDLToMsg(FrameVel.GetTwist(), twist_msg);
             twist_current_pub_.publish(twist_msg);
         }
 
-        ///compute manipulability
+        /// compute manipulability
         KDL::Jacobian jac(chain_.getNrOfJoints());
         p_jnt2jac_->JntToJac(q, jac);
-        Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> prod = jac.data * jac.data.transpose();
+        Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> prod = jac.data * jac.data.transpose();
         double d = prod.determinant();
         double kappa = std::sqrt(std::abs(d));
         std_msgs::Float64 manipulability_msg;
@@ -130,8 +130,6 @@ public:
         manipulability_pub_.publish(manipulability_msg);
     }
 };
-
-
 
 
 int main(int argc, char** argv)

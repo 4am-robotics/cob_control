@@ -26,10 +26,12 @@
  *
  ****************************************************************/
 
-#ifndef CONSTRAINT_BASE_H_
-#define CONSTRAINT_BASE_H_
+#ifndef COB_TWIST_CONTROLLER_CONSTRAINTS_CONSTRAINT_BASE_H
+#define COB_TWIST_CONTROLLER_CONSTRAINTS_CONSTRAINT_BASE_H
 
 #include <set>
+#include <string>
+#include <limits>
 #include <stdint.h>
 #include <boost/shared_ptr.hpp>
 #include <kdl/jntarray.hpp>
@@ -50,8 +52,7 @@ template
 class PriorityBase
 {
     public:
-
-        PriorityBase(PRIO prio) : priority_(prio)
+        explicit PriorityBase(PRIO prio): priority_(prio)
         {}
 
         virtual ~PriorityBase()
@@ -127,7 +128,6 @@ template
 class ConstraintBase : public PriorityBase<PRIO>
 {
     public:
-
         /**
          * @param prio A priority value / object.
          * @param q The joint states.
@@ -158,12 +158,12 @@ class ConstraintBase : public PriorityBase<PRIO>
 
         virtual Eigen::MatrixXd getTaskJacobian() const
         {
-            return Eigen::MatrixXd::Zero(1,1);
+            return Eigen::MatrixXd::Zero(1, 1);
         }
 
         virtual Eigen::VectorXd getTaskDerivatives() const
         {
-            return Eigen::VectorXd::Zero(1,1);
+            return Eigen::VectorXd::Zero(1, 1);
         }
 
         virtual Task_t createTask()
@@ -264,4 +264,4 @@ uint32_t ConstraintBase<T_PARAMS, PRIO>::instance_ctr_ = 0;
 
 typedef boost::shared_ptr<PriorityBase<uint32_t> > ConstraintBase_t;
 
-#endif /* CONSTRAINT_BASE_H_ */
+#endif  // COB_TWIST_CONTROLLER_CONSTRAINTS_CONSTRAINT_BASE_H

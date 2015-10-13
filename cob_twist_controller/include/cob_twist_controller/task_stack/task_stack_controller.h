@@ -27,16 +27,16 @@
  *
  ****************************************************************/
 
-#ifndef TASK_STACK_CONTROLLER_H_
-#define TASK_STACK_CONTROLLER_H_
+#ifndef COB_TWIST_CONTROLLER_TASK_STACK_TASK_STACK_CONTROLLER_H
+#define COB_TWIST_CONTROLLER_TASK_STACK_TASK_STACK_CONTROLLER_H
 
-#include <Eigen/Dense>
 #include <vector>
+#include <string>
 #include <stdint.h>
+#include <ros/ros.h>
 
 #include <boost/shared_ptr.hpp>
-
-#include <ros/ros.h>
+#include <Eigen/Dense>
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/damping_methods/damping_base.h"
@@ -54,7 +54,6 @@ struct Task
     boost::shared_ptr<DampingBase> db_;
     TwistControllerParams tcp_;
 
-
     Task(PRIO prio, std::string id) : prio_(prio), id_(id), is_active_(true), constraint_type_(None)
     {}
 
@@ -71,9 +70,7 @@ struct Task
       constraint_type_(task.constraint_type_),
       tcp_(task.tcp_),
       db_(task.db_)
-    {
-
-    }
+    {}
 
     ~Task()
     {
@@ -133,38 +130,26 @@ class TaskStackController
         void activateHighestPrioTask();
 
         typename std::vector<Task<PRIO> >::iterator getTasksBegin();
-
         typename std::vector<Task<PRIO> >::iterator getTasksEnd();
-
         typename std::vector<Task<PRIO> >::iterator nextActiveTask();
-
         typename std::vector<Task<PRIO> >::iterator beginTaskIter();
 
         int countActiveTasks() const;
         ros::Time getLastModificationTime() const;
 
     private:
-
         void updateModificationTime(bool change);
 
-
-        // Use a vector instead of a set here. Set stores const references ->
-        // so they cannot be changed.
         std::vector<Task<PRIO> > tasks_;
-
         TypedIter_t active_task_iter_;
-
         ros::Time modification_time_;
-
-
 };
-
 
 template <typename PRIO>
 int TaskStackController<PRIO>::countActiveTasks() const
 {
     int i = 0;
-    for(TypedConstIter_t it = this->tasks_.begin(); it != this->tasks_.end(); it++)
+    for (TypedConstIter_t it = this->tasks_.begin(); it != this->tasks_.end(); it++)
     {
         if (it->is_active_)
         {
@@ -175,7 +160,6 @@ int TaskStackController<PRIO>::countActiveTasks() const
     return i;
 }
 
-
 /**
  * Insert new task sorted.
  */
@@ -184,9 +168,9 @@ void TaskStackController<PRIO>::addTask(Task<PRIO> t)
 {
     TypedIter_t begin_it = this->tasks_.begin();
     TypedIter_t mem_it = this->tasks_.end();
-    for(TypedIter_t it = this->tasks_.begin(); it != this->tasks_.end(); it++)
+    for (TypedIter_t it = this->tasks_.begin(); it != this->tasks_.end(); it++)
     {
-        if(it->id_ == t.id_) // task already existent -> ignore add
+        if (it->id_ == t.id_)  // task already existent -> ignore add
         {
             mem_it = it;
             it->task_jacobian_ = t.task_jacobian_;
@@ -199,16 +183,16 @@ void TaskStackController<PRIO>::addTask(Task<PRIO> t)
 
     if (this->tasks_.end() == mem_it)
     {
-        for(TypedIter_t it = this->tasks_.begin(); it != this->tasks_.end(); it++)
+        for (TypedIter_t it = this->tasks_.begin(); it != this->tasks_.end(); it++)
         {
-            if(t.prio_ < it->prio_)
+            if (t.prio_ < it->prio_)
             {
                 mem_it = it;
                 break;
             }
         }
 
-        if(this->tasks_.end() == mem_it)
+        if (this->tasks_.end() == mem_it)
         {
             this->tasks_.push_back(t);
         }
@@ -225,9 +209,9 @@ template <typename PRIO>
 void TaskStackController<PRIO>::activateAllTasks()
 {
     bool change = false;
-    for(TypedIter_t it = this->tasks_.begin(); it != this->tasks_.end(); it++)
+    for (TypedIter_t it = this->tasks_.begin(); it != this->tasks_.end(); it++)
     {
-        if(!it->is_active_)
+        if (!it->is_active_)
         {
             change = true;
         }
@@ -242,7 +226,7 @@ template <typename PRIO>
 void TaskStackController<PRIO>::activateHighestPrioTask()
 {
     TypedIter_t it = this->tasks_.begin();
-    if(this->tasks_.end() != it)
+    if (this->tasks_.end() != it)
     {
         this->updateModificationTime(!it->is_active_);
 
@@ -257,7 +241,6 @@ typename std::vector<Task<PRIO> >::iterator TaskStackController<PRIO>::getTasksB
     return this->tasks_.begin();
 }
 
-
 template <typename PRIO>
 typename std::vector<Task<PRIO> >::iterator TaskStackController<PRIO>::getTasksEnd()
 {
@@ -269,7 +252,7 @@ void TaskStackController<PRIO>::activateTask(std::string task_id)
 {
     for (TypedIter_t it = this->tasks_.begin(); it != this->tasks_.end(); it++)
     {
-        if(it->id_ == task_id)
+        if (it->id_ == task_id)
         {
             this->updateModificationTime(!it->is_active_);
             it->is_active_ = true;
@@ -281,7 +264,7 @@ void TaskStackController<PRIO>::activateTask(std::string task_id)
 template <typename PRIO>
 void TaskStackController<PRIO>::deactivateTask(typename std::vector<Task<PRIO> >::iterator it)
 {
-    if(std::find(this->tasks_.begin(), this->tasks_.end(), it) != this->tasks_.end())
+    if (std::find(this->tasks_.begin(), this->tasks_.end(), it) != this->tasks_.end())
     {
         this->updateModificationTime(it->is_active_);
         it->is_active_ = false;
@@ -291,10 +274,9 @@ void TaskStackController<PRIO>::deactivateTask(typename std::vector<Task<PRIO> >
 template <typename PRIO>
 void TaskStackController<PRIO>::deactivateTask(std::string task_id)
 {
-
     for (TypedIter_t it = this->tasks_.begin(); it != this->tasks_.end(); it++)
     {
-        if(it->id_ == task_id)
+        if (it->id_ == task_id)
         {
             this->updateModificationTime(it->is_active_);
             it->is_active_ = false;
@@ -309,7 +291,7 @@ void TaskStackController<PRIO>::deactivateAllTasks()
     bool change = false;
     for (TypedIter_t it = this->tasks_.begin(); it != this->tasks_.end(); it++)
     {
-        if(it->is_active_)
+        if (it->is_active_)
         {
             change = true;
         }
@@ -320,19 +302,17 @@ void TaskStackController<PRIO>::deactivateAllTasks()
     this->updateModificationTime(change);
 }
 
-
 template <typename PRIO>
 typename std::vector<Task<PRIO> >::iterator TaskStackController<PRIO>::nextActiveTask()
 {
     TypedIter_t ret = this->tasks_.end();
 
-    while(this->tasks_.end() != this->active_task_iter_)
+    while (this->tasks_.end() != this->active_task_iter_)
     {
-        if(this->active_task_iter_->is_active_)
+        if (this->active_task_iter_->is_active_)
         {
             ret = this->active_task_iter_++;
             break;
-
         }
 
         this->active_task_iter_++;
@@ -340,7 +320,6 @@ typename std::vector<Task<PRIO> >::iterator TaskStackController<PRIO>::nextActiv
 
     return ret;
 }
-
 
 template <typename PRIO>
 typename std::vector<Task<PRIO> >::iterator TaskStackController<PRIO>::beginTaskIter()
@@ -357,18 +336,16 @@ void TaskStackController<PRIO>::clearAllTasks()
     this->updateModificationTime(true);
 }
 
-
 template <typename PRIO>
 ros::Time TaskStackController<PRIO>::getLastModificationTime() const
 {
     return this->modification_time_;
 }
 
-
 template <typename PRIO>
 void TaskStackController<PRIO>::updateModificationTime(bool change)
 {
-    if(change)
+    if (change)
     {
         this->modification_time_ = ros::Time::now();
     }
@@ -379,5 +356,4 @@ typedef TaskStackController<uint32_t> TaskStackController_t;
 typedef Task<uint32_t> Task_t;
 typedef std::vector<Task_t >::iterator TaskSetIter_t;
 
-#endif /* TASK_STACK_CONTROLLER_H_ */
-
+#endif  // COB_TWIST_CONTROLLER_TASK_STACK_TASK_STACK_CONTROLLER_H

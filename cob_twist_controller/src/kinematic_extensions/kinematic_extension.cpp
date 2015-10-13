@@ -31,7 +31,6 @@
 
 #include <eigen_conversions/eigen_kdl.h>
 
-
 /* BEGIN KinematicExtensionBuilder *****************************************************************************************/
 /**
  * Static builder method to create kinematic extensions based on given parameterization.
@@ -40,13 +39,13 @@ KinematicExtensionBase* KinematicExtensionBuilder::createKinematicExtension(cons
 {
     KinematicExtensionBase* keb = NULL;
 
-    switch(params.kinematic_extension)
+    switch (params.kinematic_extension)
     {
         case NO_EXTENSION:
             keb = new KinematicExtensionNone(params);
             break;
         case BASE_COMPENSATION:
-            //nothing to do here for BASE_COMPENSATION
+            // nothing to do here for BASE_COMPENSATION
             break;
         case BASE_ACTIVE:
             keb = new KinematicExtensionBaseActive(params);
@@ -98,18 +97,18 @@ KDL::Jacobian KinematicExtension6D::adjustJacobian(const KDL::Jacobian& jac_chai
  */
 KDL::Jacobian KinematicExtension6D::adjustJacobian6d(const KDL::Jacobian& jac_chain, const KDL::Frame full_frame, const KDL::Frame partial_frame, const ActiveCartesianDimension active_dim)
 {
-    ///compose jac_full considering kinematical extension
+    /// compose jac_full considering kinematical extension
     KDL::Jacobian jac_full;
 
-    //ToDo: some of the variable names are not generic enough
+    // ToDo: some of the variable names are not generic enough
     Eigen::Vector3d w_x_chain_base, w_y_chain_base, w_z_chain_base;
     Eigen::Vector3d tangential_vel_x, tangential_vel_y, tangential_vel_z;
     Eigen::Vector3d r_chain_base;
 
     double base_ratio = params_.base_ratio;
 
-    //Create standard platform jacobian
-    Eigen::Matrix<double,6,6> jac_b;
+    // Create standard platform jacobian
+    Eigen::Matrix<double, 6, 6> jac_b;
     jac_b.setZero();
 
     // Get current x and y position from EE and chain_base with respect to base_footprint
@@ -122,10 +121,9 @@ KDL::Jacobian KinematicExtension6D::adjustJacobian6d(const KDL::Jacobian& jac_ch
     Eigen::Matrix3d chain_base_rot = chain_base_quat.toRotationMatrix();
 
     // Transform from base_link to chain_base
-    Eigen::Vector3d w_x_base_link(base_ratio,0,0);
-    Eigen::Vector3d w_y_base_link(0,base_ratio,0);
-    Eigen::Vector3d w_z_base_link(0,0,base_ratio);
-
+    Eigen::Vector3d w_x_base_link(base_ratio, 0, 0);
+    Eigen::Vector3d w_y_base_link(0, base_ratio, 0);
+    Eigen::Vector3d w_z_base_link(0, 0, base_ratio);
 
     w_x_chain_base = chain_base_quat*w_x_base_link;
     w_y_chain_base = chain_base_quat*w_y_base_link;
@@ -133,49 +131,49 @@ KDL::Jacobian KinematicExtension6D::adjustJacobian6d(const KDL::Jacobian& jac_ch
 
     r_chain_base = chain_base_quat*r_base_link;
 
-    //Calculate tangential velocity
+    // Calculate tangential velocity
     tangential_vel_x = w_x_chain_base.cross(r_chain_base);
     tangential_vel_y = w_y_chain_base.cross(r_chain_base);
     tangential_vel_z = w_z_chain_base.cross(r_chain_base);
 
-     //Vx-Base <==> q8 effects a change in the following chain_base Vx velocities
-    jac_b(0,0) = base_ratio*chain_base_rot(0,0) * active_dim.lin_x;
-    jac_b(0,1) = base_ratio*chain_base_rot(0,1) * active_dim.lin_y;
-    jac_b(0,2) = base_ratio*chain_base_rot(0,2) * active_dim.lin_z;
-    jac_b(0,3) = tangential_vel_x(0) * active_dim.rot_x;
-    jac_b(0,4) = tangential_vel_y(0) * active_dim.rot_y;
-    jac_b(0,5) = tangential_vel_z(0) * active_dim.rot_z;
+    // Vx-Base <==> q8 effects a change in the following chain_base Vx velocities
+    jac_b(0, 0) = base_ratio*chain_base_rot(0, 0) * active_dim.lin_x;
+    jac_b(0, 1) = base_ratio*chain_base_rot(0, 1) * active_dim.lin_y;
+    jac_b(0, 2) = base_ratio*chain_base_rot(0, 2) * active_dim.lin_z;
+    jac_b(0, 3) = tangential_vel_x(0) * active_dim.rot_x;
+    jac_b(0, 4) = tangential_vel_y(0) * active_dim.rot_y;
+    jac_b(0, 5) = tangential_vel_z(0) * active_dim.rot_z;
 
     // Vy-Base <==> q9 effects a change in the following chain_base Vy velocities
-    jac_b(1,0) = base_ratio*chain_base_rot(1,0) * active_dim.lin_x;
-    jac_b(1,1) = base_ratio*chain_base_rot(1,1) * active_dim.lin_y;
-    jac_b(1,2) = base_ratio*chain_base_rot(1,2) * active_dim.lin_z;
-    jac_b(1,3) = tangential_vel_x(1) * active_dim.rot_x;
-    jac_b(1,4) = tangential_vel_y(1) * active_dim.rot_y;
-    jac_b(1,5) = tangential_vel_z(1) * active_dim.rot_z;
+    jac_b(1, 0) = base_ratio*chain_base_rot(1, 0) * active_dim.lin_x;
+    jac_b(1, 1) = base_ratio*chain_base_rot(1, 1) * active_dim.lin_y;
+    jac_b(1, 2) = base_ratio*chain_base_rot(1, 2) * active_dim.lin_z;
+    jac_b(1, 3) = tangential_vel_x(1) * active_dim.rot_x;
+    jac_b(1, 4) = tangential_vel_y(1) * active_dim.rot_y;
+    jac_b(1, 5) = tangential_vel_z(1) * active_dim.rot_z;
 
     // Vz-Base <==>  effects a change in the following chain_base Vz velocities
-    jac_b(2,0) = base_ratio*chain_base_rot(2,0) * active_dim.lin_x;
-    jac_b(2,1) = base_ratio*chain_base_rot(2,1) * active_dim.lin_y;
-    jac_b(2,2) = base_ratio*chain_base_rot(2,2) * active_dim.lin_z;
-    jac_b(2,3) = tangential_vel_x(2) * active_dim.rot_x;
-    jac_b(2,4) = tangential_vel_y(2) * active_dim.rot_y;
-    jac_b(2,5) = tangential_vel_z(2) * active_dim.rot_z;
+    jac_b(2, 0) = base_ratio*chain_base_rot(2, 0) * active_dim.lin_x;
+    jac_b(2, 1) = base_ratio*chain_base_rot(2, 1) * active_dim.lin_y;
+    jac_b(2, 2) = base_ratio*chain_base_rot(2, 2) * active_dim.lin_z;
+    jac_b(2, 3) = tangential_vel_x(2) * active_dim.rot_x;
+    jac_b(2, 4) = tangential_vel_y(2) * active_dim.rot_y;
+    jac_b(2, 5) = tangential_vel_z(2) * active_dim.rot_z;
 
-    //Phi <==> Wz with respect to base_link
-    jac_b(3,3) = w_x_chain_base(0) * active_dim.rot_x;
-    jac_b(4,3) = w_x_chain_base(1) * active_dim.rot_x;
-    jac_b(5,3) = w_x_chain_base(2) * active_dim.rot_x;
+    // Phi <==> Wz with respect to base_link
+    jac_b(3, 3) = w_x_chain_base(0) * active_dim.rot_x;
+    jac_b(4, 3) = w_x_chain_base(1) * active_dim.rot_x;
+    jac_b(5, 3) = w_x_chain_base(2) * active_dim.rot_x;
 
-    jac_b(3,4) = w_y_chain_base(0) * active_dim.rot_y;
-    jac_b(4,4) = w_y_chain_base(1) * active_dim.rot_y;
-    jac_b(5,4) = w_y_chain_base(2) * active_dim.rot_y;
+    jac_b(3, 4) = w_y_chain_base(0) * active_dim.rot_y;
+    jac_b(4, 4) = w_y_chain_base(1) * active_dim.rot_y;
+    jac_b(5, 4) = w_y_chain_base(2) * active_dim.rot_y;
 
-    jac_b(3,5) = w_z_chain_base(0) * active_dim.rot_z;
-    jac_b(4,5) = w_z_chain_base(1) * active_dim.rot_z;
-    jac_b(5,5) = w_z_chain_base(2) * active_dim.rot_z;
+    jac_b(3, 5) = w_z_chain_base(0) * active_dim.rot_z;
+    jac_b(4, 5) = w_z_chain_base(1) * active_dim.rot_z;
+    jac_b(5, 5) = w_z_chain_base(2) * active_dim.rot_z;
 
-    //combine chain Jacobian and platform Jacobian
+    // combine chain Jacobian and platform Jacobian
     Matrix6Xd_t jac_full_matrix;
     jac_full_matrix.resize(6, jac_chain.data.cols() + jac_b.cols());
     jac_full_matrix << jac_chain.data, jac_b;
@@ -197,7 +195,7 @@ KDL::Jacobian KinematicExtensionBaseActive::adjustJacobian(const KDL::Jacobian& 
     KDL::Frame bl_frame_ct, cb_frame_bl;
     ActiveCartesianDimension active_dim;
 
-    ///get required transformations
+    /// get required transformations
     try
     {
         ros::Time now = ros::Time(0);
@@ -209,7 +207,7 @@ KDL::Jacobian KinematicExtensionBaseActive::adjustJacobian(const KDL::Jacobian& 
     }
     catch (tf::TransformException& ex)
     {
-        ROS_ERROR("%s",ex.what());
+        ROS_ERROR("%s", ex.what());
     }
 
     bl_frame_ct.p = KDL::Vector(bl_transform_ct.getOrigin().x(), bl_transform_ct.getOrigin().y(), bl_transform_ct.getOrigin().z());
@@ -218,15 +216,14 @@ KDL::Jacobian KinematicExtensionBaseActive::adjustJacobian(const KDL::Jacobian& 
     cb_frame_bl.p = KDL::Vector(cb_transform_bl.getOrigin().x(), cb_transform_bl.getOrigin().y(), cb_transform_bl.getOrigin().z());
     cb_frame_bl.M = KDL::Rotation::Quaternion(cb_transform_bl.getRotation().x(), cb_transform_bl.getRotation().y(), cb_transform_bl.getRotation().z(), cb_transform_bl.getRotation().w());
 
+    /// active base can move in lin_x, lin_y and rot_z
+    active_dim.lin_x = 1;
+    active_dim.lin_y = 1;
+    active_dim.lin_z = 0;
 
-    ///active base can move in lin_x, lin_y and rot_z
-    active_dim.lin_x=1;
-    active_dim.lin_y=1;
-    active_dim.lin_z=0;
-
-    active_dim.rot_x=0;
-    active_dim.rot_y=0;
-    active_dim.rot_z=1;
+    active_dim.rot_x = 0;
+    active_dim.rot_y = 0;
+    active_dim.rot_z = 1;
 
     return adjustJacobian6d(jac_chain, bl_frame_ct, cb_frame_bl, active_dim);
 }

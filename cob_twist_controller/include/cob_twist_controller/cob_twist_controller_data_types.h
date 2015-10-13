@@ -26,22 +26,23 @@
  *
  ****************************************************************/
 
-#ifndef COB_TWIST_CONTROLLER_DATA_TYPES_H_
-#define COB_TWIST_CONTROLLER_DATA_TYPES_H_
+#ifndef COB_TWIST_CONTROLLER_COB_TWIST_CONTROLLER_DATA_TYPES_H
+#define COB_TWIST_CONTROLLER_COB_TWIST_CONTROLLER_DATA_TYPES_H
 
+#include <string>
 #include <vector>
 #include <map>
 #include <stdint.h>
 #include <Eigen/Core>
-#include <Eigen/LU> // necessary to use several methods on EIGEN Matrices.
+#include <Eigen/LU>
 #include <kdl/chainjnttojacsolver.hpp>
 #include <cob_twist_controller/TwistControllerConfig.h>
 
 #define MAX_CRIT true
 #define MIN_CRIT false
 #define DEFAULT_CYCLE 0.02
-#define ZERO_THRESHOLD 1.0e-9  ///< used for numerical 0.0 threshold
-#define DIV0_SAFE 1.0e-6 ///< used for division in case of DIV/0
+#define ZERO_THRESHOLD 1.0e-9   ///< used for numerical 0.0 threshold
+#define DIV0_SAFE 1.0e-6        ///< used for division in case of DIV/0
 
 enum DampingMethodTypes
 {
@@ -137,51 +138,51 @@ struct ConstraintThresholds
 struct TwistControllerParams
 {
     TwistControllerParams() :
-            dof(0),
-            controller_interface(VELOCITY_INTERFACE),
+        dof(0),
+        controller_interface(VELOCITY_INTERFACE),
 
-            numerical_filtering(false),
-            damping_method(MANIPULABILITY),
-            damping_factor(0.2),
-            lambda_max(0.1),
-            w_threshold(0.005),
-            beta(0.005),
-            eps_damping(0.003),
-            eps_truncation(0.001),
+        numerical_filtering(false),
+        damping_method(MANIPULABILITY),
+        damping_factor(0.2),
+        lambda_max(0.1),
+        w_threshold(0.005),
+        beta(0.005),
+        eps_damping(0.003),
+        eps_truncation(0.001),
 
-            solver(WLN),
-            priority_main(500),
-            k_H(1.0),
+        solver(WLN),
+        priority_main(500),
+        k_H(1.0),
 
-            constraint_jla(JLA_ON),
-            priority_jla(50),
-            k_H_jla(-10.0),
-            damping_jla(0.000001),
+        constraint_jla(JLA_ON),
+        priority_jla(50),
+        k_H_jla(-10.0),
+        damping_jla(0.000001),
 
-            constraint_ca(CA_OFF),
-            priority_ca(100),
-            damping_ca(0.000001),
-            k_H_ca(2.0),
+        constraint_ca(CA_OFF),
+        priority_ca(100),
+        damping_ca(0.000001),
+        k_H_ca(2.0),
 
-            keep_direction(true),
-            enforce_pos_limits(true),
-            enforce_vel_limits(true),
-            enforce_acc_limits(false),
-            limits_tolerance(5.0),
-            max_vel_lin_base(0.5),
-            max_vel_rot_base(0.5),
+        keep_direction(true),
+        enforce_pos_limits(true),
+        enforce_vel_limits(true),
+        enforce_acc_limits(false),
+        limits_tolerance(5.0),
+        max_vel_lin_base(0.5),
+        max_vel_rot_base(0.5),
 
-            kinematic_extension(NO_EXTENSION),
-            base_ratio(0.0)
-            {
-                this->thresholds_ca.activation = 0.1;
-                this->thresholds_ca.critical = 0.025;
-                this->thresholds_ca.activation_with_buffer = this->thresholds_ca.activation * 1.5; // best experienced value
+        kinematic_extension(NO_EXTENSION),
+        base_ratio(0.0)
+    {
+        this->thresholds_ca.activation = 0.1;
+        this->thresholds_ca.critical = 0.025;
+        this->thresholds_ca.activation_with_buffer = this->thresholds_ca.activation * 1.5;  // best experienced value
 
-                this->thresholds_jla.activation = 0.1;
-                this->thresholds_jla.critical = 0.05;
-                this->thresholds_jla.activation_with_buffer = this->thresholds_jla.activation * 4.0; // best experienced value
-            }
+        this->thresholds_jla.activation = 0.1;
+        this->thresholds_jla.critical = 0.05;
+        this->thresholds_jla.activation_with_buffer = this->thresholds_jla.activation * 4.0;  // best experienced value
+    }
 
     uint8_t dof;
     std::string chain_base_link;
@@ -249,12 +250,9 @@ enum EN_ConstraintStates
 class ConstraintState
 {
     public:
-
         ConstraintState()
         : current_(NORMAL), previous_(NORMAL), transition_(false)
-        {
-
-        }
+        {}
 
         inline void setState(EN_ConstraintStates next_state)
         {
@@ -284,8 +282,8 @@ class ConstraintState
         bool transition_;
 };
 
-typedef Eigen::Matrix<double,6,Eigen::Dynamic> Matrix6Xd_t;
-typedef Eigen::Matrix<double,6,1> Vector6d_t;
+typedef Eigen::Matrix<double, 6, Eigen::Dynamic> Matrix6Xd_t;
+typedef Eigen::Matrix<double, 6, 1> Vector6d_t;
 typedef std::map<std::string, std::vector<ObstacleDistanceData> > ObstacleDistancesInfo_t;
 
-#endif /* COB_TWIST_CONTROLLER_DATA_TYPES_H_ */
+#endif  // COB_TWIST_CONTROLLER_COB_TWIST_CONTROLLER_DATA_TYPES_H

@@ -27,6 +27,7 @@
  *   for constraint parameters.
  *
  ****************************************************************/
+#include <limits>
 #include <ros/ros.h>
 
 #include "cob_twist_controller/callback_data_mediator.h"
@@ -47,11 +48,11 @@ bool CallbackDataMediator::fill(ConstraintParamsCA& params_ca)
     bool success = false;
     double last_min_distance = std::numeric_limits<double>::max();
     params_ca.current_distances_.clear();
-    for(ObstacleDistancesIter_t it = this->obstacle_distances_.begin(); it != this->obstacle_distances_.end(); it++)
+    for (ObstacleDistancesIter_t it = this->obstacle_distances_.begin(); it != this->obstacle_distances_.end(); it++)
     {
-        if(it->first == params_ca.id_) // select the appropriate distances for frame id of interest
+        if (it->first == params_ca.id_)  // select the appropriate distances for frame id of interest
         {
-            params_ca.current_distances_ = it->second; // copy all distances for frame to current distances of param struct
+            params_ca.current_distances_ = it->second;  // copy all distances for frame to current distances of param struct
             success = true;
         }
     }
@@ -70,7 +71,7 @@ void CallbackDataMediator::distancesToObstaclesCallback(const cob_obstacle_dista
 {
     boost::mutex::scoped_lock lock(distances_to_obstacles_lock_);
     this->obstacle_distances_.clear();
-    for(cob_obstacle_distance::ObstacleDistances::_distances_type::const_iterator it = msg->distances.begin(); it != msg->distances.end(); it++)
+    for (cob_obstacle_distance::ObstacleDistances::_distances_type::const_iterator it = msg->distances.begin(); it != msg->distances.end(); it++)
     {
         ObstacleDistanceData d;
         d.min_distance = it->distance;
@@ -79,5 +80,4 @@ void CallbackDataMediator::distancesToObstaclesCallback(const cob_obstacle_dista
         tf::vectorMsgToEigen(it->nearest_point_obstacle_vector, d.nearest_point_obstacle_vector);
         this->obstacle_distances_[it->link_of_interest].push_back(d);
     }
-
 }

@@ -26,8 +26,9 @@
  *   Pure virtual methods have to be implemented in subclasses
  *
  ****************************************************************/
-#ifndef I_PSEUDOINV_CALC_BASE_H_
-#define I_PSEUDOINV_CALC_BASE_H_
+
+#ifndef COB_TWIST_CONTROLLER_INVERSE_JACOBIAN_CALCULATIONS_INVERSE_JACOBIAN_CALCULATION_BASE_H
+#define COB_TWIST_CONTROLLER_INVERSE_JACOBIAN_CALCULATIONS_INVERSE_JACOBIAN_CALCULATION_BASE_H
 
 #include <Eigen/Core>
 #include <boost/shared_ptr.hpp>
@@ -37,7 +38,6 @@
 class IPseudoinverseCalculator
 {
     public:
-
         /**
          * Pure virtual method for calculation of the pseudoinverse
          * @param jacobian The Jacobi matrix.
@@ -59,7 +59,7 @@ class IPseudoinverseCalculator
         /**
          * Class has no members so implementing an empty destructor.
          */
-        virtual ~IPseudoinverseCalculator() {};
+        virtual ~IPseudoinverseCalculator() {}
 };
 
-#endif /* I_PSEUDOINV_CALC_BASE_H_ */
+#endif  // COB_TWIST_CONTROLLER_INVERSE_JACOBIAN_CALCULATIONS_INVERSE_JACOBIAN_CALCULATION_BASE_H

@@ -26,8 +26,9 @@
  *   Implements methods from constraint_solver_base
  *
  ****************************************************************/
-#ifndef UNCONSTRAINT_SOLVER_H_
-#define UNCONSTRAINT_SOLVER_H_
+
+#ifndef COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_UNCONSTRAINT_SOLVER_H
+#define COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_UNCONSTRAINT_SOLVER_H
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/constraint_solvers/solvers/constraint_solver_base.h"
@@ -35,7 +36,6 @@
 class UnconstraintSolver : public ConstraintSolver<>
 {
     public:
-
         /**
          * Specific implementation of solve-method to solve IK problem without any constraints.
          * See base class ConstraintSolver for more details on params and returns.
@@ -51,4 +51,4 @@ class UnconstraintSolver : public ConstraintSolver<>
         {}
 };
 
-#endif /* UNCONSTRAINT_SOLVER_H_ */
+#endif  // COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_UNCONSTRAINT_SOLVER_H

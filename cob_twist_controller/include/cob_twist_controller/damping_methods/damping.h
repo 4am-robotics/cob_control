@@ -26,8 +26,9 @@
  *   several damping methods.
  *
  ****************************************************************/
-#ifndef DAMPING_H_
-#define DAMPING_H_
+
+#ifndef COB_TWIST_CONTROLLER_DAMPING_METHODS_DAMPING_H
+#define COB_TWIST_CONTROLLER_DAMPING_METHODS_DAMPING_H
 
 #include "cob_twist_controller/damping_methods/damping_base.h"
 
@@ -49,7 +50,7 @@ class DampingBuilder
 class DampingNone : public DampingBase
 {
     public:
-        DampingNone(const TwistControllerParams& params)
+        explicit DampingNone(const TwistControllerParams& params)
         : DampingBase(params)
         {}
 
@@ -65,7 +66,7 @@ class DampingNone : public DampingBase
 class DampingConstant : public DampingBase
 {
     public:
-        DampingConstant(const TwistControllerParams& params)
+        explicit DampingConstant(const TwistControllerParams& params)
         : DampingBase(params)
         {}
 
@@ -81,7 +82,7 @@ class DampingConstant : public DampingBase
 class DampingManipulability : public DampingBase
 {
     public:
-        DampingManipulability(const TwistControllerParams& params)
+        explicit DampingManipulability(const TwistControllerParams& params)
         : DampingBase(params)
         {}
 
@@ -97,7 +98,7 @@ class DampingManipulability : public DampingBase
 class DampingLeastSingularValues : public DampingBase
 {
     public:
-        DampingLeastSingularValues(const TwistControllerParams& params)
+        explicit DampingLeastSingularValues(const TwistControllerParams& params)
         : DampingBase(params)
         {}
 
@@ -108,4 +109,4 @@ class DampingLeastSingularValues : public DampingBase
 };
 /* END DampingLeastSingularValues ************************************************************************************/
 
-#endif /* DAMPING_H_ */
+#endif  // COB_TWIST_CONTROLLER_DAMPING_METHODS_DAMPING_H
