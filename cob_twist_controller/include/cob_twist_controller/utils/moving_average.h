@@ -25,8 +25,9 @@
  *   This Class contains an moving average filter with exponential and normal weighting
  *
  ****************************************************************/
-#ifndef MOVING_AVERAGE_H_
-#define MOVING_AVERAGE_H_
+
+#ifndef COB_TWIST_CONTROLLER_UTILS_MOVING_AVERAGE_H
+#define COB_TWIST_CONTROLLER_UTILS_MOVING_AVERAGE_H
 
 #include <stdint.h>
 #include <ros/ros.h>
@@ -36,13 +37,8 @@ template
 <typename T>
 class MovingAverage
 {
-    private:
-        uint16_t size_;
-        std::deque<T> s_;
-        std::deque<double> weighting_;
-
     public:
-        MovingAverage(uint16_t size = 3, bool do_auto_weighting = true);
+        explicit MovingAverage(uint16_t size = 3, bool do_auto_weighting = true);
 
         inline void addElement(T element);
         inline void calcMovingAverage(T& sum) const;
@@ -59,36 +55,39 @@ class MovingAverage
             }
             else
             {
-                return  (double)(n * factorial(n - 1));
+                return static_cast<double>(n * factorial(n - 1));
             }
         }
+
+    private:
+        uint16_t size_;
+        std::deque<T> s_;
+        std::deque<double> weighting_;
 };
 
 template <typename T>
 MovingAverage<T>::MovingAverage(uint16_t size, bool do_auto_weighting) : size_(size)
 {
-    if(do_auto_weighting)
+    if (do_auto_weighting)
     {
         calculateWeighting();
     }
 }
 
-
 template <typename T>
 void MovingAverage<T>::setWeighting(const std::deque<double>& weighting)
 {
     weighting_.clear();
-    for(std::deque<double>::const_iterator i = weighting.begin(); i != weighting.end(); ++i)
+    for (std::deque<double>::const_iterator i = weighting.begin(); i != weighting.end(); ++i)
     {
-        weighting_.push_back(*i); // highest weighting should be first!
+        weighting_.push_back(*i);  // highest weighting should be first!
     }
 }
-
 
 template <typename T>
 void MovingAverage<T>::addElement(T element)
 {
-    if(s_.size() < size_)
+    if (s_.size() < size_)
     {
         s_.push_front(element);
     }
@@ -100,30 +99,25 @@ void MovingAverage<T>::addElement(T element)
     }
 }
 
-
 template <typename T>
 void MovingAverage<T>::calcMovingAverage(T& sum) const
 {
-    for(typename std::deque<T>::const_iterator i = s_.begin(); i != s_.end(); ++i)
+    for (typename std::deque<T>::const_iterator i = s_.begin(); i != s_.end(); ++i)
     {
         sum += *i;
     }
 
-
     sum = sum / s_.size();
 }
-
 
 template <typename T>
 void MovingAverage<T>::calcWeightedMovingAverage(T& sum) const
 {
-    for(uint16_t i = 0; i < s_.size(); ++i)
+    for (uint16_t i = 0; i < s_.size(); ++i)
     {
         sum += s_[i] * weighting_[i];
     }
-
 }
-
 
 template <typename T>
 void MovingAverage<T>::calculateWeighting()
@@ -132,7 +126,7 @@ void MovingAverage<T>::calculateWeighting()
     double err = 0;
     uint16_t j = 0;
 
-    for(uint16_t i = 0; i < size_; ++i)
+    for (uint16_t i = 0; i < size_; ++i)
     {
         weighting_.push_back((pow(log(2.0), static_cast<double>(j + 1)) / factorial(j + 1)));
         sum += weighting_[i];
@@ -144,8 +138,6 @@ void MovingAverage<T>::calculateWeighting()
     *i += err;
 }
 
-
 typedef MovingAverage<double> MovingAvg_double_t;
 
-
-#endif /* MOVING_AVERAGE_H_ */
+#endif  // COB_TWIST_CONTROLLER_UTILS_MOVING_AVERAGE_H

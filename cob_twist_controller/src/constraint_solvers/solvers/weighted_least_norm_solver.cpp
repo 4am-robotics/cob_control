@@ -26,8 +26,8 @@
  *   Special constraint: Avoid joint limits.
  *
  ****************************************************************/
-#include "cob_twist_controller/constraint_solvers/solvers/weighted_least_norm_solver.h"
 
+#include "cob_twist_controller/constraint_solvers/solvers/weighted_least_norm_solver.h"
 
 /**
  * Specific implementation of the solve method using a weighted least norm.
@@ -39,8 +39,8 @@ Eigen::MatrixXd WeightedLeastNormSolver::solve(const Vector6d_t& in_cart_velocit
 {
     Eigen::MatrixXd W_WLN = this->calculateWeighting(joint_states);
     // for the following formulas see Chan paper ISSN 1042-296X [Page 288]
-    Eigen::MatrixXd root_W_WLN =  W_WLN.cwiseSqrt(); // element-wise sqrt -> ok because diag matrix W^(1/2)
-    Eigen::MatrixXd inv_root_W_WLN =  root_W_WLN.inverse(); // -> W^(-1/2)
+    Eigen::MatrixXd root_W_WLN =  W_WLN.cwiseSqrt();            // element-wise sqrt -> ok because diag matrix W^(1/2)
+    Eigen::MatrixXd inv_root_W_WLN =  root_W_WLN.inverse();     // -> W^(-1/2)
 
     // SVD of JLA weighted Jacobian: Damping will be done later in calculatePinvJacobianBySVD for pseudo-inverse Jacobian with additional truncation etc.
     Eigen::MatrixXd weighted_jacobian_pseudoinverse = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_ * inv_root_W_WLN);

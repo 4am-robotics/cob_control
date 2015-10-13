@@ -26,8 +26,9 @@
  *   task solver with additional gradient projection.
  *
  ****************************************************************/
-#ifndef DYNAMIC_TASKS_READJUST_SOLVER_H_
-#define DYNAMIC_TASKS_READJUST_SOLVER_H_
+
+#ifndef COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_STACK_OF_TASKS_SOLVER_H
+#define COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_STACK_OF_TASKS_SOLVER_H
 
 #include <set>
 #include <ros/ros.h>
@@ -51,8 +52,7 @@ class StackOfTasksSolver : public ConstraintSolver<>
         }
 
         virtual ~StackOfTasksSolver()
-        {
-        }
+        {}
 
         /**
          * Specific implementation of solve-method to solve IK problem with constraints by using the GPM.
@@ -60,8 +60,6 @@ class StackOfTasksSolver : public ConstraintSolver<>
          */
         virtual Eigen::MatrixXd solve(const Vector6d_t& in_cart_velocities,
                                       const JointStates& joint_states);
-
-
 
         /**
          * Process the state of the constraint and update the sum_of_gradient.
@@ -78,4 +76,4 @@ class StackOfTasksSolver : public ConstraintSolver<>
         double in_cart_vel_damping_;
 };
 
-#endif /* DYNAMIC_TASKS_READJUST_SOLVER_H_ */
+#endif  // COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_STACK_OF_TASKS_SOLVER_H

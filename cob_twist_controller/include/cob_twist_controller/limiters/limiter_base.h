@@ -25,8 +25,9 @@
  *   This header contains the interface description of limiters
  *
  ****************************************************************/
-#ifndef LIMITER_BASE_H_
-#define LIMITER_BASE_H_
+
+#ifndef COB_TWIST_CONTROLLER_LIMITERS_LIMITER_BASE_H
+#define COB_TWIST_CONTROLLER_LIMITERS_LIMITER_BASE_H
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include <kdl/chain.hpp>
@@ -57,4 +58,4 @@ class LimiterBase
         const KDL::Chain& chain_;
 };
 
-#endif /* LIMITER_BASE_H_ */
+#endif  // COB_TWIST_CONTROLLER_LIMITERS_LIMITER_BASE_H

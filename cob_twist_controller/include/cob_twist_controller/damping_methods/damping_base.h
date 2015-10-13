@@ -25,8 +25,9 @@
  *   This header contains the interface description of damping methods
  *
  ****************************************************************/
-#ifndef DAMPING_METHOD_INTERFACE_H_
-#define DAMPING_METHOD_INTERFACE_H_
+
+#ifndef COB_TWIST_CONTROLLER_DAMPING_METHODS_DAMPING_BASE_H
+#define COB_TWIST_CONTROLLER_DAMPING_METHODS_DAMPING_BASE_H
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 
@@ -34,15 +35,16 @@
 class DampingBase
 {
     public:
+        explicit DampingBase(const TwistControllerParams& params) : params_(params)
+        {}
+
         virtual ~DampingBase() {}
 
         virtual double getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
-                                          const Eigen::MatrixXd& jacobian_data) const = 0;
+                                        const Eigen::MatrixXd& jacobian_data) const = 0;
 
     protected:
-        DampingBase(const TwistControllerParams& params) : params_(params) { }
-
         const TwistControllerParams params_;
 };
 
-#endif /* DAMPING_METHOD_INTERFACE_H_ */
+#endif  // COB_TWIST_CONTROLLER_DAMPING_METHODS_DAMPING_BASE_H

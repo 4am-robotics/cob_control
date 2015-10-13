@@ -26,24 +26,24 @@
  *   kinematic chain with additional degrees of freedom, e.g. base_active or lookat
  *
  ****************************************************************/
-#ifndef KINEMATIC_EXTENSION_DOF_H_
-#define KINEMATIC_EXTENSION_DOF_H_
+
+#ifndef COB_TWIST_CONTROLLER_KINEMATIC_EXTENSIONS_KINEMATIC_EXTENSION_DOF_H
+#define COB_TWIST_CONTROLLER_KINEMATIC_EXTENSIONS_KINEMATIC_EXTENSION_DOF_H
 
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
-#include <tf/transform_listener.h>
 #include <tf/tf.h>
+#include <tf/transform_listener.h>
 #include <Eigen/Geometry>
 
 #include "cob_twist_controller/kinematic_extensions/kinematic_extension_base.h"
-
 
 /* BEGIN KinematicExtensionDOF ****************************************************************************************/
 /// Abstract Helper Class to be used for Cartesian KinematicExtensions based on enabled DoFs.
 class KinematicExtensionDOF : public KinematicExtensionBase
 {
     public:
-        KinematicExtensionDOF(const TwistControllerParams& params)
+        explicit KinematicExtensionDOF(const TwistControllerParams& params)
         : KinematicExtensionBase(params)
         {}
 
@@ -61,13 +61,12 @@ class KinematicExtensionDOF : public KinematicExtensionBase
 class KinematicExtensionBaseActive : public KinematicExtensionDOF
 {
     public:
-        KinematicExtensionBaseActive(const TwistControllerParams& params)
+        explicit KinematicExtensionBaseActive(const TwistControllerParams& params)
         : KinematicExtensionDOF(params)
         {
             base_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("/base/twist_controller/command", 1);
 
-            //ToDo: I don't like this hack! Can we pass the tf_listner_ somehow?
-            ///give tf_listener_ some time to fill buffer
+            /// give tf_listener_ some time to fill buffer
             ros::Duration(0.5).sleep();
         }
 
@@ -86,4 +85,4 @@ class KinematicExtensionBaseActive : public KinematicExtensionDOF
 };
 /* END KinematicExtensionBaseActive **********************************************************************************************/
 
-#endif /* KINEMATIC_EXTENSION_DOF_H_ */
+#endif  // COB_TWIST_CONTROLLER_KINEMATIC_EXTENSIONS_KINEMATIC_EXTENSION_DOF_H

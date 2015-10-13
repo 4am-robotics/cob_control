@@ -26,8 +26,9 @@
  *   kinematic chain with additional degrees of freedom, e.g. base_active or lookat
  *
  ****************************************************************/
-#ifndef KINEMATIC_EXTENSION_BUILDER_H_
-#define KINEMATIC_EXTENSION_BUILDER_H_
+
+#ifndef COB_TWIST_CONTROLLER_KINEMATIC_EXTENSIONS_KINEMATIC_EXTENSION_BUILDER_H
+#define COB_TWIST_CONTROLLER_KINEMATIC_EXTENSIONS_KINEMATIC_EXTENSION_BUILDER_H
 
 #include <ros/ros.h>
 #include <Eigen/Geometry>
@@ -51,17 +52,14 @@ class KinematicExtensionBuilder
 /* END KinematicExtensionBuilder *******************************************************************************************/
 
 
-
 /* BEGIN KinematicExtensionNone ****************************************************************************************/
 /// Class implementing the interface in case KinematicExtension is disabled.
 class KinematicExtensionNone : public KinematicExtensionBase
 {
     public:
-        KinematicExtensionNone(const TwistControllerParams& params)
+        explicit KinematicExtensionNone(const TwistControllerParams& params)
         : KinematicExtensionBase(params)
-        {
-            //nothing to do
-        }
+        {}
 
         ~KinematicExtensionNone() {}
 
@@ -70,4 +68,4 @@ class KinematicExtensionNone : public KinematicExtensionBase
 };
 /* END KinematicExtensionNone **********************************************************************************************/
 
-#endif /* KINEMATIC_EXTENSION_BUILDER_H_ */
+#endif  // COB_TWIST_CONTROLLER_KINEMATIC_EXTENSIONS_KINEMATIC_EXTENSION_BUILDER_H

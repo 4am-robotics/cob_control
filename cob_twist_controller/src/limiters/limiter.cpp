@@ -26,6 +26,7 @@
  *   methods to limit joint positions / velocities / accelerations.
  *
  ****************************************************************/
+#include <vector>
 #include <ros/ros.h>
 #include <kdl/chain.hpp>
 
@@ -55,36 +56,36 @@ void LimiterContainer::init()
 {
     this->eraseAll();
 
-    if(this->tc_params_.keep_direction)
+    if (this->tc_params_.keep_direction)
     {
-        if(this->tc_params_.enforce_pos_limits)
+        if (this->tc_params_.enforce_pos_limits)
         {
             this->add(new LimiterAllJointPositions(this->tc_params_, this->chain_));
         }
 
-        if(this->tc_params_.enforce_vel_limits)
+        if (this->tc_params_.enforce_vel_limits)
         {
             this->add(new LimiterAllJointVelocities(this->tc_params_, this->chain_));
         }
-        
-        if(this->tc_params_.enforce_acc_limits)
+
+        if (this->tc_params_.enforce_acc_limits)
         {
             this->add(new LimiterAllJointAccelerations(this->tc_params_, this->chain_));
         }
     }
     else
     {
-        if(this->tc_params_.enforce_pos_limits)
+        if (this->tc_params_.enforce_pos_limits)
         {
             this->add(new LimiterIndividualJointPositions(this->tc_params_, this->chain_));
         }
 
-        if(this->tc_params_.enforce_vel_limits)
+        if (this->tc_params_.enforce_vel_limits)
         {
             this->add(new LimiterIndividualJointVelocities(this->tc_params_, this->chain_));
         }
-        
-        if(this->tc_params_.enforce_acc_limits)
+
+        if (this->tc_params_.enforce_acc_limits)
         {
             this->add(new LimiterIndividualJointAccelerations(this->tc_params_, this->chain_));
         }
@@ -136,11 +137,11 @@ KDL::JntArray LimiterAllJointPositions::enforceLimits(const KDL::JntArray& q_dot
     double tolerance = this->tc_params_.limits_tolerance / 180.0 * M_PI;
     double max_factor = 1.0;
 
-    for(int i = 0; i < this->tc_params_.dof; ++i)
+    for (int i = 0; i < this->tc_params_.dof; ++i)
     {
-        if((this->tc_params_.limits_max[i] - q(i)) < tolerance)    //Joint is nearer to the MAXIMUM limit
+        if ((this->tc_params_.limits_max[i] - q(i)) < tolerance)  // Joint is nearer to the MAXIMUM limit
         {
-            if(q_dot_ik(i) > 0)   //Joint moves towards the MAX limit
+            if (q_dot_ik(i) > 0)  // Joint moves towards the MAX limit
             {
                 double temp = 1.0 / pow((0.5 + 0.5 * cos(M_PI * (q(i) + tolerance - this->tc_params_.limits_max[i]) / tolerance)), 5.0);
                 max_factor = (temp > max_factor) ? temp : max_factor;
@@ -148,9 +149,9 @@ KDL::JntArray LimiterAllJointPositions::enforceLimits(const KDL::JntArray& q_dot
         }
         else
         {
-            if((q(i) - this->tc_params_.limits_min[i]) < tolerance)    //Joint is nearer to the MINIMUM limit
+            if ((q(i) - this->tc_params_.limits_min[i]) < tolerance)  // Joint is nearer to the MINIMUM limit
             {
-                if(q_dot_ik(i) < 0)   //Joint moves towards the MIN limit
+                if (q_dot_ik(i) < 0)  // Joint moves towards the MIN limit
                 {
                     double temp = 1.0 / pow(0.5 + 0.5 * cos(M_PI * (q(i) - tolerance - this->tc_params_.limits_min[i]) / tolerance), 5.0);
                     max_factor = (temp > max_factor) ? temp : max_factor;
@@ -159,10 +160,10 @@ KDL::JntArray LimiterAllJointPositions::enforceLimits(const KDL::JntArray& q_dot
         }
     }
 
-    if(max_factor > 1.0)
+    if (max_factor > 1.0)
     {
         ROS_ERROR_STREAM_THROTTLE(1, "Position tolerance surpassed: Scaling ALL VELOCITIES with factor = " << max_factor);
-        for(int i = 0; i < q_dot_ik.rows() ; i++)
+        for (int i = 0; i < q_dot_ik.rows() ; i++)
         {
             q_dot_norm(i) = q_dot_ik(i) / max_factor;
         }
@@ -184,29 +185,29 @@ KDL::JntArray LimiterAllJointVelocities::enforceLimits(const KDL::JntArray& q_do
 
     uint16_t maxDof = this->tc_params_.dof;
     std::vector<double> tmpLimits = this->tc_params_.limits_vel;
-    if(this->tc_params_.kinematic_extension == BASE_ACTIVE)
+    if (this->tc_params_.kinematic_extension == BASE_ACTIVE)
     {
-        maxDof += 6; // additional 6 DOF kinematic extension
-        tmpLimits.push_back(this->tc_params_.max_vel_lin_base); // BaseTransX limit
-        tmpLimits.push_back(this->tc_params_.max_vel_lin_base); // BaseTransY limit
-        tmpLimits.push_back(this->tc_params_.max_vel_lin_base); // BaseTransZ limit
-        tmpLimits.push_back(this->tc_params_.max_vel_rot_base); // BaseRotX limit
-        tmpLimits.push_back(this->tc_params_.max_vel_rot_base); // BaseRotY limit
-        tmpLimits.push_back(this->tc_params_.max_vel_rot_base); // BaseRotZ limit
+        maxDof += 6;  // additional 6 DOF kinematic extension
+        tmpLimits.push_back(this->tc_params_.max_vel_lin_base);  // BaseTransX limit
+        tmpLimits.push_back(this->tc_params_.max_vel_lin_base);  // BaseTransY limit
+        tmpLimits.push_back(this->tc_params_.max_vel_lin_base);  // BaseTransZ limit
+        tmpLimits.push_back(this->tc_params_.max_vel_rot_base);  // BaseRotX limit
+        tmpLimits.push_back(this->tc_params_.max_vel_rot_base);  // BaseRotY limit
+        tmpLimits.push_back(this->tc_params_.max_vel_rot_base);  // BaseRotZ limit
     }
 
-    for(uint16_t i=0; i < maxDof; ++i)
+    for (uint16_t i=0; i < maxDof; ++i)
     {
-        if(max_factor < std::fabs(q_dot_ik(i) / tmpLimits[i]))
+        if (max_factor < std::fabs(q_dot_ik(i) / tmpLimits[i]))
         {
             max_factor = std::fabs(q_dot_ik(i) / tmpLimits[i]);
         }
     }
 
-    if(max_factor > 1.0)
+    if (max_factor > 1.0)
     {
         ROS_WARN_STREAM_THROTTLE(1, "Velocity limit surpassed: Scaling ALL VELOCITIES with factor = " << max_factor);
-        for(uint16_t i=0; i < maxDof; ++i)
+        for (uint16_t i=0; i < maxDof; ++i)
         {
             q_dot_norm(i) = q_dot_ik(i) / max_factor;
         }
@@ -243,12 +244,12 @@ KDL::JntArray LimiterIndividualJointPositions::enforceLimits(const KDL::JntArray
     double tolerance = this->tc_params_.limits_tolerance / 180.0 * M_PI;
     double max_factor = 1.0;
 
-    for(uint16_t i = 0; i < this->tc_params_.dof; ++i)
+    for (uint16_t i = 0; i < this->tc_params_.dof; ++i)
     {
         max_factor = 1.0;
-        if((this->tc_params_.limits_max[i] - q(i)) < tolerance)    //Joint is nearer to the MAXIMUM limit
+        if ((this->tc_params_.limits_max[i] - q(i)) < tolerance)  // Joint is nearer to the MAXIMUM limit
         {
-            if(q_dot_ik(i) > 0.0)   //Joint moves towards the MAX limit
+            if (q_dot_ik(i) > 0.0)  // Joint moves towards the MAX limit
             {
                 max_factor = 1.0 / pow((0.5 + 0.5 * cos(M_PI * (q(i) + tolerance - this->tc_params_.limits_max[i]) / tolerance)), 5.0);
                 q_dot_norm(i) = q_dot_norm(i) / max_factor;
@@ -256,9 +257,9 @@ KDL::JntArray LimiterIndividualJointPositions::enforceLimits(const KDL::JntArray
         }
         else
         {
-            if((q(i) - this->tc_params_.limits_min[i]) < tolerance)    //Joint is nearer to the MINIMUM limit
+            if ((q(i) - this->tc_params_.limits_min[i]) < tolerance)  // Joint is nearer to the MINIMUM limit
             {
-                if(q_dot_ik(i) < 0.0)   //Joint moves towards the MIN limit
+                if (q_dot_ik(i) < 0.0)  // Joint moves towards the MIN limit
                 {
                     max_factor = 1.0 / pow(0.5 + 0.5 * cos(M_PI * (q(i) - tolerance - this->tc_params_.limits_min[i]) / tolerance), 5.0);
                     q_dot_norm(i) = q_dot_norm(i) / max_factor;
@@ -283,21 +284,21 @@ KDL::JntArray LimiterIndividualJointVelocities::enforceLimits(const KDL::JntArra
 
     uint16_t maxDof = this->tc_params_.dof;
     std::vector<double> tmpLimits = this->tc_params_.limits_vel;
-    if(this->tc_params_.kinematic_extension == BASE_ACTIVE)
+    if (this->tc_params_.kinematic_extension == BASE_ACTIVE)
     {
-        maxDof += 6; // additional 6 DOF kinematic extension
-        tmpLimits.push_back(this->tc_params_.max_vel_lin_base); // BaseTransX limit
-        tmpLimits.push_back(this->tc_params_.max_vel_lin_base); // BaseTransY limit
-        tmpLimits.push_back(this->tc_params_.max_vel_lin_base); // BaseTransZ limit
-        tmpLimits.push_back(this->tc_params_.max_vel_rot_base); // BaseRotX limit
-        tmpLimits.push_back(this->tc_params_.max_vel_rot_base); // BaseRotY limit
-        tmpLimits.push_back(this->tc_params_.max_vel_rot_base); // BaseRotZ limit
+        maxDof += 6;  // additional 6 DOF kinematic extension
+        tmpLimits.push_back(this->tc_params_.max_vel_lin_base);  // BaseTransX limit
+        tmpLimits.push_back(this->tc_params_.max_vel_lin_base);  // BaseTransY limit
+        tmpLimits.push_back(this->tc_params_.max_vel_lin_base);  // BaseTransZ limit
+        tmpLimits.push_back(this->tc_params_.max_vel_rot_base);  // BaseRotX limit
+        tmpLimits.push_back(this->tc_params_.max_vel_rot_base);  // BaseRotY limit
+        tmpLimits.push_back(this->tc_params_.max_vel_rot_base);  // BaseRotZ limit
     }
 
-    for(uint16_t i=0; i < maxDof; ++i)
+    for (uint16_t i=0; i < maxDof; ++i)
     {
         max_factor = 1.0;
-        if(max_factor < std::fabs(q_dot_ik(i) / tmpLimits[i]))
+        if (max_factor < std::fabs(q_dot_ik(i) / tmpLimits[i]))
         {
             max_factor = std::fabs(q_dot_ik(i) / tmpLimits[i]);
             q_dot_norm(i) = q_dot_ik(i) / max_factor;

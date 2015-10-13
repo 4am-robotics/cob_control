@@ -26,9 +26,11 @@
  *   controller interfaces (Velocity/Position/Trajectory/JointStates).
  *
  ****************************************************************/
-#ifndef CONTROLLER_INTERFACE_BASE_H_
-#define CONTROLLER_INTERFACE_BASE_H_
 
+#ifndef COB_TWIST_CONTROLLER_CONTROLLER_INTERFACES_CONTROLLER_INTERFACE_BASE_H
+#define COB_TWIST_CONTROLLER_CONTROLLER_INTERFACES_CONTROLLER_INTERFACE_BASE_H
+
+#include <vector>
 #include "ros/ros.h"
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
@@ -37,8 +39,8 @@
 class ControllerInterfaceBase
 {
     public:
-        ControllerInterfaceBase(ros::NodeHandle& nh,
-                                const TwistControllerParams& params):
+        explicit ControllerInterfaceBase(ros::NodeHandle& nh,
+                                         const TwistControllerParams& params):
             nh_(nh),
             params_(params)
         {}
@@ -47,7 +49,6 @@ class ControllerInterfaceBase
 
         virtual void processResult(const KDL::JntArray& q_dot_ik,
                                    const KDL::JntArray& current_q) = 0;
-
 
     protected:
         const TwistControllerParams& params_;
@@ -59,9 +60,9 @@ class ControllerInterfaceBase
 class ControllerInterfacePositionBase : public ControllerInterfaceBase
 {
     public:
-        ControllerInterfacePositionBase(ros::NodeHandle& nh,
-                                        const TwistControllerParams& params,
-                                        const uint16_t ma_size)
+        explicit ControllerInterfacePositionBase(ros::NodeHandle& nh,
+                                                 const TwistControllerParams& params,
+                                                 const uint16_t ma_size)
         : ControllerInterfaceBase(nh, params)
         {
             ma_.assign(params.dof, MovingAvg_double_t(ma_size));
@@ -73,7 +74,7 @@ class ControllerInterfacePositionBase : public ControllerInterfaceBase
 
         virtual void processResult(const KDL::JntArray& q_dot_ik,
                                    const KDL::JntArray& current_q) = 0;
-        
+
         bool updateIntegration(const KDL::JntArray& q_dot_ik,
                                const KDL::JntArray& current_q)
         {
@@ -84,18 +85,18 @@ class ControllerInterfacePositionBase : public ControllerInterfaceBase
             pos.clear();
             vel.clear();
 
-            //ToDo: Test this and find good threshold
-            if(period.toSec() > 2*last_period_.toSec()) //missed about a cycle
+            // ToDo: Test this and find good threshold
+            if (period.toSec() > 2*last_period_.toSec())  // missed about a cycle
             {
                 ROS_WARN("reset Integration");
-                //resetting outdated values
+                // resetting outdated values
                 vel_last_.clear();
                 vel_before_last_.clear();
             }
 
-            if(!vel_before_last_.empty())
+            if (!vel_before_last_.empty())
             {
-                for(unsigned int i = 0; i < params_.dof; ++i)
+                for (unsigned int i = 0; i < params_.dof; ++i)
                 {
                     // Simpson
                     double integration_value = static_cast<double>(period.toSec() / 6.0 * (vel_before_last_[i] + 4.0 * (vel_before_last_[i] + vel_last_[i]) + vel_before_last_[i] + vel_last_[i] + q_dot_ik(i)) + current_q(i));
@@ -110,13 +111,13 @@ class ControllerInterfacePositionBase : public ControllerInterfaceBase
 
             // Continuously shift the vectors for simpson integration
             vel_before_last_.clear();
-            for(unsigned int i=0; i < vel_last_.size(); ++i)
+            for (unsigned int i=0; i < vel_last_.size(); ++i)
             {
                 vel_before_last_.push_back(vel_last_[i]);
             }
 
             vel_last_.clear();
-            for(unsigned int i=0; i < q_dot_ik.rows(); ++i)
+            for (unsigned int i=0; i < q_dot_ik.rows(); ++i)
             {
                 vel_last_.push_back(q_dot_ik(i));
             }
@@ -134,5 +135,4 @@ class ControllerInterfacePositionBase : public ControllerInterfaceBase
         std::vector<double> pos, vel;
 };
 
-
-#endif /* CONTROLLER_INTERFACE_BASE_H_ */
+#endif  // COB_TWIST_CONTROLLER_CONTROLLER_INTERFACES_CONTROLLER_INTERFACE_BASE_H

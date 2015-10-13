@@ -25,7 +25,9 @@
  *   Implementation of an unconstraint solver.
  *
  ****************************************************************/
+
 #include <ros/ros.h>
+
 #include "cob_twist_controller/constraint_solvers/solvers/unconstraint_solver.h"
 
 /**

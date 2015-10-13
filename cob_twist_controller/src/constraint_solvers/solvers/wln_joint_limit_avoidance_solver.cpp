@@ -26,6 +26,8 @@
  *   Special constraint: Avoid joint limits.
  *
  ****************************************************************/
+
+#include <vector>
 #include <ros/ros.h>
 
 #include "cob_twist_controller/constraint_solvers/solvers/wln_joint_limit_avoidance_solver.h"
@@ -45,21 +47,20 @@ Eigen::MatrixXd WLN_JointLimitAvoidanceSolver::calculateWeighting(const JointSta
     KDL::JntArray q = joint_states.current_q_;
     KDL::JntArray q_dot = joint_states.current_q_dot_;
 
-    for(uint32_t i = 0; i < cols ; ++i)
+    for (uint32_t i = 0; i < cols ; ++i)
     {
-        output(i) = 1.0; // in the else cases -> output always 1
-        if(i < q.rows())
+        output(i) = 1.0;    // in the else cases -> output always 1
+        if (i < q.rows())
         {
-            //See Chan paper ISSN 1042-296X [Page 288]
-            if( (q_dot(i) > 0.0 && ((limits_max[i] - q(i)) < (q(i) - limits_min[i])))
-                    || (q_dot(i) < 0.0 && ((limits_max[i] - q(i)) > (q(i) - limits_min[i]))) )
+            // See Chan paper ISSN 1042-296X [Page 288]
+            if ( (q_dot(i) > 0.0 && ((limits_max[i] - q(i)) < (q(i) - limits_min[i])))
+                 || (q_dot(i) < 0.0 && ((limits_max[i] - q(i)) > (q(i) - limits_min[i]))) )
             {
                 // calculation is only necessary in case of condition is true!
                 double nominator = pow(limits_max[i]-limits_min[i], 2.0) * (2.0 * q(i) - limits_max[i] - limits_min[i]);
                 double denominator = 4.0 * pow(limits_max[i] - q(i), 2.0) * pow(q(i) - limits_min[i], 2.0);
                 if (denominator != 0.0)
                 {
-                    //double partialPerformanceCriterion = rad * fabs(nominator / denominator);
                     double partialPerformanceCriterion = fabs(nominator / denominator);
                     output(i) = 1 + partialPerformanceCriterion;
                 }

@@ -34,29 +34,24 @@
  *
  ****************************************************************/
 
-#ifndef SELF_MOTION_MAGNITUDE_H_
-#define SELF_MOTION_MAGNITUDE_H_
-
-#include "cob_twist_controller/cob_twist_controller_data_types.h"
-
-#include "ros/ros.h"
+#ifndef COB_TWIST_CONTROLLER_CONSTRAINTS_SELF_MOTION_MAGNITUDE_H
+#define COB_TWIST_CONTROLLER_CONSTRAINTS_SELF_MOTION_MAGNITUDE_H
 
 #include <vector>
 #include <algorithm>
 #include <cmath>
+#include <ros/ros.h>
+
+#include "cob_twist_controller/cob_twist_controller_data_types.h"
 
 class SelfMotionMagnitudeDeterminatorBase
 {
     public:
         SelfMotionMagnitudeDeterminatorBase()
-        {
-
-        }
+        {}
 
         virtual ~SelfMotionMagnitudeDeterminatorBase()
-        {
-
-        }
+        {}
 
         virtual double calculate(const TwistControllerParams& params,
                                  const Eigen::MatrixXd& particular_solution,
@@ -69,18 +64,17 @@ class SmmDeterminatorVelocityBounds : public SelfMotionMagnitudeDeterminatorBase
 {
     public:
         SmmDeterminatorVelocityBounds()
-        {
+        {}
 
-        }
-
-        virtual ~SmmDeterminatorVelocityBounds() {}
+        virtual ~SmmDeterminatorVelocityBounds()
+        {}
 
         /// Implementation of SMM. Formula: See header comment!
         virtual double calculate(const TwistControllerParams& params, const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const
         {
             std::vector<double> velLim = params.limits_vel;
             uint16_t cntRows = particular_solution.rows();
-            if(params.kinematic_extension == BASE_ACTIVE && (cntRows == (velLim.size() + 6)))
+            if (params.kinematic_extension == BASE_ACTIVE && (cntRows == (velLim.size() + 6)))
             {
                 // Base active with extended 6 DOF
                 velLim.push_back(params.max_vel_lin_base);
@@ -98,7 +92,7 @@ class SmmDeterminatorVelocityBounds : public SelfMotionMagnitudeDeterminatorBase
                 return 0.0;
             }
 
-            if(homogeneous_solution.norm() <= ZERO_THRESHOLD)
+            if (homogeneous_solution.norm() <= ZERO_THRESHOLD)
             {
                 return 0.0;
             }
@@ -110,7 +104,7 @@ class SmmDeterminatorVelocityBounds : public SelfMotionMagnitudeDeterminatorBase
             {
                 double upper;
                 double lower;
-                if (std::abs(double(homogeneous_solution(i))) > ZERO_THRESHOLD)
+                if (std::fabs(static_cast<double>(homogeneous_solution(i))) > ZERO_THRESHOLD)
                 {
                     upper = (velLim[i] - particular_solution(i)) / homogeneous_solution(i);
                     lower = (-velLim[i] - particular_solution(i)) / homogeneous_solution(i);
@@ -128,9 +122,9 @@ class SmmDeterminatorVelocityBounds : public SelfMotionMagnitudeDeterminatorBase
                 }
             }
 
-            if(kMax > kMin)
+            if (kMax > kMin)
             {
-                if(MAXIMIZE)
+                if (MAXIMIZE)
                 {
                     kResult = kMax;
                     ROS_INFO_STREAM("Calculated MAX k = " << kResult);
@@ -151,16 +145,14 @@ class SmmDeterminatorVelocityBounds : public SelfMotionMagnitudeDeterminatorBase
         }
 };
 
-
 class SmmDeterminatorConstant : public SelfMotionMagnitudeDeterminatorBase
 {
     public:
         SmmDeterminatorConstant()
-        {
+        {}
 
-        }
-
-        virtual ~SmmDeterminatorConstant() {}
+        virtual ~SmmDeterminatorConstant()
+        {}
 
         virtual double calculate(const TwistControllerParams& params,
                                  const Eigen::MatrixXd& particular_solution,
@@ -170,13 +162,11 @@ class SmmDeterminatorConstant : public SelfMotionMagnitudeDeterminatorBase
         }
 };
 
-
 /// Factory to create an SMM type object and call calculate method on it.
 template <typename T>
 class SelfMotionMagnitudeFactory
 {
     public:
-
         static double calculate(const TwistControllerParams& params,
                                 const Eigen::MatrixXd& particular_solution,
                                 const Eigen::MatrixXd& homogeneous_solution)
@@ -185,8 +175,6 @@ class SelfMotionMagnitudeFactory
             double k = smm_determinator.calculate(params, particular_solution, homogeneous_solution);
             return k;
         }
-
-    protected:
 };
 
-#endif /* SELF_MOTION_MAGNITUDE_H_ */
+#endif  // COB_TWIST_CONTROLLER_CONSTRAINTS_SELF_MOTION_MAGNITUDE_H

@@ -25,8 +25,9 @@
  *   This package provides a generic Twist controller for the Care-O-bot
  *
  ****************************************************************/
-#ifndef COB_TWIST_CONTROLLER_H
-#define COB_TWIST_CONTROLLER_H
+
+#ifndef COB_TWIST_CONTROLLER_COB_TWIST_CONTROLLER_H
+#define COB_TWIST_CONTROLLER_COB_TWIST_CONTROLLER_H
 
 #include <ros/ros.h>
 
@@ -120,6 +121,6 @@ public:
 
     boost::recursive_mutex reconfig_mutex_;
     boost::shared_ptr< dynamic_reconfigure::Server<cob_twist_controller::TwistControllerConfig> > reconfigure_server_;
-
 };
-#endif
+
+#endif  // COB_TWIST_CONTROLLER_COB_TWIST_CONTROLLER_H

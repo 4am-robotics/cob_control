@@ -1,4 +1,4 @@
-/*
+/*!
  *****************************************************************
  * \file
  *
@@ -26,9 +26,10 @@
  *
  ****************************************************************/
 
-#include <cob_twist_controller/constraint_solvers/constraint_solver_factory.h>
+#include <set>
 #include <ros/ros.h>
 
+#include <cob_twist_controller/constraint_solvers/constraint_solver_factory.h>
 #include "cob_twist_controller/constraint_solvers/solvers/constraint_solver_base.h"
 #include "cob_twist_controller/constraint_solvers/solvers/unconstraint_solver.h"
 #include "cob_twist_controller/constraint_solvers/solvers/wln_joint_limit_avoidance_solver.h"
@@ -38,7 +39,6 @@
 #include "cob_twist_controller/constraint_solvers/solvers/stack_of_tasks_solver.h"
 
 #include "cob_twist_controller/damping_methods/damping.h"
-
 #include "cob_twist_controller/constraints/constraint.h"
 
 /**
@@ -56,11 +56,11 @@ int8_t ConstraintSolverFactory::calculateJointVelocities(Matrix6Xd_t& jacobian_d
 
     if (NULL == this->damping_method_)
     {
-        return -1; // damping method not initialized
+        return -1;  // damping method not initialized
     }
     else if (NULL == this->solver_factory_)
     {
-        return -2; // solver factory not initialized
+        return -2;  // solver factory not initialized
     }
     else
     {
@@ -73,7 +73,7 @@ int8_t ConstraintSolverFactory::calculateJointVelocities(Matrix6Xd_t& jacobian_d
                                                                          this->damping_method_,
                                                                          this->constraints_);
 
-    return 0; // success
+    return 0;   // success
 }
 
 /**
@@ -83,7 +83,7 @@ bool ConstraintSolverFactory::getSolverFactory(const TwistControllerParams& para
                                                boost::shared_ptr<ISolverFactory>& solver_factory,
                                                TaskStackController_t& task_stack_controller)
 {
-    switch(params.solver)
+    switch (params.solver)
     {
         case DEFAULT_SOLVER:
             solver_factory.reset(new SolverFactory<UnconstraintSolver>(params, task_stack_controller));
@@ -119,10 +119,10 @@ bool ConstraintSolverFactory::getSolverFactory(const TwistControllerParams& para
 int8_t ConstraintSolverFactory::resetAll(const TwistControllerParams& params)
 {
     this->damping_method_.reset(DampingBuilder::createDamping(params));
-    if(NULL == this->damping_method_)
+    if (NULL == this->damping_method_)
     {
         ROS_ERROR("Returning NULL due to damping creation error.");
-        return -1; // error
+        return -1;  // error
     }
 
     this->constraints_.clear();
@@ -131,12 +131,12 @@ int8_t ConstraintSolverFactory::resetAll(const TwistControllerParams& params)
                                                                  this->fk_solver_vel_,
                                                                  this->data_mediator_);
 
-    for(std::set<ConstraintBase_t>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
+    for (std::set<ConstraintBase_t>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
     {
         ROS_DEBUG_STREAM((*it)->getTaskId());
     }
 
-    if(!ConstraintSolverFactory::getSolverFactory(params, this->solver_factory_, this->task_stack_controller_))
+    if (!ConstraintSolverFactory::getSolverFactory(params, this->solver_factory_, this->task_stack_controller_))
     {
         return -2;
     }

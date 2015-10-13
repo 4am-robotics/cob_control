@@ -26,9 +26,12 @@
  *
  ****************************************************************/
 
-#ifndef CONSTRAINT_H_
-#define CONSTRAINT_H_
+#ifndef COB_TWIST_CONTROLLER_CONSTRAINTS_CONSTRAINT_H
+#define COB_TWIST_CONTROLLER_CONSTRAINTS_CONSTRAINT_H
 
+#include <set>
+#include <string>
+#include <limits>
 #include <kdl/chainjnttojacsolver.hpp>
 #include <kdl/chainfksolvervel_recursive.hpp>
 
@@ -36,7 +39,6 @@
 #include "cob_twist_controller/constraints/constraint_base.h"
 #include "cob_twist_controller/callback_data_mediator.h"
 #include "cob_twist_controller/utils/moving_average.h"
-
 
 /* BEGIN ConstraintParamFactory *********************************************************************************/
 /// Creates constraint parameters and fills them with the values provided by CallbackDataMediator.
@@ -83,7 +85,6 @@ template <typename T_PARAMS, typename PRIO = uint32_t>
 class CollisionAvoidance : public ConstraintBase<T_PARAMS, PRIO>
 {
     public:
-
         CollisionAvoidance(PRIO prio,
                            T_PARAMS constraint_params,
                            CallbackDataMediator& cbdm,
@@ -98,9 +99,8 @@ class CollisionAvoidance : public ConstraintBase<T_PARAMS, PRIO>
         {}
 
         virtual void calculate();
-
-        virtual std::string getTaskId() const;
         virtual Task_t createTask();
+        virtual std::string getTaskId() const;
         virtual Eigen::MatrixXd getTaskJacobian() const;
         virtual Eigen::VectorXd getTaskDerivatives() const;
 
@@ -135,27 +135,24 @@ template <typename T_PARAMS, typename PRIO = uint32_t>
 class JointLimitAvoidance : public ConstraintBase<T_PARAMS, PRIO>
 {
     public:
-
         JointLimitAvoidance(PRIO prio,
                             T_PARAMS constraint_params,
                             CallbackDataMediator& cbdm)
             : ConstraintBase<T_PARAMS, PRIO>(prio, constraint_params, cbdm),
               abs_delta_max_(std::numeric_limits<double>::max()),
               abs_delta_min_(std::numeric_limits<double>::max()),  // max. delta away from min
-              rel_max_(1.0), // 100% rel. range to max limit
-              rel_min_(1.0) // 100% rel. range to min limit
+              rel_max_(1.0),    // 100% rel. range to max limit
+              rel_min_(1.0)     // 100% rel. range to min limit
         {}
 
         virtual ~JointLimitAvoidance()
         {}
 
-        virtual std::string getTaskId() const;
+        virtual void calculate();
         virtual Task_t createTask();
+        virtual std::string getTaskId() const;
         virtual Eigen::MatrixXd getTaskJacobian() const;
         virtual Eigen::VectorXd getTaskDerivatives() const;
-
-        virtual void calculate();
-
         virtual double getActivationGain() const;
         virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const;
 
@@ -178,7 +175,6 @@ template <typename T_PARAMS, typename PRIO = uint32_t>
 class JointLimitAvoidanceMid : public ConstraintBase<T_PARAMS, PRIO>
 {
     public:
-
         JointLimitAvoidanceMid(PRIO prio,
                                T_PARAMS constraint_params,
                                CallbackDataMediator& cbdm)
@@ -188,10 +184,8 @@ class JointLimitAvoidanceMid : public ConstraintBase<T_PARAMS, PRIO>
         virtual ~JointLimitAvoidanceMid()
         {}
 
-        virtual std::string getTaskId() const;
-
         virtual void calculate();
-
+        virtual std::string getTaskId() const;
         virtual double getActivationGain() const;
         virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const;
 
@@ -222,13 +216,11 @@ class JointLimitAvoidanceIneq : public ConstraintBase<T_PARAMS, PRIO>
         virtual ~JointLimitAvoidanceIneq()
         {}
 
+        virtual void calculate();
         virtual Task_t createTask();
         virtual std::string getTaskId() const;
         virtual Eigen::MatrixXd getTaskJacobian() const;
         virtual Eigen::VectorXd getTaskDerivatives() const;
-
-        virtual void calculate();
-
         virtual double getActivationGain() const;
         virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const;
 
@@ -247,6 +239,6 @@ class JointLimitAvoidanceIneq : public ConstraintBase<T_PARAMS, PRIO>
 
 typedef ConstraintsBuilder<uint32_t> ConstraintsBuilder_t;
 
-#include "cob_twist_controller/constraints/constraint_impl.h" // implementation of templated class
+#include "cob_twist_controller/constraints/constraint_impl.h"   // implementation of templated class
 
-#endif /* CONSTRAINT_H_ */
+#endif  // COB_TWIST_CONTROLLER_CONSTRAINTS_CONSTRAINT_H

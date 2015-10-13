@@ -26,9 +26,12 @@
  *   kinematic chain with additional degrees of freedom, e.g. base_active or lookat
  *
  ****************************************************************/
-#ifndef KINEMATIC_EXTENSION_URDF_H_
-#define KINEMATIC_EXTENSION_URDF_H_
 
+#ifndef COB_TWIST_CONTROLLER_KINEMATIC_EXTENSIONS_KINEMATIC_EXTENSION_URDF_H
+#define COB_TWIST_CONTROLLER_KINEMATIC_EXTENSIONS_KINEMATIC_EXTENSION_URDF_H
+
+#include <string>
+#include <vector>
 #include <ros/ros.h>
 #include <std_msgs/Float64MultiArray.h>
 #include <sensor_msgs/JointState.h>
@@ -39,13 +42,12 @@
 
 #include "cob_twist_controller/kinematic_extensions/kinematic_extension_base.h"
 
-
 /* BEGIN KinematicExtensionURDF ****************************************************************************************/
 /// Abstract Helper Class to be used for Cartesian KinematicExtensions based on URDF.
 class KinematicExtensionURDF : public KinematicExtensionBase
 {
     public:
-        KinematicExtensionURDF(const TwistControllerParams& params)
+        explicit KinematicExtensionURDF(const TwistControllerParams& params)
         : KinematicExtensionBase(params)
         {}
 
@@ -74,25 +76,25 @@ class KinematicExtensionURDF : public KinematicExtensionBase
 class KinematicExtensionTorso : public KinematicExtensionURDF
 {
     public:
-        KinematicExtensionTorso(const TwistControllerParams& params)
+        explicit KinematicExtensionTorso(const TwistControllerParams& params)
         : KinematicExtensionURDF(params)
         {
             std::string chain_base = "torso_base_link";
             std::string chain_tip = "torso_center_link";
-            
-            if(!initUrdfExtension(chain_base, chain_tip))
+
+            if (!initUrdfExtension(chain_base, chain_tip))
             {
                 ROS_ERROR("Initialization failed");
             }
 
-            joint_state_sub_ = nh_.subscribe("torso/joint_states", 1, &KinematicExtensionURDF::jointstateCallback, dynamic_cast<KinematicExtensionURDF*>( this ));
+            joint_state_sub_ = nh_.subscribe("torso/joint_states", 1, &KinematicExtensionURDF::jointstateCallback, dynamic_cast<KinematicExtensionURDF*>(this));
             command_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("torso/joint_group_velocity_controller/command", 1);
         }
 
         ~KinematicExtensionTorso() {}
-        
+
         KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain);
 };
 /* END KinematicExtensionTorso **********************************************************************************************/
 
-#endif /* KINEMATIC_EXTENSION_URDF_H_ */
+#endif  // COB_TWIST_CONTROLLER_KINEMATIC_EXTENSIONS_KINEMATIC_EXTENSION_URDF_H

@@ -26,8 +26,9 @@
  *   kinematic chain with additional degrees of freedom, e.g. base_active or lookat
  *
  ****************************************************************/
-#ifndef KINEMATIC_EXTENSION_BASE_H_
-#define KINEMATIC_EXTENSION_BASE_H_
+
+#ifndef COB_TWIST_CONTROLLER_KINEMATIC_EXTENSIONS_KINEMATIC_EXTENSION_BASE_H
+#define COB_TWIST_CONTROLLER_KINEMATIC_EXTENSIONS_KINEMATIC_EXTENSION_BASE_H
 
 #include <ros/ros.h>
 
@@ -38,7 +39,7 @@
 class KinematicExtensionBase
 {
     public:
-        KinematicExtensionBase(const TwistControllerParams& params):
+        explicit KinematicExtensionBase(const TwistControllerParams& params):
             params_(params)
         {}
 
@@ -51,4 +52,4 @@ class KinematicExtensionBase
         const TwistControllerParams& params_;
 };
 
-#endif /* KINEMATIC_EXTENSION_BASE_H_ */
+#endif  // COB_TWIST_CONTROLLER_KINEMATIC_EXTENSIONS_KINEMATIC_EXTENSION_BASE_H

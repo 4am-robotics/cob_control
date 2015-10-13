@@ -39,13 +39,13 @@ KinematicExtensionBase* KinematicExtensionBuilder::createKinematicExtension(cons
 {
     KinematicExtensionBase* keb = NULL;
 
-    switch(params.kinematic_extension)
+    switch (params.kinematic_extension)
     {
         case NO_EXTENSION:
             keb = new KinematicExtensionNone(params);
             break;
         case BASE_COMPENSATION:
-            //nothing to do here for BASE_COMPENSATION
+            // nothing to do here for BASE_COMPENSATION
             break;
         case BASE_ACTIVE:
             keb = new KinematicExtensionBaseActive(params);
@@ -81,4 +81,3 @@ void KinematicExtensionNone::processResultExtension(const KDL::JntArray& q_dot_i
     return;
 }
 /* END KinematicExtensionNone **********************************************************************************************/
-
