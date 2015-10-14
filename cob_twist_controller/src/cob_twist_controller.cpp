@@ -118,7 +118,7 @@ bool CobTwistController::initialize()
         twist_controller_params_.frame_names.push_back(chain_.getSegment(i).getName());
     }
     register_link_client_ = nh_.serviceClient<cob_srvs::SetString>("obstacle_distance/registerLinkOfInterest");
-    register_link_client_.waitForExistence(ros::Duration(2.0));
+    register_link_client_.waitForExistence(ros::Duration(5.0));
 
     /// initialize configuration control solver
     p_inv_diff_kin_solver_.reset(new InverseDifferentialKinematicsSolver(twist_controller_params_, chain_, callback_data_mediator_));

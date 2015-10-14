@@ -52,14 +52,15 @@ int main(int argc, char** argv)
         return -4;
     }
 
-    ros::Subscriber jointstate_sub = nh.subscribe("joint_states", 1, &DistanceManager::jointstateCb, &sm);
-    ros::Subscriber obstacle_sub = nh.subscribe("obstacle_distance/registerObstacle", 1, &DistanceManager::registerObstacle, &sm);
-    ros::ServiceServer registration_srv = nh.advertiseService("obstacle_distance/registerLinkOfInterest" , &DistanceManager::registerLinkOfInterest, &sm);
-
     //addTestObstacles(sm); // Comment in to see what happens
 
     std::thread t(&DistanceManager::transform, std::ref(sm));
+    ros::Duration(1.0).sleep(); // Give some time for threads to run
     ROS_INFO_STREAM("Started transform thread.");
+
+    ros::Subscriber jointstate_sub = nh.subscribe("joint_states", 1, &DistanceManager::jointstateCb, &sm);
+    ros::Subscriber obstacle_sub = nh.subscribe("obstacle_distance/registerObstacle", 1, &DistanceManager::registerObstacle, &sm);
+    ros::ServiceServer registration_srv = nh.advertiseService("obstacle_distance/registerLinkOfInterest" , &DistanceManager::registerLinkOfInterest, &sm);
 
     ros::Rate loop_rate(20);
     while(ros::ok())
