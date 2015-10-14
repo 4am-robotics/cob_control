@@ -45,7 +45,8 @@ KinematicExtensionBase* KinematicExtensionBuilder::createKinematicExtension(cons
             keb = new KinematicExtensionNone(params);
             break;
         case BASE_COMPENSATION:
-            // nothing to do here for BASE_COMPENSATION
+            // nothing to do here for BASE_COMPENSATION - only affects twist subscription callback
+            keb = new KinematicExtensionNone(params);
             break;
         case BASE_ACTIVE:
             keb = new KinematicExtensionBaseActive(params);
