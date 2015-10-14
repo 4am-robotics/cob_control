@@ -76,9 +76,13 @@ void ShapesManager::draw()
     for(MapIter_t iter = shapes_.begin(); iter != shapes_.end(); ++iter)
     {
         PtrIMarkerShape_t elem = iter->second;
-        visualization_msgs::Marker marker = elem->getMarker();
-        marker_array.markers.push_back(marker);
+        if(elem->isDrawable())
+        {
+            visualization_msgs::Marker marker = elem->getMarker();
+            marker_array.markers.push_back(marker);
+        }
     }
+
     this->pub_.publish(marker_array);
     sleep(0.1); // it takes some time for Rviz to compute and show the marker!
 }
