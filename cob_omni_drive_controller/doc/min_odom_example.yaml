@@ -1,0 +1,14 @@
+type: cob_omni_drive_controller/OdometryController
+
+publish_rate: 50
+# broadcast_tf: true
+
+wheels:
+  - steer: fl_caster_rotation_joint
+    drive: fl_caster_r_wheel_joint
+  - steer: bl_caster_rotation_joint
+    drive: bl_caster_r_wheel_joint
+  - steer: br_caster_rotation_joint
+    drive: br_caster_r_wheel_joint
+  - steer: fr_caster_rotation_joint
+    drive: fr_caster_r_wheel_joint

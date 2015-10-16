@@ -1,0 +1,22 @@
+## goal definition
+
+# frame to track
+string tracking_frame
+
+# max time to track
+float64 tracking_duration
+
+# stop tracking when goal is reached?
+bool stop_on_goal
+
+---
+
+# result definition
+bool success
+string message
+
+---
+
+# feedback definition
+geometry_msgs/Twist twist
+float64 distance

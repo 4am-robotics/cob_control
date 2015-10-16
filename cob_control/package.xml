@@ -1,8 +1,7 @@
-<package>
+<package format="2">
   <name>cob_control</name>
-  <version>0.5.4</version>
+  <version>0.6.10</version>
   <description>cob_control meta-package</description>
-
 
   <license>LGPL</license>
 
@@ -13,21 +12,19 @@
   <maintainer email="nhg@ipa.fhg.de">Nadia Hammoudeh Garcia</maintainer>
   <maintainer email="fxm@ipa.fhg.de">Felix Messmer</maintainer>
 
-
   <buildtool_depend>catkin</buildtool_depend>
-  <run_depend>cob_base_velocity_smoother</run_depend>
-  <run_depend>cob_collision_velocity_filter</run_depend>
-  <run_depend>cob_control_mode_adapter</run_depend>
-  <run_depend>cob_footprint_observer</run_depend>
-  <run_depend>cob_frame_tracker</run_depend>
-  <run_depend>cob_hardware_interface</run_depend>
-  <run_depend>cob_lookat_controller</run_depend>
-  <run_depend>cob_path_broadcaster</run_depend>
-  <run_depend>cob_trajectory_controller</run_depend>
-  <run_depend>cob_twist_controller</run_depend>
 
-
-
+  <exec_depend>cob_base_velocity_smoother</exec_depend>
+  <exec_depend>cob_cartesian_controller</exec_depend>
+  <exec_depend>cob_collision_velocity_filter</exec_depend>
+  <exec_depend>cob_control_mode_adapter</exec_depend>
+  <exec_depend>cob_footprint_observer</exec_depend>
+  <exec_depend>cob_frame_tracker</exec_depend>
+  <exec_depend>cob_model_identifier</exec_depend>
+  <exec_depend>cob_obstacle_distance</exec_depend>
+  <exec_depend>cob_omni_drive_controller</exec_depend>
+  <exec_depend>cob_trajectory_controller</exec_depend>
+  <exec_depend>cob_twist_controller</exec_depend>
 
   <export>
     <metapackage/>

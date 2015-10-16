@@ -1,0 +1,25 @@
+<package format="2">
+  <name>cob_model_identifier</name>
+  <version>0.6.10</version>
+  <description>The cob_model_identifier package</description>
+
+  <author email="fxm-cm@ipa.fhg.de">Christoph Mark</author>
+  <maintainer email="fxm@ipa.fhg.de">Felix Messmer</maintainer>
+
+  <license>LGPL</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>boost</depend>
+  <depend>cmake_modules</depend>
+  <depend>geometry_msgs</depend>
+  <depend>kdl_parser</depend>
+  <depend>orocos_kdl</depend>
+  <depend>roscpp</depend>
+  <depend>sensor_msgs</depend>
+  <depend>std_srvs</depend>
+  <depend>tf</depend>
+
+  <exec_depend>rospy</exec_depend>
+
+</package>

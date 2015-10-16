@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- send lwa4p_extended urdf to param server -->
+  <param name="robot_description" command="$(find xacro)/xacro.py '$(find schunk_lwa4p_extended)/urdf/robot.urdf.xacro'" />
+
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" >
+    <param name="use_gui" value="true"/>
+    <param name="publish_default_velocities" value="true"/>
+    <param name="publish_default_efforts" value="true"/>
+  </node>
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
+    <param name="publish_frequency" type="double" value="50.0" />
+    <param name="tf_prefix" type="str" value="" />
+  </node>
+
+  <!-- controllers -->
+  <rosparam ns="arm" command="load" file="$(find cob_obstacle_distance)/config/example_obstacle_distance.yaml" />
+
+  <!-- Obstacle distance -->
+  <node ns="arm" name="obstacle_distance" pkg="cob_obstacle_distance" type="cob_obstacle_distance" output="screen">
+    <remap from="joint_states" to="/joint_states"/>
+  </node>
+  <node ns="arm" name="debug_obstacle_distance_node" pkg="cob_obstacle_distance" type="debug_obstacle_distance_node" output="screen"/>
+
+  <!-- spawn example obstacle -->
+  <node ns="arm" name="example_obstacle_publisher" pkg="cob_obstacle_distance" type="example_obstacle_publisher_node.py" output="screen"/>
+  <node ns="arm" name="interactive_obstacle_publisher" pkg="cob_obstacle_distance" type="test_interactive_obstacle_node.py" output="screen"/>
+
+  <!-- rviz visualization -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find cob_obstacle_distance)/launch/rviz_config.rviz" />
+
+<!--
+  for activation execute the following command on a terminal:
+  'rosservice call /arm/obstacle_distance/registerFrameOfInterest "data: 'arm_7_link'"'
+-->
+
+
+
+</launch>

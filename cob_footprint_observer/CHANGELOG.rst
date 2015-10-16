@@ -2,6 +2,47 @@
 Changelog for package cob_footprint_observer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.10 (2015-08-31)
+-------------------
+
+0.6.9 (2015-08-25)
+------------------
+* boost revision
+* do not install headers in executable-only packages
+* explicit dependency to boost
+* explicit dependency to boost
+* remove trailing whitespaces
+* migrate to package format 2
+* sort dependencies
+* review dependencies
+* Contributors: ipa-fxm
+
+0.6.8 (2015-06-17)
+------------------
+
+0.6.7 (2015-06-17)
+------------------
+* beautify CMakeLists
+* Contributors: ipa-fxm
+
+0.6.6 (2014-12-18)
+------------------
+
+0.6.5 (2014-12-18)
+------------------
+
+0.6.4 (2014-12-16)
+------------------
+
+0.6.3 (2014-12-16)
+------------------
+
+0.6.2 (2014-12-15)
+------------------
+
+0.6.1 (2014-09-22)
+------------------
+
 0.5.3 (2014-03-31)
 ------------------
 * install tags

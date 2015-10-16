@@ -9,9 +9,9 @@
  * Project name: care-o-bot
  * ROS stack name: cob_navigation
  * ROS package name: cob_footprint_observer
- *                
+ *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- *      
+ *
  * Author: Matthias Gruhler, email: Matthias.Gruhler@ipa.fraunhofer.de
  *
  * Date of creation: 27.02.2012
@@ -26,23 +26,23 @@
  *   * Redistributions in binary form must reproduce the above copyright
  *     notice, this list of conditions and the following disclaimer in the
  *     documentation and/or other materials provided with the distribution.
- *   * Neither the name of the Fraunhofer Institute for Manufacturing 
+ *   * Neither the name of the Fraunhofer Institute for Manufacturing
  *     Engineering and Automation (IPA) nor the names of its
  *     contributors may be used to endorse or promote products derived from
  *     this software without specific prior written permission.
  *
  * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License LGPL as 
- * published by the Free Software Foundation, either version 3 of the 
+ * it under the terms of the GNU Lesser General Public License LGPL as
+ * published by the Free Software Foundation, either version 3 of the
  * License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License LGPL for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public 
- * License LGPL along with this program. 
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License LGPL along with this program.
  * If not, see <http://www.gnu.org/licenses/>.
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -65,32 +65,32 @@ FootprintObserver::FootprintObserver() :
 
   // publish footprint
   topic_pub_footprint_ = nh_.advertise<geometry_msgs::PolygonStamped>("adjusted_footprint",1);
-  
+
   // advertise service
   srv_get_footprint_ = nh_.advertiseService("/get_footprint", &FootprintObserver::getFootprintCB, this);
 
   // read footprint_source parameter
-  std::string footprint_source; 
+  std::string footprint_source;
   if(!nh_.hasParam("footprint_source")) ROS_WARN("Checking default location (/local_costmap_node/costmap) for initial footprint parameter.");
   nh_.param("footprint_source", footprint_source, std::string("/local_costmap_node/costmap"));
- 
+
   // node handle to get footprint from parameter server
-  ros::NodeHandle footprint_source_nh_(footprint_source); 	
-  
+  ros::NodeHandle footprint_source_nh_(footprint_source);
+
   // load the robot footprint from the parameter server if its available in the local costmap namespace
   robot_footprint_ = loadRobotFootprint(footprint_source_nh_);
-  if(robot_footprint_.size() > 4) 
+  if(robot_footprint_.size() > 4)
     ROS_WARN("You have set more than 4 points as robot_footprint, cob_footprint_observer can deal only with rectangular footprints so far!");
 
   // get parameter sepcifying minimal changes of footprint that are accepted. (smaller changes are neglected)
   if(!nh_.hasParam("epsilon"))
     ROS_WARN("No epsilon value specified. Changes in footprint smaller than epsilon are neglected. Using default [0.01m]!");
   nh_.param("epsilon", epsilon_, 0.01);
-    
+
   // get the frames for which to check the footprint
   if(!nh_.hasParam("frames_to_check")) ROS_WARN("No frames to check for footprint observer. Only using initial footprint!");
   nh_.param("frames_to_check", frames_to_check_, std::string(""));
-  
+
   if(!nh_.hasParam("robot_base_frame")) ROS_WARN("No parameter robot_base_frame on parameter server. Using default [/base_link].");
   nh_.param("robot_base_frame", robot_base_frame_, std::string("/base_link"));
 
@@ -108,12 +108,12 @@ bool FootprintObserver::getFootprintCB(cob_footprint_observer::GetFootprint::Req
   geometry_msgs::PolygonStamped footprint_poly;
   footprint_poly.header.frame_id = robot_base_frame_;
   footprint_poly.header.stamp = ros::Time::now();
-  
+
   footprint_poly.polygon.points.resize(robot_footprint_.size());
   for(unsigned int i=0; i<robot_footprint_.size(); ++i) {
     footprint_poly.polygon.points[i].x = robot_footprint_[i].x;
     footprint_poly.polygon.points[i].y = robot_footprint_[i].y;
-    footprint_poly.polygon.points[i].z = robot_footprint_[i].z;   
+    footprint_poly.polygon.points[i].z = robot_footprint_[i].z;
   }
 
   resp.footprint = footprint_poly;
@@ -285,7 +285,7 @@ void FootprintObserver::checkFootprint(){
   // check each frame
   std::string frame;
   std::stringstream ss;
-  ss << frames_to_check_; 
+  ss << frames_to_check_;
 
   double x_rear, x_front, y_left, y_right;
   x_front = footprint_front_initial_;
@@ -299,7 +299,7 @@ void FootprintObserver::checkFootprint(){
     if(tf_listener_.canTransform(robot_base_frame_, frame, ros::Time(0))) {
       tf::StampedTransform transform;
       tf_listener_.lookupTransform(robot_base_frame_, frame, ros::Time(0), transform);
-      
+
       tf::Vector3 frame_position = transform.getOrigin();
 
       // check if frame position is outside of current footprint
@@ -326,7 +326,7 @@ void FootprintObserver::checkFootprint(){
   {
     pthread_mutex_lock(&m_mutex);
     // adjust footprint
-    footprint_front_ = x_front; 
+    footprint_front_ = x_front;
     footprint_rear_ = x_rear;
     footprint_left_ = y_left;
     footprint_right_ = y_right;
@@ -354,22 +354,22 @@ void FootprintObserver::checkFootprint(){
     // publish the adjusted footprint
     publishFootprint();
   }
-  
+
 }
 
 // publishes the adjusted footprint
 void FootprintObserver::publishFootprint(){
 
-  // create Polygon message 
+  // create Polygon message
   geometry_msgs::PolygonStamped footprint_poly;
   footprint_poly.header.frame_id = robot_base_frame_;
   footprint_poly.header.stamp = ros::Time::now();
-  
+
   footprint_poly.polygon.points.resize(robot_footprint_.size());
   for(unsigned int i=0; i<robot_footprint_.size(); ++i) {
     footprint_poly.polygon.points[i].x = robot_footprint_[i].x;
     footprint_poly.polygon.points[i].y = robot_footprint_[i].y;
-    footprint_poly.polygon.points[i].z = robot_footprint_[i].z;   
+    footprint_poly.polygon.points[i].z = robot_footprint_[i].z;
   }
 
   // publish adjusted footprint

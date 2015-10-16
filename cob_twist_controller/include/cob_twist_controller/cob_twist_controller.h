@@ -30,62 +30,97 @@
 
 #include <ros/ros.h>
 
-#include <std_msgs/Float64.h>
+#include <std_msgs/ColorRGBA.h>
 #include <sensor_msgs/JointState.h>
 #include <geometry_msgs/Twist.h>
-#include <brics_actuator/JointVelocities.h>
+#include <nav_msgs/Odometry.h>
 
 #include <urdf/model.h>
+
 #include <kdl_parser/kdl_parser.hpp>
-#include <kdl/chainiksolvervel_pinv.hpp>
-#include <cob_twist_controller/augmented_solver.h>
+#include <kdl/chainfksolvervel_recursive.hpp>
 #include <kdl/jntarray.hpp>
 #include <kdl/jntarrayvel.hpp>
 #include <kdl/frames.hpp>
 
 #include <tf/transform_listener.h>
+#include <tf/tf.h>
 
+#include <boost/thread/mutex.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <dynamic_reconfigure/server.h>
+
+#include <cob_twist_controller/TwistControllerConfig.h>
+#include "cob_twist_controller/cob_twist_controller_data_types.h"
+#include <cob_twist_controller/inverse_differential_kinematics_solver.h>
+#include "cob_twist_controller/controller_interfaces/controller_interface.h"
+#include "cob_twist_controller/callback_data_mediator.h"
 
 class CobTwistController
 {
 private:
-	ros::NodeHandle nh_;
-	tf::TransformListener tf_listener_;
-	
-	ros::Subscriber jointstate_sub;
-	ros::Subscriber twist_sub;
-	ros::Publisher vel_pub;
-	
-	KDL::Chain chain_;
-	std::string chain_base_;
-	std::string chain_tip_;
-	
-	KDL::ChainIkSolverVel_pinv* p_iksolver_vel_;
-	augmented_solver* p_augmented_solver_;
-	
-	std::vector<std::string> joints_;
-	unsigned int dof_;
-	std::vector<float> limits_min_;
-	std::vector<float> limits_max_;
-	std::vector<float> limits_vel_;
-	
-	KDL::JntArray last_q_;
-	KDL::JntArray last_q_dot_;
-	
-	
+    ros::NodeHandle nh_;
+
+    ros::Subscriber jointstate_sub_;
+
+    ros::Subscriber twist_sub_;
+    ros::Subscriber twist_stamped_sub_;
+
+    ros::Subscriber odometry_sub_;
+
+    ros::Publisher twist_direction_pub_;
+
+    ros::ServiceClient register_link_client_;
+    ros::Subscriber obstacle_distance_sub_;
+
+    KDL::Chain chain_;
+    JointStates joint_states_;
+    KDL::Twist twist_odometry_cb_;
+
+    TwistControllerParams twist_controller_params_;
+
+    boost::shared_ptr<KDL::ChainFkSolverVel_recursive> jntToCartSolver_vel_;
+    boost::shared_ptr<InverseDifferentialKinematicsSolver> p_inv_diff_kin_solver_;
+    boost::shared_ptr<ControllerInterfaceBase> controller_interface_;
+
+    CallbackDataMediator callback_data_mediator_;
+
+    tf::TransformListener tf_listener_;
+
+
+
 public:
-	CobTwistController() {;}
-	~CobTwistController();
-	
-	void initialize();
-	void run();
-	
-	void jointstate_cb(const sensor_msgs::JointState::ConstPtr& msg);
-	void twist_cb(const geometry_msgs::Twist::ConstPtr& msg);
-	
-	
-	KDL::JntArray normalize_velocities(KDL::JntArray q_dot_ik);
+    CobTwistController()
+    {
+    }
+
+    ~CobTwistController()
+    {
+        this->jntToCartSolver_vel_.reset();
+        this->p_inv_diff_kin_solver_.reset();
+        this->controller_interface_.reset();
+        this->reconfigure_server_.reset();
+    }
+
+    bool initialize();
+    void run();
+
+    void reinitServiceRegistration();
+
+    void reconfigureCallback(cob_twist_controller::TwistControllerConfig& config, uint32_t level);
+    void checkSolverAndConstraints(cob_twist_controller::TwistControllerConfig& config);
+    void jointstateCallback(const sensor_msgs::JointState::ConstPtr& msg);
+    void odometryCallback(const nav_msgs::Odometry::ConstPtr& msg);
+
+    void twistCallback(const geometry_msgs::Twist::ConstPtr& msg);
+    void twistStampedCallback(const geometry_msgs::TwistStamped::ConstPtr& msg);
+
+    void solveTwist(KDL::Twist twist);
+    void visualizeTwist(KDL::Twist twist);
+
+    boost::recursive_mutex reconfig_mutex_;
+    boost::shared_ptr< dynamic_reconfigure::Server<cob_twist_controller::TwistControllerConfig> > reconfigure_server_;
+
 };
-
 #endif
-

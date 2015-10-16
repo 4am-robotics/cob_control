@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+
+<launch>
+	<param name="model_itentifier/output_file_path" type="str" value="/tmp/model_identifier/model1/"/>
+
+	<node name="output_recorder" pkg="cob_model_identifier" type="output_recorder_node" output="screen"/>
+</launch>

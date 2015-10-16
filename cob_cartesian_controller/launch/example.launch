@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- send lwa4p_extended urdf to param server -->
+  <param name="robot_description" command="$(find xacro)/xacro.py '$(find schunk_lwa4p_extended)/urdf/robot.urdf.xacro'" />
+
+  <!-- robot state publisher -->
+  <node ns="arm" name="joint_states_relay" pkg="topic_tools" type="relay" args="joint_states /joint_states" cwd="node" respawn="true" output="screen"/>
+  <node ns="arm" pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+    <param name="publish_frequency" type="double" value="50.0" />
+    <param name="tf_prefix" type="str" value="" />
+  </node>
+
+  <!-- controllers -->
+  <rosparam ns="arm" command="load" file="$(find cob_cartesian_controller)/config/example_cartesian_controller.yaml" />
+
+  <!-- Cartesian stuff -->
+  <node ns="arm" name="twist_controller" pkg="cob_twist_controller" type="cob_twist_controller_node" cwd="node" respawn="false" output="screen"/>
+  <node ns="arm" name="frame_tracker" pkg="cob_frame_tracker" type="cob_frame_tracker_node" cwd="node" respawn="false" output="screen"/>
+
+  <node ns="arm" pkg="cob_cartesian_controller" type="cartesian_controller_node" name="cartesian_controller" output="screen">
+    <param name="target_frame" type="str" value="cartesian_target"/>
+  </node>
+
+<!--
+  <node ns="arm" pkg="cob_cartesian_controller" type="test_move_santa.py" name="test_move_santa" output="screen"/>
+-->
+
+  <!-- debug -->
+  <node ns="arm" name="debug_trajectory_marker_node" pkg="cob_twist_controller" type="debug_trajectory_marker_node" cwd="node" respawn="false" output="screen">
+    <param name="target_frame" type="str" value="cartesian_target" />
+  </node>
+
+  <!-- rviz visualization -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find cob_cartesian_controller)/launch/rviz_config.rviz" />
+
+</launch>

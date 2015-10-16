@@ -1,269 +1,384 @@
 #include "ros/ros.h"
 #include <std_msgs/Float64.h>
-#include <brics_actuator/JointVelocities.h>
+#include <std_msgs/Float64MultiArray.h>
 #include <controller_manager_msgs/LoadController.h>
 #include <controller_manager_msgs/SwitchController.h>
-
+#include <boost/thread/mutex.hpp>
 
 class CobControlModeAdapter
 {
-  public:
+public:
     void initialize()
     {
-      bool success = false;
-      bool is_simulation = false;
-      
-      joint_names_.clear();
-      current_controller_names_.clear();
-      vel_controller_names_.clear();
-      traj_controller_names_.clear();
-      vel_controller_pubs_.clear();
-      
-      current_control_mode_="NONE";
-      
-      //wait for services from controller manager
-      //also: this is used to determine whether simulation or real hardware is used
-      ROS_INFO("Waiting for Service 'load_controller'...");
-      ros::service::waitForService("/controller_manager/load_controller", ros::Duration(5.0));
-      if(ros::service::exists("/controller_manager/load_controller", false))
-      {
-        ROS_INFO("..Global service available. Using controller_manager from gazebo_ros_control plugin");
-        is_simulation = true;
-        load_client_ = nh_.serviceClient<controller_manager_msgs::LoadController>("/controller_manager/load_controller");
-      }
-      else
-      {
-        ros::service::waitForService("controller_manager/load_controller", ros::Duration(5.0));
+        bool success = false;
+
+        joint_names_.clear();
+        current_controller_names_.clear();
+        traj_controller_names_.clear();
+        pos_controller_names_.clear();
+        interpol_pos_controller_names_.clear();
+        vel_controller_names_.clear();
+        last_pos_command_ = ros::Time();
+        last_interpol_pos_command_ = ros::Time();
+        last_vel_command_ = ros::Time();
+
+        has_traj_controller_ = false;
+        has_pos_controller_ = false;
+        has_interpol_pos_controller_ = false;
+        has_vel_controller_ = false;
+
+        current_control_mode_ = NONE;
+
+        //wait for services from controller manager
+        while (not ros::service::waitForService("controller_manager/load_controller", ros::Duration(5.0))){;}
+
         if(ros::service::exists("controller_manager/load_controller", false))
         {
-          ROS_INFO("..Local service available. Using controller_manager from hardware_interface");
-          is_simulation = false;
-          load_client_ = nh_.serviceClient<controller_manager_msgs::LoadController>("controller_manager/load_controller");
+            load_client_ = nh_.serviceClient<controller_manager_msgs::LoadController>("controller_manager/load_controller");
         }
         else
         {
-          ROS_ERROR("...Load service not available!");
-          return;
+            ROS_ERROR("...Load service not available!");
+            return;
         }
-      }
-      
-      ROS_INFO("Waiting for Service 'switch_controller'...");
-      ros::service::waitForService("/controller_manager/switch_controller", ros::Duration(5.0));
-      if(ros::service::exists("/controller_manager/switch_controller", false))
-      {
-        ROS_INFO("..Global service available. Using controller_manager from gazebo_ros_control plugin");
-        is_simulation = true;
-        switch_client_ = nh_.serviceClient<controller_manager_msgs::SwitchController>("/controller_manager/switch_controller");
-      }
-      else
-      {
-        ros::service::waitForService("controller_manager/switch_controller", ros::Duration(5.0));
+
+        while (not ros::service::waitForService("controller_manager/switch_controller", ros::Duration(5.0))){;}
+
         if(ros::service::exists("controller_manager/switch_controller", false))
         {
-          ROS_INFO("..Local service available. Using controller_manager from hardware_interface");
-          is_simulation = false;
-          switch_client_ = nh_.serviceClient<controller_manager_msgs::SwitchController>("controller_manager/switch_controller");
+            switch_client_ = nh_.serviceClient<controller_manager_msgs::SwitchController>("controller_manager/switch_controller");
         }
         else
         {
-          ROS_ERROR("...Load service not available!");
-          return;
+            ROS_ERROR("...Load service not available!");
+            return;
         }
-      }
-      
-      //Get joint names from parameter server
-      std::string param="joint_names";
-      XmlRpc::XmlRpcValue jointNames_XMLRPC;
-      if (nh_.hasParam(param))
-      {
-        nh_.getParam(param, jointNames_XMLRPC);
-      }
-      else
-      {
-        ROS_ERROR("Parameter %s not set, shutting down node...", param.c_str());
-        nh_.shutdown();
-      }
 
-      for (unsigned int i=0; i<jointNames_XMLRPC.size(); i++)
-      {
-        joint_names_.push_back(static_cast<std::string>(jointNames_XMLRPC[i]));  
-        ROS_INFO("JointNames: %s", joint_names_[i].c_str());
-        
-        if(is_simulation)
+        std::string param="max_command_silence";
+        if (nh_.hasParam(param))
         {
-          //advertise in global namespace
-          ros::Publisher pub = nh_.advertise<std_msgs::Float64>("/"+joint_names_[i]+"_velocity_controller/command", 1);
-          vel_controller_pubs_.push_back(pub);
+            nh_.getParam(param, max_command_silence_);
         }
         else
         {
-          //advertise in local namespace
-          ros::Publisher pub = nh_.advertise<std_msgs::Float64>(joint_names_[i]+"_velocity_controller/command", 1);
-          vel_controller_pubs_.push_back(pub);
+            ROS_ERROR("Parameter %s not set, using default 0.3s...", param.c_str());
+            max_command_silence_ = 0.3;
         }
-        vel_controller_names_.push_back(joint_names_[i]+"_velocity_controller");
-      }
-      
-      param="max_vel_command_silence";
-      if (nh_.hasParam(param))
-      {
-        nh_.getParam(param, max_vel_command_silence_);
-      }
-      else
-      {
-        ROS_ERROR("Parameter %s not set, using default 0.5s...", param.c_str());
-        max_vel_command_silence_=0.5;
-      }
-      
-      traj_controller_names_.push_back(nh_.getNamespace());
-      
-      
-      //load all required controllers
-      for (unsigned int i=0; i<traj_controller_names_.size(); i++)
-      {
-        success = load_controller(traj_controller_names_[i]);
-      }
-      
-      for (unsigned int i=0; i<vel_controller_names_.size(); i++)
-      {
-        success = load_controller(vel_controller_names_[i]);
-      }
-      
-      //start trajectory controller by default
-      success = switch_controller(traj_controller_names_, current_controller_names_);
-      current_control_mode_="TRAJECTORY";
-      
-      ////start velocity controllers
-      //success = switch_controller(vel_controller_names_, current_controller_names_);
-      //current_control_mode_="VELOCITY";
-      
-      cmd_vel_sub_ = nh_.subscribe("command_vel", 1, &CobControlModeAdapter::cmd_vel_cb, this);
-      
-      update_rate = 100;  //[hz]
-      timer = nh_.createTimer(ros::Duration(1/update_rate), &CobControlModeAdapter::update, this);
+
+        // List of controlled joints
+        param="joint_names";
+        if(!nh_.getParam(param, joint_names_))
+        {
+            ROS_ERROR("Parameter %s not set, shutting down node...", param.c_str());
+            nh_.shutdown();
+        }
+
+        if(nh_.hasParam("joint_trajectory_controller"))
+        {
+            has_traj_controller_ = true;
+            traj_controller_names_.push_back("joint_trajectory_controller");
+            ROS_DEBUG_STREAM(nh_.getNamespace() << " supports 'joint_trajectory_controller'");
+        }
+
+        if(nh_.hasParam("joint_group_position_controller"))
+        {
+            has_pos_controller_ = true;
+            pos_controller_names_.push_back("joint_group_position_controller");
+            ROS_DEBUG_STREAM(nh_.getNamespace() << " supports 'joint_group_position_controller'");
+        }
+
+        if(nh_.hasParam("joint_group_interpol_position_controller"))
+        {
+            has_interpol_pos_controller_ = true;
+            interpol_pos_controller_names_.push_back("joint_group_interpol_position_controller");
+            ROS_DEBUG_STREAM(nh_.getNamespace() << " supports 'joint_group_interpol_position_controller'");
+        }
+
+        if(nh_.hasParam("joint_group_velocity_controller"))
+        {
+            has_vel_controller_ = true;
+            vel_controller_names_.push_back("joint_group_velocity_controller");
+            ROS_DEBUG_STREAM(nh_.getNamespace() << " supports 'joint_group_velocity_controller'");
+        }
+
+        //load all required controllers
+        if(has_traj_controller_)
+        {
+            for (unsigned int i=0; i<traj_controller_names_.size(); i++)
+            {
+                success = loadController(traj_controller_names_[i]);
+            }
+        }
+        if(has_pos_controller_)
+        {
+            for (unsigned int i=0; i<pos_controller_names_.size(); i++)
+            {
+                success = loadController(pos_controller_names_[i]);
+            }
+            cmd_pos_sub_ = nh_.subscribe("joint_group_position_controller/command", 1, &CobControlModeAdapter::cmd_pos_cb, this);
+        }
+        if(has_interpol_pos_controller_)
+        {
+            for (unsigned int i=0; i<interpol_pos_controller_names_.size(); i++)
+            {
+                success = loadController(interpol_pos_controller_names_[i]);
+            }
+            cmd_interpol_pos_sub_ = nh_.subscribe("joint_group_interpol_position_controller/command", 1, &CobControlModeAdapter::cmd_interpol_pos_cb, this);
+        }
+        if(has_vel_controller_)
+        {
+            for (unsigned int i=0; i<vel_controller_names_.size(); i++)
+            {
+                success = loadController(vel_controller_names_[i]);
+            }
+            cmd_vel_sub_ = nh_.subscribe("joint_group_velocity_controller/command", 1, &CobControlModeAdapter::cmd_vel_cb, this);
+        }
+
+        //start trajectory controller by default
+        if(has_traj_controller_)
+        {
+            success = switchController(traj_controller_names_, current_controller_names_);
+            current_control_mode_ = TRAJECTORY;
+        }
+
+        update_rate_ = 100;    //[hz]
+        timer_ = nh_.createTimer(ros::Duration(1/update_rate_), &CobControlModeAdapter::update, this);
     }
-    
-    bool load_controller(std::string load_controller)
+
+    bool loadController(std::string load_controller)
     {
-      controller_manager_msgs::LoadController load_srv;
-      load_srv.request.name = load_controller;
-      if(load_client_.call(load_srv))
-      {
-        if(load_srv.response.ok)
+        controller_manager_msgs::LoadController load_srv;
+        load_srv.request.name = load_controller;
+        if(load_client_.call(load_srv))
         {
-          ROS_INFO("%s loaded", load_controller.c_str());
-          return true;
+            if(load_srv.response.ok)
+            {
+                ROS_INFO("%s loaded", load_controller.c_str());
+                return true;
+            }
+            else
+            {
+                ROS_ERROR("Could not load controllers");
+            }
         }
         else
-          ROS_ERROR("Could not load controllers");
-      }
-      else
-        ROS_ERROR("ServiceCall failed: load_controller");
-        
-      return false;
+        {
+            ROS_ERROR("ServiceCall failed: load_controller");
+        }
+
+        return false;
     }
-    
-    
-    bool switch_controller(std::vector< std::string > start_controllers, std::vector< std::string > stop_controllers)
+
+
+    bool switchController(std::vector< std::string > start_controllers, std::vector< std::string > stop_controllers)
     {
-      controller_manager_msgs::SwitchController switch_srv;
-      switch_srv.request.start_controllers = start_controllers;
-      switch_srv.request.stop_controllers = stop_controllers;
-      switch_srv.request.strictness = 2; //STRICT
-      if(switch_client_.call(switch_srv))
-      {
-        if(switch_srv.response.ok)
+        controller_manager_msgs::SwitchController switch_srv;
+        switch_srv.request.start_controllers = start_controllers;
+        switch_srv.request.stop_controllers = stop_controllers;
+        switch_srv.request.strictness = 2; //STRICT
+
+        if(switch_client_.call(switch_srv))
         {
-          ROS_INFO("Switched Controllers");
-          current_controller_names_=start_controllers;
-          return true;
+            if(switch_srv.response.ok)
+            {
+                std::string str_start;
+                std::string str_stop;
+
+                if(start_controllers.empty())
+                {
+                    str_start = "no_start_controller_defined";
+                }
+                else
+                {
+                    str_start = start_controllers.back();
+                }
+                if(stop_controllers.empty())
+                {
+                    str_stop = "no_stop_controller_defined";
+                }
+                else
+                {
+                    str_stop    = stop_controllers.back();
+                }
+
+                ROS_INFO("Switched Controllers. From %s to %s", str_stop.c_str(), str_start.c_str());
+
+                current_controller_names_ = start_controllers;
+                return true;
+            }
+            else
+            {
+                ROS_ERROR("Could not switch controllers");
+            }
         }
         else
-          ROS_ERROR("Could not switch controllers");
-      }
-      else
-        ROS_ERROR("ServiceCall failed: switch_controller");
-        
-      return false;
+        {
+            ROS_ERROR("ServiceCall failed: switch_controller");
+        }
+
+        return false;
     }
-    
-    void cmd_vel_cb(const brics_actuator::JointVelocities::ConstPtr& msg)
+
+    void cmd_pos_cb(const std_msgs::Float64MultiArray::ConstPtr& msg)
     {
-      last_vel_command_=ros::Time::now();
-      if(current_control_mode_!="VELOCITY")
-      {
-        bool success = switch_controller(vel_controller_names_, current_controller_names_);
-        if(!success)
-        {
-          ROS_ERROR("Unable to switch to velocity_controllers. Not executing command_vel...");
-          return;
-        }
-        else
-        {
-          ROS_INFO("Successfully switched to velocity_controllers");
-          current_control_mode_="VELOCITY";
-        }
-      }
-      
-      for(unsigned int i=0; i<joint_names_.size(); i++)
-      {
-        std_msgs::Float64 cmd;
-        cmd.data= msg->velocities[i].value;
-        vel_controller_pubs_[i].publish(cmd);
-      }
+        boost::mutex::scoped_lock lock(mutex_);
+        last_pos_command_ = ros::Time::now();
+    }
+
+    void cmd_interpol_pos_cb(const std_msgs::Float64MultiArray::ConstPtr& msg)
+    {
+        boost::mutex::scoped_lock lock(mutex_);
+        last_interpol_pos_command_ = ros::Time::now();
+    }
+
+    void cmd_vel_cb(const std_msgs::Float64MultiArray::ConstPtr& msg)
+    {
+        boost::mutex::scoped_lock lock(mutex_);
+        last_vel_command_ = ros::Time::now();
     }
 
     void update(const ros::TimerEvent& event)
     {
-      ros::Duration period = event.current_real - last_vel_command_;
-      if(current_control_mode_!="TRAJECTORY" && period.toSec() >= max_vel_command_silence_)
-      {
-        bool success = switch_controller(traj_controller_names_, current_controller_names_);
-        if(success)
+        boost::mutex::scoped_lock lock(mutex_);
+
+        ros::Duration period_vel = event.current_real - last_vel_command_;
+        ros::Duration period_pos = event.current_real - last_pos_command_;
+        ros::Duration period_interpol_pos = event.current_real - last_interpol_pos_command_;
+
+        lock.unlock();
+
+        if(has_vel_controller_ && (period_vel.toSec() < max_command_silence_))
         {
-          ROS_INFO("Have not heard a vel command for %f seconds, switched back to trajectory_controller", period.toSec());
-          current_control_mode_="TRAJECTORY";
+            if(current_control_mode_!=VELOCITY)
+            {
+                bool success = switchController(vel_controller_names_, current_controller_names_);
+                if(!success)
+                {
+                    ROS_ERROR("Unable to switch to velocity_controllers. Not executing command...");
+                }
+                else
+                {
+                    ROS_INFO("Successfully switched to velocity_controllers");
+                    current_control_mode_=VELOCITY;
+                }
+            }
         }
-      }
+        else if(has_pos_controller_ && (period_pos.toSec() < max_command_silence_))
+        {
+            if(current_control_mode_!=POSITION)
+            {
+                bool success = switchController(pos_controller_names_, current_controller_names_);
+                if(!success)
+                {
+                    ROS_ERROR("Unable to switch to position_controllers. Not executing command...");
+                }
+                else
+                {
+                    ROS_INFO("Successfully switched to position_controllers");
+                    current_control_mode_=POSITION;
+                }
+            }
+        }
+        else if(has_interpol_pos_controller_ && (period_interpol_pos.toSec() < max_command_silence_))
+        {
+            if(current_control_mode_!=INTERPOL_POSITION)
+            {
+                bool success = switchController(interpol_pos_controller_names_, current_controller_names_);
+                if(!success)
+                {
+                    ROS_ERROR("Unable to switch to interpolated position_controllers. Not executing command...");
+                }
+                else
+                {
+                    ROS_INFO("Successfully switched to interpolated position_controllers");
+                    current_control_mode_=INTERPOL_POSITION;
+                }
+            }
+        }
+        else if(has_traj_controller_)
+        {
+            if(current_control_mode_!=TRAJECTORY)
+            {
+                if(current_control_mode_==POSITION)
+                {
+                    ROS_INFO("Have not heard a pos command for %f seconds, switched back to trajectory_controller", period_pos.toSec());
+                }
+                else if(current_control_mode_==INTERPOL_POSITION)
+                {
+                    ROS_INFO("Have not heard a interplated pos command for %f seconds, switched back to trajectory_controller", period_interpol_pos.toSec());
+                }
+                else
+                {
+                    ROS_INFO("Have not heard a vel command for %f seconds, switched back to trajectory_controller", period_vel.toSec());
+                }
+                bool success = switchController(traj_controller_names_, current_controller_names_);
+
+                if(success)
+                {
+                    current_control_mode_=TRAJECTORY;
+                }
+                else
+                {
+                    ROS_ERROR("Unable to switch to trajectory_controller. Not executing command...");
+                }
+            }
+        }
+        else
+        {
+            ROS_ERROR_STREAM(nh_.getNamespace() << " does not support 'joint_trajectory_controller' and no other controller was started yet");
+        }
     }
 
-  private:
+private:
     ros::NodeHandle nh_;
-    
-    ros::Timer timer;
-    double update_rate;
-    
+
+    ros::Timer timer_;
+    double update_rate_;
+
     std::vector< std::string > joint_names_;
-    
-    std::string current_control_mode_;
+
+    enum
+    {
+        NONE, VELOCITY, POSITION, INTERPOL_POSITION, TRAJECTORY
+    } current_control_mode_;
+
     std::vector< std::string > current_controller_names_;
+    std::vector< std::string > traj_controller_names_;
+    std::vector< std::string > pos_controller_names_;
+    std::vector< std::string > interpol_pos_controller_names_;
     std::vector< std::string > vel_controller_names_;
-    std::vector< std::string >  traj_controller_names_;
-    
-    std::vector< ros::Publisher > vel_controller_pubs_;
+
+    bool has_traj_controller_;
+    bool has_pos_controller_;
+    bool has_interpol_pos_controller_;
+    bool has_vel_controller_;
+
+    ros::Subscriber cmd_pos_sub_;
+    ros::Subscriber cmd_interpol_pos_sub_;
     ros::Subscriber cmd_vel_sub_;
-    
+
     ros::ServiceClient load_client_;
     ros::ServiceClient switch_client_;
-    
-    double max_vel_command_silence_;
+
+    double max_command_silence_;
+    ros::Time last_pos_command_;
+    ros::Time last_interpol_pos_command_;
     ros::Time last_vel_command_;
+    boost::mutex mutex_;
 };
 
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "cob_control_mode_adapter_node");
-  ros::AsyncSpinner spinner(0);
-  spinner.start();
-  
-  CobControlModeAdapter* ccma = new CobControlModeAdapter();
-  ccma->initialize();
+    ros::init(argc, argv, "cob_control_mode_adapter_node");
+    ros::AsyncSpinner spinner(0);
+    spinner.start();
 
-  ros::waitForShutdown();
-  return 0;
+    CobControlModeAdapter* ccma = new CobControlModeAdapter();
+    ccma->initialize();
+
+    ros::waitForShutdown();
+    delete ccma;
+    return 0;
 }
-
-
-
 
