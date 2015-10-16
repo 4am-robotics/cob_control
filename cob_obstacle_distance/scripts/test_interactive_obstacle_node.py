@@ -34,30 +34,30 @@ class InteractiveObstacle:
         self.co.header.frame_id = "interactive_box_frame"
         self.co.operation = CollisionObject.ADD
 
-        box = SolidPrimitive()
-        box.type = SolidPrimitive.BOX
-        box.dimensions = [0.2, 0.2, 0.2] # extent x, y, z
-        self.co.primitives.append(box)
+        primitive = SolidPrimitive()
+        primitive.type = SolidPrimitive.SPHERE
+        primitive.dimensions = [0.1] # extent x, y, z
+        self.co.primitives.append(primitive)
 
         pose = Pose()
         pose.orientation.w = 1.0;
         self.co.primitive_poses.append(pose)
 
         # Compose InteractiveMarker
-        self.interactive_box_pose = PoseStamped()
-        self.interactive_box_pose.header.stamp = rospy.Time.now()
-        self.interactive_box_pose.header.frame_id = self.root_frame
+        self.interactive_obstacle_pose = PoseStamped()
+        self.interactive_obstacle_pose.header.stamp = rospy.Time.now()
+        self.interactive_obstacle_pose.header.frame_id = self.root_frame
 
-        self.interactive_box_pose.pose.position.x = -0.5
-        self.interactive_box_pose.pose.position.y =  0.3
-        self.interactive_box_pose.pose.position.z =  0.8
-        self.interactive_box_pose.pose.orientation.w = 1.0
+        self.interactive_obstacle_pose.pose.position.x = -0.5
+        self.interactive_obstacle_pose.pose.position.y =  0.3
+        self.interactive_obstacle_pose.pose.position.z =  0.8
+        self.interactive_obstacle_pose.pose.orientation.w = 1.0
 
         self.ia_server = InteractiveMarkerServer("obstacle_marker_server")
         self.int_marker = InteractiveMarker()
         self.int_marker.header.frame_id = self.root_frame
-        self.int_marker.pose = self.interactive_box_pose.pose
-        self.int_marker.name = "interactive_box_marker"
+        self.int_marker.pose = self.interactive_obstacle_pose.pose
+        self.int_marker.name = "interactive_obstacle_marker"
         self.int_marker.scale = 0.5
 
         # Setup MarkerControls
@@ -109,9 +109,9 @@ class InteractiveObstacle:
 
         # initial send
         self.br.sendTransform(
-            (self.interactive_box_pose.pose.position.x, self.interactive_box_pose.pose.position.y, self.interactive_box_pose.pose.position.z),
-            (self.interactive_box_pose.pose.orientation.x, self.interactive_box_pose.pose.orientation.y, self.interactive_box_pose.pose.orientation.z, self.interactive_box_pose.pose.orientation.w),
-             rospy.Time.now(), "interactive_box_frame", self.interactive_box_pose.header.frame_id)
+            (self.interactive_obstacle_pose.pose.position.x, self.interactive_obstacle_pose.pose.position.y, self.interactive_obstacle_pose.pose.position.z),
+            (self.interactive_obstacle_pose.pose.orientation.x, self.interactive_obstacle_pose.pose.orientation.y, self.interactive_obstacle_pose.pose.orientation.z, self.interactive_obstacle_pose.pose.orientation.w),
+             rospy.Time.now(), "interactive_box_frame", self.interactive_obstacle_pose.header.frame_id)
         rospy.sleep(1.0)
         self.pub.publish(self.co)
         rospy.sleep(1.0)
@@ -119,15 +119,15 @@ class InteractiveObstacle:
     def marker_fb(self, fb):
         #p = feedback.pose.position
         #print feedback.marker_name + " is now at " + str(p.x) + ", " + str(p.y) + ", " + str(p.z)
-        self.interactive_box_pose.header = fb.header
-        self.interactive_box_pose.pose = fb.pose
+        self.interactive_obstacle_pose.header = fb.header
+        self.interactive_obstacle_pose.pose = fb.pose
         self.ia_server.applyChanges()
 
     def run(self):
         self.br.sendTransform(
-            (self.interactive_box_pose.pose.position.x, self.interactive_box_pose.pose.position.y, self.interactive_box_pose.pose.position.z),
-            (self.interactive_box_pose.pose.orientation.x, self.interactive_box_pose.pose.orientation.y, self.interactive_box_pose.pose.orientation.z, self.interactive_box_pose.pose.orientation.w),
-             rospy.Time.now(), "interactive_box_frame", self.interactive_box_pose.header.frame_id)
+            (self.interactive_obstacle_pose.pose.position.x, self.interactive_obstacle_pose.pose.position.y, self.interactive_obstacle_pose.pose.position.z),
+            (self.interactive_obstacle_pose.pose.orientation.x, self.interactive_obstacle_pose.pose.orientation.y, self.interactive_obstacle_pose.pose.orientation.z, self.interactive_obstacle_pose.pose.orientation.w),
+             rospy.Time.now(), "interactive_box_frame", self.interactive_obstacle_pose.header.frame_id)
 
         self.co.operation = CollisionObject.MOVE
         self.pub.publish(self.co)
