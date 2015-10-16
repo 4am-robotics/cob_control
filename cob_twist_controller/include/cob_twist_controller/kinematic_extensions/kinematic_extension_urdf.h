@@ -53,20 +53,22 @@ class KinematicExtensionURDF : public KinematicExtensionBase
 
         ~KinematicExtensionURDF() {}
 
-        virtual KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain) = 0;
+        virtual KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain);
         virtual void processResultExtension(const KDL::JntArray& q_dot_ik);
 
         void jointstateCallback(const sensor_msgs::JointState::ConstPtr& msg);
         bool initUrdfExtension(std::string chain_base, std::string chain_tip);
 
     protected:
-        ros::NodeHandle nh_;
         ros::Publisher command_pub_;
         ros::Subscriber joint_state_sub_;
 
         std::vector<std::string> joint_names_;
         JointStates joint_states_;
         KDL::ChainJntToJacSolver* p_jnt2jac_;
+
+        std::string ext_base;
+        std::string ext_tip;
 };
 /* END KinematicExtensionURDF **********************************************************************************************/
 
@@ -79,10 +81,11 @@ class KinematicExtensionTorso : public KinematicExtensionURDF
         explicit KinematicExtensionTorso(const TwistControllerParams& params)
         : KinematicExtensionURDF(params)
         {
-            std::string chain_base = "torso_base_link";
-            std::string chain_tip = "torso_center_link";
+            this->ext_base = "torso_base_link";
+            // this->ext_tip = "torso_center_link";
+            this->ext_tip = params.chain_base_link;
 
-            if (!initUrdfExtension(chain_base, chain_tip))
+            if (!initUrdfExtension(ext_base, ext_tip))
             {
                 ROS_ERROR("Initialization failed");
             }
@@ -92,8 +95,6 @@ class KinematicExtensionTorso : public KinematicExtensionURDF
         }
 
         ~KinematicExtensionTorso() {}
-
-        virtual KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain);
 };
 /* END KinematicExtensionTorso **********************************************************************************************/
 

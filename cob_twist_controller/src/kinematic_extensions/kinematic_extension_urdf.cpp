@@ -63,6 +63,45 @@ bool KinematicExtensionURDF::initUrdfExtension(std::string chain_base, std::stri
     return true;
 }
 
+KDL::Jacobian KinematicExtensionURDF::adjustJacobian(const KDL::Jacobian& jac_chain)
+{
+    /// compose jac_full considering kinematical extension
+    KDL::Jacobian jac_extension(joint_names_.size());
+
+    /// calculate Jacobian for extension
+    p_jnt2jac_->JntToJac(joint_states_.current_q_, jac_extension);
+
+    /// get required transformations
+    tf::StampedTransform cb_transform_eb;
+    KDL::Frame cb_frame_eb;
+
+    try
+    {
+        ros::Time now = ros::Time(0);
+        tf_listener_.waitForTransform(params_.chain_base_link, this->ext_base, now, ros::Duration(0.5));
+        tf_listener_.lookupTransform(params_.chain_base_link, this->ext_base, now, cb_transform_eb);
+    }
+    catch (tf::TransformException& ex)
+    {
+        ROS_ERROR("%s", ex.what());
+    }
+
+    cb_frame_eb.p = KDL::Vector(cb_transform_eb.getOrigin().x(), cb_transform_eb.getOrigin().y(), cb_transform_eb.getOrigin().z());
+    cb_frame_eb.M = KDL::Rotation::Quaternion(cb_transform_eb.getRotation().x(), cb_transform_eb.getRotation().y(), cb_transform_eb.getRotation().z(), cb_transform_eb.getRotation().w());
+
+    /// transform accordingly
+    jac_extension.changeRefFrame(cb_frame_eb);
+
+    /// compose full Jacobian
+    Matrix6Xd_t jac_full_matrix;
+    jac_full_matrix.resize(6, jac_chain.data.cols() + jac_extension.data.cols());
+    jac_full_matrix << jac_chain.data, jac_extension.data;
+    KDL::Jacobian jac_full(jac_chain.data.cols() + jac_extension.data.cols());
+    jac_full.data << jac_full_matrix;
+
+    return jac_full;
+}
+
 void KinematicExtensionURDF::processResultExtension(const KDL::JntArray& q_dot_ik)
 {
     std_msgs::Float64MultiArray command_msg;
@@ -93,26 +132,3 @@ void KinematicExtensionURDF::jointstateCallback(const sensor_msgs::JointState::C
     this->joint_states_.current_q_dot_ = q_dot_temp;
 }
 /* END KinematicExtensionURDF ********************************************************************************************/
-
-/* BEGIN KinematicExtensionTorso ****************************************************************************************/
-KDL::Jacobian KinematicExtensionTorso::adjustJacobian(const KDL::Jacobian& jac_chain)
-{
-    /// compose jac_full considering kinematical extension
-    KDL::Jacobian jac_extension(joint_names_.size());
-
-    /// calculate Jacobian for extension
-    p_jnt2jac_->JntToJac(joint_states_.current_q_, jac_extension);
-
-    /// transform accordingly
-    // ToDo
-
-    /// compose full Jacobian
-    Matrix6Xd_t jac_full_matrix;
-    jac_full_matrix.resize(6, jac_chain.data.cols() + jac_extension.data.cols());
-    jac_full_matrix << jac_chain.data, jac_extension.data;
-    KDL::Jacobian jac_full(jac_chain.data.cols() + jac_extension.data.cols());
-    jac_full.data << jac_full_matrix;
-
-    return jac_full;
-}
-/* END KinematicExtensionTorso ****************************************************************************************/

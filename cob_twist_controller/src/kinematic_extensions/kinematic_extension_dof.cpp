@@ -44,90 +44,106 @@ KDL::Jacobian KinematicExtensionDOF::adjustJacobian(const KDL::Jacobian& jac_cha
 
 /**
  * Helper function adjusting the Jacobian used in inverse differential computation based on the Cartesian DoFs enabled in 'adjustJacobian()'.
+ * @param jac_chain The jacobian of the primary kinematic chain.
+ * @param eb_frame_ct The transformation from base_frame of the extension (eb) to the tip_frame of the primary chain (ct).
+ * @param cb_frame_eb The transformation from base_frame of the primary chain (cb) to the base_frame of the extension (eb).
+ * @param active_dim The binary vector of active dimensions.
+ * @return The extended Jacobian
  */
-KDL::Jacobian KinematicExtensionDOF::adjustJacobianDof(const KDL::Jacobian& jac_chain, const KDL::Frame full_frame, const KDL::Frame partial_frame, const ActiveCartesianDimension active_dim)
+KDL::Jacobian KinematicExtensionDOF::adjustJacobianDof(const KDL::Jacobian& jac_chain, const KDL::Frame eb_frame_ct, const KDL::Frame cb_frame_eb, const ActiveCartesianDimension active_dim)
 {
     /// compose jac_full considering kinematical extension
     KDL::Jacobian jac_full;
+    
+    // jacobian matrix for the extension
+    Eigen::Matrix<double, 6, 6> jac_ext;
+    jac_ext.setZero();
 
-    // ToDo: some of the variable names are not generic enough
-    Eigen::Vector3d w_x_chain_base, w_y_chain_base, w_z_chain_base;
-    Eigen::Vector3d tangential_vel_x, tangential_vel_y, tangential_vel_z;
-    Eigen::Vector3d r_chain_base;
+    // rotation from base_frame of primary chain to base_frame of extension (eb)
+    Eigen::Quaterniond quat_cb;
+    tf::quaternionKDLToEigen(cb_frame_eb.M, quat_cb);
+    Eigen::Matrix3d rot_cb = quat_cb.toRotationMatrix();
 
-    double base_ratio = params_.base_ratio;
+    /// angular velocities
+    // omega wrt eb
+    Eigen::Vector3d w_x_eb(1, 0, 0);
+    Eigen::Vector3d w_y_eb(0, 1, 0);
+    Eigen::Vector3d w_z_eb(0, 0, 1);
 
-    // Create standard platform jacobian
-    Eigen::Matrix<double, 6, 6> jac_b;
-    jac_b.setZero();
+    // transform to cb
+    Eigen::Vector3d w_x_cb = quat_cb * w_x_eb;
+    Eigen::Vector3d w_y_cb = quat_cb * w_y_eb;
+    Eigen::Vector3d w_z_cb = quat_cb * w_z_eb;
 
-    // Get current x and y position from EE and chain_base with respect to base_footprint
-    Eigen::Vector3d r_base_link(full_frame.p.x(),
-                                full_frame.p.y(),
-                                full_frame.p.z());
+    /// linear velocities
+    // vector from base_frame of extension (eb) to endeffector (ct)
+    Eigen::Vector3d p_eb(eb_frame_ct.p.x(), eb_frame_ct.p.y(), eb_frame_ct.p.z());
 
-    Eigen::Quaterniond chain_base_quat;
-    tf::quaternionKDLToEigen(partial_frame.M, chain_base_quat);
-    Eigen::Matrix3d chain_base_rot = chain_base_quat.toRotationMatrix();
-
-    // Transform from base_link to chain_base
-    Eigen::Vector3d w_x_base_link(base_ratio, 0, 0);
-    Eigen::Vector3d w_y_base_link(0, base_ratio, 0);
-    Eigen::Vector3d w_z_base_link(0, 0, base_ratio);
-
-    w_x_chain_base = chain_base_quat * w_x_base_link;
-    w_y_chain_base = chain_base_quat * w_y_base_link;
-    w_z_chain_base = chain_base_quat * w_z_base_link;
-
-    r_chain_base = chain_base_quat * r_base_link;
+    // transform to cb
+    Eigen::Vector3d p_cb = quat_cb * p_eb;
 
     // Calculate tangential velocity
-    tangential_vel_x = w_x_chain_base.cross(r_chain_base);
-    tangential_vel_y = w_y_chain_base.cross(r_chain_base);
-    tangential_vel_z = w_z_chain_base.cross(r_chain_base);
+    Eigen::Vector3d vel_x_cb = w_x_cb.cross(p_cb);
+    Eigen::Vector3d vel_y_cb = w_y_cb.cross(p_cb);
+    Eigen::Vector3d vel_z_cb = w_z_cb.cross(p_cb);
 
-    // Vx-Base <==> q8 effects a change in the following chain_base Vx velocities
-    jac_b(0, 0) = base_ratio * chain_base_rot(0, 0) * active_dim.lin_x;
-    jac_b(0, 1) = base_ratio * chain_base_rot(0, 1) * active_dim.lin_y;
-    jac_b(0, 2) = base_ratio * chain_base_rot(0, 2) * active_dim.lin_z;
-    jac_b(0, 3) = tangential_vel_x(0) * active_dim.rot_x;
-    jac_b(0, 4) = tangential_vel_y(0) * active_dim.rot_y;
-    jac_b(0, 5) = tangential_vel_z(0) * active_dim.rot_z;
+    /// Fill Jacobian column by column
+    // effect of lin_x motion
+    jac_ext(0, 0) = rot_cb(0, 0) * active_dim.lin_x;
+    jac_ext(1, 0) = rot_cb(1, 0) * active_dim.lin_x;
+    jac_ext(2, 0) = rot_cb(2, 0) * active_dim.lin_x;
+    jac_ext(3, 0) = 0.0;
+    jac_ext(4, 0) = 0.0;
+    jac_ext(5, 0) = 0.0;
 
-    // Vy-Base <==> q9 effects a change in the following chain_base Vy velocities
-    jac_b(1, 0) = base_ratio * chain_base_rot(1, 0) * active_dim.lin_x;
-    jac_b(1, 1) = base_ratio * chain_base_rot(1, 1) * active_dim.lin_y;
-    jac_b(1, 2) = base_ratio * chain_base_rot(1, 2) * active_dim.lin_z;
-    jac_b(1, 3) = tangential_vel_x(1) * active_dim.rot_x;
-    jac_b(1, 4) = tangential_vel_y(1) * active_dim.rot_y;
-    jac_b(1, 5) = tangential_vel_z(1) * active_dim.rot_z;
+    // effect of lin_y motion
+    jac_ext(0, 1) = rot_cb(0, 1) * active_dim.lin_y;
+    jac_ext(1, 1) = rot_cb(1, 1) * active_dim.lin_y;
+    jac_ext(2, 1) = rot_cb(2, 1) * active_dim.lin_y;
+    jac_ext(3, 1) = 0.0;
+    jac_ext(4, 1) = 0.0;
+    jac_ext(5, 1) = 0.0;
 
-    // Vz-Base <==>  effects a change in the following chain_base Vz velocities
-    jac_b(2, 0) = base_ratio * chain_base_rot(2, 0) * active_dim.lin_x;
-    jac_b(2, 1) = base_ratio * chain_base_rot(2, 1) * active_dim.lin_y;
-    jac_b(2, 2) = base_ratio * chain_base_rot(2, 2) * active_dim.lin_z;
-    jac_b(2, 3) = tangential_vel_x(2) * active_dim.rot_x;
-    jac_b(2, 4) = tangential_vel_y(2) * active_dim.rot_y;
-    jac_b(2, 5) = tangential_vel_z(2) * active_dim.rot_z;
+    // effect of lin_z motion
+    jac_ext(0, 2) = rot_cb(0, 2) * active_dim.lin_z;
+    jac_ext(1, 2) = rot_cb(1, 2) * active_dim.lin_z;
+    jac_ext(2, 2) = rot_cb(2, 2) * active_dim.lin_z;
+    jac_ext(3, 2) = 0.0;
+    jac_ext(4, 2) = 0.0;
+    jac_ext(5, 2) = 0.0;
 
-    // Phi <==> Wz with respect to base_link
-    jac_b(3, 3) = w_x_chain_base(0) * active_dim.rot_x;
-    jac_b(4, 3) = w_x_chain_base(1) * active_dim.rot_x;
-    jac_b(5, 3) = w_x_chain_base(2) * active_dim.rot_x;
+    // effect of rot_x motion
+    jac_ext(0, 3) = vel_x_cb(0) * active_dim.rot_x;
+    jac_ext(1, 3) = vel_x_cb(1) * active_dim.rot_x;
+    jac_ext(2, 3) = vel_x_cb(2) * active_dim.rot_x;
+    jac_ext(3, 3) = w_x_cb(0) * active_dim.rot_x;
+    jac_ext(4, 3) = w_x_cb(1) * active_dim.rot_x;
+    jac_ext(5, 3) = w_x_cb(2) * active_dim.rot_x;
 
-    jac_b(3, 4) = w_y_chain_base(0) * active_dim.rot_y;
-    jac_b(4, 4) = w_y_chain_base(1) * active_dim.rot_y;
-    jac_b(5, 4) = w_y_chain_base(2) * active_dim.rot_y;
+    // effect of rot_y motion
+    jac_ext(0, 4) = vel_y_cb(0) * active_dim.rot_y;
+    jac_ext(1, 4) = vel_y_cb(1) * active_dim.rot_y;
+    jac_ext(2, 4) = vel_y_cb(2) * active_dim.rot_y;
+    jac_ext(3, 4) = w_y_cb(0) * active_dim.rot_y;
+    jac_ext(4, 4) = w_y_cb(1) * active_dim.rot_y;
+    jac_ext(5, 4) = w_y_cb(2) * active_dim.rot_y;
 
-    jac_b(3, 5) = w_z_chain_base(0) * active_dim.rot_z;
-    jac_b(4, 5) = w_z_chain_base(1) * active_dim.rot_z;
-    jac_b(5, 5) = w_z_chain_base(2) * active_dim.rot_z;
+    // effect of rot_z motion
+    jac_ext(0, 5) = vel_z_cb(0) * active_dim.rot_z;
+    jac_ext(1, 5) = vel_z_cb(1) * active_dim.rot_z;
+    jac_ext(2, 5) = vel_z_cb(2) * active_dim.rot_z;
+    jac_ext(3, 5) = w_z_cb(0) * active_dim.rot_z;
+    jac_ext(4, 5) = w_z_cb(1) * active_dim.rot_z;
+    jac_ext(5, 5) = w_z_cb(2) * active_dim.rot_z;
+    
+    // scale with extension_ratio
+    jac_ext *= params_.base_ratio;
 
-    // combine chain Jacobian and platform Jacobian
+    // combine Jacobian of primary chain and extension
     Matrix6Xd_t jac_full_matrix;
-    jac_full_matrix.resize(6, jac_chain.data.cols() + jac_b.cols());
-    jac_full_matrix << jac_chain.data, jac_b;
-    jac_full.resize(jac_chain.data.cols() + jac_b.cols());
+    jac_full_matrix.resize(6, jac_chain.data.cols() + jac_ext.cols());
+    jac_full_matrix << jac_chain.data, jac_ext;
+    jac_full.resize(jac_chain.data.cols() + jac_ext.cols());
     jac_full.data << jac_full_matrix;
 
     return jac_full;

@@ -32,8 +32,6 @@
 
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
-#include <tf/tf.h>
-#include <tf/transform_listener.h>
 #include <Eigen/Geometry>
 
 #include "cob_twist_controller/kinematic_extensions/kinematic_extension_base.h"
@@ -52,7 +50,7 @@ class KinematicExtensionDOF : public KinematicExtensionBase
         virtual KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain);
         virtual void processResultExtension(const KDL::JntArray& q_dot_ik) = 0;
 
-        KDL::Jacobian adjustJacobianDof(const KDL::Jacobian& jac_chain, const KDL::Frame full_frame, const KDL::Frame partial_frame, const ActiveCartesianDimension active_dim);
+        KDL::Jacobian adjustJacobianDof(const KDL::Jacobian& jac_chain, const KDL::Frame eb_frame_ct, const KDL::Frame cb_frame_eb, const ActiveCartesianDimension active_dim);
 };
 /* END KinematicExtensionDOF **********************************************************************************************/
 
@@ -65,22 +63,16 @@ class KinematicExtensionBaseActive : public KinematicExtensionDOF
         : KinematicExtensionDOF(params)
         {
             base_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("/base/twist_controller/command", 1);
-
-            /// give tf_listener_ some time to fill buffer
-            ros::Duration(0.5).sleep();
         }
 
         ~KinematicExtensionBaseActive() {}
 
-        virtual KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain);
-        virtual void processResultExtension(const KDL::JntArray& q_dot_ik);
+        KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain);
+        void processResultExtension(const KDL::JntArray& q_dot_ik);
 
         void baseTwistCallback(const geometry_msgs::Twist::ConstPtr& msg);
 
     private:
-        ros::NodeHandle nh_;
-        tf::TransformListener tf_listener_;
-
         ros::Publisher base_vel_pub_;
 };
 /* END KinematicExtensionBaseActive **********************************************************************************************/

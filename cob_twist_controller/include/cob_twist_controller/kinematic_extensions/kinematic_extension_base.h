@@ -31,7 +31,8 @@
 #define COB_TWIST_CONTROLLER_KINEMATIC_EXTENSIONS_KINEMATIC_EXTENSION_BASE_H
 
 #include <ros/ros.h>
-
+#include <tf/tf.h>
+#include <tf/transform_listener.h>
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 
 
@@ -41,7 +42,10 @@ class KinematicExtensionBase
     public:
         explicit KinematicExtensionBase(const TwistControllerParams& params):
             params_(params)
-        {}
+        {
+            /// give tf_listener_ some time to fill buffer
+            ros::Duration(0.5).sleep();
+        }
 
         virtual ~KinematicExtensionBase() {}
 
@@ -49,6 +53,8 @@ class KinematicExtensionBase
         virtual void processResultExtension(const KDL::JntArray& q_dot_ik) = 0;
 
     protected:
+        ros::NodeHandle nh_;
+        tf::TransformListener tf_listener_;
         const TwistControllerParams& params_;
 };
 
