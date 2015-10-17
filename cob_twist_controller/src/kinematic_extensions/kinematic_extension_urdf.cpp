@@ -32,71 +32,141 @@
 #include "cob_twist_controller/kinematic_extensions/kinematic_extension_urdf.h"
 
 /* BEGIN KinematicExtensionURDF ********************************************************************************************/
-bool KinematicExtensionURDF::initUrdfExtension(std::string chain_base, std::string chain_tip)
+bool KinematicExtensionURDF::initUrdfExtension()
 {
     /// parse robot_description and generate KDL chains
     KDL::Tree tree;
-    KDL::Chain chain;
     if (!kdl_parser::treeFromParam("robot_description", tree))
     {
         ROS_ERROR("Failed to construct kdl tree");
         return false;
     }
 
-    tree.getChain(chain_base, chain_tip, chain);
-    if (chain.getNrOfJoints() == 0)
+    tree.getChain(ext_base_, ext_tip_, chain_);
+    if (chain_.getNrOfJoints() == 0)
     {
         ROS_ERROR("Failed to initialize kinematic chain");
         return false;
     }
 
-    for (unsigned int i = 0; i < chain.getNrOfJoints(); i++)
+    for (unsigned int i = 0; i < chain_.getNrOfSegments(); i++)
     {
-        joint_names_.push_back(chain.getSegment(i).getJoint().getName());
+        ROS_INFO_STREAM("Segment[" << i << "] Name : " << chain_.getSegment(i).getName());
+        ROS_INFO_STREAM("Joint[" << i << "] Name: " << chain_.getSegment(i).getJoint().getName());
+        ROS_INFO_STREAM("Joint[" << i << "] Type: " << chain_.getSegment(i).getJoint().getTypeName());
+        if (chain_.getSegment(i).getJoint().getType() != KDL::Joint::None)
+        {
+            ROS_INFO_STREAM("Adding Joint " << chain_.getSegment(i).getJoint().getName());
+            joint_names_.push_back(chain_.getSegment(i).getJoint().getName());
+        }
     }
-    this->joint_states_.last_q_.resize(chain.getNrOfJoints());
-    this->joint_states_.last_q_dot_.resize(chain.getNrOfJoints());
-    this->joint_states_.current_q_.resize(chain.getNrOfJoints());
-    this->joint_states_.current_q_dot_.resize(chain.getNrOfJoints());
+    this->dof_ext_ = chain_.getNrOfJoints();
+    this->joint_states_.last_q_.resize(dof_ext_);
+    this->joint_states_.last_q_dot_.resize(dof_ext_);
+    this->joint_states_.current_q_.resize(dof_ext_);
+    this->joint_states_.current_q_dot_.resize(dof_ext_);
 
-    p_jnt2jac_ = new KDL::ChainJntToJacSolver(chain);
+    p_jnt2jac_ = new KDL::ChainJntToJacSolver(chain_);
     return true;
 }
 
 KDL::Jacobian KinematicExtensionURDF::adjustJacobian(const KDL::Jacobian& jac_chain)
 {
     /// compose jac_full considering kinematical extension
-    KDL::Jacobian jac_extension(joint_names_.size());
+    KDL::Jacobian jac_full;
 
-    /// calculate Jacobian for extension
-    p_jnt2jac_->JntToJac(joint_states_.current_q_, jac_extension);
+    // jacobian matrix for the extension
+    Eigen::Matrix<double, 6, Eigen::Dynamic> jac_ext;
+    jac_ext.resize(6, dof_ext_);
+    jac_ext.setZero();
 
-    /// get required transformations
-    tf::StampedTransform cb_transform_eb;
-    KDL::Frame cb_frame_eb;
-
-    try
+    unsigned int k = 0;
+    for (unsigned int i = 0; i < chain_.getNrOfSegments(); i++)
     {
-        ros::Time now = ros::Time(0);
-        tf_listener_.waitForTransform(params_.chain_base_link, this->ext_base, now, ros::Duration(0.5));
-        tf_listener_.lookupTransform(params_.chain_base_link, this->ext_base, now, cb_transform_eb);
+        KDL::Joint joint = chain_.getSegment(i).getJoint();
+        double eps_type = -1.0;  // joint_type selector: 0.0 -> rot_axis, 1.0 -> lin_axis
+
+        switch (joint.getType())
+        {
+            // revolute axis
+            case KDL::Joint::RotAxis:
+            case KDL::Joint::RotX:
+            case KDL::Joint::RotY:
+            case KDL::Joint::RotZ:
+                eps_type = 0.0;
+                break;
+            // linear axis
+            case KDL::Joint::TransAxis:
+            case KDL::Joint::TransX:
+            case KDL::Joint::TransY:
+            case KDL::Joint::TransZ:
+                eps_type = 1.0;
+                break;
+            // fixed axis
+            case KDL::Joint::None:
+            default:
+                break;
+        }
+
+        if (eps_type < 0.0)
+        {
+            ROS_DEBUG_STREAM("Not considering " << joint.getName() << " in jac_ext");
+            continue;
+        }
+
+        /// get required transformations
+        tf::StampedTransform eb_transform_ct, cb_transform_eb;
+        KDL::Frame eb_frame_ct, cb_frame_eb;
+        try
+        {
+            ros::Time now = ros::Time(0);
+            tf_listener_.waitForTransform(chain_.getSegment(i).getName(), params_.chain_tip_link, now, ros::Duration(0.5));
+            tf_listener_.lookupTransform(chain_.getSegment(i).getName(), params_.chain_tip_link,  now, eb_transform_ct);
+
+            tf_listener_.waitForTransform(params_.chain_base_link, chain_.getSegment(i).getName(), now, ros::Duration(0.5));
+            tf_listener_.lookupTransform(params_.chain_base_link, chain_.getSegment(i).getName(), now, cb_transform_eb);
+        }
+        catch (tf::TransformException& ex)
+        {
+            ROS_ERROR("%s", ex.what());
+        }
+
+        eb_frame_ct.p = KDL::Vector(eb_transform_ct.getOrigin().x(), eb_transform_ct.getOrigin().y(), eb_transform_ct.getOrigin().z());
+        eb_frame_ct.M = KDL::Rotation::Quaternion(eb_transform_ct.getRotation().x(), eb_transform_ct.getRotation().y(), eb_transform_ct.getRotation().z(), eb_transform_ct.getRotation().w());
+
+        cb_frame_eb.p = KDL::Vector(cb_transform_eb.getOrigin().x(), cb_transform_eb.getOrigin().y(), cb_transform_eb.getOrigin().z());
+        cb_frame_eb.M = KDL::Rotation::Quaternion(cb_transform_eb.getRotation().x(), cb_transform_eb.getRotation().y(), cb_transform_eb.getRotation().z(), cb_transform_eb.getRotation().w());
+
+        // rotation from base_frame of primary chain to base_frame of extension (eb)
+        Eigen::Quaterniond quat_cb;
+        tf::quaternionKDLToEigen(cb_frame_eb.M, quat_cb);
+        Eigen::Matrix3d rot_cb = quat_cb.toRotationMatrix();
+
+        /// angular velocities
+        Eigen::Vector3d axis_eb(joint.JointAxis().x(), joint.JointAxis().y(), joint.JointAxis().z());  // axis wrt eb
+        Eigen::Vector3d axis_cb = quat_cb * axis_eb;  // transform to cb
+
+        /// linear velocities
+        // vector from base_frame of extension (eb) to endeffector (ct)
+        Eigen::Vector3d p_eb(eb_frame_ct.p.x(), eb_frame_ct.p.y(), eb_frame_ct.p.z());
+        Eigen::Vector3d p_cb = quat_cb * p_eb;                  // transform to cb
+        Eigen::Vector3d axis_cross_p_cb = axis_cb.cross(p_cb);  // tangential velocity
+
+        /// explicit form of jacobian
+        jac_ext(0, k) = eps_type * axis_cb(0) + (1.0 - eps_type) * axis_cross_p_cb(0);
+        jac_ext(1, k) = eps_type * axis_cb(0) + (1.0 - eps_type) * axis_cross_p_cb(1);
+        jac_ext(2, k) = eps_type * axis_cb(0) + (1.0 - eps_type) * axis_cross_p_cb(2);
+        jac_ext(3, k) = eps_type * 0.0     + (1.0 - eps_type) * axis_cb(0);
+        jac_ext(4, k) = eps_type * 0.0     + (1.0 - eps_type) * axis_cb(1);
+        jac_ext(5, k) = eps_type * 0.0     + (1.0 - eps_type) * axis_cb(2);
+        k++;
     }
-    catch (tf::TransformException& ex)
-    {
-        ROS_ERROR("%s", ex.what());
-    }
 
-    cb_frame_eb.p = KDL::Vector(cb_transform_eb.getOrigin().x(), cb_transform_eb.getOrigin().y(), cb_transform_eb.getOrigin().z());
-    cb_frame_eb.M = KDL::Rotation::Quaternion(cb_transform_eb.getRotation().x(), cb_transform_eb.getRotation().y(), cb_transform_eb.getRotation().z(), cb_transform_eb.getRotation().w());
-
-    /// transform accordingly
-    jac_extension.changeRefFrame(cb_frame_eb);
-
-    /// compose full Jacobian
+    // combine Jacobian of primary chain and extension
     Matrix6Xd_t jac_full_matrix;
-    jac_full_matrix.resize(6, jac_chain.data.cols() + jac_extension.data.cols());
-    jac_full_matrix << jac_chain.data, jac_extension.data;
-    KDL::Jacobian jac_full(jac_chain.data.cols() + jac_extension.data.cols());
+    jac_full_matrix.resize(6, jac_chain.data.cols() + jac_ext.cols());
+    jac_full_matrix << jac_chain.data, jac_ext;
+    jac_full.resize(jac_chain.data.cols() + jac_ext.cols());
     jac_full.data << jac_full_matrix;
 
     return jac_full;
@@ -106,7 +176,7 @@ void KinematicExtensionURDF::processResultExtension(const KDL::JntArray& q_dot_i
 {
     std_msgs::Float64MultiArray command_msg;
 
-    for (unsigned int i = 0; i < joint_names_.size(); i++)
+    for (unsigned int i = 0; i < dof_ext_; i++)
     {
         command_msg.data.push_back(q_dot_ik(params_.dof+i));
     }
@@ -120,7 +190,7 @@ void KinematicExtensionURDF::jointstateCallback(const sensor_msgs::JointState::C
     KDL::JntArray q_dot_temp = this->joint_states_.current_q_dot_;
 
     // ToDo: Do we need more robust parsing/handling?
-    for (uint16_t i = 0; i < joint_names_.size(); i++)
+    for (unsigned int i = 0; i < dof_ext_; i++)
     {
         q_temp(i) = msg->position[i];
         q_dot_temp(i) = msg->velocity[i];

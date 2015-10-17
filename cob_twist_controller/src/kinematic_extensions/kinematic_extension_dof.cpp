@@ -54,7 +54,7 @@ KDL::Jacobian KinematicExtensionDOF::adjustJacobianDof(const KDL::Jacobian& jac_
 {
     /// compose jac_full considering kinematical extension
     KDL::Jacobian jac_full;
-    
+
     // jacobian matrix for the extension
     Eigen::Matrix<double, 6, 6> jac_ext;
     jac_ext.setZero();
@@ -135,7 +135,7 @@ KDL::Jacobian KinematicExtensionDOF::adjustJacobianDof(const KDL::Jacobian& jac_
     jac_ext(3, 5) = w_z_cb(0) * active_dim.rot_z;
     jac_ext(4, 5) = w_z_cb(1) * active_dim.rot_z;
     jac_ext(5, 5) = w_z_cb(2) * active_dim.rot_z;
-    
+
     // scale with extension_ratio
     jac_ext *= params_.base_ratio;
 
