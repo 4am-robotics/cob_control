@@ -45,7 +45,9 @@ class TaskPrioritySolver : public ConstraintSolver<>
     public:
         TaskPrioritySolver(const TwistControllerParams& params, TaskStackController_t& task_stack_controller)
                            : ConstraintSolver(params, task_stack_controller)
-        {}
+        {
+            this->last_time_ = ros::Time::now();
+        }
 
         virtual ~TaskPrioritySolver()
         {}
@@ -56,6 +58,9 @@ class TaskPrioritySolver : public ConstraintSolver<>
          */
         virtual Eigen::MatrixXd solve(const Vector6d_t& in_cart_velocities,
                                       const JointStates& joint_states);
+
+    protected:
+        ros::Time last_time_;
 };
 
 #endif  // COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_TASK_PRIORITY_SOLVER_H
