@@ -137,6 +137,28 @@ struct ConstraintThresholds
     double critical;
 };
 
+struct LimiterParams
+{
+    LimiterParams() :
+        keep_direction(true),
+        enforce_pos_limits(true),
+        enforce_vel_limits(true),
+        enforce_acc_limits(false),
+        limits_tolerance(5.0)
+    {}
+
+    bool keep_direction;
+    bool enforce_pos_limits;
+    bool enforce_vel_limits;
+    bool enforce_acc_limits;
+    double limits_tolerance;
+
+    std::vector<double> limits_max;
+    std::vector<double> limits_min;
+    std::vector<double> limits_vel;
+    std::vector<double> limits_acc;
+};
+
 struct TwistControllerParams
 {
     TwistControllerParams() :
@@ -165,14 +187,6 @@ struct TwistControllerParams
         priority_ca(100),
         damping_ca(0.000001),
         k_H_ca(2.0),
-
-        keep_direction(true),
-        enforce_pos_limits(true),
-        enforce_vel_limits(true),
-        enforce_acc_limits(false),
-        limits_tolerance(5.0),
-        max_vel_lin_base(0.5),
-        max_vel_rot_base(0.5),
 
         kinematic_extension(NO_EXTENSION),
         base_ratio(0.0)
@@ -217,20 +231,7 @@ struct TwistControllerParams
     double damping_jla;
     ConstraintThresholds thresholds_jla;
 
-    bool keep_direction;
-    bool enforce_pos_limits;
-    bool enforce_vel_limits;
-    bool enforce_acc_limits;
-    double limits_tolerance;
-
-    // added limits from URDF file
-    std::vector<double> limits_max;
-    std::vector<double> limits_min;
-    std::vector<double> limits_vel;
-    std::vector<double> limits_acc;
-
-    double max_vel_lin_base;
-    double max_vel_rot_base;
+    LimiterParams limiter_params;
 
     KinematicExtensionTypes kinematic_extension;
     double base_ratio;

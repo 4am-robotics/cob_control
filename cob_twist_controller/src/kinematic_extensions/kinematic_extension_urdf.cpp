@@ -32,7 +32,7 @@
 #include "cob_twist_controller/kinematic_extensions/kinematic_extension_urdf.h"
 
 /* BEGIN KinematicExtensionURDF ********************************************************************************************/
-bool KinematicExtensionURDF::initUrdfExtension()
+bool KinematicExtensionURDF::initExtension()
 {
     /// parse robot_description and generate KDL chains
     KDL::Tree tree;
@@ -60,13 +60,28 @@ bool KinematicExtensionURDF::initUrdfExtension()
             joint_names_.push_back(chain_.getSegment(i).getJoint().getName());
         }
     }
-    this->dof_ext_ = chain_.getNrOfJoints();
-    this->joint_states_.last_q_.resize(dof_ext_);
-    this->joint_states_.last_q_dot_.resize(dof_ext_);
-    this->joint_states_.current_q_.resize(dof_ext_);
-    this->joint_states_.current_q_dot_.resize(dof_ext_);
+    this->ext_dof_ = chain_.getNrOfJoints();
+    this->joint_states_.last_q_.resize(ext_dof_);
+    this->joint_states_.last_q_dot_.resize(ext_dof_);
+    this->joint_states_.current_q_.resize(ext_dof_);
+    this->joint_states_.current_q_dot_.resize(ext_dof_);
 
-    p_jnt2jac_ = new KDL::ChainJntToJacSolver(chain_);
+    /// parse robot_description and set velocity limits
+    urdf::Model model;
+    if (!model.initParam("/robot_description"))
+    {
+        ROS_ERROR("Failed to parse urdf file for JointLimits");
+        return false;
+    }
+
+    for (unsigned int i = 0; i < ext_dof_; i++)
+    {
+        limits_max_.push_back(model.getJoint(joint_names_[i])->limits->upper);
+        limits_min_.push_back(model.getJoint(joint_names_[i])->limits->lower);
+        limits_vel_.push_back(model.getJoint(joint_names_[i])->limits->velocity);
+        limits_acc_.push_back(std::numeric_limits<double>::max());
+    }
+
     return true;
 }
 
@@ -77,7 +92,7 @@ KDL::Jacobian KinematicExtensionURDF::adjustJacobian(const KDL::Jacobian& jac_ch
 
     // jacobian matrix for the extension
     Eigen::Matrix<double, 6, Eigen::Dynamic> jac_ext;
-    jac_ext.resize(6, dof_ext_);
+    jac_ext.resize(6, ext_dof_);
     jac_ext.setZero();
 
     unsigned int k = 0;
@@ -172,11 +187,51 @@ KDL::Jacobian KinematicExtensionURDF::adjustJacobian(const KDL::Jacobian& jac_ch
     return jac_full;
 }
 
+JointStates KinematicExtensionURDF::adjustJointStates(const JointStates& joint_states)
+{
+    JointStates js;
+    unsigned int chain_dof = joint_states.current_q_.rows();
+    js.current_q_.resize(chain_dof + ext_dof_);
+    js.last_q_.resize(chain_dof + ext_dof_);
+    js.current_q_dot_.resize(chain_dof + ext_dof_);
+    js.last_q_dot_.resize(chain_dof + ext_dof_);
+    
+    for (unsigned int i = 0; i< chain_dof; i++)
+    {
+        js.current_q_(i) = joint_states.current_q_(i);
+        js.last_q_(i) = joint_states.last_q_(i);
+        js.current_q_dot_(i) = joint_states.current_q_dot_(i);
+        js.last_q_dot_(i) = joint_states.last_q_dot_(i);
+    }
+    for (unsigned int i = 0; i < ext_dof_; i++)
+    {
+        js.current_q_(chain_dof + i) = this->joint_states_.current_q_(i);
+        js.last_q_(chain_dof + i) = this->joint_states_.last_q_(i);
+        js.current_q_dot_(chain_dof + i) = this->joint_states_.current_q_dot_(i);
+        js.last_q_dot_(chain_dof + i) = this->joint_states_.last_q_dot_(i);
+    }
+
+    return js;
+}
+
+LimiterParams KinematicExtensionURDF::adjustLimiterParams(const LimiterParams& limiter_params)
+{
+    LimiterParams lp = limiter_params;
+    for (unsigned int i = 0; i < ext_dof_; i++)
+    {
+        lp.limits_max.push_back(limits_max_[i]);
+        lp.limits_min.push_back(limits_min_[i]);
+        lp.limits_vel.push_back(limits_vel_[i]);
+        lp.limits_acc.push_back(limits_acc_[i]);
+    }
+    return lp;
+}
+
 void KinematicExtensionURDF::processResultExtension(const KDL::JntArray& q_dot_ik)
 {
     std_msgs::Float64MultiArray command_msg;
 
-    for (unsigned int i = 0; i < dof_ext_; i++)
+    for (unsigned int i = 0; i < ext_dof_; i++)
     {
         command_msg.data.push_back(q_dot_ik(params_.dof+i));
     }
@@ -190,7 +245,7 @@ void KinematicExtensionURDF::jointstateCallback(const sensor_msgs::JointState::C
     KDL::JntArray q_dot_temp = this->joint_states_.current_q_dot_;
 
     // ToDo: Do we need more robust parsing/handling?
-    for (unsigned int i = 0; i < dof_ext_; i++)
+    for (unsigned int i = 0; i < ext_dof_; i++)
     {
         q_temp(i) = msg->position[i];
         q_dot_temp(i) = msg->velocity[i];

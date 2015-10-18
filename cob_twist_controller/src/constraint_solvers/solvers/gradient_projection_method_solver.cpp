@@ -31,7 +31,6 @@
 #include <cmath>
 
 #include "cob_twist_controller/constraint_solvers/solvers/gradient_projection_method_solver.h"
-#include "cob_twist_controller/constraints/self_motion_magnitude.h"
 
 /**
  * Solve the inverse differential kinematics equation by using GPM.

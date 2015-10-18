@@ -97,9 +97,10 @@ template <typename T_PARAMS, typename PRIO>
 void JointLimitAvoidance<T_PARAMS, PRIO>::calculate()
 {
     const TwistControllerParams& params = this->constraint_params_.tc_params_;
+    const LimiterParams& limiter_params = this->constraint_params_.limiter_params_;
     const int32_t joint_idx = this->constraint_params_.joint_idx_;
-    const double limit_min = params.limits_min[joint_idx];
-    const double limit_max = params.limits_max[joint_idx];
+    const double limit_min = limiter_params.limits_min[joint_idx];
+    const double limit_max = limiter_params.limits_max[joint_idx];
     const double joint_pos = this->joint_states_.current_q_(joint_idx);
 
     this->abs_delta_max_ = std::abs(limit_max - joint_pos);
@@ -143,9 +144,10 @@ template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidance<T_PARAMS, PRIO>::calcValue()
 {
     const TwistControllerParams& params = this->constraint_params_.tc_params_;
+    const LimiterParams& limiter_params = this->constraint_params_.limiter_params_;
     const int32_t joint_idx = this->constraint_params_.joint_idx_;
-    std::vector<double> limits_min = params.limits_min;
-    std::vector<double> limits_max = params.limits_max;
+    std::vector<double> limits_min = limiter_params.limits_min;
+    std::vector<double> limits_max = limiter_params.limits_max;
     const double joint_pos = this->joint_states_.current_q_(joint_idx);
 
     double nom = pow(limits_max[joint_idx] - limits_min[joint_idx], 2.0);
@@ -170,10 +172,11 @@ template <typename T_PARAMS, typename PRIO>
 Eigen::VectorXd JointLimitAvoidance<T_PARAMS, PRIO>::calcPartialValues()
 {
     const TwistControllerParams& params = this->constraint_params_.tc_params_;
+    const LimiterParams& limiter_params = this->constraint_params_.limiter_params_;
     const double joint_pos = this->joint_states_.current_q_(this->constraint_params_.joint_idx_);
     const double joint_vel = this->joint_states_.current_q_dot_(this->constraint_params_.joint_idx_);
-    const double limits_min = params.limits_min[this->constraint_params_.joint_idx_];
-    const double limits_max = params.limits_max[this->constraint_params_.joint_idx_];
+    const double limits_min = limiter_params.limits_min[this->constraint_params_.joint_idx_];
+    const double limits_max = limiter_params.limits_max[this->constraint_params_.joint_idx_];
     Eigen::VectorXd partial_values = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
 
     const double min_delta = (joint_pos - limits_min);
@@ -269,8 +272,9 @@ template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidanceMid<T_PARAMS, PRIO>::calcValue()
 {
     const TwistControllerParams& params = this->constraint_params_.tc_params_;
-    std::vector<double> limits_min = params.limits_min;
-    std::vector<double> limits_max = params.limits_max;
+    const LimiterParams& limiter_params = this->constraint_params_.limiter_params_;
+    std::vector<double> limits_min = limiter_params.limits_min;
+    std::vector<double> limits_max = limiter_params.limits_max;
     const KDL::JntArray joint_pos = this->joint_states_.current_q_;
     double H_q = 0.0;
     for (uint8_t i = 0; i < joint_pos.rows() ; ++i)
@@ -309,9 +313,10 @@ template <typename T_PARAMS, typename PRIO>
 Eigen::VectorXd JointLimitAvoidanceMid<T_PARAMS, PRIO>::calcPartialValues()
 {
     const TwistControllerParams& params = this->constraint_params_.tc_params_;
+    const LimiterParams& limiter_params = this->constraint_params_.limiter_params_;
     const KDL::JntArray joint_pos = this->joint_states_.current_q_;
-    std::vector<double> limits_min = params.limits_min;
-    std::vector<double> limits_max = params.limits_max;
+    std::vector<double> limits_min = limiter_params.limits_min;
+    std::vector<double> limits_max = limiter_params.limits_max;
 
     uint8_t vec_rows = static_cast<uint8_t>(joint_pos.rows());
     Eigen::VectorXd partial_values = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
@@ -409,9 +414,10 @@ template <typename T_PARAMS, typename PRIO>
 void JointLimitAvoidanceIneq<T_PARAMS, PRIO>::calculate()
 {
     const TwistControllerParams& params = this->constraint_params_.tc_params_;
+    const LimiterParams& limiter_params = this->constraint_params_.limiter_params_;
     const int32_t joint_idx = this->constraint_params_.joint_idx_;
-    const double limit_min = params.limits_min[joint_idx];
-    const double limit_max = params.limits_max[joint_idx];
+    const double limit_min = limiter_params.limits_min[joint_idx];
+    const double limit_max = limiter_params.limits_max[joint_idx];
     const double joint_pos = this->joint_states_.current_q_(joint_idx);
 
     this->abs_delta_max_ = std::abs(limit_max - joint_pos);
@@ -462,9 +468,10 @@ template <typename T_PARAMS, typename PRIO>
 double JointLimitAvoidanceIneq<T_PARAMS, PRIO>::calcValue()
 {
     const TwistControllerParams& params = this->constraint_params_.tc_params_;
+    const LimiterParams& limiter_params = this->constraint_params_.limiter_params_;
     int32_t joint_idx = this->constraint_params_.joint_idx_;
-    double limit_min = params.limits_min[joint_idx];
-    double limit_max = params.limits_max[joint_idx];
+    double limit_min = limiter_params.limits_min[joint_idx];
+    double limit_max = limiter_params.limits_max[joint_idx];
 
     double joint_pos = this->joint_states_.current_q_(joint_idx);
 
@@ -489,9 +496,10 @@ template <typename T_PARAMS, typename PRIO>
 Eigen::VectorXd JointLimitAvoidanceIneq<T_PARAMS, PRIO>::calcPartialValues()
 {
     const TwistControllerParams& params = this->constraint_params_.tc_params_;
+    const LimiterParams& limiter_params = this->constraint_params_.limiter_params_;
     int32_t joint_idx = this->constraint_params_.joint_idx_;
-    double limit_min = params.limits_min[joint_idx];
-    double limit_max = params.limits_max[joint_idx];
+    double limit_min = limiter_params.limits_min[joint_idx];
+    double limit_max = limiter_params.limits_max[joint_idx];
     double joint_pos = this->joint_states_.current_q_(joint_idx);
     Eigen::VectorXd partial_values = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
     partial_values(this->constraint_params_.joint_idx_) = -2.0 * joint_pos + limit_max + limit_min;

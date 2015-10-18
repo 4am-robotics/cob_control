@@ -95,20 +95,20 @@ bool CobTwistController::initialize()
         return false;
     }
 
-    for (uint16_t i=0; i < twist_controller_params_.dof; i++)
+    for (uint16_t i = 0; i < twist_controller_params_.dof; i++)
     {
-        twist_controller_params_.limits_min.push_back(model.getJoint(twist_controller_params_.joints[i])->limits->lower);
-        twist_controller_params_.limits_max.push_back(model.getJoint(twist_controller_params_.joints[i])->limits->upper);
-        twist_controller_params_.limits_vel.push_back(model.getJoint(twist_controller_params_.joints[i])->limits->velocity);
+        twist_controller_params_.limiter_params.limits_min.push_back(model.getJoint(twist_controller_params_.joints[i])->limits->lower);
+        twist_controller_params_.limiter_params.limits_max.push_back(model.getJoint(twist_controller_params_.joints[i])->limits->upper);
+        twist_controller_params_.limiter_params.limits_vel.push_back(model.getJoint(twist_controller_params_.joints[i])->limits->velocity);
     }
 
-    // ToDo: get this from joint_limits.yaml?
-    if ((!nh_twist.getParam("limits_acc", twist_controller_params_.limits_acc)) || (twist_controller_params_.limits_acc.size() != twist_controller_params_.dof))
+    // Currently not supported yet
+    if ((!nh_twist.getParam("limits_acc", twist_controller_params_.limiter_params.limits_acc)) || (twist_controller_params_.limiter_params.limits_acc.size() != twist_controller_params_.dof))
     {
-        ROS_ERROR("Parameter 'limits_acc' not set or dimensions do not match! Not limiting acceleration!");
+        // ROS_ERROR("Parameter 'limits_acc' not set or dimensions do not match! Not limiting acceleration!");
         for (uint16_t i = 0; i < twist_controller_params_.dof; i++)
         {
-            twist_controller_params_.limits_acc.push_back(std::numeric_limits<double>::max());
+            twist_controller_params_.limiter_params.limits_acc.push_back(std::numeric_limits<double>::max());
         }
     }
 
@@ -218,11 +218,11 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
 
     twist_controller_params_.eps_truncation = config.eps_truncation;
 
-    twist_controller_params_.keep_direction = config.keep_direction;
-    twist_controller_params_.enforce_pos_limits = config.enforce_pos_limits;
-    twist_controller_params_.enforce_vel_limits = config.enforce_vel_limits;
-    twist_controller_params_.enforce_acc_limits = config.enforce_acc_limits;
-    twist_controller_params_.limits_tolerance = config.limits_tolerance;
+    twist_controller_params_.limiter_params.keep_direction = config.keep_direction;
+    twist_controller_params_.limiter_params.enforce_pos_limits = config.enforce_pos_limits;
+    twist_controller_params_.limiter_params.enforce_vel_limits = config.enforce_vel_limits;
+    twist_controller_params_.limiter_params.enforce_acc_limits = config.enforce_acc_limits;
+    twist_controller_params_.limiter_params.limits_tolerance = config.limits_tolerance;
 
     twist_controller_params_.kinematic_extension = static_cast<KinematicExtensionTypes>(config.kinematic_extension);
     twist_controller_params_.base_ratio = config.base_ratio;
@@ -288,12 +288,12 @@ void CobTwistController::checkSolverAndConstraints(cob_twist_controller::TwistCo
         }
     }
 
-    if (twist_controller_params_.limits_tolerance <= DIV0_SAFE)
+    if (twist_controller_params_.limiter_params.limits_tolerance <= DIV0_SAFE)
     {
         ROS_ERROR("The limits_tolerance for enforce limits is smaller than DIV/0 threshold. Therefore both enforce_limits are set to false!");
-        twist_controller_params_.enforce_pos_limits = config.enforce_pos_limits = false;
-        twist_controller_params_.enforce_vel_limits = config.enforce_vel_limits = false;
-        twist_controller_params_.enforce_acc_limits = config.enforce_acc_limits = false;
+        twist_controller_params_.limiter_params.enforce_pos_limits = config.enforce_pos_limits = false;
+        twist_controller_params_.limiter_params.enforce_vel_limits = config.enforce_vel_limits = false;
+        twist_controller_params_.limiter_params.enforce_acc_limits = config.enforce_acc_limits = false;
     }
 
     if (!warning)

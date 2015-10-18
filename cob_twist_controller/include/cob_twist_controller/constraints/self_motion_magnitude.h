@@ -53,7 +53,7 @@ class SelfMotionMagnitudeDeterminatorBase
         virtual ~SelfMotionMagnitudeDeterminatorBase()
         {}
 
-        virtual double calculate(const TwistControllerParams& params,
+        virtual double calculate(const LimiterParams& params,
                                  const Eigen::MatrixXd& particular_solution,
                                  const Eigen::MatrixXd& homogeneous_solution) const = 0;
 };
@@ -70,25 +70,14 @@ class SmmDeterminatorVelocityBounds : public SelfMotionMagnitudeDeterminatorBase
         {}
 
         /// Implementation of SMM. Formula: See header comment!
-        virtual double calculate(const TwistControllerParams& params, const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const
+        virtual double calculate(const LimiterParams& params, const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const
         {
-            std::vector<double> velLim = params.limits_vel;
             uint16_t cntRows = particular_solution.rows();
-            if (params.kinematic_extension == BASE_ACTIVE && (cntRows == (velLim.size() + 6)))
-            {
-                // Base active with extended 6 DOF
-                velLim.push_back(params.max_vel_lin_base);
-                velLim.push_back(params.max_vel_lin_base);
-                velLim.push_back(params.max_vel_lin_base);
-                velLim.push_back(params.max_vel_rot_base);
-                velLim.push_back(params.max_vel_rot_base);
-                velLim.push_back(params.max_vel_rot_base);
-            }
 
-            if (cntRows != homogeneous_solution.rows() || cntRows != velLim.size())
+            if (cntRows != homogeneous_solution.rows() || cntRows != params.limits_vel.size())
             {
                 ROS_ERROR("Count of rows do not match for particular solution, homogeneous solution and vector limits.");
-                ROS_ERROR("Part.Solution = %d\nHom.Solution = %d\velLim = %d\n", cntRows, (int) homogeneous_solution.rows(), (int) velLim.size());
+                ROS_ERROR("Part.Solution = %d\nHom.Solution = %d\velLim = %d\n", cntRows, (int) homogeneous_solution.rows(), (int) params.limits_vel.size());
                 return 0.0;
             }
 
@@ -106,8 +95,8 @@ class SmmDeterminatorVelocityBounds : public SelfMotionMagnitudeDeterminatorBase
                 double lower;
                 if (std::fabs(static_cast<double>(homogeneous_solution(i))) > ZERO_THRESHOLD)
                 {
-                    upper = (velLim[i] - particular_solution(i)) / homogeneous_solution(i);
-                    lower = (-velLim[i] - particular_solution(i)) / homogeneous_solution(i);
+                    upper = (params.limits_vel[i] - particular_solution(i)) / homogeneous_solution(i);
+                    lower = (-params.limits_vel[i] - particular_solution(i)) / homogeneous_solution(i);
                 }
 
                 if (0 == i)
@@ -154,11 +143,12 @@ class SmmDeterminatorConstant : public SelfMotionMagnitudeDeterminatorBase
         virtual ~SmmDeterminatorConstant()
         {}
 
-        virtual double calculate(const TwistControllerParams& params,
+        virtual double calculate(const LimiterParams& params,
                                  const Eigen::MatrixXd& particular_solution,
                                  const Eigen::MatrixXd& homogeneous_solution) const
         {
-            return params.k_H;
+            // not really used anymore
+            return 1.0;
         }
 };
 
@@ -167,13 +157,12 @@ template <typename T>
 class SelfMotionMagnitudeFactory
 {
     public:
-        static double calculate(const TwistControllerParams& params,
+        static double calculate(const LimiterParams& params,
                                 const Eigen::MatrixXd& particular_solution,
                                 const Eigen::MatrixXd& homogeneous_solution)
         {
             T smm_determinator;
-            double k = smm_determinator.calculate(params, particular_solution, homogeneous_solution);
-            return k;
+            return smm_determinator.calculate(params, particular_solution, homogeneous_solution);
         }
 };
 

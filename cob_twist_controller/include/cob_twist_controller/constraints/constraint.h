@@ -48,10 +48,11 @@ class ConstraintParamFactory
 {
     public:
         static T createConstraintParams(const TwistControllerParams& twist_controller_params,
+                                        const LimiterParams& limiter_params,
                                         CallbackDataMediator& data_mediator,
                                         const std::string& id = std::string())
         {
-            T params(twist_controller_params, id);
+            T params(twist_controller_params, limiter_params, id);
             data_mediator.fill(params);
             return params;
         }
@@ -69,9 +70,10 @@ class ConstraintsBuilder
 {
     public:
         static std::set<ConstraintBase_t> createConstraints(const TwistControllerParams& params,
-                                                           KDL::ChainJntToJacSolver& jnt_to_jac_,
-                                                           KDL::ChainFkSolverVel_recursive& fk_solver_vel,
-                                                           CallbackDataMediator& data_mediator);
+                                                            const LimiterParams& limiter_params,
+                                                            KDL::ChainJntToJacSolver& jnt_to_jac_,
+                                                            KDL::ChainFkSolverVel_recursive& fk_solver_vel,
+                                                            CallbackDataMediator& data_mediator);
 
     private:
         ConstraintsBuilder() {}
@@ -204,8 +206,8 @@ class JointLimitAvoidanceIneq : public ConstraintBase<T_PARAMS, PRIO>
 {
     public:
         JointLimitAvoidanceIneq(PRIO prio,
-                            T_PARAMS constraint_params,
-                            CallbackDataMediator& cbdm)
+                                T_PARAMS constraint_params,
+                                CallbackDataMediator& cbdm)
             : ConstraintBase<T_PARAMS, PRIO>(prio, constraint_params, cbdm),
               abs_delta_max_(std::numeric_limits<double>::max()),
               abs_delta_min_(std::numeric_limits<double>::max()),

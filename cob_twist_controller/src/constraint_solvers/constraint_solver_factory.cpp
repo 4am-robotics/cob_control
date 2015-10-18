@@ -80,32 +80,33 @@ int8_t ConstraintSolverFactory::calculateJointVelocities(Matrix6Xd_t& jacobian_d
  * Given a proper constraint_type a corresponding SolverFactory is generated and returned.
  */
 bool ConstraintSolverFactory::getSolverFactory(const TwistControllerParams& params,
+                                               const LimiterParams& limiter_params,
                                                boost::shared_ptr<ISolverFactory>& solver_factory,
                                                TaskStackController_t& task_stack_controller)
 {
     switch (params.solver)
     {
         case DEFAULT_SOLVER:
-            solver_factory.reset(new SolverFactory<UnconstraintSolver>(params, task_stack_controller));
+            solver_factory.reset(new SolverFactory<UnconstraintSolver>(params, limiter_params, task_stack_controller));
             break;
         case WLN:
             if (params.constraint_jla == JLA_ON)
             {
-                solver_factory.reset(new SolverFactory<WLN_JointLimitAvoidanceSolver>(params, task_stack_controller));
+                solver_factory.reset(new SolverFactory<WLN_JointLimitAvoidanceSolver>(params, limiter_params, task_stack_controller));
             }
             else
             {
-                solver_factory.reset(new SolverFactory<WeightedLeastNormSolver>(params, task_stack_controller));
+                solver_factory.reset(new SolverFactory<WeightedLeastNormSolver>(params, limiter_params, task_stack_controller));
             }
             break;
         case GPM:
-            solver_factory.reset(new SolverFactory<GradientProjectionMethodSolver>(params, task_stack_controller));
+            solver_factory.reset(new SolverFactory<GradientProjectionMethodSolver>(params, limiter_params, task_stack_controller));
             break;
         case STACK_OF_TASKS:
-            solver_factory.reset(new SolverFactory<StackOfTasksSolver>(params, task_stack_controller));
+            solver_factory.reset(new SolverFactory<StackOfTasksSolver>(params, limiter_params, task_stack_controller));
             break;
         case TASK_2ND_PRIO:
-            solver_factory.reset(new SolverFactory<TaskPrioritySolver>(params, task_stack_controller));
+            solver_factory.reset(new SolverFactory<TaskPrioritySolver>(params, limiter_params, task_stack_controller));
             break;
         default:
             ROS_ERROR("Returning NULL factory due to constraint solver creation error. There is no solver method for %d implemented.",
@@ -116,7 +117,7 @@ bool ConstraintSolverFactory::getSolverFactory(const TwistControllerParams& para
     return true;
 }
 
-int8_t ConstraintSolverFactory::resetAll(const TwistControllerParams& params)
+int8_t ConstraintSolverFactory::resetAll(const TwistControllerParams& params, const LimiterParams& limiter_params)
 {
     this->damping_method_.reset(DampingBuilder::createDamping(params));
     if (NULL == this->damping_method_)
@@ -127,6 +128,7 @@ int8_t ConstraintSolverFactory::resetAll(const TwistControllerParams& params)
 
     this->constraints_.clear();
     this->constraints_ = ConstraintsBuilder_t::createConstraints(params,
+                                                                 limiter_params,
                                                                  this->jnt_to_jac_,
                                                                  this->fk_solver_vel_,
                                                                  this->data_mediator_);
@@ -136,7 +138,7 @@ int8_t ConstraintSolverFactory::resetAll(const TwistControllerParams& params)
         ROS_DEBUG_STREAM((*it)->getTaskId());
     }
 
-    if (!ConstraintSolverFactory::getSolverFactory(params, this->solver_factory_, this->task_stack_controller_))
+    if (!ConstraintSolverFactory::getSolverFactory(params, limiter_params, this->solver_factory_, this->task_stack_controller_))
     {
         return -2;
     }

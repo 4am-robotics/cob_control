@@ -66,12 +66,34 @@ KinematicExtensionBase* KinematicExtensionBuilder::createKinematicExtension(cons
 
 
 /* BEGIN KinematicExtensionNone ********************************************************************************************/
+
+bool KinematicExtensionNone::initExtension()
+{
+    return true;
+}
+
 /**
  * Method adjusting the Jacobian used in inverse differential computation. No changes applied.
  */
 KDL::Jacobian KinematicExtensionNone::adjustJacobian(const KDL::Jacobian& jac_chain)
 {
     return jac_chain;
+}
+
+/**
+ * Method adjusting the JointStates used in inverse differential computation and limiters. No changes applied.
+ */
+JointStates KinematicExtensionNone::adjustJointStates(const JointStates& joint_states)
+{
+    return joint_states;
+}
+
+/**
+ * Method adjusting the LimiterParams used in limiters. No changes applied.
+ */
+LimiterParams KinematicExtensionNone::adjustLimiterParams(const LimiterParams& limiter_params)
+{
+    return limiter_params;
 }
 
 /**

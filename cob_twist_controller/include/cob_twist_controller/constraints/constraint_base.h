@@ -39,7 +39,6 @@
 #include <Eigen/Core>
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
-#include "cob_twist_controller/constraints/self_motion_magnitude.h"
 #include "cob_twist_controller/constraints/constraint_params.h"
 #include "cob_twist_controller/callback_data_mediator.h"
 #include "cob_twist_controller/task_stack/task_stack_controller.h"

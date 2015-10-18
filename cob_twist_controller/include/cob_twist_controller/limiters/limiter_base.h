@@ -35,7 +35,7 @@
 class LimiterBase
 {
     public:
-        LimiterBase(const TwistControllerParams& tc_params) : tc_params_(tc_params)
+        LimiterBase(const LimiterParams& limiter_params) : limiter_params_(limiter_params)
         {}
 
         virtual ~LimiterBase() {}
@@ -51,7 +51,7 @@ class LimiterBase
         virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const = 0;
 
     protected:
-        const TwistControllerParams& tc_params_;
+        const LimiterParams& limiter_params_;
 };
 
 #endif  // COB_TWIST_CONTROLLER_LIMITERS_LIMITER_BASE_H

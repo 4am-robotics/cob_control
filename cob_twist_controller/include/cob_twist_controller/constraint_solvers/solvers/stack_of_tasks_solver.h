@@ -44,11 +44,14 @@
 class StackOfTasksSolver : public ConstraintSolver<>
 {
     public:
-        StackOfTasksSolver(const TwistControllerParams& params, TaskStackController_t& task_stack_controller)
-                           : ConstraintSolver(params, task_stack_controller), in_cart_vel_damping_(1.0)
+        StackOfTasksSolver(const TwistControllerParams& params,
+                           const LimiterParams& limiter_params,
+                           TaskStackController_t& task_stack_controller) :
+                ConstraintSolver(params, limiter_params, task_stack_controller)
         {
             this->last_time_ = ros::Time::now();
             this->global_constraint_state_ = NORMAL;
+            this->in_cart_vel_damping_ = 1.0;
         }
 
         virtual ~StackOfTasksSolver()

@@ -36,8 +36,8 @@
 #include <std_msgs/Float64MultiArray.h>
 #include <sensor_msgs/JointState.h>
 
+#include <urdf/model.h>
 #include <kdl_parser/kdl_parser.hpp>
-#include <kdl/chainjnttojacsolver.hpp>
 #include <Eigen/Geometry>
 
 #include "cob_twist_controller/kinematic_extensions/kinematic_extension_base.h"
@@ -53,11 +53,13 @@ class KinematicExtensionURDF : public KinematicExtensionBase
 
         ~KinematicExtensionURDF() {}
 
+        bool initExtension();
         virtual KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain);
+        virtual JointStates adjustJointStates(const JointStates& joint_states);
+        virtual LimiterParams adjustLimiterParams(const LimiterParams& limiter_params);
         virtual void processResultExtension(const KDL::JntArray& q_dot_ik);
 
         void jointstateCallback(const sensor_msgs::JointState::ConstPtr& msg);
-        bool initUrdfExtension();
 
     protected:
         ros::Publisher command_pub_;
@@ -66,10 +68,13 @@ class KinematicExtensionURDF : public KinematicExtensionBase
         std::string ext_base_;
         std::string ext_tip_;
         KDL::Chain chain_;
-        unsigned int dof_ext_;
+        unsigned int ext_dof_;
         std::vector<std::string> joint_names_;
         JointStates joint_states_;
-        KDL::ChainJntToJacSolver* p_jnt2jac_;
+        std::vector<double> limits_max_;
+        std::vector<double> limits_min_;
+        std::vector<double> limits_vel_;
+        std::vector<double> limits_acc_;
 };
 /* END KinematicExtensionURDF **********************************************************************************************/
 
@@ -85,7 +90,7 @@ class KinematicExtensionTorso : public KinematicExtensionURDF
             ext_base_ = "torso_base_link";
             ext_tip_ = params.chain_base_link;
 
-            if (!initUrdfExtension())
+            if (!initExtension())
             {
                 ROS_ERROR("Initialization failed");
             }

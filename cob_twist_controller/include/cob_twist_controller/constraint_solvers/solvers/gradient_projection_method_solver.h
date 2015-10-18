@@ -42,8 +42,10 @@
 class GradientProjectionMethodSolver : public ConstraintSolver<>
 {
     public:
-        GradientProjectionMethodSolver(const TwistControllerParams& params, TaskStackController_t& task_stack_controller)
-                           : ConstraintSolver(params, task_stack_controller)
+        GradientProjectionMethodSolver(const TwistControllerParams& params,
+                                       const LimiterParams& limiter_params,
+                                       TaskStackController_t& task_stack_controller) :
+                ConstraintSolver(params, limiter_params, task_stack_controller)
         {}
 
         virtual ~GradientProjectionMethodSolver()

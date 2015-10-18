@@ -90,10 +90,11 @@ class ConstraintSolverFactory
          * @param solver_factory: Reference of a shared pointer to be filled.
          */
         static bool getSolverFactory(const TwistControllerParams& params,
+                                     const LimiterParams& limiter_params,
                                      boost::shared_ptr<ISolverFactory>& solver_factory,
                                      TaskStackController_t& task_stack_controller);
 
-        int8_t resetAll(const TwistControllerParams& params);
+        int8_t resetAll(const TwistControllerParams& params, const LimiterParams& limiter_params);
 
     private:
         CallbackDataMediator& data_mediator_;

@@ -47,10 +47,22 @@ class KinematicExtensionDOF : public KinematicExtensionBase
 
         ~KinematicExtensionDOF() {}
 
-        virtual KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain);
+        virtual bool initExtension() = 0;
+        virtual KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain) = 0;
+        virtual JointStates adjustJointStates(const JointStates& joint_states) = 0;
+        virtual LimiterParams adjustLimiterParams(const LimiterParams& limiter_params) = 0;
         virtual void processResultExtension(const KDL::JntArray& q_dot_ik) = 0;
 
         KDL::Jacobian adjustJacobianDof(const KDL::Jacobian& jac_chain, const KDL::Frame eb_frame_ct, const KDL::Frame cb_frame_eb, const ActiveCartesianDimension active_dim);
+
+    protected:
+        unsigned int ext_dof_;
+        std::vector<std::string> joint_names_;
+        JointStates joint_states_;
+        std::vector<double> limits_max_;
+        std::vector<double> limits_min_;
+        std::vector<double> limits_vel_;
+        std::vector<double> limits_acc_;
 };
 /* END KinematicExtensionDOF **********************************************************************************************/
 
@@ -63,17 +75,31 @@ class KinematicExtensionBaseActive : public KinematicExtensionDOF
         : KinematicExtensionDOF(params)
         {
             base_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("/base/twist_controller/command", 1);
+
+            max_vel_lin_base_ = 0.5;
+            max_vel_rot_base_ = 0.5;
+
+            if (!initExtension())
+            {
+                ROS_ERROR("Initialization failed");
+            }
         }
 
         ~KinematicExtensionBaseActive() {}
 
+        bool initExtension();
         KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain);
+        JointStates adjustJointStates(const JointStates& joint_states);
+        LimiterParams adjustLimiterParams(const LimiterParams& limiter_params);
         void processResultExtension(const KDL::JntArray& q_dot_ik);
 
         void baseTwistCallback(const geometry_msgs::Twist::ConstPtr& msg);
 
     private:
         ros::Publisher base_vel_pub_;
+
+        double max_vel_lin_base_;
+        double max_vel_rot_base_;
 };
 /* END KinematicExtensionBaseActive **********************************************************************************************/
 

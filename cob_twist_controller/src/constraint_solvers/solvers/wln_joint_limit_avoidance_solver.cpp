@@ -36,13 +36,12 @@
  * This function calculates the weighting matrix used to penalize a joint when it is near and moving towards a limit.
  * The last joint velocity is used to determine if it that happens or not
  */
-Eigen::MatrixXd WLN_JointLimitAvoidanceSolver::calculateWeighting(const JointStates& joint_states)
+Eigen::MatrixXd WLN_JointLimitAvoidanceSolver::calculateWeighting(const JointStates& joint_states) const
 {
-    std::vector<double> limits_min = this->params_.limits_min;
-    std::vector<double> limits_max = this->params_.limits_max;
+    std::vector<double> limits_min = this->limiter_params_.limits_min;
+    std::vector<double> limits_max = this->limiter_params_.limits_max;
     uint32_t cols = this->jacobian_data_.cols();
     Eigen::VectorXd output = Eigen::VectorXd::Zero(cols);
-
 
     KDL::JntArray q = joint_states.current_q_;
     KDL::JntArray q_dot = joint_states.current_q_dot_;

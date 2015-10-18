@@ -38,19 +38,21 @@
 class WeightedLeastNormSolver : public ConstraintSolver<>
 {
     public:
+        WeightedLeastNormSolver(const TwistControllerParams& params,
+                                const LimiterParams& limiter_params,
+                                TaskStackController_t& task_stack_controller) :
+                ConstraintSolver(params, limiter_params, task_stack_controller)
+        {}
+
+        virtual ~WeightedLeastNormSolver()
+        {}
+
         /**
          * Specific implementation of solve-method to solve IK problem with joint limit avoidance.
          * See base class ConstraintSolver for more details on params and returns.
          */
         virtual Eigen::MatrixXd solve(const Vector6d_t& in_cart_velocities,
                                       const JointStates& joint_states);
-
-        WeightedLeastNormSolver(const TwistControllerParams& params, TaskStackController_t& task_stack_controller)
-                                  : ConstraintSolver(params, task_stack_controller)
-        {}
-
-        virtual ~WeightedLeastNormSolver()
-        {}
 
     private:
         /**

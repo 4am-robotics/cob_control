@@ -63,8 +63,11 @@ class KinematicExtensionNone : public KinematicExtensionBase
 
         ~KinematicExtensionNone() {}
 
-        virtual KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain);
-        virtual void processResultExtension(const KDL::JntArray& q_dot_ik);
+        bool initExtension();
+        KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain);
+        JointStates adjustJointStates(const JointStates& joint_states);
+        LimiterParams adjustLimiterParams(const LimiterParams& limiter_params);
+        void processResultExtension(const KDL::JntArray& q_dot_ik);
 };
 /* END KinematicExtensionNone **********************************************************************************************/
 

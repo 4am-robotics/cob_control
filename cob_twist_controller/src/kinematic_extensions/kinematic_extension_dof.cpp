@@ -32,17 +32,6 @@
 
 /* BEGIN KinematicExtensionDOF ********************************************************************************************/
 /**
- * Method adjusting the Jacobian used in inverse differential computation. All Cartesian DoFs are disabled.
- */
-KDL::Jacobian KinematicExtensionDOF::adjustJacobian(const KDL::Jacobian& jac_chain)
-{
-    KDL::Frame dummy;
-    ActiveCartesianDimension active_dim;
-
-    return adjustJacobianDof(jac_chain, dummy, dummy, active_dim);
-}
-
-/**
  * Helper function adjusting the Jacobian used in inverse differential computation based on the Cartesian DoFs enabled in 'adjustJacobian()'.
  * @param jac_chain The jacobian of the primary kinematic chain.
  * @param eb_frame_ct The transformation from base_frame of the extension (eb) to the tip_frame of the primary chain (ct).
@@ -56,7 +45,8 @@ KDL::Jacobian KinematicExtensionDOF::adjustJacobianDof(const KDL::Jacobian& jac_
     KDL::Jacobian jac_full;
 
     // jacobian matrix for the extension
-    Eigen::Matrix<double, 6, 6> jac_ext;
+    Eigen::Matrix<double, 6, Eigen::Dynamic> jac_ext;
+    jac_ext.resize(6, ext_dof_);
     jac_ext.setZero();
 
     // rotation from base_frame of primary chain to base_frame of extension (eb)
@@ -152,6 +142,32 @@ KDL::Jacobian KinematicExtensionDOF::adjustJacobianDof(const KDL::Jacobian& jac_
 
 
 /* BEGIN KinematicExtensionBaseActive ********************************************************************************************/
+bool KinematicExtensionBaseActive::initExtension()
+{
+    this->ext_dof_ = 6;
+    this->joint_states_.last_q_.resize(ext_dof_);
+    this->joint_states_.last_q_dot_.resize(ext_dof_);
+    this->joint_states_.current_q_.resize(ext_dof_);
+    this->joint_states_.current_q_dot_.resize(ext_dof_);
+
+    for (unsigned int i = 0; i < ext_dof_; i++)
+    {
+        limits_max_.push_back(std::numeric_limits<double>::max());
+        limits_min_.push_back(-std::numeric_limits<double>::max());
+        if (i < 3)
+        {
+            limits_vel_.push_back(max_vel_lin_base_);
+        }
+        else
+        {
+            limits_vel_.push_back(max_vel_rot_base_);
+        }
+        limits_acc_.push_back(std::numeric_limits<double>::max());
+    }
+
+    return true;
+}
+
 /**
  * Method adjusting the Jacobian used in inverse differential computation. Enable Cartesian DoFs (lin_x, lin_y, rot_z) considering current transformation to main kinematic chain.
  */
@@ -192,6 +208,58 @@ KDL::Jacobian KinematicExtensionBaseActive::adjustJacobian(const KDL::Jacobian& 
     active_dim.rot_z = 1;
 
     return adjustJacobianDof(jac_chain, bl_frame_ct, cb_frame_bl, active_dim);
+}
+
+/**
+ * Method adjusting the JointStates used in inverse differential computation and limiters. Fill neutrally.
+ */
+JointStates KinematicExtensionBaseActive::adjustJointStates(const JointStates& joint_states)
+{
+    JointStates js;
+    unsigned int chain_dof = joint_states.current_q_.rows();
+    js.current_q_.resize(chain_dof + ext_dof_);
+    js.last_q_.resize(chain_dof + ext_dof_);
+    js.current_q_dot_.resize(chain_dof + ext_dof_);
+    js.last_q_dot_.resize(chain_dof + ext_dof_);
+    
+    for (unsigned int i = 0; i< chain_dof; i++)
+    {
+        js.current_q_(i) = joint_states.current_q_(i);
+        js.last_q_(i) = joint_states.last_q_(i);
+        js.current_q_dot_(i) = joint_states.current_q_dot_(i);
+        js.last_q_dot_(i) = joint_states.last_q_dot_(i);
+    }
+    for (unsigned int i = 0; i < ext_dof_; i++)
+    {
+        js.current_q_(chain_dof + i) = 0.0;
+        js.last_q_(chain_dof + i) = 0.0;
+        js.current_q_dot_(chain_dof + i) = 0.0;
+        js.last_q_dot_(chain_dof + i) = 0.0;
+    }
+    return js;
+}
+
+/**
+ * Method adjusting the LimiterParams used in limiters. Appends limits for BaseActive
+ */
+LimiterParams KinematicExtensionBaseActive::adjustLimiterParams(const LimiterParams& limiter_params)
+{
+    LimiterParams lp = limiter_params;
+    for (unsigned int i = 0; i < ext_dof_; i++)
+    {
+        lp.limits_max.push_back(std::numeric_limits<double>::max());
+        lp.limits_min.push_back(-std::numeric_limits<double>::max());
+        if (i < 3)
+        {
+            lp.limits_vel.push_back(max_vel_lin_base_);
+        }
+        else
+        {
+            lp.limits_vel.push_back(max_vel_rot_base_);
+        }
+        lp.limits_acc.push_back(std::numeric_limits<double>::max());
+    }
+    return lp;
 }
 
 /**

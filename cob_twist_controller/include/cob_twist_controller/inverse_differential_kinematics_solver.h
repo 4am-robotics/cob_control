@@ -62,6 +62,7 @@ public:
      */
     InverseDifferentialKinematicsSolver(const TwistControllerParams& params, const KDL::Chain& chain, CallbackDataMediator& data_mediator) :
         params_(params),
+        limiter_params_(params_.limiter_params),
         chain_(chain),
         jac_(chain_.getNrOfJoints()),
         jnt2jac_(chain_),
@@ -69,10 +70,11 @@ public:
         callback_data_mediator_(data_mediator),
         constraint_solver_factory_(data_mediator, jnt2jac_, fk_solver_vel_, task_stack_controller_)
     {
-        this->limiters_.reset(new LimiterContainer(this->params_));
-        this->limiters_->init();
-
         this->kinematic_extension_.reset(KinematicExtensionBuilder::createKinematicExtension(this->params_));
+        this->limiter_params_ = this->kinematic_extension_->adjustLimiterParams(this->limiter_params_);
+
+        this->limiters_.reset(new LimiterContainer(this->limiter_params_));
+        this->limiters_->init();
     }
 
     virtual ~InverseDifferentialKinematicsSolver()
@@ -94,6 +96,7 @@ private:
     KDL::ChainFkSolverVel_recursive fk_solver_vel_;
     KDL::ChainJntToJacSolver jnt2jac_;
     TwistControllerParams params_;
+    LimiterParams limiter_params_;
     CallbackDataMediator& callback_data_mediator_;
     boost::shared_ptr<LimiterContainer> limiters_;
     boost::shared_ptr<KinematicExtensionBase> kinematic_extension_;

@@ -274,7 +274,7 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
 
                 // Create a skew-symm matrix as transformation between the segment root and the critical point.
                 Eigen::Matrix3d skew_symm;
-                skew_symm <<    0.0,                        collision_pnt_vector.z(), -collision_pnt_vector.y(),
+                skew_symm <<     0.0,                       collision_pnt_vector.z(), -collision_pnt_vector.y(),
                                 -collision_pnt_vector.z(),  0.0,                       collision_pnt_vector.x(),
                                  collision_pnt_vector.y(), -collision_pnt_vector.x(),  0.0;
 
@@ -291,6 +291,7 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
 
                 KDL::Jacobian new_jac_chain(size_of_joints);
                 KDL::JntArray ja = this->joint_states_.current_q_;
+                ROS_INFO_STREAM("ja.rows(): " << ja.rows());
                 if (0 != this->jnt_to_jac_.JntToJac(ja, new_jac_chain, frame_number))
                 {
                     ROS_ERROR_STREAM("Failed to calculate JntToJac.");
@@ -302,8 +303,8 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
                 Matrix6Xd_t crit_pnt_jac = T * jac_extension;
                 Eigen::Matrix3Xd m_transl = Eigen::Matrix3Xd::Zero(3, crit_pnt_jac.cols());
                 m_transl << crit_pnt_jac.row(0),
-                        crit_pnt_jac.row(1),
-                        crit_pnt_jac.row(2);
+                            crit_pnt_jac.row(1),
+                            crit_pnt_jac.row(2);
 
                 double vec_norm = distance_vec.norm();
                 vec_norm = (vec_norm > 0.0) ? vec_norm : DIV0_SAFE;

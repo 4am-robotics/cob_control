@@ -36,19 +36,21 @@
 class UnconstraintSolver : public ConstraintSolver<>
 {
     public:
+        UnconstraintSolver(const TwistControllerParams& params,
+                           const LimiterParams& limiter_params,
+                           TaskStackController_t& task_stack_controller) :
+                ConstraintSolver(params, limiter_params, task_stack_controller)
+        {}
+
+        virtual ~UnconstraintSolver()
+        {}
+
         /**
          * Specific implementation of solve-method to solve IK problem without any constraints.
          * See base class ConstraintSolver for more details on params and returns.
          */
         virtual Eigen::MatrixXd solve(const Vector6d_t& in_cart_velocities,
                                       const JointStates& joint_states);
-
-        UnconstraintSolver(const TwistControllerParams& params, TaskStackController_t& task_stack_controller)
-                           : ConstraintSolver(params, task_stack_controller)
-        {}
-
-        virtual ~UnconstraintSolver()
-        {}
 };
 
 #endif  // COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_UNCONSTRAINT_SOLVER_H

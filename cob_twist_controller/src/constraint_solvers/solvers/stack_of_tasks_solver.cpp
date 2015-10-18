@@ -31,7 +31,6 @@
 
 #include "cob_twist_controller/constraint_solvers/solvers/stack_of_tasks_solver.h"
 #include "cob_twist_controller/task_stack/task_stack_controller.h"
-#include "cob_twist_controller/constraints/self_motion_magnitude.h"
 
 Eigen::MatrixXd StackOfTasksSolver::solve(const Vector6d_t& in_cart_velocities,
                                           const JointStates& joint_states)
