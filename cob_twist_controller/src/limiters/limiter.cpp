@@ -28,7 +28,6 @@
  ****************************************************************/
 #include <vector>
 #include <ros/ros.h>
-#include <kdl/chain.hpp>
 
 #include "cob_twist_controller/limiters/limiter.h"
 
@@ -60,34 +59,34 @@ void LimiterContainer::init()
     {
         if (this->tc_params_.enforce_pos_limits)
         {
-            this->add(new LimiterAllJointPositions(this->tc_params_, this->chain_));
+            this->add(new LimiterAllJointPositions(this->tc_params_));
         }
 
         if (this->tc_params_.enforce_vel_limits)
         {
-            this->add(new LimiterAllJointVelocities(this->tc_params_, this->chain_));
+            this->add(new LimiterAllJointVelocities(this->tc_params_));
         }
 
         if (this->tc_params_.enforce_acc_limits)
         {
-            this->add(new LimiterAllJointAccelerations(this->tc_params_, this->chain_));
+            this->add(new LimiterAllJointAccelerations(this->tc_params_));
         }
     }
     else
     {
         if (this->tc_params_.enforce_pos_limits)
         {
-            this->add(new LimiterIndividualJointPositions(this->tc_params_, this->chain_));
+            this->add(new LimiterIndividualJointPositions(this->tc_params_));
         }
 
         if (this->tc_params_.enforce_vel_limits)
         {
-            this->add(new LimiterIndividualJointVelocities(this->tc_params_, this->chain_));
+            this->add(new LimiterIndividualJointVelocities(this->tc_params_));
         }
 
         if (this->tc_params_.enforce_acc_limits)
         {
-            this->add(new LimiterIndividualJointAccelerations(this->tc_params_, this->chain_));
+            this->add(new LimiterIndividualJointAccelerations(this->tc_params_));
         }
     }
 }

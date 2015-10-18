@@ -69,7 +69,7 @@ public:
         callback_data_mediator_(data_mediator),
         constraint_solver_factory_(data_mediator, jnt2jac_, fk_solver_vel_, task_stack_controller_)
     {
-        this->limiters_.reset(new LimiterContainer(this->params_, this->chain_));
+        this->limiters_.reset(new LimiterContainer(this->params_));
         this->limiters_->init();
 
         this->kinematic_extension_.reset(KinematicExtensionBuilder::createKinematicExtension(this->params_));

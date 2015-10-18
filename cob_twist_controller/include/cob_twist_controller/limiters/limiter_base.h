@@ -30,15 +30,12 @@
 #define COB_TWIST_CONTROLLER_LIMITERS_LIMITER_BASE_H
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
-#include <kdl/chain.hpp>
-#include <kdl/chainiksolver.hpp>
-#include <kdl/chainjnttojacsolver.hpp>
 
 /// Base class for limiters, defining interface methods.
 class LimiterBase
 {
     public:
-        LimiterBase(const TwistControllerParams& tc_params, const KDL::Chain& chain) : tc_params_(tc_params), chain_(chain)
+        LimiterBase(const TwistControllerParams& tc_params) : tc_params_(tc_params)
         {}
 
         virtual ~LimiterBase() {}
@@ -55,7 +52,6 @@ class LimiterBase
 
     protected:
         const TwistControllerParams& tc_params_;
-        const KDL::Chain& chain_;
 };
 
 #endif  // COB_TWIST_CONTROLLER_LIMITERS_LIMITER_BASE_H
