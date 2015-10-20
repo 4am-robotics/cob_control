@@ -72,7 +72,7 @@ MAX_VEL_LIN_BASE = 'max_vel_lin_base'
 MAX_VEL_ROT_BASE = 'max_vel_rot_base'
 
 KIN_EXT = 'kinematic_extension'
-BASE_RATIO = 'base_ratio'
+EXT_RATIO = 'extension_ratio'
 
 '''
 Class inherits from dynamic_reconfigure.client.Client and implements some wrapper methods

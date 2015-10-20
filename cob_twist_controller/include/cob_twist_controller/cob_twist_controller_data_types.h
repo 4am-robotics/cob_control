@@ -189,7 +189,7 @@ struct TwistControllerParams
         k_H_ca(2.0),
 
         kinematic_extension(NO_EXTENSION),
-        base_ratio(0.0)
+        extension_ratio(0.0)
     {
         this->thresholds_ca.activation = 0.1;
         this->thresholds_ca.critical = 0.025;
@@ -234,7 +234,7 @@ struct TwistControllerParams
     LimiterParams limiter_params;
 
     KinematicExtensionTypes kinematic_extension;
-    double base_ratio;
+    double extension_ratio;
 
     std::vector<std::string> frame_names;
     std::vector<std::string> joints;

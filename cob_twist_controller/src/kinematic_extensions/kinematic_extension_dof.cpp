@@ -127,7 +127,7 @@ KDL::Jacobian KinematicExtensionDOF::adjustJacobianDof(const KDL::Jacobian& jac_
     jac_ext(5, 5) = w_z_cb(2) * active_dim.rot_z;
 
     // scale with extension_ratio
-    jac_ext *= params_.base_ratio;
+    jac_ext *= params_.extension_ratio;
 
     // combine Jacobian of primary chain and extension
     Matrix6Xd_t jac_full_matrix;

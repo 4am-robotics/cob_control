@@ -177,6 +177,9 @@ KDL::Jacobian KinematicExtensionURDF::adjustJacobian(const KDL::Jacobian& jac_ch
         k++;
     }
 
+    // scale with extension_ratio
+    jac_ext *= params_.extension_ratio;
+
     // combine Jacobian of primary chain and extension
     Matrix6Xd_t jac_full_matrix;
     jac_full_matrix.resize(6, jac_chain.data.cols() + jac_ext.cols());

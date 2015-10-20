@@ -225,7 +225,7 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     twist_controller_params_.limiter_params.limits_tolerance = config.limits_tolerance;
 
     twist_controller_params_.kinematic_extension = static_cast<KinematicExtensionTypes>(config.kinematic_extension);
-    twist_controller_params_.base_ratio = config.base_ratio;
+    twist_controller_params_.extension_ratio = config.extension_ratio;
 
     this->controller_interface_.reset(ControllerInterfaceBuilder::createControllerInterface(this->nh_, this->twist_controller_params_));
 
