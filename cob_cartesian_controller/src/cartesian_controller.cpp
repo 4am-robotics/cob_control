@@ -202,7 +202,7 @@ bool CartesianController::posePathBroadcaster(const geometry_msgs::PoseArray& ca
     int failure_counter = 0;
     ros::Rate rate(update_rate_);
     tf::Transform transform;
-    for(int i = 0; i < cartesian_path.poses.size(); i++)
+    for(unsigned int i = 0; i < cartesian_path.poses.size(); i++)
     {
         if(!as_->isActive())
         {
@@ -212,12 +212,12 @@ bool CartesianController::posePathBroadcaster(const geometry_msgs::PoseArray& ca
 
         // Send/Refresh target Frame
         transform.setOrigin( tf::Vector3(cartesian_path.poses.at(i).position.x,
-                                                 cartesian_path.poses.at(i).position.y,
-                                                 cartesian_path.poses.at(i).position.z) );
+                                         cartesian_path.poses.at(i).position.y,
+                                         cartesian_path.poses.at(i).position.z) );
         transform.setRotation( tf::Quaternion(cartesian_path.poses.at(i).orientation.x,
-                                                      cartesian_path.poses.at(i).orientation.y,
-                                                      cartesian_path.poses.at(i).orientation.z,
-                                                      cartesian_path.poses.at(i).orientation.w) );
+                                              cartesian_path.poses.at(i).orientation.y,
+                                              cartesian_path.poses.at(i).orientation.z,
+                                              cartesian_path.poses.at(i).orientation.w) );
         tf_broadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), cartesian_path.header.frame_id, target_frame_));
 
         // Get transformation
@@ -244,7 +244,6 @@ bool CartesianController::posePathBroadcaster(const geometry_msgs::PoseArray& ca
             success = false;
             break;
         }
-
         ros::spinOnce();
         rate.sleep();
     }
@@ -258,7 +257,10 @@ void CartesianController::goalCallback()
     geometry_msgs::PoseArray cartesian_path;
     cob_cartesian_controller::CartesianActionStruct action_struct;
 
+
+    ROS_INFO_STREAM("=========================================================================");
     ROS_INFO("Received a new goal");
+    ROS_INFO_STREAM("=========================================================================");
 
     action_struct = acceptGoal(as_->acceptNewGoal());
 

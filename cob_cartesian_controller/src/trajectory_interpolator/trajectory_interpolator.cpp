@@ -63,8 +63,6 @@ bool TrajectoryInterpolator::linearInterpolation(geometry_msgs::PoseArray& pose_
     Se_pitch = end_pitch - start_pitch;
     Se_yaw   = end_yaw   - start_yaw;
 
-    ROS_INFO_STREAM("Se: " << Se << "   Se_roll: " << Se_roll << "   Se_pitch: " << Se_pitch << "   Se_yaw: " << Se_yaw);
-
     // Calculate path for each Angle
     if(!this->trajectory_profile_generator_->calculateProfile(path_matrix, Se, Se_roll, Se_pitch, Se_yaw, as.move_lin.start))
     {

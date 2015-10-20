@@ -81,7 +81,7 @@ namespace cob_cartesian_controller
                 start_value_(start_value)
             {
                 idx_= idx;
-                calcTe_=false;
+                calcTe_ = false;
             }
 
             ~PathArray()
@@ -89,16 +89,6 @@ namespace cob_cartesian_controller
                 array_.clear();
             }
 
-            unsigned int getIdx();
-            bool getCalcTe();
-            double getSe();
-            std::vector<double> getArray();
-            void setCalcTe(bool calcTe);
-            void setIdx(unsigned int idx);
-            void setArray(std::vector<double> array);
-            double getStartValue();
-
-        private:
             unsigned int idx_;
             bool calcTe_;
             double Se_;
@@ -107,62 +97,18 @@ namespace cob_cartesian_controller
 
     };
 
-    inline double PathArray::getStartValue()
-    {
-        return start_value_;
-    }
-
-    inline void PathArray::setArray(std::vector<double> array)
-    {
-        array_ = array;
-    }
-
-    inline void PathArray::setCalcTe(bool calcTe)
-    {
-        calcTe_ = calcTe;
-    }
-
-    inline void PathArray::setIdx(unsigned int idx)
-    {
-        idx_=idx;
-    }
-
-    inline unsigned int PathArray::getIdx()
-    {
-        return idx_;
-    }
-
-    inline bool PathArray::getCalcTe()
-    {
-        return calcTe_;
-    }
-
-    inline double PathArray::getSe()
-    {
-        return Se_;
-    }
-
-    inline std::vector<double> PathArray::getArray()
-    {
-        return array_;
-    }
-
-
     class PathMatrix{
             public:
                 PathMatrix(PathArray &pa1,
                            PathArray &pa2,
                            PathArray &pa3,
                            PathArray &pa4)
-//                           PathArray &pa5,
-//                           PathArray &pa6)
                 {
                     pm_.push_back(pa1);
                     pm_.push_back(pa2);
                     pm_.push_back(pa3);
                     pm_.push_back(pa4);
-//                    pm_.push_back(pa5);
-//                    pm_.push_back(pa6);
+
                 }
                 ~PathMatrix()
                 {
@@ -191,7 +137,7 @@ namespace cob_cartesian_controller
         {
             for(int i = 0; i<pm_.size()-1; i++)
             {
-                if(std::fabs(pm_[i].getSe()) < std::fabs(pm_[i+1].getSe()))
+                if(std::fabs(pm_[i].Se_) < std::fabs(pm_[i+1].Se_))
                 {
                     temp = pm_[i];
                     pm_[i] = pm_[i+1];
@@ -199,7 +145,20 @@ namespace cob_cartesian_controller
                 }
             }
         }
-        pm_[0].setCalcTe(true); // Reference Time for profile interpolation (Te)
+//        for(int j = 0; j < pm_.size(); j++)
+//        {
+//            for(int i = 0; i < pm_.size()-1; i++)
+//            {
+//                if(pm_[i].idx_ > pm_[i+1].idx_)
+//                {
+//                    temp = pm_[i];
+//                    pm_[i] = pm_[i+1];
+//                    pm_[i+1] = temp;
+//                }
+//            }
+//        }
+
+        pm_[0].calcTe_ = true; // Reference Time for profile interpolation (Te)
     }
 
 
