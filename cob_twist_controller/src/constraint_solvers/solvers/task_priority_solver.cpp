@@ -37,6 +37,10 @@
 Eigen::MatrixXd TaskPrioritySolver::solve(const Vector6d_t& in_cart_velocities,
                                           const JointStates& joint_states)
 {
+    ros::Time now = ros::Time::now();
+    double cycle = (now - this->last_time_).toSec();
+    this->last_time_ = now;
+    
     double derivative_cost_func_value;
     double current_cost_func_value;
     double activation_gain;
@@ -50,8 +54,6 @@ Eigen::MatrixXd TaskPrioritySolver::solve(const Vector6d_t& in_cart_velocities,
     Eigen::MatrixXd particular_solution = jacobianPseudoInverse * in_cart_velocities;
 
     KDL::JntArrayVel predict_jnts_vel(joint_states.current_q_.rows());
-    double cycle = (ros::Time::now() - this->last_time_).toSec();
-    this->last_time_ = ros::Time::now();
 
     // predict next joint states!
     for (uint8_t i = 0; i < joint_states.current_q_.rows(); ++i)
@@ -65,9 +67,9 @@ Eigen::MatrixXd TaskPrioritySolver::solve(const Vector6d_t& in_cart_velocities,
         for (std::set<ConstraintBase_t>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
         {
             (*it)->update(joint_states, predict_jnts_vel, this->jacobian_data_);
-            partial_cost_func = (*it)->getPartialValues();  // Equal to (partial g) / (partial q) = J_g
             current_cost_func_value = (*it)->getValue();
             derivative_cost_func_value = (*it)->getDerivativeValue();
+            partial_cost_func = (*it)->getPartialValues();  // Equal to (partial g) / (partial q) = J_g
             activation_gain = (*it)->getActivationGain();
             magnitude = (*it)->getSelfMotionMagnitude(Eigen::MatrixXd::Zero(1, 1), Eigen::MatrixXd::Zero(1, 1));  // not necessary to pass valid values here.
 

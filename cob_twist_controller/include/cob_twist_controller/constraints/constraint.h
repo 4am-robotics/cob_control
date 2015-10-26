@@ -100,34 +100,36 @@ class CollisionAvoidance : public ConstraintBase<T_PARAMS, PRIO>
         virtual ~CollisionAvoidance()
         {}
 
-        virtual void calculate();
         virtual Task_t createTask();
         virtual std::string getTaskId() const;
         virtual Eigen::MatrixXd getTaskJacobian() const;
         virtual Eigen::VectorXd getTaskDerivatives() const;
 
+        virtual void calculate();
+
         virtual double getActivationGain() const;
         virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution,
                                               const Eigen::MatrixXd& homogeneous_solution) const;
 
-    private:
-        virtual double getCriticalValue() const;
-        virtual ConstraintTypes getType() const;
         double getActivationGain(double current_cost_func_value) const;
         double getSelfMotionMagnitude(double current_cost_func_value) const;
+
+    private:
+        virtual ConstraintTypes getType() const;
+        virtual double getCriticalValue() const;
 
         void calcValue();
         void calcDerivativeValue();
         void calcPartialValues();
-        double predictValue();
+        void calcPredictionValue();
         double getActivationThresholdWithBuffer() const;
 
         KDL::ChainJntToJacSolver& jnt_to_jac_;
         KDL::ChainFkSolverVel_recursive& fk_solver_vel_;
 
-        Eigen::MatrixXd task_jacobian_;
         Eigen::VectorXd values_;
         Eigen::VectorXd derivative_values_;
+        Eigen::MatrixXd task_jacobian_;
 };
 /* END CollisionAvoidance ***************************************************************************************/
 
@@ -150,16 +152,19 @@ class JointLimitAvoidance : public ConstraintBase<T_PARAMS, PRIO>
         virtual ~JointLimitAvoidance()
         {}
 
-        virtual void calculate();
         virtual Task_t createTask();
         virtual std::string getTaskId() const;
+
+        virtual void calculate();
         virtual Eigen::MatrixXd getTaskJacobian() const;
         virtual Eigen::VectorXd getTaskDerivatives() const;
+
         virtual double getActivationGain() const;
         virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const;
 
     private:
         virtual ConstraintTypes getType() const;
+
         void calcValue();
         void calcDerivativeValue();
         void calcPartialValues();
@@ -172,7 +177,7 @@ class JointLimitAvoidance : public ConstraintBase<T_PARAMS, PRIO>
 /* END JointLimitAvoidance **************************************************************************************/
 
 /* BEGIN JointLimitAvoidanceMid *********************************************************************************/
-/// Class providing methods that realize a CollisionAvoidance constraint.
+/// Class providing methods that realize a JointLimitAvoidanceMid constraint.
 template <typename T_PARAMS, typename PRIO = uint32_t>
 class JointLimitAvoidanceMid : public ConstraintBase<T_PARAMS, PRIO>
 {
@@ -186,13 +191,16 @@ class JointLimitAvoidanceMid : public ConstraintBase<T_PARAMS, PRIO>
         virtual ~JointLimitAvoidanceMid()
         {}
 
-        virtual void calculate();
         virtual std::string getTaskId() const;
+
+        virtual void calculate();
+
         virtual double getActivationGain() const;
         virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const;
 
     private:
         virtual ConstraintTypes getType() const;
+
         void calcValue();
         void calcDerivativeValue();
         void calcPartialValues();
@@ -218,16 +226,19 @@ class JointLimitAvoidanceIneq : public ConstraintBase<T_PARAMS, PRIO>
         virtual ~JointLimitAvoidanceIneq()
         {}
 
-        virtual void calculate();
         virtual Task_t createTask();
         virtual std::string getTaskId() const;
         virtual Eigen::MatrixXd getTaskJacobian() const;
         virtual Eigen::VectorXd getTaskDerivatives() const;
+
+        virtual void calculate();
+
         virtual double getActivationGain() const;
         virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const;
 
     private:
         virtual ConstraintTypes getType() const;
+
         void calcValue();
         void calcDerivativeValue();
         void calcPartialValues();

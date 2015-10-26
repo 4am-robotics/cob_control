@@ -72,12 +72,12 @@ class SmmDeterminatorVelocityBounds : public SelfMotionMagnitudeDeterminatorBase
         /// Implementation of SMM. Formula: See header comment!
         virtual double calculate(const LimiterParams& params, const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const
         {
-            uint16_t cntRows = particular_solution.rows();
-
-            if (cntRows != homogeneous_solution.rows() || cntRows != params.limits_vel.size())
+            if (params.limits_vel.size() != homogeneous_solution.rows() || params.limits_vel.size() != particular_solution.rows())
             {
                 ROS_ERROR("Count of rows do not match for particular solution, homogeneous solution and vector limits.");
-                ROS_ERROR("Part.Solution = %d\nHom.Solution = %d\velLim = %d\n", cntRows, (int) homogeneous_solution.rows(), (int) params.limits_vel.size());
+                ROS_ERROR_STREAM("Part.Solution: " << particular_solution.rows());
+                ROS_ERROR_STREAM("Hom.Solution: " << homogeneous_solution.rows());
+                ROS_ERROR_STREAM("Vel.Lim: " << params.limits_vel.size());
                 return 0.0;
             }
 
@@ -86,29 +86,21 @@ class SmmDeterminatorVelocityBounds : public SelfMotionMagnitudeDeterminatorBase
                 return 0.0;
             }
 
-            double kMax = -1.0;
-            double kMin = 1.0;
+            double kMax = std::numeric_limits<double>::max();
+            double kMin = -std::numeric_limits<double>::max();
             double kResult = 0.0;
             for (uint16_t i = 0; i < cntRows; ++i)
             {
-                double upper;
-                double lower;
+                double upper = 0.0;
+                double lower = 0.0;
                 if (std::fabs(static_cast<double>(homogeneous_solution(i))) > ZERO_THRESHOLD)
                 {
                     upper = (params.limits_vel[i] - particular_solution(i)) / homogeneous_solution(i);
                     lower = (-params.limits_vel[i] - particular_solution(i)) / homogeneous_solution(i);
                 }
 
-                if (0 == i)
-                {
-                    kMax = std::max(upper, lower);
-                    kMin = std::min(upper, lower);
-                }
-                else
-                {
-                    kMax = std::min(std::max(upper, lower), kMax);
-                    kMin = std::max(std::min(upper, lower), kMin);
-                }
+                kMax = std::min(std::max(upper, lower), kMax);
+                kMin = std::max(std::min(upper, lower), kMin);
             }
 
             if (kMax > kMin)

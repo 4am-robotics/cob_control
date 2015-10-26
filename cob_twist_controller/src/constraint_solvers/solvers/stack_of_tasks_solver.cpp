@@ -36,6 +36,9 @@ Eigen::MatrixXd StackOfTasksSolver::solve(const Vector6d_t& in_cart_velocities,
                                           const JointStates& joint_states)
 {
     this->global_constraint_state_ = NORMAL;
+    ros::Time now = ros::Time::now();
+    double cycle = (now - this->last_time_).toSec();
+    this->last_time_ = now;
 
     Eigen::MatrixXd jacobianPseudoInverse = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
     Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(jacobianPseudoInverse.rows(), this->jacobian_data_.cols());
@@ -49,8 +52,6 @@ Eigen::MatrixXd StackOfTasksSolver::solve(const Vector6d_t& in_cart_velocities,
     Eigen::VectorXd sum_of_gradient = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
 
     KDL::JntArrayVel predict_jnts_vel(joint_states.current_q_.rows());
-    double cycle = (ros::Time::now() - this->last_time_).toSec();
-    this->last_time_ = ros::Time::now();
 
     // predict next joint states!
     for (int i = 0; i < joint_states.current_q_.rows(); ++i)
