@@ -81,7 +81,7 @@ std::set<ConstraintBase_t> ConstraintsBuilder<PRIO>::createConstraints(const Twi
         boost::shared_ptr<JlaMid_t > jla(new JlaMid_t(tc_params.priority_jla, params, data_mediator));
         constraints.insert(boost::static_pointer_cast<PriorityBase<PRIO> >(jla));
     }
-    if (JLA_INEQ_ON == tc_params.constraint_jla)
+    else if (JLA_INEQ_ON == tc_params.constraint_jla)
     {
         typedef JointLimitAvoidanceIneq<ConstraintParamsJLA, PRIO> Jla_t;
         ConstraintParamsJLA params = ConstraintParamFactory<ConstraintParamsJLA>::createConstraintParams(tc_params, limiter_params, data_mediator);

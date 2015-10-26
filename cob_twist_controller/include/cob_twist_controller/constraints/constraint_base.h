@@ -199,6 +199,10 @@ class ConstraintBase : public PriorityBase<PRIO>
 
         virtual void update(const JointStates& joint_states, const KDL::JntArrayVel& joints_prediction, const Matrix6Xd_t& jacobian_data)
         {
+            ROS_INFO_STREAM("ConstraintBase::update: joint_states.current_q_.rows: " << joint_states.current_q_.rows());
+            ROS_INFO_STREAM("ConstraintBase::update: joints_prediction.q.rows: " << joints_prediction.q.rows());
+            ROS_INFO_STREAM("ConstraintBase::update: jacobian_data.cols: " << jacobian_data.cols());
+            
             this->joint_states_ = joint_states;
             this->jacobian_data_ = jacobian_data;
             this->jnts_prediction_ = joints_prediction;

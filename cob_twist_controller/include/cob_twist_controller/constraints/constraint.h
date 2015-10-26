@@ -116,9 +116,9 @@ class CollisionAvoidance : public ConstraintBase<T_PARAMS, PRIO>
         double getActivationGain(double current_cost_func_value) const;
         double getSelfMotionMagnitude(double current_cost_func_value) const;
 
-        double calcValue();
-        double calcDerivativeValue();
-        Eigen::VectorXd calcPartialValues();
+        void calcValue();
+        void calcDerivativeValue();
+        void calcPartialValues();
         double predictValue();
         double getActivationThresholdWithBuffer() const;
 
@@ -160,9 +160,9 @@ class JointLimitAvoidance : public ConstraintBase<T_PARAMS, PRIO>
 
     private:
         virtual ConstraintTypes getType() const;
-        double calcValue();
-        double calcDerivativeValue();
-        Eigen::VectorXd calcPartialValues();
+        void calcValue();
+        void calcDerivativeValue();
+        void calcPartialValues();
 
         double abs_delta_max_;
         double abs_delta_min_;
@@ -193,9 +193,9 @@ class JointLimitAvoidanceMid : public ConstraintBase<T_PARAMS, PRIO>
 
     private:
         virtual ConstraintTypes getType() const;
-        double calcValue();
-        double calcDerivativeValue();
-        Eigen::VectorXd calcPartialValues();
+        void calcValue();
+        void calcDerivativeValue();
+        void calcPartialValues();
 };
 /* END JointLimitAvoidanceMid ***********************************************************************************/
 
@@ -228,9 +228,9 @@ class JointLimitAvoidanceIneq : public ConstraintBase<T_PARAMS, PRIO>
 
     private:
         virtual ConstraintTypes getType() const;
-        double calcValue();
-        double calcDerivativeValue();
-        Eigen::VectorXd calcPartialValues();
+        void calcValue();
+        void calcDerivativeValue();
+        void calcPartialValues();
 
         double abs_delta_max_;
         double abs_delta_min_;

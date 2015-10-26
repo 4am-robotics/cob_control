@@ -145,13 +145,13 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calculate()
 }
 
 template <typename T_PARAMS, typename PRIO>
-double CollisionAvoidance<T_PARAMS, PRIO>::calcValue()
+void CollisionAvoidance<T_PARAMS, PRIO>::calcValue()
 {
     const TwistControllerParams& params = this->constraint_params_.tc_params_;
     std::vector<double> relevant_values;
     for (std::vector<ObstacleDistanceData>::const_iterator it = this->constraint_params_.current_distances_.begin();
-            it != this->constraint_params_.current_distances_.end();
-            ++it)
+         it != this->constraint_params_.current_distances_.end();
+         ++it)
     {
         if (params.thresholds_ca.activation_with_buffer > it->min_distance)
         {
@@ -171,8 +171,6 @@ double CollisionAvoidance<T_PARAMS, PRIO>::calcValue()
     {
         this->values_(idx) = relevant_values.at(idx);
     }
-
-    return this->value_;
 }
 
 template <typename T_PARAMS, typename PRIO>
@@ -186,6 +184,8 @@ double CollisionAvoidance<T_PARAMS, PRIO>::predictValue()
     std::vector<std::string>::const_iterator str_it = std::find(params.frame_names.begin(),
                                                                 params.frame_names.end(),
                                                                 this->constraint_params_.id_);
+    ROS_INFO_STREAM("constraint_params_.id_: " << this->constraint_params_.id_);
+    
     if (params.frame_names.end() != str_it)
     {
         if (this->constraint_params_.current_distances_.size() > 0)
@@ -193,12 +193,22 @@ double CollisionAvoidance<T_PARAMS, PRIO>::predictValue()
             uint32_t frame_number = (str_it - params.frame_names.begin()) + 1;  // segment nr not index represents frame number
             KDL::FrameVel frame_vel;
 
+            // ToDo: the fk_solver_vel_ is only initialized for the primary chain - kinematic extensions cannot be considered yet!
+            KDL::JntArrayVel jnts_prediction_chain(params.dof);
+            for (unsigned int i = 0; i < params.dof; i++)
+            {
+                jnts_prediction_chain.q(i) = this->jnts_prediction_.q(i);
+                jnts_prediction_chain.qdot(i) = this->jnts_prediction_.qdot(i);
+            }
+            ROS_INFO_STREAM("jnts_prediction_chain.q.rows: " << jnts_prediction_chain.q.rows());
+            
             // Calculate prediction for pos and vel
             if (0 != this->fk_solver_vel_.JntToCart(this->jnts_prediction_, frame_vel, frame_number))
             {
                 ROS_ERROR_STREAM("Could not calculate twist for frame: " << frame_number);
                 return std::numeric_limits<double>::max();
             }
+            ROS_INFO_STREAM("Calculated twist for frame: " << frame_number);
 
             KDL::Twist twist = frame_vel.GetTwist();  // predicted frame twist
 
@@ -210,8 +220,7 @@ double CollisionAvoidance<T_PARAMS, PRIO>::predictValue()
 
             std::vector<ObstacleDistanceData>::const_iterator it = this->constraint_params_.current_distances_.begin();
             ObstacleDistanceData critical_data = *it;
-            for ( ; it != this->constraint_params_.current_distances_.end();
-                   ++it)
+            for ( ; it != this->constraint_params_.current_distances_.end(); ++it)
             {
                 if (it->min_distance < critical_data.min_distance)
                 {
@@ -234,11 +243,10 @@ double CollisionAvoidance<T_PARAMS, PRIO>::predictValue()
 }
 
 template <typename T_PARAMS, typename PRIO>
-double CollisionAvoidance<T_PARAMS, PRIO>::calcDerivativeValue()
+void CollisionAvoidance<T_PARAMS, PRIO>::calcDerivativeValue()
 {
     this->derivative_value_ = -0.1 * this->value_;  // exponential decay experimentally chosen -0.1
     this->derivative_values_ = -0.1 * this->values_;
-    return this->derivative_value_;
 }
 
 /**
@@ -249,8 +257,9 @@ double CollisionAvoidance<T_PARAMS, PRIO>::calcDerivativeValue()
  * @return The partial values vector consisting of the sum of all collision pair partial values.
  */
 template <typename T_PARAMS, typename PRIO>
-Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
+void CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
 {
+    ROS_INFO_STREAM("CollisionAvoidance::calcPartialValues: this->jacobian_data_.cols: " << this->jacobian_data_.cols());
     Eigen::VectorXd partial_values = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
     Eigen::VectorXd sum_partial_values = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
     const TwistControllerParams& params = this->constraint_params_.tc_params_;
@@ -262,8 +271,8 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
                                                                 this->constraint_params_.id_);
 
     for (std::vector<ObstacleDistanceData>::const_iterator it = this->constraint_params_.current_distances_.begin();
-            it != this->constraint_params_.current_distances_.end();
-            ++it)
+         it != this->constraint_params_.current_distances_.end();
+         ++it)
     {
         if (params.thresholds_ca.activation_with_buffer > it->min_distance)
         {
@@ -295,7 +304,7 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
                 if (0 != this->jnt_to_jac_.JntToJac(ja, new_jac_chain, frame_number))
                 {
                     ROS_ERROR_STREAM("Failed to calculate JntToJac.");
-                    return sum_partial_values;
+                    return;
                 }
 
                 Matrix6Xd_t jac_extension = this->jacobian_data_;
@@ -339,7 +348,6 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
 
     this->partial_values_.resize(sum_partial_values.rows(), 1);
     this->partial_values_ = sum_partial_values;
-    return this->partial_values_;
 }
 
 /// Returns a value for magnitude
