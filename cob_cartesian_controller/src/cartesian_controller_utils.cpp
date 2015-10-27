@@ -158,3 +158,47 @@ void CartesianControllerUtils::previewPath(const geometry_msgs::PoseArray& pose_
 
     marker_pub_.publish(marker_array);
 }
+
+void CartesianControllerUtils::sortMatrixByIdx(std::vector<cob_cartesian_controller::PathArray> &m)
+{
+    std::vector<double> temp_array;
+    cob_cartesian_controller::PathArray temp(0, 0, 0.0, temp_array);
+
+    for(int j = 0; j < m.size(); j++)
+    {
+        for(int i = 0; i < m.size()-1; i++)
+        {
+            if(m[i].idx_ > m[i+1].idx_)
+            {
+                temp = m[i];
+                m[i] = m[i+1];
+                m[i+1] = temp;
+            }
+        }
+    }
+}
+
+void CartesianControllerUtils::adjustArrayLength(std::vector<cob_cartesian_controller::PathArray> &m)
+{
+    unsigned int max_steps = 0;
+    for(int i = 0; i < m.size(); i++)
+    {
+        max_steps = std::max((unsigned int)m[i].array_.size() , max_steps);
+    }
+
+    for(int i = 0; i < m.size(); i++)
+    {
+        if(m[i].array_.size() < max_steps)
+        {
+            m[i].array_.resize(max_steps, m[i].array_.back());
+        }
+    }
+}
+
+void CartesianControllerUtils::copyMatrix(std::vector<double> *path_array,std::vector<cob_cartesian_controller::PathArray> &m)
+{
+    for(int i = 0; i < m.size(); i++)
+    {
+        path_array[i] = m[i].array_;
+    }
+}

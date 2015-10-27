@@ -54,6 +54,17 @@ inline cob_cartesian_controller::ProfileTimings TrajectoryProfileSinoid::getProf
         return pt;
 }
 
+inline cob_cartesian_controller::ProfileTimings TrajectoryProfileSinoid::getMaxProfileTimings(double Se_max, double accl, double vel)
+{
+    // Calculate the Sinoid Profile Parameters
+    if (vel > sqrt(std::fabs(Se_max) * accl / 2))
+    {
+        vel = sqrt(std::fabs(Se_max) * accl / 2);
+    }
+    return getProfileTimings((std::fabs(Se_max) / vel), accl, vel);  // Calculate the velocity profile timings with respect to the largest Se
+
+}
+
 inline bool TrajectoryProfileSinoid::generatePath(cob_cartesian_controller::PathArray &pa)
 {
     std::vector<double> array;
@@ -74,7 +85,6 @@ inline bool TrajectoryProfileSinoid::generatePath(cob_cartesian_controller::Path
 
             pt = getProfileTimings(pt_max_.te, accl_max, vel_max);
         }
-
         array = getTrajectory(pa.start_value_ , pa.Se_, accl_max, vel_max, params_.profile.t_ipo, pt.steps_tb, pt.steps_tv, pt.steps_te, pt.tb, pt.tv, pt.te);
 
         switch(pa.idx_)
@@ -103,29 +113,6 @@ inline bool TrajectoryProfileSinoid::generatePath(cob_cartesian_controller::Path
     }
     else
     {
-        switch(pa.idx_)
-        {
-            case 0:
-            {
-                ROS_INFO_STREAM("Linear-Path: " << pa.Se_ << " Velocity: 0" << "Acceleration: 0");
-                break;
-            }
-            case 1:
-            {
-                ROS_INFO_STREAM("Roll-Path: " << pa.Se_ << " Velocity: 0" << "Acceleration: 0");
-                break;
-            }
-            case 2:
-            {
-                ROS_INFO_STREAM("Pitch-Path: " << pa.Se_ << " Velocity: 0" << "Acceleration: 0");
-                break;
-            }
-            case 3:
-            {
-                ROS_INFO_STREAM("Yaw-Path: " << pa.Se_ << " Velocity: 0" << "Acceleration: 0");
-                break;
-            }
-        }
         array.push_back(pa.start_value_);
     }
 
@@ -160,32 +147,28 @@ inline bool TrajectoryProfileSinoid::calculateProfile(std::vector<double> path_m
                                                     const double Se, const double Se_roll, const double Se_pitch, const double Se_yaw,
                                                     geometry_msgs::Pose start)
 {
-    double accl = params_.profile.accl;
-    double vel  = params_.profile.vel;
-    unsigned int max_steps = 0;
+    CartesianControllerUtils ccu;
+    std::vector<double> linear_path, roll_path, pitch_path, yaw_path;
+    std::vector<cob_cartesian_controller::PathArray> sortedMatrix;
+    double roll_start, pitch_start, yaw_start;
 
     //Convert to RPY
-    double roll_start, pitch_start, yaw_start;
     tf::Quaternion q;
     tf::quaternionMsgToTF(start.orientation, q);
     tf::Matrix3x3(q).getRPY(roll_start, pitch_start, yaw_start);
-
-    std::vector<double> linear_path, roll_path, pitch_path, yaw_path;
 
     cob_cartesian_controller::PathArray lin(0, Se, 0, linear_path);
     cob_cartesian_controller::PathArray roll(1, Se_roll, roll_start, roll_path);
     cob_cartesian_controller::PathArray pitch(2, Se_pitch, pitch_start, pitch_path);
     cob_cartesian_controller::PathArray yaw(3, Se_yaw, yaw_start, yaw_path);
+
     cob_cartesian_controller::PathMatrix pm(lin,roll,pitch,yaw);
 
-    std::vector<cob_cartesian_controller::PathArray> sortedMatrix = pm.getSortedMatrix();   // Sort the Matrix from the largest Se (0) to the smallest one (3)
+    // Sort the Matrix from the largest Se (0) to the smallest one (3)
+    sortedMatrix = pm.getSortedMatrix();
 
-    // Calculate the Sinoid Profile Parameters
-    if (vel > sqrt(std::fabs(sortedMatrix[0].Se_) * accl / 2))
-    {
-        vel = sqrt(std::fabs(sortedMatrix[0].Se_) * accl / 2);
-    }
-    pt_max_ = this->getProfileTimings((std::fabs(sortedMatrix[0].Se_) / vel), accl, vel);  // Calculate the velocity profile timings with respect to the largest Se
+    // Get the profile timings from the longest path
+    pt_max_ = getMaxProfileTimings(sortedMatrix[0].Se_, params_.profile.accl, params_.profile.vel);
 
     // Calculate the paths
     for(int i=0; i<sortedMatrix.size(); i++)
@@ -193,40 +176,14 @@ inline bool TrajectoryProfileSinoid::calculateProfile(std::vector<double> path_m
         this->generatePath(sortedMatrix[i]);
     }
 
-    // Resize the path vectors
-    for(int i = 0; i < sortedMatrix.size(); i++)
-    {
-        max_steps = std::max((unsigned int)sortedMatrix[i].array_.size() , max_steps);
-    }
+    // Adjust the array length
+    ccu.adjustArrayLength(sortedMatrix);
 
-    // Re-adjust the Matrix to its originally form. Index 0 to 3
-    std::vector<double> temp_array;
-    cob_cartesian_controller::PathArray temp(0, 0, 0.0, temp_array);
-    for(int j = 0; j<sortedMatrix.size(); j++)
-    {
-        for(int i = 0; i < sortedMatrix.size()-1; i++)
-        {
-            if(sortedMatrix[i].idx_ > sortedMatrix[i+1].idx_)
-            {
-                temp = sortedMatrix[i];
-                sortedMatrix[i] = sortedMatrix[i+1];
-                sortedMatrix[i+1] = temp;
-            }
-        }
-    }
+    // Sort the arrays in the following order lin(0), roll(1), pitch(2), yaw(3)
+    ccu.sortMatrixByIdx(sortedMatrix);
 
-    for(int i = 0; i < sortedMatrix.size(); i++)
-    {
-        path_matrix[i] = sortedMatrix[i].array_;
-    }
+    ccu.copyMatrix(path_matrix,sortedMatrix);
 
-    for(int i = 0; i < sortedMatrix.size(); i++)
-    {
-        if(path_matrix[i].size() < max_steps)
-        {
-            path_matrix[i].resize(max_steps, path_matrix[i].back());
-        }
-    }
     return true;
 }
 /* END TrajectoryProfileSinoid ******************************************************************************************/

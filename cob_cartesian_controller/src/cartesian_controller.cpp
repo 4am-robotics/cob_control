@@ -173,7 +173,7 @@ bool CartesianController::movePTP(const geometry_msgs::Pose& target_pose, const 
         tf_broadcaster_.sendTransform(stamped_transform);
 
         // Get transformation
-        stamped_transform = utils_.getStampedTransform(target_frame_, chain_tip_link_);
+        tf::StampedTransform stamped_transform = utils_.getStampedTransform(target_frame_, chain_tip_link_);
 
         // Wait for chain_tip_link to be within epsilon area of target_frame
         if(utils_.inEpsilonArea(stamped_transform, epsilon))

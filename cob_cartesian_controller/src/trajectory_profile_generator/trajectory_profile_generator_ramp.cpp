@@ -34,7 +34,6 @@ inline cob_cartesian_controller::ProfileTimings TrajectoryProfileRamp::getProfil
         int steps_te, steps_tv, steps_tb = 0;
         double tv, tb, te = 0.0;
 
-
         tb = vel / accl;
 //        te = (std::fabs(Se) / vel) + tb;
         te = te_max + tb;
@@ -52,8 +51,18 @@ inline cob_cartesian_controller::ProfileTimings TrajectoryProfileRamp::getProfil
         pt.steps_tb = steps_tb;
         pt.steps_tv = steps_tv;
         pt.steps_te = steps_te;
-
         return pt;
+}
+
+inline cob_cartesian_controller::ProfileTimings TrajectoryProfileRamp::getMaxProfileTimings(double Se_max, double accl, double vel)
+{
+    // Calculate the Ramp Profile Parameters
+    if (vel > sqrt(std::fabs(Se_max) * accl))
+    {
+        vel = sqrt(std::fabs(Se_max) * accl);
+    }
+
+    return getProfileTimings((std::fabs(Se_max) / vel), accl, vel);
 }
 
 inline bool TrajectoryProfileRamp::generatePath(cob_cartesian_controller::PathArray &pa)
@@ -73,9 +82,9 @@ inline bool TrajectoryProfileRamp::generatePath(cob_cartesian_controller::PathAr
         {
             // Calculate the Profile Timings
             vel_max = accl_max * pt_max_.te / 2 - sqrt((pow(accl_max,2) * pow(pt_max_.te,2)/4) - std::fabs(pa.Se_) * accl_max);
-
             pt = getProfileTimings(pt_max_.te, accl_max, vel_max);
         }
+
         array = getTrajectory(pa.start_value_, pa.Se_, accl_max, vel_max, params_.profile.t_ipo, pt.steps_tb, pt.steps_tv, pt.steps_te, pt.tb, pt.tv, pt.te);
 
         switch(pa.idx_)
@@ -104,25 +113,6 @@ inline bool TrajectoryProfileRamp::generatePath(cob_cartesian_controller::PathAr
     }
     else
     {
-        switch(pa.idx_)
-        {
-            case 1:
-            {
-                ROS_INFO_STREAM("Roll-Path: " << pa.Se_ << " Velocity: 0" << " Acceleration: 0");
-                break;
-            }
-            case 2:
-            {
-                ROS_INFO_STREAM("Pitch-Path: " << pa.Se_ << " Velocity: 0" << " Acceleration: 0");
-                break;
-            }
-            case 3:
-            {
-                ROS_INFO_STREAM("Yaw-Path: " << pa.Se_ << " Velocity: 0" << " Acceleration: 0");
-                break;
-            }
-        }
-
         array.push_back(pa.start_value_);
     }
     pa.array_ = array;
@@ -159,77 +149,44 @@ inline bool TrajectoryProfileRamp::calculateProfile(std::vector<double> path_mat
                                                     const double Se, const double Se_roll, const double Se_pitch, const double Se_yaw,
                                                     geometry_msgs::Pose start)
 {
-    double accl = params_.profile.accl;
-    double vel  = params_.profile.vel;
-    unsigned int max_steps = 0;
+    CartesianControllerUtils ccu;
+    std::vector<double> linear_path, roll_path, pitch_path, yaw_path;
+    std::vector<cob_cartesian_controller::PathArray> sortedMatrix;
+    double roll_start, pitch_start, yaw_start;
 
     //Convert to RPY
-    double roll_start, pitch_start, yaw_start;
     tf::Quaternion q;
     tf::quaternionMsgToTF(start.orientation, q);
     tf::Matrix3x3(q).getRPY(roll_start, pitch_start, yaw_start);
-
-    std::vector<double> linear_path, roll_path, pitch_path, yaw_path;
 
     cob_cartesian_controller::PathArray lin(0, Se, 0, linear_path);
     cob_cartesian_controller::PathArray roll(1, Se_roll, roll_start, roll_path);
     cob_cartesian_controller::PathArray pitch(2, Se_pitch, pitch_start, pitch_path);
     cob_cartesian_controller::PathArray yaw(3, Se_yaw, yaw_start, yaw_path);
+
     cob_cartesian_controller::PathMatrix pm(lin,roll,pitch,yaw);
 
-    std::vector<cob_cartesian_controller::PathArray> sortedMatrix = pm.getSortedMatrix();   // Sort the Matrix from the largest Se (0) to the smallest one (3)
+    // Sort the Matrix from the largest Se (0) to the smallest one (3)
+    sortedMatrix = pm.getSortedMatrix();
 
-    // Calculate the Ramp Profile Parameters
-    if (vel > sqrt(std::fabs(Se) * accl))
-    {
-        vel = sqrt(std::fabs(Se) * accl);
-    }
-    pt_max_ = this->getProfileTimings((sortedMatrix[0].Se_ / vel), accl, vel);  // Calculate the velocity profile timings with respect to the largest Se
+    // Get the profile timings from the longest path
+    pt_max_ = getMaxProfileTimings(sortedMatrix[0].Se_, params_.profile.accl, params_.profile.vel);
 
     // Calculate the paths
-    for(int i=0; i<sortedMatrix.size(); i++)
-    {
-        this->generatePath(sortedMatrix[i]);
-    }
-
-    // Resize the path vectors
     for(int i = 0; i < sortedMatrix.size(); i++)
     {
-        max_steps = std::max((unsigned int)sortedMatrix[i].array_.size() , max_steps);
+        generatePath(sortedMatrix[i]);
     }
 
-    // Re-adjust the Matrix to its originally form. Index 0 to 3
-    std::vector<double> temp_array;
-    cob_cartesian_controller::PathArray temp(0, 0, 0.0, temp_array);
+    // Adjust the array length
+    ccu.adjustArrayLength(sortedMatrix);
 
-    for(int j = 0; j < sortedMatrix.size(); j++)
-    {
-        for(int i = 0; i < sortedMatrix.size()-1; i++)
-        {
-            if(sortedMatrix[i].idx_ > sortedMatrix[i+1].idx_)
-            {
-                temp = sortedMatrix[i];
-                sortedMatrix[i] = sortedMatrix[i+1];
-                sortedMatrix[i+1] = temp;
-            }
-        }
-    }
+    // Sort the arrays in the following order lin(0), roll(1), pitch(2), yaw(3)
+    ccu.sortMatrixByIdx(sortedMatrix);
 
-    for(int i = 0; i < sortedMatrix.size(); i++)
-    {
-        path_matrix[i] = sortedMatrix[i].array_;
-    }
+    ccu.copyMatrix(path_matrix,sortedMatrix);
 
-    for(int i = 0; i < sortedMatrix.size(); i++)
-    {
-        if(path_matrix[i].size() < max_steps)
-        {
-            path_matrix[i].resize(max_steps, path_matrix[i].back());
-        }
-    }
     return true;
 }
 
-
 /* END TrajectoryProfileRamp **********************************************************************************************/
-

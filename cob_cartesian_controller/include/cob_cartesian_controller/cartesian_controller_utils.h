@@ -35,6 +35,8 @@
 
 #include <geometry_msgs/PoseArray.h>
 #include <visualization_msgs/MarkerArray.h>
+#include "cob_cartesian_controller/cartesian_controller_data_types.h"
+
 
 
 class CartesianControllerUtils
@@ -54,6 +56,9 @@ public:
 
     void previewPath(const geometry_msgs::PoseArray& pose_array);
 
+    void sortMatrixByIdx(std::vector<cob_cartesian_controller::PathArray> &m);
+    void adjustArrayLength(std::vector<cob_cartesian_controller::PathArray> &m);
+    void copyMatrix(std::vector<double> *path_array,std::vector<cob_cartesian_controller::PathArray> &m);
 
 private:
     ros::NodeHandle nh_;
