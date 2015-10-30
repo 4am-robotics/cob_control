@@ -91,8 +91,21 @@ FootprintObserver::FootprintObserver() :
   if(!nh_.hasParam("frames_to_check")) ROS_WARN("No frames to check for footprint observer. Only using initial footprint!");
   nh_.param("frames_to_check", frames_to_check_, std::string(""));
 
-  if(!nh_.hasParam("robot_base_frame")) ROS_WARN("No parameter robot_base_frame on parameter server. Using default [/base_link].");
-  nh_.param("robot_base_frame", robot_base_frame_, std::string("/base_link"));
+  if(!nh_.hasParam("robot_base_frame")) ROS_WARN("No parameter robot_base_frame on parameter server. Using default [base_link].");
+  nh_.param("robot_base_frame", robot_base_frame_, std::string("base_link"));
+
+  // resolve the name using the tf_prefix
+  std::string tf_prefix = tf::getPrefixParam(nh_);
+  std::string frame;
+  std::stringstream ss;
+  ss << frames_to_check_;
+  frames_to_check_.clear();
+
+  while(ss >> frame){
+    frames_to_check_ += tf::resolve(tf_prefix,frame) + " ";
+  }
+
+  robot_base_frame_ = tf::resolve(tf_prefix,robot_base_frame_);
 
   last_tf_missing_ = ros::Time::now();
 }
@@ -296,9 +309,9 @@ void FootprintObserver::checkFootprint(){
   bool missing_frame_exists = false;
   while(ss >> frame){
     // get transform between robot base frame and frame
-    if(tf_listener_.canTransform(robot_base_frame_, frame, ros::Time(0))) {
+    if(tf_listener_.canTransform(tf_listener_.resolve(robot_base_frame_), tf_listener_.resolve(frame), ros::Time(0))) {
       tf::StampedTransform transform;
-      tf_listener_.lookupTransform(robot_base_frame_, frame, ros::Time(0), transform);
+      tf_listener_.lookupTransform(tf_listener_.resolve(robot_base_frame_), tf_listener_.resolve(frame), ros::Time(0), transform);
 
       tf::Vector3 frame_position = transform.getOrigin();
 

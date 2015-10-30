@@ -74,17 +74,23 @@ public:
 
         ///parse robot_description and generate KDL chains
         KDL::Tree my_tree;
-        if (!kdl_parser::treeFromParam("/robot_description", my_tree))
+        std::string robot_description_param;
+        if (!nh_.searchParam("robot_description", robot_description_param))
+        {
+            ROS_ERROR("Parameter 'robot_description' not found");
+            return -3;
+        }
+        if (!kdl_parser::treeFromParam(robot_description_param, my_tree))
         {
             ROS_ERROR("Failed to construct kdl tree");
-            return -3;
+            return -4;
         }
 
         my_tree.getChain(this->chain_base_link_, this->chain_tip_link_, chain_);
         if(chain_.getNrOfJoints() == 0)
         {
             ROS_ERROR("Failed to initialize kinematic chain");
-            return -4;
+            return -5;
         }
 
         p_fksolver_vel_ = new KDL::ChainFkSolverVel_recursive(chain_);

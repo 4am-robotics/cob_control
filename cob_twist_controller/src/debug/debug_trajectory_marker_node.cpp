@@ -115,7 +115,7 @@ public:
         visualization_msgs::MarkerArray marker_array;
         geometry_msgs::Point point;
 
-        if(tf_listener_.frameExists(this->chain_tip_link_))
+        if(tf_listener_.frameExists(tf_listener_.resolve(this->chain_tip_link_)))
         {
             if(tip_marker_.points.size() > 10000)
             {
@@ -126,7 +126,7 @@ public:
             marker_array.markers.push_back(tip_marker_);
         }
 
-        if(tf_listener_.frameExists(this->target_frame_))
+        if(tf_listener_.frameExists(tf_listener_.resolve(this->target_frame_)))
         {
             if(target_marker_.points.size() > 10000)
             {
@@ -137,7 +137,7 @@ public:
             marker_array.markers.push_back(target_marker_);
         }
 
-        if(tf_listener_.frameExists(this->base_link_))
+        if(tf_listener_.frameExists(tf_listener_.resolve(this->base_link_)))
         {
             if(nh_.param("twist_controller/kinematic_extension", 0) == cob_twist_controller::TwistController_BASE_ACTIVE)
             {
@@ -181,8 +181,8 @@ public:
         try
         {
             ros::Time now = ros::Time::now();
-            tf_listener_.waitForTransform(from, to, now, ros::Duration(0.5));
-            tf_listener_.lookupTransform(from, to, now, transform);
+            tf_listener_.waitForTransform(tf_listener_.resolve(from), tf_listener_.resolve(to), now, ros::Duration(0.5));
+            tf_listener_.lookupTransform(tf_listener_.resolve(from), tf_listener_.resolve(to), now, transform);
 
             point.x = transform.getOrigin().x();
             point.y = transform.getOrigin().y();

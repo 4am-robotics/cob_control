@@ -104,8 +104,7 @@ public:
     void action_abort();
 
 private:
-    HoldTf ht_;
-
+    ros::NodeHandle nh_;
     double update_rate_;
     ros::Timer timer_;
 
@@ -166,6 +165,7 @@ private:
 
     int checkServiceCallStatus();
 
+    HoldTf ht_;
     bool stop_on_goal_;
     double tracking_duration_;
     ros::Time tracking_start_time_;

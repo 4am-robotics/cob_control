@@ -122,7 +122,7 @@ private:
     double x_dot_rot_in_, y_dot_rot_in_, z_dot_rot_in_;
 
     /// Transform Listener
-    tf::TransformListener listener_;
+    tf::TransformListener tf_listener_;
 
     /// Euler Integration
     double dt_;

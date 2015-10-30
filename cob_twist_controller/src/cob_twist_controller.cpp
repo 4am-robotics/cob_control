@@ -71,7 +71,13 @@ bool CobTwistController::initialize()
 
     ///parse robot_description and generate KDL chains
     KDL::Tree my_tree;
-    if (!kdl_parser::treeFromParam("/robot_description", my_tree))
+    std::string robot_description_param;
+    if (!nh_.searchParam("robot_description", robot_description_param))
+    {
+        ROS_ERROR("Parameter 'robot_description' not found");
+        return false;
+    }
+    if (!kdl_parser::treeFromParam(robot_description_param, my_tree))
     {
         ROS_ERROR("Failed to construct kdl tree");
         return false;
@@ -86,7 +92,7 @@ bool CobTwistController::initialize()
 
     ///parse robot_description and set velocity limits
     urdf::Model model;
-    if (!model.initParam("/robot_description"))
+    if (!model.initParam(robot_description_param))
     {
         ROS_ERROR("Failed to parse urdf file for JointLimits");
         return false;
@@ -296,7 +302,7 @@ void CobTwistController::twistStampedCallback(const geometry_msgs::TwistStamped:
 
     try
     {
-        tf_listener_.lookupTransform(twist_controller_params_.chain_base_link, msg->header.frame_id, ros::Time(0), transform_tf);
+        tf_listener_.lookupTransform(tf_listener_.resolve(twist_controller_params_.chain_base_link), tf_listener_.resolve(msg->header.frame_id), ros::Time(0), transform_tf);
         frame.M = KDL::Rotation::Quaternion(transform_tf.getRotation().x(), transform_tf.getRotation().y(), transform_tf.getRotation().z(), transform_tf.getRotation().w());
     }
     catch (tf::TransformException& ex){
@@ -354,7 +360,7 @@ void CobTwistController::visualizeTwist(KDL::Twist twist)
     tf::StampedTransform transform_tf;
     try
     {
-        tf_listener_.lookupTransform(twist_controller_params_.chain_base_link, twist_controller_params_.chain_tip_link, ros::Time(0), transform_tf);
+        tf_listener_.lookupTransform(tf_listener_.resolve(twist_controller_params_.chain_base_link), tf_listener_.resolve(twist_controller_params_.chain_tip_link), ros::Time(0), transform_tf);
     }
     catch (tf::TransformException& ex){
         ROS_ERROR("CobTwistController::visualizeTwist: \n%s",ex.what());
@@ -428,11 +434,11 @@ void CobTwistController::odometryCallback(const nav_msgs::Odometry::ConstPtr& ms
 
     try
     {
-        tf_listener_.waitForTransform(twist_controller_params_.chain_base_link, "base_link", ros::Time(0), ros::Duration(0.5));
-        tf_listener_.lookupTransform(twist_controller_params_.chain_base_link, "base_link", ros::Time(0), cb_transform_bl);
+        tf_listener_.waitForTransform(tf_listener_.resolve(twist_controller_params_.chain_base_link), tf_listener_.resolve("base_link"), ros::Time(0), ros::Duration(0.5));
+        tf_listener_.lookupTransform(tf_listener_.resolve(twist_controller_params_.chain_base_link), tf_listener_.resolve("base_link"), ros::Time(0), cb_transform_bl);
 
-        tf_listener_.waitForTransform("base_link", twist_controller_params_.chain_tip_link, ros::Time(0), ros::Duration(0.5));
-        tf_listener_.lookupTransform("base_link", twist_controller_params_.chain_tip_link, ros::Time(0), bl_transform_ct);
+        tf_listener_.waitForTransform(tf_listener_.resolve("base_link"), tf_listener_.resolve(twist_controller_params_.chain_tip_link), ros::Time(0), ros::Duration(0.5));
+        tf_listener_.lookupTransform(tf_listener_.resolve("base_link"), tf_listener_.resolve(twist_controller_params_.chain_tip_link), ros::Time(0), bl_transform_ct);
 
         cb_frame_bl.p = KDL::Vector(cb_transform_bl.getOrigin().x(), cb_transform_bl.getOrigin().y(), cb_transform_bl.getOrigin().z());
         cb_frame_bl.M = KDL::Rotation::Quaternion(cb_transform_bl.getRotation().x(), cb_transform_bl.getRotation().y(), cb_transform_bl.getRotation().z(), cb_transform_bl.getRotation().w());
