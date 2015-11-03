@@ -39,19 +39,19 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const JointStates& joint_stat
                                                    const KDL::Twist& v_in,
                                                    KDL::JntArray& qdot_out)
 {
-    ROS_INFO_STREAM("joint_states.current_q_: " << joint_states.current_q_.rows());
+    //ROS_INFO_STREAM("joint_states.current_q_: " << joint_states.current_q_.rows());
     int8_t retStat = -1;
 
     /// Let the ChainJntToJacSolver calculate the jacobian "jac_chain" for the current joint positions "q_in"
     KDL::Jacobian jac_chain(chain_.getNrOfJoints());
     jnt2jac_.JntToJac(joint_states.current_q_, jac_chain);
-    ROS_INFO_STREAM("jac_chain.rows: " << jac_chain.rows() << ", jac_chain.columns: " << jac_chain.columns());
+    //ROS_INFO_STREAM("jac_chain.rows: " << jac_chain.rows() << ", jac_chain.columns: " << jac_chain.columns());
 
     /// append columns to Jacobian in order to reflect additional DoFs of kinematical extension
     KDL::Jacobian jac_full = this->kinematic_extension_->adjustJacobian(jac_chain);
-    ROS_INFO_STREAM("jac_full.rows: " << jac_full.rows() << ", jac_full.columns: " << jac_full.columns());
+    //ROS_INFO_STREAM("jac_full.rows: " << jac_full.rows() << ", jac_full.columns: " << jac_full.columns());
     JointStates joint_states_full = this->kinematic_extension_->adjustJointStates(joint_states);
-    ROS_INFO_STREAM("joint_states_full.current_q_: " << joint_states_full.current_q_.rows());
+    //ROS_INFO_STREAM("joint_states_full.current_q_: " << joint_states_full.current_q_.rows());
 
     Vector6d_t v_in_vec;
     tf::twistKDLToEigen(v_in, v_in_vec);
@@ -61,7 +61,7 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const JointStates& joint_stat
                                                                   v_in_vec,
                                                                   joint_states_full,
                                                                   qdot_out_vec);
-    ROS_INFO_STREAM("calculateJointVelocities done: " << retStat);
+    //ROS_INFO_STREAM("calculateJointVelocities done: " << retStat);
 
     /// convert output
     KDL::JntArray qdot_out_full(jac_full.columns());
@@ -100,8 +100,8 @@ void InverseDifferentialKinematicsSolver::resetAll(TwistControllerParams params)
 
     this->kinematic_extension_.reset(KinematicExtensionBuilder::createKinematicExtension(this->params_));
     this->limiter_params_ = this->kinematic_extension_->adjustLimiterParams(this->params_.limiter_params);
-    ROS_INFO_STREAM("this->params_.limiter_params.limits_vel: " << this->params_.limiter_params.limits_vel.size());
-    ROS_INFO_STREAM("this->limiter_params_.limits_vel: " << this->limiter_params_.limits_vel.size());
+    //ROS_INFO_STREAM("this->params_.limiter_params.limits_vel: " << this->params_.limiter_params.limits_vel.size());
+    //ROS_INFO_STREAM("this->limiter_params_.limits_vel: " << this->limiter_params_.limits_vel.size());
 
     this->limiters_.reset(new LimiterContainer(this->limiter_params_));
     this->limiters_->init();

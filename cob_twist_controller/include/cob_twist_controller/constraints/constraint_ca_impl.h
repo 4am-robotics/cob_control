@@ -264,16 +264,16 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calcDerivativeValue()
 template <typename T_PARAMS, typename PRIO>
 void CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
 {
-    ROS_INFO_STREAM("CollisionAvoidance::calcPartialValues:");
+    //ROS_INFO_STREAM("CollisionAvoidance::calcPartialValues:");
     Eigen::VectorXd partial_values = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
     Eigen::VectorXd sum_partial_values = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
     const TwistControllerParams& params = this->constraint_params_.tc_params_;
     int32_t size_of_joints = params.joints.size();
     std::vector<Eigen::VectorXd> vec_partial_values;
     
-    ROS_INFO_STREAM("this->jacobian_data_.cols: " << this->jacobian_data_.cols());
-    ROS_INFO_STREAM("size_of_joints: " << size_of_joints);
-    ROS_INFO_STREAM("this->joint_states_.current_q_.rows: " << this->joint_states_.current_q_.rows());
+    //ROS_INFO_STREAM("this->jacobian_data_.cols: " << this->jacobian_data_.cols());
+    //ROS_INFO_STREAM("size_of_joints: " << size_of_joints);
+    //ROS_INFO_STREAM("this->joint_states_.current_q_.rows: " << this->joint_states_.current_q_.rows());
 
     std::vector<std::string>::const_iterator str_it = std::find(params.frame_names.begin(),
                                                                 params.frame_names.end(),
@@ -310,14 +310,14 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
                 KDL::Jacobian new_jac_chain(size_of_joints);
                 KDL::JntArray ja = this->joint_states_.current_q_;
 
-                ROS_INFO_STREAM("frame_number: " << frame_number);
+                //ROS_INFO_STREAM("frame_number: " << frame_number);
 
                 if (0 != this->jnt_to_jac_.JntToJac(ja, new_jac_chain, frame_number))
                 {
                     ROS_ERROR_STREAM("Failed to calculate JntToJac.");
                     return;
                 }
-                ROS_INFO_STREAM("new_jac_chain.columns: " << new_jac_chain.columns());
+                //ROS_INFO_STREAM("new_jac_chain.columns: " << new_jac_chain.columns());
 
                 Matrix6Xd_t jac_extension = this->jacobian_data_;
                 jac_extension.block(0, 0, new_jac_chain.data.rows(), new_jac_chain.data.cols()) = new_jac_chain.data;
@@ -348,11 +348,11 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
         }
         else
         {
-            ROS_INFO_STREAM("min_dist not within activation_buffer: " << params.thresholds_ca.activation_with_buffer << " <= " << it->min_distance);
+            //ROS_INFO_STREAM("min_dist not within activation_buffer: " << params.thresholds_ca.activation_with_buffer << " <= " << it->min_distance);
         }
     }
-    ROS_INFO_STREAM("Done all distances");
-    ROS_INFO_STREAM("vec_partial_values.size:" << vec_partial_values.size());
+    //ROS_INFO_STREAM("Done all distances");
+    //ROS_INFO_STREAM("vec_partial_values.size:" << vec_partial_values.size());
 
     if (vec_partial_values.size() > 0)
     {
@@ -363,8 +363,8 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
     {
         this->task_jacobian_.block(idx, 0, 1, this->jacobian_data_.cols()) = vec_partial_values.at(idx).transpose();
     }
-    ROS_INFO_STREAM("this->task_jacobian_.rows:" << this->task_jacobian_.rows());
-    ROS_INFO_STREAM("this->task_jacobian_.cols:" << this->task_jacobian_.cols());
+    //ROS_INFO_STREAM("this->task_jacobian_.rows:" << this->task_jacobian_.rows());
+    //ROS_INFO_STREAM("this->task_jacobian_.cols:" << this->task_jacobian_.cols());
 
     this->partial_values_.resize(sum_partial_values.rows(), 1);
     this->partial_values_ = sum_partial_values;
@@ -383,7 +383,7 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calcPredictionValue()
     std::vector<std::string>::const_iterator str_it = std::find(params.frame_names.begin(),
                                                                 params.frame_names.end(),
                                                                 this->constraint_params_.id_);
-    ROS_INFO_STREAM("constraint_params_.id_: " << this->constraint_params_.id_);
+    //ROS_INFO_STREAM("constraint_params_.id_: " << this->constraint_params_.id_);
     
     if (params.frame_names.end() != str_it)
     {
@@ -399,7 +399,7 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calcPredictionValue()
                 jnts_prediction_chain.q(i) = this->jnts_prediction_.q(i);
                 jnts_prediction_chain.qdot(i) = this->jnts_prediction_.qdot(i);
             }
-            ROS_INFO_STREAM("jnts_prediction_chain.q.rows: " << jnts_prediction_chain.q.rows());
+            //ROS_INFO_STREAM("jnts_prediction_chain.q.rows: " << jnts_prediction_chain.q.rows());
             
             // Calculate prediction for pos and vel
             if (0 != this->fk_solver_vel_.JntToCart(this->jnts_prediction_, frame_vel, frame_number))
@@ -407,7 +407,7 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calcPredictionValue()
                 ROS_ERROR_STREAM("Could not calculate twist for frame: " << frame_number);
                 return;
             }
-            ROS_INFO_STREAM("Calculated twist for frame: " << frame_number);
+            //ROS_INFO_STREAM("Calculated twist for frame: " << frame_number);
 
             KDL::Twist twist = frame_vel.GetTwist();  // predicted frame twist
 

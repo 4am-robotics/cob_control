@@ -85,15 +85,15 @@ class SolverFactory : public ISolverFactory
                                                  boost::shared_ptr<DampingBase>& damping_method,
                                                  std::set<ConstraintBase_t>& constraints) const
         {
-            ROS_INFO("in calculateJointVelocities");
+            //ROS_INFO("in calculateJointVelocities");
             constraint_solver_->setJacobianData(jacobian_data);
-            ROS_INFO("setJacobianData done");
+            //ROS_INFO("setJacobianData done");
             constraint_solver_->setConstraints(constraints);
-            ROS_INFO("setConstraints done");
+            //ROS_INFO("setConstraints done");
             constraint_solver_->setDamping(damping_method);
-            ROS_INFO("setDamping done");
+            //ROS_INFO("setDamping done");
             Eigen::MatrixXd new_q_dot = constraint_solver_->solve(in_cart_velocities, joint_states);
-            ROS_INFO("solve done");
+            //ROS_INFO("solve done");
             return new_q_dot;
         }
 
