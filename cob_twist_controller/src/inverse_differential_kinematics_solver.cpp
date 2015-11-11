@@ -47,11 +47,12 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const JointStates& joint_stat
     jnt2jac_.JntToJac(joint_states.current_q_, jac_chain);
     //ROS_INFO_STREAM("jac_chain.rows: " << jac_chain.rows() << ", jac_chain.columns: " << jac_chain.columns());
 
+    JointStates joint_states_full = this->kinematic_extension_->adjustJointStates(joint_states);
+    //ROS_INFO_STREAM("joint_states_full.current_q_: " << joint_states_full.current_q_.rows());
+
     /// append columns to Jacobian in order to reflect additional DoFs of kinematical extension
     KDL::Jacobian jac_full = this->kinematic_extension_->adjustJacobian(jac_chain);
     //ROS_INFO_STREAM("jac_full.rows: " << jac_full.rows() << ", jac_full.columns: " << jac_full.columns());
-    JointStates joint_states_full = this->kinematic_extension_->adjustJointStates(joint_states);
-    //ROS_INFO_STREAM("joint_states_full.current_q_: " << joint_states_full.current_q_.rows());
 
     Vector6d_t v_in_vec;
     tf::twistKDLToEigen(v_in, v_in_vec);

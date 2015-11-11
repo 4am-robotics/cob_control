@@ -67,6 +67,7 @@ enum KinematicExtensionTypes
     BASE_COMPENSATION = cob_twist_controller::TwistController_BASE_COMPENSATION,
     BASE_ACTIVE = cob_twist_controller::TwistController_BASE_ACTIVE,
     COB_TORSO = cob_twist_controller::TwistController_COB_TORSO,
+    LOOKAT = cob_twist_controller::TwistController_LOOKAT
 };
 
 enum SolverTypes

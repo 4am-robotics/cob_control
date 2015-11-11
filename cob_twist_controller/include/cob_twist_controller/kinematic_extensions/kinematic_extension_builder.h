@@ -37,6 +37,7 @@
 #include "cob_twist_controller/kinematic_extensions/kinematic_extension_base.h"
 #include "cob_twist_controller/kinematic_extensions/kinematic_extension_dof.h"
 #include "cob_twist_controller/kinematic_extensions/kinematic_extension_urdf.h"
+#include "cob_twist_controller/kinematic_extensions/kinematic_extension_lookat.h"
 
 
 /* BEGIN KinematicExtensionBuilder *****************************************************************************************/

@@ -23,7 +23,7 @@
  *
  * \brief
  *   This header contains the interface description for extending the
- *   kinematic chain with additional degrees of freedom, e.g. base_active or lookat
+ *   kinematic chain with additional degrees of freedom, e.g. base_active
  *
  ****************************************************************/
 

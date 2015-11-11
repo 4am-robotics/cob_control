@@ -134,7 +134,7 @@ KDL::Jacobian KinematicExtensionURDF::adjustJacobian(const KDL::Jacobian& jac_ch
         KDL::Frame eb_frame_ct, cb_frame_eb;
         try
         {
-            ros::Time now = ros::Time(0);
+            ros::Time now = ros::Time::now();
             tf_listener_.waitForTransform(chain_.getSegment(i).getName(), params_.chain_tip_link, now, ros::Duration(0.5));
             tf_listener_.lookupTransform(chain_.getSegment(i).getName(), params_.chain_tip_link,  now, eb_transform_ct);
 
