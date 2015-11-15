@@ -34,6 +34,7 @@
 #include "ros/ros.h"
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
+#include "cob_twist_controller/utils/simpson_integrator.h"
 
 /// Base class for controller interfaces.
 class ControllerInterfaceBase
@@ -65,9 +66,7 @@ class ControllerInterfacePositionBase : public ControllerInterfaceBase
                                                  const uint16_t ma_size)
         : ControllerInterfaceBase(nh, params)
         {
-            ma_.assign(params.dof, MovingAvg_double_t(ma_size));
-            last_update_time_ = ros::Time(0.0);
-            last_period_ = ros::Duration(0.0);
+            integrator_.reset(new SimpsonIntegrator(params.dof, ma_size));
         }
 
         ~ControllerInterfacePositionBase() {}
@@ -78,60 +77,11 @@ class ControllerInterfacePositionBase : public ControllerInterfaceBase
         bool updateIntegration(const KDL::JntArray& q_dot_ik,
                                const KDL::JntArray& current_q)
         {
-            now_ = ros::Time::now();
-            ros::Duration period = now_ - last_update_time_;
-
-            bool value_valid = false;
-            pos.clear();
-            vel.clear();
-
-            // ToDo: Test this and find good threshold
-            if (period.toSec() > 2*last_period_.toSec())  // missed about a cycle
-            {
-                ROS_WARN("reset Integration");
-                // resetting outdated values
-                vel_last_.clear();
-                vel_before_last_.clear();
-            }
-
-            if (!vel_before_last_.empty())
-            {
-                for (unsigned int i = 0; i < params_.dof; ++i)
-                {
-                    // Simpson
-                    double integration_value = static_cast<double>(period.toSec() / 6.0 * (vel_before_last_[i] + 4.0 * (vel_before_last_[i] + vel_last_[i]) + vel_before_last_[i] + vel_last_[i] + q_dot_ik(i)) + current_q(i));
-                    ma_[i].addElement(integration_value);
-                    double avg = 0.0;
-                    ma_[i].calcWeightedMovingAverage(avg);
-                    pos.push_back(avg);
-                    vel.push_back(q_dot_ik(i));
-                }
-                value_valid = true;
-            }
-
-            // Continuously shift the vectors for simpson integration
-            vel_before_last_.clear();
-            for (unsigned int i=0; i < vel_last_.size(); ++i)
-            {
-                vel_before_last_.push_back(vel_last_[i]);
-            }
-
-            vel_last_.clear();
-            for (unsigned int i=0; i < q_dot_ik.rows(); ++i)
-            {
-                vel_last_.push_back(q_dot_ik(i));
-            }
-
-            last_update_time_ = now_;
-            last_period_ = period;
-            return value_valid;
+            return integrator_->updateIntegration(q_dot_ik, current_q, pos, vel);
         }
 
     protected:
-        std::vector<MovingAvg_double_t> ma_;
-        std::vector<double> vel_last_, vel_before_last_;
-        ros::Time now_, last_update_time_;
-        ros::Duration last_period_;
+        boost::shared_ptr<SimpsonIntegrator> integrator_;
         std::vector<double> pos, vel;
 };
 
