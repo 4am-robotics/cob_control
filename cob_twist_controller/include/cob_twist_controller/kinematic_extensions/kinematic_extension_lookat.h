@@ -35,10 +35,16 @@
 #include <ros/ros.h>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/thread/mutex.hpp>
 #include <kdl_parser/kdl_parser.hpp>
+#include <kdl/chainjnttojacsolver.hpp>
+#include <kdl/chainfksolverpos_recursive.hpp>
+#include <tf_conversions/tf_kdl.h>
+#include <tf/transform_broadcaster.h>
 #include <Eigen/Geometry>
 
 #include "cob_twist_controller/kinematic_extensions/kinematic_extension_base.h"
+#include "cob_twist_controller/utils/simpson_integrator.h"
 
 /* BEGIN KinematicExtensionLookat ****************************************************************************************/
 /// Class to be used for Cartesian KinematicExtensions for Lookat.
@@ -62,17 +68,26 @@ class KinematicExtensionLookat : public KinematicExtensionBase
         virtual LimiterParams adjustLimiterParams(const LimiterParams& limiter_params);
         virtual void processResultExtension(const KDL::JntArray& q_dot_ik);
 
-    protected:
-        KDL::Chain chain_;
+    private:
         unsigned int ext_dof_;
-        JointStates joint_states_;
+        KDL::Chain chain_ext_;
+        KDL::Chain chain_full_;
+        JointStates joint_states_ext_;
         JointStates joint_states_full_;
-        std::vector<double> limits_max_;
-        std::vector<double> limits_min_;
-        std::vector<double> limits_vel_;
-        std::vector<double> limits_acc_;
+        std::vector<double> limits_ext_max_;
+        std::vector<double> limits_ext_min_;
+        std::vector<double> limits_ext_vel_;
+        std::vector<double> limits_ext_acc_;
         
         boost::shared_ptr<KDL::ChainJntToJacSolver> jnt2jac_;
+        boost::shared_ptr<KDL::ChainFkSolverPos_recursive> fk_solver_ext_;
+        
+        boost::shared_ptr<SimpsonIntegrator> integrator_;
+
+        boost::mutex mutex_;
+        ros::Timer timer_;
+        tf::TransformBroadcaster br_;
+        void broadcastFocusFrame(const ros::TimerEvent& event);
 };
 /* END KinematicExtensionLookat **********************************************************************************************/
 
