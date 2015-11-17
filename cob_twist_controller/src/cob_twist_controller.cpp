@@ -377,6 +377,12 @@ void CobTwistController::solveTwist(KDL::Twist twist)
 
 void CobTwistController::visualizeTwist(KDL::Twist twist)
 {
+    std::string tracking_frame = twist_controller_params_.chain_tip_link;
+    if (twist_controller_params_.kinematic_extension == LOOKAT)
+    {
+        tracking_frame = "lookat_focus_frame";
+    }
+
     tf::StampedTransform transform_tf;
     try
     {
@@ -389,7 +395,7 @@ void CobTwistController::visualizeTwist(KDL::Twist twist)
     }
 
     visualization_msgs::Marker marker;
-    marker.header.frame_id = twist_controller_params_.chain_base_link;
+    marker.header.frame_id = tracking_frame;
     marker.header.stamp = ros::Time::now();
     marker.ns = "twist_direction";
     marker.id = 0;
