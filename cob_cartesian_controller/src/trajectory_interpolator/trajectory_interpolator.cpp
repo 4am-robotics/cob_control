@@ -27,18 +27,19 @@
  ****************************************************************/
 
 #include <cob_cartesian_controller/trajectory_interpolator/trajectory_interpolator.h>
-#include <cob_cartesian_controller/trajectory_profile_generator/trajactory_profile_generator.h>
+#include <cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_builder.h>
+#include <math.h>
 
 bool TrajectoryInterpolator::linearInterpolation(geometry_msgs::PoseArray& pose_array,
                                                  const cob_cartesian_controller::CartesianActionStruct& as)
 {
-
+    double Se_roll, Se_pitch, Se_yaw;
     this->trajectory_profile_generator_.reset(TrajectoryProfileBuilder::createProfile(as));
 
     pose_array.header.stamp = ros::Time::now();
     pose_array.header.frame_id = root_frame_;
 
-    tf::Quaternion q;
+    tf::Quaternion q_start, q_end, q_relative, q;
     double start_roll, start_pitch, start_yaw;
     double end_roll, end_pitch, end_yaw;
 
@@ -50,18 +51,26 @@ bool TrajectoryInterpolator::linearInterpolation(geometry_msgs::PoseArray& pose_
                      pow((as.move_lin.end.position.y - as.move_lin.start.position.y), 2) +
                      pow((as.move_lin.end.position.z - as.move_lin.start.position.z), 2));
 
-    // Convert Quaternions into RPY Angles for start and end pose
-    tf::quaternionMsgToTF(as.move_lin.start.orientation, q);
-    tf::Matrix3x3(q).getRPY(start_roll, start_pitch, start_yaw);
-
-    tf::quaternionMsgToTF(as.move_lin.end.orientation, q);
-    tf::Matrix3x3(q).getRPY(end_roll, end_pitch, end_yaw);
+//    // Convert Quaternions into RPY Angles for start and end pose
+    tf::quaternionMsgToTF(as.move_lin.start.orientation, q_start);
+////    tf::Matrix3x3(q).getRPY(start_roll, start_pitch, start_yaw);
+//
+    tf::quaternionMsgToTF(as.move_lin.end.orientation, q_end);
+////    tf::Matrix3x3(q).getRPY(end_roll, end_pitch, end_yaw);
+//    q_relative = q_start * q_end.inverse();
+//    q_relative.normalized();
+//
+//    q_relative = q_start * q_end.inverse();
+//    tf::Matrix3x3(q_relative).getRPY(Se_roll, Se_pitch, Se_yaw);
 
     // Calculate path length for the angular movement
-    double Se_roll, Se_pitch, Se_yaw;
-    Se_roll  = end_roll  - start_roll;
-    Se_pitch = end_pitch - start_pitch;
-    Se_yaw   = end_yaw   - start_yaw;
+    Se_roll  = std::fabs(end_roll)  - std::fabs(start_roll);
+    Se_pitch = std::fabs(end_pitch) - std::fabs(start_pitch);
+    Se_yaw   = std::fabs(end_yaw)   - std::fabs(start_yaw);
+
+//    ROS_INFO_STREAM("Q_x: " << Se_roll <<
+//                    " Q_y: " << Se_pitch <<
+//                    " Q_z: " << Se_yaw);
 
     // Calculate path for each Angle
     if(!this->trajectory_profile_generator_->calculateProfile(path_matrix, Se, Se_roll, Se_pitch, Se_yaw, as.move_lin.start))
@@ -75,11 +84,21 @@ bool TrajectoryInterpolator::linearInterpolation(geometry_msgs::PoseArray& pose_
     yaw_path     = path_matrix[3];
 
     // Interpolate the linear path
-    for(int i = 0 ; i < path_matrix[0].size() ; i++)
+    for(unsigned int i = 0 ; i < path_matrix[0].size() ; i++)
     {
-        pose.position.x = as.move_lin.start.position.x + linear_path.at(i) * (as.move_lin.end.position.x - as.move_lin.start.position.x) / Se;
-        pose.position.y = as.move_lin.start.position.y + linear_path.at(i) * (as.move_lin.end.position.y - as.move_lin.start.position.y) / Se;
-        pose.position.z = as.move_lin.start.position.z + linear_path.at(i) * (as.move_lin.end.position.z - as.move_lin.start.position.z) / Se;
+        if(linear_path.back() == 0)
+        {
+            pose.position.x = as.move_lin.start.position.x;
+            pose.position.y = as.move_lin.start.position.y;
+            pose.position.z = as.move_lin.start.position.z;
+        }
+        else
+        {
+            ROS_INFO_STREAM("linear.path.at(..) = " << linear_path.at(i));
+            pose.position.x = as.move_lin.start.position.x + linear_path.at(i) * (as.move_lin.end.position.x - as.move_lin.start.position.x) / linear_path.back();
+            pose.position.y = as.move_lin.start.position.y + linear_path.at(i) * (as.move_lin.end.position.y - as.move_lin.start.position.y) / linear_path.back();
+            pose.position.z = as.move_lin.start.position.z + linear_path.at(i) * (as.move_lin.end.position.z - as.move_lin.start.position.z) / linear_path.back();
+        }
 
         // Transform RPY to Quaternion
         q.setRPY(roll_path.at(i), pitch_path.at(i), yaw_path.at(i));

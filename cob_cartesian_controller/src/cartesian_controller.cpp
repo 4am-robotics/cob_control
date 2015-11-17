@@ -254,6 +254,7 @@ bool CartesianController::posePathBroadcaster(const geometry_msgs::PoseArray& ca
 
 void CartesianController::goalCallback()
 {
+    geometry_msgs::Pose start_pose, end_pose, pose;
     geometry_msgs::PoseArray cartesian_path;
     cob_cartesian_controller::CartesianActionStruct action_struct;
 
@@ -261,6 +262,9 @@ void CartesianController::goalCallback()
     ROS_INFO_STREAM("=========================================================================");
     ROS_INFO("Received a new goal");
     ROS_INFO_STREAM("=========================================================================");
+
+    start_pose = utils_.getPose(root_frame_, chain_tip_link_);
+    ROS_INFO_STREAM("Start Pose\n X: " << start_pose.position.x << ", Y:" << start_pose.position.y << " , Z: " << start_pose.position.z);
 
     action_struct = acceptGoal(as_->acceptNewGoal());
 
@@ -276,6 +280,8 @@ void CartesianController::goalCallback()
         }
 
         // Publish Preview
+//        visualization_msgs::MarkerArray marker_array;
+//        utils_.previewPath(cartesian_path,marker_array);
         utils_.previewPath(cartesian_path);
 
         // Activate Tracking
@@ -291,6 +297,14 @@ void CartesianController::goalCallback()
             actionAbort(false, "Failed to execute path for 'move_lin'");
             return;
         }
+
+//        movePTP(action_struct.move_lin.end, 0.005);
+
+//        end_pose = utils_.getPose(root_frame_,chain_tip_link_);
+//
+//        ROS_INFO_STREAM("Relative \n X: " << fabs(end_pose.position.x) - fabs(action_struct.move_lin.end.position.x) <<
+//                        ", Y:" << fabs(end_pose.position.y) - fabs(action_struct.move_lin.end.position.y) <<
+//                        " , Z: " << fabs(end_pose.position.z) - fabs(action_struct.move_lin.end.position.z));
 
         // De-Activate Tracking
         if(!stopTracking())

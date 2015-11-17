@@ -34,7 +34,7 @@
 #include <tf/transform_datatypes.h>
 
 #include <cob_cartesian_controller/cartesian_controller_data_types.h>
-#include <cob_cartesian_controller/trajectory_profile_generator/trajactory_profile_generator.h>
+#include <cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_builder.h>
 
 
 

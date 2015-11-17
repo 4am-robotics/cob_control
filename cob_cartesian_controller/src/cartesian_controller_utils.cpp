@@ -133,10 +133,8 @@ void CartesianControllerUtils::poseToRPY(const geometry_msgs::Pose& pose, double
 
 void CartesianControllerUtils::previewPath(const geometry_msgs::PoseArray& pose_array)
 {
-    visualization_msgs::MarkerArray marker_array;
-
     visualization_msgs::Marker marker;
-    marker.type = visualization_msgs::Marker::ARROW;
+    marker.type = visualization_msgs::Marker::SPHERE;
     marker.lifetime = ros::Duration();
     marker.action = visualization_msgs::Marker::ADD;
     marker.header = pose_array.header;
@@ -149,33 +147,16 @@ void CartesianControllerUtils::previewPath(const geometry_msgs::PoseArray& pose_
     marker.color.b = 1.0;
     marker.color.a = 1.0;
 
-    for(unsigned int i=0; i<pose_array.poses.size(); i++)
-    {
-        marker.id = i;
-        marker.pose = pose_array.poses.at(i);
-        marker_array.markers.push_back(marker);
-    }
+    double id = marker_array_.markers.size();
 
-    marker_pub_.publish(marker_array);
-}
-
-void CartesianControllerUtils::sortMatrixByIdx(std::vector<cob_cartesian_controller::PathArray> &m)
-{
-    std::vector<double> temp_array;
-    cob_cartesian_controller::PathArray temp(0, 0, 0.0, temp_array);
-
-    for(int j = 0; j < m.size(); j++)
-    {
-        for(int i = 0; i < m.size()-1; i++)
+    for(unsigned int i=0; i < pose_array.poses.size(); i++)
         {
-            if(m[i].idx_ > m[i+1].idx_)
-            {
-                temp = m[i];
-                m[i] = m[i+1];
-                m[i+1] = temp;
-            }
+            marker.id = id+i;
+            marker.pose = pose_array.poses.at(i);
+            marker_array_.markers.push_back(marker);
         }
-    }
+
+    marker_pub_.publish(marker_array_);
 }
 
 void CartesianControllerUtils::adjustArrayLength(std::vector<cob_cartesian_controller::PathArray> &m)
@@ -201,4 +182,9 @@ void CartesianControllerUtils::copyMatrix(std::vector<double> *path_array,std::v
     {
         path_array[i] = m[i].array_;
     }
+}
+
+double CartesianControllerUtils::roundUpToMultiplier(double numberToRound, double multiplier)
+{
+    return ( multiplier - fmod(numberToRound,multiplier) + numberToRound );
 }

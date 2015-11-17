@@ -47,6 +47,7 @@ namespace cob_cartesian_controller
     {
         double tb, te, tv;
         unsigned int steps_tb, steps_te, steps_tv;
+        bool ok;
     };
 
     struct MoveLinStruct
@@ -115,52 +116,22 @@ namespace cob_cartesian_controller
                     pm_.clear();
                 }
 
-                std::vector<PathArray> getSortedMatrix();
-
-            private:
-                void sortMatrixRows();
+                double getMaxSe();
                 std::vector<PathArray> pm_;
-
         };
 
-    inline std::vector<PathArray> PathMatrix::getSortedMatrix()
+    inline double PathMatrix::getMaxSe()
     {
-        sortMatrixRows();
-        return pm_;
-    }
+        double se_max = 0;
 
-    inline void PathMatrix::sortMatrixRows()
-    {
-        std::vector<double> tmp;
-        PathArray temp(0, 0, 0.0, tmp);
-        for(int j = 0; j<pm_.size(); j++)
+        for(int i=0; i<4; i++)
         {
-            for(int i = 0; i<pm_.size()-1; i++)
+            if(se_max < fabs(pm_[i].Se_))
             {
-                if(std::fabs(pm_[i].Se_) < std::fabs(pm_[i+1].Se_))
-                {
-                    temp = pm_[i];
-                    pm_[i] = pm_[i+1];
-                    pm_[i+1] = temp;
-                }
+                se_max = fabs(pm_[i].Se_);
             }
         }
-//        for(int j = 0; j < pm_.size(); j++)
-//        {
-//            for(int i = 0; i < pm_.size()-1; i++)
-//            {
-//                if(pm_[i].idx_ > pm_[i+1].idx_)
-//                {
-//                    temp = pm_[i];
-//                    pm_[i] = pm_[i+1];
-//                    pm_[i+1] = temp;
-//                }
-//            }
-//        }
-
-        pm_[0].calcTe_ = true; // Reference Time for profile interpolation (Te)
+        return se_max;
     }
-
-
 }//namespace
 #endif /* COB_CARTESIAN_CONTROLLER_DATA_STRUCTURES_H_ */

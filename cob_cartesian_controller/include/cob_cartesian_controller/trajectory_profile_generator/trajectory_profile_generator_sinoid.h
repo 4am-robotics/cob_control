@@ -27,7 +27,7 @@
 #ifndef COB_CONTROL_COB_CARTESIAN_CONTROLLER_INCLUDE_COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_TRAJECTORY_PROFILE_GENERATOR_SINOID_H_
 #define COB_CONTROL_COB_CARTESIAN_CONTROLLER_INCLUDE_COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_TRAJECTORY_PROFILE_GENERATOR_SINOID_H_
 
-#include "cob_cartesian_controller/trajectory_profile_generator/trajactory_profile_generator_base.h"
+#include "cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_base.h"
 
 /* BEGIN TrajectoryProfileSinoid ****************************************************************************************/
 /// Class providing a HardwareInterface publishing positions.
@@ -39,7 +39,7 @@ class TrajectoryProfileSinoid : public TrajectoryProfileBase
         {        }
 
         ~TrajectoryProfileSinoid() {}
-        virtual cob_cartesian_controller::ProfileTimings getMaxProfileTimings(double Se_max, double accl, double vel);
+        virtual cob_cartesian_controller::ProfileTimings getProfileTimings(double Se, double te, double accl, double vel);
         virtual bool generatePath(cob_cartesian_controller::PathArray &pa);
         virtual bool calculateProfile(std::vector<double>* path_matrix,
                                       double Se, double Se_roll, double Se_pitch, double Se_yaw,
@@ -49,7 +49,7 @@ class TrajectoryProfileSinoid : public TrajectoryProfileBase
                                                   double steps_tb, double steps_tv, double steps_te, double tb, double tv, double te);
 
     private:
-        virtual cob_cartesian_controller::ProfileTimings getProfileTimings(double Se_max, double accl, double vel);
+//        virtual cob_cartesian_controller::ProfileTimings getProfileTimings(double Se, double te, double accl, double vel);
         cob_cartesian_controller::ProfileTimings pt_max_;
 };
 /* END TrajectoryProfileSinoid **********************************************************************************************/

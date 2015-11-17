@@ -28,42 +28,56 @@
 #include "ros/ros.h"
 #include "cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_ramp.h"
 /* BEGIN TrajectoryProfileRamp ********************************************************************************************/
-inline cob_cartesian_controller::ProfileTimings TrajectoryProfileRamp::getProfileTimings(double te_max, double accl, double vel)
+inline cob_cartesian_controller::ProfileTimings TrajectoryProfileRamp::getProfileTimings(double Se, double te, double accl, double vel)
 {
-        cob_cartesian_controller::ProfileTimings pt;
-        int steps_te, steps_tv, steps_tb = 0;
-        double tv, tb, te = 0.0;
+    CartesianControllerUtils utils;
+    cob_cartesian_controller::ProfileTimings pt;
+    int steps_te, steps_tv, steps_tb = 0;
+    double tv, tb = 0.0;
 
-        tb = vel / accl;
-//        te = (std::fabs(Se) / vel) + tb;
-        te = te_max + tb;
-        tv = te - tb;
-
-        // Interpolationsteps for every timesequence
-        steps_tb = round(tb      / params_.profile.t_ipo);
-        steps_tv = round((tv-tb) / params_.profile.t_ipo);
-        steps_te = round((te-tv) / params_.profile.t_ipo);
-
-        // Reconfigure timings wtih t_ipo_
-        pt.tb = steps_tb * params_.profile.t_ipo;
-        pt.tv = (steps_tb + steps_tv) * params_.profile.t_ipo;
-        pt.te = (steps_tb + steps_tv + steps_te) * params_.profile.t_ipo;
-        pt.steps_tb = steps_tb;
-        pt.steps_tv = steps_tv;
-        pt.steps_te = steps_te;
-        return pt;
-}
-
-inline cob_cartesian_controller::ProfileTimings TrajectoryProfileRamp::getMaxProfileTimings(double Se_max, double accl, double vel)
-{
-    // Calculate the Ramp Profile Parameters
-    if (vel > sqrt(std::fabs(Se_max) * accl))
+    // Calculate the Sinoid Profile Parameters
+    if (vel > sqrt(std::fabs(Se) * accl))
     {
-        vel = sqrt(std::fabs(Se_max) * accl);
+        vel = sqrt(std::fabs(Se) * accl);
     }
 
-    return getProfileTimings((std::fabs(Se_max) / vel), accl, vel);
+    //Todo: Find a value.
+    if(vel > 0.001)
+    {
+        tb = utils.roundUpToMultiplier(vel / accl, params_.profile.t_ipo);
+        if(te == 0)
+        {
+            te = utils.roundUpToMultiplier((std::fabs(Se) / vel) + tb,  params_.profile.t_ipo);
+        }
+        tv = te - tb;
+
+        ROS_INFO_STREAM("=========================================================================");
+        ROS_INFO_STREAM("vel_new:" << vel << " accl: " << accl << " Se: " << std::fabs(Se));
+        ROS_INFO_STREAM("tb:" << tb << " tv: " << tv << " te: " << te);
+
+        // Interpolationsteps for every timesequence
+        pt.tb = tb;
+        pt.tv = tv;
+        pt.te = te;
+
+        pt.steps_tb = pt.tb/params_.profile.t_ipo;
+        pt.steps_tv = (pt.tv-pt.tb)/params_.profile.t_ipo;
+        pt.steps_te = (pt.te-pt.tv)/params_.profile.t_ipo;
+
+        ROS_INFO_STREAM("pt.tb:" << pt.tb << " pt.tv: " << pt.tv << " pt.te: " << pt.te);
+        ROS_INFO_STREAM("pt.steps_tb:" << pt.steps_tb << " pt.steps_tv: " << pt.steps_tv << " pt.steps_te: " << pt.steps_te);
+        ROS_INFO_STREAM("=========================================================================");
+
+        pt.ok = true;
+    }
+    else
+    {
+        pt.ok = false;
+    }
+
+    return pt;
 }
+
 
 inline bool TrajectoryProfileRamp::generatePath(cob_cartesian_controller::PathArray &pa)
 {
@@ -72,49 +86,17 @@ inline bool TrajectoryProfileRamp::generatePath(cob_cartesian_controller::PathAr
     double accl_max = params_.profile.accl;
     double vel_max = params_.profile.vel;
 
-    if(std::fabs(pa.Se_) > 0.001)
+    // Calculate the Profile Timings
+    pt = getProfileTimings(pa.Se_, pt_max_.te, accl_max, vel_max);
+    if(pt.ok)
     {
-        if(pa.calcTe_)
-        {
-            pt = pt_max_;
-        }
-        else
-        {
-            // Calculate the Profile Timings
-            vel_max = accl_max * pt_max_.te / 2 - sqrt((pow(accl_max,2) * pow(pt_max_.te,2)/4) - std::fabs(pa.Se_) * accl_max);
-            pt = getProfileTimings(pt_max_.te, accl_max, vel_max);
-        }
-
-        array = getTrajectory(pa.start_value_, pa.Se_, accl_max, vel_max, params_.profile.t_ipo, pt.steps_tb, pt.steps_tv, pt.steps_te, pt.tb, pt.tv, pt.te);
-
-        switch(pa.idx_)
-        {
-            case 0:
-            {
-                ROS_INFO_STREAM("Linear-Path: "  << pa.Se_ << std::setw(10) << std::left << " Velocity: " << vel_max << std::setw(10) <<" Acceleration: " << accl_max);
-                break;
-            }
-            case 1:
-            {
-                ROS_INFO_STREAM("Roll-Path: " << pa.Se_ << std::setw(10) << std::left << " Velocity: " << vel_max << std::setw(10) << " Acceleration: " << accl_max);
-                break;
-            }
-            case 2:
-            {
-                ROS_INFO_STREAM("Pitch-Path: " << pa.Se_ << std::setw(10) << std::left << " Velocity: " << vel_max << std::setw(10) <<" Acceleration: " << accl_max);
-                break;
-            }
-            case 3:
-            {
-                ROS_INFO_STREAM("Yaw-Path: " << pa.Se_ << std::setw(10) << std::left <<" Velocity: " << vel_max << std::setw(10) <<" Acceleration: " << accl_max);
-                break;
-            }
-        }
+        array = getTrajectory(pa.start_value_ , std::fabs(pa.Se_), accl_max, vel_max, params_.profile.t_ipo, pt.steps_tb, pt.steps_tv, pt.steps_te, pt.tb, pt.tv, pt.te);
     }
     else
     {
         array.push_back(pa.start_value_);
     }
+
     pa.array_ = array;
     return true;
 }
@@ -129,17 +111,17 @@ inline std::vector<double> TrajectoryProfileRamp::getTrajectory(double start_val
     // 0 <= t <= tb
     for(; i <= steps_tb ; i++)
     {
-        array.push_back(start_value + direction * (0.5*accl*pow((params_.profile.t_ipo*i),2)));
+        array.push_back(start_value + direction * (0.5*accl*pow((t_ipo*i),2)));
     }
     // tb <= t <= tv
     for(; i <= (steps_tb + steps_tv); i++)
     {
-        array.push_back(start_value + direction *(vel*(params_.profile.t_ipo*i) - 0.5*pow(vel,2)/accl));
+        array.push_back(start_value + direction *(vel*(t_ipo*i) - 0.5*pow(vel,2)/accl));
     }
     // tv <= t <= te
     for(; i <= (steps_tv + steps_tb + steps_te + 1); i++)
     {
-        array.push_back(start_value + direction * (vel * (te-tb) - 0.5 * accl * pow(te-(i*params_.profile.t_ipo),2)));
+        array.push_back(start_value + direction * (vel * tv - 0.5 * accl * pow(te-(t_ipo*i),2)));
     }
 
     return array;
@@ -151,7 +133,6 @@ inline bool TrajectoryProfileRamp::calculateProfile(std::vector<double> path_mat
 {
     CartesianControllerUtils ccu;
     std::vector<double> linear_path, roll_path, pitch_path, yaw_path;
-    std::vector<cob_cartesian_controller::PathArray> sortedMatrix;
     double roll_start, pitch_start, yaw_start;
 
     //Convert to RPY
@@ -166,25 +147,21 @@ inline bool TrajectoryProfileRamp::calculateProfile(std::vector<double> path_mat
 
     cob_cartesian_controller::PathMatrix pm(lin,roll,pitch,yaw);
 
-    // Sort the Matrix from the largest Se (0) to the smallest one (3)
-    sortedMatrix = pm.getSortedMatrix();
-
     // Get the profile timings from the longest path
-    pt_max_ = getMaxProfileTimings(sortedMatrix[0].Se_, params_.profile.accl, params_.profile.vel);
+    pt_max_ = getProfileTimings(pm.getMaxSe(), 0, params_.profile.accl, params_.profile.vel);
 
     // Calculate the paths
-    for(int i = 0; i < sortedMatrix.size(); i++)
+    for(int i=0; i<pm.pm_.size(); i++)
     {
-        generatePath(sortedMatrix[i]);
+        generatePath(pm.pm_[i]);
     }
 
     // Adjust the array length
-    ccu.adjustArrayLength(sortedMatrix);
+    // If no trajectory was interpolated, then this path array contains only one constant value.
+    // This constant value needs to be duplicated N_max times for matrix conversion purposes.
+    ccu.adjustArrayLength(pm.pm_);
 
-    // Sort the arrays in the following order lin(0), roll(1), pitch(2), yaw(3)
-    ccu.sortMatrixByIdx(sortedMatrix);
-
-    ccu.copyMatrix(path_matrix,sortedMatrix);
+    ccu.copyMatrix(path_matrix,pm.pm_);
 
     return true;
 }
