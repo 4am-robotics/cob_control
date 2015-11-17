@@ -68,9 +68,9 @@ public:
             return -2;
         }
 
-        if (!nh_.getParam("frame_tracker/tracking_frame", this->target_frame_))
+        if (!nh_.getParam("frame_tracker/target_frame", this->target_frame_))
         {
-            ROS_ERROR_STREAM("Please provide a 'frame_tracker/tracking_frame' parameter in this node's namespace.");
+            ROS_ERROR_STREAM("Please provide a 'frame_tracker/target_frame' parameter in this node's namespace.");
             return -3;
         }
 
