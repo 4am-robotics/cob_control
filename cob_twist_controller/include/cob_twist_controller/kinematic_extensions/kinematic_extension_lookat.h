@@ -32,6 +32,7 @@
 
 #include <string>
 #include <vector>
+#include <limits>
 #include <ros/ros.h>
 
 #include <boost/shared_ptr.hpp>
@@ -78,10 +79,10 @@ class KinematicExtensionLookat : public KinematicExtensionBase
         std::vector<double> limits_ext_min_;
         std::vector<double> limits_ext_vel_;
         std::vector<double> limits_ext_acc_;
-        
+
         boost::shared_ptr<KDL::ChainJntToJacSolver> jnt2jac_;
         boost::shared_ptr<KDL::ChainFkSolverPos_recursive> fk_solver_ext_;
-        
+
         boost::shared_ptr<SimpsonIntegrator> integrator_;
 
         boost::mutex mutex_;

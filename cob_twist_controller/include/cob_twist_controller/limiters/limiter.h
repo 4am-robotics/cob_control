@@ -51,7 +51,7 @@ class LimiterContainer : public LimiterBase
 
         virtual ~LimiterContainer();
 
-        LimiterContainer(const LimiterParams& limiter_params)
+        explicit LimiterContainer(const LimiterParams& limiter_params)
             : LimiterBase(limiter_params)
         {}
 
@@ -83,7 +83,7 @@ class LimiterAllJointPositions : public LimiterBase
          */
         virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const;
 
-        LimiterAllJointPositions(const LimiterParams& limiter_params) :
+        explicit LimiterAllJointPositions(const LimiterParams& limiter_params) :
             LimiterBase(limiter_params)
         {}
 };
@@ -100,7 +100,7 @@ class LimiterAllJointVelocities : public LimiterBase
          */
         virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const;
 
-        LimiterAllJointVelocities(const LimiterParams& limiter_params) :
+        explicit LimiterAllJointVelocities(const LimiterParams& limiter_params) :
             LimiterBase(limiter_params)
         {}
 };
@@ -117,7 +117,7 @@ class LimiterAllJointAccelerations : public LimiterBase
          */
         virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const;
 
-        LimiterAllJointAccelerations(const LimiterParams& limiter_params) :
+        explicit LimiterAllJointAccelerations(const LimiterParams& limiter_params) :
             LimiterBase(limiter_params)
         {}
 };
@@ -134,7 +134,7 @@ class LimiterIndividualJointPositions : public LimiterBase
          */
         virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const;
 
-        LimiterIndividualJointPositions(const LimiterParams& limiter_params) :
+        explicit LimiterIndividualJointPositions(const LimiterParams& limiter_params) :
             LimiterBase(limiter_params)
         {}
 };
@@ -151,7 +151,7 @@ class LimiterIndividualJointVelocities : public LimiterBase
          */
         virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const;
 
-        LimiterIndividualJointVelocities(const LimiterParams& limiter_params) :
+        explicit LimiterIndividualJointVelocities(const LimiterParams& limiter_params) :
             LimiterBase(limiter_params)
         {}
 };
@@ -168,7 +168,7 @@ class LimiterIndividualJointAccelerations : public LimiterBase
          */
         virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const;
 
-        LimiterIndividualJointAccelerations(const LimiterParams& limiter_params) :
+        explicit LimiterIndividualJointAccelerations(const LimiterParams& limiter_params) :
             LimiterBase(limiter_params)
         {}
 };

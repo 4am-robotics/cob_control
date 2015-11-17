@@ -35,7 +35,7 @@
 class LimiterBase
 {
     public:
-        LimiterBase(const LimiterParams& limiter_params) : limiter_params_(limiter_params)
+        explicit LimiterBase(const LimiterParams& limiter_params) : limiter_params_(limiter_params)
         {}
 
         virtual ~LimiterBase() {}

@@ -86,7 +86,7 @@ bool KinematicExtensionLookat::initExtension()
     limits_ext_min_.push_back(-M_PI);
     limits_ext_vel_.push_back(std::numeric_limits<double>::max());
     limits_ext_acc_.push_back(std::numeric_limits<double>::max());
-    
+
     chain_full_ = chain_main;
     chain_full_.addChain(chain_ext_);
 
@@ -102,7 +102,7 @@ bool KinematicExtensionLookat::initExtension()
     KDL::SetToZero(this->joint_states_ext_.current_q_);
     this->joint_states_ext_.current_q_dot_.resize(ext_dof_);
     KDL::SetToZero(this->joint_states_ext_.current_q_dot_);
-    
+
     integrator_.reset(new SimpsonIntegrator(ext_dof_, 3));
 
     timer_ = nh_.createTimer(ros::Duration(1/100.0), &KinematicExtensionLookat::broadcastFocusFrame, this);
@@ -116,7 +116,7 @@ KDL::Jacobian KinematicExtensionLookat::adjustJacobian(const KDL::Jacobian& jac_
     /// compose jac_full considering kinematical extension
     boost::mutex::scoped_lock lock(mutex_);
     KDL::Jacobian jac_full(chain_full_.getNrOfJoints());
-    
+
     jnt2jac_->JntToJac(joint_states_full_.current_q_ , jac_full);
 
     return jac_full;
@@ -130,7 +130,7 @@ JointStates KinematicExtensionLookat::adjustJointStates(const JointStates& joint
     joint_states_full_.last_q_.resize(chain_dof + ext_dof_);
     joint_states_full_.current_q_dot_.resize(chain_dof + ext_dof_);
     joint_states_full_.last_q_dot_.resize(chain_dof + ext_dof_);
-    
+
     for (unsigned int i = 0; i< chain_dof; i++)
     {
         joint_states_full_.current_q_(i) = joint_states.current_q_(i);
@@ -168,7 +168,7 @@ void KinematicExtensionLookat::processResultExtension(const KDL::JntArray& q_dot
     boost::mutex::scoped_lock lock(mutex_);
     std::vector<double> pos;
     std::vector<double> vel;
-    
+
     for (unsigned int i = 0; i < ext_dof_; i++)
     {
         joint_states_ext_.current_q_dot_(i) = q_dot_ik(params_.dof + i);

@@ -30,6 +30,9 @@
 #ifndef COB_TWIST_CONTROLLER_KINEMATIC_EXTENSIONS_KINEMATIC_EXTENSION_DOF_H
 #define COB_TWIST_CONTROLLER_KINEMATIC_EXTENSIONS_KINEMATIC_EXTENSION_DOF_H
 
+#include <string>
+#include <vector>
+
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
 #include <Eigen/Geometry>

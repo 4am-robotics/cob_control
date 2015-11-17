@@ -300,11 +300,10 @@ void CobTwistController::checkSolverAndConstraints(cob_twist_controller::TwistCo
     if (CA_OFF != ct_ca && ket != NO_EXTENSION)
     {
         ROS_ERROR("ToDo: CollisionAvoidance currently cannot be used together with KinematicExtensions!");
-        //This is due to a dimension conflict in ConstraintsCA! ConstraintsCA needs to be refactored (i.e. KDL::ChainFkSolverVel_recursive and KDL::ChainJntToJacSolver jnt2jac_ in InverseDifferentialKinematicsSolver)
+        // This is due to a dimension conflict in ConstraintsCA! ConstraintsCA needs to be refactored (i.e. KDL::ChainFkSolverVel_recursive and KDL::ChainJntToJacSolver jnt2jac_ in InverseDifferentialKinematicsSolver)
         twist_controller_params_.constraint_ca = CA_OFF;
         config.constraint_ca = static_cast<int>(twist_controller_params_.constraint_ca);
     }
-    
 
     if (!warning)
     {

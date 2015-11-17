@@ -38,6 +38,7 @@
 #define COB_TWIST_CONTROLLER_CONSTRAINTS_SELF_MOTION_MAGNITUDE_H
 
 #include <vector>
+#include <limits>
 #include <algorithm>
 #include <cmath>
 #include <ros/ros.h>

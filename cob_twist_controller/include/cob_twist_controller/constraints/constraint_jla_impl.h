@@ -32,6 +32,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <limits>
 #include <ros/ros.h>
 
 #include <boost/shared_ptr.hpp>
@@ -298,7 +299,7 @@ void JointLimitAvoidanceMid<T_PARAMS, PRIO>::calcDerivativeValue()
     ros::Time now = ros::Time::now();
     double cycle = (now - this->last_time_).toSec();
     this->last_time_ = now;
-    
+
     if (cycle > 0.0)
     {
         this->derivative_value_ = (this->value_ - this->last_value_) / cycle;

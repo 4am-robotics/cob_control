@@ -221,7 +221,7 @@ JointStates KinematicExtensionBaseActive::adjustJointStates(const JointStates& j
     js.last_q_.resize(chain_dof + ext_dof_);
     js.current_q_dot_.resize(chain_dof + ext_dof_);
     js.last_q_dot_.resize(chain_dof + ext_dof_);
-    
+
     for (unsigned int i = 0; i< chain_dof; i++)
     {
         js.current_q_(i) = joint_states.current_q_(i);
