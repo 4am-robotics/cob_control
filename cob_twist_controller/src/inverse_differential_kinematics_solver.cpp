@@ -69,7 +69,7 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const JointStates& joint_stat
     for (int i = 0; i < jac_full.columns(); i++)
     {
         qdot_out_full(i) = qdot_out_vec(i);
-        //ROS_INFO_STREAM("i: " << i << ", qdot_out_full: " << qdot_out_full(i));
+        //ROS_INFO_STREAM("qdot_out_full " << i << ": " << qdot_out_full(i));
     }
     //ROS_INFO_STREAM("qdot_out_full.rows: " << qdot_out_full.rows());
 
