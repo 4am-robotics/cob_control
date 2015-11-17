@@ -53,17 +53,18 @@ class SimpsonIntegrator
                                std::vector<double>& pos,
                                std::vector<double>& vel)
         {
-            now_ = ros::Time::now();
-            ros::Duration period = now_ - last_update_time_;
+            ros::Time now = ros::Time::now();
+            ros::Duration period = now - last_update_time_;
 
             bool value_valid = false;
             pos.clear();
             vel.clear();
 
-            // ToDo: Test this and find good threshold
-            if (period.toSec() > 2*last_period_.toSec())  // missed about a cycle
+            // ToDo: Test these conditions and find good thresholds
+            //if (period.toSec() > 2*last_period_.toSec())  // missed about a cycle
+            if (period.toSec() > ros::Duration(0.5).toSec())  // missed about 'max_command_silence'
             {
-                ROS_WARN("reset Integration");
+                ROS_WARN_STREAM("reset Integration: " << period.toSec());
                 // resetting outdated values
                 vel_last_.clear();
                 vel_before_last_.clear();
@@ -97,8 +98,9 @@ class SimpsonIntegrator
                 vel_last_.push_back(q_dot_ik(i));
             }
 
-            last_update_time_ = now_;
+            last_update_time_ = now;
             last_period_ = period;
+
             return value_valid;
         }
 
@@ -106,7 +108,7 @@ class SimpsonIntegrator
         std::vector<MovingAvg_double_t> ma_;
         uint8_t dof_;
         std::vector<double> vel_last_, vel_before_last_;
-        ros::Time now_, last_update_time_;
+        ros::Time last_update_time_;
         ros::Duration last_period_;
 };
 
