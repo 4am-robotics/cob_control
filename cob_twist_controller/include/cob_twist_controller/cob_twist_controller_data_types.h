@@ -125,10 +125,10 @@ struct ActiveCartesianDimension
 
 struct ObstacleDistanceData
 {
-        double min_distance;
-        Eigen::Vector3d frame_vector;
-        Eigen::Vector3d nearest_point_frame_vector;
-        Eigen::Vector3d nearest_point_obstacle_vector;
+    double min_distance;
+    Eigen::Vector3d frame_vector;
+    Eigen::Vector3d nearest_point_frame_vector;
+    Eigen::Vector3d nearest_point_obstacle_vector;
 };
 
 struct ConstraintThresholds
