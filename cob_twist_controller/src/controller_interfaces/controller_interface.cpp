@@ -143,10 +143,10 @@ inline void ControllerInterfaceJointStates::processResult(const KDL::JntArray& q
     }
 }
 
-void ControllerInterfaceJointStates::publishJointState(const ros::TimerEvent& event)
 /**
  * Timer callback publishing the internal JointState to the 'joint_state' topic.
  */
+void ControllerInterfaceJointStates::publishJointState(const ros::TimerEvent& event)
 {
     boost::mutex::scoped_lock lock(mutex_);
     js_msg_.header.stamp = ros::Time::now();
