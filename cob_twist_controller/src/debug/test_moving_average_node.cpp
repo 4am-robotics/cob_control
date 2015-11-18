@@ -6,9 +6,9 @@
 class MovingAverageTester
 {
 public:
-    MovingAverageTester(std::string out, uint16_t ma_size, bool ma_auto_weighting)
+    MovingAverageTester(std::string out, MovingAvgBase_double_t* ma)
     {
-        ma_.reset(new MovingAvg_double_t(ma_size, ma_auto_weighting));
+        ma_.reset(ma);
         output_pub_ = nh_.advertise<std_msgs::Float64>(out, 1);
         input_sub_ = nh_.subscribe("input", 1, &MovingAverageTester::input_cb, this);
     }
@@ -21,7 +21,7 @@ public:
         std_msgs::Float64 output;
         
         ma_->addElement(input->data);
-        ma_->calcWeightedMovingAverage(output.data);
+        ma_->calcMovingAverage(output.data);
         
         output_pub_.publish(output);
     }
@@ -30,7 +30,7 @@ public:
     ros::Subscriber input_sub_;
     ros::Publisher output_pub_;
     
-    boost::shared_ptr<MovingAvg_double_t> ma_;
+    boost::shared_ptr< MovingAvgBase_double_t > ma_;
 };
 
 
@@ -38,10 +38,15 @@ public:
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "test_moving_average_node");
-    MovingAverageTester mat_1_true("output_ma_1_true", 1, true);
-    MovingAverageTester mat_3_true("output_ma_3_true", 3, true);
-    MovingAverageTester mat_10_true("output_ma_10_true", 10, true);
-    MovingAverageTester mat_100_true("output_ma_100_true", 100, true);
+    
+    MovingAvgSimple_double_t* ma_3 = new MovingAvgSimple_double_t(3);
+    MovingAverageTester mat("output_ma", ma_3);
+    MovingAvgWeighted_double_t* maw_3 = new MovingAvgWeighted_double_t(3);
+    MovingAverageTester maw_3t("output_maw", maw_3);
+    MovingAvgExponential_double_t* mae_03 = new MovingAvgExponential_double_t(0.3);
+    MovingAverageTester mae_03t("output_mae", mae_03);
+    MovingAvgExponential_double_t* mae_05 = new MovingAvgExponential_double_t(0.5);
+    MovingAverageTester mae_05t("output_mae05", mae_05);
 
     ros::spin();
     return 0;
