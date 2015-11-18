@@ -455,11 +455,27 @@ bool CobFrameTracker::stopCallback(std_srvs::Trigger::Request& request, std_srvs
     }
     else if (tracking_ || lookat_)
     {
+        if (lookat_)
+        {
+            // disable LOOKAT in dynamic_reconfigure server
+            dynamic_reconfigure::Reconfigure srv;
+            dynamic_reconfigure::IntParameter int_param;
+            int_param.name = "kinematic_extension";
+            int_param.value = 0;    //NO_EXTENSION
+            srv.request.config.ints.push_back(int_param);
+
+            if(!reconfigure_client_.call(srv))
+            {
+                std::string msg = "CobFrameTracker: Stop failed to disable LOOKAT_EXTENSION. Stopping anyway!";
+                ROS_ERROR_STREAM(msg);
+            }
+        }
+
         std::string msg = "CobFrameTracker: Stop successful";
         ROS_INFO_STREAM(msg);
         response.success = true;
         response.message = msg;
-        
+
         tracking_ = false;
         tracking_goal_ = false;
         lookat_ = false;
@@ -467,19 +483,6 @@ bool CobFrameTracker::stopCallback(std_srvs::Trigger::Request& request, std_srvs
         target_frame_ = tracking_frame_;
 
         publishZeroTwist();
-        
-        // disable LOOKAT in dynamic_reconfigure server
-        dynamic_reconfigure::Reconfigure srv;
-        dynamic_reconfigure::IntParameter int_param;
-        int_param.name = "kinematic_extension";
-        int_param.value = 0;    //NO_EXTENSION
-        srv.request.config.ints.push_back(int_param);
-        
-        if(!reconfigure_client_.call(srv))
-        {
-            std::string msg = "CobFrameTracker: Stop failed to disable LOOKAT_EXTENSION. Stopped anyway!";
-            ROS_ERROR_STREAM(msg);
-        }
     }
     else
     {
