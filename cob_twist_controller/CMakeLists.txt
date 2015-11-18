@@ -70,6 +70,11 @@ add_executable(debug_evaluate_jointstates_node src/debug/debug_evaluate_jointsta
 add_dependencies(debug_evaluate_jointstates_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(debug_evaluate_jointstates_node ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 
+
+add_executable(test_moving_average_node src/debug/test_moving_average_node.cpp)
+add_dependencies(test_moving_average_node ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_moving_average_node ${catkin_LIBRARIES})
+
 roslint_cpp()
 
 ### INSTALL ###
