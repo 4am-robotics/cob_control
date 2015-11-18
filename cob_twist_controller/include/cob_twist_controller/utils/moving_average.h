@@ -72,6 +72,10 @@ MovingAverage<T>::MovingAverage(uint16_t size, bool do_auto_weighting) : size_(s
     {
         calculateWeighting();
     }
+    else
+    {
+        weighting_.assign(size_, 0.0);
+    }
 }
 
 template <typename T>
@@ -93,7 +97,7 @@ void MovingAverage<T>::addElement(T element)
     }
     else
     {
-        // Drops the first element
+        // Drops the last element
         s_.pop_back();
         s_.push_front(element);
     }
@@ -125,6 +129,7 @@ void MovingAverage<T>::calculateWeighting()
     double sum = 0;
     double err = 0;
     uint16_t j = 0;
+    weighting_.clear();
 
     for (uint16_t i = 0; i < size_; ++i)
     {
