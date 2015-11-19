@@ -13,7 +13,6 @@
 #include <ros/ros.h>
 
 #include <dynamic_reconfigure/server.h>
-#include <cob_base_velocity_smoother/paramsConfig.h>
 #include <cob_base_velocity_smoother/velocity_smoother.h>
 
 #include <boost/thread.hpp>

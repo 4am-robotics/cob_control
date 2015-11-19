@@ -12,6 +12,7 @@ std::string unresolvedName(const std::string &name){
 
 int main(int argc, char** argv)
 {
+  ros::init(argc, argv, "velocity_smoother");
   ros::NodeHandle nh_p("~");
   std::string resolved_name = nh_p.getUnresolvedNamespace(); // this always returns like /robosem/goo_arm - why not unresolved?
   std::string name = unresolvedName(resolved_name); // unresolve it ourselves
@@ -30,6 +31,14 @@ int main(int argc, char** argv)
     ROS_ERROR_STREAM("Velocity Smoother: initialisation failed [" << name << "]");
   }
 
+  ros::Rate r(100);
+  while (ros::ok())
+  {
+    ros::spinOnce();
+    r.sleep();
+  }
+
+  vel_smoother_->shutdown();
   worker_thread_->join();
   
   return 0;
