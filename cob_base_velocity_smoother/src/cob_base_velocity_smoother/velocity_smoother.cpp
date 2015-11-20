@@ -125,9 +125,9 @@ void VelocitySmoother::spin()
   double period = 1.0/frequency;
   ros::Rate spin_rate(frequency);
 
-  double decel_vx = decel_lim_vx;
-  double decel_vy = decel_lim_vy;
-  double decel_w = decel_lim_w;
+  double decel_vx;
+  double decel_vy;
+  double decel_w;
 
   while (! shutdown_req && ros::ok())
   {
@@ -145,12 +145,21 @@ void VelocitySmoother::spin()
         ROS_WARN_STREAM("Velocity Smoother : input got inactive leaving us a non-zero target velocity ("
               << target_vel.linear.x << ", " << target_vel.linear.y << ", " << target_vel.angular.z << "), zeroing...[" << name << "]");
         target_vel = ZERO_VEL_COMMAND;
-
-        //increase decel factor because this is a safty case, no more commands means we should stop as fast as it is safe
-        decel_vx = decel_lim_vx_safe;
-        decel_vy = decel_lim_vy_safe;
-        decel_w = decel_lim_w_safe;
       }
+    }
+
+    if(input_active)
+    {
+      decel_vx = decel_lim_vx;
+      decel_vy = decel_lim_vy;
+      decel_w = decel_lim_w;
+    }
+    else
+    {
+      //increase decel factor because this is a safty case, no more commands means we should stop as fast as it is safe
+      decel_vx = decel_lim_vx_safe;
+      decel_vy = decel_lim_vy_safe;
+      decel_w = decel_lim_w_safe;
     }
 
     if ((robot_feedback != NONE) && (input_active == true) && (cb_avg_time > 0.0) &&
