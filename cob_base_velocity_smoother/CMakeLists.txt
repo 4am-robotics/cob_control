@@ -23,7 +23,7 @@ add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${BOOST_LIBRARIES})
 
 add_executable(velocity_smoother src/cob_base_velocity_smoother/velocity_smoother.cpp src/velocity_smoother_node.cpp)
-add_dependencies(velocity_smoother ${catkin_EXPORTED_TARGETS})
+add_dependencies(velocity_smoother ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(velocity_smoother ${catkin_LIBRARIES} ${BOOST_LIBRARIES})
 
 ### INSTALL ###
