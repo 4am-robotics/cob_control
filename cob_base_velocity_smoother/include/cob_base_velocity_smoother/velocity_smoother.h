@@ -58,10 +58,10 @@ private:
   } robot_feedback;  /**< What source to use as robot velocity feedback */
 
   std::string name;
-  double speed_lim_vx, accel_lim_vx, decel_lim_vx;
-  double speed_lim_vy, accel_lim_vy, decel_lim_vy;
-  double speed_lim_w, accel_lim_w, decel_lim_w;
-  double decel_factor;
+  double speed_lim_vx, accel_lim_vx, decel_lim_vx, decel_lim_vx_safe;
+  double speed_lim_vy, accel_lim_vy, decel_lim_vy, decel_lim_vy_safe;
+  double speed_lim_w, accel_lim_w, decel_lim_w, decel_lim_w_safe;
+  double decel_factor, decel_factor_safe;
 
   double frequency;
 

@@ -46,8 +46,8 @@ VelocitySmoother::VelocitySmoother(const std::string &name)
 
 void VelocitySmoother::reconfigCB(cob_base_velocity_smoother::paramsConfig &config, uint32_t level)
 {
-  ROS_INFO("Reconfigure request : %f %f %f %f %f %f %f",
-           config.speed_lim_vx, config.speed_lim_vy, config.speed_lim_w, config.accel_lim_vx, config.accel_lim_vy, config.accel_lim_w, config.decel_factor);
+  ROS_INFO("Reconfigure request : %f %f %f %f %f %f %f %f",
+           config.speed_lim_vx, config.speed_lim_vy, config.speed_lim_w, config.accel_lim_vx, config.accel_lim_vy, config.accel_lim_w, config.decel_factor, config.decel_factor_safe);
 
   speed_lim_vx  = config.speed_lim_vx;
   speed_lim_vy  = config.speed_lim_vy;
@@ -56,9 +56,13 @@ void VelocitySmoother::reconfigCB(cob_base_velocity_smoother::paramsConfig &conf
   accel_lim_vy  = config.accel_lim_vy;
   accel_lim_w  = config.accel_lim_w;
   decel_factor = config.decel_factor;
+  decel_factor_safe = config.decel_factor_safe;
   decel_lim_vx  = decel_factor*accel_lim_vx;
   decel_lim_vy  = decel_factor*accel_lim_vy;
   decel_lim_w  = decel_factor*accel_lim_w;
+  decel_lim_vx_safe = decel_factor_safe*accel_lim_vx;
+  decel_lim_vy_safe = decel_factor_safe*accel_lim_vy;
+  decel_lim_w_safe = decel_factor_safe*accel_lim_w;
 }
 
 void VelocitySmoother::velocityCB(const geometry_msgs::Twist::ConstPtr& msg)
@@ -121,6 +125,10 @@ void VelocitySmoother::spin()
   double period = 1.0/frequency;
   ros::Rate spin_rate(frequency);
 
+  double decel_vx = decel_lim_vx;
+  double decel_vy = decel_lim_vy;
+  double decel_w = decel_lim_w;
+
   while (! shutdown_req && ros::ok())
   {
     if ((input_active == true) && (cb_avg_time > 0.0) &&
@@ -137,6 +145,11 @@ void VelocitySmoother::spin()
         ROS_WARN_STREAM("Velocity Smoother : input got inactive leaving us a non-zero target velocity ("
               << target_vel.linear.x << ", " << target_vel.linear.y << ", " << target_vel.angular.z << "), zeroing...[" << name << "]");
         target_vel = ZERO_VEL_COMMAND;
+
+        //increase decel factor because this is a safty case, no more commands means we should stop as fast as it is safe
+        decel_vx = decel_lim_vx_safe;
+        decel_vy = decel_lim_vy_safe;
+        decel_w = decel_lim_w_safe;
       }
     }
 
@@ -177,33 +190,33 @@ void VelocitySmoother::spin()
       if ((robot_feedback == ODOMETRY) && (current_vel.linear.x*target_vel.linear.x < 0.0))
       {
         // countermarch (on robots with significant inertia; requires odometry feedback to be detected)
-        max_vx_inc = decel_lim_vx*period;
+        max_vx_inc = decel_vx*period;
       }
       else
       {
-        max_vx_inc = ((vx_inc*target_vel.linear.x > 0.0)?accel_lim_vx:decel_lim_vx)*period;
+        max_vx_inc = ((vx_inc*target_vel.linear.x > 0.0)?accel_lim_vx:decel_vx)*period;
       }
 
       vy_inc = target_vel.linear.y - last_cmd_vel.linear.y;
       if ((robot_feedback == ODOMETRY) && (current_vel.linear.y*target_vel.linear.y < 0.0))
       {
         // countermarch (on robots with significant inertia; requires odometry feedback to be detected)
-        max_vy_inc = decel_lim_vy*period;
+        max_vy_inc = decel_vy*period;
       }
       else
       {
-        max_vy_inc = ((vy_inc*target_vel.linear.x > 0.0)?accel_lim_vy:decel_lim_vy)*period;
+        max_vy_inc = ((vy_inc*target_vel.linear.x > 0.0)?accel_lim_vy:decel_vy)*period;
       }
 
       w_inc = target_vel.angular.z - last_cmd_vel.angular.z;
       if ((robot_feedback == ODOMETRY) && (current_vel.angular.z*target_vel.angular.z < 0.0))
       {
         // countermarch (on robots with significant inertia; requires odometry feedback to be detected)
-        max_w_inc = decel_lim_w*period;
+        max_w_inc = decel_w*period;
       }
       else
       {
-        max_w_inc = ((w_inc*target_vel.angular.z > 0.0)?accel_lim_w:decel_lim_w)*period;
+        max_w_inc = ((w_inc*target_vel.angular.z > 0.0)?accel_lim_w:decel_w)*period;
       }
 
 /*
@@ -279,6 +292,7 @@ bool VelocitySmoother::init(ros::NodeHandle& nh)
   int feedback;
   nh.param("frequency",      frequency,     20.0);
   nh.param("decel_factor",   decel_factor,   1.0);
+  nh.param("decel_factor_safty",   decel_factor_safe,   1.0);
   nh.param("robot_feedback", feedback, (int)NONE);
 
   if ((int(feedback) < NONE) || (int(feedback) > COMMANDS))
@@ -311,6 +325,10 @@ bool VelocitySmoother::init(ros::NodeHandle& nh)
   decel_lim_vx = decel_factor*accel_lim_vx;
   decel_lim_vy = decel_factor*accel_lim_vy;
   decel_lim_w = decel_factor*accel_lim_w;
+  // In safety cases (no topic command anymore), deceleration should be very aggressive
+  decel_lim_vx_safe = decel_factor_safe*accel_lim_vx;
+  decel_lim_vy_safe = decel_factor_safe*accel_lim_vy;
+  decel_lim_w_safe = decel_factor_safe*accel_lim_w;
 
   // Publishers and subscribers
   odometry_sub    = nh.subscribe("odometry",      1, &VelocitySmoother::odometryCB, this);
