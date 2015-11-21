@@ -49,8 +49,21 @@ class SimpsonIntegrator
             last_period_ = ros::Duration(0.0);
         }
         ~SimpsonIntegrator(){}
-        
-        
+
+
+        void resetIntegration()
+        {
+            // resetting outdated values
+            vel_last_.clear();
+            vel_before_last_.clear();
+
+            // resetting moving average
+            for (unsigned int i = 0; i < dof_; ++i)
+            {
+                ma_[i]->reset();
+            }
+        }
+
         bool updateIntegration(const KDL::JntArray& q_dot_ik,
                                const KDL::JntArray& current_q,
                                std::vector<double>& pos,
@@ -68,9 +81,7 @@ class SimpsonIntegrator
             if (period.toSec() > ros::Duration(0.5).toSec())  // missed about 'max_command_silence'
             {
                 ROS_WARN_STREAM("reset Integration: " << period.toSec());
-                // resetting outdated values
-                vel_last_.clear();
-                vel_before_last_.clear();
+                resetIntegration();
             }
 
             if (!vel_before_last_.empty())
@@ -81,9 +92,11 @@ class SimpsonIntegrator
                     double integration_value = static_cast<double>(period.toSec() / 6.0 * (vel_before_last_[i] + 4.0 * (vel_before_last_[i] + vel_last_[i]) + vel_before_last_[i] + vel_last_[i] + q_dot_ik(i)) + current_q(i));
                     ma_[i]->addElement(integration_value);
                     double avg = 0.0;
-                    ma_[i]->calcMovingAverage(avg);
-                    pos.push_back(avg);
-                    vel.push_back(q_dot_ik(i));
+                    if(ma_[i]->calcMovingAverage(avg))
+                    {
+                        pos.push_back(avg);
+                        vel.push_back(q_dot_ik(i));
+                    }
                 }
                 value_valid = true;
             }

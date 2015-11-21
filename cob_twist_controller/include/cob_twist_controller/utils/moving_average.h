@@ -41,8 +41,9 @@ class MovingAverageBase
         explicit MovingAverageBase()
         {}
         
+        virtual void reset() = 0;
         virtual void addElement(T element) = 0;
-        virtual void calcMovingAverage(T& average) const = 0;
+        virtual bool calcMovingAverage(T& average) const = 0;
 };
 
 template
@@ -55,6 +56,11 @@ class MovingAverageSimple : public MovingAverageBase<T>
           size_(size)
         {
             weighting_.assign(size_, 1.0);
+        }
+
+        virtual void reset()
+        {
+            s_.clear();
         }
 
         virtual void addElement(T element)
@@ -70,7 +76,7 @@ class MovingAverageSimple : public MovingAverageBase<T>
             }
         }
         
-        virtual void calcMovingAverage(T& average) const
+        virtual bool calcMovingAverage(T& average) const
         {
             if(!s_.empty())
             {
@@ -82,6 +88,12 @@ class MovingAverageSimple : public MovingAverageBase<T>
                     diff += weighting_[i];
                 }
                 average = sum / diff;
+                return true;
+            }
+            else
+            {
+                // no element available
+                return false;
             }
         }
 
@@ -132,6 +144,12 @@ class MovingAverageExponential : public MovingAverageBase<T>
             empty_ = true;
         }
 
+        virtual void reset()
+        {
+            average_ = T();
+            empty_ = true;
+        }
+
         void addElement(T element)
         {
             if(empty_)
@@ -145,9 +163,18 @@ class MovingAverageExponential : public MovingAverageBase<T>
             }
         }
         
-        void calcMovingAverage(T& average) const
+        bool calcMovingAverage(T& average) const
         {
-            average = average_;
+            if(!empty_)
+            {
+                average = average_;
+                return true;
+            }
+            else
+            {
+                // no element available
+                return false;
+            }
         }
 
     private:

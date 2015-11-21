@@ -21,9 +21,10 @@ public:
         std_msgs::Float64 output;
         
         ma_->addElement(input->data);
-        ma_->calcMovingAverage(output.data);
-        
-        output_pub_.publish(output);
+        if(ma_->calcMovingAverage(output.data))
+        {
+            output_pub_.publish(output);
+        }
     }
     
     ros::NodeHandle nh_;
