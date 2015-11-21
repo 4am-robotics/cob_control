@@ -62,11 +62,10 @@ class ControllerInterfacePositionBase : public ControllerInterfaceBase
 {
     public:
         explicit ControllerInterfacePositionBase(ros::NodeHandle& nh,
-                                                 const TwistControllerParams& params,
-                                                 const uint16_t ma_size)
+                                                 const TwistControllerParams& params)
         : ControllerInterfaceBase(nh, params)
         {
-            integrator_.reset(new SimpsonIntegrator(params.dof, ma_size));
+            integrator_.reset(new SimpsonIntegrator(params.dof));
         }
 
         ~ControllerInterfacePositionBase() {}

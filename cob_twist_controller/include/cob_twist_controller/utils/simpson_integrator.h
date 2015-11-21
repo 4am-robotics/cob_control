@@ -37,13 +37,12 @@
 class SimpsonIntegrator
 {
     public:
-        explicit SimpsonIntegrator(const uint8_t dof,
-                                   const uint16_t ma_size)
+        explicit SimpsonIntegrator(const uint8_t dof)
         {
             dof_ = dof;
             for(uint8_t i = 0; i < dof_; i++)
             {
-                //ma_.push_back(new MovingAvgSimple_double_t(ma_size));
+                //ma_.push_back(new MovingAvgSimple_double_t(3));
                 ma_.push_back(new MovingAvgExponential_double_t(0.3));
             }
             last_update_time_ = ros::Time(0.0);

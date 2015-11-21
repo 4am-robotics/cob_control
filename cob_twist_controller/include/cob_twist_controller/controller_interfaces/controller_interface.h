@@ -82,7 +82,7 @@ class ControllerInterfacePosition : public ControllerInterfacePositionBase
     public:
         explicit ControllerInterfacePosition(ros::NodeHandle& nh,
                                              const TwistControllerParams& params)
-        : ControllerInterfacePositionBase(nh, params, 3)
+        : ControllerInterfacePositionBase(nh, params)
         {
             pub_ = nh.advertise<std_msgs::Float64MultiArray>("joint_group_interpol_position_controller/command", 1);
         }
@@ -102,7 +102,7 @@ class ControllerInterfaceTrajectory : public ControllerInterfacePositionBase
     public:
         explicit ControllerInterfaceTrajectory(ros::NodeHandle& nh,
                                                const TwistControllerParams& params)
-        : ControllerInterfacePositionBase(nh, params, 3)
+        : ControllerInterfacePositionBase(nh, params)
         {
             pub_ = nh.advertise<trajectory_msgs::JointTrajectory>("joint_trajectory_controller/command", 1);
         }
@@ -121,7 +121,7 @@ class ControllerInterfaceJointStates : public ControllerInterfacePositionBase
     public:
         explicit ControllerInterfaceJointStates(ros::NodeHandle& nh,
                                                 const TwistControllerParams& params)
-        : ControllerInterfacePositionBase(nh, params, 3)
+        : ControllerInterfacePositionBase(nh, params)
         {
             pub_ = nh.advertise<sensor_msgs::JointState>("joint_states", 1);
 

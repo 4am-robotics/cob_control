@@ -103,7 +103,7 @@ bool KinematicExtensionLookat::initExtension()
     this->joint_states_ext_.current_q_dot_.resize(ext_dof_);
     KDL::SetToZero(this->joint_states_ext_.current_q_dot_);
 
-    integrator_.reset(new SimpsonIntegrator(ext_dof_, 3));
+    integrator_.reset(new SimpsonIntegrator(ext_dof_));
 
     timer_ = nh_.createTimer(ros::Duration(1/100.0), &KinematicExtensionLookat::broadcastFocusFrame, this);
     timer_.start();
