@@ -12,10 +12,10 @@ public:
         output_pub_ = nh_.advertise<std_msgs::Float64>(out, 1);
         input_sub_ = nh_.subscribe("input", 1, &MovingAverageTester::input_cb, this);
     }
-    
+
     ~MovingAverageTester()
     {}
-    
+
     void input_cb(const std_msgs::Float64::ConstPtr& input)
     {
         std_msgs::Float64 output;
@@ -26,11 +26,11 @@ public:
             output_pub_.publish(output);
         }
     }
-    
+
     ros::NodeHandle nh_;
     ros::Subscriber input_sub_;
     ros::Publisher output_pub_;
-    
+
     boost::shared_ptr< MovingAvgBase_double_t > ma_;
 };
 
@@ -39,7 +39,7 @@ public:
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "test_moving_average_node");
-    
+
     MovingAvgSimple_double_t* ma_3 = new MovingAvgSimple_double_t(3);
     MovingAverageTester mat("output_ma", ma_3);
     MovingAvgWeighted_double_t* maw_3 = new MovingAvgWeighted_double_t(3);

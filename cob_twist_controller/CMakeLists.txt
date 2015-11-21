@@ -75,6 +75,10 @@ add_executable(test_moving_average_node src/debug/test_moving_average_node.cpp)
 add_dependencies(test_moving_average_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(test_moving_average_node ${catkin_LIBRARIES})
 
+add_executable(test_simpson_integrator_node src/debug/test_simpson_integrator_node.cpp)
+add_dependencies(test_simpson_integrator_node ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_simpson_integrator_node ${catkin_LIBRARIES})
+
 roslint_cpp()
 
 ### INSTALL ###
