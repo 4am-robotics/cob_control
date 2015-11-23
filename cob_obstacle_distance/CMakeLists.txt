@@ -65,7 +65,7 @@ install(DIRECTORY include/cob_obstacle_distance/
  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
 
-install(PROGRAMS scripts/example_obstacle_publisher_node.py scripts/test_obstacle_publisher_node.py
+install(PROGRAMS scripts/example_obstacle_publisher_node.py scripts/test_interactive_obstacle_node.py scripts/test_obstacle_publisher_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/scripts
 )
 
