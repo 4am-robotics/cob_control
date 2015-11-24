@@ -77,7 +77,7 @@ class KinematicExtensionBaseActive : public KinematicExtensionDOF
         explicit KinematicExtensionBaseActive(const TwistControllerParams& params)
         : KinematicExtensionDOF(params)
         {
-            base_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("/base/twist_controller/command", 1);
+            base_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("base/command", 1);
 
             max_vel_lin_base_ = 0.5;
             max_vel_rot_base_ = 0.5;

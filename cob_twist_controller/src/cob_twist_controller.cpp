@@ -143,7 +143,7 @@ bool CobTwistController::initialize()
     twist_sub_ = nh_twist.subscribe("command_twist", 1, &CobTwistController::twistCallback, this);
     twist_stamped_sub_ = nh_twist.subscribe("command_twist_stamped", 1, &CobTwistController::twistStampedCallback, this);
 
-    odometry_sub_ = nh_.subscribe("/base/odometry_controller/odometry", 1, &CobTwistController::odometryCallback, this);
+    odometry_sub_ = nh_.subscribe("base/odometry", 1, &CobTwistController::odometryCallback, this);
 
     this->controller_interface_.reset(ControllerInterfaceBuilder::createControllerInterface(this->nh_, this->twist_controller_params_));
 
