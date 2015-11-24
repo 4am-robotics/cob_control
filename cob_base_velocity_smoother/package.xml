@@ -9,7 +9,7 @@
   <!-- <url type="bugtracker"></url> -->
 
   <maintainer email="bnm@ipa.fhg.de">Benjamin Maidel</maintainer>
-  <author email="frm@ipa.fhg.de">Florian Mirus</author>
+  <author email="florian.mirus@gmx.net">Florian Mirus</author>
   <author email="bnm@ipa.fhg.de">Benjamin Maidel</author>
 
   <buildtool_depend>catkin</buildtool_depend>
