@@ -8,13 +8,16 @@
   <url type="website">http://ros.org/wiki/cob_base_velocity_smoother</url>
   <!-- <url type="bugtracker"></url> -->
 
-  <maintainer email="frm@ipa.fhg.de">Florian Mirus</maintainer>
+  <maintainer email="bnm@ipa.fhg.de">Benjamin Maidel</maintainer>
   <author email="frm@ipa.fhg.de">Florian Mirus</author>
+  <author email="bnm@ipa.fhg.de">Benjamin Maidel</author>
 
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>boost</depend>
+  <depend>dynamic_reconfigure</depend>
   <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
 
