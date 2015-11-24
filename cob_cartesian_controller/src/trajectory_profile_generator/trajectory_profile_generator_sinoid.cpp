@@ -28,7 +28,7 @@
 #include "cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_sinoid.h"
 
 /* BEGIN TrajectoryProfileSinoid ****************************************************************************************/
-inline cob_cartesian_controller::ProfileTimings TrajectoryProfileSinoid::getProfileTimings(double Se, double te, double accl, double vel)
+inline cob_cartesian_controller::ProfileTimings TrajectoryProfileSinoid::getProfileTimings(double Se, double te, double accl, double vel, bool calcMaxTe)
 {
     CartesianControllerUtils utils;
     cob_cartesian_controller::ProfileTimings pt;
@@ -41,19 +41,15 @@ inline cob_cartesian_controller::ProfileTimings TrajectoryProfileSinoid::getProf
         vel = sqrt(std::fabs(Se) * accl / 2);
     }
 
-    //TODO: Find a value.
     if(vel > 0.001)
     {
         tb = utils.roundUpToMultiplier(2 * vel / accl, params_.profile.t_ipo);
+
         if(te == 0)
         {
             te = utils.roundUpToMultiplier((std::fabs(Se) / vel) + tb,  params_.profile.t_ipo);
         }
         tv = te - tb;
-
-        ROS_INFO_STREAM("=========================================================================");
-        ROS_INFO_STREAM("vel_new:" << vel << " accl: " << accl << " Se: " << std::fabs(Se));
-        ROS_INFO_STREAM("tb:" << tb << " tv: " << tv << " te: " << te);
 
         // Interpolationsteps for every timesequence
         pt.tb = tb;
@@ -64,6 +60,10 @@ inline cob_cartesian_controller::ProfileTimings TrajectoryProfileSinoid::getProf
         pt.steps_tv = (pt.tv-pt.tb)/params_.profile.t_ipo;
         pt.steps_te = (pt.te-pt.tv)/params_.profile.t_ipo;
 
+        pt.vel = vel;
+
+        ROS_INFO_STREAM("=========================================================================");
+        ROS_INFO_STREAM("vel_new:" << vel << " accl: " << accl << " Se: " << std::fabs(Se));
         ROS_INFO_STREAM("pt.tb:" << pt.tb << " pt.tv: " << pt.tv << " pt.te: " << pt.te);
         ROS_INFO_STREAM("pt.steps_tb:" << pt.steps_tb << " pt.steps_tv: " << pt.steps_tv << " pt.steps_te: " << pt.steps_te);
         ROS_INFO_STREAM("=========================================================================");
@@ -87,10 +87,10 @@ inline bool TrajectoryProfileSinoid::generatePath(cob_cartesian_controller::Path
     double vel_max = params_.profile.vel;
 
     // Calculate the Profile Timings
-    pt = getProfileTimings(pa.Se_, pt_max_.te, accl_max, vel_max);
+    pt = getProfileTimings(pa.Se_, pt_max_.te, accl_max, vel_max, false);
     if(pt.ok)
     {
-        array = getTrajectory(pa.start_value_ , std::fabs(pa.Se_), accl_max, vel_max, params_.profile.t_ipo, pt.steps_tb, pt.steps_tv, pt.steps_te, pt.tb, pt.tv, pt.te);
+        array = getTrajectory(pa.start_value_ , pa.Se_, accl_max, pt.vel, params_.profile.t_ipo, pt.steps_tb, pt.steps_tv, pt.steps_te, pt.tb, pt.tv, pt.te);
     }
     else
     {
@@ -148,7 +148,7 @@ inline bool TrajectoryProfileSinoid::calculateProfile(std::vector<double> path_m
     cob_cartesian_controller::PathMatrix pm(lin,roll,pitch,yaw);
 
     // Get the profile timings from the longest path
-    pt_max_ = getProfileTimings(pm.getMaxSe(), 0, params_.profile.accl, params_.profile.vel);
+    pt_max_ = getProfileTimings(pm.getMaxSe(), 0, params_.profile.accl, params_.profile.vel, true);
 
     // Calculate the paths
     for(int i=0; i<pm.pm_.size(); i++)

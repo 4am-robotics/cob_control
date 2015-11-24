@@ -39,7 +39,7 @@ class TrajectoryProfileSinoid : public TrajectoryProfileBase
         {        }
 
         ~TrajectoryProfileSinoid() {}
-        virtual cob_cartesian_controller::ProfileTimings getProfileTimings(double Se, double te, double accl, double vel);
+        virtual cob_cartesian_controller::ProfileTimings getProfileTimings(double Se, double te, double accl, double vel, bool calcMaxTe);
         virtual bool generatePath(cob_cartesian_controller::PathArray &pa);
         virtual bool calculateProfile(std::vector<double>* path_matrix,
                                       double Se, double Se_roll, double Se_pitch, double Se_yaw,

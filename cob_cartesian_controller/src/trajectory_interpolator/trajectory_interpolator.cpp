@@ -53,24 +53,45 @@ bool TrajectoryInterpolator::linearInterpolation(geometry_msgs::PoseArray& pose_
 
 //    // Convert Quaternions into RPY Angles for start and end pose
     tf::quaternionMsgToTF(as.move_lin.start.orientation, q_start);
-////    tf::Matrix3x3(q).getRPY(start_roll, start_pitch, start_yaw);
-//
+    tf::Matrix3x3(q_start).getRPY(start_roll, start_pitch, start_yaw);
+
+    ROS_INFO_STREAM("q_start_w: " << q_start.getW() << " q_start_x: " << q_start.getX() << " q_start_y: " << q_start.getY() << " q_start_z: " << q_start.getZ());
+//    ROS_INFO_STREAM("start_roll: " << start_roll << " start_pitch: " << start_pitch << " start_yaw: " << start_yaw);
+
     tf::quaternionMsgToTF(as.move_lin.end.orientation, q_end);
-////    tf::Matrix3x3(q).getRPY(end_roll, end_pitch, end_yaw);
-//    q_relative = q_start * q_end.inverse();
-//    q_relative.normalized();
-//
-//    q_relative = q_start * q_end.inverse();
+    tf::Matrix3x3(q_end).getRPY(end_roll, end_pitch, end_yaw);
+
+    ROS_INFO_STREAM("q_end_w: " << q_end.getW() << " q_end_x: " << q_end.getX() << " q_end_y: " << q_end.getY() << " q_end_z: " << q_end.getZ());
+//    ROS_INFO_STREAM("end_roll: " << end_roll << " end_pitch: " << end_pitch << " end_yaw: " << end_yaw);
+
+
+//    q_relative = q_start.slerp(q_end, 1);
+//    ROS_INFO_STREAM("q_slerp_w: " << q_relative.getW() << " q_slerp_x: " << q_relative.getX() << " q_slerp_y: " << q_relative.getY() << " q_slerp_z: " << q_relative.getZ());
+
+    q_start = q_start.normalized();
+    q_end = q_end.normalize();
+    q_relative = q_end * q_start.inverse();
+
+    tf::Matrix3x3(q_relative).getRPY(Se_roll, Se_pitch, Se_yaw);
+
+//    if(q_start.dot(q_end) > 1-0.0001)
+//    {
+//        Se_pitch = Se_roll = Se_yaw = 0;
+//    }
+//    q_relative = q_end * q_start.inverse();
 //    tf::Matrix3x3(q_relative).getRPY(Se_roll, Se_pitch, Se_yaw);
 
-    // Calculate path length for the angular movement
-    Se_roll  = std::fabs(end_roll)  - std::fabs(start_roll);
-    Se_pitch = std::fabs(end_pitch) - std::fabs(start_pitch);
-    Se_yaw   = std::fabs(end_yaw)   - std::fabs(start_yaw);
+//    ROS_INFO_STREAM("q_relative_w: " << q_relative.getW() << " q_relative_x: " << q_relative.getX() << " q_relative_y: " << q_relative.getY() << " q_relative_z: " << q_relative.getZ());
+//    ROS_INFO_STREAM("Se_roll: " << Se_roll << " Se_pitch: " << Se_pitch << " Se_yaw: " << Se_yaw);
 
-//    ROS_INFO_STREAM("Q_x: " << Se_roll <<
-//                    " Q_y: " << Se_pitch <<
-//                    " Q_z: " << Se_yaw);
+    // Calculate path length for the angular movement
+    //    Se_roll  = std::fabs(end_roll)  - std::fabs(start_roll);
+    //    Se_pitch = std::fabs(end_pitch) - std::fabs(start_pitch);
+    //    Se_yaw   = std::fabs(end_yaw)   - std::fabs(start_yaw);
+
+//    Se_roll  = end_roll  - start_roll;
+//    Se_pitch = end_pitch - start_pitch;
+//    Se_yaw   = end_yaw   - start_yaw;
 
     // Calculate path for each Angle
     if(!this->trajectory_profile_generator_->calculateProfile(path_matrix, Se, Se_roll, Se_pitch, Se_yaw, as.move_lin.start))
@@ -94,10 +115,10 @@ bool TrajectoryInterpolator::linearInterpolation(geometry_msgs::PoseArray& pose_
         }
         else
         {
-            ROS_INFO_STREAM("linear.path.at(..) = " << linear_path.at(i));
             pose.position.x = as.move_lin.start.position.x + linear_path.at(i) * (as.move_lin.end.position.x - as.move_lin.start.position.x) / linear_path.back();
             pose.position.y = as.move_lin.start.position.y + linear_path.at(i) * (as.move_lin.end.position.y - as.move_lin.start.position.y) / linear_path.back();
             pose.position.z = as.move_lin.start.position.z + linear_path.at(i) * (as.move_lin.end.position.z - as.move_lin.start.position.z) / linear_path.back();
+
         }
 
         // Transform RPY to Quaternion

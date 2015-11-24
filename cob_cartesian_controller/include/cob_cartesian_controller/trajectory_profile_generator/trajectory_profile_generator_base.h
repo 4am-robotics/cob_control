@@ -43,7 +43,7 @@ class TrajectoryProfileBase
 
         virtual ~TrajectoryProfileBase() {}
 
-        virtual cob_cartesian_controller::ProfileTimings getProfileTimings(double Se, double te, double accl, double vel) = 0;
+        virtual cob_cartesian_controller::ProfileTimings getProfileTimings(double Se, double te, double accl, double vel, bool calcMaxTe) = 0;
         virtual bool calculateProfile(std::vector<double> path_matrix[4],
                                       double Se, double Se_roll, double Se_pitch, double Se_yaw,
                                       geometry_msgs::Pose start) = 0;

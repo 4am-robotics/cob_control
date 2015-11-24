@@ -265,6 +265,7 @@ void CobFrameTracker::publishTwist(ros::Duration period, bool do_publish)
     }
 
     twist_msg.header.frame_id = chain_tip_link_;
+    twist_msg.header.stamp = ros::Time::now();
 
     /////debug only
     //if(std::fabs(transform_tf.getOrigin().x()) >= max_vel_lin_)

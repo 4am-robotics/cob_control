@@ -48,12 +48,12 @@ namespace cob_cartesian_controller
         double tb, te, tv;
         unsigned int steps_tb, steps_te, steps_tv;
         bool ok;
+        double vel;
     };
 
     struct MoveLinStruct
     {
         geometry_msgs::Pose start, end;
-        bool rotate_only;
     };
 
     struct MoveCircStruct
