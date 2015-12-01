@@ -61,13 +61,6 @@ inline cob_cartesian_controller::ProfileTimings TrajectoryProfileSinoid::getProf
         pt.steps_te = (pt.te-pt.tv)/params_.profile.t_ipo;
 
         pt.vel = vel;
-
-        ROS_INFO_STREAM("=========================================================================");
-        ROS_INFO_STREAM("vel_new:" << vel << " accl: " << accl << " Se: " << std::fabs(Se));
-        ROS_INFO_STREAM("pt.tb:" << pt.tb << " pt.tv: " << pt.tv << " pt.te: " << pt.te);
-        ROS_INFO_STREAM("pt.steps_tb:" << pt.steps_tb << " pt.steps_tv: " << pt.steps_tv << " pt.steps_te: " << pt.steps_te);
-        ROS_INFO_STREAM("=========================================================================");
-
         pt.ok = true;
     }
     else

@@ -151,7 +151,6 @@ bool CartesianController::stopTracking()
 // MovePTP
 bool CartesianController::movePTP(const geometry_msgs::Pose& target_pose, const double epsilon)
 {
-    ROS_WARN("TEST");
     bool success = false;
     int reached_pos_counter = 0;
 
@@ -220,36 +219,11 @@ bool CartesianController::posePathBroadcaster(const geometry_msgs::PoseArray& ca
                                               cartesian_path.poses.at(i).orientation.z,
                                               cartesian_path.poses.at(i).orientation.w) );
 
-//        geometry_msgs::Transform tf_msg;
-//        tf::transformTFToMsg(transform, tf_msg);
-//        ROS_INFO_STREAM("pathArray[" << i << "]: " << tf_msg.rotation);
         tf_broadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), cartesian_path.header.frame_id, target_frame_));
-
 
         // Get transformation
         tf::StampedTransform stamped_transform = utils_.getStampedTransform(target_frame_, chain_tip_link_);
 
-        // Check whether chain_tip_link is within epsilon area of target_frame
-//        if(!utils_.inEpsilonArea(stamped_transform, epsilon))
-//        {
-//            failure_counter++;
-//        }
-//        else
-//        {
-//            if(failure_counter > 0)
-//            {
-//                failure_counter--;
-//            }
-//        }
-
-        //ToDo: This functionality is already implemented in the frame_tracker
-        //Use the the ActionInterface of the FrameTracker instead of the ServiceCalls and modify constraints in FrameTracker accordingly
-//        if(failure_counter > 100)
-//        {
-//            ROS_ERROR("Endeffector failed to track target_frame!");
-//            success = false;
-//            break;
-//        }
         ros::spinOnce();
         rate.sleep();
     }
@@ -328,7 +302,7 @@ void CartesianController::goalCallback()
             return;
         }
 
-        movePTP(action_struct.move_lin.end, 0.001);
+//        movePTP(action_struct.move_lin.end, 0.001);
 
         // De-Activate Tracking
         if(!stopTracking())
@@ -342,45 +316,37 @@ void CartesianController::goalCallback()
     else if(action_struct.move_type == cob_cartesian_controller::CartesianControllerGoal::CIRC)
     {
         ROS_INFO("move_circ");
-//        if(!trajectory_interpolator_->circularInterpolation(cartesian_path, action_struct))
-//        {
-//            actionAbort(false, "Failed to do interpolation for 'move_circ'");
-//            return;
-//        }
-//
-//        // Publish Preview
-//        utils_.previewPath(cartesian_path);
-//
-//        // Activate Tracking
-//        if(!startTracking())
-//        {
-//            actionAbort(false, "Failed to start tracking");
-//            return;
-//        }
-//
-//        // Move to start
-//        if(!movePTP(cartesian_path.poses.at(0), 0.03))
-//        {
-//            actionAbort(false, "Failed to movePTP to start");
-//            return;
-//        }
-//
-//        // Execute path
-//        if(!posePathBroadcaster(cartesian_path))
-//        {
-//            actionAbort(false, "Failed to execute path for 'move_circ'");
-//            return;
-//        }
-//
-//        // De-Activate Tracking
-//        if(!stopTracking())
-//        {
-//            actionAbort(false, "Failed to stop tracking");
-//            return;
-//        }
-//
-//        actionSuccess(true, "move_circ succeeded!");
-        actionAbort(false, "Not implemented.");
+        if(!trajectory_interpolator_->circularInterpolation(cartesian_path, action_struct))
+        {
+            actionAbort(false, "Failed to do interpolation for 'move_circ'");
+            return;
+        }
+
+        // Publish Preview
+        utils_.previewPath(cartesian_path);
+
+        // Activate Tracking
+        if(!startTracking())
+        {
+            actionAbort(false, "Failed to start tracking");
+            return;
+        }
+
+        // Execute path
+        if(!posePathBroadcaster(cartesian_path))
+        {
+            actionAbort(false, "Failed to execute path for 'move_circ'");
+            return;
+        }
+
+        // De-Activate Tracking
+        if(!stopTracking())
+        {
+            actionAbort(false, "Failed to stop tracking");
+            return;
+        }
+
+        actionSuccess(true, "move_circ succeeded!");
     }
     else
     {

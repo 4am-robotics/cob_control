@@ -74,4 +74,6 @@ def gen_pose(pos=[0,0,0], rpy=[0,0,0]):
     pose = Pose()
     pose.position.x, pose.position.y, pose.position.z = pos
     pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w = quaternion_from_euler(*rpy)
+
+
     return pose
