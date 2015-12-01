@@ -135,6 +135,7 @@ KDL::JntArray LimiterAllJointPositions::enforceLimits(const KDL::JntArray& q_dot
     KDL::JntArray q_dot_norm(q_dot_ik);
     double tolerance = limiter_params_.limits_tolerance / 180.0 * M_PI;
     double max_factor = 1.0;
+    int joint_index = -1;
 
     for (unsigned int i = 0; i < q_dot_ik.rows(); i++)
     {
@@ -143,7 +144,11 @@ KDL::JntArray LimiterAllJointPositions::enforceLimits(const KDL::JntArray& q_dot
             if (q_dot_ik(i) > 0)  // Joint moves towards the MAX limit
             {
                 double temp = 1.0 / pow((0.5 + 0.5 * cos(M_PI * (q(i) + tolerance - limiter_params_.limits_max[i]) / tolerance)), 5.0);
-                max_factor = (temp > max_factor) ? temp : max_factor;
+                if(temp > max_factor)
+                {
+                    max_factor = temp;
+                    joint_index = i;
+                }
             }
         }
         else
@@ -153,7 +158,11 @@ KDL::JntArray LimiterAllJointPositions::enforceLimits(const KDL::JntArray& q_dot
                 if (q_dot_ik(i) < 0)  // Joint moves towards the MIN limit
                 {
                     double temp = 1.0 / pow(0.5 + 0.5 * cos(M_PI * (q(i) - tolerance - limiter_params_.limits_min[i]) / tolerance), 5.0);
-                    max_factor = (temp > max_factor) ? temp : max_factor;
+                    if(temp > max_factor)
+                    {
+                        max_factor = temp;
+                        joint_index = i;
+                    }
                 }
             }
         }
@@ -161,7 +170,7 @@ KDL::JntArray LimiterAllJointPositions::enforceLimits(const KDL::JntArray& q_dot
 
     if (max_factor > 1.0)
     {
-        ROS_ERROR_STREAM_THROTTLE(1, "Position tolerance surpassed: Scaling ALL VELOCITIES with factor = " << max_factor);
+        ROS_ERROR_STREAM_THROTTLE(1, "Position tolerance surpassed (by Joint " << joint_index << "): Scaling ALL VELOCITIES with factor = " << max_factor);
         for (unsigned int i = 0; i < q_dot_ik.rows(); i++)
         {
             q_dot_norm(i) = q_dot_ik(i) / max_factor;
@@ -181,18 +190,20 @@ KDL::JntArray LimiterAllJointVelocities::enforceLimits(const KDL::JntArray& q_do
 {
     KDL::JntArray q_dot_norm(q_dot_ik);
     double max_factor = 1.0;
+    int joint_index = -1;
 
     for (unsigned int i = 0; i < q_dot_ik.rows(); i++)
     {
         if (max_factor < std::fabs(q_dot_ik(i) / limiter_params_.limits_vel[i]))
         {
             max_factor = std::fabs(q_dot_ik(i) / limiter_params_.limits_vel[i]);
+            joint_index = i;
         }
     }
 
     if (max_factor > 1.0)
     {
-        ROS_WARN_STREAM_THROTTLE(1, "Velocity limit surpassed: Scaling ALL VELOCITIES with factor = " << max_factor);
+        ROS_WARN_STREAM_THROTTLE(1, "Velocity limit surpassed (by Joint " << joint_index << "): Scaling ALL VELOCITIES with factor = " << max_factor);
         for (unsigned int i = 0; i < q_dot_ik.rows(); i++)
         {
             q_dot_norm(i) = q_dot_ik(i) / max_factor;
