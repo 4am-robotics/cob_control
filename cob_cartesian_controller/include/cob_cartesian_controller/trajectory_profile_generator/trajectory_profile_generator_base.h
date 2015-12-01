@@ -44,11 +44,12 @@ class TrajectoryProfileBase
         virtual ~TrajectoryProfileBase() {}
 
         virtual cob_cartesian_controller::ProfileTimings getProfileTimings(double Se, double te, double accl, double vel, bool calcMaxTe) = 0;
-        virtual bool calculateProfile(std::vector<double> path_matrix[4],
-                                      double Se, double Se_roll, double Se_pitch, double Se_yaw,
+
+        virtual bool calculateProfile(std::vector<double>* path_matrix,
+                                      const double Se_lin, const double Se_rot,
                                       geometry_msgs::Pose start) = 0;
-        virtual std::vector<double> getTrajectory(double start_value, double se,
-                                                  double accl, double vel, double t_ipo,
+
+        virtual std::vector<double> getTrajectory(double se, double accl, double vel, double t_ipo,
                                                   double steps_tb, double steps_tv, double steps_te, double tb, double tv, double te) = 0;
     private:
         virtual bool generatePath(cob_cartesian_controller::PathArray &pa) = 0;

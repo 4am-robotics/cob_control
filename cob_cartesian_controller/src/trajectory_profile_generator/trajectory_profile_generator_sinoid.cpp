@@ -90,18 +90,18 @@ inline bool TrajectoryProfileSinoid::generatePath(cob_cartesian_controller::Path
     pt = getProfileTimings(pa.Se_, pt_max_.te, accl_max, vel_max, false);
     if(pt.ok)
     {
-        array = getTrajectory(pa.start_value_ , pa.Se_, accl_max, pt.vel, params_.profile.t_ipo, pt.steps_tb, pt.steps_tv, pt.steps_te, pt.tb, pt.tv, pt.te);
+        array = getTrajectory(pa.Se_, accl_max, pt.vel, params_.profile.t_ipo, pt.steps_tb, pt.steps_tv, pt.steps_te, pt.tb, pt.tv, pt.te);
     }
     else
     {
-        array.push_back(pa.start_value_);
+        array.push_back(0);
     }
 
     pa.array_ = array;
     return true;
 }
 
-inline std::vector<double> TrajectoryProfileSinoid::getTrajectory(double start_value, double se, double accl, double vel, double t_ipo, double steps_tb, double steps_tv, double steps_te, double tb, double tv, double te)
+inline std::vector<double> TrajectoryProfileSinoid::getTrajectory(double se, double accl, double vel, double t_ipo, double steps_tb, double steps_tv, double steps_te, double tb, double tv, double te)
 {
     std::vector<double> array;
     unsigned int i = 1;
@@ -111,41 +111,34 @@ inline std::vector<double> TrajectoryProfileSinoid::getTrajectory(double start_v
     // 0 <= t <= tb
     for(; i <= steps_tb; i++)
     {
-        array.push_back(start_value + direction * (accl*(0.25*pow(i*t_ipo,2) + pow(tb,2)/(8*pow(M_PI,2)) *(cos(2*M_PI/tb * (i*t_ipo))-1))));
+        array.push_back(direction * (accl*(0.25*pow(i*t_ipo,2) + pow(tb,2)/(8*pow(M_PI,2)) *(cos(2*M_PI/tb * (i*t_ipo))-1))));
     }
     // tb <= t <= tv
     for(; i <= (steps_tb + steps_tv); i++)
     {
-        array.push_back(start_value + direction * ( vel*(i*t_ipo-0.5*tb)));
+        array.push_back(direction * ( vel*(i*t_ipo-0.5*tb)));
     }
     // tv <= t <= te
     for(; i <= (steps_tv + steps_tb + steps_te + 1); i++)
     {
-        array.push_back(start_value + direction * (0.5 * accl *(te*(i*t_ipo + tb) - 0.5*(pow(i*t_ipo,2)+pow(te,2)+2*pow(tb,2)) + (pow(tb,2)/(4*pow(M_PI,2))) * (1-cos(((2*M_PI)/tb) * (i*t_ipo-tv))))));
+        array.push_back(direction * (0.5 * accl *(te*(i*t_ipo + tb) - 0.5*(pow(i*t_ipo,2)+pow(te,2)+2*pow(tb,2)) + (pow(tb,2)/(4*pow(M_PI,2))) * (1-cos(((2*M_PI)/tb) * (i*t_ipo-tv))))));
     }
 
     return array;
 }
 
-inline bool TrajectoryProfileSinoid::calculateProfile(std::vector<double> path_matrix[4],
-                                                    const double Se, const double Se_roll, const double Se_pitch, const double Se_yaw,
+inline bool TrajectoryProfileSinoid::calculateProfile(std::vector<double> path_matrix[2],
+                                                    const double Se_lin, const double Se_rot,
                                                     geometry_msgs::Pose start)
 {
     CartesianControllerUtils ccu;
-    std::vector<double> linear_path, roll_path, pitch_path, yaw_path;
-    double roll_start, pitch_start, yaw_start;
+    std::vector<double> linear_path, angular_path;
 
-    //Convert to RPY
-    tf::Quaternion q;
-    tf::quaternionMsgToTF(start.orientation, q);
-    tf::Matrix3x3(q).getRPY(roll_start, pitch_start, yaw_start);
+    cob_cartesian_controller::PathArray lin(Se_lin, linear_path);
+    cob_cartesian_controller::PathArray rot(Se_rot, angular_path);
 
-    cob_cartesian_controller::PathArray lin(0, Se, 0, linear_path);
-    cob_cartesian_controller::PathArray roll(1, Se_roll, roll_start, roll_path);
-    cob_cartesian_controller::PathArray pitch(2, Se_pitch, pitch_start, pitch_path);
-    cob_cartesian_controller::PathArray yaw(3, Se_yaw, yaw_start, yaw_path);
 
-    cob_cartesian_controller::PathMatrix pm(lin,roll,pitch,yaw);
+    cob_cartesian_controller::PathMatrix pm(lin,rot);
 
     // Get the profile timings from the longest path
     pt_max_ = getProfileTimings(pm.getMaxSe(), 0, params_.profile.accl, params_.profile.vel, true);

@@ -76,12 +76,10 @@ namespace cob_cartesian_controller
 
     class PathArray{
         public:
-            PathArray(double idx, double Se, double start_value, std::vector<double> array):
+            PathArray(double Se, std::vector<double> array):
                 Se_(Se),
-                array_(array),
-                start_value_(start_value)
+                array_(array)
             {
-                idx_= idx;
                 calcTe_ = false;
             }
 
@@ -90,25 +88,19 @@ namespace cob_cartesian_controller
                 array_.clear();
             }
 
-            unsigned int idx_;
             bool calcTe_;
             double Se_;
             std::vector<double> array_;
-            double start_value_;
 
     };
 
     class PathMatrix{
             public:
                 PathMatrix(PathArray &pa1,
-                           PathArray &pa2,
-                           PathArray &pa3,
-                           PathArray &pa4)
+                           PathArray &pa2)
                 {
                     pm_.push_back(pa1);
                     pm_.push_back(pa2);
-                    pm_.push_back(pa3);
-                    pm_.push_back(pa4);
 
                 }
                 ~PathMatrix()
@@ -124,7 +116,7 @@ namespace cob_cartesian_controller
     {
         double se_max = 0;
 
-        for(int i=0; i<4; i++)
+        for(int i=0; i<pm_.size(); i++)
         {
             if(se_max < fabs(pm_[i].Se_))
             {

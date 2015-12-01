@@ -151,6 +151,7 @@ bool CartesianController::stopTracking()
 // MovePTP
 bool CartesianController::movePTP(const geometry_msgs::Pose& target_pose, const double epsilon)
 {
+    ROS_WARN("TEST");
     bool success = false;
     int reached_pos_counter = 0;
 
@@ -218,32 +219,64 @@ bool CartesianController::posePathBroadcaster(const geometry_msgs::PoseArray& ca
                                               cartesian_path.poses.at(i).orientation.y,
                                               cartesian_path.poses.at(i).orientation.z,
                                               cartesian_path.poses.at(i).orientation.w) );
+
+//        geometry_msgs::Transform tf_msg;
+//        tf::transformTFToMsg(transform, tf_msg);
+//        ROS_INFO_STREAM("pathArray[" << i << "]: " << tf_msg.rotation);
         tf_broadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), cartesian_path.header.frame_id, target_frame_));
+
 
         // Get transformation
         tf::StampedTransform stamped_transform = utils_.getStampedTransform(target_frame_, chain_tip_link_);
 
         // Check whether chain_tip_link is within epsilon area of target_frame
-        if(!utils_.inEpsilonArea(stamped_transform, epsilon))
-        {
-            failure_counter++;
-        }
-        else
-        {
-            if(failure_counter > 0)
-            {
-                failure_counter--;
-            }
-        }
+//        if(!utils_.inEpsilonArea(stamped_transform, epsilon))
+//        {
+//            failure_counter++;
+//        }
+//        else
+//        {
+//            if(failure_counter > 0)
+//            {
+//                failure_counter--;
+//            }
+//        }
 
         //ToDo: This functionality is already implemented in the frame_tracker
         //Use the the ActionInterface of the FrameTracker instead of the ServiceCalls and modify constraints in FrameTracker accordingly
-        if(failure_counter > 100)
+//        if(failure_counter > 100)
+//        {
+//            ROS_ERROR("Endeffector failed to track target_frame!");
+//            success = false;
+//            break;
+//        }
+        ros::spinOnce();
+        rate.sleep();
+    }
+
+    while(true)
+    {
+        // Get transformation
+        tf::StampedTransform stamped_transform = utils_.getStampedTransform(target_frame_, chain_tip_link_);
+        ROS_INFO_STREAM("stamped: x: " << stamped_transform.getOrigin().getX() << " y: " << stamped_transform.getOrigin().getY() << " z: " << stamped_transform.getOrigin().getZ());
+
+        if(!utils_.inEpsilonArea(stamped_transform, 0.0005))
         {
-            ROS_ERROR("Endeffector failed to track target_frame!");
-            success = false;
+            // Send/Refresh target Frame
+            transform.setOrigin( tf::Vector3(cartesian_path.poses.back().position.x,
+                                             cartesian_path.poses.back().position.y,
+                                             cartesian_path.poses.back().position.z) );
+            transform.setRotation( tf::Quaternion(cartesian_path.poses.back().orientation.x,
+                                                  cartesian_path.poses.back().orientation.y,
+                                                  cartesian_path.poses.back().orientation.z,
+                                                  cartesian_path.poses.back().orientation.w) );
+            tf_broadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), cartesian_path.header.frame_id, target_frame_));
+        }
+        else
+        {
             break;
         }
+
         ros::spinOnce();
         rate.sleep();
     }
@@ -264,7 +297,6 @@ void CartesianController::goalCallback()
     ROS_INFO_STREAM("=========================================================================");
 
     start_pose = utils_.getPose(root_frame_, chain_tip_link_);
-    ROS_INFO_STREAM("Start Pose\n X: " << start_pose.position.x << ", Y:" << start_pose.position.y << " , Z: " << start_pose.position.z);
 
     action_struct = acceptGoal(as_->acceptNewGoal());
 
@@ -280,8 +312,6 @@ void CartesianController::goalCallback()
         }
 
         // Publish Preview
-//        visualization_msgs::MarkerArray marker_array;
-//        utils_.previewPath(cartesian_path,marker_array);
         utils_.previewPath(cartesian_path);
 
         // Activate Tracking
@@ -298,13 +328,7 @@ void CartesianController::goalCallback()
             return;
         }
 
-//        movePTP(action_struct.move_lin.end, 0.005);
-
-//        end_pose = utils_.getPose(root_frame_,chain_tip_link_);
-//
-//        ROS_INFO_STREAM("Relative \n X: " << fabs(end_pose.position.x) - fabs(action_struct.move_lin.end.position.x) <<
-//                        ", Y:" << fabs(end_pose.position.y) - fabs(action_struct.move_lin.end.position.y) <<
-//                        " , Z: " << fabs(end_pose.position.z) - fabs(action_struct.move_lin.end.position.z));
+        movePTP(action_struct.move_lin.end, 0.001);
 
         // De-Activate Tracking
         if(!stopTracking())
@@ -318,45 +342,45 @@ void CartesianController::goalCallback()
     else if(action_struct.move_type == cob_cartesian_controller::CartesianControllerGoal::CIRC)
     {
         ROS_INFO("move_circ");
-
-        if(!trajectory_interpolator_->circularInterpolation(cartesian_path, action_struct))
-        {
-            actionAbort(false, "Failed to do interpolation for 'move_circ'");
-            return;
-        }
-
-        // Publish Preview
-        utils_.previewPath(cartesian_path);
-
-        // Activate Tracking
-        if(!startTracking())
-        {
-            actionAbort(false, "Failed to start tracking");
-            return;
-        }
-
-        // Move to start
-        if(!movePTP(cartesian_path.poses.at(0), 0.03))
-        {
-            actionAbort(false, "Failed to movePTP to start");
-            return;
-        }
-
-        // Execute path
-        if(!posePathBroadcaster(cartesian_path))
-        {
-            actionAbort(false, "Failed to execute path for 'move_circ'");
-            return;
-        }
-
-        // De-Activate Tracking
-        if(!stopTracking())
-        {
-            actionAbort(false, "Failed to stop tracking");
-            return;
-        }
-
-        actionSuccess(true, "move_circ succeeded!");
+//        if(!trajectory_interpolator_->circularInterpolation(cartesian_path, action_struct))
+//        {
+//            actionAbort(false, "Failed to do interpolation for 'move_circ'");
+//            return;
+//        }
+//
+//        // Publish Preview
+//        utils_.previewPath(cartesian_path);
+//
+//        // Activate Tracking
+//        if(!startTracking())
+//        {
+//            actionAbort(false, "Failed to start tracking");
+//            return;
+//        }
+//
+//        // Move to start
+//        if(!movePTP(cartesian_path.poses.at(0), 0.03))
+//        {
+//            actionAbort(false, "Failed to movePTP to start");
+//            return;
+//        }
+//
+//        // Execute path
+//        if(!posePathBroadcaster(cartesian_path))
+//        {
+//            actionAbort(false, "Failed to execute path for 'move_circ'");
+//            return;
+//        }
+//
+//        // De-Activate Tracking
+//        if(!stopTracking())
+//        {
+//            actionAbort(false, "Failed to stop tracking");
+//            return;
+//        }
+//
+//        actionSuccess(true, "move_circ succeeded!");
+        actionAbort(false, "Not implemented.");
     }
     else
     {
@@ -372,11 +396,14 @@ cob_cartesian_controller::MoveLinStruct CartesianController::convertMoveLin(cons
     utils_.transformPose(move_lin_msg.frame_id, root_frame_, move_lin_msg.pose_goal, end);
 
     cob_cartesian_controller::MoveLinStruct move_lin;
-    move_lin.rotate_only = move_lin_msg.rotate_only;
 
     move_lin.start = start;
     move_lin.end = end;
 
+    ROS_WARN("move_lin_msg_orientation .. w: %f", move_lin_msg.pose_goal.orientation.w);
+    ROS_WARN("move_lin_msg_orientation .. x: %f", move_lin_msg.pose_goal.orientation.x);
+    ROS_WARN("move_lin_msg_orientation .. y: %f", move_lin_msg.pose_goal.orientation.y);
+    ROS_WARN("move_lin_msg_orientation .. z: %f", move_lin_msg.pose_goal.orientation.z);
     return move_lin;
 }
 
