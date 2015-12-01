@@ -250,6 +250,7 @@ void CobFrameTracker::publishTwist(ros::Duration period, bool do_publish)
     
     geometry_msgs::TwistStamped twist_msg;
     twist_msg.header.frame_id = tracking_frame_;
+    twist_msg.header.stamp = ros::Time::now();
 
     if(!success)
     {

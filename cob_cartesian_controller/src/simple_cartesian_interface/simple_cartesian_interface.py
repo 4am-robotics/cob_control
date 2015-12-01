@@ -21,7 +21,7 @@ def move_lin(pose_goal, frame_id, profile, rotate_only=False):
     goal.move_lin.pose_goal = pose_goal
     goal.move_lin.frame_id = frame_id
     goal.move_lin.rotate_only = rotate_only
-    goal.move_lin.profile = profile
+    goal.profile = profile
     # print goal
 
     client.send_goal(goal)
@@ -48,7 +48,7 @@ def move_circ(pose_center, frame_id, start_angle, end_angle, radius, profile, ro
     goal.move_circ.start_angle = start_angle
     goal.move_circ.end_angle = end_angle
     goal.move_circ.radius = radius
-    goal.move_circ.profile = profile
+    goal.profile = profile
     print goal
 
     client.send_goal(goal)

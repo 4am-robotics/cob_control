@@ -133,10 +133,8 @@ void CartesianControllerUtils::poseToRPY(const geometry_msgs::Pose& pose, double
 
 void CartesianControllerUtils::previewPath(const geometry_msgs::PoseArray& pose_array)
 {
-    visualization_msgs::MarkerArray marker_array;
-
     visualization_msgs::Marker marker;
-    marker.type = visualization_msgs::Marker::ARROW;
+    marker.type = visualization_msgs::Marker::SPHERE;
     marker.lifetime = ros::Duration();
     marker.action = visualization_msgs::Marker::ADD;
     marker.header = pose_array.header;
@@ -149,12 +147,44 @@ void CartesianControllerUtils::previewPath(const geometry_msgs::PoseArray& pose_
     marker.color.b = 1.0;
     marker.color.a = 1.0;
 
-    for(unsigned int i=0; i<pose_array.poses.size(); i++)
+    double id = marker_array_.markers.size();
+
+    for(unsigned int i=0; i < pose_array.poses.size(); i++)
+        {
+            marker.id = id+i;
+            marker.pose = pose_array.poses.at(i);
+            marker_array_.markers.push_back(marker);
+        }
+
+    marker_pub_.publish(marker_array_);
+}
+
+void CartesianControllerUtils::adjustArrayLength(std::vector<cob_cartesian_controller::PathArray> &m)
+{
+    unsigned int max_steps = 0;
+    for(int i = 0; i < m.size(); i++)
     {
-        marker.id = i;
-        marker.pose = pose_array.poses.at(i);
-        marker_array.markers.push_back(marker);
+        max_steps = std::max((unsigned int)m[i].array_.size() , max_steps);
     }
 
-    marker_pub_.publish(marker_array);
+    for(int i = 0; i < m.size(); i++)
+    {
+        if(m[i].array_.size() < max_steps)
+        {
+            m[i].array_.resize(max_steps, m[i].array_.back());
+        }
+    }
+}
+
+void CartesianControllerUtils::copyMatrix(std::vector<double> *path_array,std::vector<cob_cartesian_controller::PathArray> &m)
+{
+    for(int i = 0; i < m.size(); i++)
+    {
+        path_array[i] = m[i].array_;
+    }
+}
+
+double CartesianControllerUtils::roundUpToMultiplier(double numberToRound, double multiplier)
+{
+    return ( multiplier - fmod(numberToRound,multiplier) + numberToRound );
 }

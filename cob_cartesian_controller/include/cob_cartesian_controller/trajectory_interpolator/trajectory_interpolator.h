@@ -34,32 +34,32 @@
 #include <tf/transform_datatypes.h>
 
 #include <cob_cartesian_controller/cartesian_controller_data_types.h>
-#include <cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_lin.h>
-#include <cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_circ.h>
+#include <cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_builder.h>
+
 
 
 class TrajectoryInterpolator
 {
 public:
     TrajectoryInterpolator(std::string root_frame, double update_rate)
-    :   root_frame_(root_frame),
-        trajectory_profile_generator_lin_(TrajectoryProfileGeneratorLin(update_rate)),
-        trajectory_profile_generator_circ_(TrajectoryProfileGeneratorCirc(update_rate))
+    :   root_frame_(root_frame)
+
     {}
 
-    ~TrajectoryInterpolator(){}
+    ~TrajectoryInterpolator(){
+        trajectory_profile_generator_.reset();
+    }
 
     bool linearInterpolation(geometry_msgs::PoseArray& pose_array,
-                             cob_cartesian_controller::MoveLinStruct& move_lin);
+                             const cob_cartesian_controller::CartesianActionStruct& as);
 
     bool circularInterpolation(geometry_msgs::PoseArray& pose_array,
-                               cob_cartesian_controller::MoveCircStruct& move_circ);
+                               const cob_cartesian_controller::CartesianActionStruct& as);
 
 private:
-    TrajectoryProfileGeneratorLin trajectory_profile_generator_lin_;
-    TrajectoryProfileGeneratorCirc trajectory_profile_generator_circ_;
-
     std::string root_frame_;
+    boost::shared_ptr< TrajectoryProfileBase > trajectory_profile_generator_;
+
 };
 
 #endif /* COB_CARTESIAN_CONTROLLER_TRAJECTORY_INTERPOLATOR_H_ */

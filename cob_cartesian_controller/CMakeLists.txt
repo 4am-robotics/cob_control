@@ -38,7 +38,7 @@ add_library(cartesian_controller_utils src/cartesian_controller_utils.cpp)
 add_dependencies(cartesian_controller_utils ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cartesian_controller_utils ${catkin_LIBRARIES})
 
-add_library(profile_generator src/trajectory_profile_generator/trajectory_profile_generator_lin.cpp src/trajectory_profile_generator/trajectory_profile_generator_circ.cpp)
+add_library(profile_generator src/trajectory_profile_generator/trajectory_profile_generator_builder.cpp src/trajectory_profile_generator/trajectory_profile_generator_ramp.cpp src/trajectory_profile_generator/trajectory_profile_generator_sinoid.cpp)
 add_dependencies(profile_generator ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(profile_generator ${catkin_LIBRARIES})
 
