@@ -26,8 +26,9 @@
  *   Implements methods from constraint_solver_base
  *
  ****************************************************************/
-#ifndef TASK_PRIORITY_SOLVER_H_
-#define TASK_PRIORITY_SOLVER_H_
+
+#ifndef COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_TASK_PRIORITY_SOLVER_H
+#define COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_TASK_PRIORITY_SOLVER_H
 
 #include <set>
 #include "ros/ros.h"
@@ -42,14 +43,16 @@
 class TaskPrioritySolver : public ConstraintSolver<>
 {
     public:
-        TaskPrioritySolver(const TwistControllerParams& params, TaskStackController_t& task_stack_controller)
-                           : ConstraintSolver(params, task_stack_controller)
+        TaskPrioritySolver(const TwistControllerParams& params,
+                           const LimiterParams& limiter_params,
+                           TaskStackController_t& task_stack_controller) :
+                ConstraintSolver(params, limiter_params, task_stack_controller)
         {
+            this->last_time_ = ros::Time::now();
         }
 
         virtual ~TaskPrioritySolver()
-        {
-        }
+        {}
 
         /**
          * Specific implementation of solve-method to solve IK problem with constraints by using the GPM.
@@ -57,6 +60,9 @@ class TaskPrioritySolver : public ConstraintSolver<>
          */
         virtual Eigen::MatrixXd solve(const Vector6d_t& in_cart_velocities,
                                       const JointStates& joint_states);
+
+    protected:
+        ros::Time last_time_;
 };
 
-#endif /* TASK_PRIORITY_SOLVER_H_ */
+#endif  // COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_TASK_PRIORITY_SOLVER_H

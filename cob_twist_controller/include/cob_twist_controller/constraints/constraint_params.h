@@ -25,13 +25,15 @@
  *   Implementation of parameter classes for constraints.
  *
  ****************************************************************/
-#ifndef CONSTRAINT_PARAMS_H_
-#define CONSTRAINT_PARAMS_H_
 
+#ifndef COB_TWIST_CONTROLLER_CONSTRAINTS_CONSTRAINT_PARAMS_H
+#define COB_TWIST_CONTROLLER_CONSTRAINTS_CONSTRAINT_PARAMS_H
+
+#include <vector>
+#include <string>
+#include <ros/ros.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/scoped_ptr.hpp>
-
-#include <ros/ros.h>
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 
@@ -40,17 +42,20 @@
 class ConstraintParamsBase
 {
     public:
-
         ConstraintParamsBase(const TwistControllerParams& params,
-                             const std::string& id = std::string()) : tc_params_(params), id_(id)
+                             const LimiterParams& limiter_params,
+                             const std::string& id = std::string()) :
+                tc_params_(params),
+                limiter_params_(limiter_params),
+                id_(id)
         {}
 
         ~ConstraintParamsBase()
         {}
 
-
         const std::string id_;
         const TwistControllerParams& tc_params_;
+        const LimiterParams& limiter_params_;
 };
 /* END ConstraintParamsBase *************************************************************************************/
 
@@ -59,15 +64,14 @@ class ConstraintParamsBase
 class ConstraintParamsCA : public ConstraintParamsBase
 {
     public:
-        std::vector<ObstacleDistanceData> current_distances_;
-
         ConstraintParamsCA(const TwistControllerParams& params,
-                           const std::string& id = std::string())
-        : ConstraintParamsBase(params, id)
+                           const LimiterParams& limiter_params,
+                           const std::string& id = std::string()) :
+                ConstraintParamsBase(params, limiter_params, id)
         {}
 
-        ConstraintParamsCA(const ConstraintParamsCA& cpca)
-        : ConstraintParamsBase(cpca.tc_params_, cpca.id_)
+        ConstraintParamsCA(const ConstraintParamsCA& cpca) :
+                ConstraintParamsBase(cpca.tc_params_, cpca.limiter_params_, cpca.id_)
         {
             current_distances_ = cpca.current_distances_;
         }
@@ -75,6 +79,7 @@ class ConstraintParamsCA : public ConstraintParamsBase
         virtual ~ConstraintParamsCA()
         {}
 
+        std::vector<ObstacleDistanceData> current_distances_;
 };
 /* END ConstraintParamsCA ***************************************************************************************/
 
@@ -83,15 +88,17 @@ class ConstraintParamsCA : public ConstraintParamsBase
 class ConstraintParamsJLA : public ConstraintParamsBase
 {
     public:
-
         ConstraintParamsJLA(const TwistControllerParams& params,
-                            const std::string& id = std::string())
-        : ConstraintParamsBase(params, id), joint_idx_(-1)
-        {
-        }
+                            const LimiterParams& limiter_params,
+                            const std::string& id = std::string()) :
+                ConstraintParamsBase(params, limiter_params, id),
+                joint_idx_(-1)
+        {}
 
-        ConstraintParamsJLA(const ConstraintParamsJLA& cpjla)
-        : ConstraintParamsBase(cpjla.tc_params_, cpjla.id_), joint_(cpjla.joint_), joint_idx_(cpjla.joint_idx_)
+        ConstraintParamsJLA(const ConstraintParamsJLA& cpjla) :
+                ConstraintParamsBase(cpjla.tc_params_, cpjla.limiter_params_, cpjla.id_),
+                joint_(cpjla.joint_),
+                joint_idx_(cpjla.joint_idx_)
         {}
 
         virtual ~ConstraintParamsJLA()
@@ -99,10 +106,9 @@ class ConstraintParamsJLA : public ConstraintParamsBase
 
         std::string joint_;
         int32_t joint_idx_;
-
 };
 /* END ConstraintParamsJLA **************************************************************************************/
 
 typedef boost::shared_ptr<ConstraintParamsBase> ConstraintParamsBase_t;
 
-#endif /* CONSTRAINT_PARAMS_H_ */
+#endif  // COB_TWIST_CONTROLLER_CONSTRAINTS_CONSTRAINT_PARAMS_H

@@ -36,7 +36,7 @@
 DampingBase* DampingBuilder::createDamping(const TwistControllerParams& params)
 {
     DampingBase* db = NULL;
-    switch(params.damping_method)
+    switch (params.damping_method)
     {
         case NO_DAMPING:
             db = new DampingNone(params);
@@ -123,7 +123,7 @@ double DampingLeastSingularValues::getDampingFactor(const Eigen::VectorXd& sorte
 {
     // Formula 15 Singularity-robust Task-priority Redundandancy Resolution
     double least_singular_value = sorted_singular_values(sorted_singular_values.rows() - 1);
-    if(least_singular_value < this->params_.eps_damping)
+    if (least_singular_value < this->params_.eps_damping)
     {
         double lambda_quad = pow(this->params_.lambda_max, 2.0);
         return sqrt( (1.0 - pow(least_singular_value / this->params_.eps_damping, 2.0)) * lambda_quad);

@@ -26,8 +26,9 @@
  *   Implements methods from constraint_solver_base
  *
  ****************************************************************/
-#ifndef GRADIENT_PROJECTION_METHOD_SOLVER_H_
-#define GRADIENT_PROJECTION_METHOD_SOLVER_H_
+
+#ifndef COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_GRADIENT_PROJECTION_METHOD_SOLVER_H
+#define COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_GRADIENT_PROJECTION_METHOD_SOLVER_H
 
 #include <set>
 #include "ros/ros.h"
@@ -35,21 +36,20 @@
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/constraint_solvers/solvers/constraint_solver_base.h"
 
-
 #include "cob_twist_controller/constraints/constraint_base.h"
 #include "cob_twist_controller/constraints/constraint.h"
 
 class GradientProjectionMethodSolver : public ConstraintSolver<>
 {
     public:
-        GradientProjectionMethodSolver(const TwistControllerParams& params, TaskStackController_t& task_stack_controller)
-                           : ConstraintSolver(params, task_stack_controller)
-        {
-        }
+        GradientProjectionMethodSolver(const TwistControllerParams& params,
+                                       const LimiterParams& limiter_params,
+                                       TaskStackController_t& task_stack_controller) :
+                ConstraintSolver(params, limiter_params, task_stack_controller)
+        {}
 
         virtual ~GradientProjectionMethodSolver()
-        {
-        }
+        {}
 
         /**
          * Specific implementation of solve-method to solve IK problem with constraints by using the GPM.
@@ -59,4 +59,4 @@ class GradientProjectionMethodSolver : public ConstraintSolver<>
                                       const JointStates& joint_states);
 };
 
-#endif /* GRADIENT_PROJECTION_METHOD_SOLVER_H_ */
+#endif  // COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_GRADIENT_PROJECTION_METHOD_SOLVER_H

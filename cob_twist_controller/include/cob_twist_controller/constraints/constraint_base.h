@@ -26,10 +26,12 @@
  *
  ****************************************************************/
 
-#ifndef CONSTRAINT_BASE_H_
-#define CONSTRAINT_BASE_H_
+#ifndef COB_TWIST_CONTROLLER_CONSTRAINTS_CONSTRAINT_BASE_H
+#define COB_TWIST_CONTROLLER_CONSTRAINTS_CONSTRAINT_BASE_H
 
 #include <set>
+#include <string>
+#include <limits>
 #include <stdint.h>
 #include <boost/shared_ptr.hpp>
 #include <kdl/jntarray.hpp>
@@ -37,7 +39,6 @@
 #include <Eigen/Core>
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
-#include "cob_twist_controller/constraints/self_motion_magnitude.h"
 #include "cob_twist_controller/constraints/constraint_params.h"
 #include "cob_twist_controller/callback_data_mediator.h"
 #include "cob_twist_controller/task_stack/task_stack_controller.h"
@@ -50,8 +51,7 @@ template
 class PriorityBase
 {
     public:
-
-        PriorityBase(PRIO prio) : priority_(prio)
+        explicit PriorityBase(PRIO prio): priority_(prio)
         {}
 
         virtual ~PriorityBase()
@@ -82,37 +82,34 @@ class PriorityBase
             return priority_;
         }
 
-        /// Ensure priority class has overriddend double() operator.
+        /// Ensure priority class has overwritten double() operator.
         inline double getPriorityAsNum() const
         {
             return static_cast<double>(priority_);
         }
 
-        virtual std::string getTaskId() const = 0;
         virtual Task_t createTask() = 0;
+        virtual std::string getTaskId() const = 0;
+        virtual ConstraintState getState() const = 0;
         virtual Eigen::MatrixXd getTaskJacobian() const = 0;
         virtual Eigen::VectorXd getTaskDerivatives() const = 0;
 
+        virtual void update(const JointStates& joint_states, const KDL::JntArrayVel& joints_prediction, const Matrix6Xd_t& jacobian_data) = 0;
         virtual void calculate() = 0;
         virtual double getValue() const = 0;
         virtual double getDerivativeValue() const = 0;
         virtual Eigen::VectorXd getPartialValues() const = 0;
-        virtual double getPrediction() const = 0;
+        virtual double getPredictionValue() const = 0;
 
         virtual double getActivationGain() const = 0;
         virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution,
                                               const Eigen::MatrixXd& homogeneous_solution) const = 0;
 
-
-        virtual void update(const JointStates& joint_states, const KDL::JntArrayVel& joints_prediction, const Matrix6Xd_t& jacobian_data) = 0;
-
-        virtual ConstraintState getState() const = 0;
-
     protected:
         PRIO priority_;
 
-        virtual double getCriticalValue() const = 0;
         virtual ConstraintTypes getType() const = 0;
+        virtual double getCriticalValue() const = 0;
         virtual TwistControllerParams adaptDampingParamsForTask(double const_damping_factor) = 0;
 };
 
@@ -127,7 +124,6 @@ template
 class ConstraintBase : public PriorityBase<PRIO>
 {
     public:
-
         /**
          * @param prio A priority value / object.
          * @param q The joint states.
@@ -141,30 +137,16 @@ class ConstraintBase : public PriorityBase<PRIO>
           callback_data_mediator_(cbdm),
           value_(0.0),
           derivative_value_(0.0),
+          prediction_value_(std::numeric_limits<double>::max()),
           last_value_(0.0),
-          last_time_(-0.1),
-          prediction_value_(std::numeric_limits<double>::max())
+          last_time_(ros::Time::now()),
+          last_pred_time_(ros::Time::now())
         {
             this->member_inst_cnt_ = instance_ctr_++;
-            this->last_pred_time_ = ros::Time::now();
         }
 
         virtual ~ConstraintBase()
         {}
-
-        virtual ConstraintTypes getType() const = 0;
-
-        virtual std::string getTaskId() const = 0;
-
-        virtual Eigen::MatrixXd getTaskJacobian() const
-        {
-            return Eigen::MatrixXd::Zero(1,1);
-        }
-
-        virtual Eigen::VectorXd getTaskDerivatives() const
-        {
-            return Eigen::VectorXd::Zero(1,1);
-        }
 
         virtual Task_t createTask()
         {
@@ -176,16 +158,41 @@ class ConstraintBase : public PriorityBase<PRIO>
             return task;
         }
 
+        virtual std::string getTaskId() const = 0;
+
+        virtual ConstraintState getState() const
+        {
+            return this->state_;
+        }
+
+        virtual Eigen::MatrixXd getTaskJacobian() const
+        {
+            return Eigen::MatrixXd::Zero(1, 1);
+        }
+
+        virtual Eigen::VectorXd getTaskDerivatives() const
+        {
+            return Eigen::VectorXd::Zero(1, 1);
+        }
+
+        virtual void update(const JointStates& joint_states, const KDL::JntArrayVel& joints_prediction, const Matrix6Xd_t& jacobian_data)
+        {
+            // ROS_INFO_STREAM("ConstraintBase::update: joint_states.current_q_.rows: " << joint_states.current_q_.rows());
+            // ROS_INFO_STREAM("ConstraintBase::update: joints_prediction.q.rows: " << joints_prediction.q.rows());
+            // ROS_INFO_STREAM("ConstraintBase::update: jacobian_data.cols: " << jacobian_data.cols());
+
+            this->joint_states_ = joint_states;
+            this->jacobian_data_ = jacobian_data;
+            this->jnts_prediction_ = joints_prediction;
+            this->callback_data_mediator_.fill(this->constraint_params_);
+            this->calculate();
+        }
+
         virtual void calculate() = 0;
 
         virtual double getValue() const
         {
             return this->value_;
-        }
-
-        virtual double getPrediction() const
-        {
-            return this->prediction_value_;
         }
 
         virtual double getDerivativeValue() const
@@ -198,41 +205,36 @@ class ConstraintBase : public PriorityBase<PRIO>
             return this->partial_values_;
         }
 
-        virtual void update(const JointStates& joint_states, const KDL::JntArrayVel& joints_prediction, const Matrix6Xd_t& jacobian_data)
+        virtual double getPredictionValue() const
         {
-            this->joint_states_ = joint_states;
-            this->jacobian_data_ = jacobian_data;
-            this->jnts_prediction_ = joints_prediction;
-            this->callback_data_mediator_.fill(this->constraint_params_);
-            this->calculate();
-        }
-
-        virtual ConstraintState getState() const
-        {
-            return this->state_;
+            return this->prediction_value_;
         }
 
         virtual double getActivationGain() const = 0;
-
+        virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution,
+                                              const Eigen::MatrixXd& homogeneous_solution) const = 0;
 
     protected:
         ConstraintState state_;
-        JointStates joint_states_;
-        Matrix6Xd_t jacobian_data_;
         T_PARAMS constraint_params_;
         CallbackDataMediator& callback_data_mediator_;
-        Eigen::VectorXd partial_values_;
-        KDL::JntArrayVel jnts_prediction_;
 
-        double derivative_value_;
+        JointStates joint_states_;
+        KDL::JntArrayVel jnts_prediction_;
+        Matrix6Xd_t jacobian_data_;
+
         double value_;
+        double derivative_value_;
+        Eigen::VectorXd partial_values_;
         double prediction_value_;
         double last_value_;
-        double last_time_;
+        ros::Time last_time_;
         ros::Time last_pred_time_;
 
         uint32_t member_inst_cnt_;
         static uint32_t instance_ctr_;
+
+        virtual ConstraintTypes getType() const = 0;
 
         virtual double getCriticalValue() const
         {
@@ -264,4 +266,4 @@ uint32_t ConstraintBase<T_PARAMS, PRIO>::instance_ctr_ = 0;
 
 typedef boost::shared_ptr<PriorityBase<uint32_t> > ConstraintBase_t;
 
-#endif /* CONSTRAINT_BASE_H_ */
+#endif  // COB_TWIST_CONTROLLER_CONSTRAINTS_CONSTRAINT_BASE_H

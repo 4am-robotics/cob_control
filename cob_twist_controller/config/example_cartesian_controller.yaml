@@ -12,7 +12,7 @@ twist_controller:
 
 # frame_tracker + interactive_marker
 frame_tracker:
-  tracking_frame: arm_7_target
+  target_frame: arm_7_target
   marker_scale: 0.3
   movable_trans: true
   movable_rot: true

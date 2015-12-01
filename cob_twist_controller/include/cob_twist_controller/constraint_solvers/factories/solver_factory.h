@@ -25,9 +25,11 @@
  *   This header contains the interface description to create solvers
  *
  ****************************************************************/
-#ifndef SOLVER_FACTORY_H_
-#define SOLVER_FACTORY_H_
 
+#ifndef COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_FACTORIES_SOLVER_FACTORY_H
+#define COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_FACTORIES_SOLVER_FACTORY_H
+
+#include <set>
 #include <Eigen/Core>
 #include <Eigen/SVD>
 #include <kdl/jntarray.hpp>
@@ -54,11 +56,11 @@ template <typename T>
 class SolverFactory : public ISolverFactory
 {
     public:
-
         SolverFactory(const TwistControllerParams& params,
+                      const LimiterParams& limiter_params,
                       TaskStackController_t& task_stack_controller)
         {
-            constraint_solver_.reset(new T(params, task_stack_controller));
+            constraint_solver_.reset(new T(params, limiter_params, task_stack_controller));
         }
 
         ~SolverFactory()
@@ -94,4 +96,4 @@ class SolverFactory : public ISolverFactory
         boost::shared_ptr<T> constraint_solver_;
 };
 
-#endif /* SOLVER_FACTORY_H_ */
+#endif  // COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_FACTORIES_SOLVER_FACTORY_H

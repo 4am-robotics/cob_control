@@ -36,7 +36,7 @@ ControllerInterfaceBase* ControllerInterfaceBuilder::createControllerInterface(r
                                                                                const TwistControllerParams& params)
 {
     ControllerInterfaceBase* ib = NULL;
-    switch(params.controller_interface)
+    switch (params.controller_interface)
     {
         case VELOCITY_INTERFACE:
             ib = new ControllerInterfaceVelocity(nh, params);
@@ -69,7 +69,7 @@ inline void ControllerInterfaceVelocity::processResult(const KDL::JntArray& q_do
 {
     std_msgs::Float64MultiArray vel_msg;
 
-    for(unsigned int i = 0; i < params_.dof; i++)
+    for (unsigned int i = 0; i < params_.dof; i++)
     {
         vel_msg.data.push_back(q_dot_ik(i));
     }
@@ -86,9 +86,9 @@ inline void ControllerInterfaceVelocity::processResult(const KDL::JntArray& q_do
 inline void ControllerInterfacePosition::processResult(const KDL::JntArray& q_dot_ik,
                                                        const KDL::JntArray& current_q)
 {
-    if(updateIntegration(q_dot_ik, current_q))
+    if (updateIntegration(q_dot_ik, current_q))
     {
-        ///publish to interface
+        /// publish to interface
         std_msgs::Float64MultiArray pos_msg;
         pos_msg.data = pos;
         pub_.publish(pos_msg);
@@ -104,22 +104,21 @@ inline void ControllerInterfacePosition::processResult(const KDL::JntArray& q_do
 inline void ControllerInterfaceTrajectory::processResult(const KDL::JntArray& q_dot_ik,
                                                          const KDL::JntArray& current_q)
 {
-    if(updateIntegration(q_dot_ik, current_q))
+    if (updateIntegration(q_dot_ik, current_q))
     {
-        ///publish to interface
         trajectory_msgs::JointTrajectoryPoint traj_point;
         traj_point.positions = pos;
-        //traj_point.velocities = vel;
-        //traj_point.accelerations.assign(params_.dof, 0.0);
-        //traj_point.effort.assign(params_.dof, 0.0);
-        traj_point.time_from_start = ros::Duration(0.05);  //ToDo: find good value
-        
+        // traj_point.velocities = vel;
+        // traj_point.accelerations.assign(params_.dof, 0.0);
+        // traj_point.effort.assign(params_.dof, 0.0);
+        traj_point.time_from_start = ros::Duration(0.05);  // ToDo: find good value
+
         trajectory_msgs::JointTrajectory traj_msg;
-        //traj_msg.header.stamp = ros::Time::now();
+        traj_msg.header.stamp = ros::Time::now();
         traj_msg.joint_names = params_.joints;
         traj_msg.points.push_back(traj_point);
-        
-        //publish to interface
+
+        /// publish to interface
         pub_.publish(traj_msg);
     }
 }
@@ -133,21 +132,21 @@ inline void ControllerInterfaceTrajectory::processResult(const KDL::JntArray& q_
 inline void ControllerInterfaceJointStates::processResult(const KDL::JntArray& q_dot_ik,
                                                           const KDL::JntArray& current_q)
 {
-    if(updateIntegration(q_dot_ik, current_q))
+    if (updateIntegration(q_dot_ik, current_q))
     {
-        ///update JointState
+        /// update JointState
         boost::mutex::scoped_lock lock(mutex_);
         js_msg_.position = pos;
         js_msg_.velocity = vel;
 
-        ///publishing takes place in separate thread
+        /// publishing takes place in separate thread
     }
 }
 
-void ControllerInterfaceJointStates::publishJointState(const ros::TimerEvent& event)
 /**
  * Timer callback publishing the internal JointState to the 'joint_state' topic.
  */
+void ControllerInterfaceJointStates::publishJointState(const ros::TimerEvent& event)
 {
     boost::mutex::scoped_lock lock(mutex_);
     js_msg_.header.stamp = ros::Time::now();

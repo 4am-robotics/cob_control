@@ -305,7 +305,7 @@ public:
                 }
                 else if(current_control_mode_==INTERPOL_POSITION)
                 {
-                    ROS_INFO("Have not heard a interplated pos command for %f seconds, switched back to trajectory_controller", period_interpol_pos.toSec());
+                    ROS_INFO("Have not heard a interpolated pos command for %f seconds, switched back to trajectory_controller", period_interpol_pos.toSec());
                 }
                 else
                 {

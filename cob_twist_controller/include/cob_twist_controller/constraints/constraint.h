@@ -26,16 +26,19 @@
  *
  ****************************************************************/
 
-#ifndef CONSTRAINT_H_
-#define CONSTRAINT_H_
+#ifndef COB_TWIST_CONTROLLER_CONSTRAINTS_CONSTRAINT_H
+#define COB_TWIST_CONTROLLER_CONSTRAINTS_CONSTRAINT_H
 
+#include <set>
+#include <string>
+#include <limits>
+#include <kdl/chainjnttojacsolver.hpp>
 #include <kdl/chainfksolvervel_recursive.hpp>
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/constraints/constraint_base.h"
 #include "cob_twist_controller/callback_data_mediator.h"
 #include "cob_twist_controller/utils/moving_average.h"
-
 
 /* BEGIN ConstraintParamFactory *********************************************************************************/
 /// Creates constraint parameters and fills them with the values provided by CallbackDataMediator.
@@ -45,10 +48,11 @@ class ConstraintParamFactory
 {
     public:
         static T createConstraintParams(const TwistControllerParams& twist_controller_params,
+                                        const LimiterParams& limiter_params,
                                         CallbackDataMediator& data_mediator,
                                         const std::string& id = std::string())
         {
-            T params(twist_controller_params, id);
+            T params(twist_controller_params, limiter_params, id);
             data_mediator.fill(params);
             return params;
         }
@@ -66,9 +70,10 @@ class ConstraintsBuilder
 {
     public:
         static std::set<ConstraintBase_t> createConstraints(const TwistControllerParams& params,
-                                                           KDL::ChainJntToJacSolver& jnt_to_jac_,
-                                                           KDL::ChainFkSolverVel_recursive& fk_solver_vel,
-                                                           CallbackDataMediator& data_mediator);
+                                                            const LimiterParams& limiter_params,
+                                                            KDL::ChainJntToJacSolver& jnt_to_jac_,
+                                                            KDL::ChainFkSolverVel_recursive& fk_solver_vel,
+                                                            CallbackDataMediator& data_mediator);
 
     private:
         ConstraintsBuilder() {}
@@ -82,7 +87,6 @@ template <typename T_PARAMS, typename PRIO = uint32_t>
 class CollisionAvoidance : public ConstraintBase<T_PARAMS, PRIO>
 {
     public:
-
         CollisionAvoidance(PRIO prio,
                            T_PARAMS constraint_params,
                            CallbackDataMediator& cbdm,
@@ -91,43 +95,41 @@ class CollisionAvoidance : public ConstraintBase<T_PARAMS, PRIO>
             ConstraintBase<T_PARAMS, PRIO>(prio, constraint_params, cbdm),
             jnt_to_jac_(jnt_to_jac),
             fk_solver_vel_(fk_solver_vel)
-        {
-        }
+        {}
 
         virtual ~CollisionAvoidance()
         {}
 
-        virtual void calculate();
-
-        virtual std::string getTaskId() const;
         virtual Task_t createTask();
+        virtual std::string getTaskId() const;
         virtual Eigen::MatrixXd getTaskJacobian() const;
         virtual Eigen::VectorXd getTaskDerivatives() const;
+
+        virtual void calculate();
 
         virtual double getActivationGain() const;
         virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution,
                                               const Eigen::MatrixXd& homogeneous_solution) const;
 
-    private:
-        virtual double getCriticalValue() const;
-        virtual ConstraintTypes getType() const;
         double getActivationGain(double current_cost_func_value) const;
         double getSelfMotionMagnitude(double current_cost_func_value) const;
 
-        double calcValue();
-        double calcDerivativeValue();
-        Eigen::VectorXd calcPartialValues();
-        double predictValue();
+    private:
+        virtual ConstraintTypes getType() const;
+        virtual double getCriticalValue() const;
+
+        void calcValue();
+        void calcDerivativeValue();
+        void calcPartialValues();
+        void calcPredictionValue();
         double getActivationThresholdWithBuffer() const;
 
         KDL::ChainJntToJacSolver& jnt_to_jac_;
         KDL::ChainFkSolverVel_recursive& fk_solver_vel_;
 
-        Eigen::MatrixXd task_jacobian_;
         Eigen::VectorXd values_;
         Eigen::VectorXd derivative_values_;
-
-
+        Eigen::MatrixXd task_jacobian_;
 };
 /* END CollisionAvoidance ***************************************************************************************/
 
@@ -137,51 +139,49 @@ template <typename T_PARAMS, typename PRIO = uint32_t>
 class JointLimitAvoidance : public ConstraintBase<T_PARAMS, PRIO>
 {
     public:
-
         JointLimitAvoidance(PRIO prio,
                             T_PARAMS constraint_params,
                             CallbackDataMediator& cbdm)
             : ConstraintBase<T_PARAMS, PRIO>(prio, constraint_params, cbdm),
               abs_delta_max_(std::numeric_limits<double>::max()),
               abs_delta_min_(std::numeric_limits<double>::max()),  // max. delta away from min
-              rel_max_(1.0), // 100% rel. range to max limit
-              rel_min_(1.0) // 100% rel. range to min limit
+              rel_max_(1.0),    // 100% rel. range to max limit
+              rel_min_(1.0)     // 100% rel. range to min limit
         {}
 
         virtual ~JointLimitAvoidance()
         {}
 
-        virtual std::string getTaskId() const;
         virtual Task_t createTask();
-        virtual Eigen::MatrixXd getTaskJacobian() const;
-        virtual Eigen::VectorXd getTaskDerivatives() const;
+        virtual std::string getTaskId() const;
 
         virtual void calculate();
+        virtual Eigen::MatrixXd getTaskJacobian() const;
+        virtual Eigen::VectorXd getTaskDerivatives() const;
 
         virtual double getActivationGain() const;
         virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const;
 
     private:
         virtual ConstraintTypes getType() const;
-        double calcValue();
-        double calcDerivativeValue();
-        Eigen::VectorXd calcPartialValues();
+
+        void calcValue();
+        void calcDerivativeValue();
+        void calcPartialValues();
 
         double abs_delta_max_;
         double abs_delta_min_;
         double rel_max_;
         double rel_min_;
-
 };
 /* END JointLimitAvoidance **************************************************************************************/
 
 /* BEGIN JointLimitAvoidanceMid *********************************************************************************/
-/// Class providing methods that realize a CollisionAvoidance constraint.
+/// Class providing methods that realize a JointLimitAvoidanceMid constraint.
 template <typename T_PARAMS, typename PRIO = uint32_t>
 class JointLimitAvoidanceMid : public ConstraintBase<T_PARAMS, PRIO>
 {
     public:
-
         JointLimitAvoidanceMid(PRIO prio,
                                T_PARAMS constraint_params,
                                CallbackDataMediator& cbdm)
@@ -200,9 +200,10 @@ class JointLimitAvoidanceMid : public ConstraintBase<T_PARAMS, PRIO>
 
     private:
         virtual ConstraintTypes getType() const;
-        double calcValue();
-        double calcDerivativeValue();
-        Eigen::VectorXd calcPartialValues();
+
+        void calcValue();
+        void calcDerivativeValue();
+        void calcPartialValues();
 };
 /* END JointLimitAvoidanceMid ***********************************************************************************/
 
@@ -213,15 +214,14 @@ class JointLimitAvoidanceIneq : public ConstraintBase<T_PARAMS, PRIO>
 {
     public:
         JointLimitAvoidanceIneq(PRIO prio,
-                            T_PARAMS constraint_params,
-                            CallbackDataMediator& cbdm)
+                                T_PARAMS constraint_params,
+                                CallbackDataMediator& cbdm)
             : ConstraintBase<T_PARAMS, PRIO>(prio, constraint_params, cbdm),
               abs_delta_max_(std::numeric_limits<double>::max()),
               abs_delta_min_(std::numeric_limits<double>::max()),
               rel_max_(1.0),
               rel_min_(1.0)
-        {
-        }
+        {}
 
         virtual ~JointLimitAvoidanceIneq()
         {}
@@ -238,9 +238,10 @@ class JointLimitAvoidanceIneq : public ConstraintBase<T_PARAMS, PRIO>
 
     private:
         virtual ConstraintTypes getType() const;
-        double calcValue();
-        double calcDerivativeValue();
-        Eigen::VectorXd calcPartialValues();
+
+        void calcValue();
+        void calcDerivativeValue();
+        void calcPartialValues();
 
         double abs_delta_max_;
         double abs_delta_min_;
@@ -251,6 +252,6 @@ class JointLimitAvoidanceIneq : public ConstraintBase<T_PARAMS, PRIO>
 
 typedef ConstraintsBuilder<uint32_t> ConstraintsBuilder_t;
 
-#include "cob_twist_controller/constraints/constraint_impl.h" // implementation of templated class
+#include "cob_twist_controller/constraints/constraint_impl.h"   // implementation of templated class
 
-#endif /* CONSTRAINT_H_ */
+#endif  // COB_TWIST_CONTROLLER_CONSTRAINTS_CONSTRAINT_H

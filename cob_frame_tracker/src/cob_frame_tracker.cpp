@@ -54,7 +54,7 @@ bool CobFrameTracker::initialize()
 
     if (nh_.hasParam("chain_base_link"))
     {
-        nh_.getParam("chain_base_link", chain_base_);
+        nh_.getParam("chain_base_link", chain_base_link_);
     }
     else
     {
@@ -85,7 +85,7 @@ bool CobFrameTracker::initialize()
         return false;
     }
 
-    tree.getChain(chain_base_, chain_tip_link_, chain_);
+    tree.getChain(chain_base_link_, chain_tip_link_, chain_);
     if(chain_.getNrOfJoints() == 0)
     {
         ROS_ERROR("Failed to initialize kinematic chain");
@@ -133,7 +133,10 @@ bool CobFrameTracker::initialize()
 
     tracking_ = false;
     tracking_goal_ = false;
+    lookat_ = false;
     tracking_frame_ = chain_tip_link_;
+    target_frame_ = chain_tip_link_;
+    lookat_focus_frame_ = "lookat_focus_frame";
 
     //ABORTION CRITERIA:
     cart_min_dist_threshold_lin_ = 0.01;
@@ -150,16 +153,19 @@ bool CobFrameTracker::initialize()
     target_twist_.Zero();
 
     abortion_counter_ = 0;
-    max_abortions_ = update_rate_;    //if tracking fails for 1 minute
+    max_abortions_ = update_rate_;    //if tracking fails for 1 second
 
     reconfigure_server_.reset(new dynamic_reconfigure::Server<cob_frame_tracker::FrameTrackerConfig>(reconfig_mutex_, nh_tracker));
     reconfigure_server_->setCallback(boost::bind(&CobFrameTracker::reconfigureCallback,   this, _1, _2));
+    
+    reconfigure_client_ = nh_twist.serviceClient<dynamic_reconfigure::Reconfigure>("set_parameters");
 
     jointstate_sub_ = nh_.subscribe("joint_states", 1, &CobFrameTracker::jointstateCallback, this);
     twist_pub_ = nh_twist.advertise<geometry_msgs::TwistStamped> ("command_twist_stamped", 1);
 
-    start_server_ = nh_tracker.advertiseService("start_tracking", &CobFrameTracker::startTrackingCallback, this);
-    stop_server_ = nh_tracker.advertiseService("stop_tracking", &CobFrameTracker::stopTrackingCallback, this);
+    start_tracking_server_ = nh_tracker.advertiseService("start_tracking", &CobFrameTracker::startTrackingCallback, this);
+    start_lookat_server_ = nh_tracker.advertiseService("start_lookat", &CobFrameTracker::startLookatCallback, this);
+    stop_server_ = nh_tracker.advertiseService("stop", &CobFrameTracker::stopCallback, this);
 
     action_name_ = "tracking_action";
     as_.reset(new SAS_FrameTrackingAction_t(nh_tracker, action_name_, false));
@@ -177,7 +183,7 @@ void CobFrameTracker::run(const ros::TimerEvent& event)
 {
     ros::Duration period = event.current_real - event.last_real;
 
-    if(tracking_)
+    if(tracking_ || tracking_goal_ || lookat_)
     {
         if (tracking_goal_) // tracking on action goal.
         {
@@ -197,7 +203,7 @@ void CobFrameTracker::run(const ros::TimerEvent& event)
                 if (as_->isActive()){ as_->publishFeedback(action_feedback_); }
             }
         }
-        else // tracking on service call
+        else // tracking/lookat on service call
         {
             int status = checkServiceCallStatus();
             if(status < 0)
@@ -212,38 +218,42 @@ void CobFrameTracker::run(const ros::TimerEvent& event)
     }
 }
 
-bool CobFrameTracker::getTransform(const std::string& target_frame, const std::string& source_frame, tf::StampedTransform& stamped_tf)
+bool CobFrameTracker::getTransform(const std::string& from, const std::string& to, tf::StampedTransform& stamped_tf)
 {
-    bool success = true;
+    bool transform = false;
+
     try
     {
-        tf_listener_.lookupTransform(target_frame, source_frame, ros::Time(0), stamped_tf);
+        tf_listener_.lookupTransform(from, to, ros::Time(0), stamped_tf);
+        transform = true;
     }
     catch (tf::TransformException& ex)
     {
         ROS_ERROR("CobFrameTracker::getTransform: \n%s",ex.what());
-        success = false;
     }
 
-    return success;
+    return transform;
 }
 
 void CobFrameTracker::publishZeroTwist()
 {
     //publish zero Twist for stopping
     geometry_msgs::TwistStamped twist_msg;
-    twist_msg.header.frame_id = chain_tip_link_;
+    twist_msg.header.frame_id = tracking_frame_;
     twist_pub_.publish(twist_msg);
 }
 
 void CobFrameTracker::publishTwist(ros::Duration period, bool do_publish)
 {
     tf::StampedTransform transform_tf;
+    bool success = this->getTransform(tracking_frame_, target_frame_, transform_tf);
+    
     geometry_msgs::TwistStamped twist_msg;
-    double roll, pitch, yaw;
+    twist_msg.header.frame_id = tracking_frame_;
 
-    if(!this->getTransform(chain_tip_link_, tracking_frame_, transform_tf))
+    if(!success)
     {
+        ROS_WARN("publishTwist: failed to getTransform");
         return;
     }
 
@@ -263,8 +273,6 @@ void CobFrameTracker::publishTwist(ros::Duration period, bool do_publish)
         twist_msg.twist.angular.y = pid_controller_rot_y_.computeCommand(transform_tf.getRotation().y(), period);
         twist_msg.twist.angular.z = pid_controller_rot_z_.computeCommand(transform_tf.getRotation().z(), period);
     }
-
-    twist_msg.header.frame_id = chain_tip_link_;
 
     /////debug only
     //if(std::fabs(transform_tf.getOrigin().x()) >= max_vel_lin_)
@@ -303,33 +311,37 @@ void CobFrameTracker::publishTwist(ros::Duration period, bool do_publish)
     target_twist_.rot.z(twist_msg.twist.angular.z);
 
     if(do_publish)
+    {
         twist_pub_.publish(twist_msg);
+    }
 }
 
 void CobFrameTracker::publishHoldTwist(const ros::Duration& period)
 {
+    tf::StampedTransform transform_tf;
+    bool success = this->getTransform(chain_base_link_, tracking_frame_, transform_tf);
+    
     geometry_msgs::TwistStamped twist_msg;
-    twist_msg.header.frame_id = chain_tip_link_;
+    twist_msg.header.frame_id = tracking_frame_;
 
     if(!this->ht_.hold)
     {
         ROS_ERROR_STREAM_THROTTLE(1, "Abortion active: Publishing zero twist");
-        ht_.hold = this->getTransform(chain_base_, chain_tip_link_, ht_.transform_tf);
+        ht_.hold = success;
+        ht_.transform_tf = transform_tf;
     }
     else
     {
         ROS_ERROR_STREAM_THROTTLE(1, "Abortion active: Publishing hold posture twist");
-        tf::StampedTransform new_tf;
-        if(this->getTransform(chain_base_, chain_tip_link_, new_tf))
+        if(success)
         {
-            twist_msg.header.frame_id = chain_tip_link_;
-            twist_msg.twist.linear.x = pid_controller_trans_x_.computeCommand(ht_.transform_tf.getOrigin().x() - new_tf.getOrigin().x(), period);
-            twist_msg.twist.linear.y = pid_controller_trans_y_.computeCommand(ht_.transform_tf.getOrigin().y() - new_tf.getOrigin().y(), period);
-            twist_msg.twist.linear.z = pid_controller_trans_z_.computeCommand(ht_.transform_tf.getOrigin().z() - new_tf.getOrigin().z(), period);
+            twist_msg.twist.linear.x = pid_controller_trans_x_.computeCommand(ht_.transform_tf.getOrigin().x() - transform_tf.getOrigin().x(), period);
+            twist_msg.twist.linear.y = pid_controller_trans_y_.computeCommand(ht_.transform_tf.getOrigin().y() - transform_tf.getOrigin().y(), period);
+            twist_msg.twist.linear.z = pid_controller_trans_z_.computeCommand(ht_.transform_tf.getOrigin().z() - transform_tf.getOrigin().z(), period);
 
-            twist_msg.twist.angular.x = pid_controller_rot_x_.computeCommand(ht_.transform_tf.getRotation().x() - new_tf.getRotation().x(), period);
-            twist_msg.twist.angular.y = pid_controller_rot_y_.computeCommand(ht_.transform_tf.getRotation().y() - new_tf.getRotation().y(), period);
-            twist_msg.twist.angular.z = pid_controller_rot_z_.computeCommand(ht_.transform_tf.getRotation().z() - new_tf.getRotation().z(), period);
+            twist_msg.twist.angular.x = pid_controller_rot_x_.computeCommand(ht_.transform_tf.getRotation().x() - transform_tf.getRotation().x(), period);
+            twist_msg.twist.angular.y = pid_controller_rot_y_.computeCommand(ht_.transform_tf.getRotation().y() - transform_tf.getRotation().y(), period);
+            twist_msg.twist.angular.z = pid_controller_rot_z_.computeCommand(ht_.transform_tf.getRotation().z() - transform_tf.getRotation().z(), period);
         }
     }
 
@@ -340,44 +352,146 @@ bool CobFrameTracker::startTrackingCallback(cob_srvs::SetString::Request& reques
 {
     if (tracking_)
     {
-        ROS_ERROR("CobFrameTracker start was denied! FrameTracker is already tracking a goal");
+        std::string msg = "CobFrameTracker: StartTracking denied because Tracking already active";
+        ROS_ERROR_STREAM(msg);
         response.success = false;
-        response.message = "FrameTracker is already tracking goal!";
-        return false;
+        response.message = msg;
+    }
+    else if (tracking_goal_)
+    {
+        std::string msg = "CobFrameTracker: StartTracking denied because TrackingAction is active";
+        ROS_ERROR_STREAM(msg);
+        response.success = false;
+        response.message = msg;
+    }
+    else if (lookat_)
+    {
+        std::string msg = "CobFrameTracker: StartTracking denied because Lookat is active";
+        ROS_ERROR_STREAM(msg);
+        response.success = false;
+        response.message = msg;
     }
     else
     {
-        ROS_INFO("CobFrameTracker started with CART_DIST_SECURITY MONITORING enabled");
+        std::string msg = "CobFrameTracker: StartTracking started with CART_DIST_SECURITY MONITORING enabled";
+        ROS_INFO_STREAM(msg);
+        response.success = true;
+        response.message = msg;
+        
         tracking_ = true;
         tracking_goal_ = false;
-        tracking_frame_ = request.data;
-
-        response.success = true;
-        return true;
+        lookat_ = false;
+        tracking_frame_ = chain_tip_link_;
+        target_frame_ = request.data;
     }
+    return true;
 }
 
-bool CobFrameTracker::stopTrackingCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response)
+bool CobFrameTracker::startLookatCallback(cob_srvs::SetString::Request& request, cob_srvs::SetString::Response& response)
 {
     if (tracking_)
     {
-        if (tracking_goal_)
-        {
-            ROS_ERROR("CobFrameTracker stop was denied because TrackingAction is tracking a goal. You must send 'cancel goal' to the action server instead.");
-            return false;
-        }
-        ROS_INFO("CobFrameTracker stopped successfully");
-        tracking_ = false;
-        tracking_frame_ = chain_tip_link_;
-
-        publishZeroTwist();
-        return true;
+        std::string msg = "CobFrameTracker: StartLookat denied because Tracking active";
+        ROS_ERROR_STREAM(msg);
+        response.success = false;
+        response.message = msg;
+    }
+    else if (tracking_goal_)
+    {
+        std::string msg = "CobFrameTracker: StartLookat denied because TrackingAction is active";
+        ROS_ERROR_STREAM(msg);
+        response.success = false;
+        response.message = msg;
+    }
+    else if (lookat_)
+    {
+        std::string msg = "CobFrameTracker: StartLookat denied because Lookat is already active";
+        ROS_ERROR_STREAM(msg);
+        response.success = false;
+        response.message = msg;
     }
     else
     {
-        ROS_WARN("CobFrameTracker stop denied because nothing was tracked.");
-        return false;
+        dynamic_reconfigure::Reconfigure srv;
+        dynamic_reconfigure::IntParameter int_param;
+        int_param.name = "kinematic_extension";
+        int_param.value = 4;    //LOOKAT
+        srv.request.config.ints.push_back(int_param);
+        
+        bool success = reconfigure_client_.call(srv);
+
+        if(success)
+        {
+            std::string msg = "CobFrameTracker: StartLookat started with CART_DIST_SECURITY MONITORING enabled";
+            ROS_INFO_STREAM(msg);
+            response.success = true;
+            response.message = msg;
+            
+            tracking_ = false;
+            tracking_goal_ = false;
+            lookat_ = true;
+            tracking_frame_ = lookat_focus_frame_;
+            target_frame_ = request.data;
+        }
+        else
+        {
+            std::string msg = "CobFrameTracker: StartLookat denied because DynamicReconfigure failed";
+            ROS_ERROR_STREAM(msg);
+            response.success = false;
+            response.message = msg;
+        }
     }
+    return true;
+}
+
+bool CobFrameTracker::stopCallback(std_srvs::Trigger::Request& request, std_srvs::Trigger::Response& response)
+{
+    if (tracking_goal_)
+    {
+        std::string msg = "CobFrameTracker: Stop denied because TrackingAction is active";
+        ROS_ERROR_STREAM(msg);
+        response.success = false;
+        response.message = msg;
+    }
+    else if (tracking_ || lookat_)
+    {
+        if (lookat_)
+        {
+            // disable LOOKAT in dynamic_reconfigure server
+            dynamic_reconfigure::Reconfigure srv;
+            dynamic_reconfigure::IntParameter int_param;
+            int_param.name = "kinematic_extension";
+            int_param.value = 0;    //NO_EXTENSION
+            srv.request.config.ints.push_back(int_param);
+
+            if(!reconfigure_client_.call(srv))
+            {
+                std::string msg = "CobFrameTracker: Stop failed to disable LOOKAT_EXTENSION. Stopping anyway!";
+                ROS_ERROR_STREAM(msg);
+            }
+        }
+
+        std::string msg = "CobFrameTracker: Stop successful";
+        ROS_INFO_STREAM(msg);
+        response.success = true;
+        response.message = msg;
+
+        tracking_ = false;
+        tracking_goal_ = false;
+        lookat_ = false;
+        tracking_frame_ = chain_tip_link_;
+        target_frame_ = tracking_frame_;
+
+        publishZeroTwist();
+    }
+    else
+    {
+        std::string msg = "CobFrameTracker: Stop failed because nothing was tracked";
+        ROS_ERROR_STREAM(msg);
+        response.success = false;
+        response.message = msg;
+    }
+    return true;
 }
 
 void CobFrameTracker::goalCB()
@@ -386,11 +500,12 @@ void CobFrameTracker::goalCB()
     if (as_->isNewGoalAvailable())
     {
         boost::shared_ptr<const cob_frame_tracker::FrameTrackingGoal> goal_= as_->acceptNewGoal();
-        tracking_frame_ = goal_->tracking_frame;
+        target_frame_ = goal_->tracking_frame;
         tracking_duration_ = goal_->tracking_duration;
         stop_on_goal_ = goal_->stop_on_goal;
-        tracking_ = true;
+        tracking_ = false;
         tracking_goal_ = true;
+        lookat_ = false;
         abortion_counter_ = 0;
         tracking_start_time_ = ros::Time::now();
     }
@@ -404,7 +519,9 @@ void CobFrameTracker::preemptCB()
     as_->setPreempted(action_result_);
     tracking_ = false;
     tracking_goal_ = false;
+    lookat_ = false;
     tracking_frame_ = chain_tip_link_;
+    target_frame_ = tracking_frame_;
 
     publishZeroTwist();
 }
@@ -416,7 +533,9 @@ void CobFrameTracker::action_success()
 
     tracking_ = false;
     tracking_goal_ = false;
+    lookat_ = false;
     tracking_frame_ = chain_tip_link_;
+    target_frame_ = tracking_frame_;
 
     publishZeroTwist();
 }
@@ -428,7 +547,9 @@ void CobFrameTracker::action_abort()
 
     tracking_ = false;
     tracking_goal_ = false;
+    lookat_ = false;
     tracking_frame_ = chain_tip_link_;
+    target_frame_ = tracking_frame_;
 
     publishZeroTwist();
 }

@@ -62,9 +62,13 @@ public:
         }
         
         //could be made a parameter or even dynamically reconfigurable
-        scaling_factor_ = 0.1;
+        ros::NodeHandle nh_priv("~");
+        nh_priv.param<double>("scaling_factor", scaling_factor_, 0.1);
         dead_man_enabled_ = false;
         frame_id_ = root_frame_;
+        
+        timer_ = nh_.createTimer(ros::Duration(0.01), &SpacenavCommander::timerCallback, this); //guarantee 100Hz
+        timer_.start();
     }
 
     ~SpacenavCommander()
@@ -107,20 +111,25 @@ public:
     void twistSpacenavCallback(const geometry_msgs::Twist::ConstPtr& msg)
     {        
         boost::mutex::scoped_lock lock(mutex_);
+
+        ts_.twist.linear.x = scaling_factor_ * msg->linear.x;
+        ts_.twist.linear.y = scaling_factor_ * msg->linear.y;
+        ts_.twist.linear.z = scaling_factor_ * msg->linear.z;
+        ts_.twist.angular.x = scaling_factor_ * msg->angular.x;
+        ts_.twist.angular.y = scaling_factor_ * msg->angular.y;
+        ts_.twist.angular.z = scaling_factor_ * msg->angular.z;
+    }
+    
+    void timerCallback(const ros::TimerEvent&)
+    {
+        boost::mutex::scoped_lock lock(mutex_);
         
         if(dead_man_enabled_)
         {
-            geometry_msgs::TwistStamped ts;
-            ts.header.frame_id = frame_id_;
-            ts.header.stamp = ros::Time::now();
-            ts.twist.linear.x = scaling_factor_ * msg->linear.x;
-            ts.twist.linear.y = scaling_factor_ * msg->linear.y;
-            ts.twist.linear.z = scaling_factor_ * msg->linear.z;
-            ts.twist.angular.x = scaling_factor_ * msg->angular.x;
-            ts.twist.angular.y = scaling_factor_ * msg->angular.y;
-            ts.twist.angular.z = scaling_factor_ * msg->angular.z;
+            ts_.header.frame_id = frame_id_;
+            ts_.header.stamp = ros::Time::now();
             
-            twist_pub_.publish(ts);
+            twist_pub_.publish(ts_);
         }
     }
     
@@ -129,11 +138,13 @@ private:
     ros::Subscriber twist_spacenav_sub_;
     ros::Subscriber joy_spacenav_sub_;
     ros::Publisher twist_pub_;
+    ros::Timer timer_;
     
     bool dead_man_enabled_;
     boost::mutex mutex_;
     double scaling_factor_;
     std::string root_frame_, tip_frame_, frame_id_;
+    geometry_msgs::TwistStamped ts_;
 };
 
 

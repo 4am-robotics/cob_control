@@ -25,8 +25,9 @@
  *   This Class contains an moving average filter with exponential and normal weighting
  *
  ****************************************************************/
-#ifndef MOVING_AVERAGE_H_
-#define MOVING_AVERAGE_H_
+
+#ifndef COB_TWIST_CONTROLLER_UTILS_MOVING_AVERAGE_H
+#define COB_TWIST_CONTROLLER_UTILS_MOVING_AVERAGE_H
 
 #include <stdint.h>
 #include <ros/ros.h>
@@ -34,118 +35,158 @@
 
 template
 <typename T>
-class MovingAverage
+class MovingAverageBase
 {
-    private:
-        uint16_t size_;
-        std::deque<T> s_;
-        std::deque<double> weighting_;
-
     public:
-        MovingAverage(uint16_t size = 3, bool do_auto_weighting = true);
+        explicit MovingAverageBase()
+        {}
 
-        inline void addElement(T element);
-        inline void calcMovingAverage(T& sum) const;
-        inline void calcWeightedMovingAverage(T& sum) const;
-        inline void calculateWeighting();
+        virtual void reset() = 0;
+        virtual void addElement(T element) = 0;
+        virtual bool calcMovingAverage(T& average) const = 0;
+};
 
-        inline void setWeighting(const std::deque<double>& weighting);
-
-        inline double factorial(uint16_t n) const
+template
+<typename T>
+class MovingAverageSimple : public MovingAverageBase<T>
+{
+    public:
+        explicit MovingAverageSimple(uint16_t size)
+        : MovingAverageBase<T>(),
+          size_(size)
         {
-            if ( n <= 1 )
+            weighting_.assign(size_, 1.0);
+        }
+
+        virtual void reset()
+        {
+            s_.clear();
+        }
+
+        virtual void addElement(T element)
+        {
+            if (s_.size() < size_)
             {
-                return  1.0;
+                s_.push_front(element);
             }
             else
             {
-                return  (double)(n * factorial(n - 1));
+                s_.pop_back();
+                s_.push_front(element);
+            }
+        }
+
+        virtual bool calcMovingAverage(T& average) const
+        {
+            if (!s_.empty())
+            {
+                T sum;
+                T diff;
+                for (uint16_t i = 0; i < s_.size(); ++i)
+                {
+                    sum += s_[i] * weighting_[i];
+                    diff += weighting_[i];
+                }
+                average = sum / diff;
+                return true;
+            }
+            else
+            {
+                // no element available
+                return false;
+            }
+        }
+
+    protected:
+        uint16_t size_;
+        std::deque<T> s_;
+        std::deque<double> weighting_;
+};
+
+template
+<typename T>
+class MovingAverageWeighted : public MovingAverageSimple<T>
+{
+    public:
+        explicit MovingAverageWeighted(uint16_t size)
+        : MovingAverageSimple<T>(size)
+        {
+            this->weighting_.clear();
+            for (uint16_t i = 0; i < this->size_; i++)
+            {
+                this->weighting_.push_front(triangle(i));
+            }
+        }
+
+    private:
+        double triangle(uint16_t n)
+        {
+            if (n == 0)
+            {
+                return 0.0;
+            }
+            else
+            {
+                return static_cast<double>(n)*(static_cast<double>(n)+1.0)/2.0;
             }
         }
 };
 
-template <typename T>
-MovingAverage<T>::MovingAverage(uint16_t size, bool do_auto_weighting) : size_(size)
+template
+<typename T>
+class MovingAverageExponential : public MovingAverageBase<T>
 {
-    if(do_auto_weighting)
-    {
-        calculateWeighting();
-    }
-}
+    public:
+        explicit MovingAverageExponential(double factor)
+        : MovingAverageBase<T>(),
+          factor_(factor)
+        {
+            empty_ = true;
+        }
+
+        virtual void reset()
+        {
+            average_ = T();
+            empty_ = true;
+        }
+
+        void addElement(T element)
+        {
+            if (empty_)
+            {
+                average_ = element;
+                empty_ = false;
+            }
+            else
+            {
+                average_ = factor_ * element + (1.0 - factor_) * average_;
+            }
+        }
+
+        bool calcMovingAverage(T& average) const
+        {
+            if (!empty_)
+            {
+                average = average_;
+                return true;
+            }
+            else
+            {
+                // no element available
+                return false;
+            }
+        }
+
+    private:
+        bool empty_;
+        double factor_;
+        T average_;
+};
 
 
-template <typename T>
-void MovingAverage<T>::setWeighting(const std::deque<double>& weighting)
-{
-    weighting_.clear();
-    for(std::deque<double>::const_iterator i = weighting.begin(); i != weighting.end(); ++i)
-    {
-        weighting_.push_back(*i); // highest weighting should be first!
-    }
-}
+typedef MovingAverageBase<double> MovingAvgBase_double_t;
+typedef MovingAverageSimple<double> MovingAvgSimple_double_t;
+typedef MovingAverageWeighted<double> MovingAvgWeighted_double_t;
+typedef MovingAverageExponential<double> MovingAvgExponential_double_t;
 
-
-template <typename T>
-void MovingAverage<T>::addElement(T element)
-{
-    if(s_.size() < size_)
-    {
-        s_.push_front(element);
-    }
-    else
-    {
-        // Drops the first element
-        s_.pop_back();
-        s_.push_front(element);
-    }
-}
-
-
-template <typename T>
-void MovingAverage<T>::calcMovingAverage(T& sum) const
-{
-    for(typename std::deque<T>::const_iterator i = s_.begin(); i != s_.end(); ++i)
-    {
-        sum += *i;
-    }
-
-
-    sum = sum / s_.size();
-}
-
-
-template <typename T>
-void MovingAverage<T>::calcWeightedMovingAverage(T& sum) const
-{
-    for(uint16_t i = 0; i < s_.size(); ++i)
-    {
-        sum += s_[i] * weighting_[i];
-    }
-
-}
-
-
-template <typename T>
-void MovingAverage<T>::calculateWeighting()
-{
-    double sum = 0;
-    double err = 0;
-    uint16_t j = 0;
-
-    for(uint16_t i = 0; i < size_; ++i)
-    {
-        weighting_.push_back((pow(log(2.0), static_cast<double>(j + 1)) / factorial(j + 1)));
-        sum += weighting_[i];
-        j += 1;
-    }
-
-    err = 1.0 - sum;
-    std::deque<double>::iterator i = weighting_.begin();
-    *i += err;
-}
-
-
-typedef MovingAverage<double> MovingAvg_double_t;
-
-
-#endif /* MOVING_AVERAGE_H_ */
+#endif  // COB_TWIST_CONTROLLER_UTILS_MOVING_AVERAGE_H

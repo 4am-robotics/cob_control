@@ -30,7 +30,7 @@
 
 #include <ros/ros.h>
 
-#include <std_srvs/Empty.h>
+#include <std_srvs/Trigger.h>
 #include <cob_srvs/SetString.h>
 #include <geometry_msgs/PoseStamped.h>
 
@@ -59,9 +59,10 @@ private:
     ros::Timer timer_;
     double update_rate_;
 
-    std::string chain_tip_link_;    //twists with respect to this frame
-    std::string tracking_frame_;    //goal frame
     std::string root_frame_;
+    std::string chain_tip_link_;
+    std::string tracking_frame_;    //the frame tracking the target
+    std::string target_frame_;      //the frame to be tracked
 
     bool movable_trans_;
     bool movable_rot_;
@@ -72,17 +73,19 @@ private:
     interactive_markers::MenuHandler menu_handler_;
 
     bool tracking_;
+    bool lookat_;
     tf::StampedTransform target_pose_;
     boost::mutex mutex_;
 
     ros::ServiceClient start_tracking_client_;
-    ros::ServiceClient stop_tracking_client_;
+    ros::ServiceClient start_lookat_client_;
+    ros::ServiceClient stop_client_;
 
     void updateMarker();
     void sendTransform(const ros::TimerEvent& event);
     void startTracking( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback );
-    void stopTracking( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback );
-    void resetTracking( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback );
+    void startLookat( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback );
+    void stop( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback );
     void menuFeedback( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback );
     void markerFeedback( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback );
 };

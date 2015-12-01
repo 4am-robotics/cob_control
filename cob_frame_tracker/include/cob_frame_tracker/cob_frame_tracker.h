@@ -37,7 +37,7 @@
 #include <std_msgs/Float64MultiArray.h>
 #include <sensor_msgs/JointState.h>
 #include <geometry_msgs/Twist.h>
-#include <std_srvs/Empty.h>
+#include <std_srvs/Trigger.h>
 #include <cob_srvs/SetString.h>
 
 #include <actionlib/server/simple_action_server.h>
@@ -56,6 +56,7 @@
 
 #include <control_toolbox/pid.h>
 #include <dynamic_reconfigure/server.h>
+#include <dynamic_reconfigure/Reconfigure.h>
 #include <boost/thread/mutex.hpp>
 
 
@@ -89,9 +90,10 @@ public:
     void jointstateCallback(const sensor_msgs::JointState::ConstPtr& msg);
 
     bool startTrackingCallback(cob_srvs::SetString::Request& request, cob_srvs::SetString::Response& response);
-    bool stopTrackingCallback(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
+    bool startLookatCallback(cob_srvs::SetString::Request& request, cob_srvs::SetString::Response& response);
+    bool stopCallback(std_srvs::Trigger::Request& request, std_srvs::Trigger::Response& response);
 
-    bool getTransform(const std::string& target_frame, const std::string& source_frame, tf::StampedTransform& stamped_tf);
+    bool getTransform(const std::string& from, const std::string& to, tf::StampedTransform& stamped_tf);
 
     void publishZeroTwist();
     void publishTwist(ros::Duration period, bool do_publish = true);
@@ -111,8 +113,12 @@ private:
 
     bool tracking_;
     bool tracking_goal_;
-    std::string tracking_frame_;
+    bool lookat_;
+    std::string chain_base_link_;
     std::string chain_tip_link_;
+    std::string lookat_focus_frame_;
+    std::string tracking_frame_;    //the frame tracking the target (i.e. chain_tip or lookat_focus)
+    std::string target_frame_;      //the frame to be tracked
 
     double max_vel_lin_;
     double max_vel_rot_;
@@ -136,16 +142,16 @@ private:
     KDL::JntArray last_q_;
     KDL::JntArray last_q_dot_;
     boost::shared_ptr<KDL::ChainFkSolverVel_recursive> jntToCartSolver_vel_;
-    std::string chain_base_;
-    std::string chain_tip_;
 
     tf::TransformListener tf_listener_;
 
     ros::Subscriber jointstate_sub_;
     ros::Publisher twist_pub_;
 
-    ros::ServiceServer start_server_;
+    ros::ServiceServer start_tracking_server_;
+    ros::ServiceServer start_lookat_server_;
     ros::ServiceServer stop_server_;
+    ros::ServiceClient reconfigure_client_;
 
     /// Action interface
     std::string action_name_;

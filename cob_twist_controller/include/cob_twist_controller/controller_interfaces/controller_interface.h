@@ -26,11 +26,12 @@
  *   controller interfaces (Velocity/Position/Trajectory/JointStates).
  *
  ****************************************************************/
-#ifndef CONTROLLER_INTERFACE_H_
-#define CONTROLLER_INTERFACE_H_
 
-#include <std_msgs/Float64MultiArray.h>
+#ifndef COB_TWIST_CONTROLLER_CONTROLLER_INTERFACES_CONTROLLER_INTERFACE_H
+#define COB_TWIST_CONTROLLER_CONTROLLER_INTERFACES_CONTROLLER_INTERFACE_H
+
 #include <sensor_msgs/JointState.h>
+#include <std_msgs/Float64MultiArray.h>
 #include <trajectory_msgs/JointTrajectory.h>
 
 #include <boost/thread/mutex.hpp>
@@ -49,7 +50,7 @@ class ControllerInterfaceBuilder
         ~ControllerInterfaceBuilder() {}
 
         static ControllerInterfaceBase* createControllerInterface(ros::NodeHandle& nh,
-                                               const TwistControllerParams& params);
+                                                                  const TwistControllerParams& params);
 };
 /* END ControllerInterfaceBuilder *******************************************************************************************/
 
@@ -59,8 +60,8 @@ class ControllerInterfaceBuilder
 class ControllerInterfaceVelocity : public ControllerInterfaceBase
 {
     public:
-        ControllerInterfaceVelocity(ros::NodeHandle& nh,
-                                    const TwistControllerParams& params)
+        explicit ControllerInterfaceVelocity(ros::NodeHandle& nh,
+                                             const TwistControllerParams& params)
         : ControllerInterfaceBase(nh, params)
         {
             pub_ = nh.advertise<std_msgs::Float64MultiArray>("joint_group_velocity_controller/command", 1);
@@ -79,9 +80,9 @@ class ControllerInterfaceVelocity : public ControllerInterfaceBase
 class ControllerInterfacePosition : public ControllerInterfacePositionBase
 {
     public:
-        ControllerInterfacePosition(ros::NodeHandle& nh,
-                                    const TwistControllerParams& params)
-        : ControllerInterfacePositionBase(nh, params, 3)
+        explicit ControllerInterfacePosition(ros::NodeHandle& nh,
+                                             const TwistControllerParams& params)
+        : ControllerInterfacePositionBase(nh, params)
         {
             pub_ = nh.advertise<std_msgs::Float64MultiArray>("joint_group_interpol_position_controller/command", 1);
         }
@@ -90,7 +91,6 @@ class ControllerInterfacePosition : public ControllerInterfacePositionBase
 
         virtual void processResult(const KDL::JntArray& q_dot_ik,
                                    const KDL::JntArray& current_q);
-
 };
 /* END ControllerInterfacePosition **********************************************************************************************/
 
@@ -100,9 +100,9 @@ class ControllerInterfacePosition : public ControllerInterfacePositionBase
 class ControllerInterfaceTrajectory : public ControllerInterfacePositionBase
 {
     public:
-        ControllerInterfaceTrajectory(ros::NodeHandle& nh,
-                                      const TwistControllerParams& params)
-        : ControllerInterfacePositionBase(nh, params, 3)
+        explicit ControllerInterfaceTrajectory(ros::NodeHandle& nh,
+                                               const TwistControllerParams& params)
+        : ControllerInterfacePositionBase(nh, params)
         {
             pub_ = nh.advertise<trajectory_msgs::JointTrajectory>("joint_trajectory_controller/command", 1);
         }
@@ -119,9 +119,9 @@ class ControllerInterfaceTrajectory : public ControllerInterfacePositionBase
 class ControllerInterfaceJointStates : public ControllerInterfacePositionBase
 {
     public:
-        ControllerInterfaceJointStates(ros::NodeHandle& nh,
-                                       const TwistControllerParams& params)
-        : ControllerInterfacePositionBase(nh, params, 3)
+        explicit ControllerInterfaceJointStates(ros::NodeHandle& nh,
+                                                const TwistControllerParams& params)
+        : ControllerInterfacePositionBase(nh, params)
         {
             pub_ = nh.advertise<sensor_msgs::JointState>("joint_states", 1);
 
@@ -145,9 +145,7 @@ class ControllerInterfaceJointStates : public ControllerInterfacePositionBase
 
         ros::Timer js_timer_;
         void publishJointState(const ros::TimerEvent& event);
-
 };
 /* END ControllerInterfaceJointStates **********************************************************************************************/
 
-
-#endif /* CONTROLLER_INTERFACE_H_ */
+#endif  // COB_TWIST_CONTROLLER_CONTROLLER_INTERFACES_CONTROLLER_INTERFACE_H

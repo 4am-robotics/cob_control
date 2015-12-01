@@ -60,13 +60,13 @@ bool InteractiveFrameTarget::initialize()
         root_frame_ = "base_link";
     }
 
-    if (nh_tracker.hasParam("tracking_frame"))
+    if (nh_tracker.hasParam("target_frame"))
     {
-        nh_tracker.getParam("tracking_frame", tracking_frame_);
+        nh_tracker.getParam("target_frame", target_frame_);
     }
     else
     {
-        ROS_ERROR("No tracking_frame specified. Aborting!");
+        ROS_ERROR("No target_frame specified. Aborting!");
         return false;
     }
 
@@ -80,28 +80,33 @@ bool InteractiveFrameTarget::initialize()
     {    movable_rot_ = true;    }
 
     tracking_ = false;
+    lookat_ = false;
+    tracking_frame_ = chain_tip_link_;
 
     start_tracking_client_ = nh_tracker.serviceClient<cob_srvs::SetString>("start_tracking");
     ROS_INFO("Waiting for StartTrackingServer...");
     start_tracking_client_.waitForExistence();
-    ROS_INFO("...done");
 
-    stop_tracking_client_ = nh_tracker.serviceClient<std_srvs::Empty>("stop_tracking");
-    ROS_INFO("Waiting for StopTrackingServer...");
-    stop_tracking_client_.waitForExistence();
-    ROS_INFO("...done");
+    start_lookat_client_ = nh_tracker.serviceClient<cob_srvs::SetString>("start_lookat");
+    ROS_INFO("Waiting for StartLookatServer...");
+    start_lookat_client_.waitForExistence();
+
+    stop_client_ = nh_tracker.serviceClient<std_srvs::Trigger>("stop");
+    ROS_INFO("Waiting for StopServer...");
+    stop_client_.waitForExistence();
+    ROS_INFO("InteractiveFrameTarget: All Services available!");
 
     bool transform_available = false;
     while(!transform_available)
     {
         try
         {
-            tf_listener_.lookupTransform(root_frame_, chain_tip_link_, ros::Time(), target_pose_);
+            tf_listener_.lookupTransform(root_frame_, tracking_frame_, ros::Time(), target_pose_);
             transform_available = true;
         }
         catch (tf::TransformException& ex)
         {
-            //ROS_WARN("Waiting for transform...(%s)",ex.what());
+            //ROS_WARN("IFT::initialize: Waiting for transform...(%s)",ex.what());
             ros::Duration(0.1).sleep();
         }
     }
@@ -117,7 +122,7 @@ bool InteractiveFrameTarget::initialize()
     int_marker_.pose.orientation.z = target_pose_.getRotation().getZ();
     int_marker_.pose.orientation.w = target_pose_.getRotation().getW();
     int_marker_.name = "interactive_target";
-    //int_marker_.description = tracking_frame_;
+    //int_marker_.description = target_frame_;
     int_marker_.scale = nh_tracker.param("marker_scale", 0.5);
 
     visualization_msgs::InteractiveMarkerControl control;
@@ -189,16 +194,16 @@ bool InteractiveFrameTarget::initialize()
 
     // create menu
     menu_handler_.insert( "StartTracking", boost::bind(&InteractiveFrameTarget::startTracking,   this, _1) );
-    menu_handler_.insert( "StopTracking", boost::bind(&InteractiveFrameTarget::stopTracking,   this, _1) );
-    menu_handler_.insert( "ResetTracking", boost::bind(&InteractiveFrameTarget::resetTracking,   this, _1) );
+    menu_handler_.insert( "StartLookat", boost::bind(&InteractiveFrameTarget::startLookat,   this, _1) );
+    menu_handler_.insert( "Stop", boost::bind(&InteractiveFrameTarget::stop,   this, _1) );
 
-    int_marker_menu_.header.frame_id = tracking_frame_;
+    int_marker_menu_.header.frame_id = target_frame_;
     int_marker_menu_.name = "marker_menu";
     int_marker_menu_.pose.position.y = int_marker_.scale;
     visualization_msgs::Marker menu_marker;
-    menu_marker.scale.x = 0.05;
-    menu_marker.scale.y = 0.05;
-    menu_marker.scale.z = 0.05;
+    menu_marker.scale.x = 0.1;
+    menu_marker.scale.y = 0.1;
+    menu_marker.scale.z = 0.1;
     menu_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
     menu_marker.text = nh_.getNamespace() + "_menu";
     menu_marker.color.r = 0.0;
@@ -226,11 +231,11 @@ bool InteractiveFrameTarget::initialize()
 
 void InteractiveFrameTarget::sendTransform(const ros::TimerEvent& event)
 {
-    if(!tracking_)
+    if(!tracking_ && !lookat_)
     {    updateMarker();    }
 
     target_pose_.stamp_ = ros::Time::now();
-    target_pose_.child_frame_id_ = tracking_frame_;
+    target_pose_.child_frame_id_ = target_frame_;
     tf_broadcaster_.sendTransform(target_pose_);
 }
 
@@ -240,11 +245,11 @@ void InteractiveFrameTarget::updateMarker()
     while(!transform_available)
     {
         try{
-            tf_listener_.lookupTransform(root_frame_, chain_tip_link_, ros::Time(), target_pose_);
+            tf_listener_.lookupTransform(root_frame_, tracking_frame_, ros::Time(), target_pose_);
             transform_available = true;
         }
         catch (tf::TransformException& ex){
-            //ROS_WARN("Waiting for transform...(%s)",ex.what());
+            //ROS_WARN("IFT::updateMarker: Waiting for transform...(%s)",ex.what());
             ros::Duration(0.1).sleep();
         }
     }
@@ -263,41 +268,55 @@ void InteractiveFrameTarget::updateMarker()
 
 void InteractiveFrameTarget::startTracking( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback )
 {
-    ROS_INFO("StartTracking");
-
     cob_srvs::SetString srv;
-    srv.request.data = tracking_frame_;
+    srv.request.data = target_frame_;
+    bool success = start_tracking_client_.call(srv);
 
-    if(start_tracking_client_.call(srv))
+    if(success && srv.response.success)
     {
+        ROS_INFO_STREAM("StartTracking successful: " << srv.response.message);
         tracking_ = true;
+        lookat_ = false;
     }
     else
     {
-        ROS_ERROR("Service call failed");
-        tracking_ = false;
+        ROS_ERROR_STREAM("StartTracking failed: " << srv.response.message);
     }
 }
 
-void InteractiveFrameTarget::stopTracking( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback )
+void InteractiveFrameTarget::startLookat( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback )
 {
-    std_srvs::Empty srv;
+    cob_srvs::SetString srv;
+    srv.request.data = target_frame_;
+    bool success = start_lookat_client_.call(srv);
 
-    if(stop_tracking_client_.call(srv))
+    if(success && srv.response.success)
     {
+        ROS_INFO_STREAM("StartLookat successful: " << srv.response.message);
         tracking_ = false;
+        lookat_ = true;
     }
     else
     {
-        ROS_ERROR("Service call failed");
-        tracking_ = false;
+        ROS_ERROR_STREAM("StartLookat failed: " << srv.response.message);
     }
 }
 
-void InteractiveFrameTarget::resetTracking( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback )
+void InteractiveFrameTarget::stop( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback )
 {
-    stopTracking(feedback);
-    updateMarker();
+    std_srvs::Trigger srv;
+    bool success = stop_client_.call(srv);
+
+    if(success && srv.response.success)
+    {
+        ROS_INFO_STREAM("Stop successful: " << srv.response.message);
+        tracking_ = false;
+        lookat_ = false;
+    }
+    else
+    {
+        ROS_ERROR_STREAM("Stop failed: " << srv.response.message);
+    }
 }
 
 void InteractiveFrameTarget::menuFeedback( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback )
@@ -309,7 +328,7 @@ void InteractiveFrameTarget::markerFeedback( const visualization_msgs::Interacti
 {
     target_pose_.stamp_ = feedback->header.stamp;
     target_pose_.frame_id_ = feedback->header.frame_id;
-    target_pose_.child_frame_id_ = tracking_frame_;
+    target_pose_.child_frame_id_ = target_frame_;
     target_pose_.setOrigin(tf::Vector3(feedback->pose.position.x, feedback->pose.position.y, feedback->pose.position.z));
     target_pose_.setRotation(tf::Quaternion(feedback->pose.orientation.x, feedback->pose.orientation.y, feedback->pose.orientation.z, feedback->pose.orientation.w));
 

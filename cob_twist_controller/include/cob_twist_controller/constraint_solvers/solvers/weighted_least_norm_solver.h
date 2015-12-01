@@ -27,8 +27,9 @@
  *   Special constraint handling.
  *
  ****************************************************************/
-#ifndef WEIGHTED_LEAST_NORM_SOLVER_H_
-#define WEIGHTED_LEAST_NORM_SOLVER_H_
+
+#ifndef COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_WEIGHTED_LEAST_NORM_SOLVER_H
+#define COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_WEIGHTED_LEAST_NORM_SOLVER_H
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/constraint_solvers/solvers/constraint_solver_base.h"
@@ -37,6 +38,14 @@
 class WeightedLeastNormSolver : public ConstraintSolver<>
 {
     public:
+        WeightedLeastNormSolver(const TwistControllerParams& params,
+                                const LimiterParams& limiter_params,
+                                TaskStackController_t& task_stack_controller) :
+                ConstraintSolver(params, limiter_params, task_stack_controller)
+        {}
+
+        virtual ~WeightedLeastNormSolver()
+        {}
 
         /**
          * Specific implementation of solve-method to solve IK problem with joint limit avoidance.
@@ -45,20 +54,7 @@ class WeightedLeastNormSolver : public ConstraintSolver<>
         virtual Eigen::MatrixXd solve(const Vector6d_t& in_cart_velocities,
                                       const JointStates& joint_states);
 
-        WeightedLeastNormSolver(const TwistControllerParams& params, TaskStackController_t& task_stack_controller)
-                                  : ConstraintSolver(params, task_stack_controller)
-        {
-
-        }
-
-        virtual ~WeightedLeastNormSolver()
-        {
-
-        }
-
-
     private:
-
         /**
          * Virtual helper method that calculates a weighting for the Jacobian to adapt joint velocity calculation for given constraints.
          * @param q The current joint positions.
@@ -68,4 +64,4 @@ class WeightedLeastNormSolver : public ConstraintSolver<>
         virtual Eigen::MatrixXd calculateWeighting(const JointStates& joint_states) const;
 };
 
-#endif /* WEIGHTED_LEAST_NORM_SOLVER_H_ */
+#endif  // COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_WEIGHTED_LEAST_NORM_SOLVER_H

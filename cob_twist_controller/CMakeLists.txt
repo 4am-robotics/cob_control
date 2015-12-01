@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(cob_twist_controller)
 
-find_package(catkin REQUIRED COMPONENTS cmake_modules cob_obstacle_distance cob_srvs dynamic_reconfigure eigen_conversions geometry_msgs kdl_conversions kdl_parser nav_msgs roscpp sensor_msgs std_msgs tf trajectory_msgs urdf visualization_msgs)
+find_package(catkin REQUIRED COMPONENTS cmake_modules cob_obstacle_distance cob_srvs dynamic_reconfigure eigen_conversions geometry_msgs kdl_conversions kdl_parser nav_msgs roscpp roslint sensor_msgs std_msgs tf trajectory_msgs urdf visualization_msgs)
 
 find_package(Boost REQUIRED COMPONENTS thread)
 
@@ -46,7 +46,7 @@ add_library(controller_interfaces src/controller_interfaces/controller_interface
 add_dependencies(controller_interfaces ${catkin_EXPORTED_TARGETS})
 target_link_libraries(controller_interfaces ${catkin_LIBRARIES})
 
-add_library(kinematic_extensions src/kinematic_extensions/kinematic_extension.cpp)
+add_library(kinematic_extensions src/kinematic_extensions/kinematic_extension_builder.cpp src/kinematic_extensions/kinematic_extension_dof.cpp src/kinematic_extensions/kinematic_extension_urdf.cpp src/kinematic_extensions/kinematic_extension_lookat.cpp)
 add_dependencies(kinematic_extensions ${catkin_EXPORTED_TARGETS})
 target_link_libraries(kinematic_extensions ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 
@@ -69,6 +69,17 @@ target_link_libraries(debug_trajectory_marker_node ${catkin_LIBRARIES})
 add_executable(debug_evaluate_jointstates_node src/debug/debug_evaluate_jointstates_node.cpp)
 add_dependencies(debug_evaluate_jointstates_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(debug_evaluate_jointstates_node ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
+
+
+add_executable(test_moving_average_node src/debug/test_moving_average_node.cpp)
+add_dependencies(test_moving_average_node ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_moving_average_node ${catkin_LIBRARIES})
+
+add_executable(test_simpson_integrator_node src/debug/test_simpson_integrator_node.cpp)
+add_dependencies(test_simpson_integrator_node ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_simpson_integrator_node ${catkin_LIBRARIES})
+
+roslint_cpp()
 
 ### INSTALL ###
 install(TARGETS cob_twist_controller_node damping_methods inv_calculations constraint_solvers limiters controller_interfaces kinematic_extensions inverse_differential_kinematics_solver twist_controller debug_trajectory_marker_node debug_evaluate_jointstates_node

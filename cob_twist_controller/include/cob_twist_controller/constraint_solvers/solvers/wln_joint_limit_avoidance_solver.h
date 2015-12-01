@@ -27,8 +27,9 @@
  *   Special constraint handling.
  *
  ****************************************************************/
-#ifndef JOINT_LIMIT_AVOIDANCE_SOLVER_H_
-#define JOINT_LIMIT_AVOIDANCE_SOLVER_H_
+
+#ifndef COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_WLN_JOINT_LIMIT_AVOIDANCE_SOLVER_H
+#define COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_WLN_JOINT_LIMIT_AVOIDANCE_SOLVER_H
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/constraint_solvers/solvers/weighted_least_norm_solver.h"
@@ -38,21 +39,16 @@
 class WLN_JointLimitAvoidanceSolver : public WeightedLeastNormSolver
 {
     public:
-
-        WLN_JointLimitAvoidanceSolver(const TwistControllerParams& params, TaskStackController_t& task_stack_controller)
-                                  : WeightedLeastNormSolver(params, task_stack_controller)
-        {
-
-        }
+        WLN_JointLimitAvoidanceSolver(const TwistControllerParams& params,
+                                      const LimiterParams& limiter_params,
+                                      TaskStackController_t& task_stack_controller) :
+                WeightedLeastNormSolver(params, limiter_params, task_stack_controller)
+        {}
 
         virtual ~WLN_JointLimitAvoidanceSolver()
-        {
-
-        }
-
+        {}
 
     private:
-
         /**
          * Helper method that calculates a weighting for the Jacobian to adapt the impact on joint velocities.
          * Overridden from base class WLNSolver
@@ -60,7 +56,7 @@ class WLN_JointLimitAvoidanceSolver : public WeightedLeastNormSolver
          * @param q_dot The current joint velocities.
          * @return Diagonal weighting matrix that adapts the Jacobian.
          */
-        virtual Eigen::MatrixXd calculateWeighting(const JointStates& joint_states);
+        virtual Eigen::MatrixXd calculateWeighting(const JointStates& joint_states) const;
 };
 
-#endif /* JOINT_LIMIT_AVOIDANCE_SOLVER_H_ */
+#endif  // COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_WLN_JOINT_LIMIT_AVOIDANCE_SOLVER_H

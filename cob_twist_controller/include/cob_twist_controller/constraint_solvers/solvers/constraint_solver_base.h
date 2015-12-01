@@ -26,9 +26,11 @@
  *   Pure virtual methods have to be implemented in subclasses
  *
  ****************************************************************/
-#ifndef CONSTRAINT_SOLVER_BASE_H_
-#define CONSTRAINT_SOLVER_BASE_H_
 
+#ifndef COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_CONSTRAINT_SOLVER_BASE_H
+#define COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_CONSTRAINT_SOLVER_BASE_H
+
+#include <set>
 #include <Eigen/Core>
 #include <kdl/jntarray.hpp>
 #include <boost/shared_ptr.hpp>
@@ -92,20 +94,23 @@ class ConstraintSolver
             this->clearConstraints();
         }
 
+        ConstraintSolver(const TwistControllerParams& params,
+                         const LimiterParams& limiter_params,
+                         TaskStackController_t& task_stack_controller) :
+                params_(params),
+                limiter_params_(limiter_params),
+                task_stack_controller_(task_stack_controller)
+        {}
+
     protected:
-
-        ConstraintSolver(const TwistControllerParams& params, TaskStackController_t& task_stack_controller)
-                         : params_(params), task_stack_controller_(task_stack_controller)
-        {
-        }
-
         /// set inserts sorted (default less operator); if element has already been added it returns an iterator on it.
-        std::set<ConstraintBase_t> constraints_; ///< Set of constraints.
-        const TwistControllerParams& params_; ///< References the inv. diff. kin. solver parameters.
-        Matrix6Xd_t jacobian_data_; ///< References the current Jacobian (matrix data only).
-        boost::shared_ptr<DampingBase> damping_; ///< The currently set damping method.
-        PINV pinv_calc_; ///< An instance that helps solving the inverse of the Jacobian.
-        TaskStackController_t& task_stack_controller_; ///< Reference to the task stack controller.
+        std::set<ConstraintBase_t> constraints_;  /// Set of constraints.
+        const TwistControllerParams& params_;  /// References the inv. diff. kin. solver parameters.
+        const LimiterParams& limiter_params_;  /// References the limiter parameters (up-to-date according to KinematicExtension).
+        Matrix6Xd_t jacobian_data_;  /// References the current Jacobian (matrix data only).
+        boost::shared_ptr<DampingBase> damping_;  /// The currently set damping method.
+        PINV pinv_calc_;  /// An instance that helps solving the inverse of the Jacobian.
+        TaskStackController_t& task_stack_controller_;  /// Reference to the task stack controller.
 };
 
-#endif /* CONSTRAINT_SOLVER_BASE_H_ */
+#endif  // COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_CONSTRAINT_SOLVER_BASE_H

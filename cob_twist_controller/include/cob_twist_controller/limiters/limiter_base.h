@@ -25,19 +25,17 @@
  *   This header contains the interface description of limiters
  *
  ****************************************************************/
-#ifndef LIMITER_BASE_H_
-#define LIMITER_BASE_H_
+
+#ifndef COB_TWIST_CONTROLLER_LIMITERS_LIMITER_BASE_H
+#define COB_TWIST_CONTROLLER_LIMITERS_LIMITER_BASE_H
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
-#include <kdl/chain.hpp>
-#include <kdl/chainiksolver.hpp>
-#include <kdl/chainjnttojacsolver.hpp>
 
 /// Base class for limiters, defining interface methods.
 class LimiterBase
 {
     public:
-        LimiterBase(const TwistControllerParams& tc_params, const KDL::Chain& chain) : tc_params_(tc_params), chain_(chain)
+        explicit LimiterBase(const LimiterParams& limiter_params) : limiter_params_(limiter_params)
         {}
 
         virtual ~LimiterBase() {}
@@ -53,8 +51,7 @@ class LimiterBase
         virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const = 0;
 
     protected:
-        const TwistControllerParams& tc_params_;
-        const KDL::Chain& chain_;
+        const LimiterParams& limiter_params_;
 };
 
-#endif /* LIMITER_BASE_H_ */
+#endif  // COB_TWIST_CONTROLLER_LIMITERS_LIMITER_BASE_H

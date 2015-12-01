@@ -28,8 +28,8 @@
  *
  ****************************************************************/
 
-#ifndef CALLBACK_DATA_MEDIATOR_H_
-#define CALLBACK_DATA_MEDIATOR_H_
+#ifndef COB_TWIST_CONTROLLER_CALLBACK_DATA_MEDIATOR_H
+#define COB_TWIST_CONTROLLER_CALLBACK_DATA_MEDIATOR_H
 
 #include <vector>
 #include <stdint.h>
@@ -48,7 +48,7 @@ class CallbackDataMediator
         boost::mutex distances_to_obstacles_lock_;
 
     public:
-        CallbackDataMediator() {};
+        CallbackDataMediator() {}
 
         /**
          * @return Number of active distances to obstacles.
@@ -76,4 +76,4 @@ class CallbackDataMediator
         void distancesToObstaclesCallback(const cob_obstacle_distance::ObstacleDistances::ConstPtr& msg);
 };
 
-#endif /* CALLBACK_DATA_MEDIATOR_H_ */
+#endif  // COB_TWIST_CONTROLLER_CALLBACK_DATA_MEDIATOR_H

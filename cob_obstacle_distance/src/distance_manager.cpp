@@ -644,7 +644,7 @@ bool DistanceManager::registerLinkOfInterest(cob_srvs::SetString::Request& reque
         }
     }
 
-    ROS_INFO_STREAM("Registration: " << response.message);
+    ROS_INFO_STREAM("DistanceManager::Registration: " << response.message);
     return true;
 }
 
