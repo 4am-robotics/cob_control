@@ -30,7 +30,7 @@
 #include <boost/lexical_cast.hpp>
 
 #include <ros/ros.h>
-#include <std_srvs/Empty.h>
+#include <std_srvs/Trigger.h>
 #include <cob_srvs/SetString.h>
 
 #include <cob_cartesian_controller/cartesian_controller.h>
@@ -66,7 +66,7 @@ bool CartesianController::initialize()
 
     ROS_WARN("Waiting for Services...");
     start_tracking_ = nh_.serviceClient<cob_srvs::SetString>("frame_tracker/start_tracking");
-    stop_tracking_ = nh_.serviceClient<std_srvs::Empty>("frame_tracker/stop_tracking");
+    stop_tracking_ = nh_.serviceClient<std_srvs::Trigger>("frame_tracker/stop");
     start_tracking_.waitForExistence();
     stop_tracking_.waitForExistence();
     tracking_ = false;
@@ -124,7 +124,7 @@ bool CartesianController::startTracking()
 bool CartesianController::stopTracking()
 {
     bool success = false;
-    std_srvs::Empty stop;
+    std_srvs::Trigger stop;
     if(tracking_)
     {
         success = stop_tracking_.call(stop);
