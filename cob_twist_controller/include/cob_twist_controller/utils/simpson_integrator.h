@@ -29,6 +29,8 @@
 #ifndef COB_TWIST_CONTROLLER_UTILS_SIMPSON_INTEGRATOR_H
 #define COB_TWIST_CONTROLLER_UTILS_SIMPSON_INTEGRATOR_H
 
+#include <vector>
+
 #include <ros/ros.h>
 #include <kdl/jntarray.hpp>
 
@@ -40,15 +42,16 @@ class SimpsonIntegrator
         explicit SimpsonIntegrator(const uint8_t dof)
         {
             dof_ = dof;
-            for(uint8_t i = 0; i < dof_; i++)
+            for (uint8_t i = 0; i < dof_; i++)
             {
-                //ma_.push_back(new MovingAvgSimple_double_t(3));
+                // ma_.push_back(new MovingAvgSimple_double_t(3));
                 ma_.push_back(new MovingAvgExponential_double_t(0.3));
             }
             last_update_time_ = ros::Time(0.0);
             last_period_ = ros::Duration(0.0);
         }
-        ~SimpsonIntegrator(){}
+        ~SimpsonIntegrator()
+        {}
 
 
         void resetIntegration()
@@ -77,7 +80,7 @@ class SimpsonIntegrator
             vel.clear();
 
             // ToDo: Test these conditions and find good thresholds
-            //if (period.toSec() > 2*last_period_.toSec())  // missed about a cycle
+            // if (period.toSec() > 2*last_period_.toSec())  // missed about a cycle
             if (period.toSec() > ros::Duration(0.5).toSec())  // missed about 'max_command_silence'
             {
                 ROS_WARN_STREAM("reset Integration: " << period.toSec());
@@ -92,7 +95,7 @@ class SimpsonIntegrator
                     double integration_value = static_cast<double>(period.toSec() / 6.0 * (vel_before_last_[i] + 4.0 * (vel_before_last_[i] + vel_last_[i]) + vel_before_last_[i] + vel_last_[i] + q_dot_ik(i)) + current_q(i));
                     ma_[i]->addElement(integration_value);
                     double avg = 0.0;
-                    if(ma_[i]->calcMovingAverage(avg))
+                    if (ma_[i]->calcMovingAverage(avg))
                     {
                         pos.push_back(avg);
                         vel.push_back(q_dot_ik(i));

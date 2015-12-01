@@ -19,9 +19,9 @@ public:
     void input_cb(const std_msgs::Float64::ConstPtr& input)
     {
         std_msgs::Float64 output;
-        
+
         ma_->addElement(input->data);
-        if(ma_->calcMovingAverage(output.data))
+        if (ma_->calcMovingAverage(output.data))
         {
             output_pub_.publish(output);
         }
