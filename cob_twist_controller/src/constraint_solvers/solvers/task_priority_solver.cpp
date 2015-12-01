@@ -40,7 +40,7 @@ Eigen::MatrixXd TaskPrioritySolver::solve(const Vector6d_t& in_cart_velocities,
     ros::Time now = ros::Time::now();
     double cycle = (now - this->last_time_).toSec();
     this->last_time_ = now;
-    
+
     double derivative_cost_func_value;
     double current_cost_func_value;
     double activation_gain;

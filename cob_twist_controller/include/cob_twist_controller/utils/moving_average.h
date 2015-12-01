@@ -40,7 +40,7 @@ class MovingAverageBase
     public:
         explicit MovingAverageBase()
         {}
-        
+
         virtual void reset() = 0;
         virtual void addElement(T element) = 0;
         virtual bool calcMovingAverage(T& average) const = 0;
@@ -75,10 +75,10 @@ class MovingAverageSimple : public MovingAverageBase<T>
                 s_.push_front(element);
             }
         }
-        
+
         virtual bool calcMovingAverage(T& average) const
         {
-            if(!s_.empty())
+            if (!s_.empty())
             {
                 T sum;
                 T diff;
@@ -108,7 +108,7 @@ template
 class MovingAverageWeighted : public MovingAverageSimple<T>
 {
     public:
-        MovingAverageWeighted(uint16_t size)
+        explicit MovingAverageWeighted(uint16_t size)
         : MovingAverageSimple<T>(size)
         {
             this->weighting_.clear();
@@ -117,7 +117,7 @@ class MovingAverageWeighted : public MovingAverageSimple<T>
                 this->weighting_.push_front(triangle(i));
             }
         }
-    
+
     private:
         double triangle(uint16_t n)
         {
@@ -152,7 +152,7 @@ class MovingAverageExponential : public MovingAverageBase<T>
 
         void addElement(T element)
         {
-            if(empty_)
+            if (empty_)
             {
                 average_ = element;
                 empty_ = false;
@@ -162,10 +162,10 @@ class MovingAverageExponential : public MovingAverageBase<T>
                 average_ = factor_ * element + (1.0 - factor_) * average_;
             }
         }
-        
+
         bool calcMovingAverage(T& average) const
         {
-            if(!empty_)
+            if (!empty_)
             {
                 average = average_;
                 return true;
