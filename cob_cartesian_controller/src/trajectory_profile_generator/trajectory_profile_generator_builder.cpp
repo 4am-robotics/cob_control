@@ -1,4 +1,3 @@
-
 /*!
  *****************************************************************
  * \file
@@ -15,34 +14,40 @@
  * \note
  *   ROS stack name: cob_control
  * \note
- *   ROS package name: cob_twist_controller
+ *   ROS package name: cob_cartesian_controller
  *
  * \author
  *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de / christoph.mark@gmail.com
  *
- * \date Date of creation: June, 2015
+ * \date Date of creation: December, 2015
  *
  * \brief
- *   This module contains the implementation of all interface types.
+ *   This module contains the implementation of all profile types.
  *
  ****************************************************************/
-#define RAMP_PROFILE 1
-#define SINOID_PROFILE 2
+
+#ifndef COB_CONTROL_COB_CARTESIAN_CONTROLLER_INCLUDE_COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_BUILDER_H_
+#define COB_CONTROL_COB_CARTESIAN_CONTROLLER_INCLUDE_COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_BUILDER_H_
+
 #include "cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_builder.h"
 #include "cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_ramp.h"
 #include "cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_sinoid.h"
+#include "cob_cartesian_controller/Profile.h"
 
 /* BEGIN TrajectoryProfileBase *****************************************************************************************/
-
 TrajectoryProfileBase* TrajectoryProfileBuilder::createProfile(const cob_cartesian_controller::CartesianActionStruct& params)
 {
+    cob_cartesian_controller::Profile msg;
+
+    const int RAMP = static_cast<const int>(msg.RAMP);
+    const int SINOID = static_cast<const int>(msg.SINOID);
     TrajectoryProfileBase* ib = NULL;
     switch(params.profile.profile_type)
     {
-        case RAMP_PROFILE:
+        case RAMP:
             ib = new TrajectoryProfileRamp(params);
             break;
-        case SINOID_PROFILE:
+        case SINOID:
             ib = new TrajectoryProfileSinoid(params);
             break;
         default:
@@ -53,3 +58,5 @@ TrajectoryProfileBase* TrajectoryProfileBuilder::createProfile(const cob_cartesi
     return ib;
 }
 /* END TrajectoryProfileBase *******************************************************************************************/
+
+#endif

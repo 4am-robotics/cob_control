@@ -19,8 +19,8 @@
  * \author
  *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de / christoph.mark@gmail.com
  *
- * \date Date of creation: July, 2015
- *
+ * \date Date of creation: December, 2015
+ *   This class contains useful functions which are not directly part of the cartesian controller.
  * \brief
  *   ...
  *
@@ -78,7 +78,7 @@ void CartesianControllerUtils::transformPose(const std::string source_frame, con
         try
         {
             stamped_in.header.stamp = ros::Time(0);
-            tf_listener_.waitForTransform(target_frame, source_frame, stamped_in.header.stamp, ros::Duration(0.5));
+            tf_listener_.waitForTransform(target_frame, source_frame, stamped_in.header.stamp, ros::Duration(1.0));
             tf_listener_.transformPose(target_frame, stamped_in, stamped_out);
             pose_out = stamped_out.pose;
             transform = true;
@@ -95,9 +95,6 @@ void CartesianControllerUtils::transformPose(const std::string source_frame, con
 /// Used to check whether the chain_tip_link is close to the target_frame
 /// 'stamped_transform' expreses the transform between the two frames.
 /// Thus inEpsilonArea() returns 'true' in case 'stamped_transform' is "smaller" than 'epsilon'
-// ToDo: Can we simplify this check?
-//      e.g. use stamped_transform.getOrigin().length() < epsilon
-//      what about orientation distance?
 bool CartesianControllerUtils::inEpsilonArea(const tf::StampedTransform& stamped_transform, const double epsilon)
 {
     double roll, pitch, yaw;
@@ -150,11 +147,11 @@ void CartesianControllerUtils::previewPath(const geometry_msgs::PoseArray& pose_
     double id = marker_array_.markers.size();
 
     for(unsigned int i=0; i < pose_array.poses.size(); i++)
-        {
-            marker.id = id+i;
-            marker.pose = pose_array.poses.at(i);
-            marker_array_.markers.push_back(marker);
-        }
+    {
+        marker.id = id+i;
+        marker.pose = pose_array.poses.at(i);
+        marker_array_.markers.push_back(marker);
+    }
 
     marker_pub_.publish(marker_array_);
 }
@@ -186,5 +183,5 @@ void CartesianControllerUtils::copyMatrix(std::vector<double> *path_array,std::v
 
 double CartesianControllerUtils::roundUpToMultiplier(double numberToRound, double multiplier)
 {
-    return ( multiplier - fmod(numberToRound,multiplier) + numberToRound );
+    return ( multiplier - std::fmod(numberToRound,multiplier) + numberToRound );
 }

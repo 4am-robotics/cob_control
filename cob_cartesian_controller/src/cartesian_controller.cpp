@@ -19,8 +19,9 @@
  * \author
  *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de / christoph.mark@gmail.com
  *
- * \date Date of creation: July, 2015
- *
+ * \date Date of creation: December, 2015
+ *   This class is used to interpolate cartesian paths with a velocity profile. There are two types of interpolations (Linear and Circular) and two velocity
+ *   profiles (Ramp and Sinoid) implemented.
  * \brief
  *   ...
  *
@@ -202,6 +203,7 @@ bool CartesianController::posePathBroadcaster(const geometry_msgs::PoseArray& ca
     int failure_counter = 0;
     ros::Rate rate(update_rate_);
     tf::Transform transform;
+
     for(unsigned int i = 0; i < cartesian_path.poses.size(); i++)
     {
         if(!as_->isActive())
@@ -221,39 +223,35 @@ bool CartesianController::posePathBroadcaster(const geometry_msgs::PoseArray& ca
 
         tf_broadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), cartesian_path.header.frame_id, target_frame_));
 
-        // Get transformation
-        tf::StampedTransform stamped_transform = utils_.getStampedTransform(target_frame_, chain_tip_link_);
-
         ros::spinOnce();
         rate.sleep();
     }
 
-    while(true)
-    {
-        // Get transformation
-        tf::StampedTransform stamped_transform = utils_.getStampedTransform(target_frame_, chain_tip_link_);
-        ROS_INFO_STREAM("stamped: x: " << stamped_transform.getOrigin().getX() << " y: " << stamped_transform.getOrigin().getY() << " z: " << stamped_transform.getOrigin().getZ());
-
-        if(!utils_.inEpsilonArea(stamped_transform, 0.0005))
-        {
-            // Send/Refresh target Frame
-            transform.setOrigin( tf::Vector3(cartesian_path.poses.back().position.x,
-                                             cartesian_path.poses.back().position.y,
-                                             cartesian_path.poses.back().position.z) );
-            transform.setRotation( tf::Quaternion(cartesian_path.poses.back().orientation.x,
-                                                  cartesian_path.poses.back().orientation.y,
-                                                  cartesian_path.poses.back().orientation.z,
-                                                  cartesian_path.poses.back().orientation.w) );
-            tf_broadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), cartesian_path.header.frame_id, target_frame_));
-        }
-        else
-        {
-            break;
-        }
-
-        ros::spinOnce();
-        rate.sleep();
-    }
+//    while(ros::ok())
+//    {
+//        // Get transformation
+//        tf::StampedTransform stamped_transform = utils_.getStampedTransform(target_frame_, chain_tip_link_);
+//        ROS_INFO_STREAM("Adjustment (This compensates the inaccuracy from the T_IPO interpolation). This is optional and results in an velocity spike !!! \n : x: " << stamped_transform.getOrigin().getX() << " y: " << stamped_transform.getOrigin().getY() << " z: " << stamped_transform.getOrigin().getZ());
+//        if(!utils_.inEpsilonArea(stamped_transform, 0.0005))
+//        {
+//            // Send/Refresh target Frame
+//            transform.setOrigin( tf::Vector3(cartesian_path.poses.back().position.x,
+//                                             cartesian_path.poses.back().position.y,
+//                                             cartesian_path.poses.back().position.z) );
+//            transform.setRotation( tf::Quaternion(cartesian_path.poses.back().orientation.x,
+//                                                  cartesian_path.poses.back().orientation.y,
+//                                                  cartesian_path.poses.back().orientation.z,
+//                                                  cartesian_path.poses.back().orientation.w) );
+//            tf_broadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), cartesian_path.header.frame_id, target_frame_));
+//        }
+//        else
+//        {
+//            break;
+//        }
+//
+//        ros::spinOnce();
+//        rate.sleep();
+//    }
 
     return success;
 }
@@ -261,23 +259,13 @@ bool CartesianController::posePathBroadcaster(const geometry_msgs::PoseArray& ca
 
 void CartesianController::goalCallback()
 {
-    geometry_msgs::Pose start_pose, end_pose, pose;
     geometry_msgs::PoseArray cartesian_path;
     cob_cartesian_controller::CartesianActionStruct action_struct;
-
-
-    ROS_INFO_STREAM("=========================================================================");
-    ROS_INFO("Received a new goal");
-    ROS_INFO_STREAM("=========================================================================");
-
-    start_pose = utils_.getPose(root_frame_, chain_tip_link_);
 
     action_struct = acceptGoal(as_->acceptNewGoal());
 
     if(action_struct.move_type == cob_cartesian_controller::CartesianControllerGoal::LIN)
     {
-        ROS_INFO("move_lin");
-
         // Interpolate path
         if(!trajectory_interpolator_->linearInterpolation(cartesian_path, action_struct))
         {
@@ -302,8 +290,6 @@ void CartesianController::goalCallback()
             return;
         }
 
-//        movePTP(action_struct.move_lin.end, 0.001);
-
         // De-Activate Tracking
         if(!stopTracking())
         {
@@ -315,7 +301,6 @@ void CartesianController::goalCallback()
     }
     else if(action_struct.move_type == cob_cartesian_controller::CartesianControllerGoal::CIRC)
     {
-        ROS_INFO("move_circ");
         if(!trajectory_interpolator_->circularInterpolation(cartesian_path, action_struct))
         {
             actionAbort(false, "Failed to do interpolation for 'move_circ'");
@@ -366,10 +351,6 @@ cob_cartesian_controller::MoveLinStruct CartesianController::convertMoveLin(cons
     move_lin.start = start;
     move_lin.end = end;
 
-    ROS_WARN("move_lin_msg_orientation .. w: %f", move_lin_msg.pose_goal.orientation.w);
-    ROS_WARN("move_lin_msg_orientation .. x: %f", move_lin_msg.pose_goal.orientation.x);
-    ROS_WARN("move_lin_msg_orientation .. y: %f", move_lin_msg.pose_goal.orientation.y);
-    ROS_WARN("move_lin_msg_orientation .. z: %f", move_lin_msg.pose_goal.orientation.z);
     return move_lin;
 }
 
@@ -382,7 +363,6 @@ cob_cartesian_controller::MoveCircStruct CartesianController::convertMoveCirc(co
     move_circ.start_angle           = move_circ_msg.start_angle;
     move_circ.end_angle             = move_circ_msg.end_angle;
     move_circ.radius                = move_circ_msg.radius;
-
 
     move_circ.pose_center = center;
 

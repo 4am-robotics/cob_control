@@ -19,7 +19,7 @@
  * \author
  *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de / christoph.mark@gmail.com
  *
- * \date Date of creation: July, 2015
+ * \date Date of creation: December, 2015
  *
  * \brief
  *   ...
@@ -35,7 +35,6 @@
 
 #include <cob_cartesian_controller/cartesian_controller_data_types.h>
 #include <cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_builder.h>
-
 
 
 class TrajectoryInterpolator

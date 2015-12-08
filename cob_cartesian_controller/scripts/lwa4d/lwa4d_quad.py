@@ -34,12 +34,12 @@ if __name__ == '__main__':
  
     rospy.sleep(3.0)
 
-    pose = sci.gen_pose(pos=[0.3, 0, 0.9], rpy=[0.0, 0.0, 90.0])
+    pose = sci.gen_pose(pos=[0.3, 0, 0.9], rpy=[0.0, 0.0, math.pi/3])
     profile = Profile()
     profile.vel = 0.1
     profile.accl = 0.05
-    #profile.profile_type = Profile.SINOID
-    profile.profile_type = Profile.RAMP
+    profile.profile_type = Profile.SINOID
+    #profile.profile_type = Profile.RAMP
 
     success, message = sci.move_lin(pose, "world", profile)
     if success:
@@ -55,8 +55,8 @@ if __name__ == '__main__':
     profile = Profile()
     profile.vel = 0.1
     profile.accl = 0.05
-    #profile.profile_type = Profile.SINOID
-    profile.profile_type = Profile.RAMP
+    profile.profile_type = Profile.SINOID
+    #profile.profile_type = Profile.RAMP
 
     success, message = sci.move_lin(pose, "world", profile)
     if success:
@@ -73,8 +73,8 @@ if __name__ == '__main__':
     profile = Profile()
     profile.vel = 0.1
     profile.accl = 0.05
-    #profile.profile_type = Profile.SINOID
-    profile.profile_type = Profile.RAMP
+    profile.profile_type = Profile.SINOID
+    #profile.profile_type = Profile.RAMP
 
     success, message = sci.move_lin(pose, "world", profile)
     if success:
@@ -90,8 +90,8 @@ if __name__ == '__main__':
     profile = Profile()
     profile.vel = 0.1
     profile.accl = 0.05
-    #profile.profile_type = Profile.SINOID
-    profile.profile_type = Profile.RAMP
+    profile.profile_type = Profile.SINOID
+    #profile.profile_type = Profile.RAMP
 
     success, message = sci.move_lin(pose, "world", profile)
     if success:
@@ -108,8 +108,8 @@ if __name__ == '__main__':
     profile = Profile()
     profile.vel = 0.1
     profile.accl = 0.05
-    #profile.profile_type = Profile.SINOID
-    profile.profile_type = Profile.RAMP
+    profile.profile_type = Profile.SINOID
+    #profile.profile_type = Profile.RAMP
 
     success, message = sci.move_lin(pose, "world", profile)
     if success:
@@ -126,8 +126,8 @@ if __name__ == '__main__':
     profile = Profile()
     profile.vel = 0.1
     profile.accl = 0.05
-    #profile.profile_type = Profile.SINOID
-    profile.profile_type = Profile.RAMP
+    profile.profile_type = Profile.SINOID
+    #profile.profile_type = Profile.RAMP
 
     success, message = sci.move_lin(pose, "world", profile)
     if success:

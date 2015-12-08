@@ -19,8 +19,8 @@
  * \author
  *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de / christoph.mark@gmail.com
  *
- * \date Date of creation: July, 2015
- *
+ * \date Date of creation: December, 2015
+ *   This class contains the implementation for the linear and circular interpolation.
  * \brief
  *   ...
  *
@@ -49,8 +49,8 @@ bool TrajectoryInterpolator::linearInterpolation(geometry_msgs::PoseArray& pose_
     tf::quaternionMsgToTF(as.move_lin.end.orientation,q_end);
 
     double Se_lin = sqrt(pow((as.move_lin.end.position.x - as.move_lin.start.position.x), 2) +
-                     pow((as.move_lin.end.position.y - as.move_lin.start.position.y), 2) +
-                     pow((as.move_lin.end.position.z - as.move_lin.start.position.z), 2));
+                         pow((as.move_lin.end.position.y - as.move_lin.start.position.y), 2) +
+                         pow((as.move_lin.end.position.z - as.move_lin.start.position.z), 2));
 
     double Se_rot = q_start.angleShortestPath(q_end);
 
@@ -62,19 +62,18 @@ bool TrajectoryInterpolator::linearInterpolation(geometry_msgs::PoseArray& pose_
     linear_path  = path_matrix[0];
     angular_path = path_matrix[1];
 
-    if(linear_path.back() == 0)
+    if(fabs(linear_path.back()) > fabs(angular_path.back()))
     {
-        norm_factor = 1/angular_path.back();
-        path = angular_path;
-    }
-    else    //todo: There's still a bug in the rotational interpolation !
-    {
-        norm_factor = 1/linear_path.back();
         path = linear_path;
     }
+    else
+    {
+        path = angular_path;
+    }
+    norm_factor = 1/path.back();
 
     // Interpolate the linear path
-    for(unsigned int i = 0 ; i < path_matrix[0].size() ; i++)
+    for(unsigned int i = 0 ; i < linear_path.size() ; i++)
     {
         if(linear_path.back() == 0)
         {
@@ -98,20 +97,22 @@ bool TrajectoryInterpolator::linearInterpolation(geometry_msgs::PoseArray& pose_
 bool TrajectoryInterpolator::circularInterpolation(geometry_msgs::PoseArray& pose_array,
                                                    const cob_cartesian_controller::CartesianActionStruct& as)
 {
-    pose_array.header.stamp = ros::Time::now();
+     pose_array.header.stamp = ros::Time::now();
      pose_array.header.frame_id = root_frame_;
 
      tf::Quaternion q;
      tf::Transform C, P, T;
 
      std::vector<double> path_array;
-     std::vector<double> path_matrix[4];
+     std::vector<double> path_matrix[2];
 
      geometry_msgs::Pose pose;
 
      double Se = as.move_circ.end_angle - as.move_circ.start_angle;
 
      bool forward;
+
+     // Needed for the circle direction !
      if(Se < 0)
      {
          forward = false;

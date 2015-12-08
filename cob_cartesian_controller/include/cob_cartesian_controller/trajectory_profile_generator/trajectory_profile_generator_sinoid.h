@@ -19,7 +19,7 @@
  * \author
  *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de / christoph.mark@gmail.com
  *
- * \date Date of creation: September, 2015
+ * \date Date of creation: December, 2015
  *
  * \brief
  *
@@ -30,7 +30,6 @@
 #include "cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_base.h"
 
 /* BEGIN TrajectoryProfileSinoid ****************************************************************************************/
-/// Class providing a HardwareInterface publishing positions.
 class TrajectoryProfileSinoid : public TrajectoryProfileBase
 {
     public:
@@ -48,7 +47,6 @@ class TrajectoryProfileSinoid : public TrajectoryProfileBase
                                                   double steps_tb, double steps_tv, double steps_te, double tb, double tv, double te);
 
     private:
-//        virtual cob_cartesian_controller::ProfileTimings getProfileTimings(double Se, double te, double accl, double vel);
         cob_cartesian_controller::ProfileTimings pt_max_;
 };
 /* END TrajectoryProfileSinoid **********************************************************************************************/

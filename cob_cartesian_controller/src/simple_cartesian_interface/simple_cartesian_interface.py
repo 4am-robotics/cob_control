@@ -20,7 +20,6 @@ def move_lin(pose_goal, frame_id, profile, rotate_only=False):
     goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.pose_goal = pose_goal
     goal.move_lin.frame_id = frame_id
-    goal.move_lin.rotate_only = rotate_only
     goal.profile = profile
     # print goal
 
@@ -44,7 +43,6 @@ def move_circ(pose_center, frame_id, start_angle, end_angle, radius, profile, ro
     goal.move_type = CartesianControllerGoal.CIRC
     goal.move_circ.pose_center = pose_center
     goal.move_circ.frame_id = frame_id
-    goal.move_circ.rotate_only = rotate_only
     goal.move_circ.start_angle = start_angle
     goal.move_circ.end_angle = end_angle
     goal.move_circ.radius = radius

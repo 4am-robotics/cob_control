@@ -61,7 +61,6 @@ namespace cob_cartesian_controller
         geometry_msgs::Pose pose_center;
         double start_angle, end_angle;
         double radius;
-        bool rotate_only;
     };
 
     struct CartesianActionStruct
@@ -71,8 +70,6 @@ namespace cob_cartesian_controller
         MoveCircStruct move_circ;
         ProfileStruct profile;
     };
-
-
 
     class PathArray{
         public:
@@ -101,7 +98,6 @@ namespace cob_cartesian_controller
                 {
                     pm_.push_back(pa1);
                     pm_.push_back(pa2);
-
                 }
                 ~PathMatrix()
                 {

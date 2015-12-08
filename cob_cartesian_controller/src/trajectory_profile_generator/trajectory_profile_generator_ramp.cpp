@@ -19,12 +19,12 @@
  * \author
  *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de / christoph.mark@gmail.com
  *
- * \date Date of creation: September, 2015
- *
+ * \date Date of creation: December, 2015
+ *   This class calculates the timings for a ramp velocity profile with respect to the interpolation rate of the system. It also adjusts the velocity in case of
+ *   a bad velocity / path-length ratio, which leads to a longer path time.
  * \brief
  *
  ****************************************************************/
-
 #include "ros/ros.h"
 #include "cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_ramp.h"
 /* BEGIN TrajectoryProfileRamp ********************************************************************************************/
@@ -32,7 +32,6 @@ inline cob_cartesian_controller::ProfileTimings TrajectoryProfileRamp::getProfil
 {
     CartesianControllerUtils utils;
     cob_cartesian_controller::ProfileTimings pt;
-    int steps_te, steps_tv, steps_tb = 0;
     double tv, tb = 0.0;
 
     // Calculate the Sinoid Profile Parameters
@@ -41,7 +40,7 @@ inline cob_cartesian_controller::ProfileTimings TrajectoryProfileRamp::getProfil
         vel = sqrt(std::fabs(Se) * accl);
     }
 
-    if(vel > 0.00001)
+    if(vel > MIN_VELOCITY_THRESHOLD)
     {
         tb = utils.roundUpToMultiplier(vel / accl, params_.profile.t_ipo);
         if(calcMaxTe)
@@ -129,13 +128,11 @@ inline bool TrajectoryProfileRamp::calculateProfile(std::vector<double> path_mat
     cob_cartesian_controller::PathArray lin(Se_lin, linear_path);
     cob_cartesian_controller::PathArray rot(Se_rot, angular_path);
 
-
     cob_cartesian_controller::PathMatrix pm(lin,rot);
 
     // Get the profile timings from the longest path
     pt_max_ = getProfileTimings(pm.getMaxSe(), 0, params_.profile.accl, params_.profile.vel, true);
 
-    ROS_INFO_STREAM("pt_max_SEEEEEEEEEEEEE: " << pm.getMaxSe());
     // Calculate the paths
     for(int i=0; i < pm.pm_.size(); i++)
     {

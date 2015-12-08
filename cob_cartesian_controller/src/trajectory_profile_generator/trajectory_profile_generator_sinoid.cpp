@@ -19,7 +19,9 @@
  * \author
  *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de / christoph.mark@gmail.com
  *
- * \date Date of creation: September, 2015
+ * \date Date of creation: December, 2015
+ *   This class calculates the timings for a sinoid velocity profile with respect to the interpolation rate of the system. It also adjusts the velocity in case of
+ *   a bad velocity / path-length ratio, which leads to a longer path time.
  *
  * \brief
  *
@@ -32,7 +34,6 @@ inline cob_cartesian_controller::ProfileTimings TrajectoryProfileSinoid::getProf
 {
     CartesianControllerUtils utils;
     cob_cartesian_controller::ProfileTimings pt;
-    int steps_te, steps_tv, steps_tb = 0;
     double tv, tb = 0.0;
 
     // Calculate the Sinoid Profile Parameters
@@ -41,7 +42,7 @@ inline cob_cartesian_controller::ProfileTimings TrajectoryProfileSinoid::getProf
         vel = sqrt(std::fabs(Se) * accl / 2);
     }
 
-    if(vel > 0.001)
+    if(vel > MIN_VELOCITY_THRESHOLD)
     {
         tb = utils.roundUpToMultiplier(2 * vel / accl, params_.profile.t_ipo);
 
@@ -129,7 +130,6 @@ inline bool TrajectoryProfileSinoid::calculateProfile(std::vector<double> path_m
 
     cob_cartesian_controller::PathArray lin(Se_lin, linear_path);
     cob_cartesian_controller::PathArray rot(Se_rot, angular_path);
-
 
     cob_cartesian_controller::PathMatrix pm(lin,rot);
 

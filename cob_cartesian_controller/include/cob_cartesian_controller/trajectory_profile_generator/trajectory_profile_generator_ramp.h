@@ -19,7 +19,7 @@
  * \author
  *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de / christoph.mark@gmail.com
  *
- * \date Date of creation: September, 2015
+ * \date Date of creation: December, 2015
  *
  * \brief
  *
@@ -27,12 +27,10 @@
 #ifndef COB_CONTROL_COB_CARTESIAN_CONTROLLER_INCLUDE_COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_TRAJECTORY_PROFILE_GENERATOR_RAMP_H_
 #define COB_CONTROL_COB_CARTESIAN_CONTROLLER_INCLUDE_COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_TRAJECTORY_PROFILE_GENERATOR_RAMP_H_
 
-
 #include "cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_base.h"
 
 /* BEGIN TrajectoryProfileRamp ****************************************************************************************/
-/// Class providing a HardwareInterface publishing velocities.
-class  TrajectoryProfileRamp: public TrajectoryProfileBase
+class TrajectoryProfileRamp: public TrajectoryProfileBase
 {
     public:
         TrajectoryProfileRamp(const cob_cartesian_controller::CartesianActionStruct& params)
