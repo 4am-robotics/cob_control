@@ -227,32 +227,6 @@ bool CartesianController::posePathBroadcaster(const geometry_msgs::PoseArray& ca
         rate.sleep();
     }
 
-//    while(ros::ok())
-//    {
-//        // Get transformation
-//        tf::StampedTransform stamped_transform = utils_.getStampedTransform(target_frame_, chain_tip_link_);
-//        ROS_INFO_STREAM("Adjustment (This compensates the inaccuracy from the T_IPO interpolation). This is optional and results in an velocity spike !!! \n : x: " << stamped_transform.getOrigin().getX() << " y: " << stamped_transform.getOrigin().getY() << " z: " << stamped_transform.getOrigin().getZ());
-//        if(!utils_.inEpsilonArea(stamped_transform, 0.0005))
-//        {
-//            // Send/Refresh target Frame
-//            transform.setOrigin( tf::Vector3(cartesian_path.poses.back().position.x,
-//                                             cartesian_path.poses.back().position.y,
-//                                             cartesian_path.poses.back().position.z) );
-//            transform.setRotation( tf::Quaternion(cartesian_path.poses.back().orientation.x,
-//                                                  cartesian_path.poses.back().orientation.y,
-//                                                  cartesian_path.poses.back().orientation.z,
-//                                                  cartesian_path.poses.back().orientation.w) );
-//            tf_broadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), cartesian_path.header.frame_id, target_frame_));
-//        }
-//        else
-//        {
-//            break;
-//        }
-//
-//        ros::spinOnce();
-//        rate.sleep();
-//    }
-
     return success;
 }
 
