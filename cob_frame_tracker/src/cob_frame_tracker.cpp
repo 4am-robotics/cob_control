@@ -224,6 +224,7 @@ bool CobFrameTracker::getTransform(const std::string& from, const std::string& t
 
     try
     {
+        tf_listener_.waitForTransform(from, to, ros::Time(0), ros::Duration(0.2));
         tf_listener_.lookupTransform(from, to, ros::Time(0), stamped_tf);
         transform = true;
     }
