@@ -58,7 +58,6 @@ public:
 
     // Main functions
     bool posePathBroadcaster(const geometry_msgs::PoseArray& cartesian_path);
-    bool movePTP(const geometry_msgs::Pose& target_pose, double epsilon);
 
     // Helper function
     bool startTracking();
@@ -86,9 +85,6 @@ private:
 
     double update_rate_;
     std::string root_frame_, chain_tip_link_, target_frame_;
-
-    // HelperVars for movePTP
-    bool reached_pos_;
 
     /// Action interface
     std::string action_name_;

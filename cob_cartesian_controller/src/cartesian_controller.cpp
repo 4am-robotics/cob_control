@@ -149,52 +149,6 @@ bool CartesianController::stopTracking()
     return success;
 }
 
-// MovePTP
-bool CartesianController::movePTP(const geometry_msgs::Pose& target_pose, const double epsilon)
-{
-    bool success = false;
-    int reached_pos_counter = 0;
-
-    ros::Rate rate(update_rate_);
-    tf::StampedTransform stamped_transform;
-    stamped_transform.setOrigin(tf::Vector3(target_pose.position.x,
-                                            target_pose.position.y,
-                                            target_pose.position.z));
-    stamped_transform.setRotation(tf::Quaternion(target_pose.orientation.x,
-                                                 target_pose.orientation.y,
-                                                 target_pose.orientation.z,
-                                                 target_pose.orientation.w));
-    stamped_transform.frame_id_ = root_frame_;
-    stamped_transform.child_frame_id_ = target_frame_;
-
-    while (as_->isActive())
-    {
-        // Send/Refresh target Frame
-        stamped_transform.stamp_ = ros::Time::now();
-        tf_broadcaster_.sendTransform(stamped_transform);
-
-        // Get transformation
-        tf::StampedTransform stamped_transform = utils_.getStampedTransform(target_frame_, chain_tip_link_);
-
-        // Wait for chain_tip_link to be within epsilon area of target_frame
-        if (utils_.inEpsilonArea(stamped_transform, epsilon))
-        {
-            reached_pos_counter++;  // Count up if end effector position is in the epsilon area to avoid wrong values
-        }
-
-        if (reached_pos_counter >= static_cast<int>(2*update_rate_))  // has been close enough to target for 2 seconds
-        {
-            success = true;
-            break;
-        }
-
-        rate.sleep();
-        ros::spinOnce();
-    }
-
-    return success;
-}
-
 // Broadcasting interpolated Cartesian path
 bool CartesianController::posePathBroadcaster(const geometry_msgs::PoseArray& cartesian_path)
 {
