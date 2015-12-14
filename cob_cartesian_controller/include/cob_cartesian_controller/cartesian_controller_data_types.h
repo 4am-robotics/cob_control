@@ -74,9 +74,9 @@ struct CartesianActionStruct
 class PathArray
 {
     public:
-        PathArray(double Se, std::vector<double> array):
-            Se_(Se),
-            array_(array)
+        PathArray(double Se, std::vector<double> array)
+        :    Se_(Se),
+             array_(array)
         {}
 
         ~PathArray()

@@ -37,7 +37,7 @@ class TrajectoryProfileSinoid : public TrajectoryProfileBase
 {
 public:
     explicit TrajectoryProfileSinoid(const cob_cartesian_controller::CartesianActionStruct& params)
-    :   TrajectoryProfileBase(params)
+    :    TrajectoryProfileBase(params)
     {}
 
     ~TrajectoryProfileSinoid()

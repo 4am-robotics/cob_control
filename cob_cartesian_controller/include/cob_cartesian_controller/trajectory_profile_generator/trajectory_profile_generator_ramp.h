@@ -37,7 +37,7 @@ class TrajectoryProfileRamp: public TrajectoryProfileBase
 {
 public:
     explicit TrajectoryProfileRamp(const cob_cartesian_controller::CartesianActionStruct& params)
-    :   TrajectoryProfileBase(params)
+    :    TrajectoryProfileBase(params)
     {}
 
     ~TrajectoryProfileRamp()
