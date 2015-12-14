@@ -20,8 +20,9 @@
  *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de / christoph.mark@gmail.com
  *
  * \date Date of creation: December, 2015
- *   Builder class for generic profile generator.
+ *
  * \brief
+ *   Builder class for generic profile generator.
  *
  ****************************************************************/
 #ifndef TRAJECTORY_PROFILE_BUILDER_H_

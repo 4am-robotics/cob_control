@@ -22,6 +22,7 @@
  * \date Date of creation: December, 2015
  *
  * \brief
+ *   Class implementing the Ramp velocity profile generator.
  *
  ****************************************************************/
 #ifndef COB_CONTROL_COB_CARTESIAN_CONTROLLER_INCLUDE_COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_TRAJECTORY_PROFILE_GENERATOR_RAMP_H_

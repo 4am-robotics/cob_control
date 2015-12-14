@@ -20,9 +20,9 @@
  *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de / christoph.mark@gmail.com
  *
  * \date Date of creation: December, 2015
- *   This class contains useful functions which are not directly part of the cartesian controller.
+ *
  * \brief
- *   ...
+ *   Helper functions  used in the cob_cartesian_controller package.
  *
  ****************************************************************/
 

@@ -22,7 +22,7 @@
  * \date Date of creation: July, 2015
  *
  * \brief
- *   ...
+ *   Definition of data structures used in the cob_cartesian_controller package.
  *
  ****************************************************************/
 

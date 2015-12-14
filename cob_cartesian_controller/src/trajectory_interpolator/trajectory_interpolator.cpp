@@ -20,9 +20,9 @@
  *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de / christoph.mark@gmail.com
  *
  * \date Date of creation: December, 2015
- *   This class contains the implementation for the linear and circular interpolation.
+ *
  * \brief
- *   ...
+ *   This class contains the implementation for the linear and circular interpolation.
  *
  ****************************************************************/
 

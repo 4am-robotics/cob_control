@@ -20,9 +20,9 @@
  *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de / christoph.mark@gmail.com
  *
  * \date Date of creation: December, 2015
- *   This class calculates the timings for a ramp velocity profile with respect to the interpolation rate of the system. It also adjusts the velocity in case of
- *   a bad velocity / path-length ratio, which leads to a longer path time.
+ *
  * \brief
+ *   Class implementing the Ramp velocity profile generator.
  *
  ****************************************************************/
 #include "ros/ros.h"

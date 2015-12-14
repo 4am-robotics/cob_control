@@ -22,7 +22,9 @@
  * \date Date of creation: December, 2015
  *
  * \brief
- *   ...
+ *   This class is used to interpolate various Cartesian paths for a given velocity profile.
+ *   Supported types of Cartesian paths are Linear and Circular.
+ *   Supported types of velocity profiles are Ramp and Sinoid.
  *
  ****************************************************************/
 

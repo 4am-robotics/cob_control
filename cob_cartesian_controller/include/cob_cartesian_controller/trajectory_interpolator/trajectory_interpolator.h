@@ -22,7 +22,7 @@
  * \date Date of creation: December, 2015
  *
  * \brief
- *   ...
+ *   This class contains the implementation for the linear and circular interpolation.
  *
  ****************************************************************/
 

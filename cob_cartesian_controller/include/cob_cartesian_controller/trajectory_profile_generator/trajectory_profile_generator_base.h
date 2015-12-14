@@ -20,9 +20,9 @@
  *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de / christoph.mark@gmail.com
  *
  * \date Date of creation: December, 2015
- *   Base class implementation for trajectory_profile_generator.
- * \brief
  *
+ * \brief
+ *   Base class for trajectory_profile_generator.
  *
  ****************************************************************/
 

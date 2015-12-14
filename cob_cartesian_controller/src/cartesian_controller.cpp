@@ -20,10 +20,11 @@
  *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de / christoph.mark@gmail.com
  *
  * \date Date of creation: December, 2015
- *   This class is used to interpolate cartesian paths with a velocity profile. There are two types of interpolations (Linear and Circular) and two velocity
- *   profiles (Ramp and Sinoid) implemented.
+ *   
  * \brief
- *   ...
+ *   This class is used to interpolate various Cartesian paths for a given velocity profile.
+ *   Supported types of Cartesian paths are Linear and Circular.
+ *   Supported types of velocity profiles are Ramp and Sinoid.
  *
  ****************************************************************/
 #include <math.h>
