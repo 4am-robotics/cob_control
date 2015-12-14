@@ -130,7 +130,7 @@ void CartesianControllerUtils::poseToRPY(const geometry_msgs::Pose& pose, double
     tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
 }
 
-void CartesianControllerUtils::previewPath(const geometry_msgs::PoseArray& pose_array)
+void CartesianControllerUtils::previewPath(const geometry_msgs::PoseArray pose_array)
 {
     visualization_msgs::Marker marker;
     marker.type = visualization_msgs::Marker::SPHERE;
@@ -183,7 +183,7 @@ void CartesianControllerUtils::copyMatrix(std::vector<double>* path_array, std::
     }
 }
 
-double CartesianControllerUtils::roundUpToMultiplier(double numberToRound, double multiplier)
+double CartesianControllerUtils::roundUpToMultiplier(const double numberToRound, const double multiplier)
 {
     return ( multiplier - std::fmod(numberToRound, multiplier) + numberToRound );
 }

@@ -74,7 +74,7 @@ struct CartesianActionStruct
 class PathArray
 {
     public:
-        PathArray(double Se, std::vector<double> array)
+        PathArray(const double Se, const std::vector<double> array)
         :    Se_(Se),
              array_(array)
         {}
@@ -91,8 +91,8 @@ class PathArray
 class PathMatrix
 {
     public:
-        PathMatrix(PathArray& pa1,
-                   PathArray& pa2)
+        PathMatrix(const PathArray pa1,
+                   const PathArray pa2)
         {
             pm_.push_back(pa1);
             pm_.push_back(pa2);

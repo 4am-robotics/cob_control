@@ -33,7 +33,7 @@
 #include <cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_builder.h>
 
 bool TrajectoryInterpolator::linearInterpolation(geometry_msgs::PoseArray& pose_array,
-                                                 const cob_cartesian_controller::CartesianActionStruct& as)
+                                                 const cob_cartesian_controller::CartesianActionStruct as)
 {
     this->trajectory_profile_generator_.reset(TrajectoryProfileBuilder::createProfile(as));
 
@@ -97,7 +97,7 @@ bool TrajectoryInterpolator::linearInterpolation(geometry_msgs::PoseArray& pose_
 }
 
 bool TrajectoryInterpolator::circularInterpolation(geometry_msgs::PoseArray& pose_array,
-                                                   const cob_cartesian_controller::CartesianActionStruct& as)
+                                                   const cob_cartesian_controller::CartesianActionStruct as)
 {
      pose_array.header.stamp = ros::Time::now();
      pose_array.header.frame_id = root_frame_;

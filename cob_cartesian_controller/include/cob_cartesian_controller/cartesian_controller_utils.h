@@ -55,12 +55,11 @@ public:
     bool inEpsilonArea(const tf::StampedTransform& stamped_transform, const double epsilon);
     void poseToRPY(const geometry_msgs::Pose& pose, double& roll, double& pitch, double& yaw);
 
-    void previewPath(const geometry_msgs::PoseArray& pose_array);
+    void previewPath(const geometry_msgs::PoseArray pose_array);
 
-    void sortMatrixByIdx(std::vector<cob_cartesian_controller::PathArray>& m);
     void adjustArrayLength(std::vector<cob_cartesian_controller::PathArray>& m);
     void copyMatrix(std::vector<double>* path_array, std::vector<cob_cartesian_controller::PathArray>& m);
-    double roundUpToMultiplier(double numberToRound, double multiplier);
+    double roundUpToMultiplier(const double numberToRound, const double multiplier);
 
 private:
     ros::NodeHandle nh_;

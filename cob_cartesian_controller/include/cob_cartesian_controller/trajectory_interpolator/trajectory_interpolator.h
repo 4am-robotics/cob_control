@@ -50,10 +50,10 @@ public:
     }
 
     bool linearInterpolation(geometry_msgs::PoseArray& pose_array,
-                             const cob_cartesian_controller::CartesianActionStruct& as);
+                             const cob_cartesian_controller::CartesianActionStruct as);
 
     bool circularInterpolation(geometry_msgs::PoseArray& pose_array,
-                               const cob_cartesian_controller::CartesianActionStruct& as);
+                               const cob_cartesian_controller::CartesianActionStruct as);
 
 private:
     std::string root_frame_;
