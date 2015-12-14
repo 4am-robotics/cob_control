@@ -38,8 +38,9 @@ TrajectoryProfileBase* TrajectoryProfileBuilder::createProfile(const cob_cartesi
 
     const int RAMP = static_cast<const int>(msg.RAMP);
     const int SINOID = static_cast<const int>(msg.SINOID);
+
     TrajectoryProfileBase* ib = NULL;
-    switch(params.profile.profile_type)
+    switch (params.profile.profile_type)
     {
         case RAMP:
             ib = new TrajectoryProfileRamp(params);

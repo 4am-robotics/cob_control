@@ -26,9 +26,10 @@
  *
  ****************************************************************/
 
-#ifndef COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_BASE_H
-#define COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_BASE_H
+#ifndef COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_TRAJECTORY_PROFILE_GENERATOR_BASE_H
+#define COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_TRAJECTORY_PROFILE_GENERATOR_BASE_H
 
+#include <vector>
 #include <ros/ros.h>
 #include <cob_cartesian_controller/cartesian_controller_data_types.h>
 #include <cob_cartesian_controller/cartesian_controller_utils.h>
@@ -39,7 +40,7 @@
 class TrajectoryProfileBase
 {
 public:
-    TrajectoryProfileBase(const cob_cartesian_controller::CartesianActionStruct& params)
+    explicit TrajectoryProfileBase(const cob_cartesian_controller::CartesianActionStruct& params)
     :    params_(params)
     {}
 
@@ -61,4 +62,4 @@ protected:
     const cob_cartesian_controller::CartesianActionStruct& params_;
 };
 
-#endif  // COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_BASE_H
+#endif  // COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_TRAJECTORY_PROFILE_GENERATOR_BASE_H

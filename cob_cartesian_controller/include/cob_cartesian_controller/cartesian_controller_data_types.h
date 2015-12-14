@@ -26,103 +26,104 @@
  *
  ****************************************************************/
 
-#ifndef CARTESIAN_CONTROLLER_DATA_STRUCTURES_H
-#define CARTESIAN_CONTROLLER_DATA_STRUCTURES_H
+#ifndef COB_CARTESIAN_CONTROLLER_CARTESIAN_CONTROLLER_DATA_TYPES_H
+#define COB_CARTESIAN_CONTROLLER_CARTESIAN_CONTROLLER_DATA_TYPES_H
 
-#include <exception>
+#include <vector>
 #include <std_msgs/Float64.h>
 #include <geometry_msgs/Pose.h>
 
 namespace cob_cartesian_controller
 {
-    struct ProfileStruct
-    {
-        double t_ipo;
-        unsigned int profile_type;
-        double vel, accl;
-        double Se_max;
-    };
 
-    struct ProfileTimings
-    {
-        double tb, te, tv;
-        unsigned int steps_tb, steps_te, steps_tv;
-        bool ok;
-        double vel;
-    };
+struct ProfileStruct
+{
+    double t_ipo;
+    unsigned int profile_type;
+    double vel, accl;
+    double Se_max;
+};
 
-    struct MoveLinStruct
-    {
-        geometry_msgs::Pose start, end;
-    };
+struct ProfileTimings
+{
+    double tb, te, tv;
+    unsigned int steps_tb, steps_te, steps_tv;
+    bool ok;
+    double vel;
+};
 
-    struct MoveCircStruct
-    {
-        geometry_msgs::Pose pose_center;
-        double start_angle, end_angle;
-        double radius;
-    };
+struct MoveLinStruct
+{
+    geometry_msgs::Pose start, end;
+};
 
-    struct CartesianActionStruct
-    {
-        unsigned int move_type;
-        MoveLinStruct move_lin;
-        MoveCircStruct move_circ;
-        ProfileStruct profile;
-    };
+struct MoveCircStruct
+{
+    geometry_msgs::Pose pose_center;
+    double start_angle, end_angle;
+    double radius;
+};
 
-    class PathArray
-    {
-        public:
-            PathArray(double Se, std::vector<double> array):
-                Se_(Se),
-                array_(array)
+struct CartesianActionStruct
+{
+    unsigned int move_type;
+    MoveLinStruct move_lin;
+    MoveCircStruct move_circ;
+    ProfileStruct profile;
+};
+
+class PathArray
+{
+    public:
+        PathArray(double Se, std::vector<double> array):
+            Se_(Se),
+            array_(array)
+        {
+            calcTe_ = false;
+        }
+
+        ~PathArray()
+        {
+            array_.clear();
+        }
+
+        bool calcTe_;
+        double Se_;
+        std::vector<double> array_;
+};
+
+class PathMatrix
+{
+    public:
+        PathMatrix(PathArray& pa1,
+                   PathArray& pa2)
+        {
+            pm_.push_back(pa1);
+            pm_.push_back(pa2);
+        }
+
+        ~PathMatrix()
+        {
+            pm_.clear();
+        }
+
+        double getMaxSe()
+        {
+            double se_max = 0;
+
+            for (unsigned int i = 0; i < pm_.size(); i++)
             {
-                calcTe_ = false;
-            }
-
-            ~PathArray()
-            {
-                array_.clear();
-            }
-
-            bool calcTe_;
-            double Se_;
-            std::vector<double> array_;
-    };
-
-    class PathMatrix
-    {
-        public:
-            PathMatrix(PathArray& pa1,
-                       PathArray& pa2)
-            {
-                pm_.push_back(pa1);
-                pm_.push_back(pa2);
-            }
-
-            ~PathMatrix()
-            {
-                pm_.clear();
-            }
-
-            double getMaxSe()
-            {
-                double se_max = 0;
-
-                for (unsigned int i = 0; i < pm_.size(); i++)
+                if (se_max < fabs(pm_[i].Se_))
                 {
-                    if (se_max < fabs(pm_[i].Se_))
-                    {
-                        se_max = fabs(pm_[i].Se_);
-                    }
+                    se_max = fabs(pm_[i].Se_);
                 }
-                return se_max;
             }
+            return se_max;
+        }
 
-            std::vector<PathArray> pm_;
-    };
+        std::vector<PathArray> pm_;
+};
 
-}//  namespace
+}  // namespace cob_cartesian_controller
 
-#endif  // CARTESIAN_CONTROLLER_DATA_STRUCTURES_H
+#endif  // COB_CARTESIAN_CONTROLLER_CARTESIAN_CONTROLLER_DATA_TYPES_H

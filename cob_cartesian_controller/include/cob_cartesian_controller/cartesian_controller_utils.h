@@ -26,8 +26,11 @@
  *
  ****************************************************************/
 
-#ifndef CARTESIAN_CONTROLLER_UTILS_H
-#define CARTESIAN_CONTROLLER_UTILS_H
+#ifndef COB_CARTESIAN_CONTROLLER_CARTESIAN_CONTROLLER_UTILS_H
+#define COB_CARTESIAN_CONTROLLER_CARTESIAN_CONTROLLER_UTILS_H
+
+#include <string>
+#include <vector>
 
 #include <ros/ros.h>
 #include <tf/transform_listener.h>
@@ -67,4 +70,4 @@ private:
     ros::Publisher marker_pub_;
 };
 
-#endif  // CARTESIAN_CONTROLLER_UTILS_H
+#endif  // COB_CARTESIAN_CONTROLLER_CARTESIAN_CONTROLLER_UTILS_H

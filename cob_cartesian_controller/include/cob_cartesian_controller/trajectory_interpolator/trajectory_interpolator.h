@@ -26,9 +26,10 @@
  *
  ****************************************************************/
 
-#ifndef COB_CARTESIAN_CONTROLLER_TRAJECTORY_INTERPOLATOR_H
-#define COB_CARTESIAN_CONTROLLER_TRAJECTORY_INTERPOLATOR_H
+#ifndef COB_CARTESIAN_CONTROLLER_TRAJECTORY_INTERPOLATOR_TRAJECTORY_INTERPOLATOR_H
+#define COB_CARTESIAN_CONTROLLER_TRAJECTORY_INTERPOLATOR_TRAJECTORY_INTERPOLATOR_H
 
+#include <string>
 #include <ros/ros.h>
 #include <geometry_msgs/PoseArray.h>
 #include <tf/transform_datatypes.h>
@@ -57,7 +58,6 @@ public:
 private:
     std::string root_frame_;
     boost::shared_ptr<TrajectoryProfileBase> trajectory_profile_generator_;
-
 };
 
-#endif  // COB_CARTESIAN_CONTROLLER_TRAJECTORY_INTERPOLATOR_H
+#endif  // COB_CARTESIAN_CONTROLLER_TRAJECTORY_INTERPOLATOR_TRAJECTORY_INTERPOLATOR_H

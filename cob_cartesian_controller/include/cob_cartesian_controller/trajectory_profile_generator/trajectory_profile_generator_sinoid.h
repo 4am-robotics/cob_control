@@ -26,16 +26,17 @@
  *
  ****************************************************************/
 
-#ifndef COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_SINOID_H
-#define COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_SINOID_H
+#ifndef COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_TRAJECTORY_PROFILE_GENERATOR_SINOID_H
+#define COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_TRAJECTORY_PROFILE_GENERATOR_SINOID_H
 
+#include <vector>
 #include <cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_base.h>
 
 /* BEGIN TrajectoryProfileSinoid ****************************************************************************************/
 class TrajectoryProfileSinoid : public TrajectoryProfileBase
 {
 public:
-    TrajectoryProfileSinoid(const cob_cartesian_controller::CartesianActionStruct& params)
+    explicit TrajectoryProfileSinoid(const cob_cartesian_controller::CartesianActionStruct& params)
     :   TrajectoryProfileBase(params)
     {}
 
@@ -55,4 +56,4 @@ private:
 };
 /* END TrajectoryProfileSinoid **********************************************************************************************/
 
-#endif  // COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_SINOID_H
+#endif  // COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_TRAJECTORY_PROFILE_GENERATOR_SINOID_H

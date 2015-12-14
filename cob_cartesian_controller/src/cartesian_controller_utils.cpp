@@ -26,6 +26,9 @@
  *
  ****************************************************************/
 
+#include <string>
+#include <vector>
+#include <algorithm>
 #include <cob_cartesian_controller/cartesian_controller_utils.h>
 
 geometry_msgs::Pose CartesianControllerUtils::getPose(const std::string& target_frame, const std::string& source_frame)
@@ -57,10 +60,10 @@ tf::StampedTransform CartesianControllerUtils::getStampedTransform(const std::st
         }
         catch (tf::TransformException& ex)
         {
-            ROS_ERROR("CartesianControllerUtils::getStampedTransform: \n%s",ex.what());
+            ROS_ERROR("CartesianControllerUtils::getStampedTransform: \n%s", ex.what());
             ros::Duration(0.1).sleep();
         }
-    }while(!transform && ros::ok());
+    } while (!transform && ros::ok());
 
     return stamped_transform;
 }
@@ -84,10 +87,10 @@ void CartesianControllerUtils::transformPose(const std::string source_frame, con
         }
         catch (tf::TransformException& ex)
         {
-            ROS_ERROR("CartesianControllerUtils::transformPose: \n%s",ex.what());
+            ROS_ERROR("CartesianControllerUtils::transformPose: \n%s", ex.what());
             ros::Duration(0.1).sleep();
         }
-    }while(!transform && ros::ok());
+    } while (!transform && ros::ok());
 }
 
 
@@ -110,7 +113,7 @@ bool CartesianControllerUtils::inEpsilonArea(const tf::StampedTransform& stamped
     pitch_okay  = std::fabs(pitch) < epsilon;
     yaw_okay    = std::fabs(yaw)   < epsilon;
 
-    if(x_okay && y_okay && z_okay && roll_okay && pitch_okay && yaw_okay)
+    if (x_okay && y_okay && z_okay && roll_okay && pitch_okay && yaw_okay)
     {
         return true;
     }
@@ -145,7 +148,7 @@ void CartesianControllerUtils::previewPath(const geometry_msgs::PoseArray& pose_
 
     double id = marker_array_.markers.size();
 
-    for(unsigned int i = 0; i < pose_array.poses.size(); i++)
+    for (unsigned int i = 0; i < pose_array.poses.size(); i++)
     {
         marker.id = id + i;
         marker.pose = pose_array.poses.at(i);

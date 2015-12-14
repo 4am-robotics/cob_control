@@ -30,6 +30,7 @@
 
 #include <math.h>
 #include <algorithm>
+#include <string>
 #include <boost/lexical_cast.hpp>
 
 #include <ros/ros.h>
@@ -48,24 +49,23 @@ bool CartesianController::initialize()
         return false;
     }
 
-    if(!nh_.getParam("root_frame", root_frame_))
+    if (!nh_.getParam("root_frame", root_frame_))
     {
         ROS_ERROR("Parameter 'reference_frame' not set");
         return false;
     }
 
-    if(!nh_.getParam("update_rate", update_rate_))
+    if (!nh_.getParam("update_rate", update_rate_))
     {
-        update_rate_ = 50.0;    //hz
+        update_rate_ = 50.0;  // hz
     }
 
     /// Private Nodehandle
-    if(!nh_private.getParam("target_frame", target_frame_))
+    if (!nh_private.getParam("target_frame", target_frame_))
     {
         ROS_WARN("Parameter 'target_frame' not set. Using default 'cartesian_target'");
         target_frame_ = DEFAULT_CARTESIAN_TARGET;
     }
-
 
     ROS_WARN("Waiting for Services...");
     start_tracking_ = nh_.serviceClient<cob_srvs::SetString>("frame_tracker/start_tracking");
@@ -86,21 +86,20 @@ bool CartesianController::initialize()
     return true;
 }
 
-
-//ToDo: Use the ActionInterface of the FrameTracker instead in order to be able to consider TrackingConstraints
+// ToDo: Use the ActionInterface of the FrameTracker instead in order to be able to consider TrackingConstraints
 bool CartesianController::startTracking()
 {
     bool success = false;
     cob_srvs::SetString start;
     start.request.data = target_frame_;
-    if(!tracking_)
+    if (!tracking_)
     {
         success = start_tracking_.call(start);
 
-        if(success)
+        if (success)
         {
             success = start.response.success;
-            if(success)
+            if (success)
             {
                 ROS_INFO("Response 'start_tracking': succeded");
                 tracking_ = true;
@@ -123,16 +122,16 @@ bool CartesianController::startTracking()
     return success;
 }
 
-//ToDo:: If we use the ActionInterface of the FrameTracker, here that action should be cancled()
+// ToDo:: If we use the ActionInterface of the FrameTracker, here that action should be cancled()
 bool CartesianController::stopTracking()
 {
     bool success = false;
     std_srvs::Trigger stop;
-    if(tracking_)
+    if (tracking_)
     {
         success = stop_tracking_.call(stop);
 
-        if(success)
+        if (success)
         {
             ROS_INFO("Service 'stop' succeded!");
             tracking_ = false;
@@ -150,7 +149,6 @@ bool CartesianController::stopTracking()
     return success;
 }
 
-
 // MovePTP
 bool CartesianController::movePTP(const geometry_msgs::Pose& target_pose, const double epsilon)
 {
@@ -159,17 +157,17 @@ bool CartesianController::movePTP(const geometry_msgs::Pose& target_pose, const 
 
     ros::Rate rate(update_rate_);
     tf::StampedTransform stamped_transform;
-    stamped_transform.setOrigin( tf::Vector3(target_pose.position.x,
-                                             target_pose.position.y,
-                                             target_pose.position.z) );
-    stamped_transform.setRotation( tf::Quaternion(target_pose.orientation.x,
-                                                  target_pose.orientation.y,
-                                                  target_pose.orientation.z,
-                                                  target_pose.orientation.w) );
+    stamped_transform.setOrigin(tf::Vector3(target_pose.position.x,
+                                            target_pose.position.y,
+                                            target_pose.position.z));
+    stamped_transform.setRotation(tf::Quaternion(target_pose.orientation.x,
+                                                 target_pose.orientation.y,
+                                                 target_pose.orientation.z,
+                                                 target_pose.orientation.w));
     stamped_transform.frame_id_ = root_frame_;
     stamped_transform.child_frame_id_ = target_frame_;
 
-    while(as_->isActive())
+    while (as_->isActive())
     {
         // Send/Refresh target Frame
         stamped_transform.stamp_ = ros::Time::now();
@@ -179,12 +177,12 @@ bool CartesianController::movePTP(const geometry_msgs::Pose& target_pose, const 
         tf::StampedTransform stamped_transform = utils_.getStampedTransform(target_frame_, chain_tip_link_);
 
         // Wait for chain_tip_link to be within epsilon area of target_frame
-        if(utils_.inEpsilonArea(stamped_transform, epsilon))
+        if (utils_.inEpsilonArea(stamped_transform, epsilon))
         {
-            reached_pos_counter++;    // Count up if end effector position is in the epsilon area to avoid wrong values
+            reached_pos_counter++;  // Count up if end effector position is in the epsilon area to avoid wrong values
         }
 
-        if(reached_pos_counter >= static_cast<int>(2*update_rate_)) //has been close enough to target for 2 seconds
+        if (reached_pos_counter >= static_cast<int>(2*update_rate_))  // has been close enough to target for 2 seconds
         {
             success = true;
             break;
@@ -206,22 +204,22 @@ bool CartesianController::posePathBroadcaster(const geometry_msgs::PoseArray& ca
     ros::Rate rate(update_rate_);
     tf::Transform transform;
 
-    for(unsigned int i = 0; i < cartesian_path.poses.size(); i++)
+    for (unsigned int i = 0; i < cartesian_path.poses.size(); i++)
     {
-        if(!as_->isActive())
+        if (!as_->isActive())
         {
             success = false;
             break;
         }
 
         // Send/Refresh target Frame
-        transform.setOrigin( tf::Vector3(cartesian_path.poses.at(i).position.x,
-                                         cartesian_path.poses.at(i).position.y,
-                                         cartesian_path.poses.at(i).position.z) );
-        transform.setRotation( tf::Quaternion(cartesian_path.poses.at(i).orientation.x,
-                                              cartesian_path.poses.at(i).orientation.y,
-                                              cartesian_path.poses.at(i).orientation.z,
-                                              cartesian_path.poses.at(i).orientation.w) );
+        transform.setOrigin(tf::Vector3(cartesian_path.poses.at(i).position.x,
+                                        cartesian_path.poses.at(i).position.y,
+                                        cartesian_path.poses.at(i).position.z));
+        transform.setRotation(tf::Quaternion(cartesian_path.poses.at(i).orientation.x,
+                                             cartesian_path.poses.at(i).orientation.y,
+                                             cartesian_path.poses.at(i).orientation.z,
+                                             cartesian_path.poses.at(i).orientation.w));
 
         tf_broadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), cartesian_path.header.frame_id, target_frame_));
 
@@ -240,10 +238,10 @@ void CartesianController::goalCallback()
 
     action_struct = acceptGoal(as_->acceptNewGoal());
 
-    if(action_struct.move_type == cob_cartesian_controller::CartesianControllerGoal::LIN)
+    if (action_struct.move_type == cob_cartesian_controller::CartesianControllerGoal::LIN)
     {
         // Interpolate path
-        if(!trajectory_interpolator_->linearInterpolation(cartesian_path, action_struct))
+        if (!trajectory_interpolator_->linearInterpolation(cartesian_path, action_struct))
         {
             actionAbort(false, "Failed to do interpolation for 'move_lin'");
             return;
@@ -253,21 +251,21 @@ void CartesianController::goalCallback()
         utils_.previewPath(cartesian_path);
 
         // Activate Tracking
-        if(!startTracking())
+        if (!startTracking())
         {
             actionAbort(false, "Failed to start tracking");
             return;
         }
 
         // Execute path
-        if(!posePathBroadcaster(cartesian_path))
+        if (!posePathBroadcaster(cartesian_path))
         {
             actionAbort(false, "Failed to execute path for 'move_lin'");
             return;
         }
 
         // De-Activate Tracking
-        if(!stopTracking())
+        if (!stopTracking())
         {
             actionAbort(false, "Failed to stop tracking");
             return;
@@ -275,9 +273,9 @@ void CartesianController::goalCallback()
 
         actionSuccess(true, "move_lin succeeded!");
     }
-    else if(action_struct.move_type == cob_cartesian_controller::CartesianControllerGoal::CIRC)
+    else if (action_struct.move_type == cob_cartesian_controller::CartesianControllerGoal::CIRC)
     {
-        if(!trajectory_interpolator_->circularInterpolation(cartesian_path, action_struct))
+        if (!trajectory_interpolator_->circularInterpolation(cartesian_path, action_struct))
         {
             actionAbort(false, "Failed to do interpolation for 'move_circ'");
             return;
@@ -287,21 +285,21 @@ void CartesianController::goalCallback()
         utils_.previewPath(cartesian_path);
 
         // Activate Tracking
-        if(!startTracking())
+        if (!startTracking())
         {
             actionAbort(false, "Failed to start tracking");
             return;
         }
 
         // Execute path
-        if(!posePathBroadcaster(cartesian_path))
+        if (!posePathBroadcaster(cartesian_path))
         {
             actionAbort(false, "Failed to execute path for 'move_circ'");
             return;
         }
 
         // De-Activate Tracking
-        if(!stopTracking())
+        if (!stopTracking())
         {
             actionAbort(false, "Failed to stop tracking");
             return;
@@ -319,7 +317,7 @@ void CartesianController::goalCallback()
 cob_cartesian_controller::MoveLinStruct CartesianController::convertMoveLin(const cob_cartesian_controller::MoveLin& move_lin_msg)
 {
     geometry_msgs::Pose start, end;
-    start = utils_.getPose(root_frame_, chain_tip_link_);   //current tcp pose
+    start = utils_.getPose(root_frame_, chain_tip_link_);   // current tcp pose
     utils_.transformPose(move_lin_msg.frame_id, root_frame_, move_lin_msg.pose_goal, end);
 
     cob_cartesian_controller::MoveLinStruct move_lin;
@@ -356,17 +354,16 @@ cob_cartesian_controller::CartesianActionStruct CartesianController::acceptGoal(
     action_struct.profile.t_ipo         = 1/update_rate_;
 
 
-    if(action_struct.move_type == cob_cartesian_controller::CartesianControllerGoal::LIN)
+    if (action_struct.move_type == cob_cartesian_controller::CartesianControllerGoal::LIN)
     {
         action_struct.move_lin = convertMoveLin(goal->move_lin);
     }
-    else if(action_struct.move_type == cob_cartesian_controller::CartesianControllerGoal::CIRC)
+    else if (action_struct.move_type == cob_cartesian_controller::CartesianControllerGoal::CIRC)
     {
         action_struct.move_circ = convertMoveCirc(goal->move_circ);
     }
     else
     {
-
         actionAbort(false, "Unknown trajectory action " + boost::lexical_cast<std::string>(action_struct.move_type));
     }
 

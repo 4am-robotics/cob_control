@@ -26,8 +26,8 @@
  *
  ****************************************************************/
 
-#ifndef COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_BUILDER_H
-#define COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_BUILDER_H
+#ifndef COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_TRAJECTORY_PROFILE_GENERATOR_BUILDER_H
+#define COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_TRAJECTORY_PROFILE_GENERATOR_BUILDER_H
 
 #include <cob_cartesian_controller/cartesian_controller_data_types.h>
 #include <cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_base.h>
@@ -38,9 +38,9 @@ class TrajectoryProfileBuilder
 public:
     TrajectoryProfileBuilder() {}
     ~TrajectoryProfileBuilder() {}
-    
+
     static TrajectoryProfileBase* createProfile(const cob_cartesian_controller::CartesianActionStruct& params);
 };
 /* END TrajectoryGeneratorBuilder *******************************************************************************************/
 
-#endif  // COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_BUILDER_H
+#endif  // COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_TRAJECTORY_PROFILE_GENERATOR_BUILDER_H

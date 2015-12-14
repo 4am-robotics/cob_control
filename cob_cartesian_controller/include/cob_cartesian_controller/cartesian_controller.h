@@ -28,11 +28,11 @@
  *
  ****************************************************************/
 
-#ifndef CARTESIAN_CONTROLLER_H
-#define CARTESIAN_CONTROLLER_H
+#ifndef COB_CARTESIAN_CONTROLLER_CARTESIAN_CONTROLLER_H
+#define COB_CARTESIAN_CONTROLLER_CARTESIAN_CONTROLLER_H
 
 #include <vector>
-#include <string.h>
+#include <string>
 #include <boost/shared_ptr.hpp>
 
 #include <ros/ros.h>
@@ -100,4 +100,4 @@ private:
     boost::shared_ptr< TrajectoryInterpolator > trajectory_interpolator_;
 };
 
-#endif  // CARTESIAN_CONTROLLER_H
+#endif  // COB_CARTESIAN_CONTROLLER_CARTESIAN_CONTROLLER_H
