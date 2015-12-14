@@ -46,7 +46,6 @@ inline cob_cartesian_controller::ProfileTimings TrajectoryProfileSinoid::getProf
     if (vel > MIN_VELOCITY_THRESHOLD)
     {
         tb = utils.roundUpToMultiplier(2 * vel / accl, params_.profile.t_ipo);
-
         if (te == 0)
         {
             te = utils.roundUpToMultiplier((std::fabs(Se) / vel) + tb,  params_.profile.t_ipo);
