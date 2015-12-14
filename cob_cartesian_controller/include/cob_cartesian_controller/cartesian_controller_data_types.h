@@ -78,16 +78,13 @@ class PathArray
         PathArray(double Se, std::vector<double> array):
             Se_(Se),
             array_(array)
-        {
-            calcTe_ = false;
-        }
+        {}
 
         ~PathArray()
         {
             array_.clear();
         }
 
-        bool calcTe_;
         double Se_;
         std::vector<double> array_;
 };
