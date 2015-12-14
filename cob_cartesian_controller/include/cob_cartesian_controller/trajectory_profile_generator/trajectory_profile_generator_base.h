@@ -47,19 +47,66 @@ public:
     virtual ~TrajectoryProfileBase()
     {}
 
-    virtual cob_cartesian_controller::ProfileTimings getProfileTimings(double Se, double te, double accl, double vel, bool calcMaxTe) = 0;
-
     virtual bool calculateProfile(std::vector<double>* path_matrix,
                                   const double Se_lin, const double Se_rot,
-                                  geometry_msgs::Pose start) = 0;
+                                  geometry_msgs::Pose start)
+    {
+        CartesianControllerUtils ccu;
+        std::vector<double> linear_path, angular_path;
 
-    virtual std::vector<double> getTrajectory(double se, double accl, double vel, double t_ipo,
-                                              double steps_tb, double steps_tv, double steps_te, double tb, double tv, double te) = 0;
-private:
-    virtual bool generatePath(cob_cartesian_controller::PathArray& pa) = 0;
+        cob_cartesian_controller::PathArray lin(Se_lin, linear_path);
+        cob_cartesian_controller::PathArray rot(Se_rot, angular_path);
+
+        cob_cartesian_controller::PathMatrix pm(lin, rot);
+
+        // Get the profile timings from the longest path
+        pt_max_ = getProfileTimings(pm.getMaxSe(), 0, params_.profile.accl, params_.profile.vel, true);
+
+        // Calculate the paths
+        for (unsigned int i = 0; i < pm.pm_.size(); i++)
+        {
+            generatePath(pm.pm_[i]);
+        }
+
+        // Adjust the array length
+        // If no trajectory was interpolated, then this path array contains only one constant value.
+        // This constant value needs to be duplicated N_max times for matrix conversion purposes.
+        ccu.adjustArrayLength(pm.pm_);
+
+        ccu.copyMatrix(path_matrix, pm.pm_);
+
+        return true;
+    }
 
 protected:
+    virtual bool generatePath(cob_cartesian_controller::PathArray& pa)
+    {
+        std::vector<double> array;
+        cob_cartesian_controller::ProfileTimings pt;
+        double accl_max = params_.profile.accl;
+        double vel_max = params_.profile.vel;
+
+        // Calculate the Profile Timings
+        pt = getProfileTimings(pa.Se_, pt_max_.te, accl_max, vel_max, false);
+        if (pt.ok)
+        {
+            array = getTrajectory(pa.Se_, accl_max, pt.vel, params_.profile.t_ipo, pt.steps_tb, pt.steps_tv, pt.steps_te, pt.tb, pt.tv, pt.te);
+        }
+        else
+        {
+            array.push_back(0);
+        }
+
+        pa.array_ = array;
+        return true;
+    }
+    
+    virtual cob_cartesian_controller::ProfileTimings getProfileTimings(double Se, double te, double accl, double vel, bool calcMaxTe) = 0;
+    virtual std::vector<double> getTrajectory(double se, double accl, double vel, double t_ipo,
+                                              double steps_tb, double steps_tv, double steps_te, double tb, double tv, double te) = 0;
+
     const cob_cartesian_controller::CartesianActionStruct& params_;
+    cob_cartesian_controller::ProfileTimings pt_max_;
 };
 
 #endif  // COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_TRAJECTORY_PROFILE_GENERATOR_BASE_H
