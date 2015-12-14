@@ -26,37 +26,39 @@
  *
  ****************************************************************/
 
-#ifndef COB_CONTROL_COB_CARTESIAN_CONTROLLER_INCLUDE_COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_BASE_H_
-#define COB_CONTROL_COB_CARTESIAN_CONTROLLER_INCLUDE_COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_BASE_H_
+#ifndef COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_BASE_H
+#define COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_BASE_H
+
+#include <ros/ros.h>
+#include <cob_cartesian_controller/cartesian_controller_data_types.h>
+#include <cob_cartesian_controller/cartesian_controller_utils.h>
+
 
 #define MIN_VELOCITY_THRESHOLD 0.001
 
-#include "ros/ros.h"
-#include "cob_cartesian_controller/cartesian_controller_data_types.h"
-#include <cob_cartesian_controller/cartesian_controller_utils.h>
-
 class TrajectoryProfileBase
 {
-    public:
-        TrajectoryProfileBase(const cob_cartesian_controller::CartesianActionStruct& params):
-            params_(params)
-        {}
+public:
+    TrajectoryProfileBase(const cob_cartesian_controller::CartesianActionStruct& params)
+    :    params_(params)
+    {}
 
-        virtual ~TrajectoryProfileBase() {}
+    virtual ~TrajectoryProfileBase()
+    {}
 
-        virtual cob_cartesian_controller::ProfileTimings getProfileTimings(double Se, double te, double accl, double vel, bool calcMaxTe) = 0;
+    virtual cob_cartesian_controller::ProfileTimings getProfileTimings(double Se, double te, double accl, double vel, bool calcMaxTe) = 0;
 
-        virtual bool calculateProfile(std::vector<double>* path_matrix,
-                                      const double Se_lin, const double Se_rot,
-                                      geometry_msgs::Pose start) = 0;
+    virtual bool calculateProfile(std::vector<double>* path_matrix,
+                                  const double Se_lin, const double Se_rot,
+                                  geometry_msgs::Pose start) = 0;
 
-        virtual std::vector<double> getTrajectory(double se, double accl, double vel, double t_ipo,
-                                                  double steps_tb, double steps_tv, double steps_te, double tb, double tv, double te) = 0;
-    private:
-        virtual bool generatePath(cob_cartesian_controller::PathArray &pa) = 0;
+    virtual std::vector<double> getTrajectory(double se, double accl, double vel, double t_ipo,
+                                              double steps_tb, double steps_tv, double steps_te, double tb, double tv, double te) = 0;
+private:
+    virtual bool generatePath(cob_cartesian_controller::PathArray& pa) = 0;
 
-    protected:
-        const cob_cartesian_controller::CartesianActionStruct &params_;
+protected:
+    const cob_cartesian_controller::CartesianActionStruct& params_;
 };
 
-#endif
+#endif  // COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_BASE_H

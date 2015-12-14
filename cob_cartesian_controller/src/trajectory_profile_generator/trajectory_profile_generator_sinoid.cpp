@@ -71,7 +71,6 @@ inline cob_cartesian_controller::ProfileTimings TrajectoryProfileSinoid::getProf
     return pt;
 }
 
-
 inline bool TrajectoryProfileSinoid::generatePath(cob_cartesian_controller::PathArray &pa)
 {
     std::vector<double> array;
@@ -136,7 +135,7 @@ inline bool TrajectoryProfileSinoid::calculateProfile(std::vector<double> path_m
     pt_max_ = getProfileTimings(pm.getMaxSe(), 0, params_.profile.accl, params_.profile.vel, true);
 
     // Calculate the paths
-    for(int i=0; i<pm.pm_.size(); i++)
+    for(unsigned int i=0; i<pm.pm_.size(); i++)
     {
         generatePath(pm.pm_[i]);
     }
@@ -151,4 +150,3 @@ inline bool TrajectoryProfileSinoid::calculateProfile(std::vector<double> path_m
     return true;
 }
 /* END TrajectoryProfileSinoid ******************************************************************************************/
-

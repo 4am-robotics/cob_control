@@ -27,6 +27,7 @@
  *   Supported types of velocity profiles are Ramp and Sinoid.
  *
  ****************************************************************/
+
 #include <math.h>
 #include <algorithm>
 #include <boost/lexical_cast.hpp>

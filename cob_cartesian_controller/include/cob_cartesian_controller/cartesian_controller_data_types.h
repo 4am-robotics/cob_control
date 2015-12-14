@@ -26,12 +26,12 @@
  *
  ****************************************************************/
 
-#ifndef COB_CARTESIAN_CONTROLLER_DATA_STRUCTURES_H_
-#define COB_CARTESIAN_CONTROLLER_DATA_STRUCTURES_H_
+#ifndef CARTESIAN_CONTROLLER_DATA_STRUCTURES_H
+#define CARTESIAN_CONTROLLER_DATA_STRUCTURES_H
 
+#include <exception>
 #include <std_msgs/Float64.h>
 #include <geometry_msgs/Pose.h>
-#include <exception>
 
 namespace cob_cartesian_controller
 {
@@ -71,7 +71,8 @@ namespace cob_cartesian_controller
         ProfileStruct profile;
     };
 
-    class PathArray{
+    class PathArray
+    {
         public:
             PathArray(double Se, std::vector<double> array):
                 Se_(Se),
@@ -88,38 +89,40 @@ namespace cob_cartesian_controller
             bool calcTe_;
             double Se_;
             std::vector<double> array_;
-
     };
 
-    class PathMatrix{
-            public:
-                PathMatrix(PathArray &pa1,
-                           PathArray &pa2)
-                {
-                    pm_.push_back(pa1);
-                    pm_.push_back(pa2);
-                }
-                ~PathMatrix()
-                {
-                    pm_.clear();
-                }
-
-                double getMaxSe();
-                std::vector<PathArray> pm_;
-        };
-
-    inline double PathMatrix::getMaxSe()
+    class PathMatrix
     {
-        double se_max = 0;
-
-        for(int i=0; i<pm_.size(); i++)
-        {
-            if(se_max < fabs(pm_[i].Se_))
+        public:
+            PathMatrix(PathArray& pa1,
+                       PathArray& pa2)
             {
-                se_max = fabs(pm_[i].Se_);
+                pm_.push_back(pa1);
+                pm_.push_back(pa2);
             }
-        }
-        return se_max;
-    }
-}//namespace
-#endif /* COB_CARTESIAN_CONTROLLER_DATA_STRUCTURES_H_ */
+
+            ~PathMatrix()
+            {
+                pm_.clear();
+            }
+
+            double getMaxSe()
+            {
+                double se_max = 0;
+
+                for (unsigned int i = 0; i < pm_.size(); i++)
+                {
+                    if (se_max < fabs(pm_[i].Se_))
+                    {
+                        se_max = fabs(pm_[i].Se_);
+                    }
+                }
+                return se_max;
+            }
+
+            std::vector<PathArray> pm_;
+    };
+
+}//  namespace
+
+#endif  // CARTESIAN_CONTROLLER_DATA_STRUCTURES_H

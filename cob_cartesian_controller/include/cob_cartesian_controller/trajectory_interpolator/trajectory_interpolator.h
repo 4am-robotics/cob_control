@@ -26,8 +26,8 @@
  *
  ****************************************************************/
 
-#ifndef COB_CARTESIAN_CONTROLLER_TRAJECTORY_INTERPOLATOR_H_
-#define COB_CARTESIAN_CONTROLLER_TRAJECTORY_INTERPOLATOR_H_
+#ifndef COB_CARTESIAN_CONTROLLER_TRAJECTORY_INTERPOLATOR_H
+#define COB_CARTESIAN_CONTROLLER_TRAJECTORY_INTERPOLATOR_H
 
 #include <ros/ros.h>
 #include <geometry_msgs/PoseArray.h>
@@ -36,16 +36,15 @@
 #include <cob_cartesian_controller/cartesian_controller_data_types.h>
 #include <cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_builder.h>
 
-
 class TrajectoryInterpolator
 {
 public:
     TrajectoryInterpolator(std::string root_frame, double update_rate)
     :   root_frame_(root_frame)
-
     {}
 
-    ~TrajectoryInterpolator(){
+    ~TrajectoryInterpolator()
+    {
         trajectory_profile_generator_.reset();
     }
 
@@ -57,8 +56,8 @@ public:
 
 private:
     std::string root_frame_;
-    boost::shared_ptr< TrajectoryProfileBase > trajectory_profile_generator_;
+    boost::shared_ptr<TrajectoryProfileBase> trajectory_profile_generator_;
 
 };
 
-#endif /* COB_CARTESIAN_CONTROLLER_TRAJECTORY_INTERPOLATOR_H_ */
+#endif  // COB_CARTESIAN_CONTROLLER_TRAJECTORY_INTERPOLATOR_H

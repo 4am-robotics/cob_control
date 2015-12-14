@@ -25,8 +25,10 @@
  *   Class implementing the Ramp velocity profile generator.
  *
  ****************************************************************/
-#include "ros/ros.h"
-#include "cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_ramp.h"
+
+#include <ros/ros.h>
+#include <cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_ramp.h>
+
 /* BEGIN TrajectoryProfileRamp ********************************************************************************************/
 inline cob_cartesian_controller::ProfileTimings TrajectoryProfileRamp::getProfileTimings(double Se, double te, double accl, double vel, bool calcMaxTe)
 {
@@ -69,8 +71,7 @@ inline cob_cartesian_controller::ProfileTimings TrajectoryProfileRamp::getProfil
     return pt;
 }
 
-
-inline bool TrajectoryProfileRamp::generatePath(cob_cartesian_controller::PathArray &pa)
+inline bool TrajectoryProfileRamp::generatePath(cob_cartesian_controller::PathArray& pa)
 {
     std::vector<double> array;
     cob_cartesian_controller::ProfileTimings pt;
@@ -100,7 +101,7 @@ inline std::vector<double> TrajectoryProfileRamp::getTrajectory(double se, doubl
 
     // Calculate the ramp profile path
     // 0 <= t <= tb
-    for(; i <= steps_tb ; i++)
+    for(; i <= steps_tb; i++)
     {
         array.push_back(direction * (0.5*accl*pow((t_ipo*i),2)));
     }
@@ -128,13 +129,13 @@ inline bool TrajectoryProfileRamp::calculateProfile(std::vector<double> path_mat
     cob_cartesian_controller::PathArray lin(Se_lin, linear_path);
     cob_cartesian_controller::PathArray rot(Se_rot, angular_path);
 
-    cob_cartesian_controller::PathMatrix pm(lin,rot);
+    cob_cartesian_controller::PathMatrix pm(lin, rot);
 
     // Get the profile timings from the longest path
     pt_max_ = getProfileTimings(pm.getMaxSe(), 0, params_.profile.accl, params_.profile.vel, true);
 
     // Calculate the paths
-    for(int i=0; i < pm.pm_.size(); i++)
+    for(unsigned int i=0; i < pm.pm_.size(); i++)
     {
         generatePath(pm.pm_[i]);
     }
@@ -144,9 +145,8 @@ inline bool TrajectoryProfileRamp::calculateProfile(std::vector<double> path_mat
     // This constant value needs to be duplicated N_max times for matrix conversion purposes.
     ccu.adjustArrayLength(pm.pm_);
 
-    ccu.copyMatrix(path_matrix,pm.pm_);
+    ccu.copyMatrix(path_matrix, pm.pm_);
 
     return true;
 }
-
 /* END TrajectoryProfileRamp **********************************************************************************************/

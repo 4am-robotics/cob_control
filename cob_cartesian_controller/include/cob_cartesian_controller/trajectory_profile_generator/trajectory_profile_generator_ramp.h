@@ -25,31 +25,34 @@
  *   Class implementing the Ramp velocity profile generator.
  *
  ****************************************************************/
-#ifndef COB_CONTROL_COB_CARTESIAN_CONTROLLER_INCLUDE_COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_TRAJECTORY_PROFILE_GENERATOR_RAMP_H_
-#define COB_CONTROL_COB_CARTESIAN_CONTROLLER_INCLUDE_COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_TRAJECTORY_PROFILE_GENERATOR_RAMP_H_
 
-#include "cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_base.h"
+#ifndef COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_RAMP_H
+#define COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_RAMP_H
+
+#include <cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_base.h>
 
 /* BEGIN TrajectoryProfileRamp ****************************************************************************************/
 class TrajectoryProfileRamp: public TrajectoryProfileBase
 {
-    public:
-        TrajectoryProfileRamp(const cob_cartesian_controller::CartesianActionStruct& params)
-        : TrajectoryProfileBase(params)
-        {        }
+public:
+    TrajectoryProfileRamp(const cob_cartesian_controller::CartesianActionStruct& params)
+    :   TrajectoryProfileBase(params)
+    {}
 
-        ~TrajectoryProfileRamp() {}
-        virtual cob_cartesian_controller::ProfileTimings getProfileTimings(double Se, double te, double accl, double vel, bool calcMaxTe);
-        virtual bool generatePath(cob_cartesian_controller::PathArray &pa);
-        virtual bool calculateProfile(std::vector<double> *path_matrix,
-                                      const double Se_lin, const double Se_rot,
-                                      geometry_msgs::Pose start);
-        virtual std::vector<double> getTrajectory(double se, double accl, double vel, double t_ipo,
-                                                  double steps_tb, double steps_tv, double steps_te, double tb, double tv, double te);
+    ~TrajectoryProfileRamp()
+    {}
 
-    private:
-        cob_cartesian_controller::ProfileTimings pt_max_;
+    virtual cob_cartesian_controller::ProfileTimings getProfileTimings(double Se, double te, double accl, double vel, bool calcMaxTe);
+    virtual bool generatePath(cob_cartesian_controller::PathArray &pa);
+    virtual bool calculateProfile(std::vector<double>* path_matrix,
+                                  const double Se_lin, const double Se_rot,
+                                  geometry_msgs::Pose start);
+    virtual std::vector<double> getTrajectory(double se, double accl, double vel, double t_ipo,
+                                              double steps_tb, double steps_tv, double steps_te, double tb, double tv, double te);
+
+private:
+    cob_cartesian_controller::ProfileTimings pt_max_;
 };
 /* END TrajectoryProfileRamp **********************************************************************************************/
 
-#endif /* COB_CONTROL_COB_CARTESIAN_CONTROLLER_INCLUDE_COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_TRAJECTORY_PROFILE_GENERATOR_RAMP_H_ */
+#endif  // COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_RAMP_H

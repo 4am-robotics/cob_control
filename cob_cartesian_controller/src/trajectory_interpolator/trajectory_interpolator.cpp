@@ -26,9 +26,10 @@
  *
  ****************************************************************/
 
+#include <math.h>
+
 #include <cob_cartesian_controller/trajectory_interpolator/trajectory_interpolator.h>
 #include <cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_builder.h>
-#include <math.h>
 
 bool TrajectoryInterpolator::linearInterpolation(geometry_msgs::PoseArray& pose_array,
                                                  const cob_cartesian_controller::CartesianActionStruct& as)
@@ -73,7 +74,7 @@ bool TrajectoryInterpolator::linearInterpolation(geometry_msgs::PoseArray& pose_
     norm_factor = 1/path.back();
 
     // Interpolate the linear path
-    for(unsigned int i = 0 ; i < linear_path.size() ; i++)
+    for(unsigned int i = 0; i < linear_path.size(); i++)
     {
         if(linear_path.back() == 0)
         {
@@ -112,7 +113,7 @@ bool TrajectoryInterpolator::circularInterpolation(geometry_msgs::PoseArray& pos
 
      bool forward;
 
-     // Needed for the circle direction !
+     // Needed for the circle direction!
      if(Se < 0)
      {
          forward = false;
@@ -136,7 +137,7 @@ bool TrajectoryInterpolator::circularInterpolation(geometry_msgs::PoseArray& pos
      C.setRotation(q);
 
      // Interpolate the circular path
-     for(int i = 0 ; i < path_array.size() ; i++)
+     for(unsigned int i = 0; i < path_array.size(); i++)
      {
          // Rotate T
          T.setOrigin(tf::Vector3(cos(path_array.at(i)) * as.move_circ.radius, 0, sin(path_array.at(i)) * as.move_circ.radius));

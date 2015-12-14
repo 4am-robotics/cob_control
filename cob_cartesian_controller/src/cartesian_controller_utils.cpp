@@ -28,7 +28,6 @@
 
 #include <cob_cartesian_controller/cartesian_controller_utils.h>
 
-
 geometry_msgs::Pose CartesianControllerUtils::getPose(const std::string& target_frame, const std::string& source_frame)
 {
     geometry_msgs::Pose pose;
@@ -146,9 +145,9 @@ void CartesianControllerUtils::previewPath(const geometry_msgs::PoseArray& pose_
 
     double id = marker_array_.markers.size();
 
-    for(unsigned int i=0; i < pose_array.poses.size(); i++)
+    for(unsigned int i = 0; i < pose_array.poses.size(); i++)
     {
-        marker.id = id+i;
+        marker.id = id + i;
         marker.pose = pose_array.poses.at(i);
         marker_array_.markers.push_back(marker);
     }
@@ -156,26 +155,26 @@ void CartesianControllerUtils::previewPath(const geometry_msgs::PoseArray& pose_
     marker_pub_.publish(marker_array_);
 }
 
-void CartesianControllerUtils::adjustArrayLength(std::vector<cob_cartesian_controller::PathArray> &m)
+void CartesianControllerUtils::adjustArrayLength(std::vector<cob_cartesian_controller::PathArray>& m)
 {
     unsigned int max_steps = 0;
-    for(int i = 0; i < m.size(); i++)
+    for (unsigned int i = 0; i < m.size(); i++)
     {
-        max_steps = std::max((unsigned int)m[i].array_.size() , max_steps);
+        max_steps = std::max((unsigned int)m[i].array_.size(), max_steps);
     }
 
-    for(int i = 0; i < m.size(); i++)
+    for (unsigned int i = 0; i < m.size(); i++)
     {
-        if(m[i].array_.size() < max_steps)
+        if (m[i].array_.size() < max_steps)
         {
             m[i].array_.resize(max_steps, m[i].array_.back());
         }
     }
 }
 
-void CartesianControllerUtils::copyMatrix(std::vector<double> *path_array,std::vector<cob_cartesian_controller::PathArray> &m)
+void CartesianControllerUtils::copyMatrix(std::vector<double>* path_array, std::vector<cob_cartesian_controller::PathArray>& m)
 {
-    for(int i = 0; i < m.size(); i++)
+    for (int i = 0; i < m.size(); i++)
     {
         path_array[i] = m[i].array_;
     }
@@ -183,5 +182,5 @@ void CartesianControllerUtils::copyMatrix(std::vector<double> *path_array,std::v
 
 double CartesianControllerUtils::roundUpToMultiplier(double numberToRound, double multiplier)
 {
-    return ( multiplier - std::fmod(numberToRound,multiplier) + numberToRound );
+    return ( multiplier - std::fmod(numberToRound, multiplier) + numberToRound );
 }

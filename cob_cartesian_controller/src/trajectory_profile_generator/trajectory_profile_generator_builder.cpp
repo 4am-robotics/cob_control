@@ -26,15 +26,12 @@
  *
  ****************************************************************/
 
-#ifndef COB_CONTROL_COB_CARTESIAN_CONTROLLER_INCLUDE_COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_BUILDER_H_
-#define COB_CONTROL_COB_CARTESIAN_CONTROLLER_INCLUDE_COB_CARTESIAN_CONTROLLER_TRAJECTORY_PROFILE_GENERATOR_BUILDER_H_
+#include <cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_builder.h>
+#include <cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_ramp.h>
+#include <cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_sinoid.h>
+#include <cob_cartesian_controller/Profile.h>
 
-#include "cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_builder.h"
-#include "cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_ramp.h"
-#include "cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_sinoid.h"
-#include "cob_cartesian_controller/Profile.h"
-
-/* BEGIN TrajectoryProfileBase *****************************************************************************************/
+/* BEGIN TrajectoryProfileBuilder *****************************************************************************************/
 TrajectoryProfileBase* TrajectoryProfileBuilder::createProfile(const cob_cartesian_controller::CartesianActionStruct& params)
 {
     cob_cartesian_controller::Profile msg;
@@ -57,6 +54,4 @@ TrajectoryProfileBase* TrajectoryProfileBuilder::createProfile(const cob_cartesi
 
     return ib;
 }
-/* END TrajectoryProfileBase *******************************************************************************************/
-
-#endif
+/* END TrajectoryProfileBuilder *******************************************************************************************/
