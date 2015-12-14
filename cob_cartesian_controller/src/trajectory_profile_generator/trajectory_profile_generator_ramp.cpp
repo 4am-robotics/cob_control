@@ -31,10 +31,9 @@
 #include <cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_ramp.h>
 
 /* BEGIN TrajectoryProfileRamp ********************************************************************************************/
-inline cob_cartesian_controller::ProfileTimings TrajectoryProfileRamp::getProfileTimings(double Se, double te, double accl, double vel, bool calcMaxTe)
+inline bool TrajectoryProfileRamp::getProfileTimings(double Se, double te, double accl, double vel, bool calcMaxTe, cob_cartesian_controller::ProfileTimings& pt)
 {
     CartesianControllerUtils utils;
-    cob_cartesian_controller::ProfileTimings pt;
     double tv, tb = 0.0;
 
     // Calculate the Sinoid Profile Parameters
@@ -62,14 +61,10 @@ inline cob_cartesian_controller::ProfileTimings TrajectoryProfileRamp::getProfil
         pt.steps_te = (pt.te-pt.tv)/params_.profile.t_ipo;
 
         pt.vel = vel;
-        pt.ok = true;
-    }
-    else
-    {
-        pt.ok = false;
+        return true;
     }
 
-    return pt;
+    return false;
 }
 
 inline std::vector<double> TrajectoryProfileRamp::getTrajectory(double se, double accl, double vel, double t_ipo, double steps_tb, double steps_tv, double steps_te, double tb, double tv, double te)

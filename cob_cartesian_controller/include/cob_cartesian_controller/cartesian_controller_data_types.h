@@ -48,7 +48,6 @@ struct ProfileTimings
 {
     double tb, te, tv;
     unsigned int steps_tb, steps_te, steps_tv;
-    bool ok;
     double vel;
 };
 
