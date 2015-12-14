@@ -177,7 +177,7 @@ void CartesianControllerUtils::adjustArrayLength(std::vector<cob_cartesian_contr
 
 void CartesianControllerUtils::copyMatrix(std::vector<double>* path_array, std::vector<cob_cartesian_controller::PathArray>& m)
 {
-    for (int i = 0; i < m.size(); i++)
+    for (unsigned int i = 0; i < m.size(); i++)
     {
         path_array[i] = m[i].array_;
     }

@@ -136,7 +136,7 @@ inline bool TrajectoryProfileRamp::calculateProfile(std::vector<double> path_mat
     pt_max_ = getProfileTimings(pm.getMaxSe(), 0, params_.profile.accl, params_.profile.vel, true);
 
     // Calculate the paths
-    for (unsigned int i=0; i < pm.pm_.size(); i++)
+    for (unsigned int i = 0; i < pm.pm_.size(); i++)
     {
         generatePath(pm.pm_[i]);
     }
