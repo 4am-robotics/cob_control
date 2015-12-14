@@ -1,3 +1,4 @@
+#include <string>
 #include <ros/ros.h>
 #include <std_msgs/Float64.h>
 #include <cob_twist_controller/utils/moving_average.h>
