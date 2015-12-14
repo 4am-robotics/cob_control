@@ -43,9 +43,8 @@ public:
     ~TrajectoryProfileSinoid()
     {}
 
-    virtual bool getProfileTimings(double Se, double te, double vel, double accl, bool calcMaxTe, cob_cartesian_controller::ProfileTimings& pt);
-    virtual std::vector<double> getTrajectory(double se, double vel, double accl, double t_ipo,
-                                              double steps_tb, double steps_tv, double steps_te, double tb, double tv, double te);
+    virtual bool getProfileTimings(double Se, double te, bool calcMaxTe, cob_cartesian_controller::ProfileTimings& pt);
+    virtual std::vector<double> getTrajectory(double se, cob_cartesian_controller::ProfileTimings pt);
 };
 /* END TrajectoryProfileSinoid **********************************************************************************************/
 

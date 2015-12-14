@@ -31,10 +31,12 @@
 #include <cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_sinoid.h>
 
 /* BEGIN TrajectoryProfileSinoid ****************************************************************************************/
-inline bool TrajectoryProfileSinoid::getProfileTimings(double Se, double te, double vel, double accl, bool calcMaxTe, cob_cartesian_controller::ProfileTimings& pt)
+inline bool TrajectoryProfileSinoid::getProfileTimings(double Se, double te, bool calcMaxTe, cob_cartesian_controller::ProfileTimings& pt)
 {
     CartesianControllerUtils utils;
     double tv, tb = 0.0;
+    double vel = params_.profile.vel;
+    double accl = params_.profile.accl;
 
     // Calculate the Sinoid Profile Parameters
     if (vel > sqrt(std::fabs(Se) * accl / 2))
@@ -67,27 +69,29 @@ inline bool TrajectoryProfileSinoid::getProfileTimings(double Se, double te, dou
     return false;
 }
 
-inline std::vector<double> TrajectoryProfileSinoid::getTrajectory(double se, double vel, double accl, double t_ipo, double steps_tb, double steps_tv, double steps_te, double tb, double tv, double te)
+inline std::vector<double> TrajectoryProfileSinoid::getTrajectory(double se, cob_cartesian_controller::ProfileTimings pt)
 {
     std::vector<double> array;
     unsigned int i = 1;
     double direction = se/std::fabs(se);
+    double accl = params_.profile.accl;
+    double t_ipo = params_.profile.t_ipo;
 
     // Calculate the sinoid profile path
     // 0 <= t <= tb
-    for (; i <= steps_tb; i++)
+    for (; i <= pt.steps_tb; i++)
     {
-        array.push_back(direction * (accl*(0.25*pow(i*t_ipo, 2) + pow(tb, 2)/(8*pow(M_PI, 2)) *(cos(2*M_PI/tb * (i*t_ipo))-1))));
+        array.push_back(direction * (accl*(0.25*pow(i*t_ipo, 2) + pow(pt.tb, 2)/(8*pow(M_PI, 2)) *(cos(2*M_PI/pt.tb * (i*t_ipo))-1))));
     }
     // tb <= t <= tv
-    for (; i <= (steps_tb + steps_tv); i++)
+    for (; i <= (pt.steps_tb + pt.steps_tv); i++)
     {
-        array.push_back(direction * (vel*(i*t_ipo-0.5*tb)));
+        array.push_back(direction * (pt.vel*(i*t_ipo-0.5*pt.tb)));
     }
     // tv <= t <= te
-    for (; i <= (steps_tv + steps_tb + steps_te + 1); i++)
+    for (; i <= (pt.steps_tv + pt.steps_tb + pt.steps_te + 1); i++)
     {
-        array.push_back(direction * (0.5 * accl *(te*(i*t_ipo + tb) - 0.5*(pow(i*t_ipo, 2)+pow(te, 2)+2*pow(tb, 2)) + (pow(tb, 2)/(4*pow(M_PI, 2))) * (1-cos(((2*M_PI)/tb) * (i*t_ipo-tv))))));
+        array.push_back(direction * (0.5 * accl *(pt.te*(i*t_ipo + pt.tb) - 0.5*(pow(i*t_ipo, 2)+pow(pt.te, 2)+2*pow(pt.tb, 2)) + (pow(pt.tb, 2)/(4*pow(M_PI, 2))) * (1-cos(((2*M_PI)/pt.tb) * (i*t_ipo-pt.tv))))));
     }
 
     return array;
