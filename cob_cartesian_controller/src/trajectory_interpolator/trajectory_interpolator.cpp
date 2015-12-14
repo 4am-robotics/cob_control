@@ -56,7 +56,7 @@ bool TrajectoryInterpolator::linearInterpolation(geometry_msgs::PoseArray& pose_
 
     double Se_rot = q_start.angleShortestPath(q_end);
 
-    if (!trajectory_profile_generator_->calculateProfile(path_matrix, Se_lin, Se_rot, as.move_lin.start))
+    if (!trajectory_profile_generator_->calculateProfile(path_matrix, Se_lin, Se_rot))
     {
         return false;
     }
@@ -126,7 +126,7 @@ bool TrajectoryInterpolator::circularInterpolation(geometry_msgs::PoseArray& pos
      Se = std::fabs(Se);
 
      // Calculates the Path with RAMP or SINOID profile
-     if (!this->trajectory_profile_generator_->calculateProfile(path_matrix, Se, 0, pose))
+     if (!this->trajectory_profile_generator_->calculateProfile(path_matrix, Se, 0))
      {
          return false;
      }

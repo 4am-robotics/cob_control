@@ -48,8 +48,7 @@ public:
     {}
 
     virtual bool calculateProfile(std::vector<double>* path_matrix,
-                                  const double Se_lin, const double Se_rot,
-                                  geometry_msgs::Pose start)
+                                  const double Se_lin, const double Se_rot)
     {
         CartesianControllerUtils ccu;
         std::vector<double> linear_path, angular_path;
