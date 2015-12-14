@@ -31,7 +31,7 @@
 #include <cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_ramp.h>
 
 /* BEGIN TrajectoryProfileRamp ********************************************************************************************/
-inline bool TrajectoryProfileRamp::getProfileTimings(double Se, double te, double accl, double vel, bool calcMaxTe, cob_cartesian_controller::ProfileTimings& pt)
+inline bool TrajectoryProfileRamp::getProfileTimings(double Se, double te, double vel, double accl, bool calcMaxTe, cob_cartesian_controller::ProfileTimings& pt)
 {
     CartesianControllerUtils utils;
     double tv, tb = 0.0;
@@ -67,7 +67,7 @@ inline bool TrajectoryProfileRamp::getProfileTimings(double Se, double te, doubl
     return false;
 }
 
-inline std::vector<double> TrajectoryProfileRamp::getTrajectory(double se, double accl, double vel, double t_ipo, double steps_tb, double steps_tv, double steps_te, double tb, double tv, double te)
+inline std::vector<double> TrajectoryProfileRamp::getTrajectory(double se, double vel, double accl, double t_ipo, double steps_tb, double steps_tv, double steps_te, double tb, double tv, double te)
 {
     std::vector<double> array;
     unsigned int i = 1;

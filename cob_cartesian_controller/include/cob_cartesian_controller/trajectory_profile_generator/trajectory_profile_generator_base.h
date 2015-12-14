@@ -60,7 +60,7 @@ public:
         cob_cartesian_controller::PathMatrix pm(lin, rot);
 
         // Get the profile timings from the longest path
-        bool success = getProfileTimings(pm.getMaxSe(), 0, params_.profile.accl, params_.profile.vel, true, pt_max_);
+        bool success = getProfileTimings(pm.getMaxSe(), 0, params_.profile.vel, params_.profile.accl, true, pt_max_);
 
         // Calculate the paths
         for (unsigned int i = 0; i < pm.pm_.size(); i++)
@@ -87,9 +87,9 @@ protected:
         double vel_max = params_.profile.vel;
 
         // Calculate the Profile Timings
-        if (getProfileTimings(pa.Se_, pt_max_.te, accl_max, vel_max, false, pt))
+        if (getProfileTimings(pa.Se_, pt_max_.te, vel_max, accl_max, false, pt))
         {
-            array = getTrajectory(pa.Se_, accl_max, pt.vel, params_.profile.t_ipo, pt.steps_tb, pt.steps_tv, pt.steps_te, pt.tb, pt.tv, pt.te);
+            array = getTrajectory(pa.Se_, pt.vel, accl_max, params_.profile.t_ipo, pt.steps_tb, pt.steps_tv, pt.steps_te, pt.tb, pt.tv, pt.te);
         }
         else
         {
@@ -100,8 +100,8 @@ protected:
         return true;
     }
     
-    virtual bool getProfileTimings(double Se, double te, double accl, double vel, bool calcMaxTe, cob_cartesian_controller::ProfileTimings& pt) = 0;
-    virtual std::vector<double> getTrajectory(double se, double accl, double vel, double t_ipo,
+    virtual bool getProfileTimings(double Se, double te, double vel, double accl, bool calcMaxTe, cob_cartesian_controller::ProfileTimings& pt) = 0;
+    virtual std::vector<double> getTrajectory(double se, double vel, double accl, double t_ipo,
                                               double steps_tb, double steps_tv, double steps_te, double tb, double tv, double te) = 0;
 
     const cob_cartesian_controller::CartesianActionStruct& params_;
