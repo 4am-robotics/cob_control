@@ -224,6 +224,7 @@ bool CobFrameTracker::getTransform(const std::string& from, const std::string& t
 
     try
     {
+        tf_listener_.waitForTransform(from, to, ros::Time(0), ros::Duration(0.2));
         tf_listener_.lookupTransform(from, to, ros::Time(0), stamped_tf);
         transform = true;
     }
@@ -250,6 +251,7 @@ void CobFrameTracker::publishTwist(ros::Duration period, bool do_publish)
     
     geometry_msgs::TwistStamped twist_msg;
     twist_msg.header.frame_id = tracking_frame_;
+    twist_msg.header.stamp = ros::Time::now();
 
     if(!success)
     {

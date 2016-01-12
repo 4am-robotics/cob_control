@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(cob_cartesian_controller)
 
-find_package(catkin REQUIRED COMPONENTS actionlib_msgs actionlib cob_srvs geometry_msgs message_generation roscpp std_msgs std_srvs tf visualization_msgs)
+find_package(catkin REQUIRED COMPONENTS actionlib_msgs actionlib cob_srvs geometry_msgs message_generation roscpp roslint std_msgs std_srvs tf visualization_msgs)
 
 find_package(Boost REQUIRED)
 
@@ -38,7 +38,7 @@ add_library(cartesian_controller_utils src/cartesian_controller_utils.cpp)
 add_dependencies(cartesian_controller_utils ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cartesian_controller_utils ${catkin_LIBRARIES})
 
-add_library(profile_generator src/trajectory_profile_generator/trajectory_profile_generator_lin.cpp src/trajectory_profile_generator/trajectory_profile_generator_circ.cpp)
+add_library(profile_generator src/trajectory_profile_generator/trajectory_profile_generator_builder.cpp src/trajectory_profile_generator/trajectory_profile_generator_ramp.cpp src/trajectory_profile_generator/trajectory_profile_generator_sinoid.cpp)
 add_dependencies(profile_generator ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(profile_generator ${catkin_LIBRARIES})
 
@@ -52,6 +52,8 @@ target_link_libraries(cartesian_controller trajectory_interpolator cartesian_con
 
 add_executable(cartesian_controller_node src/cartesian_controller_node.cpp)
 target_link_libraries(cartesian_controller_node cartesian_controller ${catkin_LIBRARIES})
+
+roslint_cpp()
 
 ### INSTALL ##
 install(TARGETS profile_generator trajectory_interpolator cartesian_controller cartesian_controller_utils cartesian_controller_node

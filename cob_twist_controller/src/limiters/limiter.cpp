@@ -144,7 +144,7 @@ KDL::JntArray LimiterAllJointPositions::enforceLimits(const KDL::JntArray& q_dot
             if (q_dot_ik(i) > 0)  // Joint moves towards the MAX limit
             {
                 double temp = 1.0 / pow((0.5 + 0.5 * cos(M_PI * (q(i) + tolerance - limiter_params_.limits_max[i]) / tolerance)), 5.0);
-                if(temp > max_factor)
+                if (temp > max_factor)
                 {
                     max_factor = temp;
                     joint_index = i;
@@ -158,7 +158,7 @@ KDL::JntArray LimiterAllJointPositions::enforceLimits(const KDL::JntArray& q_dot
                 if (q_dot_ik(i) < 0)  // Joint moves towards the MIN limit
                 {
                     double temp = 1.0 / pow(0.5 + 0.5 * cos(M_PI * (q(i) - tolerance - limiter_params_.limits_min[i]) / tolerance), 5.0);
-                    if(temp > max_factor)
+                    if (temp > max_factor)
                     {
                         max_factor = temp;
                         joint_index = i;

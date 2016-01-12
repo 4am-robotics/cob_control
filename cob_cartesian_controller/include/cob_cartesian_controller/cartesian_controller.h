@@ -19,21 +19,23 @@
  * \author
  *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de / christoph.mark@gmail.com
  *
- * \date Date of creation: July, 2015
+ * \date Date of creation: December, 2015
  *
  * \brief
- *   ...
+ *   This class is used to interpolate various Cartesian paths for a given velocity profile.
+ *   Supported types of Cartesian paths are Linear and Circular.
+ *   Supported types of velocity profiles are Ramp and Sinoid.
  *
  ****************************************************************/
 
-#ifndef CARTESIAN_CONTROLLER_H
-#define CARTESIAN_CONTROLLER_H
+#ifndef COB_CARTESIAN_CONTROLLER_CARTESIAN_CONTROLLER_H
+#define COB_CARTESIAN_CONTROLLER_CARTESIAN_CONTROLLER_H
 
-#include <ros/ros.h>
 #include <vector>
-#include <string.h>
+#include <string>
 #include <boost/shared_ptr.hpp>
 
+#include <ros/ros.h>
 #include <tf/transform_listener.h>
 #include <tf/transform_broadcaster.h>
 #include <tf/transform_datatypes.h>
@@ -56,7 +58,6 @@ public:
 
     // Main functions
     bool posePathBroadcaster(const geometry_msgs::PoseArray& cartesian_path);
-    bool movePTP(const geometry_msgs::Pose& target_pose, double epsilon);
 
     // Helper function
     bool startTracking();
@@ -85,9 +86,6 @@ private:
     double update_rate_;
     std::string root_frame_, chain_tip_link_, target_frame_;
 
-    // HelperVars for movePTP
-    bool reached_pos_;
-
     /// Action interface
     std::string action_name_;
     boost::shared_ptr<SAS_CartesianControllerAction_t> as_;
@@ -98,4 +96,4 @@ private:
     boost::shared_ptr< TrajectoryInterpolator > trajectory_interpolator_;
 };
 
-#endif
+#endif  // COB_CARTESIAN_CONTROLLER_CARTESIAN_CONTROLLER_H

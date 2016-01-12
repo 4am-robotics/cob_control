@@ -20,8 +20,7 @@ def move_lin(pose_goal, frame_id, profile, rotate_only=False):
     goal.move_type = CartesianControllerGoal.LIN
     goal.move_lin.pose_goal = pose_goal
     goal.move_lin.frame_id = frame_id
-    goal.move_lin.rotate_only = rotate_only
-    goal.move_lin.profile = profile
+    goal.profile = profile
     # print goal
 
     client.send_goal(goal)
@@ -44,11 +43,10 @@ def move_circ(pose_center, frame_id, start_angle, end_angle, radius, profile, ro
     goal.move_type = CartesianControllerGoal.CIRC
     goal.move_circ.pose_center = pose_center
     goal.move_circ.frame_id = frame_id
-    goal.move_circ.rotate_only = rotate_only
     goal.move_circ.start_angle = start_angle
     goal.move_circ.end_angle = end_angle
     goal.move_circ.radius = radius
-    goal.move_circ.profile = profile
+    goal.profile = profile
     print goal
 
     client.send_goal(goal)
@@ -74,4 +72,6 @@ def gen_pose(pos=[0,0,0], rpy=[0,0,0]):
     pose = Pose()
     pose.position.x, pose.position.y, pose.position.z = pos
     pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w = quaternion_from_euler(*rpy)
+
+
     return pose

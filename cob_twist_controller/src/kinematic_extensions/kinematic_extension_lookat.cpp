@@ -28,6 +28,8 @@
  ****************************************************************/
 
 #include <string>
+#include <vector>
+#include <limits>
 #include <eigen_conversions/eigen_kdl.h>
 #include "cob_twist_controller/kinematic_extensions/kinematic_extension_lookat.h"
 

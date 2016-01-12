@@ -5,7 +5,7 @@ uint8 move_type
 
 cob_cartesian_controller/MoveLin move_lin
 cob_cartesian_controller/MoveCirc move_circ
-
+cob_cartesian_controller/Profile profile
 ---
 # result definition
 bool success

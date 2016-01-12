@@ -19,15 +19,17 @@
  * \author
  *   Author: Christoph Mark, email: christoph.mark@ipa.fraunhofer.de / christoph.mark@gmail.com
  *
- * \date Date of creation: July, 2015
+ * \date Date of creation: December, 2015
  *
  * \brief
- *   ...
+ *   Helper functions  used in the cob_cartesian_controller package.
  *
  ****************************************************************/
 
+#include <string>
+#include <vector>
+#include <algorithm>
 #include <cob_cartesian_controller/cartesian_controller_utils.h>
-
 
 geometry_msgs::Pose CartesianControllerUtils::getPose(const std::string& target_frame, const std::string& source_frame)
 {
@@ -51,17 +53,17 @@ tf::StampedTransform CartesianControllerUtils::getStampedTransform(const std::st
     {
         try
         {
-            ros::Time now = ros::Time(0);
-            tf_listener_.waitForTransform(target_frame, source_frame, now, ros::Duration(0.5));
+            ros::Time now = ros::Time::now();
+            tf_listener_.waitForTransform(target_frame, source_frame, now, ros::Duration(0.1));
             tf_listener_.lookupTransform(target_frame, source_frame, now, stamped_transform);
             transform = true;
         }
         catch (tf::TransformException& ex)
         {
-            ROS_ERROR("CartesianControllerUtils::getStampedTransform: \n%s",ex.what());
+            ROS_ERROR("CartesianControllerUtils::getStampedTransform: \n%s", ex.what());
             ros::Duration(0.1).sleep();
         }
-    }while(!transform && ros::ok());
+    } while (!transform && ros::ok());
 
     return stamped_transform;
 }
@@ -77,27 +79,24 @@ void CartesianControllerUtils::transformPose(const std::string source_frame, con
     {
         try
         {
-            stamped_in.header.stamp = ros::Time(0);
-            tf_listener_.waitForTransform(target_frame, source_frame, stamped_in.header.stamp, ros::Duration(0.5));
+            ros::Time now = ros::Time::now();
+            tf_listener_.waitForTransform(target_frame, source_frame, now, ros::Duration(0.1));
             tf_listener_.transformPose(target_frame, stamped_in, stamped_out);
             pose_out = stamped_out.pose;
             transform = true;
         }
         catch (tf::TransformException& ex)
         {
-            ROS_ERROR("CartesianControllerUtils::transformPose: \n%s",ex.what());
+            ROS_ERROR("CartesianControllerUtils::transformPose: \n%s", ex.what());
             ros::Duration(0.1).sleep();
         }
-    }while(!transform && ros::ok());
+    } while (!transform && ros::ok());
 }
 
 
 /// Used to check whether the chain_tip_link is close to the target_frame
 /// 'stamped_transform' expreses the transform between the two frames.
 /// Thus inEpsilonArea() returns 'true' in case 'stamped_transform' is "smaller" than 'epsilon'
-// ToDo: Can we simplify this check?
-//      e.g. use stamped_transform.getOrigin().length() < epsilon
-//      what about orientation distance?
 bool CartesianControllerUtils::inEpsilonArea(const tf::StampedTransform& stamped_transform, const double epsilon)
 {
     double roll, pitch, yaw;
@@ -114,7 +113,7 @@ bool CartesianControllerUtils::inEpsilonArea(const tf::StampedTransform& stamped
     pitch_okay  = std::fabs(pitch) < epsilon;
     yaw_okay    = std::fabs(yaw)   < epsilon;
 
-    if(x_okay && y_okay && z_okay && roll_okay && pitch_okay && yaw_okay)
+    if (x_okay && y_okay && z_okay && roll_okay && pitch_okay && yaw_okay)
     {
         return true;
     }
@@ -131,12 +130,10 @@ void CartesianControllerUtils::poseToRPY(const geometry_msgs::Pose& pose, double
     tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
 }
 
-void CartesianControllerUtils::previewPath(const geometry_msgs::PoseArray& pose_array)
+void CartesianControllerUtils::previewPath(const geometry_msgs::PoseArray pose_array)
 {
-    visualization_msgs::MarkerArray marker_array;
-
     visualization_msgs::Marker marker;
-    marker.type = visualization_msgs::Marker::ARROW;
+    marker.type = visualization_msgs::Marker::SPHERE;
     marker.lifetime = ros::Duration();
     marker.action = visualization_msgs::Marker::ADD;
     marker.header = pose_array.header;
@@ -149,12 +146,44 @@ void CartesianControllerUtils::previewPath(const geometry_msgs::PoseArray& pose_
     marker.color.b = 1.0;
     marker.color.a = 1.0;
 
-    for(unsigned int i=0; i<pose_array.poses.size(); i++)
+    double id = marker_array_.markers.size();
+
+    for (unsigned int i = 0; i < pose_array.poses.size(); i++)
     {
-        marker.id = i;
+        marker.id = id + i;
         marker.pose = pose_array.poses.at(i);
-        marker_array.markers.push_back(marker);
+        marker_array_.markers.push_back(marker);
     }
 
-    marker_pub_.publish(marker_array);
+    marker_pub_.publish(marker_array_);
+}
+
+void CartesianControllerUtils::adjustArrayLength(std::vector<cob_cartesian_controller::PathArray>& m)
+{
+    unsigned int max_steps = 0;
+    for (unsigned int i = 0; i < m.size(); i++)
+    {
+        max_steps = std::max((unsigned int)m[i].array_.size(), max_steps);
+    }
+
+    for (unsigned int i = 0; i < m.size(); i++)
+    {
+        if (m[i].array_.size() < max_steps)
+        {
+            m[i].array_.resize(max_steps, m[i].array_.back());
+        }
+    }
+}
+
+void CartesianControllerUtils::copyMatrix(std::vector<double>* path_array, std::vector<cob_cartesian_controller::PathArray>& m)
+{
+    for (unsigned int i = 0; i < m.size(); i++)
+    {
+        path_array[i] = m[i].array_;
+    }
+}
+
+double CartesianControllerUtils::roundUpToMultiplier(const double numberToRound, const double multiplier)
+{
+    return ( multiplier - std::fmod(numberToRound, multiplier) + numberToRound );
 }
