@@ -40,10 +40,10 @@ Eigen::MatrixXd StackOfTasksSolver::solve(const Vector6d_t& in_cart_velocities,
     double cycle = (now - this->last_time_).toSec();
     this->last_time_ = now;
 
-    Eigen::MatrixXd jacobianPseudoInverse = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
-    Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(jacobianPseudoInverse.rows(), this->jacobian_data_.cols());
-    Eigen::MatrixXd projector = ident - jacobianPseudoInverse * this->jacobian_data_;
-    Eigen::MatrixXd particular_solution = jacobianPseudoInverse * in_cart_velocities;
+    Eigen::MatrixXd pinv = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
+    Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(pinv.rows(), this->jacobian_data_.cols());
+    Eigen::MatrixXd projector = ident - pinv * this->jacobian_data_;
+    Eigen::MatrixXd particular_solution = pinv * in_cart_velocities;
 
     Eigen::MatrixXd projector_i = Eigen::MatrixXd::Identity(this->jacobian_data_.cols(), this->jacobian_data_.cols());
     Eigen::VectorXd q_i = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
@@ -120,8 +120,8 @@ void StackOfTasksSolver::processState(std::set<ConstraintBase_t>::iterator& it,
 {
     Eigen::VectorXd q_dot_0 = (*it)->getPartialValues();
     const double activation_gain = (*it)->getActivationGain();
-    Eigen::MatrixXd tmpHomogeneousSolution = projector * q_dot_0;
-    const double magnitude = (*it)->getSelfMotionMagnitude(particular_solution, tmpHomogeneousSolution);
+    Eigen::MatrixXd tmp_projection = projector * q_dot_0;
+    const double magnitude = (*it)->getSelfMotionMagnitude(particular_solution, tmp_projection);
     ConstraintState cstate = (*it)->getState();
 
     const double constr_prio = (*it)->getPriorityAsNum();

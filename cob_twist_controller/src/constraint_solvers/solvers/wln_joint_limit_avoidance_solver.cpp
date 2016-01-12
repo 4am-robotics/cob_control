@@ -41,14 +41,14 @@ Eigen::MatrixXd WLN_JointLimitAvoidanceSolver::calculateWeighting(const JointSta
     std::vector<double> limits_min = this->limiter_params_.limits_min;
     std::vector<double> limits_max = this->limiter_params_.limits_max;
     uint32_t cols = this->jacobian_data_.cols();
-    Eigen::VectorXd output = Eigen::VectorXd::Zero(cols);
+    Eigen::VectorXd weighting = Eigen::VectorXd::Zero(cols);
 
     KDL::JntArray q = joint_states.current_q_;
     KDL::JntArray q_dot = joint_states.current_q_dot_;
 
     for (uint32_t i = 0; i < cols ; ++i)
     {
-        output(i) = 1.0;    // in the else cases -> output always 1
+        weighting(i) = 1.0;    // in the else cases -> weighting always 1
         if (i < q.rows())
         {
             // See Chan paper ISSN 1042-296X [Page 288]
@@ -61,11 +61,11 @@ Eigen::MatrixXd WLN_JointLimitAvoidanceSolver::calculateWeighting(const JointSta
                 if (denominator != 0.0)
                 {
                     double partialPerformanceCriterion = fabs(nominator / denominator);
-                    output(i) = 1 + partialPerformanceCriterion;
+                    weighting(i) = 1 + partialPerformanceCriterion;
                 }
             }
         }
     }
 
-    return output.asDiagonal();
+    return weighting.asDiagonal();
 }

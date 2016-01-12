@@ -48,10 +48,10 @@ Eigen::MatrixXd TaskPrioritySolver::solve(const Vector6d_t& in_cart_velocities,
 
     Eigen::MatrixXd qdots_out = Eigen::MatrixXd::Zero(this->jacobian_data_.cols(), 1);
     Eigen::VectorXd partial_cost_func = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
-    Eigen::MatrixXd jacobianPseudoInverse = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
-    Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(jacobianPseudoInverse.rows(), this->jacobian_data_.cols());
-    Eigen::MatrixXd projector = ident - jacobianPseudoInverse * this->jacobian_data_;
-    Eigen::MatrixXd particular_solution = jacobianPseudoInverse * in_cart_velocities;
+    Eigen::MatrixXd pinv = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
+    Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(pinv.rows(), this->jacobian_data_.cols());
+    Eigen::MatrixXd projector = ident - pinv * this->jacobian_data_;
+    Eigen::MatrixXd particular_solution = pinv * in_cart_velocities;
 
     KDL::JntArrayVel predict_jnts_vel(joint_states.current_q_.rows());
 
