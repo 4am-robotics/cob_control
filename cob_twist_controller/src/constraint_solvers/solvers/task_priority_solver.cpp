@@ -48,10 +48,13 @@ Eigen::MatrixXd TaskPrioritySolver::solve(const Vector6d_t& in_cart_velocities,
 
     Eigen::MatrixXd qdots_out = Eigen::MatrixXd::Zero(this->jacobian_data_.cols(), 1);
     Eigen::VectorXd partial_cost_func = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
-    Eigen::MatrixXd pinv = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
+    Eigen::MatrixXd damped_pinv = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
+    Eigen::MatrixXd pinv = pinv_calc_.calculate(this->jacobian_data_);
+
+    Eigen::MatrixXd particular_solution = damped_pinv * in_cart_velocities;
+
     Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(pinv.rows(), this->jacobian_data_.cols());
     Eigen::MatrixXd projector = ident - pinv * this->jacobian_data_;
-    Eigen::MatrixXd particular_solution = pinv * in_cart_velocities;
 
     KDL::JntArrayVel predict_jnts_vel(joint_states.current_q_.rows());
 
@@ -81,7 +84,7 @@ Eigen::MatrixXd TaskPrioritySolver::solve(const Vector6d_t& in_cart_velocities,
         if (activation_gain > 0.0)
         {
             Eigen::MatrixXd tmp_matrix = partial_cost_func.transpose() * projector;
-            jac_inv_2nd_term = pinv_calc_.calculate(this->params_, this->damping_, tmp_matrix);
+            jac_inv_2nd_term = pinv_calc_.calculate(tmp_matrix);
         }
 
         Eigen::MatrixXd m_derivative_cost_func_value = derivative_cost_func_value * Eigen::MatrixXd::Identity(1, 1);

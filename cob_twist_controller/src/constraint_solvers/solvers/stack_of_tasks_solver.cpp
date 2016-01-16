@@ -40,10 +40,13 @@ Eigen::MatrixXd StackOfTasksSolver::solve(const Vector6d_t& in_cart_velocities,
     double cycle = (now - this->last_time_).toSec();
     this->last_time_ = now;
 
-    Eigen::MatrixXd pinv = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
+    Eigen::MatrixXd damped_pinv = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
+    Eigen::MatrixXd pinv = pinv_calc_.calculate(this->jacobian_data_);
+
+    Eigen::MatrixXd particular_solution = damped_pinv * in_cart_velocities;
+
     Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(pinv.rows(), this->jacobian_data_.cols());
     Eigen::MatrixXd projector = ident - pinv * this->jacobian_data_;
-    Eigen::MatrixXd particular_solution = pinv * in_cart_velocities;
 
     Eigen::MatrixXd projector_i = Eigen::MatrixXd::Identity(this->jacobian_data_.cols(), this->jacobian_data_.cols());
     Eigen::VectorXd q_i = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
@@ -102,7 +105,7 @@ Eigen::MatrixXd StackOfTasksSolver::solve(const Vector6d_t& in_cart_velocities,
         Eigen::MatrixXd J_task = it->task_jacobian_;
         Eigen::MatrixXd J_temp = J_task * projector_i;
         Eigen::VectorXd v_task = it->task_;
-        Eigen::MatrixXd J_temp_inv = pinv_calc_.calculate(it->tcp_, it->db_, J_temp);
+        Eigen::MatrixXd J_temp_inv = pinv_calc_.calculate(J_temp);
         q_i = q_i + J_temp_inv * (v_task - J_task * q_i);
         projector_i = projector_i - J_temp_inv * J_temp;
     }
@@ -113,10 +116,10 @@ Eigen::MatrixXd StackOfTasksSolver::solve(const Vector6d_t& in_cart_velocities,
 
 
 void StackOfTasksSolver::processState(std::set<ConstraintBase_t>::iterator& it,
-                                              const Eigen::MatrixXd& projector,
-                                              const Eigen::MatrixXd& particular_solution,
-                                              double inv_sum_of_prios,
-                                              Eigen::VectorXd& sum_of_gradient)
+                                      const Eigen::MatrixXd& projector,
+                                      const Eigen::MatrixXd& particular_solution,
+                                      double inv_sum_of_prios,
+                                      Eigen::VectorXd& sum_of_gradient)
 {
     Eigen::VectorXd q_dot_0 = (*it)->getPartialValues();
     const double activation_gain = (*it)->getActivationGain();

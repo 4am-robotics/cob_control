@@ -45,10 +45,10 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Vector6d_t& in_cart_
 
     Eigen::MatrixXd particular_solution = damped_pinv * in_cart_velocities;
 
-    Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(damped_pinv.rows(), this->jacobian_data_.cols());
-    Eigen::MatrixXd projector = ident - damped_pinv * this->jacobian_data_;
-    // Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(pinv.rows(), this->jacobian_data_.cols());
-    // Eigen::MatrixXd projector = ident - pinv * this->jacobian_data_;
+    // Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(damped_pinv.rows(), this->jacobian_data_.cols());
+    // Eigen::MatrixXd projector = ident - damped_pinv * this->jacobian_data_;
+    Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(pinv.rows(), this->jacobian_data_.cols());
+    Eigen::MatrixXd projector = ident - pinv * this->jacobian_data_;
 
     Eigen::MatrixXd homogeneous_solution = Eigen::MatrixXd::Zero(particular_solution.rows(), particular_solution.cols());
     KDL::JntArrayVel predict_jnts_vel(joint_states.current_q_.rows());
@@ -66,6 +66,7 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Vector6d_t& in_cart_
 
     Eigen::MatrixXd qdots_out = particular_solution + this->params_.k_H * homogeneous_solution;  // weighting with k_H is done in loop
 
+    // //DEBUG: for verification of nullspace projection
     // std::stringstream ss_part;
     // ss_part << "particular_solution: ";
     // for(unsigned int i=0; i<particular_solution.rows(); i++)
