@@ -47,7 +47,7 @@ class ConstraintSolver
     public:
         /**
          * The interface method to solve the inverse kinematics problem. Has to be implemented in inherited classes.
-         * @param inCartVelocities The input velocities vector (in cartesian space).
+         * @param in_cart_velocities The input velocities vector (in cartesian space).
          * @param joint_states The joint states with history.
          * @return The calculated new joint velocities.
          */
