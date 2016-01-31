@@ -382,8 +382,19 @@ void CobTwistController::visualizeTwist(KDL::Twist twist)
         tracking_frame = "lookat_focus_frame";
     }
 
+    tf::StampedTransform transform_tf;
+    try
+    {
+        tf_listener_.lookupTransform(twist_controller_params_.chain_base_link, tracking_frame, ros::Time(0), transform_tf);
+    }
+    catch (tf::TransformException& ex)
+    {
+        ROS_ERROR("CobTwistController::visualizeTwist: \n%s", ex.what());
+        return;
+    }
+
     visualization_msgs::Marker marker;
-    marker.header.frame_id = tracking_frame;
+    marker.header.frame_id = twist_controller_params_.chain_base_link;
     marker.header.stamp = ros::Time::now();
     marker.ns = "twist_direction";
     marker.id = 0;
@@ -402,12 +413,12 @@ void CobTwistController::visualizeTwist(KDL::Twist twist)
     marker.color.a = 1.0;
 
     marker.points.resize(2);
-    marker.points[0].x = 0; // Must be zero since marker.header.frame_id is set to tracking_frame.
-    marker.points[0].y = 0;
-    marker.points[0].z = 0;
-    marker.points[1].x = 5.0*twist.vel.x();
-    marker.points[1].y = 5.0*twist.vel.y();
-    marker.points[1].z = 5.0*twist.vel.z();
+    marker.points[0].x = transform_tf.getOrigin().x();
+    marker.points[0].y = transform_tf.getOrigin().y();
+    marker.points[0].z = transform_tf.getOrigin().z();
+    marker.points[1].x = transform_tf.getOrigin().x() + 5.0 * twist.vel.x();
+    marker.points[1].y = transform_tf.getOrigin().y() + 5.0 * twist.vel.y();
+    marker.points[1].z = transform_tf.getOrigin().z() + 5.0 * twist.vel.z();
 
     twist_direction_pub_.publish(marker);
 }
