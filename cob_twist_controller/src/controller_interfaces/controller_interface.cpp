@@ -33,7 +33,8 @@
  * Static builder method to create controller interface based on given parameterization.
  */
 ControllerInterfaceBase* ControllerInterfaceBuilder::createControllerInterface(ros::NodeHandle& nh,
-                                                                               const TwistControllerParams& params)
+                                                                               const TwistControllerParams& params,
+                                                                               const JointStates& joint_states)
 {
     ControllerInterfaceBase* ib = NULL;
     switch (params.controller_interface)
@@ -48,7 +49,7 @@ ControllerInterfaceBase* ControllerInterfaceBuilder::createControllerInterface(r
             ib = new ControllerInterfaceTrajectory(nh, params);
             break;
         case JOINT_STATE_INTERFACE:
-            ib = new ControllerInterfaceJointStates(nh, params);
+            ib = new ControllerInterfaceJointStates(nh, params, joint_states);
             break;
         default:
             ROS_ERROR("ControllerInterface %d not defined! Using default: 'VELOCITY_INTERFACE'!", params.controller_interface);
