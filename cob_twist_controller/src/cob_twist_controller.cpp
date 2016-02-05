@@ -35,9 +35,10 @@
 #include <kdl_conversions/kdl_msg.h>
 #include <tf/transform_datatypes.h>
 #include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
+#include <cob_srvs/SetString.h>
 
 #include <Eigen/Dense>
-#include "cob_srvs/SetString.h"
 
 bool CobTwistController::initialize()
 {
@@ -148,7 +149,7 @@ bool CobTwistController::initialize()
     this->controller_interface_.reset(ControllerInterfaceBuilder::createControllerInterface(this->nh_, this->twist_controller_params_, this->joint_states_));
 
     /// publisher for visualizing current twist direction
-    twist_direction_pub_ = nh_.advertise<visualization_msgs::Marker>("twist_direction", 1);
+    twist_direction_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("twist_direction", 1);
 
     ROS_INFO_STREAM(nh_.getNamespace() << "/twist_controller...initialized!");
     return true;
@@ -385,7 +386,7 @@ void CobTwistController::visualizeTwist(KDL::Twist twist)
     tf::StampedTransform transform_tf;
     try
     {
-        tf_listener_.lookupTransform(twist_controller_params_.chain_base_link, twist_controller_params_.chain_tip_link, ros::Time(0), transform_tf);
+        tf_listener_.lookupTransform(twist_controller_params_.chain_base_link, tracking_frame, ros::Time(0), transform_tf);
     }
     catch (tf::TransformException& ex)
     {
@@ -393,34 +394,74 @@ void CobTwistController::visualizeTwist(KDL::Twist twist)
         return;
     }
 
-    visualization_msgs::Marker marker;
-    marker.header.frame_id = tracking_frame;
-    marker.header.stamp = ros::Time::now();
-    marker.ns = "twist_direction";
-    marker.id = 0;
-    marker.type = visualization_msgs::Marker::ARROW;
-    marker.action = visualization_msgs::Marker::ADD;
-    marker.lifetime = ros::Duration(1.0);
-    marker.pose.orientation.w = 1.0;
+    visualization_msgs::Marker marker_vel;
+    marker_vel.header.frame_id = twist_controller_params_.chain_base_link;
+    marker_vel.header.stamp = ros::Time::now();
+    marker_vel.ns = "twist_vel";
+    marker_vel.id = 0;
+    marker_vel.type = visualization_msgs::Marker::ARROW;
+    marker_vel.action = visualization_msgs::Marker::ADD;
+    marker_vel.lifetime = ros::Duration(0.1);
+    marker_vel.pose.orientation.w = 1.0;
 
-    marker.scale.x = 0.02;
-    marker.scale.y = 0.02;
-    marker.scale.z = 0.02;
+    marker_vel.scale.x = 0.02;
+    marker_vel.scale.y = 0.02;
+    marker_vel.scale.z = 0.02;
 
-    marker.color.r = 1.0f;
-    marker.color.g = 1.0f;
-    marker.color.b = 0.0f;
-    marker.color.a = 1.0;
+    marker_vel.color.r = 1.0f;
+    marker_vel.color.g = 1.0f;
+    marker_vel.color.b = 0.0f;
+    marker_vel.color.a = 1.0;
 
-    marker.points.resize(2);
-    marker.points[0].x = transform_tf.getOrigin().x();
-    marker.points[0].y = transform_tf.getOrigin().y();
-    marker.points[0].z = transform_tf.getOrigin().z();
-    marker.points[1].x = transform_tf.getOrigin().x() + 5.0*twist.vel.x();
-    marker.points[1].y = transform_tf.getOrigin().y() + 5.0*twist.vel.y();
-    marker.points[1].z = transform_tf.getOrigin().z() + 5.0*twist.vel.z();
+    marker_vel.points.resize(2);
+    marker_vel.points[0].x = transform_tf.getOrigin().x();
+    marker_vel.points[0].y = transform_tf.getOrigin().y();
+    marker_vel.points[0].z = transform_tf.getOrigin().z();
+    marker_vel.points[1].x = transform_tf.getOrigin().x() + 5.0 * twist.vel.x();
+    marker_vel.points[1].y = transform_tf.getOrigin().y() + 5.0 * twist.vel.y();
+    marker_vel.points[1].z = transform_tf.getOrigin().z() + 5.0 * twist.vel.z();
 
-    twist_direction_pub_.publish(marker);
+    visualization_msgs::Marker marker_rot;
+    marker_rot.header.frame_id = twist_controller_params_.chain_base_link;
+    marker_rot.header.stamp = ros::Time::now();
+    marker_rot.ns = "twist_rot";
+    marker_rot.id = 0;
+    marker_rot.type = visualization_msgs::Marker::CYLINDER;
+    marker_rot.action = visualization_msgs::Marker::ADD;
+    marker_rot.lifetime = ros::Duration(0.1);
+    marker_rot.pose.position.x = transform_tf.getOrigin().x();
+    marker_rot.pose.position.y = transform_tf.getOrigin().y();
+    marker_rot.pose.position.z = transform_tf.getOrigin().z();
+
+    tf::Quaternion rot;
+    rot.setRPY(twist.rot.x(), twist.rot.y(), twist.rot.z());
+
+    /// calculate rotation between twist-axis and z-axis of cylinder
+    tf::Vector3 z_axis = tf::Vector3(0,0,1);
+    tf::Vector3 t_axis = rot.getAxis();
+    tf::Quaternion temp(0,0,0,1);
+    if(z_axis!=t_axis && z_axis!=-t_axis)
+    {
+        tf::Vector3 cross = z_axis.cross(t_axis);
+        temp = tf::Quaternion(cross.x(), cross.y(), cross.z(), (std::sqrt(z_axis.length2() * t_axis.length2()) + z_axis.dot(t_axis)));
+        temp = temp.normalized();
+    }
+    tf::quaternionTFToMsg(temp, marker_rot.pose.orientation);
+
+    marker_rot.scale.x = rot.getAngle();
+    marker_rot.scale.y = rot.getAngle();
+    marker_rot.scale.z = 0.002;
+
+    marker_rot.color.r = 1.0f;
+    marker_rot.color.g = 1.0f;
+    marker_rot.color.b = 0.0f;
+    marker_rot.color.a = 1.0;
+
+    visualization_msgs::MarkerArray markers;
+    markers.markers.push_back(marker_vel);
+    markers.markers.push_back(marker_rot);
+
+    twist_direction_pub_.publish(markers);
 }
 
 void CobTwistController::jointstateCallback(const sensor_msgs::JointState::ConstPtr& msg)
