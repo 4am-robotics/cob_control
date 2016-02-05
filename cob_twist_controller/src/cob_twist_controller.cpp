@@ -145,7 +145,7 @@ bool CobTwistController::initialize()
 
     odometry_sub_ = nh_.subscribe("base/odometry", 1, &CobTwistController::odometryCallback, this);
 
-    this->controller_interface_.reset(ControllerInterfaceBuilder::createControllerInterface(this->nh_, this->twist_controller_params_));
+    this->controller_interface_.reset(ControllerInterfaceBuilder::createControllerInterface(this->nh_, this->twist_controller_params_, this->joint_states_));
 
     /// publisher for visualizing current twist direction
     twist_direction_pub_ = nh_.advertise<visualization_msgs::Marker>("twist_direction", 1);
@@ -227,7 +227,7 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     twist_controller_params_.kinematic_extension = static_cast<KinematicExtensionTypes>(config.kinematic_extension);
     twist_controller_params_.extension_ratio = config.extension_ratio;
 
-    this->controller_interface_.reset(ControllerInterfaceBuilder::createControllerInterface(this->nh_, this->twist_controller_params_));
+    this->controller_interface_.reset(ControllerInterfaceBuilder::createControllerInterface(this->nh_, this->twist_controller_params_, this->joint_states_));
 
     p_inv_diff_kin_solver_->resetAll(this->twist_controller_params_);
 
