@@ -44,8 +44,8 @@ class SimpsonIntegrator
             dof_ = dof;
             for (uint8_t i = 0; i < dof_; i++)
             {
-                // ma_.push_back(new MovingAvgSimple_double_t(3));
-                ma_.push_back(new MovingAvgExponential_double_t(0.3));
+                ma_vel_.push_back(new MovingAvgExponential_double_t(0.2));
+                ma_.push_back(new MovingAvgExponential_double_t(0.2));
             }
             last_update_time_ = ros::Time(0.0);
             last_period_ = ros::Duration(0.0);
@@ -63,6 +63,7 @@ class SimpsonIntegrator
             // resetting moving average
             for (unsigned int i = 0; i < dof_; ++i)
             {
+                ma_vel_[i]->reset();
                 ma_[i]->reset();
             }
         }
@@ -86,19 +87,37 @@ class SimpsonIntegrator
                 ROS_WARN_STREAM("reset Integration: " << period.toSec());
                 resetIntegration();
             }
+            
+            // smooth incoming velocities
+            KDL::JntArray q_dot_avg(dof_);
+            for (unsigned int i = 0; i < dof_; ++i)
+            {
+                ma_vel_[i]->addElement(q_dot_ik(i));
+                double avg_vel = 0.0;
+                if(ma_vel_[i]->calcMovingAverage(avg_vel))
+                {
+                    q_dot_avg(i) = avg_vel;
+                }
+                else
+                {
+                    q_dot_avg(i) = q_dot_ik(i);
+                }
+            }
 
             if (!vel_before_last_.empty())
             {
                 for (unsigned int i = 0; i < dof_; ++i)
                 {
                     // Simpson
-                    double integration_value = static_cast<double>(period.toSec() / 6.0 * (vel_before_last_[i] + 4.0 * (vel_before_last_[i] + vel_last_[i]) + vel_before_last_[i] + vel_last_[i] + q_dot_ik(i)) + current_q(i));
+                    double integration_value = static_cast<double>(period.toSec() / 6.0 * (vel_before_last_[i] + 4.0 * (vel_before_last_[i] + vel_last_[i]) + vel_before_last_[i] + vel_last_[i] + q_dot_avg(i)) + current_q(i));
+
+                    // smooth outgoing positions
                     ma_[i]->addElement(integration_value);
                     double avg = 0.0;
                     if (ma_[i]->calcMovingAverage(avg))
                     {
                         pos.push_back(avg);
-                        vel.push_back(q_dot_ik(i));
+                        vel.push_back(q_dot_avg(i));
                     }
                 }
                 value_valid = true;
@@ -112,9 +131,9 @@ class SimpsonIntegrator
             }
 
             vel_last_.clear();
-            for (unsigned int i=0; i < q_dot_ik.rows(); ++i)
+            for (unsigned int i=0; i < q_dot_avg.rows(); ++i)
             {
-                vel_last_.push_back(q_dot_ik(i));
+                vel_last_.push_back(q_dot_avg(i));
             }
 
             last_update_time_ = now;
@@ -124,6 +143,7 @@ class SimpsonIntegrator
         }
 
     private:
+        std::vector<MovingAvgBase_double_t*> ma_vel_;
         std::vector<MovingAvgBase_double_t*> ma_;
         uint8_t dof_;
         std::vector<double> vel_last_, vel_before_last_;
