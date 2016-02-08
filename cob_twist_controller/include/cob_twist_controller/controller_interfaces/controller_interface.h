@@ -138,7 +138,7 @@ class ControllerInterfaceJointStates : public ControllerInterfacePositionBase
                 js_msg_.effort.push_back(0.0);
             }
 
-            js_timer_ = nh.createTimer(ros::Duration(1/60.0), &ControllerInterfaceJointStates::publishJointState, this);
+            js_timer_ = nh.createTimer(ros::Duration(1/50.0), &ControllerInterfaceJointStates::publishJointState, this);
             js_timer_.start();
         }
 

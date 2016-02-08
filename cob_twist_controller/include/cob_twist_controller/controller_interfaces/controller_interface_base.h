@@ -80,12 +80,12 @@ class ControllerInterfacePositionBase : public ControllerInterfaceBase
             ros::Time now = ros::Time::now();
             period_ = now - last_update_time_;
             last_update_time_ = now;
-            return integrator_->updateIntegration(q_dot_ik, current_q, pos, vel);
+            return integrator_->updateIntegration(q_dot_ik, current_q, pos_, vel_);
         }
 
     protected:
         boost::shared_ptr<SimpsonIntegrator> integrator_;
-        std::vector<double> pos, vel;
+        std::vector<double> pos_, vel_;
         ros::Time last_update_time_;
         ros::Duration period_;
 };

@@ -91,7 +91,7 @@ inline void ControllerInterfacePosition::processResult(const KDL::JntArray& q_do
     {
         /// publish to interface
         std_msgs::Float64MultiArray pos_msg;
-        pos_msg.data = pos;
+        pos_msg.data = pos_;
         pub_.publish(pos_msg);
     }
 }
@@ -108,8 +108,8 @@ inline void ControllerInterfaceTrajectory::processResult(const KDL::JntArray& q_
     if (updateIntegration(q_dot_ik, current_q))
     {
         trajectory_msgs::JointTrajectoryPoint traj_point;
-        traj_point.positions = pos;
-        // traj_point.velocities = vel;
+        traj_point.positions = pos_;
+        // traj_point.velocities = vel_;
         // traj_point.accelerations.assign(params_.dof, 0.0);
         // traj_point.effort.assign(params_.dof, 0.0);
         traj_point.time_from_start = period_;
@@ -137,8 +137,8 @@ inline void ControllerInterfaceJointStates::processResult(const KDL::JntArray& q
     {
         /// update JointState
         boost::mutex::scoped_lock lock(mutex_);
-        js_msg_.position = pos;
-        js_msg_.velocity = vel;
+        js_msg_.position = pos_;
+        js_msg_.velocity = vel_;
 
         /// publishing takes place in separate thread
     }
