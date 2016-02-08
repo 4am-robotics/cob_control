@@ -50,7 +50,7 @@ bool CobFrameTracker::initialize()
     if (nh_tracker.hasParam("update_rate"))
     {    nh_tracker.getParam("update_rate", update_rate_);    }
     else
-    {    update_rate_ = 68.0;    }    //hz
+    {    update_rate_ = 50.0;    }    //hz
 
     if (nh_.hasParam("chain_base_link"))
     {
@@ -109,12 +109,12 @@ bool CobFrameTracker::initialize()
     if (nh_tracker.hasParam("max_vel_lin"))
     {    nh_tracker.getParam("max_vel_lin", max_vel_lin_);    }
     else
-    {    max_vel_lin_ = 10.0;    }    //m/sec
+    {    max_vel_lin_ = 0.1;    }    //m/sec
 
     if (nh_tracker.hasParam("max_vel_rot"))
     {    nh_tracker.getParam("max_vel_rot", max_vel_rot_);    }
     else
-    {    max_vel_rot_ = 6.28;    }    //rad/sec
+    {    max_vel_rot_ = 0.1;    }    //rad/sec
 
     // Load PID Controller using gains set on parameter server
     pid_controller_trans_x_.init(ros::NodeHandle(nh_tracker, "pid_trans_x"));
@@ -139,6 +139,7 @@ bool CobFrameTracker::initialize()
     lookat_focus_frame_ = "lookat_focus_frame";
 
     //ABORTION CRITERIA:
+    enable_abortion_checking_ = false;
     cart_min_dist_threshold_lin_ = 0.01;
     cart_min_dist_threshold_rot_ = 0.01;
     twist_dead_threshold_lin_ = 0.05;
@@ -560,6 +561,12 @@ int CobFrameTracker::checkStatus()
 {
     int status = 0;
 
+    if(!enable_abortion_checking_)
+    {
+        abortion_counter_ = 0;
+        return status;
+    }
+
     if(ros::Time::now() > tracking_start_time_ + ros::Duration(tracking_duration_))
     {
         action_result_.success = true;
@@ -602,6 +609,12 @@ int CobFrameTracker::checkStatus()
 int CobFrameTracker::checkServiceCallStatus()
 {
     int status = 0;
+
+    if(!enable_abortion_checking_)
+    {
+        abortion_counter_ = 0;
+        return status;
+    }
 
     bool distance_violation = checkCartDistanceViolation(cart_distance_, 0.0);
 
@@ -666,6 +679,7 @@ void CobFrameTracker::jointstateCallback(const sensor_msgs::JointState::ConstPtr
 
 void CobFrameTracker::reconfigureCallback(cob_frame_tracker::FrameTrackerConfig& config, uint32_t level)
 {
+    enable_abortion_checking_ = config.enable_abortion_checking;
     cart_min_dist_threshold_lin_ = config.cart_min_dist_threshold_lin;
     cart_min_dist_threshold_rot_ = config.cart_min_dist_threshold_rot;
     twist_dead_threshold_lin_ = config.twist_dead_threshold_lin;

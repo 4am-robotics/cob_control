@@ -176,6 +176,7 @@ private:
     double tracking_duration_;
     ros::Time tracking_start_time_;
 
+    bool enable_abortion_checking_;
     double cart_min_dist_threshold_lin_;
     double cart_min_dist_threshold_rot_;
     double twist_dead_threshold_lin_;

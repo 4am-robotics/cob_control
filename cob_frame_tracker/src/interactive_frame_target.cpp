@@ -38,7 +38,7 @@ bool InteractiveFrameTarget::initialize()
     if (nh_tracker.hasParam("update_rate"))
     {    nh_tracker.getParam("update_rate", update_rate_);    }
     else
-    {    update_rate_ = 68.0;    }    //hz
+    {    update_rate_ = 50.0;    }    //hz
 
     if (nh_.hasParam("chain_tip_link"))
     {
