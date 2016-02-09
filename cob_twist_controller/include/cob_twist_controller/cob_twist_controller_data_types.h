@@ -116,23 +116,23 @@ struct LookatOffset
 {
     LookatOffset() :
         lookat_axis_type(X_POSITIVE),
-        lookat_vec_x(0.0),
-        lookat_vec_y(0.0),
-        lookat_vec_z(0.0),
-        lookat_quat_x(0.0),
-        lookat_quat_y(0.0),
-        lookat_quat_z(0.0),
-        lookat_quat_w(1.0)
+        translation_x(0.0),
+        translation_y(0.0),
+        translation_z(0.0),
+        rotation_x(0.0),
+        rotation_y(0.0),
+        rotation_z(0.0),
+        rotation_w(1.0)
     {}
 
     LookatAxisTypes lookat_axis_type;
-    double lookat_vec_x;
-    double lookat_vec_y;
-    double lookat_vec_z;
-    double lookat_quat_x;
-    double lookat_quat_y;
-    double lookat_quat_z;
-    double lookat_quat_w;
+    double translation_x;
+    double translation_y;
+    double translation_z;
+    double rotation_x;
+    double rotation_y;
+    double rotation_z;
+    double rotation_w;
 };
 
 struct JointStates

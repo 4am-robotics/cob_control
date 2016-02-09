@@ -82,8 +82,8 @@ bool KinematicExtensionLookat::initExtension()
     KDL::Joint lookat_lin_joint("lookat_lin_joint", KDL::Vector(), lookat_lin_axis, KDL::Joint::TransAxis);
 
     KDL::Frame offset;
-    offset.p = KDL::Vector(params_.lookat_offset.lookat_vec_x, params_.lookat_offset.lookat_vec_y, params_.lookat_offset.lookat_vec_z);
-    offset.M = KDL::Rotation::Quaternion(params_.lookat_offset.lookat_quat_x, params_.lookat_offset.lookat_quat_y, params_.lookat_offset.lookat_quat_z, params_.lookat_offset.lookat_quat_w);
+    offset.p = KDL::Vector(params_.lookat_offset.translation_x, params_.lookat_offset.translation_y, params_.lookat_offset.translation_z);
+    offset.M = KDL::Rotation::Quaternion(params_.lookat_offset.rotation_x, params_.lookat_offset.rotation_y, params_.lookat_offset.rotation_z, params_.lookat_offset.rotation_w);
 
     KDL::Segment lookat_rotx_link("lookat_rotx_link", lookat_lin_joint, offset);
     chain_ext_.addSegment(lookat_rotx_link);

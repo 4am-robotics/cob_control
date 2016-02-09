@@ -114,16 +114,28 @@ bool CobTwistController::initialize()
     }
 
     // Configure Lookat Extenstion (Offset and Axis) --- not dynamic-reconfigurable
-    int lookat_axis_type;
-    if (nh_twist.getParam("lookat_axis_type", lookat_axis_type))
-    {   twist_controller_params_.lookat_offset.lookat_axis_type = static_cast<LookatAxisTypes>(lookat_axis_type);   }
-    nh_twist.getParam("lookat_vec_x", twist_controller_params_.lookat_offset.lookat_vec_x);
-    nh_twist.getParam("lookat_vec_y", twist_controller_params_.lookat_offset.lookat_vec_y);
-    nh_twist.getParam("lookat_vec_z", twist_controller_params_.lookat_offset.lookat_vec_z);
-    nh_twist.getParam("lookat_quat_x", twist_controller_params_.lookat_offset.lookat_quat_x);
-    nh_twist.getParam("lookat_quat_y", twist_controller_params_.lookat_offset.lookat_quat_y);
-    nh_twist.getParam("lookat_quat_z", twist_controller_params_.lookat_offset.lookat_quat_z);
-    nh_twist.getParam("lookat_quat_w", twist_controller_params_.lookat_offset.lookat_quat_w);
+    if (nh_twist.hasParam("lookat_axis_type"))
+    {
+        int lookat_axis_type;
+        nh_twist.getParam("lookat_axis_type", lookat_axis_type);
+        twist_controller_params_.lookat_offset.lookat_axis_type = static_cast<LookatAxisTypes>(lookat_axis_type);
+    }
+    if (nh_twist.hasParam("lookat_offset"))
+    {
+        if (nh_twist.hasParam("lookat_offset/translation"))
+        {
+            twist_controller_params_.lookat_offset.translation_x = nh_twist.param("lookat_offset/translation/x", 0.0);
+            twist_controller_params_.lookat_offset.translation_y = nh_twist.param("lookat_offset/translation/y", 0.0);
+            twist_controller_params_.lookat_offset.translation_z = nh_twist.param("lookat_offset/translation/z", 0.0);
+        }
+        if (nh_twist.hasParam("lookat_offset/rotation"))
+        {
+            twist_controller_params_.lookat_offset.rotation_x = nh_twist.param("lookat_offset/rotation/x", 0.0);
+            twist_controller_params_.lookat_offset.rotation_y = nh_twist.param("lookat_offset/rotation/y", 0.0);
+            twist_controller_params_.lookat_offset.rotation_z = nh_twist.param("lookat_offset/rotation/z", 0.0);
+            twist_controller_params_.lookat_offset.rotation_w = nh_twist.param("lookat_offset/rotation/w", 1.0);
+        }
+    }
 
     twist_controller_params_.frame_names.clear();
     for (uint16_t i = 0; i < chain_.getNrOfSegments(); ++i)
