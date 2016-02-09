@@ -1,4 +1,6 @@
 #include <vector>
+#include <string>
+
 #include <ros/ros.h>
 #include <std_msgs/Float64.h>
 #include <trajectory_msgs/JointTrajectory.h>
@@ -32,7 +34,7 @@ public:
         output_simpson_q_pub_ = nh_.advertise<std_msgs::Float64>("integrator_debug/simpson_q", 1);
         output_euler_q_pub_ = nh_.advertise<std_msgs::Float64>("integrator_debug/euler_q", 1);
         output_derived_simpson_q_dot_pub_ = nh_.advertise<std_msgs::Float64>("integrator_debug/derived_simpson_q_dot", 1);
-        
+
         ros::Duration(1.0).sleep();
     }
 
@@ -51,10 +53,10 @@ public:
         double x = time.toSec() - start_time.toSec();
         double old_pos = -99;
 
-        //double a = 0.6, b = 1.0, c = 0, d = 0;    //lwa4d
-        double a = 0.6, b = 0.4, c = 0, d = 0;      //torso_2dof
+        //double a = 0.6, b = 1.0, c = 0, d = 0;    // lwa4d
+        double a = 0.6, b = 0.4, c = 0, d = 0;      // torso_2dof
         euler_q_(idx_) = a*sin(b*x+c) + d;          // correct initial value
-        
+
         trajectory_msgs::JointTrajectoryPoint traj_point;
         traj_point.positions.assign(dof_,0.0);
         // traj_point.velocities.assign(dof_,0.0);
@@ -70,7 +72,7 @@ public:
         joint_names.push_back("torso_2_joint");
         joint_names.push_back("torso_3_joint");
 
-        while(ros::ok())
+        while (ros::ok())
         {
             time = ros::Time::now();
             period = time - last_update_time;
@@ -101,12 +103,12 @@ public:
             trajectory_msgs::JointTrajectory traj_msg;
             traj_msg.points.push_back(traj_point);
             traj_msg.joint_names = joint_names;
-            //traj_msg.header.stamp = ros::Time::now();     //now or none - does not make a difference
+            // traj_msg.header.stamp = ros::Time::now();     //now or none - does not make a difference
 
 
-            std_msgs::Float64 q_msg;       //cos
+            std_msgs::Float64 q_msg;       // cos
             q_msg.data = q_(idx_);
-            std_msgs::Float64 q_dot_msg;   //sin
+            std_msgs::Float64 q_dot_msg;   // sin
             q_dot_msg.data = q_dot_(idx_);
             std_msgs::Float64 simpson_q_msg;
             simpson_q_msg.data = simpson_q_(idx_);
@@ -120,7 +122,7 @@ public:
             output_simpson_q_pub_.publish(simpson_q_msg);
             output_euler_q_pub_.publish(euler_q_msg);
             output_derived_simpson_q_dot_pub_.publish(derived_simpson_q_dot_msg);
-            
+
             trajectory_pub_.publish(traj_msg);
 
             ros::spinOnce();

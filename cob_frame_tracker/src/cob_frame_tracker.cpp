@@ -139,7 +139,7 @@ bool CobFrameTracker::initialize()
     lookat_focus_frame_ = "lookat_focus_frame";
 
     //ABORTION CRITERIA:
-    enable_abortion_checking_ = false;
+    enable_abortion_checking_ = true;
     cart_min_dist_threshold_lin_ = 0.01;
     cart_min_dist_threshold_rot_ = 0.01;
     twist_dead_threshold_lin_ = 0.05;

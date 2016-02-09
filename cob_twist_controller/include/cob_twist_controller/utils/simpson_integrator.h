@@ -49,14 +49,14 @@ class SimpsonIntegrator
             for (uint8_t i = 0; i < dof_; i++)
             {
                 ma_vel_.push_back(new MovingAvgExponential_double_t(integrator_smoothing_));
-                ma_.push_back(new MovingAvgExponential_double_t(integrator_smoothing_));
+                ma_pos_.push_back(new MovingAvgExponential_double_t(integrator_smoothing_));
             }
 
-            nh_ = ros::NodeHandle("simpson_debug");
-            q_dot_ik_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("q_dot_ik", 1);
-            q_dot_avg_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("q_dot_avg", 1);
-            q_simpson_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("q_simpson", 1);
-            q_simpson_avg_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("q_simpson_avg", 1);
+            /// nh_ = ros::NodeHandle("simpson_debug");
+            /// q_dot_ik_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("q_dot_ik", 1);
+            /// q_dot_avg_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("q_dot_avg", 1);
+            /// q_simpson_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("q_simpson", 1);
+            /// q_simpson_avg_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("q_simpson_avg", 1);
         }
 
         ~SimpsonIntegrator()
@@ -72,7 +72,7 @@ class SimpsonIntegrator
             for (unsigned int i = 0; i < dof_; ++i)
             {
                 ma_vel_[i]->reset();
-                ma_[i]->reset();
+                ma_pos_[i]->reset();
             }
         }
 
@@ -98,13 +98,13 @@ class SimpsonIntegrator
 
             // smooth incoming velocities
             KDL::JntArray q_dot_avg(dof_);
-            std_msgs::Float64MultiArray q_dot_ik_msg;
-            std_msgs::Float64MultiArray q_dot_avg_msg;
+            /// std_msgs::Float64MultiArray q_dot_ik_msg;
+            /// std_msgs::Float64MultiArray q_dot_avg_msg;
             for (unsigned int i = 0; i < dof_; ++i)
             {
                 ma_vel_[i]->addElement(q_dot_ik(i));
                 double avg_vel = 0.0;
-                if(ma_vel_[i]->calcMovingAverage(avg_vel))
+                if (ma_vel_[i]->calcMovingAverage(avg_vel))
                 {
                     q_dot_avg(i) = avg_vel;
                 }
@@ -113,12 +113,12 @@ class SimpsonIntegrator
                     q_dot_avg(i) = q_dot_ik(i);
                 }
 
-                q_dot_ik_msg.data.push_back(q_dot_ik(i));
-                q_dot_avg_msg.data.push_back(q_dot_avg(i));
+                /// q_dot_ik_msg.data.push_back(q_dot_ik(i));
+                /// q_dot_avg_msg.data.push_back(q_dot_avg(i));
             }
 
-            std_msgs::Float64MultiArray q_simpson_msg;
-            std_msgs::Float64MultiArray q_simpson_avg_msg;
+            /// std_msgs::Float64MultiArray q_simpson_msg;
+            /// std_msgs::Float64MultiArray q_simpson_avg_msg;
             if (!vel_before_last_.empty())
             {
                 for (unsigned int i = 0; i < dof_; ++i)
@@ -127,22 +127,19 @@ class SimpsonIntegrator
                     double integration_value = static_cast<double>(period.toSec() / 6.0 * (vel_before_last_[i] + 4.0 * (vel_before_last_[i] + vel_last_[i]) + vel_before_last_[i] + vel_last_[i] + q_dot_avg(i)) + current_q(i));
 
                     // smooth outgoing positions
-                    ma_[i]->addElement(integration_value);
-                    double avg = 0.0;
-                    if (ma_[i]->calcMovingAverage(avg))
-                    {
-                        pos.push_back(avg);
-                        vel.push_back(q_dot_avg(i));
-                    }
-                    else
+                    ma_pos_[i]->addElement(integration_value);
+                    double avg_pos = 0.0;
+                    if (!ma_pos_[i]->calcMovingAverage(avg_pos))
                     {
                         ROS_ERROR("calcMovingAverage failed");
-                        pos.push_back(integration_value);
-                        vel.push_back(q_dot_avg(i));
+                        avg_pos = integration_value;
                     }
 
-                    q_simpson_msg.data.push_back(integration_value);
-                    q_simpson_avg_msg.data.push_back(avg);
+                    pos.push_back(avg_pos);
+                    vel.push_back(q_dot_avg(i));
+
+                    /// q_simpson_msg.data.push_back(integration_value);
+                    /// q_simpson_avg_msg.data.push_back(avg_pos);
                 }
                 value_valid = true;
             }
@@ -163,28 +160,29 @@ class SimpsonIntegrator
             last_update_time_ = now;
             last_period_ = period;
 
-            q_dot_ik_pub_.publish(q_dot_ik_msg);
-            q_dot_avg_pub_.publish(q_dot_avg_msg);
-            q_simpson_pub_.publish(q_simpson_msg);
-            q_simpson_avg_pub_.publish(q_simpson_avg_msg);
+            /// q_dot_ik_pub_.publish(q_dot_ik_msg);
+            /// q_dot_avg_pub_.publish(q_dot_avg_msg);
+            /// q_simpson_pub_.publish(q_simpson_msg);
+            /// q_simpson_avg_pub_.publish(q_simpson_avg_msg);
 
             return value_valid;
         }
 
     private:
         std::vector<MovingAvgBase_double_t*> ma_vel_;
-        std::vector<MovingAvgBase_double_t*> ma_;
+        std::vector<MovingAvgBase_double_t*> ma_pos_;
         uint8_t dof_;
         double integrator_smoothing_;
         std::vector<double> vel_last_, vel_before_last_;
         ros::Time last_update_time_;
         ros::Duration last_period_;
 
-        ros::NodeHandle nh_;
-        ros::Publisher q_dot_ik_pub_;
-        ros::Publisher q_dot_avg_pub_;
-        ros::Publisher q_simpson_pub_;
-        ros::Publisher q_simpson_avg_pub_;
+        // debug
+        /// ros::NodeHandle nh_;
+        /// ros::Publisher q_dot_ik_pub_;
+        /// ros::Publisher q_dot_avg_pub_;
+        /// ros::Publisher q_simpson_pub_;
+        /// ros::Publisher q_simpson_avg_pub_;
 };
 
 #endif  // COB_TWIST_CONTROLLER_UTILS_SIMPSON_INTEGRATOR_H
