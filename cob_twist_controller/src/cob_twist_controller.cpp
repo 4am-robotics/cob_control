@@ -113,6 +113,18 @@ bool CobTwistController::initialize()
         }
     }
 
+    // Configure Lookat Extenstion (Offset and Axis) --- not dynamic-reconfigurable
+    int lookat_axis_type;
+    if (nh_twist.getParam("lookat_axis_type", lookat_axis_type))
+    {   twist_controller_params_.lookat_offset.lookat_axis_type = static_cast<LookatAxisTypes>(lookat_axis_type);   }
+    nh_twist.getParam("lookat_vec_x", twist_controller_params_.lookat_offset.lookat_vec_x);
+    nh_twist.getParam("lookat_vec_y", twist_controller_params_.lookat_offset.lookat_vec_y);
+    nh_twist.getParam("lookat_vec_z", twist_controller_params_.lookat_offset.lookat_vec_z);
+    nh_twist.getParam("lookat_quat_x", twist_controller_params_.lookat_offset.lookat_quat_x);
+    nh_twist.getParam("lookat_quat_y", twist_controller_params_.lookat_offset.lookat_quat_y);
+    nh_twist.getParam("lookat_quat_z", twist_controller_params_.lookat_offset.lookat_quat_z);
+    nh_twist.getParam("lookat_quat_w", twist_controller_params_.lookat_offset.lookat_quat_w);
+
     twist_controller_params_.frame_names.clear();
     for (uint16_t i = 0; i < chain_.getNrOfSegments(); ++i)
     {

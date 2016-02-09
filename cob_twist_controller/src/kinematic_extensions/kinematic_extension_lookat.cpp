@@ -53,9 +53,39 @@ bool KinematicExtensionLookat::initExtension()
     }
 
     /// ToDo: orientation of lin_AXIS should be determined by a parameter
-    KDL::Vector lookat_lin_axis(1.0, 0.0, 0.0);
+    KDL::Vector lookat_lin_axis(0.0, 0.0, 0.0);
+    switch (params_.lookat_offset.lookat_axis_type)
+    {
+        case X_POSITIVE:
+            lookat_lin_axis.x(1.0);
+            break;
+        case Y_POSITIVE:
+            lookat_lin_axis.y(1.0);
+            break;
+        case Z_POSITIVE:
+            lookat_lin_axis.z(1.0);
+            break;
+        case X_NEGATIVE:
+            lookat_lin_axis.x(-1.0);
+            break;
+        case Y_NEGATIVE:
+            lookat_lin_axis.y(-1.0);
+            break;
+        case Z_NEGATIVE:
+            lookat_lin_axis.z(-1.0);
+            break;
+        default:
+            ROS_ERROR("LookatAxisType %d not defined! Using default: 'X_POSITIVE'!", params_.lookat_offset.lookat_axis_type);
+            lookat_lin_axis.x(1.0);
+            break;
+    }
     KDL::Joint lookat_lin_joint("lookat_lin_joint", KDL::Vector(), lookat_lin_axis, KDL::Joint::TransAxis);
-    KDL::Segment lookat_rotx_link("lookat_rotx_link", lookat_lin_joint);
+
+    KDL::Frame offset;
+    offset.p = KDL::Vector(params_.lookat_offset.lookat_vec_x, params_.lookat_offset.lookat_vec_y, params_.lookat_offset.lookat_vec_z);
+    offset.M = KDL::Rotation::Quaternion(params_.lookat_offset.lookat_quat_x, params_.lookat_offset.lookat_quat_y, params_.lookat_offset.lookat_quat_z, params_.lookat_offset.lookat_quat_w);
+
+    KDL::Segment lookat_rotx_link("lookat_rotx_link", lookat_lin_joint, offset);
     chain_ext_.addSegment(lookat_rotx_link);
     limits_ext_max_.push_back(std::numeric_limits<double>::max());
     limits_ext_min_.push_back(-params_.limiter_params.limits_tolerance);
