@@ -165,6 +165,7 @@ struct TwistControllerParams
     TwistControllerParams() :
         dof(0),
         controller_interface(VELOCITY_INTERFACE),
+        integrator_smoothing(0.2),
 
         numerical_filtering(false),
         damping_method(MANIPULABILITY),
@@ -206,6 +207,7 @@ struct TwistControllerParams
     std::string chain_tip_link;
 
     ControllerInterfaceTypes controller_interface;
+    double integrator_smoothing;
 
     bool numerical_filtering;
     DampingMethodTypes damping_method;

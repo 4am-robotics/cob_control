@@ -66,7 +66,7 @@ class ControllerInterfacePositionBase : public ControllerInterfaceBase
         : ControllerInterfaceBase(nh, params)
         {
             last_update_time_ = ros::Time(0.0);
-            integrator_.reset(new SimpsonIntegrator(params.dof));
+            integrator_.reset(new SimpsonIntegrator(params.dof, params.integrator_smoothing));
         }
 
         ~ControllerInterfacePositionBase() {}

@@ -40,16 +40,17 @@
 class SimpsonIntegrator
 {
     public:
-        explicit SimpsonIntegrator(const uint8_t dof)
+        explicit SimpsonIntegrator(const uint8_t dof, const double integrator_smoothing = 0.2)
+            : dof_(dof),
+              integrator_smoothing_(integrator_smoothing),
+              last_update_time_(ros::Time(0.0)),
+              last_period_(ros::Duration(0.0))
         {
-            dof_ = dof;
             for (uint8_t i = 0; i < dof_; i++)
             {
-                ma_vel_.push_back(new MovingAvgExponential_double_t(0.2));
-                ma_.push_back(new MovingAvgExponential_double_t(0.2));
+                ma_vel_.push_back(new MovingAvgExponential_double_t(integrator_smoothing_));
+                ma_.push_back(new MovingAvgExponential_double_t(integrator_smoothing_));
             }
-            last_update_time_ = ros::Time(0.0);
-            last_period_ = ros::Duration(0.0);
 
             nh_ = ros::NodeHandle("simpson_debug");
             q_dot_ik_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("q_dot_ik", 1);
@@ -57,9 +58,9 @@ class SimpsonIntegrator
             q_simpson_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("q_simpson", 1);
             q_simpson_avg_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("q_simpson_avg", 1);
         }
+
         ~SimpsonIntegrator()
         {}
-
 
         void resetIntegration()
         {
@@ -94,7 +95,7 @@ class SimpsonIntegrator
                 ROS_WARN_STREAM("reset Integration: " << period.toSec());
                 resetIntegration();
             }
-            
+
             // smooth incoming velocities
             KDL::JntArray q_dot_avg(dof_);
             std_msgs::Float64MultiArray q_dot_ik_msg;
@@ -174,10 +175,11 @@ class SimpsonIntegrator
         std::vector<MovingAvgBase_double_t*> ma_vel_;
         std::vector<MovingAvgBase_double_t*> ma_;
         uint8_t dof_;
+        double integrator_smoothing_;
         std::vector<double> vel_last_, vel_before_last_;
         ros::Time last_update_time_;
         ros::Duration last_period_;
-        
+
         ros::NodeHandle nh_;
         ros::Publisher q_dot_ik_pub_;
         ros::Publisher q_dot_avg_pub_;

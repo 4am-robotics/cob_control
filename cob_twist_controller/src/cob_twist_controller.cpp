@@ -183,6 +183,7 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
 {
     this->checkSolverAndConstraints(config);
     twist_controller_params_.controller_interface = static_cast<ControllerInterfaceTypes>(config.controller_interface);
+    twist_controller_params_.integrator_smoothing = config.integrator_smoothing;
 
     twist_controller_params_.numerical_filtering = config.numerical_filtering;
     twist_controller_params_.damping_method = static_cast<DampingMethodTypes>(config.damping_method);
