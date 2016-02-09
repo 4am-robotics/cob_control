@@ -62,6 +62,8 @@ add_executable(cob_twist_controller_node src/cob_twist_controller_node.cpp)
 add_dependencies(cob_twist_controller_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cob_twist_controller_node twist_controller ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 
+
+### DEBUG NODES ###
 add_executable(debug_trajectory_marker_node src/debug/debug_trajectory_marker_node.cpp)
 add_dependencies(debug_trajectory_marker_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(debug_trajectory_marker_node ${catkin_LIBRARIES})
@@ -69,7 +71,6 @@ target_link_libraries(debug_trajectory_marker_node ${catkin_LIBRARIES})
 add_executable(debug_evaluate_jointstates_node src/debug/debug_evaluate_jointstates_node.cpp)
 add_dependencies(debug_evaluate_jointstates_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(debug_evaluate_jointstates_node ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
-
 
 add_executable(test_moving_average_node src/debug/test_moving_average_node.cpp)
 add_dependencies(test_moving_average_node ${catkin_EXPORTED_TARGETS})
@@ -79,10 +80,20 @@ add_executable(test_simpson_integrator_node src/debug/test_simpson_integrator_no
 add_dependencies(test_simpson_integrator_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(test_simpson_integrator_node ${catkin_LIBRARIES})
 
+add_executable(test_trajectory_command_sine_node src/debug/test_trajectory_command_sine_node.cpp)
+add_dependencies(test_trajectory_command_sine_node ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_trajectory_command_sine_node ${catkin_LIBRARIES})
+
 roslint_cpp()
 
 ### INSTALL ###
-install(TARGETS cob_twist_controller_node damping_methods inv_calculations constraint_solvers limiters controller_interfaces kinematic_extensions inverse_differential_kinematics_solver twist_controller debug_trajectory_marker_node debug_evaluate_jointstates_node
+install(TARGETS cob_twist_controller_node damping_methods inv_calculations constraint_solvers limiters controller_interfaces kinematic_extensions inverse_differential_kinematics_solver twist_controller
+ ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+ LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+ RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(TARGETS debug_trajectory_marker_node debug_evaluate_jointstates_node test_moving_average_node test_simpson_integrator_node test_trajectory_command_sine_node
  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
