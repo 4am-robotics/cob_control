@@ -84,6 +84,10 @@ add_executable(test_trajectory_command_sine_node src/debug/test_trajectory_comma
 add_dependencies(test_trajectory_command_sine_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(test_trajectory_command_sine_node ${catkin_LIBRARIES})
 
+add_executable(test_forward_command_sine_node src/debug/test_forward_command_sine_node.cpp)
+add_dependencies(test_forward_command_sine_node ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_forward_command_sine_node ${catkin_LIBRARIES})
+
 roslint_cpp()
 
 ### INSTALL ###
