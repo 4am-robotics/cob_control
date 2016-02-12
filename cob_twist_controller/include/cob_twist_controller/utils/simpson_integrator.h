@@ -43,8 +43,7 @@ class SimpsonIntegrator
         explicit SimpsonIntegrator(const uint8_t dof, const double integrator_smoothing = 0.2)
             : dof_(dof),
               integrator_smoothing_(integrator_smoothing),
-              last_update_time_(ros::Time(0.0)),
-              last_period_(ros::Duration(0.0))
+              last_update_time_(ros::Time(0.0))
         {
             for (uint8_t i = 0; i < dof_; i++)
             {
@@ -83,13 +82,13 @@ class SimpsonIntegrator
         {
             ros::Time now = ros::Time::now();
             ros::Duration period = now - last_update_time_;
+            last_update_time_ = now;
 
             bool value_valid = false;
             pos.clear();
             vel.clear();
 
             // ToDo: Test these conditions and find good thresholds
-            // if (period.toSec() > 2*last_period_.toSec())  // missed about a cycle
             if (period.toSec() > ros::Duration(0.5).toSec())  // missed about 'max_command_silence'
             {
                 ROS_WARN_STREAM("reset Integration: " << period.toSec());
@@ -157,9 +156,6 @@ class SimpsonIntegrator
                 vel_last_.push_back(q_dot_avg(i));
             }
 
-            last_update_time_ = now;
-            last_period_ = period;
-
             /// q_dot_ik_pub_.publish(q_dot_ik_msg);
             /// q_dot_avg_pub_.publish(q_dot_avg_msg);
             /// q_simpson_pub_.publish(q_simpson_msg);
@@ -175,7 +171,6 @@ class SimpsonIntegrator
         double integrator_smoothing_;
         std::vector<double> vel_last_, vel_before_last_;
         ros::Time last_update_time_;
-        ros::Duration last_period_;
 
         // debug
         /// ros::NodeHandle nh_;
