@@ -376,16 +376,27 @@ bool CobFrameTracker::startTrackingCallback(cob_srvs::SetString::Request& reques
     }
     else
     {
-        std::string msg = "CobFrameTracker: StartTracking started with CART_DIST_SECURITY MONITORING enabled";
-        ROS_INFO_STREAM(msg);
-        response.success = true;
-        response.message = msg;
-        
-        tracking_ = true;
-        tracking_goal_ = false;
-        lookat_ = false;
-        tracking_frame_ = chain_tip_link_;
-        target_frame_ = request.data;
+        // check whether given target frame exists
+        if(!tf_listener_.frameExists(request.data))
+        {
+            std::string msg = "CobFrameTracker: StartTracking denied because target frame '" + request.data + "' does not exist";
+            ROS_ERROR_STREAM(msg);
+            response.success = false;
+            response.message = msg;
+        }
+        else
+        {
+            std::string msg = "CobFrameTracker: StartTracking started with CART_DIST_SECURITY MONITORING enabled";
+            ROS_INFO_STREAM(msg);
+            response.success = true;
+            response.message = msg;
+            
+            tracking_ = true;
+            tracking_goal_ = false;
+            lookat_ = false;
+            tracking_frame_ = chain_tip_link_;
+            target_frame_ = request.data;
+        }
     }
     return true;
 }
@@ -415,33 +426,44 @@ bool CobFrameTracker::startLookatCallback(cob_srvs::SetString::Request& request,
     }
     else
     {
-        dynamic_reconfigure::Reconfigure srv;
-        dynamic_reconfigure::IntParameter int_param;
-        int_param.name = "kinematic_extension";
-        int_param.value = 4;    //LOOKAT
-        srv.request.config.ints.push_back(int_param);
-        
-        bool success = reconfigure_client_.call(srv);
-
-        if(success)
+        // check whether given target frame exists
+        if(!tf_listener_.frameExists(request.data))
         {
-            std::string msg = "CobFrameTracker: StartLookat started with CART_DIST_SECURITY MONITORING enabled";
-            ROS_INFO_STREAM(msg);
-            response.success = true;
-            response.message = msg;
-            
-            tracking_ = false;
-            tracking_goal_ = false;
-            lookat_ = true;
-            tracking_frame_ = lookat_focus_frame_;
-            target_frame_ = request.data;
-        }
-        else
-        {
-            std::string msg = "CobFrameTracker: StartLookat denied because DynamicReconfigure failed";
+            std::string msg = "CobFrameTracker: StartLookat denied because target frame '" + request.data + "' does not exist";
             ROS_ERROR_STREAM(msg);
             response.success = false;
             response.message = msg;
+        }
+        else
+        {
+            dynamic_reconfigure::Reconfigure srv;
+            dynamic_reconfigure::IntParameter int_param;
+            int_param.name = "kinematic_extension";
+            int_param.value = 4;    //LOOKAT
+            srv.request.config.ints.push_back(int_param);
+            
+            bool success = reconfigure_client_.call(srv);
+
+            if(success)
+            {
+                std::string msg = "CobFrameTracker: StartLookat started with CART_DIST_SECURITY MONITORING enabled";
+                ROS_INFO_STREAM(msg);
+                response.success = true;
+                response.message = msg;
+                
+                tracking_ = false;
+                tracking_goal_ = false;
+                lookat_ = true;
+                tracking_frame_ = lookat_focus_frame_;
+                target_frame_ = request.data;
+            }
+            else
+            {
+                std::string msg = "CobFrameTracker: StartLookat denied because DynamicReconfigure failed";
+                ROS_ERROR_STREAM(msg);
+                response.success = false;
+                response.message = msg;
+            }
         }
     }
     return true;
@@ -503,14 +525,28 @@ void CobFrameTracker::goalCB()
     if (as_->isNewGoalAvailable())
     {
         boost::shared_ptr<const cob_frame_tracker::FrameTrackingGoal> goal_= as_->acceptNewGoal();
-        target_frame_ = goal_->tracking_frame;
-        tracking_duration_ = goal_->tracking_duration;
-        stop_on_goal_ = goal_->stop_on_goal;
-        tracking_ = false;
-        tracking_goal_ = true;
-        lookat_ = false;
-        abortion_counter_ = 0;
-        tracking_start_time_ = ros::Time::now();
+        
+        if(tracking_ || lookat_)
+        {
+            // Goal should not be accepted
+            ROS_ERROR_STREAM("CobFrameTracker: Received ActionGoal while tracking/lookat Service is active!");
+        }
+        else if (!tf_listener_.frameExists(goal_->tracking_frame))
+        {
+            // Goal should not be accepted
+            ROS_ERROR_STREAM("CobFrameTracker: Received ActionGoal but target frame '" << goal_->tracking_frame << "' does not exist");
+        }
+        else
+        {
+            target_frame_ = goal_->tracking_frame;
+            tracking_duration_ = goal_->tracking_duration;
+            stop_on_goal_ = goal_->stop_on_goal;
+            tracking_ = false;
+            tracking_goal_ = true;
+            lookat_ = false;
+            abortion_counter_ = 0;
+            tracking_start_time_ = ros::Time::now();
+        }
     }
 }
 
