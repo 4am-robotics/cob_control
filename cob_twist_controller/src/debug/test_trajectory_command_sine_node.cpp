@@ -77,7 +77,7 @@ public:
             time = ros::Time::now();
             period = time - last_update_time;
             last_update_time = time;
-            x = x = time.toSec() - start_time.toSec();
+            x = time.toSec() - start_time.toSec();
 
             std::vector<double> next_q;
             std::vector<double> next_q_dot;
