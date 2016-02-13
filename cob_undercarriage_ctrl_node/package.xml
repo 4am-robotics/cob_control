@@ -6,7 +6,6 @@
   <license>LGPL</license>
 
   <url type="website">http://ros.org/wiki/cob_undercarriage_ctrl_node</url>
-  <!-- <url type="bugtracker"></url> -->
 
   <maintainer email="mig@ipa.fhg.de">Matthias Gruhler</maintainer>
   <author>Mathias Luedtke</author>
