@@ -11,7 +11,7 @@ catkin_package()
 include_directories(${catkin_INCLUDE_DIRS})
 
 add_executable(${PROJECT_NAME}_new src/cob_undercarriage_ctrl_new.cpp)
-add_dependencies(phidget_sensors ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME}_new ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME}_new ${catkin_LIBRARIES})
 
 #############
