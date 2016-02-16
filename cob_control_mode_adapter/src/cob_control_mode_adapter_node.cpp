@@ -8,7 +8,7 @@
 class CobControlModeAdapter
 {
 public:
-    void initialize()
+    bool initialize()
     {
         bool success = false;
 
@@ -39,7 +39,7 @@ public:
         else
         {
             ROS_ERROR("...Load service not available!");
-            return;
+            return false;
         }
 
         while (not ros::service::waitForService("controller_manager/switch_controller", ros::Duration(5.0))){;}
@@ -51,7 +51,7 @@ public:
         else
         {
             ROS_ERROR("...Load service not available!");
-            return;
+            return false;
         }
 
         std::string param="max_command_silence";
@@ -143,6 +143,8 @@ public:
 
         update_rate_ = 100;    //[hz]
         timer_ = nh_.createTimer(ros::Duration(1/update_rate_), &CobControlModeAdapter::update, this);
+        
+        return true;
     }
 
     bool loadController(std::string load_controller)
@@ -239,6 +241,8 @@ public:
 
     void update(const ros::TimerEvent& event)
     {
+        if (!nh_.ok()) {return;}
+        
         boost::mutex::scoped_lock lock(mutex_);
 
         ros::Duration period_vel = event.current_real - last_vel_command_;
@@ -375,10 +379,14 @@ int main(int argc, char** argv)
     spinner.start();
 
     CobControlModeAdapter* ccma = new CobControlModeAdapter();
-    ccma->initialize();
+
+    if (!ccma->initialize())
+    {
+        ROS_ERROR("Failed to initialize CobControlModeAdapter");
+        return -1;
+    }
 
     ros::waitForShutdown();
-    delete ccma;
     return 0;
 }
 
