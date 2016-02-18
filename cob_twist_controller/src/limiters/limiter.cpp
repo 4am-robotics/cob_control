@@ -139,7 +139,15 @@ KDL::JntArray LimiterAllJointPositions::enforceLimits(const KDL::JntArray& q_dot
 
     for (unsigned int i = 0; i < q_dot_ik.rows(); i++)
     {
-        if ((limiter_params_.limits_max[i] - q(i)) < tolerance)  // Joint is nearer to the MAXIMUM limit
+        if(limiter_params_.limits_max[i] <= q(i) ||
+           limiter_params_.limits_min[i] >= q(i))
+        {
+            ROS_ERROR_STREAM("Joint " << i << " violates its limits. Setting to Zero!");
+            KDL::SetToZero(q_dot_norm);
+            return q_dot_norm;
+        }
+
+        if ((limiter_params_.limits_max[i] - q(i)) < tolerance)  // Joint is close to the MAXIMUM limit
         {
             if (q_dot_ik(i) > 0)  // Joint moves towards the MAX limit
             {
@@ -151,18 +159,16 @@ KDL::JntArray LimiterAllJointPositions::enforceLimits(const KDL::JntArray& q_dot
                 }
             }
         }
-        else
+
+        if ((q(i) - limiter_params_.limits_min[i]) < tolerance)  // Joint is close to the MINIMUM limit
         {
-            if ((q(i) - limiter_params_.limits_min[i]) < tolerance)  // Joint is nearer to the MINIMUM limit
+            if (q_dot_ik(i) < 0)  // Joint moves towards the MIN limit
             {
-                if (q_dot_ik(i) < 0)  // Joint moves towards the MIN limit
+                double temp = 1.0 / pow(0.5 + 0.5 * cos(M_PI * (q(i) - tolerance - limiter_params_.limits_min[i]) / tolerance), 5.0);
+                if (temp > max_factor)
                 {
-                    double temp = 1.0 / pow(0.5 + 0.5 * cos(M_PI * (q(i) - tolerance - limiter_params_.limits_min[i]) / tolerance), 5.0);
-                    if (temp > max_factor)
-                    {
-                        max_factor = temp;
-                        joint_index = i;
-                    }
+                    max_factor = temp;
+                    joint_index = i;
                 }
             }
         }
@@ -241,8 +247,15 @@ KDL::JntArray LimiterIndividualJointPositions::enforceLimits(const KDL::JntArray
 
     for (unsigned int i = 0; i < q_dot_ik.rows(); i++)
     {
+        if(limiter_params_.limits_max[i] <= q(i) ||
+           limiter_params_.limits_min[i] >= q(i))
+        {
+            ROS_ERROR_STREAM("Joint " << i << " violates its limits. Setting to Zero!");
+            q_dot_norm(i) = 0.0;
+        }
+
         double factor = 1.0;
-        if ((limiter_params_.limits_max[i] - q(i)) < tolerance)  // Joint is nearer to the MAXIMUM limit
+        if ((limiter_params_.limits_max[i] - q(i)) < tolerance)  // Joint is close to the MAXIMUM limit
         {
             if (q_dot_ik(i) > 0.0)  // Joint moves towards the MAX limit
             {
@@ -250,15 +263,13 @@ KDL::JntArray LimiterIndividualJointPositions::enforceLimits(const KDL::JntArray
                 q_dot_norm(i) = q_dot_norm(i) / factor;
             }
         }
-        else
+
+        if ((q(i) - limiter_params_.limits_min[i]) < tolerance)  // Joint is close to the MINIMUM limit
         {
-            if ((q(i) - limiter_params_.limits_min[i]) < tolerance)  // Joint is nearer to the MINIMUM limit
+            if (q_dot_ik(i) < 0.0)  // Joint moves towards the MIN limit
             {
-                if (q_dot_ik(i) < 0.0)  // Joint moves towards the MIN limit
-                {
-                    factor = 1.0 / pow(0.5 + 0.5 * cos(M_PI * (q(i) - tolerance - limiter_params_.limits_min[i]) / tolerance), 5.0);
-                    q_dot_norm(i) = q_dot_norm(i) / factor;
-                }
+                factor = 1.0 / pow(0.5 + 0.5 * cos(M_PI * (q(i) - tolerance - limiter_params_.limits_min[i]) / tolerance), 5.0);
+                q_dot_norm(i) = q_dot_norm(i) / factor;
             }
         }
     }
