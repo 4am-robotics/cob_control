@@ -16,6 +16,8 @@ catkin_package(
 include_directories(include src ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
 add_library(cob_omni_drive_geom src/UndercarriageCtrlGeom.cpp src/param_parser.cpp)
+add_dependencies(cob_omni_drive_geom ${catkin_EXPORTED_TARGETS})
+target_link_libraries(cob_omni_drive_geom ${catkin_LIBRARIES})
 
 add_library(cob_omni_drive_controller src/odom_plugin.cpp src/control_plugin.cpp)
 add_dependencies(cob_omni_drive_controller ${catkin_EXPORTED_TARGETS})
