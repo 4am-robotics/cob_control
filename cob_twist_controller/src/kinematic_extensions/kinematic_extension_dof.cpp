@@ -270,12 +270,12 @@ void KinematicExtensionBaseActive::processResultExtension(const KDL::JntArray& q
 {
     geometry_msgs::Twist base_vel_msg;
 
-    base_vel_msg.linear.x = q_dot_ik(params_.dof);
-    base_vel_msg.linear.y = q_dot_ik(params_.dof+1);
-    base_vel_msg.linear.z = q_dot_ik(params_.dof+2);
-    base_vel_msg.angular.x = q_dot_ik(params_.dof+3);
-    base_vel_msg.angular.y = q_dot_ik(params_.dof+4);
-    base_vel_msg.angular.z = q_dot_ik(params_.dof+5);
+    base_vel_msg.linear.x = (std::fabs(q_dot_ik(params_.dof)) < min_vel_lin_base_) ? 0.0 : q_dot_ik(params_.dof);
+    base_vel_msg.linear.y = (std::fabs(q_dot_ik(params_.dof+1)) < min_vel_lin_base_) ? 0.0 : q_dot_ik(params_.dof+1);
+    base_vel_msg.linear.z = (std::fabs(q_dot_ik(params_.dof+2)) < min_vel_lin_base_) ? 0.0 : q_dot_ik(params_.dof+2);
+    base_vel_msg.angular.x = (std::fabs(q_dot_ik(params_.dof+3)) < min_vel_rot_base_) ? 0.0 : q_dot_ik(params_.dof+3);
+    base_vel_msg.angular.y = (std::fabs(q_dot_ik(params_.dof+4)) < min_vel_rot_base_) ? 0.0 : q_dot_ik(params_.dof+4);
+    base_vel_msg.angular.z = (std::fabs(q_dot_ik(params_.dof+5)) < min_vel_rot_base_) ? 0.0 : q_dot_ik(params_.dof+5);
 
     base_vel_pub_.publish(base_vel_msg);
 }
