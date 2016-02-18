@@ -139,8 +139,8 @@ KDL::JntArray LimiterAllJointPositions::enforceLimits(const KDL::JntArray& q_dot
 
     for (unsigned int i = 0; i < q_dot_ik.rows(); i++)
     {
-        if(limiter_params_.limits_max[i] <= q(i) ||
-           limiter_params_.limits_min[i] >= q(i))
+        if((limiter_params_.limits_max[i] - LIMIT_SAFETY_THRESHOLD <= q(i) && q_dot_ik(i) > 0) ||
+           (limiter_params_.limits_min[i] + LIMIT_SAFETY_THRESHOLD >= q(i) && q_dot_ik(i) < 0))
         {
             ROS_ERROR_STREAM("Joint " << i << " violates its limits. Setting to Zero!");
             KDL::SetToZero(q_dot_norm);
