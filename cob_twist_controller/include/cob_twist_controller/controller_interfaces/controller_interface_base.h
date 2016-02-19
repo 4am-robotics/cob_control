@@ -65,7 +65,8 @@ class ControllerInterfacePositionBase : public ControllerInterfaceBase
                                                  const TwistControllerParams& params)
         : ControllerInterfaceBase(nh, params)
         {
-            integrator_.reset(new SimpsonIntegrator(params.dof));
+            last_update_time_ = ros::Time(0.0);
+            integrator_.reset(new SimpsonIntegrator(params.dof, params.integrator_smoothing));
         }
 
         ~ControllerInterfacePositionBase() {}
@@ -76,12 +77,17 @@ class ControllerInterfacePositionBase : public ControllerInterfaceBase
         bool updateIntegration(const KDL::JntArray& q_dot_ik,
                                const KDL::JntArray& current_q)
         {
-            return integrator_->updateIntegration(q_dot_ik, current_q, pos, vel);
+            ros::Time now = ros::Time::now();
+            period_ = now - last_update_time_;
+            last_update_time_ = now;
+            return integrator_->updateIntegration(q_dot_ik, current_q, pos_, vel_);
         }
 
     protected:
         boost::shared_ptr<SimpsonIntegrator> integrator_;
-        std::vector<double> pos, vel;
+        std::vector<double> pos_, vel_;
+        ros::Time last_update_time_;
+        ros::Duration period_;
 };
 
 #endif  // COB_TWIST_CONTROLLER_CONTROLLER_INTERFACES_CONTROLLER_INTERFACE_BASE_H

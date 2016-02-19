@@ -33,6 +33,8 @@
 
 #include "cob_twist_controller/limiters/limiter_base.h"
 
+#define LIMIT_SAFETY_THRESHOLD 0.5 //[rad] -> 28°
+
 /* BEGIN LimiterContainer *******************************************************************************/
 /// Container for limiters, implementing interface methods.
 class LimiterContainer : public LimiterBase

@@ -131,14 +131,15 @@ class ControllerInterfaceJointStates : public ControllerInterfacePositionBase
             js_msg_.position.clear();
             js_msg_.velocity.clear();
             js_msg_.effort.clear();
-            for(unsigned int i=0; i < joint_states.current_q_.rows(); i++)
+
+            for (unsigned int i=0; i < joint_states.current_q_.rows(); i++)
             {
                 js_msg_.position.push_back(joint_states.current_q_(i));
                 js_msg_.velocity.push_back(joint_states.current_q_dot_(i));
                 js_msg_.effort.push_back(0.0);
             }
 
-            js_timer_ = nh.createTimer(ros::Duration(1/60.0), &ControllerInterfaceJointStates::publishJointState, this);
+            js_timer_ = nh.createTimer(ros::Duration(1/50.0), &ControllerInterfaceJointStates::publishJointState, this);
             js_timer_.start();
         }
 

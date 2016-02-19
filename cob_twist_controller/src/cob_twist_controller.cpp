@@ -113,6 +113,30 @@ bool CobTwistController::initialize()
         }
     }
 
+    // Configure Lookat Extenstion (Offset and Axis) --- not dynamic-reconfigurable
+    if (nh_twist.hasParam("lookat_axis_type"))
+    {
+        int lookat_axis_type;
+        nh_twist.getParam("lookat_axis_type", lookat_axis_type);
+        twist_controller_params_.lookat_offset.lookat_axis_type = static_cast<LookatAxisTypes>(lookat_axis_type);
+    }
+    if (nh_twist.hasParam("lookat_offset"))
+    {
+        if (nh_twist.hasParam("lookat_offset/translation"))
+        {
+            twist_controller_params_.lookat_offset.translation_x = nh_twist.param("lookat_offset/translation/x", 0.0);
+            twist_controller_params_.lookat_offset.translation_y = nh_twist.param("lookat_offset/translation/y", 0.0);
+            twist_controller_params_.lookat_offset.translation_z = nh_twist.param("lookat_offset/translation/z", 0.0);
+        }
+        if (nh_twist.hasParam("lookat_offset/rotation"))
+        {
+            twist_controller_params_.lookat_offset.rotation_x = nh_twist.param("lookat_offset/rotation/x", 0.0);
+            twist_controller_params_.lookat_offset.rotation_y = nh_twist.param("lookat_offset/rotation/y", 0.0);
+            twist_controller_params_.lookat_offset.rotation_z = nh_twist.param("lookat_offset/rotation/z", 0.0);
+            twist_controller_params_.lookat_offset.rotation_w = nh_twist.param("lookat_offset/rotation/w", 1.0);
+        }
+    }
+
     twist_controller_params_.frame_names.clear();
     for (uint16_t i = 0; i < chain_.getNrOfSegments(); ++i)
     {
@@ -183,6 +207,7 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
 {
     this->checkSolverAndConstraints(config);
     twist_controller_params_.controller_interface = static_cast<ControllerInterfaceTypes>(config.controller_interface);
+    twist_controller_params_.integrator_smoothing = config.integrator_smoothing;
 
     twist_controller_params_.numerical_filtering = config.numerical_filtering;
     twist_controller_params_.damping_method = static_cast<DampingMethodTypes>(config.damping_method);

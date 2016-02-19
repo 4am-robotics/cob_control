@@ -33,26 +33,33 @@
 
 #include <ros/ros.h>
 #include <kdl/jntarray.hpp>
+#include <std_msgs/Float64MultiArray.h>
 
 #include "cob_twist_controller/utils/moving_average.h"
 
 class SimpsonIntegrator
 {
     public:
-        explicit SimpsonIntegrator(const uint8_t dof)
+        explicit SimpsonIntegrator(const uint8_t dof, const double integrator_smoothing = 0.2)
+            : dof_(dof),
+              integrator_smoothing_(integrator_smoothing),
+              last_update_time_(ros::Time(0.0))
         {
-            dof_ = dof;
             for (uint8_t i = 0; i < dof_; i++)
             {
-                // ma_.push_back(new MovingAvgSimple_double_t(3));
-                ma_.push_back(new MovingAvgExponential_double_t(0.3));
+                ma_vel_.push_back(new MovingAvgExponential_double_t(integrator_smoothing_));
+                ma_pos_.push_back(new MovingAvgExponential_double_t(integrator_smoothing_));
             }
-            last_update_time_ = ros::Time(0.0);
-            last_period_ = ros::Duration(0.0);
+
+            /// nh_ = ros::NodeHandle("simpson_debug");
+            /// q_dot_ik_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("q_dot_ik", 1);
+            /// q_dot_avg_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("q_dot_avg", 1);
+            /// q_simpson_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("q_simpson", 1);
+            /// q_simpson_avg_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("q_simpson_avg", 1);
         }
+
         ~SimpsonIntegrator()
         {}
-
 
         void resetIntegration()
         {
@@ -63,7 +70,8 @@ class SimpsonIntegrator
             // resetting moving average
             for (unsigned int i = 0; i < dof_; ++i)
             {
-                ma_[i]->reset();
+                ma_vel_[i]->reset();
+                ma_pos_[i]->reset();
             }
         }
 
@@ -74,32 +82,63 @@ class SimpsonIntegrator
         {
             ros::Time now = ros::Time::now();
             ros::Duration period = now - last_update_time_;
+            last_update_time_ = now;
 
             bool value_valid = false;
             pos.clear();
             vel.clear();
 
             // ToDo: Test these conditions and find good thresholds
-            // if (period.toSec() > 2*last_period_.toSec())  // missed about a cycle
             if (period.toSec() > ros::Duration(0.5).toSec())  // missed about 'max_command_silence'
             {
                 ROS_WARN_STREAM("reset Integration: " << period.toSec());
                 resetIntegration();
             }
 
+            // smooth incoming velocities
+            KDL::JntArray q_dot_avg(dof_);
+            /// std_msgs::Float64MultiArray q_dot_ik_msg;
+            /// std_msgs::Float64MultiArray q_dot_avg_msg;
+            for (unsigned int i = 0; i < dof_; ++i)
+            {
+                ma_vel_[i]->addElement(q_dot_ik(i));
+                double avg_vel = 0.0;
+                if (ma_vel_[i]->calcMovingAverage(avg_vel))
+                {
+                    q_dot_avg(i) = avg_vel;
+                }
+                else
+                {
+                    q_dot_avg(i) = q_dot_ik(i);
+                }
+
+                /// q_dot_ik_msg.data.push_back(q_dot_ik(i));
+                /// q_dot_avg_msg.data.push_back(q_dot_avg(i));
+            }
+
+            /// std_msgs::Float64MultiArray q_simpson_msg;
+            /// std_msgs::Float64MultiArray q_simpson_avg_msg;
             if (!vel_before_last_.empty())
             {
                 for (unsigned int i = 0; i < dof_; ++i)
                 {
                     // Simpson
-                    double integration_value = static_cast<double>(period.toSec() / 6.0 * (vel_before_last_[i] + 4.0 * (vel_before_last_[i] + vel_last_[i]) + vel_before_last_[i] + vel_last_[i] + q_dot_ik(i)) + current_q(i));
-                    ma_[i]->addElement(integration_value);
-                    double avg = 0.0;
-                    if (ma_[i]->calcMovingAverage(avg))
+                    double integration_value = static_cast<double>(period.toSec() / 6.0 * (vel_before_last_[i] + 4.0 * (vel_before_last_[i] + vel_last_[i]) + vel_before_last_[i] + vel_last_[i] + q_dot_avg(i)) + current_q(i));
+
+                    // smooth outgoing positions
+                    ma_pos_[i]->addElement(integration_value);
+                    double avg_pos = 0.0;
+                    if (!ma_pos_[i]->calcMovingAverage(avg_pos))
                     {
-                        pos.push_back(avg);
-                        vel.push_back(q_dot_ik(i));
+                        ROS_ERROR("calcMovingAverage failed");
+                        avg_pos = integration_value;
                     }
+
+                    pos.push_back(avg_pos);
+                    vel.push_back(q_dot_avg(i));
+
+                    /// q_simpson_msg.data.push_back(integration_value);
+                    /// q_simpson_avg_msg.data.push_back(avg_pos);
                 }
                 value_valid = true;
             }
@@ -112,23 +151,33 @@ class SimpsonIntegrator
             }
 
             vel_last_.clear();
-            for (unsigned int i=0; i < q_dot_ik.rows(); ++i)
+            for (unsigned int i=0; i < q_dot_avg.rows(); ++i)
             {
-                vel_last_.push_back(q_dot_ik(i));
+                vel_last_.push_back(q_dot_avg(i));
             }
 
-            last_update_time_ = now;
-            last_period_ = period;
+            /// q_dot_ik_pub_.publish(q_dot_ik_msg);
+            /// q_dot_avg_pub_.publish(q_dot_avg_msg);
+            /// q_simpson_pub_.publish(q_simpson_msg);
+            /// q_simpson_avg_pub_.publish(q_simpson_avg_msg);
 
             return value_valid;
         }
 
     private:
-        std::vector<MovingAvgBase_double_t*> ma_;
+        std::vector<MovingAvgBase_double_t*> ma_vel_;
+        std::vector<MovingAvgBase_double_t*> ma_pos_;
         uint8_t dof_;
+        double integrator_smoothing_;
         std::vector<double> vel_last_, vel_before_last_;
         ros::Time last_update_time_;
-        ros::Duration last_period_;
+
+        // debug
+        /// ros::NodeHandle nh_;
+        /// ros::Publisher q_dot_ik_pub_;
+        /// ros::Publisher q_dot_avg_pub_;
+        /// ros::Publisher q_simpson_pub_;
+        /// ros::Publisher q_simpson_avg_pub_;
 };
 
 #endif  // COB_TWIST_CONTROLLER_UTILS_SIMPSON_INTEGRATOR_H

@@ -102,6 +102,39 @@ enum ConstraintTypes
     JLA_INEQ,
 };
 
+enum LookatAxisTypes
+{
+    X_POSITIVE,
+    Y_POSITIVE,
+    Z_POSITIVE,
+    X_NEGATIVE,
+    Y_NEGATIVE,
+    Z_NEGATIVE,
+};
+
+struct LookatOffset
+{
+    LookatOffset() :
+        lookat_axis_type(X_POSITIVE),
+        translation_x(0.0),
+        translation_y(0.0),
+        translation_z(0.0),
+        rotation_x(0.0),
+        rotation_y(0.0),
+        rotation_z(0.0),
+        rotation_w(1.0)
+    {}
+
+    LookatAxisTypes lookat_axis_type;
+    double translation_x;
+    double translation_y;
+    double translation_z;
+    double rotation_x;
+    double rotation_y;
+    double rotation_z;
+    double rotation_w;
+};
+
 struct JointStates
 {
     KDL::JntArray current_q_;
@@ -165,6 +198,7 @@ struct TwistControllerParams
     TwistControllerParams() :
         dof(0),
         controller_interface(VELOCITY_INTERFACE),
+        integrator_smoothing(0.2),
 
         numerical_filtering(false),
         damping_method(MANIPULABILITY),
@@ -206,6 +240,7 @@ struct TwistControllerParams
     std::string chain_tip_link;
 
     ControllerInterfaceTypes controller_interface;
+    double integrator_smoothing;
 
     bool numerical_filtering;
     DampingMethodTypes damping_method;
@@ -235,6 +270,7 @@ struct TwistControllerParams
     LimiterParams limiter_params;
 
     KinematicExtensionTypes kinematic_extension;
+    LookatOffset lookat_offset;
     double extension_ratio;
 
     std::vector<std::string> frame_names;

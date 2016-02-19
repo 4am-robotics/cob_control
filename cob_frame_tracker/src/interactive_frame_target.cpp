@@ -38,7 +38,7 @@ bool InteractiveFrameTarget::initialize()
     if (nh_tracker.hasParam("update_rate"))
     {    nh_tracker.getParam("update_rate", update_rate_);    }
     else
-    {    update_rate_ = 68.0;    }    //hz
+    {    update_rate_ = 50.0;    }    //hz
 
     if (nh_.hasParam("chain_tip_link"))
     {
@@ -232,23 +232,25 @@ bool InteractiveFrameTarget::initialize()
 void InteractiveFrameTarget::sendTransform(const ros::TimerEvent& event)
 {
     if(!tracking_ && !lookat_)
-    {    updateMarker();    }
+    {    updateMarker(tracking_frame_);    }
 
     target_pose_.stamp_ = ros::Time::now();
     target_pose_.child_frame_id_ = target_frame_;
     tf_broadcaster_.sendTransform(target_pose_);
 }
 
-void InteractiveFrameTarget::updateMarker()
+void InteractiveFrameTarget::updateMarker(const std::string& frame)
 {
     bool transform_available = false;
     while(!transform_available)
     {
-        try{
-            tf_listener_.lookupTransform(root_frame_, tracking_frame_, ros::Time(), target_pose_);
+        try
+        {
+            tf_listener_.lookupTransform(root_frame_, frame, ros::Time(), target_pose_);
             transform_available = true;
         }
-        catch (tf::TransformException& ex){
+        catch (tf::TransformException& ex)
+        {
             //ROS_WARN("IFT::updateMarker: Waiting for transform...(%s)",ex.what());
             ros::Duration(0.1).sleep();
         }
@@ -293,6 +295,9 @@ void InteractiveFrameTarget::startLookat( const visualization_msgs::InteractiveM
     if(success && srv.response.success)
     {
         ROS_INFO_STREAM("StartLookat successful: " << srv.response.message);
+
+        updateMarker("lookat_focus_frame");
+
         tracking_ = false;
         lookat_ = true;
     }

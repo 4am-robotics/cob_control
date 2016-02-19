@@ -81,7 +81,7 @@ private:
     ros::ServiceClient start_lookat_client_;
     ros::ServiceClient stop_client_;
 
-    void updateMarker();
+    void updateMarker(const std::string& frame);
     void sendTransform(const ros::TimerEvent& event);
     void startTracking( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback );
     void startLookat( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback );

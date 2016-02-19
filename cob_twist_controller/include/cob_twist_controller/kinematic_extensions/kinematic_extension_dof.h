@@ -79,6 +79,8 @@ class KinematicExtensionBaseActive : public KinematicExtensionDOF
         {
             base_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("base/command", 1);
 
+            min_vel_lin_base_ = 0.005; // used to avoid infinitesimal motion
+            min_vel_rot_base_ = 0.005; // used to avoid infinitesimal motion
             max_vel_lin_base_ = 0.5;
             max_vel_rot_base_ = 0.5;
 
@@ -101,6 +103,8 @@ class KinematicExtensionBaseActive : public KinematicExtensionDOF
     private:
         ros::Publisher base_vel_pub_;
 
+        double min_vel_lin_base_;
+        double min_vel_rot_base_;
         double max_vel_lin_base_;
         double max_vel_rot_base_;
 };
