@@ -104,7 +104,7 @@ public:
 
     bool initialize();
 
-    void reinitServiceRegistration();
+    bool registerCollisionLinks();
 
     void reconfigureCallback(cob_twist_controller::TwistControllerConfig& config, uint32_t level);
     void checkSolverAndConstraints(cob_twist_controller::TwistControllerConfig& config);

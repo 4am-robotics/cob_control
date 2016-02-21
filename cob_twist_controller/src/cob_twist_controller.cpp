@@ -144,6 +144,7 @@ bool CobTwistController::initialize()
     }
     register_link_client_ = nh_.serviceClient<cob_srvs::SetString>("obstacle_distance/registerLinkOfInterest");
     register_link_client_.waitForExistence(ros::Duration(5.0));
+    twist_controller_params_.constraint_ca = CA_OFF;
 
     /// initialize configuration control solver
     p_inv_diff_kin_solver_.reset(new InverseDifferentialKinematicsSolver(twist_controller_params_, chain_, callback_data_mediator_));
@@ -179,7 +180,7 @@ bool CobTwistController::initialize()
     return true;
 }
 
-void CobTwistController::reinitServiceRegistration()
+bool CobTwistController::registerCollisionLinks()
 {
     ROS_WARN_COND(twist_controller_params_.collision_check_links.size() <= 0,
                   "No collision_check_links set for this chain. Nothing will be registered. Ensure parameters are set correctly.");
@@ -194,18 +195,25 @@ void CobTwistController::reinitServiceRegistration()
         if (register_link_client_.call(r))
         {
             ROS_INFO_STREAM("Called registration service with success: " << int(r.response.success) << ". Got message: " << r.response.message);
+            if (!r.response.success)
+            {
+                return false;
+            }
         }
         else
         {
             ROS_WARN_STREAM("Failed to call registration service for namespace: " << nh_.getNamespace());
-            break;
+            return false;
         }
     }
+
+    return true;
 }
 
 void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControllerConfig& config, uint32_t level)
 {
     this->checkSolverAndConstraints(config);
+
     twist_controller_params_.controller_interface = static_cast<ControllerInterfaceTypes>(config.controller_interface);
     twist_controller_params_.integrator_smoothing = config.integrator_smoothing;
 
@@ -256,22 +264,14 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     this->controller_interface_.reset(ControllerInterfaceBuilder::createControllerInterface(this->nh_, this->twist_controller_params_, this->joint_states_));
 
     p_inv_diff_kin_solver_->resetAll(this->twist_controller_params_);
-
-    if (CA_OFF != twist_controller_params_.constraint_ca)
-    {
-        this->reinitServiceRegistration();
-    }
 }
 
 void CobTwistController::checkSolverAndConstraints(cob_twist_controller::TwistControllerConfig& config)
 {
     bool warning = false;
     SolverTypes solver = static_cast<SolverTypes>(config.solver);
-    ConstraintTypesJLA ct_jla = static_cast<ConstraintTypesJLA>(config.constraint_jla);
-    ConstraintTypesCA ct_ca = static_cast<ConstraintTypesCA>(config.constraint_ca);
-    KinematicExtensionTypes ket = static_cast<KinematicExtensionTypes>(config.kinematic_extension);
 
-    if (DEFAULT_SOLVER == solver && (JLA_OFF != ct_jla || CA_OFF != ct_ca))
+    if (DEFAULT_SOLVER == solver && (JLA_OFF != static_cast<ConstraintTypesJLA>(config.constraint_jla) || CA_OFF != static_cast<ConstraintTypesCA>(config.constraint_ca)))
     {
         ROS_ERROR("The selection of Default solver and a constraint doesn\'t make any sense. Switch settings back ...");
         twist_controller_params_.constraint_jla = JLA_OFF;
@@ -281,7 +281,7 @@ void CobTwistController::checkSolverAndConstraints(cob_twist_controller::TwistCo
         warning = true;
     }
 
-    if (WLN == solver && CA_OFF != ct_ca)
+    if (WLN == solver && CA_OFF != static_cast<ConstraintTypesCA>(config.constraint_ca))
     {
         ROS_ERROR("The WLN solution doesn\'t support collision avoidance. Currently WLN is only implemented for Identity and JLA ...");
         twist_controller_params_.constraint_ca = CA_OFF;
@@ -289,13 +289,13 @@ void CobTwistController::checkSolverAndConstraints(cob_twist_controller::TwistCo
         warning = true;
     }
 
-    if (GPM == solver && CA_OFF == ct_ca && JLA_OFF == ct_jla)
+    if (GPM == solver && CA_OFF == static_cast<ConstraintTypesCA>(config.constraint_ca) && JLA_OFF == static_cast<ConstraintTypesJLA>(config.constraint_jla))
     {
         ROS_ERROR("You have chosen GPM but without constraints! The behaviour without constraints will be the same like for DEFAULT_SOLVER.");
         warning = true;
     }
 
-    if (TASK_2ND_PRIO == solver && (JLA_ON == ct_jla || CA_OFF == ct_ca))
+    if (TASK_2ND_PRIO == solver && (JLA_ON == static_cast<ConstraintTypesJLA>(config.constraint_jla) || CA_OFF == static_cast<ConstraintTypesCA>(config.constraint_ca)))
     {
         ROS_ERROR("The projection of a task into the null space of the main EE task is currently only for the CA constraint supported!");
         twist_controller_params_.constraint_jla = JLA_OFF;
@@ -305,13 +305,25 @@ void CobTwistController::checkSolverAndConstraints(cob_twist_controller::TwistCo
         warning = true;
     }
 
-    if (CA_OFF != ct_ca)
+    if (CA_OFF != static_cast<ConstraintTypesCA>(config.constraint_ca))
     {
         if (!register_link_client_.exists())
         {
-            ROS_WARN("ServiceServer 'obstacle_distance/registerLinkOfInterest' does not exist. CA not possible");
+            ROS_ERROR("ServiceServer 'obstacle_distance/registerLinkOfInterest' does not exist. CA not possible");
             twist_controller_params_.constraint_ca = CA_OFF;
             config.constraint_ca = static_cast<int>(twist_controller_params_.constraint_ca);
+            warning = true;
+        }
+        else if (twist_controller_params_.constraint_ca != static_cast<ConstraintTypesCA>(config.constraint_ca))
+        {
+            ROS_INFO("Collision Avoidance has been activated! Register links!");
+            if (!this->registerCollisionLinks())
+            {
+                ROS_ERROR("Registration of links failed. CA not possible");
+                twist_controller_params_.constraint_ca = CA_OFF;
+                config.constraint_ca = static_cast<int>(twist_controller_params_.constraint_ca);
+                warning = true;
+            }
         }
     }
 
