@@ -131,7 +131,7 @@ class NodeClass
 
     // Constructor
     NodeClass()
-    : ucar_ctrl_(0), odom_tracker_(new OdometryTracker)
+    : ucar_ctrl_(0)
     {
       // initialization of variables
       is_initialized_bool_ = false;
@@ -186,6 +186,13 @@ class NodeClass
       {
         n.getParam("broadcast_tf", broadcast_tf_);
       }
+
+      const std::string frame_id = n.param("frame_id", std::string("odom"));
+      const std::string child_frame_id = n.param("child_frame_id", std::string("base_footprint"));
+      const double cov_pose = n.param("cov_pose", 0.1);
+      const double cov_twist = n.param("cov_twist", 0.1);
+
+      odom_tracker_ = new OdometryTracker(frame_id, child_frame_id, cov_pose, cov_twist);
 
      // vector of wheels
      std::vector<UndercarriageCtrl::WheelParams> wps;
