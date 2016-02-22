@@ -35,8 +35,8 @@ public:
             return false;
         }
 
-        const std::string frame_id = controller_nh.param("frame_id", std::string("/odom_wheel"));
-        const std::string child_frame_id = controller_nh.param("child_frame_id", std::string("/base_footprint"));
+        const std::string frame_id = controller_nh.param("frame_id", std::string("odom"));
+        const std::string child_frame_id = controller_nh.param("child_frame_id", std::string("base_footprint"));
         const double cov_pose = controller_nh.param("cov_pose", 0.1);
         const double cov_twist = controller_nh.param("cov_twist", 0.1);
 
