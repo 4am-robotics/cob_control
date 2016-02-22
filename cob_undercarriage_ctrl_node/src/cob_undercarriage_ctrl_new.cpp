@@ -2,7 +2,7 @@
  *
  * Copyright (c) 2010
  *
- * Fraunhofer Institute for Manufacturing Engineering	
+ * Fraunhofer Institute for Manufacturing Engineering
  * and Automation (IPA)
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -11,16 +11,16 @@
  * ROS stack name: cob_driver
  * ROS package name: cob_undercarriage_ctrl
  * Description:
- *								
+ *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- *			
+ *
  * Author: Christian Connette, email:christian.connette@ipa.fhg.de
  * Supervised by: Christian Connette, email:christian.connette@ipa.fhg.de
  *
  * Date of creation: April 2010:
  * ToDo: Adapt Interface to controller -> remove last variable (not used anymore)
  *       Rework Ctrl-class to work with SI-Units -> remove conversion
- *		 For easier association of joints use platform.urdf!!
+ *       For easier association of joints use platform.urdf!!
  *
  * +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
  *
@@ -87,15 +87,15 @@ class NodeClass
     ros::NodeHandle n; // parameter are uploaded to private space
 
     // topics to publish
-    ros::Publisher topic_pub_joint_state_cmd_;	// cmd issued for single joints of undercarriage
+    ros::Publisher topic_pub_joint_state_cmd_;          // cmd issued for single joints of undercarriage
     ros::Publisher topic_pub_controller_joint_command_;
-    ros::Publisher topic_pub_odometry_;			// calculated (measured) velocity, rotation and pose (odometry-based) for the robot
-    tf::TransformBroadcaster tf_broadcast_odometry_;	// according transformation for the tf broadcaster
+    ros::Publisher topic_pub_odometry_;                 // calculated (measured) velocity, rotation and pose (odometry-based) for the robot
+    tf::TransformBroadcaster tf_broadcast_odometry_;    // according transformation for the tf broadcaster
 
     // topics to subscribe, callback is called for new messages arriving
-    ros::Subscriber topic_sub_CMD_pltf_twist_;	// issued command to be achieved by the platform
-    ros::Subscriber topic_sub_EM_stop_state_;	// current emergency stop state (free, active, confirmed)
-    ros::Subscriber topic_sub_drive_diagnostic_;// status of drive chain (initializing, error, normal)
+    ros::Subscriber topic_sub_CMD_pltf_twist_;          // issued command to be achieved by the platform
+    ros::Subscriber topic_sub_EM_stop_state_;           // current emergency stop state (free, active, confirmed)
+    ros::Subscriber topic_sub_drive_diagnostic_;        // status of drive chain (initializing, error, normal)
 
     //subscribe to JointStates topic
     //ros::Subscriber topic_sub_joint_states_;
@@ -108,13 +108,13 @@ class NodeClass
     ros::Timer timer_ctrl_step_;
 
     // member variables
-    UndercarriageCtrl * ucar_ctrl_;	// instantiate undercarriage controller
-    bool is_initialized_bool_;			// flag wether node is already up and running
+    UndercarriageCtrl * ucar_ctrl_;          // instantiate undercarriage controller
+    bool is_initialized_bool_;               // flag wether node is already up and running
     bool is_ucarr_geom_initialized_bool_;
-    bool broadcast_tf_;			// flag wether to broadcast the tf from odom to base_link
-    int drive_chain_diagnostic_;		// flag whether base drive chain is operating normal 
-    ros::Time last_time_;				// time Stamp for last odometry measurement
-    ros::Time joint_state_odom_stamp_;	// time stamp of joint states used for current odometry calc
+    bool broadcast_tf_;                      // flag wether to broadcast the tf from odom to base_link
+    int drive_chain_diagnostic_;             // flag whether base drive chain is operating normal 
+    ros::Time last_time_;                    // time Stamp for last odometry measurement
+    ros::Time joint_state_odom_stamp_;       // time stamp of joint states used for current odometry calc
     double sample_time_, timeout_;
     int iwatchdog_;
     double max_vel_trans_, max_vel_rot_;
@@ -411,7 +411,7 @@ class NodeClass
       for(int i = 0; i < num_joints; i++)
       {
         // associate inputs to according steer and drive joints
-        // ToDo: specify this globally (Prms-File or config-File or via msg-def.)	
+        // ToDo: specify this globally (Prms-File or config-File or via msg-def.)
         if(msg->joint_names[i] ==  "fl_caster_r_wheel_joint")
         {
              wStates[0].dVelGearDriveRadS = msg->actual.velocities[i];
@@ -520,7 +520,7 @@ void NodeClass::CalcCtrlStep()
   control_msgs::JointTrajectoryControllerState joint_state_cmd;
 
   int j = 0, k = 0;
-  iwatchdog_ += 1;	
+  iwatchdog_ += 1;
 
   // if controller is initialized and underlying hardware is operating normal
   if (is_initialized_bool_) //  && (drive_chain_diagnostic_ != diagnostic_status_lookup_.OK))
