@@ -267,12 +267,12 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
     // ROS_INFO_STREAM("CollisionAvoidance::calcPartialValues:");
     Eigen::VectorXd partial_values = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
     Eigen::VectorXd sum_partial_values = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
+    this->partial_values_ = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
+
     const TwistControllerParams& params = this->constraint_params_.tc_params_;
-    int32_t size_of_joints = params.joints.size();
     std::vector<Eigen::VectorXd> vec_partial_values;
 
     // ROS_INFO_STREAM("this->jacobian_data_.cols: " << this->jacobian_data_.cols());
-    // ROS_INFO_STREAM("size_of_joints: " << size_of_joints);
     // ROS_INFO_STREAM("this->joint_states_.current_q_.rows: " << this->joint_states_.current_q_.rows());
 
     std::vector<std::string>::const_iterator str_it = std::find(params.frame_names.begin(),
@@ -307,14 +307,17 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
                 uint32_t idx = str_it - params.frame_names.begin();
                 uint32_t frame_number = idx + 1;  // segment nr not index represents frame number
 
-                KDL::Jacobian new_jac_chain(size_of_joints);
                 KDL::JntArray ja = this->joint_states_.current_q_;
+                KDL::Jacobian new_jac_chain(this->joint_states_.current_q_.rows());
 
                 // ROS_INFO_STREAM("frame_number: " << frame_number);
+                // ROS_INFO_STREAM("ja.rows: " << ja.rows());
+                // ROS_INFO_STREAM("new_jac_chain: " << new_jac_chain.rows() << " x " << new_jac_chain.columns());
 
                 if (0 != this->jnt_to_jac_.JntToJac(ja, new_jac_chain, frame_number))
                 {
-                    ROS_ERROR_STREAM("Failed to calculate JntToJac.");
+                    ROS_ERROR_STREAM("Failed to calculate JntToJac. Error Code: " << this->jnt_to_jac_.getError() << " (" << this->jnt_to_jac_.strError(this->jnt_to_jac_.getError()) << ")");
+                    ROS_ERROR_STREAM("This is likely due to using a KinematicExtension! The ChainJntToJac-Solver is configured for the main chain only!");
                     return;
                 }
                 // ROS_INFO_STREAM("new_jac_chain.columns: " << new_jac_chain.columns());
@@ -366,7 +369,6 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
     // ROS_INFO_STREAM("this->task_jacobian_.rows:" << this->task_jacobian_.rows());
     // ROS_INFO_STREAM("this->task_jacobian_.cols:" << this->task_jacobian_.cols());
 
-    this->partial_values_.resize(sum_partial_values.rows(), 1);
     this->partial_values_ = sum_partial_values;
 }
 
@@ -402,9 +404,11 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calcPredictionValue()
             // ROS_INFO_STREAM("jnts_prediction_chain.q.rows: " << jnts_prediction_chain.q.rows());
 
             // Calculate prediction for pos and vel
-            if (0 != this->fk_solver_vel_.JntToCart(this->jnts_prediction_, frame_vel, frame_number))
+            int error = this->fk_solver_vel_.JntToCart(this->jnts_prediction_, frame_vel, frame_number);
+            if (error != 0)
             {
-                ROS_ERROR_STREAM("Could not calculate twist for frame: " << frame_number);
+                ROS_ERROR_STREAM("Could not calculate twist for frame: " << frame_number << ". Error Code: " << error << " (" << this->fk_solver_vel_.strError(error) << ")");
+                ROS_ERROR_STREAM("This is likely due to using a KinematicExtension! The ChainFkSolverVel is configured for the main chain only!");
                 return;
             }
             // ROS_INFO_STREAM("Calculated twist for frame: " << frame_number);

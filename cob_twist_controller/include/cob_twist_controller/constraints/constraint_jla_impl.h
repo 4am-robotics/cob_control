@@ -543,6 +543,7 @@ void JointLimitAvoidanceIneq<T_PARAMS, PRIO>::calcPartialValues()
     double limit_max = limiter_params.limits_max[joint_idx];
     double joint_pos = this->joint_states_.current_q_(joint_idx);
     Eigen::VectorXd partial_values = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
+
     partial_values(this->constraint_params_.joint_idx_) = -2.0 * joint_pos + limit_max + limit_min;
     this->partial_values_ = partial_values;
 }
