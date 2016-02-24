@@ -221,7 +221,7 @@ void KinematicExtensionLookat::processResultExtension(const KDL::JntArray& q_dot
         {
             joint_states_ext_.last_q_(i) = this->joint_states_ext_.current_q_(i);
             joint_states_ext_.last_q_dot_(i) = this->joint_states_ext_.current_q_dot_(i);
-            joint_states_ext_.current_q_(i) = std::max(pos[i], 0.1); // do not look backwarts
+            joint_states_ext_.current_q_(i) = std::max(pos[i], 0.1); // do not look backwards
             joint_states_ext_.current_q_dot_(i) = vel[i];
         }
     }
