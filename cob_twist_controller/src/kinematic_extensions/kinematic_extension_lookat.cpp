@@ -88,17 +88,18 @@ bool KinematicExtensionLookat::initExtension()
     KDL::Segment lookat_rotx_link("lookat_rotx_link", lookat_lin_joint, offset);
     chain_ext_.addSegment(lookat_rotx_link);
     limits_ext_max_.push_back(std::numeric_limits<double>::max());
-    limits_ext_min_.push_back(-params_.limiter_params.limits_tolerance);
-    // limits_ext_vel_.push_back(std::numeric_limits<double>::max());
-    limits_ext_vel_.push_back(1.0);
+    limits_ext_min_.push_back(-std::numeric_limits<double>::max());
+    limits_ext_vel_.push_back(5.0);
     limits_ext_acc_.push_back(std::numeric_limits<double>::max());
 
     KDL::Vector lookat_rotx_axis(1.0, 0.0, 0.0);
     KDL::Joint lookat_rotx_joint("lookat_rotx_joint", KDL::Vector(), lookat_rotx_axis, KDL::Joint::RotAxis);
     KDL::Segment lookat_roty_link("lookat_roty_link", lookat_rotx_joint);
     chain_ext_.addSegment(lookat_roty_link);
-    limits_ext_max_.push_back(M_PI);
-    limits_ext_min_.push_back(-M_PI);
+    // limits_ext_max_.push_back(M_PI);
+    // limits_ext_min_.push_back(-M_PI);
+    limits_ext_max_.push_back(std::numeric_limits<double>::max());
+    limits_ext_min_.push_back(-std::numeric_limits<double>::max());
     // limits_ext_vel_.push_back(std::numeric_limits<double>::max());
     limits_ext_vel_.push_back(M_PI);
     limits_ext_acc_.push_back(std::numeric_limits<double>::max());
@@ -107,8 +108,10 @@ bool KinematicExtensionLookat::initExtension()
     KDL::Joint lookat_roty_joint("lookat_roty_joint", KDL::Vector(), lookat_roty_axis, KDL::Joint::RotAxis);
     KDL::Segment lookat_rotz_link("lookat_rotz_link", lookat_roty_joint);
     chain_ext_.addSegment(lookat_rotz_link);
-    limits_ext_max_.push_back(M_PI);
-    limits_ext_min_.push_back(-M_PI);
+    // limits_ext_max_.push_back(M_PI);
+    // limits_ext_min_.push_back(-M_PI);
+    limits_ext_max_.push_back(std::numeric_limits<double>::max());
+    limits_ext_min_.push_back(-std::numeric_limits<double>::max());
     // limits_ext_vel_.push_back(std::numeric_limits<double>::max());
     limits_ext_vel_.push_back(M_PI);
     limits_ext_acc_.push_back(std::numeric_limits<double>::max());
@@ -117,8 +120,10 @@ bool KinematicExtensionLookat::initExtension()
     KDL::Joint lookat_rotz_joint("lookat_rotz_joint", KDL::Vector(), lookat_rotz_axis, KDL::Joint::RotAxis);
     KDL::Segment lookat_focus_frame("lookat_focus_frame", lookat_rotz_joint);
     chain_ext_.addSegment(lookat_focus_frame);
-    limits_ext_max_.push_back(M_PI);
-    limits_ext_min_.push_back(-M_PI);
+    // limits_ext_max_.push_back(M_PI);
+    // limits_ext_min_.push_back(-M_PI);
+    limits_ext_max_.push_back(std::numeric_limits<double>::max());
+    limits_ext_min_.push_back(-std::numeric_limits<double>::max());
     // limits_ext_vel_.push_back(std::numeric_limits<double>::max());
     limits_ext_vel_.push_back(M_PI);
     limits_ext_acc_.push_back(std::numeric_limits<double>::max());
@@ -216,7 +221,7 @@ void KinematicExtensionLookat::processResultExtension(const KDL::JntArray& q_dot
         {
             joint_states_ext_.last_q_(i) = this->joint_states_ext_.current_q_(i);
             joint_states_ext_.last_q_dot_(i) = this->joint_states_ext_.current_q_dot_(i);
-            joint_states_ext_.current_q_(i) = pos[i];
+            joint_states_ext_.current_q_(i) = std::max(pos[i], 0.1); // do not look backwarts
             joint_states_ext_.current_q_dot_(i) = vel[i];
         }
     }
