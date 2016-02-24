@@ -88,6 +88,10 @@ add_executable(test_forward_command_sine_node src/debug/test_forward_command_sin
 add_dependencies(test_forward_command_sine_node ${catkin_EXPORTED_TARGETS})
 target_link_libraries(test_forward_command_sine_node ${catkin_LIBRARIES})
 
+add_executable(test_twist_command_sine_node src/debug/test_twist_command_sine_node.cpp)
+add_dependencies(test_twist_command_sine_node ${catkin_EXPORTED_TARGETS})
+target_link_libraries(test_twist_command_sine_node ${catkin_LIBRARIES})
+
 roslint_cpp()
 
 ### INSTALL ###
@@ -97,7 +101,7 @@ install(TARGETS cob_twist_controller_node damping_methods inv_calculations const
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-install(TARGETS debug_trajectory_marker_node debug_evaluate_jointstates_node test_moving_average_node test_simpson_integrator_node test_trajectory_command_sine_node
+install(TARGETS debug_trajectory_marker_node debug_evaluate_jointstates_node test_moving_average_node test_simpson_integrator_node test_trajectory_command_sine_node test_twist_command_sine_node
  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
