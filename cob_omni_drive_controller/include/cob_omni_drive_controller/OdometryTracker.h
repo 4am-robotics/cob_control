@@ -49,7 +49,7 @@ class OdometryTracker{
     nav_msgs::Odometry odom_;
     double theta_rob_rad_;
 public:
-    OdometryTracker(const std::string &from = "/wheelodom", const std::string &to = "/base_footprint" , double cov_pose = 0.1, double cov_twist = 0.1) {
+    OdometryTracker(const std::string &from = "odom", const std::string &to = "base_footprint" , double cov_pose = 0.1, double cov_twist = 0.1) {
         odom_.header.frame_id = from;
         odom_.child_frame_id = to;
         for(int i = 0; i < 6; i++){

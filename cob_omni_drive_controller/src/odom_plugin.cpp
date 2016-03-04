@@ -35,7 +35,12 @@ public:
             return false;
         }
 
-        odom_tracker_.reset(new OdometryTracker);
+        const std::string frame_id = controller_nh.param("frame_id", std::string("odom"));
+        const std::string child_frame_id = controller_nh.param("child_frame_id", std::string("base_footprint"));
+        const double cov_pose = controller_nh.param("cov_pose", 0.1);
+        const double cov_twist = controller_nh.param("cov_twist", 0.1);
+
+        odom_tracker_.reset(new OdometryTracker(frame_id, child_frame_id, cov_pose, cov_twist));
         odom_ = odom_tracker_->getOdometry();
 
         topic_pub_odometry_ = controller_nh.advertise<nav_msgs::Odometry>("odometry", 1);
@@ -44,8 +49,8 @@ public:
         controller_nh.getParam("broadcast_tf", broadcast_tf);
 
         if(broadcast_tf){
-            odom_tf_.header.frame_id = "/odom_combined";
-            odom_tf_.child_frame_id = "/base_footprint";
+            odom_tf_.header.frame_id = frame_id;
+            odom_tf_.child_frame_id = child_frame_id;
             tf_broadcast_odometry_.reset(new tf::TransformBroadcaster);
         }
 
@@ -99,7 +104,7 @@ private:
     UndercarriageGeom::PlatformState platform_state_;
 
     ros::Publisher topic_pub_odometry_;                 // calculated (measured) velocity, rotation and pose (odometry-based) for the robot
-    ros::ServiceServer service_reset_;			// service to reset odometry to zero
+    ros::ServiceServer service_reset_;                  // service to reset odometry to zero
 
     boost::scoped_ptr<tf::TransformBroadcaster> tf_broadcast_odometry_;    // according transformation for the tf broadcaster
     boost::scoped_ptr<OdometryTracker> odom_tracker_;
