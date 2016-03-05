@@ -85,7 +85,7 @@ class ControllerInterfacePosition : public ControllerInterfacePositionBase
                                              const TwistControllerParams& params)
         : ControllerInterfacePositionBase(nh, params)
         {
-            pub_ = nh.advertise<std_msgs::Float64MultiArray>("joint_group_interpol_position_controller/command", 1);
+            pub_ = nh.advertise<std_msgs::Float64MultiArray>("joint_group_position_controller/command", 1);
         }
 
         ~ControllerInterfacePosition() {}
