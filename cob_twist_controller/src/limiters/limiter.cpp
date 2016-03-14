@@ -147,11 +147,12 @@ KDL::JntArray LimiterAllJointPositions::enforceLimits(const KDL::JntArray& q_dot
             return q_dot_norm;
         }
 
-        if ((limiter_params_.limits_max[i] - q(i)) < tolerance)  // Joint is close to the MAXIMUM limit
+        if (fabs(limiter_params_.limits_max[i] - q(i)) <= tolerance)  // Joint is close to the MAXIMUM limit
         {
             if (q_dot_ik(i) > 0)  // Joint moves towards the MAX limit
             {
                 double temp = 1.0 / pow((0.5 + 0.5 * cos(M_PI * (q(i) + tolerance - limiter_params_.limits_max[i]) / tolerance)), 5.0);
+                // double temp = tolerance / fabs(limiter_params_.limits_max[i] - q(i));
                 if (temp > max_factor)
                 {
                     max_factor = temp;
@@ -160,11 +161,12 @@ KDL::JntArray LimiterAllJointPositions::enforceLimits(const KDL::JntArray& q_dot
             }
         }
 
-        if ((q(i) - limiter_params_.limits_min[i]) < tolerance)  // Joint is close to the MINIMUM limit
+        if (fabs(q(i) - limiter_params_.limits_min[i]) <= tolerance)  // Joint is close to the MINIMUM limit
         {
             if (q_dot_ik(i) < 0)  // Joint moves towards the MIN limit
             {
                 double temp = 1.0 / pow(0.5 + 0.5 * cos(M_PI * (q(i) - tolerance - limiter_params_.limits_min[i]) / tolerance), 5.0);
+                // double temp = tolerance / fabs(q(i) - limiter_params_.limits_min[i]);
                 if (temp > max_factor)
                 {
                     max_factor = temp;
@@ -247,31 +249,34 @@ KDL::JntArray LimiterIndividualJointPositions::enforceLimits(const KDL::JntArray
 
     for (unsigned int i = 0; i < q_dot_ik.rows(); i++)
     {
-        if(limiter_params_.limits_max[i] <= q(i) ||
-           limiter_params_.limits_min[i] >= q(i))
+        if((limiter_params_.limits_max[i] - LIMIT_SAFETY_THRESHOLD <= q(i) && q_dot_ik(i) > 0) ||
+           (limiter_params_.limits_min[i] + LIMIT_SAFETY_THRESHOLD >= q(i) && q_dot_ik(i) < 0))
         {
             ROS_ERROR_STREAM("Joint " << i << " violates its limits. Setting to Zero!");
             q_dot_norm(i) = 0.0;
         }
 
         double factor = 1.0;
-        if ((limiter_params_.limits_max[i] - q(i)) < tolerance)  // Joint is close to the MAXIMUM limit
+        if (fabs(limiter_params_.limits_max[i] - q(i)) <= tolerance)  // Joint is close to the MAXIMUM limit
         {
             if (q_dot_ik(i) > 0.0)  // Joint moves towards the MAX limit
             {
-                factor = 1.0 / pow((0.5 + 0.5 * cos(M_PI * (q(i) + tolerance - limiter_params_.limits_max[i]) / tolerance)), 5.0);
-                q_dot_norm(i) = q_dot_norm(i) / factor;
+                double temp = 1.0 / pow((0.5 + 0.5 * cos(M_PI * (q(i) + tolerance - limiter_params_.limits_max[i]) / tolerance)), 5.0);
+                // double temp = tolerance / fabs(limiter_params_.limits_max[i] - q(i));
+                factor = (temp > factor) ? temp : factor;
             }
         }
 
-        if ((q(i) - limiter_params_.limits_min[i]) < tolerance)  // Joint is close to the MINIMUM limit
+        if (fabs(q(i) - limiter_params_.limits_min[i]) <= tolerance)  // Joint is close to the MINIMUM limit
         {
             if (q_dot_ik(i) < 0.0)  // Joint moves towards the MIN limit
             {
-                factor = 1.0 / pow(0.5 + 0.5 * cos(M_PI * (q(i) - tolerance - limiter_params_.limits_min[i]) / tolerance), 5.0);
-                q_dot_norm(i) = q_dot_norm(i) / factor;
+                double temp = 1.0 / pow(0.5 + 0.5 * cos(M_PI * (q(i) - tolerance - limiter_params_.limits_min[i]) / tolerance), 5.0);
+                // double temp = tolerance / fabs(q(i) - limiter_params_.limits_min[i]);
+                factor = (temp > factor) ? temp : factor;
             }
         }
+        q_dot_norm(i) = q_dot_norm(i) / factor;
     }
 
     return q_dot_norm;
