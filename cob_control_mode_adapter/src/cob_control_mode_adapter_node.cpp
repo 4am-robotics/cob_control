@@ -16,15 +16,12 @@ public:
         current_controller_names_.clear();
         traj_controller_names_.clear();
         pos_controller_names_.clear();
-        interpol_pos_controller_names_.clear();
         vel_controller_names_.clear();
         last_pos_command_ = ros::Time();
-        last_interpol_pos_command_ = ros::Time();
         last_vel_command_ = ros::Time();
 
         has_traj_controller_ = false;
         has_pos_controller_ = false;
-        has_interpol_pos_controller_ = false;
         has_vel_controller_ = false;
 
         current_control_mode_ = NONE;
@@ -87,13 +84,6 @@ public:
             ROS_DEBUG_STREAM(nh_.getNamespace() << " supports 'joint_group_position_controller'");
         }
 
-        if(nh_.hasParam("joint_group_interpol_position_controller"))
-        {
-            has_interpol_pos_controller_ = true;
-            interpol_pos_controller_names_.push_back("joint_group_interpol_position_controller");
-            ROS_DEBUG_STREAM(nh_.getNamespace() << " supports 'joint_group_interpol_position_controller'");
-        }
-
         if(nh_.hasParam("joint_group_velocity_controller"))
         {
             has_vel_controller_ = true;
@@ -116,14 +106,6 @@ public:
                 success = loadController(pos_controller_names_[i]);
             }
             cmd_pos_sub_ = nh_.subscribe("joint_group_position_controller/command", 1, &CobControlModeAdapter::cmd_pos_cb, this);
-        }
-        if(has_interpol_pos_controller_)
-        {
-            for (unsigned int i=0; i<interpol_pos_controller_names_.size(); i++)
-            {
-                success = loadController(interpol_pos_controller_names_[i]);
-            }
-            cmd_interpol_pos_sub_ = nh_.subscribe("joint_group_interpol_position_controller/command", 1, &CobControlModeAdapter::cmd_interpol_pos_cb, this);
         }
         if(has_vel_controller_)
         {
@@ -227,12 +209,6 @@ public:
         last_pos_command_ = ros::Time::now();
     }
 
-    void cmd_interpol_pos_cb(const std_msgs::Float64MultiArray::ConstPtr& msg)
-    {
-        boost::mutex::scoped_lock lock(mutex_);
-        last_interpol_pos_command_ = ros::Time::now();
-    }
-
     void cmd_vel_cb(const std_msgs::Float64MultiArray::ConstPtr& msg)
     {
         boost::mutex::scoped_lock lock(mutex_);
@@ -247,7 +223,6 @@ public:
 
         ros::Duration period_vel = event.current_real - last_vel_command_;
         ros::Duration period_pos = event.current_real - last_pos_command_;
-        ros::Duration period_interpol_pos = event.current_real - last_interpol_pos_command_;
 
         lock.unlock();
 
@@ -283,22 +258,6 @@ public:
                 }
             }
         }
-        else if(has_interpol_pos_controller_ && (period_interpol_pos.toSec() < max_command_silence_))
-        {
-            if(current_control_mode_!=INTERPOL_POSITION)
-            {
-                bool success = switchController(interpol_pos_controller_names_, current_controller_names_);
-                if(!success)
-                {
-                    ROS_ERROR("Unable to switch to interpolated position_controllers. Not executing command...");
-                }
-                else
-                {
-                    ROS_INFO("Successfully switched to interpolated position_controllers");
-                    current_control_mode_=INTERPOL_POSITION;
-                }
-            }
-        }
         else if(has_traj_controller_)
         {
             if(current_control_mode_!=TRAJECTORY)
@@ -306,10 +265,6 @@ public:
                 if(current_control_mode_==POSITION)
                 {
                     ROS_INFO("Have not heard a pos command for %f seconds, switched back to trajectory_controller", period_pos.toSec());
-                }
-                else if(current_control_mode_==INTERPOL_POSITION)
-                {
-                    ROS_INFO("Have not heard a interpolated pos command for %f seconds, switched back to trajectory_controller", period_interpol_pos.toSec());
                 }
                 else
                 {
@@ -343,22 +298,19 @@ private:
 
     enum
     {
-        NONE, VELOCITY, POSITION, INTERPOL_POSITION, TRAJECTORY
+        NONE, VELOCITY, POSITION, TRAJECTORY
     } current_control_mode_;
 
     std::vector< std::string > current_controller_names_;
     std::vector< std::string > traj_controller_names_;
     std::vector< std::string > pos_controller_names_;
-    std::vector< std::string > interpol_pos_controller_names_;
     std::vector< std::string > vel_controller_names_;
 
     bool has_traj_controller_;
     bool has_pos_controller_;
-    bool has_interpol_pos_controller_;
     bool has_vel_controller_;
 
     ros::Subscriber cmd_pos_sub_;
-    ros::Subscriber cmd_interpol_pos_sub_;
     ros::Subscriber cmd_vel_sub_;
 
     ros::ServiceClient load_client_;
@@ -366,7 +318,6 @@ private:
 
     double max_command_silence_;
     ros::Time last_pos_command_;
-    ros::Time last_interpol_pos_command_;
     ros::Time last_vel_command_;
     boost::mutex mutex_;
 };

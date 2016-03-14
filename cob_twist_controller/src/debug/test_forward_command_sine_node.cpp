@@ -12,7 +12,7 @@ public:
         dof_ = 2;
         idx_ = 1;
 
-        output_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("/torso/joint_group_interpol_position_controller/command", 1);
+        output_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("/torso/joint_group_position_controller/command", 1);
 
         ros::Duration(1.0).sleep();
     }

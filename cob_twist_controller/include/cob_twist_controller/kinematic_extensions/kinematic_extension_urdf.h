@@ -96,7 +96,7 @@ class KinematicExtensionTorso : public KinematicExtensionURDF
             }
 
             joint_state_sub_ = nh_.subscribe("/torso/joint_states", 1, &KinematicExtensionURDF::jointstateCallback, dynamic_cast<KinematicExtensionURDF*>(this));
-            command_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("/torso/joint_group_interpol_position_controller/command", 1);
+            command_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("/torso/joint_group_velocity_controller/command", 1);
         }
 
         ~KinematicExtensionTorso() {}

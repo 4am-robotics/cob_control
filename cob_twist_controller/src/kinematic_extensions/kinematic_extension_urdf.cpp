@@ -52,12 +52,12 @@ bool KinematicExtensionURDF::initExtension()
 
     for (unsigned int i = 0; i < chain_.getNrOfSegments(); i++)
     {
-        ROS_INFO_STREAM("Segment[" << i << "] Name : " << chain_.getSegment(i).getName());
-        ROS_INFO_STREAM("Joint[" << i << "] Name: " << chain_.getSegment(i).getJoint().getName());
-        ROS_INFO_STREAM("Joint[" << i << "] Type: " << chain_.getSegment(i).getJoint().getTypeName());
+        ROS_DEBUG_STREAM("Segment[" << i << "] Name : " << chain_.getSegment(i).getName());
+        ROS_DEBUG_STREAM("Joint[" << i << "] Name: " << chain_.getSegment(i).getJoint().getName());
+        ROS_DEBUG_STREAM("Joint[" << i << "] Type: " << chain_.getSegment(i).getJoint().getTypeName());
         if (chain_.getSegment(i).getJoint().getType() != KDL::Joint::None)
         {
-            ROS_INFO_STREAM("Adding Joint " << chain_.getSegment(i).getJoint().getName());
+            ROS_DEBUG_STREAM("Adding Joint " << chain_.getSegment(i).getJoint().getName());
             joint_names_.push_back(chain_.getSegment(i).getJoint().getName());
         }
     }
