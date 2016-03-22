@@ -8,6 +8,11 @@ add_message_files(
     ObstacleDistances.msg
 )
 
+add_service_files(
+  FILES
+    GetObstacleDistance.srv
+)
+
 generate_messages(
   DEPENDENCIES
     geometry_msgs
