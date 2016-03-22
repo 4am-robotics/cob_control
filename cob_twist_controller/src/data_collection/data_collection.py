@@ -39,7 +39,7 @@ from std_msgs.msg import Float64MultiArray
 from geometry_msgs.msg import TwistStamped
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
-from cob_obstacle_distance.msg import ObstacleDistances
+from cob_control_msgs.msg import ObstacleDistances
 import tf
 
 DEL = ','

@@ -41,8 +41,8 @@
 #include <std_msgs/Float64.h>
 #include <visualization_msgs/Marker.h>
 
-#include "cob_obstacle_distance/ObstacleDistance.h"
-#include "cob_obstacle_distance/ObstacleDistances.h"
+#include "cob_control_msgs/ObstacleDistance.h"
+#include "cob_control_msgs/ObstacleDistances.h"
 
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/path.hpp>
@@ -80,7 +80,7 @@ int DistanceManager::init()
 
     // Latched and continue in case there is no subscriber at the moment for a marker
     this->marker_pub_ = this->nh_.advertise<visualization_msgs::MarkerArray>("obstacle_distance/marker", 10, true);
-    this->obstacle_distances_pub_ = this->nh_.advertise<cob_obstacle_distance::ObstacleDistances>("obstacle_distance", 1);
+    this->obstacle_distances_pub_ = this->nh_.advertise<cob_control_msgs::ObstacleDistances>("obstacle_distance", 1);
     obstacle_mgr_.reset(new ShapesManager(this->marker_pub_));
     object_of_interest_mgr_.reset(new ShapesManager(this->marker_pub_));
     KDL::Tree robot_structure;
@@ -201,7 +201,7 @@ void DistanceManager::drawObjectsOfInterest()
 
 void DistanceManager::calculate()
 {
-    cob_obstacle_distance::ObstacleDistances obstacle_distances;
+    cob_control_msgs::ObstacleDistances obstacle_distances;
 
     // Transform needs to be calculated only once for robot structure
     // and is same for all obstacles.
@@ -291,7 +291,7 @@ void DistanceManager::calculate()
                 ROS_DEBUG_STREAM("Link \"" << object_of_interest_name << "\": Minimal distance: " << dist_result.min_distance);
                 if(dist_result.min_distance < MIN_DISTANCE)
                 {
-                    cob_obstacle_distance::ObstacleDistance od_msg;
+                    cob_control_msgs::ObstacleDistance od_msg;
                     od_msg.distance = dist_result.min_distance;
                     od_msg.link_of_interest = object_of_interest_name;
                     od_msg.obstacle_id = obstacle_id;
