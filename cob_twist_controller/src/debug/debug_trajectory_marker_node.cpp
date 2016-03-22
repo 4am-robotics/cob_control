@@ -83,7 +83,7 @@ public:
             {
                 return -4;
             }
-            ROS_WARN_STREAM("Please create a subscriber to '" + this->nh_.getNamespace() + "/trajectory_marker' topic (Type: visualization_msgs/MarkerArray)");
+            ROS_WARN_STREAM_ONCE("Please create a subscriber to '" + this->nh_.getNamespace() + "/trajectory_marker' topic (Type: visualization_msgs/MarkerArray)");
             ros::Duration(1.0).sleep();
         }
 
