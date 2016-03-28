@@ -37,7 +37,7 @@
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/constraints/constraint_params.h"
-#include "cob_obstacle_distance/ObstacleDistances.h"
+#include "cob_control_msgs/ObstacleDistances.h"
 
 /// Represents a data pool for distribution of collected data from ROS callback.
 class CallbackDataMediator
@@ -73,7 +73,7 @@ class CallbackDataMediator
          * Callback method that can be used by a ROS subscriber to a obstacle distance topic.
          * @param msg The published message containting obstacle distances.
          */
-        void distancesToObstaclesCallback(const cob_obstacle_distance::ObstacleDistances::ConstPtr& msg);
+        void distancesToObstaclesCallback(const cob_control_msgs::ObstacleDistances::ConstPtr& msg);
 };
 
 #endif  // COB_TWIST_CONTROLLER_CALLBACK_DATA_MEDIATOR_H

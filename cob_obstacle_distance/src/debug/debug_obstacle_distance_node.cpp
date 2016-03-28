@@ -29,9 +29,8 @@
 #include <map>
 #include <ros/ros.h>
 #include <visualization_msgs/MarkerArray.h>
-#include "cob_obstacle_distance/ObstacleDistances.h"
-#include "cob_obstacle_distance/ObstacleDistance.h"
-
+#include "cob_control_msgs/ObstacleDistance.h"
+#include "cob_control_msgs/ObstacleDistances.h"
 
 class DebugObstacleDistance
 {
@@ -59,10 +58,10 @@ public:
     }
 
 
-    void obstacleDistancesCallback(const cob_obstacle_distance::ObstacleDistances::ConstPtr& msg)
+    void obstacleDistancesCallback(const cob_control_msgs::ObstacleDistances::ConstPtr& msg)
     {
         visualization_msgs::MarkerArray marker_array;
-        std::map<std::string, cob_obstacle_distance::ObstacleDistance> relevant_obstacle_distances;
+        std::map<std::string, cob_control_msgs::ObstacleDistance> relevant_obstacle_distances;
 
         for(uint32_t i=0; i<msg->distances.size(); i++)
         {
@@ -80,7 +79,7 @@ public:
             }
         }
 
-        for(std::map<std::string, cob_obstacle_distance::ObstacleDistance>::const_iterator it = relevant_obstacle_distances.begin();
+        for(std::map<std::string, cob_control_msgs::ObstacleDistance>::const_iterator it = relevant_obstacle_distances.begin();
                 it != relevant_obstacle_distances.end(); ++it)
         {
 

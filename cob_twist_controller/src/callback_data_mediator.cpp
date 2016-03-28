@@ -67,11 +67,11 @@ bool CallbackDataMediator::fill(ConstraintParamsJLA& params_jla)
 }
 
 /// Producer: Fills obstacle distances but only when they are empty
-void CallbackDataMediator::distancesToObstaclesCallback(const cob_obstacle_distance::ObstacleDistances::ConstPtr& msg)
+void CallbackDataMediator::distancesToObstaclesCallback(const cob_control_msgs::ObstacleDistances::ConstPtr& msg)
 {
     boost::mutex::scoped_lock lock(distances_to_obstacles_lock_);
     this->obstacle_distances_.clear();
-    for (cob_obstacle_distance::ObstacleDistances::_distances_type::const_iterator it = msg->distances.begin(); it != msg->distances.end(); it++)
+    for (cob_control_msgs::ObstacleDistances::_distances_type::const_iterator it = msg->distances.begin(); it != msg->distances.end(); it++)
     {
         ObstacleDistanceData d;
         d.min_distance = it->distance;
