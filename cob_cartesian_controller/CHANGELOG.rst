@@ -2,8 +2,8 @@
 Changelog for package cob_cartesian_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.11 (2016-04-01)
+-------------------
 * remove lwa4d test scripts
 * use ros::Time::now
 * use const in function parameters

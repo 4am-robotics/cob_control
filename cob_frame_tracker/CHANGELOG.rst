@@ -2,8 +2,8 @@
 Changelog for package cob_frame_tracker
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.11 (2016-04-01)
+-------------------
 * add frameExists check to FrameTracker
 * updateMarker on startLookat
 * cleanup roslint

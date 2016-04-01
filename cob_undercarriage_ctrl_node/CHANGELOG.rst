@@ -2,8 +2,8 @@
 Changelog for package cob_undercarriage_ctrl_node
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.11 (2016-04-01)
+-------------------
 * parametrizable odometry tracker in undercarriage_ctrl node
 * whitespace fixes
 * fix CMakeLists

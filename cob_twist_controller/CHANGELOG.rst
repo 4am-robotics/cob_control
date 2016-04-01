@@ -2,8 +2,8 @@
 Changelog for package cob_twist_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.11 (2016-04-01)
+-------------------
 * reduce output
 * outsource obstacle_distance messages
 * remove support for interpol_position controller

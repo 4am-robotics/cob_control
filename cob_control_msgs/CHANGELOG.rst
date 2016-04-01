@@ -2,8 +2,8 @@
 Changelog for package cob_control_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.11 (2016-04-01)
+-------------------
 * add GetObstacleDistance service
 * outsource obstacle_distance messages
 * introducing cob_control_msgs

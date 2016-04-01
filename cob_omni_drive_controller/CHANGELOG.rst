@@ -2,8 +2,8 @@
 Changelog for package cob_omni_drive_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.11 (2016-04-01)
+-------------------
 * remove leading slashes and use odom as default
 * configurable odometry_controller
 * [hotfix] compile error

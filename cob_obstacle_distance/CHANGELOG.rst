@@ -2,8 +2,8 @@
 Changelog for package cob_obstacle_distance
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.11 (2016-04-01)
+-------------------
 * outsource obstacle_distance messages
 * add missing install tag
 * Added method to set drawable again and to avoid drawing of self-collision links.
