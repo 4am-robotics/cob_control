@@ -2,6 +2,31 @@
 Changelog for package cob_frame_tracker
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.11 (2016-04-01)
+-------------------
+* add frameExists check to FrameTracker
+* updateMarker on startLookat
+* cleanup roslint
+* introduce cfg-parameter enable_abortion_checking
+* Added waitForTransform in the getTransform function.. It threw an transform exception
+* Merge branch 'refactor_profile_generator' of github.com:ipa-fxm-cm/cob_control into test_new_cartesian_controller
+  Conflicts:
+  cob_frame_tracker/src/cob_frame_tracker.cpp
+* parameterizable scaling_factor
+* Linear interpolation works fine now. There's still a bug in quaternion interpolation.
+* only reset lookat extension
+* prepare interactive_frame_target for being used with lookat
+* prepare frame_tracker for being used with lookat
+* constant publish rate
+* working on log output
+* parameterizable marker_scale
+* re-activate publishHoldTwist, fix typo
+* publish ZeroTwist, root/tip frame selection
+* introduce scaling_factor and dead_man
+* simple spacenav commander
+* temporarily undo publishHoldTwist
+* Contributors: Marco Bezzon, ipa-fxm, ipa-fxm-cm
+
 0.6.10 (2015-08-31)
 -------------------
 

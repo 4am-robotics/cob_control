@@ -2,6 +2,12 @@
 Changelog for package cob_control
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.11 (2016-04-01)
+-------------------
+* introducing cob_control_msgs
+* add cob_undercarriage_ctrl_node to meta-package
+* Contributors: Felix Messmer, ipa-fxm
+
 0.6.10 (2015-08-31)
 -------------------
 

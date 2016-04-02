@@ -2,6 +2,48 @@
 Changelog for package cob_cartesian_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.11 (2016-04-01)
+-------------------
+* remove lwa4d test scripts
+* use ros::Time::now
+* use const in function parameters
+* remove movePTP
+* minor styling
+* remove unused Pose parameter
+* significantly simplify function parameters for getTrajectory and getProfileTimings
+* re-order vel-acc
+* get rid of ProfileTimings.ok
+* move identical functions to base class
+* harmonizing
+* remove obsolete calcTe\_
+* minor styling
+* roslint cob_cartesian_controller
+* towards code styling consistency
+* adjust descriptions ins license plate
+* adjust description
+* Final version
+* Almost finalized version
+* Implemented move_circ
+* remove obsolete files
+* adjust service type in cartesian controller
+* LWA4D test scripts
+* New quaternion interpolation
+* Linear interpolation works fine now. There's still a bug in quaternion interpolation.
+* Bug fixes + code reduction
+* apply change in parameter name
+* code reduction part 2.
+* forgot the cpp files
+* added new headers
+* Code reduction part 1.. there's still a bug in ramp profiles.
+* Fixed a bug in sort algorithm and profile interpolation
+* new example script
+* restructured, introducing base class for profile generator
+* renaming: hardware_interface to controller_interface
+* update trajectory_hardware_interface
+* handle base_compensation in kinematic_extension enum
+* implement JointTrajectory hardware_interface for twist_controller
+* Contributors: Marco Bezzon, ipa-fxm, ipa-fxm-cm
+
 0.6.10 (2015-08-31)
 -------------------
 

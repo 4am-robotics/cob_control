@@ -2,6 +2,19 @@
 Changelog for package cob_base_velocity_smoother
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.11 (2016-04-01)
+-------------------
+* fix install tags
+* do not install cfg files
+* Change author email
+* added dep for cfg
+* fixed deceleration factor on inactive topic input
+* added additional parameter to adjust deceleration to acceleration ratio in safety cases (no topics received, joy deadmean released)
+* revert package version
+* fixed ros loop
+* added new velocity_smoother based on yocs_velocity_smoother
+* Contributors: Benjamin Maidel, Florian Weisshardt, ipa-fmw
+
 0.6.10 (2015-08-31)
 -------------------
 

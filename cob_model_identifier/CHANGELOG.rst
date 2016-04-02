@@ -2,6 +2,11 @@
 Changelog for package cob_model_identifier
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.11 (2016-04-01)
+-------------------
+* working on log output
+* Contributors: ipa-fxm
+
 0.6.10 (2015-08-31)
 -------------------
 

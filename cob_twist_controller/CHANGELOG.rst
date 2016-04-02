@@ -2,6 +2,117 @@
 Changelog for package cob_twist_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.11 (2016-04-01)
+-------------------
+* reduce output
+* outsource obstacle_distance messages
+* remove support for interpol_position controller
+* debug output
+* use joint_group_velocity_controller for torso extension
+* verify position limit scaling factor
+* fix typo
+* fix lookat: do not look backwards
+* missing sympy dependency
+* add test publisher twist sine
+* avoid unecessary service calls to obstacle_distance
+* fix collision avoidance dimension segfault
+* infinitesiamal threshold for BaseActive
+* wider limits
+* enforce position limit
+* add test_forward_command_sine_node
+* cleanup period
+* Update test_trajectory_command_sine_node.cpp
+* adjust lookat extension limits
+* more compact parameter structure
+* make lookat linear axis configurable - axis and offset
+* cleanup roslint
+* add trajectory_command test node
+* introduce cfg-parameter integrator_smoothing
+* add debug publisher to simpson_integration
+* rename member variables
+* add q_dot_ik smoothing, adjust parameters
+* add timing members for period
+* Merge pull request `#79 <https://github.com/ipa320/cob_control/issues/79>`_ from ipa-fxm/fix_visualize_twist_marker
+  visualize twist marker
+* proper reset for ControllerInterfaceJointStates
+* visualize angular twist
+* fix visualize twist marker
+* Fixed the TwistDirection Marker
+* use undamped jacobian in nullspace projection
+* minor renaming
+* roslint cob_twist_controller
+* final roslint
+* add TimeStamp to trajectory_interface
+* also print limiting joint
+* prepare remapping for twist_mux in cartesian controller
+* add test nodes for SimpsonIntegrator
+* reset moving average
+* simplify API
+* use new API in SimpsonIntegrator
+* test new MovingAverage API
+* all new MovingAverage API
+* saver initialization of weighting
+* test scripts for moving_average
+* use interpolated position controller
+* add more debug scripts
+* consider various roslint/styleguide hints
+* apply change in parameter name
+* fix frame_id in visualizeTwist
+* lookat extension fully implemented
+* more experiments with reset condition in simpson_integrator
+* minor improvement of comment
+* fix order of doxygen comment
+* fix whitespaces
+* move simpson integration to new util class
+* prepare structure for lookat
+* temporarily disable CA when being used together with KinematicExtensions
+* less output
+* more consistent code structure for constraints
+* remove obsolete return values
+* use extension_ratio for all extensions
+* wip: consider kinematic_extensions within limiters and constraints - still unstable
+* chain not needed in limiters
+* resolve hardcoded cycle time in prediction
+* proper generation of Jacobian for kinematic extension from urdf
+* more generic naming in extension_dof, transform extension_jacobian in extension_urdf
+* merge with demo updates
+* fix BASE_COMPENSATION
+* Fixed order of transform and service registration. Additionally added more time to wait for service availability.
+* fix dimension of jac_extension
+* merge and roslint
+* roslint cob_twist_controller
+* draft towards kinematic_extension for COB_TORSO based on URDF
+* prepare structure for additional kinematic_extensions
+* revert acceleration_limiters impl, class structure only, further consistency changes and cleanup
+* progress with acceleration limiters, still wip
+* implement acceleration limiter
+* pass down whole JointStates structure
+* better reset condition
+* fix limiter reset, fix service existence, consistency
+* prepare structure for acceleration limiters
+* temporary cleanup
+* do FK_Vel in GPM for debugging
+* further debug gpm and self-motion
+* add solveTwist duration output
+* visualization marker for desired twist direction
+* renaming: hardware_interface to controller_interface
+* fixes for positional interfaces
+* waitForExistence of registerLink service
+* wip: use undamped inverse in gpm
+* allow to calculate un-damped, un-truncated inverse jacobian
+* update octave scripts for testing variants
+* working on marker publisher
+* working on log output
+* update trajectory_hardware_interface
+* introduce HardwareInterfacePositionBase, reset Integration on out-dated data
+* handle base_compensation in kinematic_extension enum
+* renaming frame - link
+* Merge branch 'indigo_dev' of github.com:ipa-fxm/cob_control into trajectory_hardware_interface
+* - Commented output lines. - Renamed frame_of_interest to link_of_interest.
+* Merge branch 'indigo_dev' of github.com:ipa-fxm/cob_control into trajectory_hardware_interface
+* implement JointTrajectory hardware_interface for twist_controller
+* Contributors: Felix Messmer, Marco Bezzon, ipa-fxm, ipa-fxm-cm, ipa-fxm-mb
+
 0.6.10 (2015-08-31)
 -------------------
 

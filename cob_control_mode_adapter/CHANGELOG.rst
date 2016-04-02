@@ -2,6 +2,14 @@
 Changelog for package cob_control_mode_adapter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.11 (2016-04-01)
+-------------------
+* remove support for interpol_position controller
+* fix mode adapter shutdown
+* fix typo
+* add joint_group_interpol_position_controller to control_mode_adapter
+* Contributors: Marco Bezzon, ipa-fxm
+
 0.6.10 (2015-08-31)
 -------------------
 

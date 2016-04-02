@@ -2,6 +2,18 @@
 Changelog for package cob_obstacle_distance
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.11 (2016-04-01)
+-------------------
+* outsource obstacle_distance messages
+* add missing install tag
+* Added method to set drawable again and to avoid drawing of self-collision links.
+* Renamings and replaced box with sphere.
+* Fixed order of transform and service registration. Additionally added more time to wait for service availability.
+* working on marker publisher
+* working on log output
+* renaming frame - link
+* Contributors: Marco Bezzon, ipa-fxm
+
 0.6.10 (2015-08-31)
 -------------------
 
