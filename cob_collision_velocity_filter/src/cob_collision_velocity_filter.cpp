@@ -80,17 +80,12 @@ CollisionVelocityFilter::CollisionVelocityFilter()
   // Initialize costmap
 
   tf::TransformListener tf(ros::Duration(10));
-  costmap_2d::Costmap2DROS costmap("anti_collision_costmap", tf);
-
-  // create Timer and call readObstacles function periodically
-  double obstacles_update_frequency;
-  if(!nh_.hasParam("obstacles_update_frequency")) ROS_WARN("Used default parameter for obstacle_update_frequency [1.0 Hz].");
-  nh_.param("obstacle_update_frequency",obstacles_update_frequency,1.0);
-  get_obstacles_timer_ = nh_.createTimer(ros::Duration(1/obstacles_update_frequency), boost::bind(&CollisionVelocityFilter::readObstacles(), this, _1));
-  readObstacles(costmap.getCostmap());
-  costmap.getLayeredCostmap();
+  //costmap_2d::Costmap2D costmap("anti_collision_costmap", tf);
+  anti_collision_costmap_ = new costmap_2d::Costmap2DROS("anti_collision_costmap", tf);
+  //costmap_ = new costmap_2d::Costmap2D("anti_collision_costmap", tf);
+  anti_collision_costmap_->start();
   // create service client
-  srv_client_get_footprint_ = nh_.serviceClient<cob_footprint_observer::GetFootprint>("/get_footprint");
+  //srv_client_get_footprint_ = nh_.serviceClient<cob_footprint_observer::GetFootprint>("/get_footprint");
 
   // create Timer and call getFootprint Service periodically
   double footprint_update_frequency;
@@ -188,25 +183,25 @@ void CollisionVelocityFilter::joystickVelocityCB(const geometry_msgs::Twist::Con
 
 }
 
-// obstaclesCB reads obstacles from costmap
-void CollisionVelocityFilter::readObstacles(){
-  pthread_mutex_lock(&m_mutex);
-  nav_msgs::OccupancyGrid::ConstPtr obstacles = costmap.getCostmap();
-  if(obstacles->data.size()!=0) costmap_received_ = true;
-  last_costmap_received_ = * obstacles;
-
-  if(stop_threshold_ < (obstacles->info.resolution / 2.0f) )
-    ROS_WARN("You specified a stop_threshold that is smaller than resolution of received costmap!");
-
-  pthread_mutex_unlock(&m_mutex);
-}
+//// obstaclesCB reads obstacles from costmap
+//void CollisionVelocityFilter::readObstacles(){
+//  pthread_mutex_lock(&m_mutex);
+//  costmap_2d::Costmap2D* obstacles = anti_collision_costmap_->getCostmap();
+//  if(anti_collision_costmap_->stopped_== 0) costmap_received_ = true;
+//  last_costmap_received_ = * obstacles;
+//
+//  if(stop_threshold_ < (obstacles->info.resolution / 2.0f) )
+//    ROS_WARN("You specified a stop_threshold that is smaller than resolution of received costmap!");
+//
+//  pthread_mutex_unlock(&m_mutex);
+//}
 
 // timer callback for periodically checking footprint
 void CollisionVelocityFilter::getFootprintServiceCB(const ros::TimerEvent&)
 {
-  cob_footprint_observer::GetFootprint srv = cob_footprint_observer::GetFootprint();
+  //cob_footprint_observer::GetFootprint srv = cob_footprint_observer::GetFootprint();
   // check if service is reachable
-  if (costmap.initialized_)
+  if (anti_collision_costmap_->initialized_)
   {
     // adjust footprint
     //geometry_msgs::PolygonStamped footprint_poly = srv.response.footprint;
@@ -219,7 +214,7 @@ void CollisionVelocityFilter::getFootprintServiceCB(const ros::TimerEvent&)
 //      pt.z = footprint_poly.polygon.points[i].z;
 //      footprint.push_back(pt);
 //    }
-    footprint = costmap.getRobotFootprint();
+    footprint = anti_collision_costmap_->getRobotFootprint();
 
     pthread_mutex_lock(&m_mutex);
 
@@ -379,8 +374,8 @@ void CollisionVelocityFilter::performControllerStep() {
 
 void CollisionVelocityFilter::obstacleHandler() {
   pthread_mutex_lock(&m_mutex);
-  if(!costmap_received_) {
-    ROS_WARN("No costmap has been received by cob_collision_velocity_filter, the robot will drive without obstacle avoidance!");
+  if(!anti_collision_costmap_->initialized_) {
+    ROS_WARN("The local costmap isn't initialized, the robot will drive without obstacle avoidance!");
     closest_obstacle_dist_ = influence_radius_;
 
     pthread_mutex_unlock(&m_mutex);
@@ -456,24 +451,26 @@ void CollisionVelocityFilter::obstacleHandler() {
   }
 
   //find relevant obstacles
+  boost::unique_lock<costmap_2d::Costmap2D::mutex_t> lock(*(anti_collision_costmap_->getCostmap()->getMutex()));
   pthread_mutex_lock(&m_mutex);
-  relevant_obstacles_.header = last_costmap_received_.header;
-  relevant_obstacles_.info = last_costmap_received_.info;
+  //relevant_obstacles_.header = last_costmap_received_.header;
+  //relevant_obstacles_.info = last_costmap_received_.info;
   relevant_obstacles_.data.clear();
-
-  for(unsigned int i = 0; i < last_costmap_received_.data.size(); i++) {
-    if (last_costmap_received_.data[i] == -1) {
+  for(unsigned int i = 0;
+      i < anti_collision_costmap_->getCostmap()->getSizeInCellsX() * anti_collision_costmap_->getCostmap()->getSizeInCellsY();
+      i++) {
+    if (anti_collision_costmap_->getCostmap()->getCharMap()[i] == -1) {
       relevant_obstacles_.data.push_back(-1);
     }
-    else if (last_costmap_received_.data[i] < costmap_obstacle_treshold_) { // add trshold
+    else if (anti_collision_costmap_->getCostmap()->getCharMap()[i] < costmap_obstacle_treshold_) { // add trshold
       relevant_obstacles_.data.push_back(0);
     }
     else {
 
       // calculate cell in 2D space where robot is is point (0, 0)
       geometry_msgs::Point cell;
-      cell.x = (i%(int)(last_costmap_received_.info.width))*last_costmap_received_.info.resolution + last_costmap_received_.info.origin.position.x;
-      cell.y = (i/(int)(last_costmap_received_.info.width))*last_costmap_received_.info.resolution + last_costmap_received_.info.origin.position.y;
+      cell.x = (i%(int)(anti_collision_costmap_->getCostmap()->getSizeInCellsX()))*anti_collision_costmap_->getCostmap()->getResolution() + anti_collision_costmap_->getCostmap()->getOriginX();
+      cell.y = (i/(int)(anti_collision_costmap_->getCostmap()->getSizeInCellsX()))*anti_collision_costmap_->getCostmap()->getResolution() + anti_collision_costmap_->getCostmap()->getOriginY();
       cell.z = 0.0f;
 
       cur_obstacle_relevant = false;

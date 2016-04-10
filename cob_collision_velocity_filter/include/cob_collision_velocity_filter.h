@@ -85,6 +85,7 @@
 // Costmap for obstacle detection
 #include <tf/transform_listener.h>
 #include <costmap_2d/costmap_2d_ros.h>
+#include <costmap_2d/costmap_2d.h>
 ///
 /// @class CollisionVelocityFilter
 /// @brief checks for obstacles in driving direction and stops the robot
@@ -159,7 +160,8 @@ class CollisionVelocityFilter
   private:
     /* core functions */
 
-    costmap_2d::Costmap2DROS costmap;
+    costmap_2d::Costmap2DROS* anti_collision_costmap_;
+    //costmap_2d::Costmap2D costmap;
     ///
     /// @brief  checks distance to obstacles in driving direction and slows down/stops
     ///         robot and publishes command velocity to robot
