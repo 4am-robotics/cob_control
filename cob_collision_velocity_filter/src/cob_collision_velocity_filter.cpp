@@ -74,9 +74,21 @@ CollisionVelocityFilter::CollisionVelocityFilter()
 
   // subscribe to twist-movement of teleop
   joystick_velocity_sub_ = nh_.subscribe<geometry_msgs::Twist>("teleop_twist", 1, boost::bind(&CollisionVelocityFilter::joystickVelocityCB, this, _1));
-  // subscribe to the costmap to receive inflated cells
-  obstacles_sub_ = nh_.subscribe<nav_msgs::OccupancyGrid>("obstacles", 1, boost::bind(&CollisionVelocityFilter::obstaclesCB, this, _1));
+//  // subscribe to the costmap to receive inflated cells
+//  obstacles_sub_ = nh_.subscribe<nav_msgs::OccupancyGrid>("obstacles", 1, boost::bind(&CollisionVelocityFilter::obstaclesCB, this, _1));
 
+  // Initialize costmap
+
+  tf::TransformListener tf(ros::Duration(10));
+  costmap_2d::Costmap2DROS costmap("anti_collision_costmap", tf);
+
+  // create Timer and call readObstacles function periodically
+  double obstacles_update_frequency;
+  if(!nh_.hasParam("obstacles_update_frequency")) ROS_WARN("Used default parameter for obstacle_update_frequency [1.0 Hz].");
+  nh_.param("obstacle_update_frequency",obstacles_update_frequency,1.0);
+  get_obstacles_timer_ = nh_.createTimer(ros::Duration(1/obstacles_update_frequency), boost::bind(&CollisionVelocityFilter::readObstacles(), this, _1));
+  readObstacles(costmap.getCostmap());
+  costmap.getLayeredCostmap();
   // create service client
   srv_client_get_footprint_ = nh_.serviceClient<cob_footprint_observer::GetFootprint>("/get_footprint");
 
@@ -99,7 +111,7 @@ CollisionVelocityFilter::CollisionVelocityFilter()
   closest_obstacle_dist_ = influence_radius_;
   closest_obstacle_angle_ = 0.0;
 
-  // parameters for obstacle avoidence and velocity adjustment
+  // parameters for obstacle avoidance and velocity adjustment
   if(!nh_.hasParam("stop_threshold")) ROS_WARN("Used default parameter for stop_threshold [0.1 m]");
   nh_.param("stop_threshold", stop_threshold_, 0.10);
 
@@ -107,7 +119,7 @@ CollisionVelocityFilter::CollisionVelocityFilter()
   nh_.param("obstacle_damping_dist", obstacle_damping_dist_, 5.0);
   if(obstacle_damping_dist_ <= stop_threshold_) {
     obstacle_damping_dist_ = stop_threshold_ + 0.01; // set to stop_threshold_+0.01 to avoid divide by zero error
-    ROS_WARN("obstacle_damping_dist <= stop_threshold -> robot will stop without decceleration!");
+    ROS_WARN("obstacle_damping_dist <= stop_threshold -> robot will stop without deceleration!");
   }
 
   if(!nh_.hasParam("use_circumscribed_threshold")) ROS_WARN("Used default parameter for use_circumscribed_threshold_ [0.2 rad/s]");
@@ -177,9 +189,9 @@ void CollisionVelocityFilter::joystickVelocityCB(const geometry_msgs::Twist::Con
 }
 
 // obstaclesCB reads obstacles from costmap
-void CollisionVelocityFilter::obstaclesCB(const nav_msgs::OccupancyGrid::ConstPtr &obstacles){
+void CollisionVelocityFilter::readObstacles(){
   pthread_mutex_lock(&m_mutex);
-
+  nav_msgs::OccupancyGrid::ConstPtr obstacles = costmap.getCostmap();
   if(obstacles->data.size()!=0) costmap_received_ = true;
   last_costmap_received_ = * obstacles;
 
@@ -194,19 +206,20 @@ void CollisionVelocityFilter::getFootprintServiceCB(const ros::TimerEvent&)
 {
   cob_footprint_observer::GetFootprint srv = cob_footprint_observer::GetFootprint();
   // check if service is reachable
-  if (srv_client_get_footprint_.call(srv))
+  if (costmap.initialized_)
   {
     // adjust footprint
-    geometry_msgs::PolygonStamped footprint_poly = srv.response.footprint;
+    //geometry_msgs::PolygonStamped footprint_poly = srv.response.footprint;
     std::vector<geometry_msgs::Point> footprint;
-    geometry_msgs::Point pt;
+    //geometry_msgs::Point pt;
 
-    for(unsigned int i=0; i<footprint_poly.polygon.points.size(); ++i) {
-      pt.x = footprint_poly.polygon.points[i].x;
-      pt.y = footprint_poly.polygon.points[i].y;
-      pt.z = footprint_poly.polygon.points[i].z;
-      footprint.push_back(pt);
-    }
+//    for(unsigned int i=0; i<footprint_poly.polygon.points.size(); ++i) {
+//      pt.x = footprint_poly.polygon.points[i].x;
+//      pt.y = footprint_poly.polygon.points[i].y;
+//      pt.z = footprint_poly.polygon.points[i].z;
+//      footprint.push_back(pt);
+//    }
+    footprint = costmap.getRobotFootprint();
 
     pthread_mutex_lock(&m_mutex);
 
@@ -226,7 +239,7 @@ void CollisionVelocityFilter::getFootprintServiceCB(const ros::TimerEvent&)
     pthread_mutex_unlock(&m_mutex);
 
   } else {
-    ROS_WARN("Cannot reach service /get_footprint");
+    ROS_WARN("Costmap is not initialized");
   }
 
 }

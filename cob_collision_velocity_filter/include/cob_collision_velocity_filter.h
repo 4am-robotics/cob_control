@@ -82,6 +82,9 @@
 // BUT velocity limited marker
 #include "velocity_limited_marker.h"
 
+// Costmap for obstacle detection
+#include <tf/transform_listener.h>
+#include <costmap_2d/costmap_2d_ros.h>
 ///
 /// @class CollisionVelocityFilter
 /// @brief checks for obstacles in driving direction and stops the robot
@@ -113,7 +116,7 @@ class CollisionVelocityFilter
     /// @brief  reads obstacles from costmap
     /// @param  obstacles - 2D occupancy grid in rolling window mode!
     ///
-    void obstaclesCB(const nav_msgs::OccupancyGrid::ConstPtr &obstacles);
+    void readObstacles();
 
 
     ///
@@ -136,6 +139,9 @@ class CollisionVelocityFilter
     /// Timer for periodically calling GetFootprint Service
     ros::Timer get_footprint_timer_;
 
+    /// Timer for periodically calling readObstacles function
+    ros::Timer get_obstacles_timer_;
+
     /// declaration of publisher
     ros::Publisher topic_pub_command_;
     ros::Publisher topic_pub_relevant_obstacles_;
@@ -153,6 +159,7 @@ class CollisionVelocityFilter
   private:
     /* core functions */
 
+    costmap_2d::Costmap2DROS costmap;
     ///
     /// @brief  checks distance to obstacles in driving direction and slows down/stops
     ///         robot and publishes command velocity to robot
@@ -214,7 +221,7 @@ class CollisionVelocityFilter
     double v_max_, vtheta_max_;
     double ax_max_, ay_max_, atheta_max_;
 
-    //obstacle avoidence
+    //obstacle avoidance
     std::vector<geometry_msgs::Point> robot_footprint_;
     double footprint_left_, footprint_right_, footprint_front_, footprint_rear_;
     double footprint_left_initial_, footprint_right_initial_, footprint_front_initial_, footprint_rear_initial_;
@@ -223,7 +230,7 @@ class CollisionVelocityFilter
     double influence_radius_, stop_threshold_, obstacle_damping_dist_, use_circumscribed_threshold_;
     double closest_obstacle_dist_, closest_obstacle_angle_;
 
-    // variables for slow down behaviour
+    // variables for slow down behavior
     double last_time_;
     double kp_, kv_;
     double vx_last_, vy_last_, vtheta_last_;
