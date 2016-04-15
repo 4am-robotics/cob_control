@@ -72,8 +72,11 @@ CollisionVelocityFilter::CollisionVelocityFilter()
   topic_pub_command_ = nh_.advertise<geometry_msgs::Twist>("command", 1);
   topic_pub_relevant_obstacles_ = nh_.advertise<nav_msgs::OccupancyGrid>("relevant_obstacles_grid", 1);
 
+  std::string teleop_topic;
+  if(!nh_.hasParam("teleop_topic")) ROS_WARN("Used default parameter for teleop_topic [teleop_twist]");
+  nh_.param("teleop_topic",teleop_topic, std::string("teleop_twist"));
   // subscribe to twist-movement of teleop
-  joystick_velocity_sub_ = nh_.subscribe<geometry_msgs::Twist>("teleop_twist", 1, boost::bind(&CollisionVelocityFilter::joystickVelocityCB, this, _1));
+  joystick_velocity_sub_ = nh_.subscribe<geometry_msgs::Twist>(teleop_topic, 1, boost::bind(&CollisionVelocityFilter::joystickVelocityCB, this, _1));
 //  // subscribe to the costmap to receive inflated cells
 //  obstacles_sub_ = nh_.subscribe<nav_msgs::OccupancyGrid>("obstacles", 1, boost::bind(&CollisionVelocityFilter::obstaclesCB, this, _1));
 
@@ -84,6 +87,8 @@ CollisionVelocityFilter::CollisionVelocityFilter()
   anti_collision_costmap_ = new costmap_2d::Costmap2DROS("anti_collision_costmap", tf);
   //costmap_ = new costmap_2d::Costmap2D("anti_collision_costmap", tf);
   anti_collision_costmap_->start();
+
+  ROS_DEBUG_STREAM_NAMED("initialize", "Costmap initialized");
   // create service client
   //srv_client_get_footprint_ = nh_.serviceClient<cob_footprint_observer::GetFootprint>("/get_footprint");
 
@@ -201,8 +206,8 @@ void CollisionVelocityFilter::getFootprintServiceCB(const ros::TimerEvent&)
 {
   //cob_footprint_observer::GetFootprint srv = cob_footprint_observer::GetFootprint();
   // check if service is reachable
-  if (anti_collision_costmap_->initialized_)
-  {
+//  if (anti_collision_costmap_->)
+//  {
     // adjust footprint
     //geometry_msgs::PolygonStamped footprint_poly = srv.response.footprint;
     std::vector<geometry_msgs::Point> footprint;
@@ -233,9 +238,9 @@ void CollisionVelocityFilter::getFootprintServiceCB(const ros::TimerEvent&)
 
     pthread_mutex_unlock(&m_mutex);
 
-  } else {
-    ROS_WARN("Costmap is not initialized");
-  }
+//  } else {
+//    ROS_WARN("Costmap is not initialized");
+//  }
 
 }
 
@@ -374,13 +379,13 @@ void CollisionVelocityFilter::performControllerStep() {
 
 void CollisionVelocityFilter::obstacleHandler() {
   pthread_mutex_lock(&m_mutex);
-  if(!anti_collision_costmap_->initialized_) {
-    ROS_WARN("The local costmap isn't initialized, the robot will drive without obstacle avoidance!");
-    closest_obstacle_dist_ = influence_radius_;
-
-    pthread_mutex_unlock(&m_mutex);
-    return;
-  }
+//  if(!anti_collision_costmap_->initialized_) {
+//    ROS_WARN("The local costmap isn't initialized, the robot will drive without obstacle avoidance!");
+//    closest_obstacle_dist_ = influence_radius_;
+//
+//    pthread_mutex_unlock(&m_mutex);
+//    return;
+//  }
   closest_obstacle_dist_ = influence_radius_;
   pthread_mutex_unlock(&m_mutex);
 
@@ -543,6 +548,7 @@ void CollisionVelocityFilter::obstacleHandler() {
   pthread_mutex_unlock(&m_mutex);
 
   topic_pub_relevant_obstacles_.publish(relevant_obstacles_);
+  ROS_DEBUG_STREAM_NAMED("obstacleHandler", "closest_obstacle_dist_ = " << closest_obstacle_dist_);
 }
 
 // load robot footprint from costmap_2d_ros to keep same footprint format
