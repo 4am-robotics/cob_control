@@ -287,8 +287,12 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
         {
             if (params.frame_names.end() != str_it)
             {
-                Eigen::Vector3d collision_pnt_vector = it->nearest_point_frame_vector - it->frame_vector;
+//                Eigen::Vector3d collision_pnt_vector = it->nearest_point_frame_vector - it->frame_vector;
+                Eigen::Vector3d collision_pnt_vector = it->nearest_point_frame_vector;
+
                 Eigen::Vector3d distance_vec = it->nearest_point_frame_vector - it->nearest_point_obstacle_vector;
+
+                ROS_INFO_STREAM("Distance: " << sqrt(pow(distance_vec[0],2) + pow(distance_vec[1],2) + pow(distance_vec[1],2)));
 
                 // Create a skew-symm matrix as transformation between the segment root and the critical point.
                 Eigen::Matrix3d skew_symm;
