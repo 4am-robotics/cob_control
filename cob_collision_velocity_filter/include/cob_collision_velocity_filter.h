@@ -119,6 +119,8 @@ class CollisionVelocityFilter
     ///
     void readObstacles();
 
+    void costmapThread();
+
 
     ///
     /// @brief  Timer callback, calls GetFootprint Service and adjusts footprint
@@ -156,6 +158,8 @@ class CollisionVelocityFilter
     /// dynamic reconfigure
     dynamic_reconfigure::Server<cob_collision_velocity_filter::CollisionVelocityFilterConfig> dyn_server_;
     dynamic_reconfigure::Server<cob_collision_velocity_filter::CollisionVelocityFilterConfig>::CallbackType dynCB_;
+
+    boost::thread* costmap_thread_;
 
   private:
     /* core functions */
@@ -211,6 +215,8 @@ class CollisionVelocityFilter
     void stopMovement();
 
     pthread_mutex_t m_mutex;
+
+    costmap_2d::Costmap2D::mutex_t* costmap_mutex_;
 
     //obstacle_treshold
     int costmap_obstacle_treshold_;
