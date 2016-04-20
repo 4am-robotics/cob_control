@@ -98,7 +98,7 @@ class CollisionVelocityFilter
     ///
     /// @brief  Constructor
     ///
-    CollisionVelocityFilter();
+    CollisionVelocityFilter(costmap_2d::Costmap2DROS * costmap);
 
 
     ///
