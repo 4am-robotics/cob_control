@@ -73,9 +73,6 @@ CollisionVelocityFilter::CollisionVelocityFilter(costmap_2d::Costmap2DROS * cost
   // subscribe to twist-movement of teleop
   joystick_velocity_sub_ = nh_.subscribe<geometry_msgs::Twist>(teleop_topic, 10, &CollisionVelocityFilter::joystickVelocityCB, this);
 
-//  tf::TransformListener tf(ros::Duration(10));
-//  anti_collision_costmap_ = new costmap_2d::Costmap2DROS("anti_collision_costmap", tf);
-
   // create Timer and call getFootprint Service periodically
   double footprint_update_frequency;
   if(!nh_.hasParam("footprint_update_frequency")) ROS_WARN("Used default parameter for footprint_update_frequency [1.0 Hz].");
@@ -411,8 +408,8 @@ void CollisionVelocityFilter::obstacleHandler() {
 
   //find relevant obstacles
   pthread_mutex_lock(&m_mutex);
-  //relevant_obstacles_.header = last_costmap_received_.header;
-  //relevant_obstacles_.info = last_costmap_received_.info;
+  relevant_obstacles_.header.frame_id = global_frame_;
+  relevant_obstacles_.header.stamp = ros::Time::now();
   relevant_obstacles_.data.clear();
   for(unsigned int i = 0;
       i < anti_collision_costmap_->getCostmap()->getSizeInCellsX() * anti_collision_costmap_->getCostmap()->getSizeInCellsY();
