@@ -67,11 +67,8 @@ CollisionVelocityFilter::CollisionVelocityFilter(costmap_2d::Costmap2DROS * cost
   topic_pub_command_ = nh_.advertise<geometry_msgs::Twist>("command", 1);
   topic_pub_relevant_obstacles_ = nh_.advertise<nav_msgs::OccupancyGrid>("relevant_obstacles_grid", 1);
 
-  std::string teleop_topic;
-  if(!nh_.hasParam("teleop_topic")) ROS_WARN("Used default parameter for teleop_topic [teleop_twist]");
-  nh_.param("teleop_topic",teleop_topic, std::string("teleop_twist"));
   // subscribe to twist-movement of teleop
-  joystick_velocity_sub_ = nh_.subscribe<geometry_msgs::Twist>(teleop_topic, 10, &CollisionVelocityFilter::joystickVelocityCB, this);
+  joystick_velocity_sub_ = nh_.subscribe<geometry_msgs::Twist>("/base/collision_velocity_filter/command", 10, &CollisionVelocityFilter::joystickVelocityCB, this);
 
   // create Timer and call getFootprint Service periodically
   double footprint_update_frequency;
