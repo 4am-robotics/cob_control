@@ -131,7 +131,11 @@ public:
                             const uint32_t level);
 
   /// create a handle for this node, initialize node
+  //public
   ros::NodeHandle nh_;
+
+  //private
+  ros::NodeHandle pnh_;
 
   /// Timer for periodically calling GetFootprint Service
   ros::Timer get_footprint_timer_;
