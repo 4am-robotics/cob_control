@@ -68,7 +68,7 @@ CollisionVelocityFilter::CollisionVelocityFilter(costmap_2d::Costmap2DROS * cost
   topic_pub_relevant_obstacles_ = nh_.advertise<nav_msgs::OccupancyGrid>("relevant_obstacles_grid", 1);
 
   // subscribe to twist-movement of teleop
-  joystick_velocity_sub_ = nh_.subscribe<geometry_msgs::Twist>("/base/collision_velocity_filter/command", 10,
+  joystick_velocity_sub_ = nh_.subscribe<geometry_msgs::Twist>("command_in", 10,
                                                                &CollisionVelocityFilter::joystickVelocityCB, this);
 
   // create Timer and call getFootprint Service periodically
