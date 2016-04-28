@@ -121,7 +121,7 @@ class CollisionVelocityFilter
     ///
     /// @brief  Timer callback, calls GetFootprint Service and adjusts footprint
     ///
-    void getFootprintServiceCB(const ros::TimerEvent&);
+    void getFootprint(const ros::TimerEvent&);
 
     ///
     /// @brief  Dynamic reconfigure callback
@@ -144,9 +144,6 @@ class CollisionVelocityFilter
 
     /// declaration of subscriber
     ros::Subscriber joystick_velocity_sub_, obstacles_sub_;
-
-    /// declaration of service client
-    ros::ServiceClient srv_client_get_footprint_;
 
     /// dynamic reconfigure
     dynamic_reconfigure::Server<cob_collision_velocity_filter::CollisionVelocityFilterConfig> dyn_server_;
@@ -171,14 +168,6 @@ class CollisionVelocityFilter
 
 
     /* helper functions */
-
-    ///
-    /// @brief  loads the robot footprint published by the local costmap
-    /// @param  node - NodeHandle to the local costmap
-    /// @return footprint polygon as vector
-    ///
-    std::vector<geometry_msgs::Point> loadRobotFootprint(ros::NodeHandle node);
-
 
     ///
     /// @brief  returns the sign of x
