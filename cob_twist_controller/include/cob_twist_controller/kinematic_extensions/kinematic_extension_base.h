@@ -51,7 +51,7 @@ class KinematicExtensionBase
 
         virtual bool initExtension() = 0;
         virtual KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain) = 0;
-        virtual JointStates adjustJointStates(const JointStates& joint_states) = 0;
+        virtual JointStates adjustJointStates(const JointStates& joint_states, const geometry_msgs::Pose& pose, const KDL::Twist& twist) = 0;
         virtual LimiterParams adjustLimiterParams(const LimiterParams& limiter_params) = 0;
         virtual void processResultExtension(const KDL::JntArray& q_dot_ik) = 0;
 

@@ -86,7 +86,7 @@ KDL::Jacobian KinematicExtensionNone::adjustJacobian(const KDL::Jacobian& jac_ch
 /**
  * Method adjusting the JointStates used in inverse differential computation and limiters. No changes applied.
  */
-JointStates KinematicExtensionNone::adjustJointStates(const JointStates& joint_states)
+JointStates KinematicExtensionNone::adjustJointStates(const JointStates& joint_states, const geometry_msgs::Pose& pose, const KDL::Twist& twist)
 {
     return joint_states;
 }
