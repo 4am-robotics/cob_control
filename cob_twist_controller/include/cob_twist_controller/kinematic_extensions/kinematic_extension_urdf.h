@@ -55,7 +55,7 @@ class KinematicExtensionURDF : public KinematicExtensionBase
 
         bool initExtension();
         virtual KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain);
-        virtual JointStates adjustJointStates(const JointStates& joint_states);
+        virtual JointStates adjustJointStates(const JointStates& joint_states, const geometry_msgs::Pose& pose, const KDL::Twist& twist);
         virtual LimiterParams adjustLimiterParams(const LimiterParams& limiter_params);
         virtual void processResultExtension(const KDL::JntArray& q_dot_ik);
 

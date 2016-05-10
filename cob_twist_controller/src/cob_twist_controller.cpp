@@ -142,6 +142,7 @@ bool CobTwistController::initialize()
     {
         twist_controller_params_.frame_names.push_back(chain_.getSegment(i).getName());
     }
+
     register_link_client_ = nh_.serviceClient<cob_srvs::SetString>("/register_links");
     register_link_client_.waitForExistence(ros::Duration(5.0));
     twist_controller_params_.constraint_ca = CA_OFF;
@@ -388,6 +389,8 @@ void CobTwistController::solveTwist(KDL::Twist twist)
     }
 
     int ret_ik = p_inv_diff_kin_solver_->CartToJnt(this->joint_states_,
+                                                   pose_,
+                                                   twist_odometry_bl_,
                                                    twist,
                                                    q_dot_ik);
 
@@ -565,5 +568,7 @@ void CobTwistController::odometryCallback(const nav_msgs::Odometry::ConstPtr& ms
     // transform into chain_base
     twist_odometry_transformed_cb = cb_frame_bl * (twist_odometry_bl + tangential_twist_bl);
 
+    twist_odometry_bl_ = twist_odometry_bl;
     twist_odometry_cb_ = twist_odometry_transformed_cb;
+    pose_ = msg->pose.pose; // Needed for selfcollision avoidance in stack_of_tasks_solver.cpp
 }
