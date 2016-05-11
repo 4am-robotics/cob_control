@@ -69,6 +69,7 @@ public:
     void actionSuccess(const bool success, const std::string& message);
     void actionPreempt(const bool success, const std::string& message);
     void actionAbort(const bool success, const std::string& message);
+    bool initTrackingFrame();
 
     cob_cartesian_controller::CartesianActionStruct acceptGoal(boost::shared_ptr<const cob_cartesian_controller::CartesianControllerGoal> goal);
     cob_cartesian_controller::MoveLinStruct convertMoveLin(const cob_cartesian_controller::MoveLin& move_lin_msg);
