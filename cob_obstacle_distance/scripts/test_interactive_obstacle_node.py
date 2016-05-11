@@ -18,6 +18,7 @@ class InteractiveObstacle:
 
         #Specify a frame_id - transformation to root_frame of obstacle_distance node is handled in according subscriber callback
         self.root_frame = rospy.get_param("root_frame")
+        self.obstacle_frame = rospy.get_namespace() + "interactive_box_frame"
 
         self.pub = rospy.Publisher("obstacle_distance/registerObstacle", CollisionObject, queue_size=1, latch=True)
         self.br = tf.TransformBroadcaster()
@@ -31,7 +32,7 @@ class InteractiveObstacle:
         # Compose CollisionObject (Box)
         self.co = CollisionObject()
         self.co.id = "Interactive Box"
-        self.co.header.frame_id = "interactive_box_frame"
+        self.co.header.frame_id = self.obstacle_frame
         self.co.operation = CollisionObject.ADD
 
         primitive = SolidPrimitive()
@@ -111,7 +112,7 @@ class InteractiveObstacle:
         self.br.sendTransform(
             (self.interactive_obstacle_pose.pose.position.x, self.interactive_obstacle_pose.pose.position.y, self.interactive_obstacle_pose.pose.position.z),
             (self.interactive_obstacle_pose.pose.orientation.x, self.interactive_obstacle_pose.pose.orientation.y, self.interactive_obstacle_pose.pose.orientation.z, self.interactive_obstacle_pose.pose.orientation.w),
-             rospy.Time.now(), "interactive_box_frame", self.interactive_obstacle_pose.header.frame_id)
+             rospy.Time.now(), self.obstacle_frame, self.interactive_obstacle_pose.header.frame_id)
         rospy.sleep(1.0)
         self.pub.publish(self.co)
         rospy.sleep(1.0)
@@ -127,7 +128,7 @@ class InteractiveObstacle:
         self.br.sendTransform(
             (self.interactive_obstacle_pose.pose.position.x, self.interactive_obstacle_pose.pose.position.y, self.interactive_obstacle_pose.pose.position.z),
             (self.interactive_obstacle_pose.pose.orientation.x, self.interactive_obstacle_pose.pose.orientation.y, self.interactive_obstacle_pose.pose.orientation.z, self.interactive_obstacle_pose.pose.orientation.w),
-             rospy.Time.now(), "interactive_box_frame", self.interactive_obstacle_pose.header.frame_id)
+             rospy.Time.now(), self.obstacle_frame, self.interactive_obstacle_pose.header.frame_id)
 
         self.co.operation = CollisionObject.MOVE
         self.pub.publish(self.co)
