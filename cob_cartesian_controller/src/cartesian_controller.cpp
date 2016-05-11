@@ -82,7 +82,7 @@ bool CartesianController::initialize()
     as_->registerPreemptCallback(boost::bind(&CartesianController::preemptCallback, this));
     as_->start();
 
-    ROS_INFO("...done!");
+    ROS_INFO("Cartesian Controller running!");
     return true;
 }
 
@@ -91,6 +91,7 @@ bool CartesianController::startTracking()
 {
     bool success = false;
     cob_srvs::SetString start;
+
     start.request.data = target_frame_;
     if (!tracking_)
     {
@@ -113,10 +114,6 @@ bool CartesianController::startTracking()
         {
             ROS_ERROR("Failed to call service 'start_tracking'");
         }
-    }
-    else
-    {
-        ROS_WARN("Already tracking");
     }
 
     return success;
@@ -177,6 +174,9 @@ bool CartesianController::posePathBroadcaster(const geometry_msgs::PoseArray& ca
 
         tf_broadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), cartesian_path.header.frame_id, target_frame_));
 
+        // Activate Tracking
+        startTracking(); // Somehow the behavior changed.. we used to call this one before the first pose was published but this doesn't work anymore.
+
         ros::spinOnce();
         rate.sleep();
     }
@@ -204,12 +204,12 @@ void CartesianController::goalCallback()
         // Publish Preview
         utils_.previewPath(cartesian_path);
 
-        // Activate Tracking
-        if (!startTracking())
-        {
-            actionAbort(false, "Failed to start tracking");
-            return;
-        }
+//        // Activate Tracking
+//        if (!startTracking())
+//        {
+//            actionAbort(false, "Failed to start tracking");
+//            return;
+//        }
 
         // Execute path
         if (!posePathBroadcaster(cartesian_path))
@@ -238,12 +238,12 @@ void CartesianController::goalCallback()
         // Publish Preview
         utils_.previewPath(cartesian_path);
 
-        // Activate Tracking
-        if (!startTracking())
-        {
-            actionAbort(false, "Failed to start tracking");
-            return;
-        }
+//        // Activate Tracking
+//        if (!startTracking())
+//        {
+//            actionAbort(false, "Failed to start tracking");
+//            return;
+//        }
 
         // Execute path
         if (!posePathBroadcaster(cartesian_path))
@@ -354,4 +354,15 @@ void CartesianController::actionAbort(const bool success, const std::string& mes
     action_result_.message = message;
     as_->setAborted(action_result_, action_result_.message);
     stopTracking();
+}
+
+bool CartesianController::initTrackingFrame()
+{
+    tf::Transform tf;
+    tf.setOrigin(tf::Vector3(0, 0, 0));
+    tf.setRotation(tf::Quaternion(0,0,0,1));
+
+    tf_broadcaster_.sendTransform(tf::StampedTransform(tf, ros::Time::now(), root_frame_, target_frame_));
+
+    return true;
 }
