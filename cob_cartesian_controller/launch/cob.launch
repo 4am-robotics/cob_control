@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- controllers -->
+  <rosparam ns="arm_left" command="load" file="$(find cob_cartesian_controller)/config/cob_left_cartesian_controller.yaml" />
+  <rosparam ns="arm_right" command="load" file="$(find cob_cartesian_controller)/config/cob_right_cartesian_controller.yaml" />
+
+  <!-- Cartesian stuff -->
+
+  <node ns="arm_left" pkg="cob_cartesian_controller" type="cartesian_controller_node" name="cartesian_controller" output="screen">
+    <param name="target_frame" type="str" value="cartesian_target_left"/>
+  </node>
+  <node ns="arm_right" pkg="cob_cartesian_controller" type="cartesian_controller_node" name="cartesian_controller" output="screen">
+    <param name="target_frame" type="str" value="cartesian_target_right"/>
+  </node>
+
+  <!-- rviz visualization -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find cob_cartesian_controller)/launch/rviz_config.rviz" />
+
+</launch>
