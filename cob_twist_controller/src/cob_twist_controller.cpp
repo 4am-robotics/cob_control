@@ -195,7 +195,6 @@ bool CobTwistController::registerCollisionLinks()
         ROS_INFO_STREAM("Trying to register for " << *it);
         cob_srvs::SetString r;
         r.request.data = *it;
-
         if (register_link_client_.call(r))
         {
             ROS_INFO_STREAM("Called registration service with success: " << int(r.response.success) << ". Got message: " << r.response.message);
@@ -251,7 +250,6 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     twist_controller_params_.priority_jsa = config.priority_jsa;
     twist_controller_params_.k_H_jsa = config.k_H_jsa;
     twist_controller_params_.damping_jsa = config.damping_jsa;
-
 
 
     twist_controller_params_.constraint_ca = static_cast<ConstraintTypesCA>(config.constraint_ca);

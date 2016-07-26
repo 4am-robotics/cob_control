@@ -104,15 +104,13 @@ Eigen::MatrixXd StackOfTasksSolver::solve(const Vector6d_t& in_cart_velocities,
     {
         Eigen::MatrixXd J_task = it->task_jacobian_;
         Eigen::MatrixXd J_temp = J_task * projector_i;
-        Eigen::VectorXd v_task = it->task_; // Gradient
-
+        Eigen::VectorXd v_task = it->task_;
         Eigen::MatrixXd J_temp_inv = pinv_calc_.calculate(J_temp);
         q_i = q_i + J_temp_inv * (v_task - J_task * q_i);
         projector_i = projector_i - J_temp_inv * J_temp;
     }
 
     qdots_out.col(0) = q_i + projector_i * sum_of_gradient;
-
     return qdots_out;
 }
 
