@@ -38,7 +38,8 @@
  * The q_dot_0 results from the sum of the constraint cost function gradients. The terms of the sum are weighted with a factor k_H separately.
  */
 Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Vector6d_t& in_cart_velocities,
-                                                      const JointStates& joint_states)
+                                                      const JointStates& joint_states,
+                                                      bool &active_constraint)
 {
     Eigen::MatrixXd damped_pinv = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
     Eigen::MatrixXd pinv = pinv_calc_.calculate(this->jacobian_data_);
@@ -86,3 +87,4 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Vector6d_t& in_cart_
 
     return qdots_out;
 }
+

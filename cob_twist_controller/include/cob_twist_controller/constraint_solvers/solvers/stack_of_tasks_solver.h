@@ -62,7 +62,8 @@ class StackOfTasksSolver : public ConstraintSolver<>
          * See base class ConstraintSolver for more details on params and returns.
          */
         virtual Eigen::MatrixXd solve(const Vector6d_t& in_cart_velocities,
-                                      const JointStates& joint_states);
+                                      const JointStates& joint_states,
+                                      bool &active_constraint);
 
         /**
          * Process the state of the constraint and update the sum_of_gradient.

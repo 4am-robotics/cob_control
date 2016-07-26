@@ -140,7 +140,8 @@ class ConstraintBase : public PriorityBase<PRIO>
           prediction_value_(std::numeric_limits<double>::max()),
           last_value_(0.0),
           last_time_(ros::Time::now()),
-          last_pred_time_(ros::Time::now())
+          last_pred_time_(ros::Time::now()),
+          init_(false)
         {
             this->member_inst_cnt_ = instance_ctr_++;
         }
@@ -222,6 +223,8 @@ class ConstraintBase : public PriorityBase<PRIO>
         JointStates joint_states_;
         KDL::JntArrayVel jnts_prediction_;
         Matrix6Xd_t jacobian_data_;
+        Matrix6Xd_t jacobian_data_old_;
+        bool init_;
 
         double value_;
         double derivative_value_;

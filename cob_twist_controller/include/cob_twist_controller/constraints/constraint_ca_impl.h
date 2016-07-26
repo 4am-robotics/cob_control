@@ -408,7 +408,6 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calcPredictionValue()
                 jnts_prediction_chain.qdot(i) = this->jnts_prediction_.qdot(i);
             }
 
-
 //             ROS_INFO_STREAM("jnts_prediction_chain.q.rows: " << jnts_prediction_chain.q.rows());
 
             // Calculate prediction for the mainipulator
@@ -442,7 +441,6 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calcPredictionValue()
                 predicted_twist_odometry.rot.data[1] = 0;
                 predicted_twist_odometry.rot.data[2] = 0;
             }
-
 
             KDL::Twist twist = frame_vel.GetTwist() + predicted_twist_odometry;  // predicted frame twist
 

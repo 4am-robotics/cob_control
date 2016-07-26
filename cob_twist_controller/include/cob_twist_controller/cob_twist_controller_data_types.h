@@ -93,6 +93,12 @@ enum ConstraintTypesJLA
     JLA_INEQ_ON = cob_twist_controller::TwistController_JLA_INEQ,
 };
 
+enum ConstraintTypesJSA
+{
+    JSA_OFF = cob_twist_controller::TwistController_JSA_OFF,
+    JSA_ON = cob_twist_controller::TwistController_JSA,
+};
+
 enum ConstraintTypes
 {
     None,
@@ -100,6 +106,7 @@ enum ConstraintTypes
     JLA,
     JLA_MID,
     JLA_INEQ,
+    JSA,
 };
 
 enum LookatAxisTypes
@@ -201,6 +208,7 @@ struct TwistControllerParams
         integrator_smoothing(0.2),
 
         numerical_filtering(false),
+        singular_value_damping(true),
         damping_method(MANIPULABILITY),
         damping_factor(0.2),
         lambda_max(0.1),
@@ -208,6 +216,9 @@ struct TwistControllerParams
         beta(0.005),
         eps_damping(0.003),
         eps_truncation(0.001),
+        damping_delta(0.1),
+        damping_gain(0.02),
+        damping_slope(0.05),
 
         solver(GPM),
         priority_main(500),
@@ -222,6 +233,11 @@ struct TwistControllerParams
         priority_ca(100),
         damping_ca(0.000001),
         k_H_ca(2.0),
+
+        constraint_jsa(JSA_ON),
+        priority_jsa(50),
+        k_H_jsa(-10.0),
+        damping_jsa(0.000001),
 
         kinematic_extension(NO_EXTENSION),
         extension_ratio(0.0)
@@ -243,6 +259,7 @@ struct TwistControllerParams
     double integrator_smoothing;
 
     bool numerical_filtering;
+    bool singular_value_damping;
     DampingMethodTypes damping_method;
     double damping_factor;
     double lambda_max;
@@ -250,6 +267,9 @@ struct TwistControllerParams
     double beta;
     double eps_damping;
     double eps_truncation;
+    double damping_delta;
+    double damping_gain;
+    double damping_slope;
 
     SolverTypes solver;
     uint32_t priority_main;
@@ -267,6 +287,11 @@ struct TwistControllerParams
     double damping_jla;
     ConstraintThresholds thresholds_jla;
 
+    ConstraintTypesJSA constraint_jsa;
+    uint32_t priority_jsa;
+    double k_H_jsa;
+    double damping_jsa;
+
     LimiterParams limiter_params;
 
     KinematicExtensionTypes kinematic_extension;
@@ -278,6 +303,8 @@ struct TwistControllerParams
 
     // vector of links of the chain to be considered for collision avoidance
     std::vector<std::string> collision_check_links;
+
+    KDL::Chain chain;
 };
 
 enum EN_ConstraintStates

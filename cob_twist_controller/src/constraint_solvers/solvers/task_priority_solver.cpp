@@ -35,7 +35,8 @@
  * Maciejewski A., Obstacle Avoidance for Kinematically Redundant Manipulators in Dyn Varying Environments.
  */
 Eigen::MatrixXd TaskPrioritySolver::solve(const Vector6d_t& in_cart_velocities,
-                                          const JointStates& joint_states)
+                                          const JointStates& joint_states,
+                                          bool &active_constraint)
 {
     ros::Time now = ros::Time::now();
     double cycle = (now - this->last_time_).toSec();
@@ -99,4 +100,3 @@ Eigen::MatrixXd TaskPrioritySolver::solve(const Vector6d_t& in_cart_velocities,
     // Eigen::MatrixXd qdots_out = particular_solution + homogeneousSolution; // weighting with k_H is done in loop
     return qdots_out;
 }
-

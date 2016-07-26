@@ -128,14 +128,43 @@ KDL::Jacobian KinematicExtensionDOF::adjustJacobianDof(const KDL::Jacobian& jac_
     jac_ext(5, 5) = w_z_cb(2) * active_dim.rot_z;
 
     // scale with extension_ratio
-    jac_ext *= params_.extension_ratio;
+    double ext_ratio = params_.extension_ratio;
+//    double ext_ratio;
+//
+//    Eigen::JacobiSVD<Eigen::MatrixXd> svd(jac_chain.data, Eigen::ComputeThinU | Eigen::ComputeThinV);
+//    Eigen::VectorXd least_singular_value_manipulator = svd.singularValues();
+//
+//    // Formula 15 Singularity-robust Task-priority Redundandancy Resolution
+//    double least_singular_value = least_singular_value_manipulator(least_singular_value_manipulator.rows() - 1);
+//
+//    double min_least_singular_value = 0.005;// Find a good value
+//    if (least_singular_value < min_least_singular_value)
+//    {
+//        double lambda_quad = pow(params_.extension_ratio, 2.0);
+//        ext_ratio = sqrt( (1.0 - pow(least_singular_value / min_least_singular_value, 2.0)) * lambda_quad);
+//    }
+//    else
+//    {
+//        ext_ratio = 0.0;
+//    }
+
+    Eigen::MatrixXd prod = jac_chain.data * jac_chain.data.transpose();
+    double d = prod.determinant();
+    double w = std::sqrt(std::abs(d));
+
+    ROS_WARN_STREAM("w: " << w);
+    jac_ext *= ext_ratio;
 
     // combine Jacobian of primary chain and extension
     Matrix6Xd_t jac_full_matrix;
     jac_full_matrix.resize(6, jac_chain.data.cols() + jac_ext.cols());
-    jac_full_matrix << jac_chain.data, jac_ext;
+//    jac_full_matrix << jac_chain.data, jac_ext;
+    jac_full_matrix << jac_chain.data*(1-ext_ratio), jac_ext;
+
     jac_full.resize(jac_chain.data.cols() + jac_ext.cols());
     jac_full.data << jac_full_matrix;
+
+    ROS_INFO_STREAM("\n" << jac_full.data);
 
     return jac_full;
 }
@@ -297,6 +326,8 @@ void KinematicExtensionBaseActive::processResultExtension(const KDL::JntArray& q
     base_vel_msg.angular.x = (std::fabs(q_dot_ik(params_.dof+3)) < min_vel_rot_base_) ? 0.0 : q_dot_ik(params_.dof+3);
     base_vel_msg.angular.y = (std::fabs(q_dot_ik(params_.dof+4)) < min_vel_rot_base_) ? 0.0 : q_dot_ik(params_.dof+4);
     base_vel_msg.angular.z = (std::fabs(q_dot_ik(params_.dof+5)) < min_vel_rot_base_) ? 0.0 : q_dot_ik(params_.dof+5);
+
+
 
     base_vel_pub_.publish(base_vel_msg);
 }

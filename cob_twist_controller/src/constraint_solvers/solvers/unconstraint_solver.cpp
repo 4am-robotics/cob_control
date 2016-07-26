@@ -36,10 +36,10 @@
  * With the pseudo-inverse the joint velocity vector is calculated.
  */
 Eigen::MatrixXd UnconstraintSolver::solve(const Vector6d_t& in_cart_velocities,
-                                          const JointStates& joint_states)
+                                          const JointStates& joint_states,
+                                          bool &active_constraint)
 {
     Eigen::MatrixXd pinv = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
     Eigen::MatrixXd qdots_out = pinv * in_cart_velocities;
     return qdots_out;
 }
-

@@ -70,6 +70,13 @@ class CallbackDataMediator
         bool fill(ConstraintParamsJLA& params_jla);
 
         /**
+         * Special implementation for Joint Singularity Avoidance parameters.
+         * @param params_jsa Reference to JSA parameters.
+         * @return Success of filling parameters.
+         */
+        bool fill(ConstraintParamsJSA& params_jsa);
+
+        /**
          * Callback method that can be used by a ROS subscriber to a obstacle distance topic.
          * @param msg The published message containting obstacle distances.
          */

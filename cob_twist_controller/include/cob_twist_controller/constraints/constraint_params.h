@@ -109,6 +109,35 @@ class ConstraintParamsJLA : public ConstraintParamsBase
 };
 /* END ConstraintParamsJLA **************************************************************************************/
 
+
+/* BEGIN ConstraintParamsJSA ************************************************************************************/
+/// Class that represents the parameters for the Singularity Avoidance constraint.
+class ConstraintParamsJSA : public ConstraintParamsBase
+{
+    public:
+        ConstraintParamsJSA(const TwistControllerParams& params,
+                            const LimiterParams& limiter_params,
+                            const std::string& id = std::string()) :
+                ConstraintParamsBase(params, limiter_params, id),
+                joint_idx_(-1)
+        {}
+
+        ConstraintParamsJSA(const ConstraintParamsJLA& cpjsa) :
+                ConstraintParamsBase(cpjsa.tc_params_, cpjsa.limiter_params_, cpjsa.id_),
+                joint_(cpjsa.joint_),
+                joint_idx_(cpjsa.joint_idx_)
+        {}
+
+        virtual ~ConstraintParamsJSA()
+        {}
+
+        std::string joint_;
+        int32_t joint_idx_;
+};
+/* END ConstraintParamsJLA **************************************************************************************/
+
+
+
 typedef boost::shared_ptr<ConstraintParamsBase> ConstraintParamsBase_t;
 
 #endif  // COB_TWIST_CONTROLLER_CONSTRAINTS_CONSTRAINT_PARAMS_H

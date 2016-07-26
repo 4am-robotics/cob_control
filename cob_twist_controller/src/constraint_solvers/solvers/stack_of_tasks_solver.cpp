@@ -33,7 +33,8 @@
 #include "cob_twist_controller/task_stack/task_stack_controller.h"
 
 Eigen::MatrixXd StackOfTasksSolver::solve(const Vector6d_t& in_cart_velocities,
-                                          const JointStates& joint_states)
+                                          const JointStates& joint_states,
+                                          bool &active_constraint)
 {
     this->global_constraint_state_ = NORMAL;
     ros::Time now = ros::Time::now();
@@ -86,10 +87,12 @@ Eigen::MatrixXd StackOfTasksSolver::solve(const Vector6d_t& in_cart_velocities,
     if (CRITICAL == this->global_constraint_state_)
     {
         this->in_cart_vel_damping_ = START_CNT;
+        active_constraint = true;
     }
     else
     {
         this->in_cart_vel_damping_ = this->in_cart_vel_damping_ > 1.0 ? (this->in_cart_vel_damping_ - 1.0) : 1.0;
+        active_constraint = false;
     }
 
     const Vector6d_t scaled_in_cart_velocities = (1.0 / pow(this->in_cart_vel_damping_, 2.0)) * in_cart_velocities;
@@ -104,13 +107,15 @@ Eigen::MatrixXd StackOfTasksSolver::solve(const Vector6d_t& in_cart_velocities,
     {
         Eigen::MatrixXd J_task = it->task_jacobian_;
         Eigen::MatrixXd J_temp = J_task * projector_i;
-        Eigen::VectorXd v_task = it->task_;
+        Eigen::VectorXd v_task = it->task_; // Gradient
+
         Eigen::MatrixXd J_temp_inv = pinv_calc_.calculate(J_temp);
         q_i = q_i + J_temp_inv * (v_task - J_task * q_i);
         projector_i = projector_i - J_temp_inv * J_temp;
     }
 
     qdots_out.col(0) = q_i + projector_i * sum_of_gradient;
+
     return qdots_out;
 }
 
