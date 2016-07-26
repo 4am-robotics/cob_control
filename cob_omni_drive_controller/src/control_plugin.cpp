@@ -91,7 +91,7 @@ private:
         ros::Time stamp;
     } target_;
 
-    std::vector<UndercarriageCtrl::WheelState> wheel_commands_;
+    std::vector<UndercarriageCtrl::WheelCommand> wheel_commands_;
 
     boost::mutex mutex_;
     ros::Subscriber twist_subscriber_;
