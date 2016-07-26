@@ -99,3 +99,4 @@ Eigen::MatrixXd TaskPrioritySolver::solve(const Vector6d_t& in_cart_velocities,
     // Eigen::MatrixXd qdots_out = particular_solution + homogeneousSolution; // weighting with k_H is done in loop
     return qdots_out;
 }
+

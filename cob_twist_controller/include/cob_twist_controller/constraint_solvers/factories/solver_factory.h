@@ -33,7 +33,6 @@
 #include <Eigen/Core>
 #include <Eigen/SVD>
 #include <kdl/jntarray.hpp>
-#include <eigen_conversions/eigen_kdl.h>
 
 #include "cob_twist_controller/damping_methods/damping_base.h"
 #include "cob_twist_controller/constraints/constraint_base.h"
@@ -89,9 +88,7 @@ class SolverFactory : public ISolverFactory
             constraint_solver_->setJacobianData(jacobian_data);
             constraint_solver_->setConstraints(constraints);
             constraint_solver_->setDamping(damping_method);
-
             Eigen::MatrixXd new_q_dot = constraint_solver_->solve(in_cart_velocities, joint_states);
-
             return new_q_dot;
         }
 

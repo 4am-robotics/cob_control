@@ -60,4 +60,3 @@ Eigen::MatrixXd WeightedLeastNormSolver::calculateWeighting(const JointStates& j
     Eigen::VectorXd weighting = Eigen::VectorXd::Ones(cols);
     return weighting.asDiagonal();
 }
-

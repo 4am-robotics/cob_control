@@ -42,3 +42,4 @@ Eigen::MatrixXd UnconstraintSolver::solve(const Vector6d_t& in_cart_velocities,
     Eigen::MatrixXd qdots_out = pinv * in_cart_velocities;
     return qdots_out;
 }
+

@@ -86,4 +86,3 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Vector6d_t& in_cart_
 
     return qdots_out;
 }
-
