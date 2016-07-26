@@ -33,8 +33,7 @@
 #include "cob_twist_controller/task_stack/task_stack_controller.h"
 
 Eigen::MatrixXd StackOfTasksSolver::solve(const Vector6d_t& in_cart_velocities,
-                                          const JointStates& joint_states,
-                                          bool &active_constraint)
+                                          const JointStates& joint_states)
 {
     this->global_constraint_state_ = NORMAL;
     ros::Time now = ros::Time::now();
@@ -87,12 +86,10 @@ Eigen::MatrixXd StackOfTasksSolver::solve(const Vector6d_t& in_cart_velocities,
     if (CRITICAL == this->global_constraint_state_)
     {
         this->in_cart_vel_damping_ = START_CNT;
-        active_constraint = true;
     }
     else
     {
         this->in_cart_vel_damping_ = this->in_cart_vel_damping_ > 1.0 ? (this->in_cart_vel_damping_ - 1.0) : 1.0;
-        active_constraint = false;
     }
 
     const Vector6d_t scaled_in_cart_velocities = (1.0 / pow(this->in_cart_vel_damping_, 2.0)) * in_cart_velocities;

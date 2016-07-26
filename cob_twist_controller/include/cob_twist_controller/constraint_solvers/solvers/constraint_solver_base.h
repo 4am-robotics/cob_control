@@ -52,8 +52,7 @@ class ConstraintSolver
          * @return The calculated new joint velocities.
          */
         virtual Eigen::MatrixXd solve(const Vector6d_t& in_cart_velocities,
-                                      const JointStates& joint_states,
-                                      bool &active_constraint) = 0;
+                                      const JointStates& joint_states) = 0;
 
         /**
          * Inline method to set the damping

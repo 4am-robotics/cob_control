@@ -90,15 +90,13 @@ class SolverFactory : public ISolverFactory
             constraint_solver_->setConstraints(constraints);
             constraint_solver_->setDamping(damping_method);
 
-            bool active_constraint = false;
-            Eigen::MatrixXd new_q_dot = constraint_solver_->solve(in_cart_velocities, joint_states, active_constraint);
+            Eigen::MatrixXd new_q_dot = constraint_solver_->solve(in_cart_velocities, joint_states);
 
             return new_q_dot;
         }
 
     private:
         boost::shared_ptr<T> constraint_solver_;
-        JointStates joint_states_backup_;
 };
 
 #endif  // COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_FACTORIES_SOLVER_FACTORY_H
