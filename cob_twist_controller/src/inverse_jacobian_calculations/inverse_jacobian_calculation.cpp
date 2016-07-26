@@ -68,6 +68,7 @@ Eigen::MatrixXd PInvBySVD::calculate(const TwistControllerParams& params,
     Eigen::VectorXd singularValues = svd.singularValues();
     Eigen::VectorXd singularValuesInv = Eigen::VectorXd::Zero(singularValues.rows());
     double lambda = db->getDampingFactor(singularValues, jacobian);
+    Eigen::MatrixXd result;
 
     if (params.numerical_filtering)
     {
@@ -81,6 +82,24 @@ Eigen::MatrixXd PInvBySVD::calculate(const TwistControllerParams& params,
         // Formula 20 - additional part - numerical filtering for least singular value m
         uint32_t m = singularValues.rows();
         singularValuesInv(m) = singularValues(m) / (pow(singularValues(m), 2) + pow(params.beta, 2) + pow(lambda, 2));
+
+        result = svd.matrixV() * singularValuesInv.asDiagonal() * svd.matrixU().transpose();
+    }
+    else if(params.singular_value_damping)
+    {
+        Eigen::VectorXd lambda_vec = Eigen::VectorXd::Zero(singularValues.size());
+
+        Eigen::MatrixXd S = Eigen::MatrixXd::Zero(singularValues.size(),singularValues.size());
+
+        for(unsigned i = 0; i < singularValues.size(); i++)
+        {
+            lambda_vec(i) = params.damping_gain /( 1+ exp(static_cast <double>(singularValues(i)) + params.damping_delta) / params.damping_slope);
+            S(i,i) = singularValues(i)/(pow(static_cast <double>(singularValues(i)),2) + lambda_vec(i));
+        }
+
+        ROS_INFO_STREAM("S: \n" << S);
+        ROS_INFO_STREAM("lambda: \n" << lambda_vec);
+        result = svd.matrixV() * S * svd.matrixU().transpose();
     }
     else
     {
@@ -98,9 +117,11 @@ Eigen::MatrixXd PInvBySVD::calculate(const TwistControllerParams& params,
         //       // damping is disabled due to damping factor lower than a const. limit
         //       singularValues(i) = (singularValues(i) < eps_truncation) ? 0.0 : 1.0 / singularValues(i);
         // }
+
+        result = svd.matrixV() * singularValuesInv.asDiagonal() * svd.matrixU().transpose();
     }
 
-    Eigen::MatrixXd result = svd.matrixV() * singularValuesInv.asDiagonal() * svd.matrixU().transpose();
+//    Eigen::MatrixXd result = svd.matrixV() * singularValuesInv.asDiagonal() * svd.matrixU().transpose();
 
     return result;
 }

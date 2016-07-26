@@ -69,3 +69,4 @@ Eigen::MatrixXd WLN_JointLimitAvoidanceSolver::calculateWeighting(const JointSta
 
     return weighting.asDiagonal();
 }
+

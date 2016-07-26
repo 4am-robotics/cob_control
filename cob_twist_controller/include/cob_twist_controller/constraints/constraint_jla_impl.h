@@ -224,9 +224,13 @@ void JointLimitAvoidance<T_PARAMS, PRIO>::calcPartialValues()
     const double max_delta = (limits_max - joint_pos);
     const double nominator = (2.0 * joint_pos - limits_min - limits_max) * (limits_max - limits_min) * (limits_max - limits_min);
     const double denom = 4.0 * min_delta * min_delta * max_delta * max_delta;
+//    const double denom = min_delta * min_delta * max_delta * max_delta;
+
+
 
     partial_values(this->constraint_params_.joint_idx_) = std::abs(denom) > ZERO_THRESHOLD ? nominator / denom : nominator / DIV0_SAFE;
     this->partial_values_ = partial_values;
+
 }
 /* END JointLimitAvoidance **************************************************************************************/
 
@@ -523,6 +527,7 @@ void JointLimitAvoidanceIneq<T_PARAMS, PRIO>::calcValue()
 
     this->last_value_ = this->value_;
     this->value_ = (limit_max - joint_pos) * (joint_pos - limit_min);
+
 }
 
 /// Simple first order differential equation for exponential increase (move away from limit!)

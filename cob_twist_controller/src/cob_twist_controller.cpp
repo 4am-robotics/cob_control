@@ -88,6 +88,8 @@ bool CobTwistController::initialize()
         return false;
     }
 
+    twist_controller_params_.chain = chain_;
+
     /// parse robot_description and set velocity limits
     urdf::Model model;
     if (!model.initParam("/robot_description"))
@@ -193,6 +195,7 @@ bool CobTwistController::registerCollisionLinks()
         ROS_INFO_STREAM("Trying to register for " << *it);
         cob_srvs::SetString r;
         r.request.data = *it;
+
         if (register_link_client_.call(r))
         {
             ROS_INFO_STREAM("Called registration service with success: " << int(r.response.success) << ". Got message: " << r.response.message);
@@ -219,12 +222,16 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     twist_controller_params_.integrator_smoothing = config.integrator_smoothing;
 
     twist_controller_params_.numerical_filtering = config.numerical_filtering;
+    twist_controller_params_.singular_value_damping = config.singular_value_damping;
     twist_controller_params_.damping_method = static_cast<DampingMethodTypes>(config.damping_method);
     twist_controller_params_.damping_factor = config.damping_factor;
     twist_controller_params_.lambda_max = config.lambda_max;
     twist_controller_params_.w_threshold = config.w_threshold;
     twist_controller_params_.beta = config.beta;
     twist_controller_params_.eps_damping = config.eps_damping;
+    twist_controller_params_.damping_delta = config.damping_delta;
+    twist_controller_params_.damping_gain = config.damping_gain;
+    twist_controller_params_.damping_slope = config.damping_slope;
 
     twist_controller_params_.solver = static_cast<SolverTypes>(config.solver);
     twist_controller_params_.priority_main = config.priority;
@@ -239,6 +246,13 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     twist_controller_params_.thresholds_jla.activation_with_buffer = twist_controller_params_.thresholds_jla.activation * (1.0 + activation_buffer_jla_in_percent / 100.0);
     twist_controller_params_.thresholds_jla.critical =  critical_jla_in_percent / 100.0;
     twist_controller_params_.damping_jla = config.damping_jla;
+
+    twist_controller_params_.constraint_jsa = static_cast<ConstraintTypesJSA>(config.constraint_jsa);
+    twist_controller_params_.priority_jsa = config.priority_jsa;
+    twist_controller_params_.k_H_jsa = config.k_H_jsa;
+    twist_controller_params_.damping_jsa = config.damping_jsa;
+
+
 
     twist_controller_params_.constraint_ca = static_cast<ConstraintTypesCA>(config.constraint_ca);
     twist_controller_params_.priority_ca = config.priority_ca;
