@@ -1,7 +1,16 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(cob_collision_velocity_filter)
 
-find_package(catkin REQUIRED COMPONENTS cob_footprint_observer dynamic_reconfigure geometry_msgs nav_msgs roscpp tf visualization_msgs)
+find_package(catkin REQUIRED COMPONENTS
+  cob_footprint_observer
+  costmap_2d
+  dynamic_reconfigure
+  geometry_msgs
+  nav_msgs
+  roscpp
+  tf
+  visualization_msgs
+)
 
 find_package(Boost REQUIRED)
 

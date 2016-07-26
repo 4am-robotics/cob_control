@@ -16,6 +16,7 @@
 
   <depend>boost</depend>
   <depend>cob_footprint_observer</depend>
+  <depend>costmap_2d</depend>
   <depend>dynamic_reconfigure</depend>
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
