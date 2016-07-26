@@ -31,8 +31,12 @@ add_library(cob_omni_drive_controller src/odom_plugin.cpp src/control_plugin.cpp
 add_dependencies(cob_omni_drive_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cob_omni_drive_controller cob_omni_drive_geom ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
+add_executable(cob_omni_drive_stuck_detector src/stuck_detector.cpp)
+add_dependencies(cob_omni_drive_stuck_detector ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(cob_omni_drive_stuck_detector ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
 ### INSTALL ###
-install(TARGETS cob_omni_drive_geom cob_omni_drive_controller
+install(TARGETS cob_omni_drive_geom cob_omni_drive_controller cob_omni_drive_stuck_detector
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -44,4 +48,8 @@ install(FILES controller_plugins.xml
 
 install(DIRECTORY include/${PROJECT_NAME}/
  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
+
+install(DIRECTORY launch
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
