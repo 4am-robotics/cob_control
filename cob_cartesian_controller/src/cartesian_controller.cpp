@@ -91,7 +91,6 @@ bool CartesianController::startTracking()
 {
     bool success = false;
     cob_srvs::SetString start;
-
     start.request.data = target_frame_;
     if (!tracking_)
     {
