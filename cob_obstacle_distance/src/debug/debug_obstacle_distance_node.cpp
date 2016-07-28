@@ -93,7 +93,6 @@ public:
             marker_vector.id = 42;
             marker_vector.header.frame_id = chain_base_link_;
 
-
             marker_vector.scale.x = 0.01;
             marker_vector.scale.y = 0.05;
 

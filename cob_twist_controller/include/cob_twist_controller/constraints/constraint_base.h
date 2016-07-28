@@ -259,7 +259,7 @@ class ConstraintBase : public PriorityBase<PRIO>
             adapted_params.damping_method = CONSTANT;
             adapted_params.damping_factor = const_damping_factor;
             adapted_params.eps_truncation = 0.0;
-            adapted_params.numerical_filtering = false;
+//            adapted_params.numerical_filtering = false;
             return adapted_params;
         }
 };

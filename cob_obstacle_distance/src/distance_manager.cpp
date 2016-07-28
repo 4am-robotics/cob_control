@@ -90,7 +90,7 @@ int DistanceManager::init()
         return -1;
     }
 
-    if(!nh_.getParam("/arm_left/joint_names", this->joints_))
+    if(!nh_.getParam("joint_names", this->joints_))
     {
         ROS_ERROR("Failed to get parameter \"joint_names\".");
         return -2;

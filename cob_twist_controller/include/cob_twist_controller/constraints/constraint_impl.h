@@ -124,24 +124,6 @@ std::set<ConstraintBase_t> ConstraintsBuilder<PRIO>::createConstraints(const Twi
         // So the log would be filled unnecessarily.
     }
 
-    // Joint Singularity Avoidance
-    if (JSA_ON == tc_params.constraint_jsa)
-    {
-        typedef JointSingularityAvoidance<ConstraintParamsJSA, PRIO> Jsa_t;
-
-        ConstraintParamsJSA params = ConstraintParamFactory<ConstraintParamsJSA>::createConstraintParams(tc_params, limiter_params, data_mediator);
-        uint32_t startPrio = 20; // Todo
-
-
-        // TODO: take care PRIO could be of different type than UINT32
-        params.joint_ = tc_params.joints[tc_params.joints.size()-1];
-        params.joint_idx_ = static_cast<int32_t>(tc_params.joints.size()-1);
-        // copy of params will be created; priority increased with each joint.
-        boost::shared_ptr<Jsa_t > jsa(new Jsa_t(startPrio++, params, data_mediator, fk_solver_vel));
-        constraints.insert(boost::static_pointer_cast<PriorityBase<PRIO> >(jsa));
-
-    }
-
     return constraints;
 }
 /* END ConstraintsBuilder *******************************************************************************************/
@@ -151,8 +133,5 @@ std::set<ConstraintBase_t> ConstraintsBuilder<PRIO>::createConstraints(const Twi
 
 // Joint Limit Avoidance Constraint Implementation
 #include "cob_twist_controller/constraints/constraint_jla_impl.h"
-
-// Joint Limit Avoidance Constraint Implementation
-#include "cob_twist_controller/constraints/constraint_jsa_impl.h"
 
 #endif  // COB_TWIST_CONTROLLER_CONSTRAINTS_CONSTRAINT_IMPL_H

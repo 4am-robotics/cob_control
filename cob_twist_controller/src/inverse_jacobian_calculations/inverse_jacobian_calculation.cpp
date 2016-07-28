@@ -43,6 +43,8 @@ Eigen::MatrixXd PInvBySVD::calculate(const Eigen::MatrixXd& jacobian) const
     Eigen::VectorXd singularValuesInv = Eigen::VectorXd::Zero(singularValues.rows());
 
     // small change to ref: here quadratic damping due to Control of Redundant Robot Manipulators : R.V. Patel, 2005, Springer [Page 13-14]
+
+    //ToDo: Test this
     for (uint32_t i = 0; i < singularValues.rows(); ++i)
     {
         double denominator = singularValues(i) * singularValues(i);
@@ -70,58 +72,63 @@ Eigen::MatrixXd PInvBySVD::calculate(const TwistControllerParams& params,
     double lambda = db->getDampingFactor(singularValues, jacobian);
     Eigen::MatrixXd result;
 
-    if (params.numerical_filtering)
+    switch(params.singularity_avoidance)
     {
-        // Formula 20 Singularity-robust Task-priority Redundandancy Resolution
-        // Sum part
-        for (uint32_t i = 0; i < singularValues.rows()-1; ++i)
+        case(SA_NF):
         {
-            // pow(beta, 2) << pow(lambda, 2)
-            singularValuesInv(i) = singularValues(i) / (pow(singularValues(i), 2) + pow(params.beta, 2));
+            // Formula 20 Singularity-robust Task-priority Redundandancy Resolution
+            // Sum part
+            for (uint32_t i = 0; i < singularValues.rows()-1; ++i)
+            {
+                // pow(beta, 2) << pow(lambda, 2)
+                singularValuesInv(i) = singularValues(i) / (pow(singularValues(i), 2) + pow(params.beta, 2));
+            }
+            // Formula 20 - additional part - numerical filtering for least singular value m
+            uint32_t m = singularValues.rows()-1;
+            singularValuesInv(m) = singularValues(m) / (pow(singularValues(m), 2) + pow(params.beta, 2) + pow(lambda, 2));
+
+            result = svd.matrixV() * singularValuesInv.asDiagonal() * svd.matrixU().transpose();
+            break;
         }
-        // Formula 20 - additional part - numerical filtering for least singular value m
-        uint32_t m = singularValues.rows();
-        singularValuesInv(m) = singularValues(m) / (pow(singularValues(m), 2) + pow(params.beta, 2) + pow(lambda, 2));
-
-        result = svd.matrixV() * singularValuesInv.asDiagonal() * svd.matrixU().transpose();
-    }
-    else if(params.singular_value_damping)
-    {
-        Eigen::VectorXd lambda_vec = Eigen::VectorXd::Zero(singularValues.size());
-
-        Eigen::MatrixXd S = Eigen::MatrixXd::Zero(singularValues.size(),singularValues.size());
-
-        for(unsigned i = 0; i < singularValues.size(); i++)
+        case(SA_SR):
         {
-            lambda_vec(i) = params.damping_gain /( 1+ exp(static_cast <double>(singularValues(i)) + params.damping_delta) / params.damping_slope);
-            S(i,i) = singularValues(i)/(pow(static_cast <double>(singularValues(i)),2) + lambda_vec(i));
-        }
+            Eigen::VectorXd lambda_vec = Eigen::VectorXd::Zero(singularValues.size());
 
-        ROS_INFO_STREAM("S: \n" << S);
-        ROS_INFO_STREAM("lambda: \n" << lambda_vec);
-        result = svd.matrixV() * S * svd.matrixU().transpose();
-    }
-    else
-    {
-        // small change to ref: here quadratic damping due to Control of Redundant Robot Manipulators : R.V. Patel, 2005, Springer [Page 13-14]
-        for (uint32_t i = 0; i < singularValues.rows(); ++i)
+            Eigen::MatrixXd S = Eigen::MatrixXd::Zero(singularValues.size(),singularValues.size());
+
+            for(unsigned i = 0; i < singularValues.size(); i++)
+            {
+                lambda_vec(i) = params.damping_gain /( 1+ exp(static_cast <double>(singularValues(i)) + params.damping_delta) / params.damping_slope);
+                S(i,i) = singularValues(i)/(pow(static_cast <double>(singularValues(i)),2) + lambda_vec(i));
+            }
+
+            result = svd.matrixV() * S * svd.matrixU().transpose();
+            break;
+        }
+        case(SA_QD):
         {
-            double denominator = (singularValues(i) * singularValues(i) + pow(lambda, 2) );
-            // singularValuesInv(i) = (denominator < eps_truncation) ? 0.0 : singularValues(i) / denominator;
-            singularValuesInv(i) = (singularValues(i) < eps_truncation) ? 0.0 : singularValues(i) / denominator;
+            for (uint32_t i = 0; i < singularValues.rows(); ++i)
+            {
+                double denominator = singularValues(i) * singularValues(i);
+                singularValuesInv(i) = (singularValues(i) < eps_truncation) ? 0.0 : singularValues(i) / denominator;
+            }
+
+            result = svd.matrixV() * singularValuesInv.asDiagonal() * svd.matrixU().transpose();
+            break;
         }
+        case(SA_QD_EXTENDED):
+        {
+            // small change to ref: here quadratic damping due to Control of Redundant Robot Manipulators : R.V. Patel, 2005, Springer [Page 13-14]
+            for (uint32_t i = 0; i < singularValues.rows(); ++i)
+            {
+                double denominator = (singularValues(i) * singularValues(i) + pow(lambda, 2) );
+                // singularValuesInv(i) = (denominator < eps_truncation) ? 0.0 : singularValues(i) / denominator;
+                singularValuesInv(i) = (singularValues(i) < eps_truncation) ? 0.0 : singularValues(i) / denominator;
+            }
 
-        //// Formula from Advanced Robotics : Redundancy and Optimization : Nakamura, Yoshihiko, 1991, Addison-Wesley Pub. Co [Page 258-260]
-        // for(uint32_t i = 0; i < singularValues.rows(); ++i)
-        // {
-        //       // damping is disabled due to damping factor lower than a const. limit
-        //       singularValues(i) = (singularValues(i) < eps_truncation) ? 0.0 : 1.0 / singularValues(i);
-        // }
-
-        result = svd.matrixV() * singularValuesInv.asDiagonal() * svd.matrixU().transpose();
+            result = svd.matrixV() * singularValuesInv.asDiagonal() * svd.matrixU().transpose();
+        }
     }
-
-//    Eigen::MatrixXd result = svd.matrixV() * singularValuesInv.asDiagonal() * svd.matrixU().transpose();
 
     return result;
 }

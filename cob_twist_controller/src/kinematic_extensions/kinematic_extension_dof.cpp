@@ -230,13 +230,7 @@ JointStates KinematicExtensionBaseActive::adjustJointStates(const JointStates& j
         js.current_q_dot_(i) = joint_states.current_q_dot_(i);
         js.last_q_dot_(i) = joint_states.last_q_dot_(i);
     }
-//    for (unsigned int i = 0; i < ext_dof_; i++)
-//    {
-//        js.current_q_(chain_dof + i) = 0.0;
-//        js.last_q_(chain_dof + i) = 0.0;
-//        js.current_q_dot_(chain_dof + i) = 0.0;
-//        js.last_q_dot_(chain_dof + i) = 0.0;
-//    }
+
     double roll, pitch, yaw;
     tf::Quaternion q;
     q.setW(pose.orientation.w);
@@ -290,7 +284,6 @@ LimiterParams KinematicExtensionBaseActive::adjustLimiterParams(const LimiterPar
 void KinematicExtensionBaseActive::processResultExtension(const KDL::JntArray& q_dot_ik)
 {
     geometry_msgs::Twist base_vel_msg;
-
     base_vel_msg.linear.x = (std::fabs(q_dot_ik(params_.dof)) < min_vel_lin_base_) ? 0.0 : q_dot_ik(params_.dof);
     base_vel_msg.linear.y = (std::fabs(q_dot_ik(params_.dof+1)) < min_vel_lin_base_) ? 0.0 : q_dot_ik(params_.dof+1);
     base_vel_msg.linear.z = (std::fabs(q_dot_ik(params_.dof+2)) < min_vel_lin_base_) ? 0.0 : q_dot_ik(params_.dof+2);
