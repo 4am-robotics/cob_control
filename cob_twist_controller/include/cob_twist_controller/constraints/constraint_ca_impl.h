@@ -298,8 +298,6 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
                                  collision_pnt_vector.y(), -collision_pnt_vector.x(),  0.0;
 
                 Eigen::Matrix3d ident = Eigen::Matrix3d::Identity();
-
-                // ToDo: dynamic matrix size for Base Active mode.
                 Eigen::Matrix<double, 6, 6> T;
                 T.block(0, 0, 3, 3) << ident;
                 T.block(0, 3, 3, 3) << skew_symm;
@@ -398,8 +396,6 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calcPredictionValue()
         {
             uint32_t frame_number = (str_it - params.frame_names.begin()) + 1;  // segment nr not index represents frame number
             KDL::FrameVel frame_vel;
-            ROS_WARN_STREAM("frame_number" << frame_number);
-            // ToDo: the fk_solver_vel_ is only initialized for the primary chain - kinematic extensions cannot be considered yet!
             KDL::JntArrayVel jnts_prediction_chain(params.dof);
 
             for (unsigned int i = 0; i < params.dof; i++)
@@ -407,9 +403,6 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calcPredictionValue()
                 jnts_prediction_chain.q(i) = this->jnts_prediction_.q(i);
                 jnts_prediction_chain.qdot(i) = this->jnts_prediction_.qdot(i);
             }
-
-
-//             ROS_INFO_STREAM("jnts_prediction_chain.q.rows: " << jnts_prediction_chain.q.rows());
 
             // Calculate prediction for the mainipulator
             int error = this->fk_solver_vel_.JntToCart(jnts_prediction_chain, frame_vel, frame_number);

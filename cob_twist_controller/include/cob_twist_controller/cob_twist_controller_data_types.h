@@ -70,6 +70,14 @@ enum KinematicExtensionTypes
     LOOKAT = cob_twist_controller::TwistController_LOOKAT
 };
 
+enum SingularityAvoidanceTypes
+{
+    SA_QD_EXTENDED = cob_twist_controller::TwistController_SA_QD_EXTENDED,
+    SA_NF = cob_twist_controller::TwistController_SA_NF,
+    SA_SR = cob_twist_controller::TwistController_SA_SR,
+    SA_QD = cob_twist_controller::TwistController_SA_QD,
+};
+
 enum SolverTypes
 {
     DEFAULT_SOLVER = cob_twist_controller::TwistController_DEFAULT_SOLVER,
@@ -93,12 +101,6 @@ enum ConstraintTypesJLA
     JLA_INEQ_ON = cob_twist_controller::TwistController_JLA_INEQ,
 };
 
-enum ConstraintTypesJSA
-{
-    JSA_OFF = cob_twist_controller::TwistController_JSA_OFF,
-    JSA_ON = cob_twist_controller::TwistController_JSA,
-};
-
 enum ConstraintTypes
 {
     None,
@@ -106,7 +108,6 @@ enum ConstraintTypes
     JLA,
     JLA_MID,
     JLA_INEQ,
-    JSA,
 };
 
 enum LookatAxisTypes
@@ -207,8 +208,7 @@ struct TwistControllerParams
         controller_interface(VELOCITY_INTERFACE),
         integrator_smoothing(0.2),
 
-        numerical_filtering(false),
-        singular_value_damping(true),
+        singularity_avoidance(SA_SR),
         damping_method(MANIPULABILITY),
         damping_factor(0.2),
         lambda_max(0.1),
@@ -234,11 +234,6 @@ struct TwistControllerParams
         damping_ca(0.000001),
         k_H_ca(2.0),
 
-        constraint_jsa(JSA_ON),
-        priority_jsa(50),
-        k_H_jsa(-10.0),
-        damping_jsa(0.000001),
-
         kinematic_extension(NO_EXTENSION),
         extension_ratio(0.0)
     {
@@ -258,8 +253,7 @@ struct TwistControllerParams
     ControllerInterfaceTypes controller_interface;
     double integrator_smoothing;
 
-    bool numerical_filtering;
-    bool singular_value_damping;
+    SingularityAvoidanceTypes singularity_avoidance;
     DampingMethodTypes damping_method;
     double damping_factor;
     double lambda_max;
@@ -286,11 +280,6 @@ struct TwistControllerParams
     double k_H_jla;
     double damping_jla;
     ConstraintThresholds thresholds_jla;
-
-    ConstraintTypesJSA constraint_jsa;
-    uint32_t priority_jsa;
-    double k_H_jsa;
-    double damping_jsa;
 
     LimiterParams limiter_params;
 

@@ -220,8 +220,7 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     twist_controller_params_.controller_interface = static_cast<ControllerInterfaceTypes>(config.controller_interface);
     twist_controller_params_.integrator_smoothing = config.integrator_smoothing;
 
-    twist_controller_params_.numerical_filtering = config.numerical_filtering;
-    twist_controller_params_.singular_value_damping = config.singular_value_damping;
+    twist_controller_params_.singularity_avoidance = static_cast<SingularityAvoidanceTypes>(config.singularity_avoidance);
     twist_controller_params_.damping_method = static_cast<DampingMethodTypes>(config.damping_method);
     twist_controller_params_.damping_factor = config.damping_factor;
     twist_controller_params_.lambda_max = config.lambda_max;
@@ -245,12 +244,6 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     twist_controller_params_.thresholds_jla.activation_with_buffer = twist_controller_params_.thresholds_jla.activation * (1.0 + activation_buffer_jla_in_percent / 100.0);
     twist_controller_params_.thresholds_jla.critical =  critical_jla_in_percent / 100.0;
     twist_controller_params_.damping_jla = config.damping_jla;
-
-    twist_controller_params_.constraint_jsa = static_cast<ConstraintTypesJSA>(config.constraint_jsa);
-    twist_controller_params_.priority_jsa = config.priority_jsa;
-    twist_controller_params_.k_H_jsa = config.k_H_jsa;
-    twist_controller_params_.damping_jsa = config.damping_jsa;
-
 
     twist_controller_params_.constraint_ca = static_cast<ConstraintTypesCA>(config.constraint_ca);
     twist_controller_params_.priority_ca = config.priority_ca;

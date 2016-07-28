@@ -34,8 +34,6 @@ Available keys for the dynamic_reconfigure update call
 '''
 CTRL_IF = 'controller_interface'
 
-NUM_FILT = 'numerical_filtering'
-SING_FILT = 'singular_value_damping'
 DAMP_METHOD = 'damping_method'
 DAMP_FACT = 'damping_factor'
 LAMBDA_MAX = 'lambda_max'
@@ -81,6 +79,7 @@ MAX_VEL_LIN_BASE = 'max_vel_lin_base'
 MAX_VEL_ROT_BASE = 'max_vel_rot_base'
 
 KIN_EXT = 'kinematic_extension'
+SA = 'singularity_avoidance'
 EXT_RATIO = 'extension_ratio'
 
 '''

@@ -29,10 +29,6 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${oroco
 set(SRC_C_DIR "src/constraint_solvers")
 set(SRC_CS_DIR "${SRC_C_DIR}/solvers")
 
-add_library(jacobian_derivative src/utils/chainjnttojacdotsolver.cpp)
-add_dependencies(jacobian_derivative ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
-target_link_libraries(jacobian_derivative ${catkin_LIBRARIES})
-
 add_library(damping_methods src/damping_methods/damping.cpp)
 add_dependencies(damping_methods ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(damping_methods ${catkin_LIBRARIES})
@@ -43,7 +39,7 @@ target_link_libraries(inv_calculations ${catkin_LIBRARIES})
 
 add_library(constraint_solvers ${SRC_CS_DIR}/unconstraint_solver.cpp ${SRC_CS_DIR}/wln_joint_limit_avoidance_solver.cpp ${SRC_CS_DIR}/weighted_least_norm_solver.cpp ${SRC_CS_DIR}/gradient_projection_method_solver.cpp ${SRC_CS_DIR}/stack_of_tasks_solver.cpp ${SRC_CS_DIR}/task_priority_solver.cpp ${SRC_C_DIR}/constraint_solver_factory.cpp)
 add_dependencies(constraint_solvers ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(constraint_solvers damping_methods inv_calculations jacobian_derivative)
+target_link_libraries(constraint_solvers damping_methods inv_calculations)
 
 add_library(limiters src/limiters/limiter.cpp)
 add_dependencies(limiters ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
