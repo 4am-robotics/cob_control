@@ -176,6 +176,7 @@ bool CartesianController::posePathBroadcaster(const geometry_msgs::PoseArray& ca
 
         // Activate Tracking
         startTracking(); // Somehow the behavior changed.. we used to call this one before the first pose was published but this doesn't work anymore.
+                         // Even if this function call is inside a loop, the tracking request is sent only once in the first time due if-else mechanisms
 
         ros::spinOnce();
         rate.sleep();
@@ -354,15 +355,4 @@ void CartesianController::actionAbort(const bool success, const std::string& mes
     action_result_.message = message;
     as_->setAborted(action_result_, action_result_.message);
     stopTracking();
-}
-
-bool CartesianController::initTrackingFrame()
-{
-    tf::Transform tf;
-    tf.setOrigin(tf::Vector3(0, 0, 0));
-    tf.setRotation(tf::Quaternion(0,0,0,1));
-
-    tf_broadcaster_.sendTransform(tf::StampedTransform(tf, ros::Time::now(), root_frame_, target_frame_));
-
-    return true;
 }
