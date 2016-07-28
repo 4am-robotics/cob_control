@@ -57,11 +57,6 @@ ACTIV_BUF_JLA = 'activation_buffer_jla'
 CRIT_THRESH_JLA = 'critical_threshold_jla'
 DAMP_JLA = 'damping_jla'
 
-CONSTR_JSA = 'constraint_jsa'
-PRIO_JSA = 'priority_jsa'
-K_H_JSA = 'k_H_jsa'
-DAMP_JSA = 'damping_jsa'
-
 CONSTR_CA = 'constraint_ca'
 PRIO_CA = 'priority_ca'
 K_H_CA = 'k_H_ca'

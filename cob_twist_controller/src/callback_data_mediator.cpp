@@ -66,12 +66,6 @@ bool CallbackDataMediator::fill(ConstraintParamsJLA& params_jla)
     return true;
 }
 
-/// Can be used to fill parameters for joint singularity avoidance.
-bool CallbackDataMediator::fill(ConstraintParamsJSA& params_jsa)
-{
-    return true;
-}
-
 /// Producer: Fills obstacle distances but only when they are empty
 void CallbackDataMediator::distancesToObstaclesCallback(const cob_control_msgs::ObstacleDistances::ConstPtr& msg)
 {
