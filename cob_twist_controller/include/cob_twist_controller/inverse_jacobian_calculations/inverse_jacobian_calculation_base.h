@@ -54,7 +54,8 @@ class IPseudoinverseCalculator
          */
         virtual Eigen::MatrixXd calculate(const TwistControllerParams& params,
                                           boost::shared_ptr<DampingBase> db,
-                                          const Eigen::MatrixXd& jacobian) const = 0;
+                                          const Eigen::MatrixXd& jacobian,
+                                          const JointStates& joint_states) const = 0;
 
         /**
          * Class has no members so implementing an empty destructor.
