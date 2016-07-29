@@ -44,7 +44,7 @@ Eigen::MatrixXd WeightedLeastNormSolver::solve(const Vector6d_t& in_cart_velocit
 
     // SVD of JLA weighted Jacobian: Damping will be done later in calculatePinvJacobianBySVD for pseudo-inverse Jacobian with additional truncation etc.
     Eigen::MatrixXd weighted_jacobian = this->jacobian_data_ * inv_root_W_WLN;
-    Eigen::MatrixXd pinv = pinv_calc_.calculate(this->params_, this->damping_, weighted_jacobian);
+    Eigen::MatrixXd pinv = pinv_calc_.calculate(this->params_, this->damping_, weighted_jacobian, joint_states);
 
     // Take care: W^(1/2) * q_dot = weighted_pinv_J * x_dot -> One must consider the weighting!!!
     Eigen::MatrixXd qdots_out = inv_root_W_WLN * pinv * in_cart_velocities;

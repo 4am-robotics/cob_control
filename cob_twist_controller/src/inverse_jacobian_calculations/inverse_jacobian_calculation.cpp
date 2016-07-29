@@ -63,7 +63,8 @@ Eigen::MatrixXd PInvBySVD::calculate(const Eigen::MatrixXd& jacobian) const
  */
 Eigen::MatrixXd PInvBySVD::calculate(const TwistControllerParams& params,
                                      boost::shared_ptr<DampingBase> db,
-                                     const Eigen::MatrixXd& jacobian) const
+                                     const Eigen::MatrixXd& jacobian,
+                                     const JointStates& joint_states) const
 {
     Eigen::JacobiSVD<Eigen::MatrixXd> svd(jacobian, Eigen::ComputeThinU | Eigen::ComputeThinV);
     double eps_truncation = params.eps_truncation;
@@ -71,6 +72,14 @@ Eigen::MatrixXd PInvBySVD::calculate(const TwistControllerParams& params,
     Eigen::VectorXd singularValuesInv = Eigen::VectorXd::Zero(singularValues.rows());
     double lambda = db->getDampingFactor(singularValues, jacobian);
     Eigen::MatrixXd result;
+
+    const LimiterParams limiter_params = params.limiter_params;
+
+    double alpha;
+    double distance;
+    Eigen::MatrixXd v_ith_row;
+    Eigen::MatrixXd svd_V = svd.matrixV();
+
 
     switch(params.singularity_avoidance)
     {
@@ -95,14 +104,20 @@ Eigen::MatrixXd PInvBySVD::calculate(const TwistControllerParams& params,
             Eigen::VectorXd lambda_vec = Eigen::VectorXd::Zero(singularValues.size());
 
             Eigen::MatrixXd S = Eigen::MatrixXd::Zero(singularValues.size(),singularValues.size());
-
             for(unsigned i = 0; i < singularValues.size(); i++)
             {
+                distance = abs(abs(static_cast <double>(joint_states.current_q_(i))) - static_cast <double>(limiter_params.limits_max[i]));
+//                alpha = 1/(1 + exp(((distance - params.damping_delta )/ params.damping_slope)*(-1)));
+                alpha = 1/(1 + exp(((distance - 0.1)/ 0.01)*(-1)));
+
+                ROS_WARN_STREAM("alpha[" << i << "]: " << alpha << "   distance[" << i << "]: " << distance);
+
                 lambda_vec(i) = params.damping_gain /( 1+ exp(static_cast <double>(singularValues(i)) + params.damping_delta) / params.damping_slope);
                 S(i,i) = singularValues(i)/(pow(static_cast <double>(singularValues(i)),2) + lambda_vec(i));
+                v_ith_row = svd_V.row(i) * alpha;
+                svd_V.row(i) = v_ith_row;
             }
-
-            result = svd.matrixV() * S * svd.matrixU().transpose();
+            result = svd_V * S * svd.matrixU().transpose();
             break;
         }
         case(SA_QD):
