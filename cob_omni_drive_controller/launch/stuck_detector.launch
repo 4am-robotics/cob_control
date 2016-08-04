@@ -1,0 +1,12 @@
+<launch>
+  <arg name="timeout" default="1.0" />
+  <arg name="threshold" default="1.57" />
+  <arg name="component_name" default="base" />
+  
+  <group ns="$(arg component_name)">
+    <node pkg="cob_omni_drive_controller" type="cob_omni_drive_stuck_detector" name="stuck_detector">
+        <param name="timeout" type="double" value="$(arg timeout)"/>
+        <param name="threshold" type="double" value="$(arg threshold)"/>
+    </node>
+  </group>
+</launch>

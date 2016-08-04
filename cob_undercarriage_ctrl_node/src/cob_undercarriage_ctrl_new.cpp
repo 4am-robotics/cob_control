@@ -520,8 +520,8 @@ int main(int argc, char** argv)
 void NodeClass::CalcCtrlStep()
 {
   // WheelStates will be initialized with zero-values
-  std::vector<UndercarriageCtrl::WheelState> wStates;
-  wStates.assign(m_iNumWheels, UndercarriageCtrl::WheelState());
+  std::vector<UndercarriageCtrl::WheelCommand> wStates;
+  wStates.assign(m_iNumWheels, UndercarriageCtrl::WheelCommand());
 
   // create control_msg
   control_msgs::JointTrajectoryControllerState joint_state_cmd;
@@ -655,13 +655,16 @@ void NodeClass::setEMStopActive(bool bEMStopActive)
     std::vector<UndercarriageCtrl::WheelState> wStates;
     wStates.assign(m_iNumWheels, UndercarriageCtrl::WheelState());
 
+    std::vector<UndercarriageCtrl::WheelCommand> wCommands;
+    wCommands.assign(m_iNumWheels, UndercarriageCtrl::WheelCommand());
+    
     // if emergency stop reset ctrlr to zero
     if(m_bEMStopActive)
     {
 //        std::cout << "EMStop: " << "Active" << std::endl;
         has_target = false;
         // reset and update current wheel states but keep current dAngGearSteerRad per wheelState
-        ucar_ctrl_->calcControlStep(wStates, sample_time_, true);
+        ucar_ctrl_->calcControlStep(wCommands, sample_time_, true);
 
         // set current wheel states with previous reset and updated wheelStates
         ucar_ctrl_->updateWheelStates(wStates);

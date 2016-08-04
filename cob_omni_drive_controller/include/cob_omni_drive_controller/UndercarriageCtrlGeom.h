@@ -80,6 +80,10 @@ public:
         double dAngGearSteerRad;
         WheelState() : dVelGearDriveRadS(0), dVelGearSteerRadS(0), dAngGearSteerRad(0) {}
     };
+    struct WheelCommand : public WheelState {
+        double dAngGearSteerRadDelta;
+        WheelCommand() : dAngGearSteerRadDelta(0) {}
+    };
     struct WheelGeom{
         std::string steer_name, drive_name;
 
@@ -234,7 +238,7 @@ public:
     void setTarget(const PlatformState &state);
 
     // Get set point values for the Wheels (including controller) from UndercarriangeCtrl
-    void calcControlStep(std::vector<WheelState> &states, double dCmdRateS, bool reset);
+    void calcControlStep(std::vector<WheelCommand> &commands, double dCmdRateS, bool reset);
 
     void reset();
 
@@ -255,7 +259,7 @@ private:
         // calculate inverse kinematics
         void setTarget(const PlatformState &state);
 
-        void calcControlStep(WheelState &command, double dCmdRateS, bool reset);
+        void calcControlStep(WheelCommand &command, double dCmdRateS, bool reset);
 
         void reset();
 

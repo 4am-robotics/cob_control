@@ -193,24 +193,25 @@ double UndercarriageCtrl::limitValue(double value, double limit){
     return value;
 }
 
-void UndercarriageCtrl::CtrlData::calcControlStep(WheelState &command, double dCmdRateS, bool reset){
+void UndercarriageCtrl::CtrlData::calcControlStep(WheelCommand &command, double dCmdRateS, bool reset){
     if(reset){
         this->reset();
         command.dVelGearDriveRadS = 0.0;
         command.dVelGearSteerRadS = 0.0;
         command.dAngGearSteerRad = state_.dAngGearSteerRad;
+        command.dAngGearSteerRadDelta = 0.0;
         return;
     }
 
     // Normalize Actual Wheel Position before calculation
     double dCurrentPosWheelRAD = angles::normalize_angle(state_.dAngGearSteerRad);
-    double dDeltaPhi = angles::normalize_angle(m_dAngGearSteerTargetRad - dCurrentPosWheelRAD);
+    command.dAngGearSteerRadDelta = angles::normalize_angle(m_dAngGearSteerTargetRad - dCurrentPosWheelRAD);
 
     // Impedance-Ctrl
     // Calculate resulting desired forces, velocities
     // double dForceDamp, dForceProp, dAccCmd, dVelCmdInt;
     double dForceDamp = - params_.dDamp *m_dCtrlVelCmdInt;
-    double dForceProp = params_.dSpring * dDeltaPhi;
+    double dForceProp = params_.dSpring * command.dAngGearSteerRadDelta;
 
     double dAccCmd = (dForceDamp + dForceProp) /  params_.dVirtM;
     dAccCmd = limitValue(dAccCmd, params_.dDDPhiMax);
@@ -255,12 +256,12 @@ void UndercarriageCtrl::setTarget(const PlatformState &state)
     }
 }
 
-void UndercarriageCtrl::calcControlStep(std::vector<WheelState> &states, double dCmdRateS, bool reset)
+void UndercarriageCtrl::calcControlStep(std::vector<WheelCommand> &commands, double dCmdRateS, bool reset)
 {
-    states.resize(wheels_.size());
+    commands.resize(wheels_.size());
 
     for(size_t i = 0; i < wheels_.size(); ++i){
-        wheels_[i].calcControlStep(states[i], dCmdRateS, reset);
+        wheels_[i].calcControlStep(commands[i], dCmdRateS, reset);
     }
 
 }
