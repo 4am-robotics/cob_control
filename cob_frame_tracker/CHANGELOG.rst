@@ -57,8 +57,8 @@ Changelog for package cob_frame_tracker
   - Added a parameter to set the p gain. If 0.0 old behavior is active (default value).
 * Contributors: ipa-fxm, ipa-fxm-cm, ipa-fxm-mb
 
-Forthcoming
------------
+0.6.12 (2016-10-10)
+-------------------
 * 0.6.11
 * update changelog
 * add frameExists check to FrameTracker

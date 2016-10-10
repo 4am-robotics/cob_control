@@ -28,8 +28,8 @@ Changelog for package cob_model_identifier
 * beautify and code-review
 * Contributors: ipa-fxm
 
-Forthcoming
------------
+0.6.12 (2016-10-10)
+-------------------
 * 0.6.11
 * update changelog
 * working on log output
