@@ -7,7 +7,7 @@ find_package(catkin REQUIRED COMPONENTS cmake_modules cob_control_msgs cob_srvs 
 
 find_package(Boost REQUIRED COMPONENTS filesystem)
 
-find_package(Eigen REQUIRED)
+find_package(Eigen3 REQUIRED)
 add_definitions(${EIGEN_DEFINITIONS})
 
 find_package(fcl REQUIRED)
