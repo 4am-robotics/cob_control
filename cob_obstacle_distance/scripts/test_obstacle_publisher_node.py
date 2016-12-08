@@ -42,7 +42,7 @@ if __name__ == "__main__":
     while pub.get_num_connections() < 1:
         if rospy.is_shutdown():
             exit(0)
-        rospy.logwarn("Please create a subscriber to '/arm_right/obstacle_distance/registerObstacle' topic (Type: moveit_msgs/CollisionObject)")
+        rospy.logwarn("Please create a subscriber to 'obstacle_distance/registerObstacle' topic (Type: moveit_msgs/CollisionObject)")
         time.sleep(1.0)
 
     rospy.loginfo("Continue ...")
@@ -67,22 +67,23 @@ if __name__ == "__main__":
     pose.orientation.z = 0.0;
     pose.orientation.w = 1.0;
     x.primitive_poses.append(pose)
-    pub.publish(x)
+    # pub.publish(x)
     time.sleep(1.0)
 
     # Now publish a mesh and use the db field for the stl-resource name
     y = CollisionObject()
     y.id = "Funny Mesh"
     y.header.frame_id = root_frame
-    #y.type.db = "package://cob_gazebo_objects/Media/models/milk.dae"
-    y.type.db = "package://cob_twist_controller/files/torus_0_25_inner_rad.stl"
+    # y.type.db = "package://cob_gazebo_objects/Media/models/milk.dae"
+    y.type.db = "package://cob_gazebo_objects/Media/models/cabinet_ikea_kallax_4x2.stl"
+    # y.type.db = "package://cob_twist_controller/files/torus_0_25_inner_rad.stl"
     y.operation = CollisionObject.ADD
-    #y.operation = CollisionObject.REMOVE
+    # y.operation = CollisionObject.REMOVE
 
     pose = Pose()
-    pose.position.x = 0.25
-    pose.position.y = -0.60
-    pose.position.z = 0.95
+    pose.position.x = 0.5
+    pose.position.y = 0.5
+    pose.position.z = 0.0
     pose.orientation.x = 0.0
     pose.orientation.y = 0.0
     pose.orientation.z = 0.0
@@ -91,4 +92,4 @@ if __name__ == "__main__":
     pub.publish(y)
     time.sleep(1.0)
 
-    rospy.spin()
+    rospy.loginfo("Done!")
