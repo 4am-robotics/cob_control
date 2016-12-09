@@ -69,26 +69,33 @@ public:
             ROS_ERROR("Parameter %s not set, shutting down node...", param.c_str());
             nh_.shutdown();
         }
+        
+        std::string joint_trajectory_controller_name = nh_.param<std::string>("joint_trajectory_controller_name", "joint_trajectory_controller");
 
-        if(nh_.hasParam("joint_trajectory_controller"))
+        if(nh_.hasParam(joint_trajectory_controller_name))
         {
             has_traj_controller_ = true;
-            traj_controller_names_.push_back("joint_trajectory_controller");
-            ROS_DEBUG_STREAM(nh_.getNamespace() << " supports 'joint_trajectory_controller'");
+            traj_controller_names_.push_back(joint_trajectory_controller_name);
+            ROS_DEBUG_STREAM(nh_.getNamespace() << " supports '" << joint_trajectory_controller_name << "'");
         }
 
-        if(nh_.hasParam("joint_group_position_controller"))
+        std::string joint_group_position_controller_name = nh_.param<std::string>("joint_group_position_controller_name", "joint_group_position_controller");
+
+        if(nh_.hasParam(joint_group_position_controller_name))
         {
             has_pos_controller_ = true;
-            pos_controller_names_.push_back("joint_group_position_controller");
-            ROS_DEBUG_STREAM(nh_.getNamespace() << " supports 'joint_group_position_controller'");
+            pos_controller_names_.push_back(joint_group_position_controller_name);
+            ROS_DEBUG_STREAM(nh_.getNamespace() << " supports '" << joint_group_position_controller_name << "'");
         }
 
-        if(nh_.hasParam("joint_group_velocity_controller"))
+
+        std::string joint_group_velocity_controller_name = nh_.param<std::string>("joint_group_velocity_controller_name", "joint_group_velocity_controller");
+
+        if(nh_.hasParam(joint_group_velocity_controller_name))
         {
             has_vel_controller_ = true;
-            vel_controller_names_.push_back("joint_group_velocity_controller");
-            ROS_DEBUG_STREAM(nh_.getNamespace() << " supports 'joint_group_velocity_controller'");
+            vel_controller_names_.push_back(joint_group_velocity_controller_name);
+            ROS_DEBUG_STREAM(nh_.getNamespace() << " supports '" << joint_group_velocity_controller_name << "'");
         }
 
         //load all required controllers
@@ -105,7 +112,7 @@ public:
             {
                 success = loadController(pos_controller_names_[i]);
             }
-            cmd_pos_sub_ = nh_.subscribe("joint_group_position_controller/command", 1, &CobControlModeAdapter::cmd_pos_cb, this);
+            cmd_pos_sub_ = nh_.subscribe(joint_group_position_controller_name+"/command", 1, &CobControlModeAdapter::cmd_pos_cb, this);
         }
         if(has_vel_controller_)
         {
@@ -113,7 +120,7 @@ public:
             {
                 success = loadController(vel_controller_names_[i]);
             }
-            cmd_vel_sub_ = nh_.subscribe("joint_group_velocity_controller/command", 1, &CobControlModeAdapter::cmd_vel_cb, this);
+            cmd_vel_sub_ = nh_.subscribe(joint_group_velocity_controller_name+"/command", 1, &CobControlModeAdapter::cmd_vel_cb, this);
         }
 
         //start trajectory controller by default
