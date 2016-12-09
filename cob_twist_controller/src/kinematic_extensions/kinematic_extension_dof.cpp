@@ -214,7 +214,7 @@ KDL::Jacobian KinematicExtensionBaseActive::adjustJacobian(const KDL::Jacobian& 
 /**
  * Method adjusting the JointStates used in inverse differential computation and limiters. Fill neutrally.
  */
-JointStates KinematicExtensionBaseActive::adjustJointStates(const JointStates& joint_states)
+JointStates KinematicExtensionBaseActive::adjustJointStates(const JointStates& joint_states, const geometry_msgs::Pose& pose, const KDL::Twist& twist)
 {
     JointStates js;
     unsigned int chain_dof = joint_states.current_q_.rows();
@@ -230,13 +230,34 @@ JointStates KinematicExtensionBaseActive::adjustJointStates(const JointStates& j
         js.current_q_dot_(i) = joint_states.current_q_dot_(i);
         js.last_q_dot_(i) = joint_states.last_q_dot_(i);
     }
-    for (unsigned int i = 0; i < ext_dof_; i++)
-    {
-        js.current_q_(chain_dof + i) = 0.0;
-        js.last_q_(chain_dof + i) = 0.0;
-        js.current_q_dot_(chain_dof + i) = 0.0;
-        js.last_q_dot_(chain_dof + i) = 0.0;
-    }
+//    for (unsigned int i = 0; i < ext_dof_; i++)
+//    {
+//        js.current_q_(chain_dof + i) = 0.0;
+//        js.last_q_(chain_dof + i) = 0.0;
+//        js.current_q_dot_(chain_dof + i) = 0.0;
+//        js.last_q_dot_(chain_dof + i) = 0.0;
+//    }
+    double roll, pitch, yaw;
+    tf::Quaternion q;
+    q.setW(pose.orientation.w);
+    q.setX(pose.orientation.x);
+    q.setY(pose.orientation.y);
+    q.setZ(pose.orientation.z);
+    tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
+
+    js.current_q_(chain_dof + 0) = pose.position.x;
+    js.current_q_(chain_dof + 1) = pose.position.y;
+    js.current_q_(chain_dof + 2) = 0;
+    js.current_q_(chain_dof + 3) = 0;
+    js.current_q_(chain_dof + 4) = 0;
+    js.current_q_(chain_dof + 5) = yaw;
+
+    js.current_q_dot_(chain_dof + 0) = twist.vel.data[0];
+    js.current_q_dot_(chain_dof + 1) = twist.vel.data[1];
+    js.current_q_dot_(chain_dof + 2) = 0;
+    js.current_q_dot_(chain_dof + 3) = 0;
+    js.current_q_dot_(chain_dof + 4) = 0;
+    js.current_q_dot_(chain_dof + 5) = twist.rot.data[2];
     return js;
 }
 

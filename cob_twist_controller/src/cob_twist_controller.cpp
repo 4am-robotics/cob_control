@@ -142,7 +142,8 @@ bool CobTwistController::initialize()
     {
         twist_controller_params_.frame_names.push_back(chain_.getSegment(i).getName());
     }
-    register_link_client_ = nh_.serviceClient<cob_srvs::SetString>("obstacle_distance/registerLinkOfInterest");
+
+    register_link_client_ = nh_.serviceClient<cob_srvs::SetString>("/register_links");
     register_link_client_.waitForExistence(ros::Duration(5.0));
     twist_controller_params_.constraint_ca = CA_OFF;
 
@@ -164,7 +165,7 @@ bool CobTwistController::initialize()
     ros::Duration(1.0).sleep();
 
     /// initialize ROS interfaces
-    obstacle_distance_sub_ = nh_.subscribe("obstacle_distance", 1, &CallbackDataMediator::distancesToObstaclesCallback, &callback_data_mediator_);
+    obstacle_distance_sub_ = nh_.subscribe("/obstacle_distances", 1, &CallbackDataMediator::distancesToObstaclesCallback, &callback_data_mediator_);
     jointstate_sub_ = nh_.subscribe("joint_states", 1, &CobTwistController::jointstateCallback, this);
     twist_sub_ = nh_twist.subscribe("command_twist", 1, &CobTwistController::twistCallback, this);
     twist_stamped_sub_ = nh_twist.subscribe("command_twist_stamped", 1, &CobTwistController::twistStampedCallback, this);
@@ -309,7 +310,7 @@ void CobTwistController::checkSolverAndConstraints(cob_twist_controller::TwistCo
     {
         if (!register_link_client_.exists())
         {
-            ROS_ERROR("ServiceServer 'obstacle_distance/registerLinkOfInterest' does not exist. CA not possible");
+            ROS_ERROR("ServiceServer '/register_links' does not exist. CA not possible");
             twist_controller_params_.constraint_ca = CA_OFF;
             config.constraint_ca = static_cast<int>(twist_controller_params_.constraint_ca);
             warning = true;
@@ -388,6 +389,8 @@ void CobTwistController::solveTwist(KDL::Twist twist)
     }
 
     int ret_ik = p_inv_diff_kin_solver_->CartToJnt(this->joint_states_,
+                                                   pose_,
+                                                   twist_odometry_bl_,
                                                    twist,
                                                    q_dot_ik);
 
@@ -565,5 +568,7 @@ void CobTwistController::odometryCallback(const nav_msgs::Odometry::ConstPtr& ms
     // transform into chain_base
     twist_odometry_transformed_cb = cb_frame_bl * (twist_odometry_bl + tangential_twist_bl);
 
+    twist_odometry_bl_ = twist_odometry_bl;
     twist_odometry_cb_ = twist_odometry_transformed_cb;
+    pose_ = msg->pose.pose; // Needed for selfcollision avoidance in stack_of_tasks_solver.cpp
 }
