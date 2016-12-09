@@ -85,6 +85,8 @@ public:
 
     /** CartToJnt for chain using SVD considering KinematicExtensions and various DampingMethods **/
     virtual int CartToJnt(const JointStates& joint_states,
+                          const geometry_msgs::Pose pose,
+                          const KDL::Twist& twist,
                           const KDL::Twist& v_in,
                           KDL::JntArray& qdot_out);
 
