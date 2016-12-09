@@ -36,6 +36,8 @@
  * Solve the inverse kinematics problem at the first order differential level.
  */
 int InverseDifferentialKinematicsSolver::CartToJnt(const JointStates& joint_states,
+                                                   const geometry_msgs::Pose pose,
+                                                   const KDL::Twist& twist,
                                                    const KDL::Twist& v_in,
                                                    KDL::JntArray& qdot_out)
 {
@@ -47,7 +49,7 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const JointStates& joint_stat
     jnt2jac_.JntToJac(joint_states.current_q_, jac_chain);
     // ROS_INFO_STREAM("jac_chain.rows: " << jac_chain.rows() << ", jac_chain.columns: " << jac_chain.columns());
 
-    JointStates joint_states_full = this->kinematic_extension_->adjustJointStates(joint_states);
+    JointStates joint_states_full = this->kinematic_extension_->adjustJointStates(joint_states, pose, twist);
     // ROS_INFO_STREAM("joint_states_full.current_q_: " << joint_states_full.current_q_.rows());
 
     /// append columns to Jacobian in order to reflect additional DoFs of kinematical extension
@@ -84,7 +86,7 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const JointStates& joint_stat
     /// process result for kinematical extension
     this->kinematic_extension_->processResultExtension(qdot_out_full);
 
-    /// then qdot_out shut be resized to contain only the chain_qdot_out's again
+    /// then qdot_out should be resized to contain only the chain_qdot_out's again
     for (int i = 0; i < jac_chain.columns(); i++)
     {
         qdot_out(i) = qdot_out_full(i);

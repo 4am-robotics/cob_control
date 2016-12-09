@@ -191,7 +191,7 @@ KDL::Jacobian KinematicExtensionURDF::adjustJacobian(const KDL::Jacobian& jac_ch
     return jac_full;
 }
 
-JointStates KinematicExtensionURDF::adjustJointStates(const JointStates& joint_states)
+JointStates KinematicExtensionURDF::adjustJointStates(const JointStates& joint_states, const geometry_msgs::Pose& pose, const KDL::Twist& twist)
 {
     JointStates js;
     unsigned int chain_dof = joint_states.current_q_.rows();

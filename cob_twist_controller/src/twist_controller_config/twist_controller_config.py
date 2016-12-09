@@ -34,7 +34,6 @@ Available keys for the dynamic_reconfigure update call
 '''
 CTRL_IF = 'controller_interface'
 
-NUM_FILT = 'numerical_filtering'
 DAMP_METHOD = 'damping_method'
 DAMP_FACT = 'damping_factor'
 LAMBDA_MAX = 'lambda_max'
@@ -42,6 +41,9 @@ W_THRESH = 'w_threshold'
 BETA = 'beta'
 EPS_DAMP = 'eps_damping'
 EPS_TRUNC = 'eps_truncation'
+DAMP_DELTA = 'damping_delta'
+DAMP_GAIN = 'damping_gain'
+DAMP_SLOPE = 'damping_slope'
 
 SOLVER = 'solver'
 PRIO = 'priority'
@@ -72,6 +74,7 @@ MAX_VEL_LIN_BASE = 'max_vel_lin_base'
 MAX_VEL_ROT_BASE = 'max_vel_rot_base'
 
 KIN_EXT = 'kinematic_extension'
+SA = 'singularity_avoidance'
 EXT_RATIO = 'extension_ratio'
 
 '''

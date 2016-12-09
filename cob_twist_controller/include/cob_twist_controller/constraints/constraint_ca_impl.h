@@ -287,7 +287,8 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
         {
             if (params.frame_names.end() != str_it)
             {
-                Eigen::Vector3d collision_pnt_vector = it->nearest_point_frame_vector - it->frame_vector;
+                Eigen::Vector3d collision_pnt_vector = it->nearest_point_frame_vector;
+
                 Eigen::Vector3d distance_vec = it->nearest_point_frame_vector - it->nearest_point_obstacle_vector;
 
                 // Create a skew-symm matrix as transformation between the segment root and the critical point.
@@ -308,7 +309,8 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
                 uint32_t frame_number = idx + 1;  // segment nr not index represents frame number
 
                 KDL::JntArray ja = this->joint_states_.current_q_;
-                KDL::Jacobian new_jac_chain(this->joint_states_.current_q_.rows());
+                ja.resize((unsigned int)params.dof);
+                KDL::Jacobian new_jac_chain(ja.rows());
 
                 // ROS_INFO_STREAM("frame_number: " << frame_number);
                 // ROS_INFO_STREAM("ja.rows: " << ja.rows());
@@ -389,22 +391,21 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calcPredictionValue()
 
     if (params.frame_names.end() != str_it)
     {
+        unsigned int dof;
         if (this->constraint_params_.current_distances_.size() > 0)
         {
             uint32_t frame_number = (str_it - params.frame_names.begin()) + 1;  // segment nr not index represents frame number
             KDL::FrameVel frame_vel;
-
-            // ToDo: the fk_solver_vel_ is only initialized for the primary chain - kinematic extensions cannot be considered yet!
             KDL::JntArrayVel jnts_prediction_chain(params.dof);
+
             for (unsigned int i = 0; i < params.dof; i++)
             {
                 jnts_prediction_chain.q(i) = this->jnts_prediction_.q(i);
                 jnts_prediction_chain.qdot(i) = this->jnts_prediction_.qdot(i);
             }
-            // ROS_INFO_STREAM("jnts_prediction_chain.q.rows: " << jnts_prediction_chain.q.rows());
 
-            // Calculate prediction for pos and vel
-            int error = this->fk_solver_vel_.JntToCart(this->jnts_prediction_, frame_vel, frame_number);
+            // Calculate prediction for the mainipulator
+            int error = this->fk_solver_vel_.JntToCart(jnts_prediction_chain, frame_vel, frame_number);
             if (error != 0)
             {
                 ROS_ERROR_STREAM("Could not calculate twist for frame: " << frame_number << ". Error Code: " << error << " (" << this->fk_solver_vel_.strError(error) << ")");
@@ -413,7 +414,30 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calcPredictionValue()
             }
             // ROS_INFO_STREAM("Calculated twist for frame: " << frame_number);
 
-            KDL::Twist twist = frame_vel.GetTwist();  // predicted frame twist
+            KDL::Twist predicted_twist_odometry;
+            if(params.kinematic_extension == BASE_ACTIVE)   // jnts_prediction_ gives us the predicted joint_state for the plattform (calculated in stack_of_tasks_solver.cpp)
+            {
+                predicted_twist_odometry.vel.data[0] = this->jnts_prediction_.qdot(params.dof);
+                predicted_twist_odometry.vel.data[1] = this->jnts_prediction_.qdot(params.dof+1);
+                predicted_twist_odometry.vel.data[2] = this->jnts_prediction_.qdot(params.dof+2);
+
+                predicted_twist_odometry.rot.data[0] = this->jnts_prediction_.qdot(params.dof+3);
+                predicted_twist_odometry.rot.data[1] = this->jnts_prediction_.qdot(params.dof+4);
+                predicted_twist_odometry.rot.data[2] = this->jnts_prediction_.qdot(params.dof+5);
+            }
+            else
+            {
+                predicted_twist_odometry.vel.data[0] = 0;
+                predicted_twist_odometry.vel.data[1] = 0;
+                predicted_twist_odometry.vel.data[2] = 0;
+
+                predicted_twist_odometry.rot.data[0] = 0;
+                predicted_twist_odometry.rot.data[1] = 0;
+                predicted_twist_odometry.rot.data[2] = 0;
+            }
+
+
+            KDL::Twist twist = frame_vel.GetTwist() + predicted_twist_odometry;  // predicted frame twist
 
             Eigen::Vector3d pred_twist_vel;
             tf::vectorKDLToEigen(twist.vel, pred_twist_vel);

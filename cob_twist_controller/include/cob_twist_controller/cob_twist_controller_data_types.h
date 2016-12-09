@@ -70,6 +70,14 @@ enum KinematicExtensionTypes
     LOOKAT = cob_twist_controller::TwistController_LOOKAT
 };
 
+enum SingularityAvoidanceTypes
+{
+    SA_QD_EXTENDED = cob_twist_controller::TwistController_SA_QD_EXTENDED,
+    SA_NF = cob_twist_controller::TwistController_SA_NF,
+    SA_SR = cob_twist_controller::TwistController_SA_SR,
+    SA_QD = cob_twist_controller::TwistController_SA_QD,
+};
+
 enum SolverTypes
 {
     DEFAULT_SOLVER = cob_twist_controller::TwistController_DEFAULT_SOLVER,
@@ -200,7 +208,7 @@ struct TwistControllerParams
         controller_interface(VELOCITY_INTERFACE),
         integrator_smoothing(0.2),
 
-        numerical_filtering(false),
+        singularity_avoidance(SA_SR),
         damping_method(MANIPULABILITY),
         damping_factor(0.2),
         lambda_max(0.1),
@@ -208,6 +216,9 @@ struct TwistControllerParams
         beta(0.005),
         eps_damping(0.003),
         eps_truncation(0.001),
+        damping_delta(0.1),
+        damping_gain(0.02),
+        damping_slope(0.05),
 
         solver(GPM),
         priority_main(500),
@@ -242,7 +253,7 @@ struct TwistControllerParams
     ControllerInterfaceTypes controller_interface;
     double integrator_smoothing;
 
-    bool numerical_filtering;
+    SingularityAvoidanceTypes singularity_avoidance;
     DampingMethodTypes damping_method;
     double damping_factor;
     double lambda_max;
@@ -250,6 +261,9 @@ struct TwistControllerParams
     double beta;
     double eps_damping;
     double eps_truncation;
+    double damping_delta;
+    double damping_gain;
+    double damping_slope;
 
     SolverTypes solver;
     uint32_t priority_main;
@@ -278,6 +292,8 @@ struct TwistControllerParams
 
     // vector of links of the chain to be considered for collision avoidance
     std::vector<std::string> collision_check_links;
+
+    KDL::Chain chain;
 };
 
 enum EN_ConstraintStates

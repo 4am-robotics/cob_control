@@ -66,7 +66,7 @@ class KinematicExtensionNone : public KinematicExtensionBase
 
         bool initExtension();
         KDL::Jacobian adjustJacobian(const KDL::Jacobian& jac_chain);
-        JointStates adjustJointStates(const JointStates& joint_states);
+        JointStates adjustJointStates(const JointStates& joint_states, const geometry_msgs::Pose& pose, const KDL::Twist& twist);
         LimiterParams adjustLimiterParams(const LimiterParams& limiter_params);
         void processResultExtension(const KDL::JntArray& q_dot_ik);
 };

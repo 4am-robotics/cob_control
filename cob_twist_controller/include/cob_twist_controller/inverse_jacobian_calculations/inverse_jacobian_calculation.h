@@ -45,9 +45,16 @@ class PInvBySVD : public IPseudoinverseCalculator
          */
         virtual Eigen::MatrixXd calculate(const TwistControllerParams& params,
                                           boost::shared_ptr<DampingBase> db,
-                                          const Eigen::MatrixXd& jacobian) const;
+                                          const Eigen::MatrixXd& jacobian,
+                                          const JointStates& joint_states) const;
 
         virtual ~PInvBySVD() {}
+
+        enum InverseDampingMethods
+        {
+            numerical_filtering = 1 ,
+            singular_damping_value = 2
+        };
 };
 /* END PInvBySVD ************************************************************************************************/
 
