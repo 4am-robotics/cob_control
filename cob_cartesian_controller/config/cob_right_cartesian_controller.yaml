@@ -1,0 +1,24 @@
+## joint_names
+joint_names: [arm_right_1_joint, arm_right_2_joint, arm_right_3_joint, arm_right_4_joint, arm_right_5_joint, arm_right_6_joint, arm_right_7_joint]
+
+## Cartesian controller parameters
+chain_base_link: arm_right_base_link
+chain_tip_link: arm_right_7_link
+root_frame: odom_combined
+
+# twist controller parameters
+twist_controller:
+  controller_interface: 3    #Velocity 0, Position 1, Trajectory 2, JointStates 3
+
+# frame_tracker + interactive_marker
+frame_tracker:
+  target_frame: arm_right_7_target
+  marker_scale: 0.3
+  movable_trans: true
+  movable_rot: true
+  pid_trans_x: {p: 4.0, i: 0.0, d: 0.0, i_clamp: 0.0}
+  pid_trans_y: {p: 4.0, i: 0.0, d: 0.0, i_clamp: 0.0}
+  pid_trans_z: {p: 4.0, i: 0.0, d: 0.0, i_clamp: 0.0}
+  pid_rot_x: {p: 4.0, i: 0.0, d: 0.0, i_clamp: 0.0}
+  pid_rot_y: {p: 4.0, i: 0.0, d: 0.0, i_clamp: 0.0}
+  pid_rot_z: {p: 4.0, i: 0.0, d: 0.0, i_clamp: 0.0}

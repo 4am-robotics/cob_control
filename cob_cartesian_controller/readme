@@ -1,0 +1,6 @@
+Usage:
+
+1. roslaunch cob_cartesian_controller example.launch
+2. Goto scripts folder and simply type ./script_name.py __ns:=arm
+
+
