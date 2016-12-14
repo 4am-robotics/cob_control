@@ -27,7 +27,7 @@ def move_lin(pose_goal, frame_id, profile):
     client.send_goal(goal)
     print "goal sent"
     state = client.get_state()
-    print state
+    # print state
     client.wait_for_result()
     print "result received"
     result = client.get_result()
@@ -49,12 +49,12 @@ def move_circ(pose_center, frame_id, start_angle, end_angle, radius, profile):
     goal.move_circ.end_angle = end_angle
     goal.move_circ.radius = radius
     goal.profile = profile
-    print goal
+    # print goal
 
     client.send_goal(goal)
     print "goal sent"
     state = client.get_state()
-    print state
+    # print state
     client.wait_for_result()
     print "result received"
     result = client.get_result()

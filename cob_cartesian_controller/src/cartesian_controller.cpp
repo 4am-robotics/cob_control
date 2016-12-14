@@ -82,7 +82,7 @@ bool CartesianController::initialize()
     as_->registerPreemptCallback(boost::bind(&CartesianController::preemptCallback, this));
     as_->start();
 
-    ROS_INFO("...done!");
+    ROS_INFO("Cartesian Controller running");
     return true;
 }
 
