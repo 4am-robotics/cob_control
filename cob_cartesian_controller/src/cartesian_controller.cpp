@@ -153,8 +153,6 @@ bool CartesianController::stopTracking()
 bool CartesianController::posePathBroadcaster(const geometry_msgs::PoseArray& cartesian_path)
 {
     bool success = true;
-    double epsilon = 0.1;
-    int failure_counter = 0;
     ros::Rate rate(update_rate_);
     tf::Transform transform;
 
@@ -203,6 +201,11 @@ void CartesianController::goalCallback()
 
         // Publish Preview
         utils_.previewPath(cartesian_path);
+        
+        // initially broadcast target_frame
+        tf::Transform identity = tf::Transform();
+        identity.setIdentity();
+        tf_broadcaster_.sendTransform(tf::StampedTransform(identity, ros::Time::now(), chain_tip_link_, target_frame_));
 
         // Activate Tracking
         if (!startTracking())
