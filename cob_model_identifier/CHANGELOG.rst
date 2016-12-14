@@ -2,6 +2,15 @@
 Changelog for package cob_model_identifier
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.14 (2015-10-10)
+-------------------
+
+0.6.13 (2015-10-10)
+-------------------
+
+0.6.12 (2015-10-10)
+-------------------
+
 0.6.11 (2016-04-01)
 -------------------
 * working on log output
@@ -26,33 +35,6 @@ Changelog for package cob_model_identifier
 * review dependencies
 * code styling cob_model_identifier
 * beautify and code-review
-* Contributors: ipa-fxm
-
-0.6.12 (2016-10-10)
--------------------
-* 0.6.11
-* update changelog
-* working on log output
-* 0.6.10
-* update changelog
-* 0.6.9
-* update changelog
-* boost revision
-* do not install headers in executable-only packages
-* explicit dependency to boost
-* more dependency fixes according to review comments
-* explicit dependency to boost
-* more fixes for migration afer merge
-* remove trailing whitespaces
-* migrate to package format 2
-* cleanup
-* sort dependencies
-* update with ipa320
-* review dependencies
-* code styling cob_model_identifier
-* beautify and code-review
-* fixing eigen linker error
-* update changelog
 * Contributors: ipa-fxm
 
 0.6.8 (2015-06-17)
