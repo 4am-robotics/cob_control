@@ -145,6 +145,9 @@ void CartesianControllerUtils::previewPath(const geometry_msgs::PoseArray pose_a
     marker.color.g = 0.0;
     marker.color.b = 1.0;
     marker.color.a = 1.0;
+    
+    // clear marker_array_ to only show preview of current path
+    marker_array_.markers.clear();
 
     double id = marker_array_.markers.size();
 
