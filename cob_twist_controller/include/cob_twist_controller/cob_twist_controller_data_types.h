@@ -292,8 +292,6 @@ struct TwistControllerParams
 
     // vector of links of the chain to be considered for collision avoidance
     std::vector<std::string> collision_check_links;
-
-    KDL::Chain chain;
 };
 
 enum EN_ConstraintStates

@@ -295,7 +295,7 @@ class JointSingularityAvoidance : public ConstraintBase<T_PARAMS, PRIO>
         KDL::ChainFkSolverVel_recursive& fk_solver_vel_;
 
 };
-/* END JointLimitAvoidance **************************************************************************************/
+/* END JointSingularityAvoidance **************************************************************************************/
 
 typedef ConstraintsBuilder<uint32_t> ConstraintsBuilder_t;
 

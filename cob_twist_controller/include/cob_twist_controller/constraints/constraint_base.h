@@ -140,8 +140,7 @@ class ConstraintBase : public PriorityBase<PRIO>
           prediction_value_(std::numeric_limits<double>::max()),
           last_value_(0.0),
           last_time_(ros::Time::now()),
-          last_pred_time_(ros::Time::now()),
-          init_(false)
+          last_pred_time_(ros::Time::now())
         {
             this->member_inst_cnt_ = instance_ctr_++;
         }
@@ -223,8 +222,6 @@ class ConstraintBase : public PriorityBase<PRIO>
         JointStates joint_states_;
         KDL::JntArrayVel jnts_prediction_;
         Matrix6Xd_t jacobian_data_;
-        Matrix6Xd_t jacobian_data_old_;
-        bool init_;
 
         double value_;
         double derivative_value_;
@@ -259,7 +256,7 @@ class ConstraintBase : public PriorityBase<PRIO>
             adapted_params.damping_method = CONSTANT;
             adapted_params.damping_factor = const_damping_factor;
             adapted_params.eps_truncation = 0.0;
-//            adapted_params.numerical_filtering = false;
+            // adapted_params.numerical_filtering = false;
             return adapted_params;
         }
 };

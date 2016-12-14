@@ -391,7 +391,6 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calcPredictionValue()
 
     if (params.frame_names.end() != str_it)
     {
-        unsigned int dof;
         if (this->constraint_params_.current_distances_.size() > 0)
         {
             uint32_t frame_number = (str_it - params.frame_names.begin()) + 1;  // segment nr not index represents frame number
@@ -403,6 +402,9 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calcPredictionValue()
                 jnts_prediction_chain.q(i) = this->jnts_prediction_.q(i);
                 jnts_prediction_chain.qdot(i) = this->jnts_prediction_.qdot(i);
             }
+            // ROS_INFO_STREAM("jnts_prediction_chain.q.rows: " << jnts_prediction_chain.q.rows());
+
+            // ToDo: the fk_solver_vel_ is only initialized for the primary chain - kinematic extensions cannot be considered yet!
 
             // Calculate prediction for the mainipulator
             int error = this->fk_solver_vel_.JntToCart(jnts_prediction_chain, frame_vel, frame_number);

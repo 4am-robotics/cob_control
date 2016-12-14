@@ -88,8 +88,6 @@ bool CobTwistController::initialize()
         return false;
     }
 
-    twist_controller_params_.chain = chain_;
-
     /// parse robot_description and set velocity limits
     urdf::Model model;
     if (!model.initParam("/robot_description"))
