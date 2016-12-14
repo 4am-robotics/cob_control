@@ -67,6 +67,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 )
 
 install(PROGRAMS scripts/test_move_lin.py scripts/test_move_circ.py scripts/test_move_santa.py
+                 scripts/test_move_lin_interface.py scripts/test_move_circ_interface.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/scripts
 )
 
