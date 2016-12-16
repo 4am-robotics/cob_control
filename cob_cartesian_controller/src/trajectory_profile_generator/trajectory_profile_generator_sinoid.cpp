@@ -31,7 +31,7 @@
 #include <cob_cartesian_controller/trajectory_profile_generator/trajectory_profile_generator_sinoid.h>
 
 /* BEGIN TrajectoryProfileSinoid ****************************************************************************************/
-inline bool TrajectoryProfileSinoid::getProfileTimings(double Se, double te, bool calcMaxTe, cob_cartesian_controller::ProfileTimings& pt)
+bool TrajectoryProfileSinoid::getProfileTimings(double Se, double te, bool calcMaxTe, cob_cartesian_controller::ProfileTimings& pt)
 {
     CartesianControllerUtils utils;
     double tv, tb = 0.0;
@@ -69,7 +69,7 @@ inline bool TrajectoryProfileSinoid::getProfileTimings(double Se, double te, boo
     return false;
 }
 
-inline std::vector<double> TrajectoryProfileSinoid::getTrajectory(double se, cob_cartesian_controller::ProfileTimings pt)
+std::vector<double> TrajectoryProfileSinoid::getTrajectory(double se, cob_cartesian_controller::ProfileTimings pt)
 {
     std::vector<double> array;
     unsigned int i = 1;
