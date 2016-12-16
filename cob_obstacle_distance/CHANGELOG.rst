@@ -2,6 +2,17 @@
 Changelog for package cob_obstacle_distance
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.14 (2015-10-10)
+-------------------
+
+0.6.13 (2015-10-10)
+-------------------
+
+0.6.12 (2015-10-10)
+-------------------
+* Two publishers where publishing to the same frame name
+* Contributors: ipa-bfb
+
 0.6.11 (2016-04-01)
 -------------------
 * outsource obstacle_distance messages
