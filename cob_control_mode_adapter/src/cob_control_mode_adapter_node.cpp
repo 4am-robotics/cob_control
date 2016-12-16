@@ -19,7 +19,7 @@
  * \author
  *   Author: Felix Messmer, email: felix.messmer@ipa.fraunhofer.de
  *
- * \date Date of creation: September, 201
+ * \date Date of creation: September, 2014
  *
  * \brief
  *   This node automatically switches desired controllers according to incoming command messages.
