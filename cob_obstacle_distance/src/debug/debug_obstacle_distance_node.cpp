@@ -25,7 +25,7 @@
  *   Debug node visualizing the vector to the closest obstacle as well as the distance value through visualization_msgs/Marker.
  ****************************************************************/
 
-#include <string.h>
+#include <string>
 #include <map>
 #include <ros/ros.h>
 #include <visualization_msgs/MarkerArray.h>
@@ -34,18 +34,16 @@
 
 class DebugObstacleDistance
 {
+    ros::NodeHandle nh_;
+    ros::Publisher marker_pub_;
+    ros::Subscriber obstacle_distances_sub_;
 
-ros::NodeHandle nh_;
-ros::Publisher marker_pub_;
-ros::Subscriber obstacle_distances_sub_;
-
-std::string chain_base_link_;
+    std::string chain_base_link_;
 
 public:
-
     int init()
     {
-        if(!nh_.getParam("chain_base_link", this->chain_base_link_))
+        if (!nh_.getParam("chain_base_link", this->chain_base_link_))
         {
             ROS_ERROR("Failed to get parameter \"chain_base_link\".");
             return -1;
@@ -63,12 +61,12 @@ public:
         visualization_msgs::MarkerArray marker_array;
         std::map<std::string, cob_control_msgs::ObstacleDistance> relevant_obstacle_distances;
 
-        for(uint32_t i=0; i<msg->distances.size(); i++)
+        for (uint32_t i = 0; i < msg->distances.size(); i++)
         {
             const std::string id = msg->distances[i].link_of_interest;
-            if(relevant_obstacle_distances.count(id) > 0)
+            if (relevant_obstacle_distances.count(id) > 0)
             {
-                if(relevant_obstacle_distances[id].distance > msg->distances[i].distance)
+                if (relevant_obstacle_distances[id].distance > msg->distances[i].distance)
                 {
                     relevant_obstacle_distances[id] = msg->distances[i];
                 }
@@ -79,12 +77,10 @@ public:
             }
         }
 
-        for(std::map<std::string, cob_control_msgs::ObstacleDistance>::const_iterator it = relevant_obstacle_distances.begin();
+        for (std::map<std::string, cob_control_msgs::ObstacleDistance>::const_iterator it = relevant_obstacle_distances.begin();
                 it != relevant_obstacle_distances.end(); ++it)
         {
-
-
-            //show distance vector as arrow
+            // show distance vector as arrow
             visualization_msgs::Marker marker_vector;
             marker_vector.type = visualization_msgs::Marker::ARROW;
             marker_vector.lifetime = ros::Duration(0.5);
@@ -114,7 +110,7 @@ public:
             marker_array.markers.push_back(marker_vector);
 
 
-            //show distance as text
+            // show distance as text
             visualization_msgs::Marker marker_distance;
             marker_distance.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
             marker_distance.lifetime = ros::Duration(0.5);
@@ -129,9 +125,9 @@ public:
             marker_distance.scale.z = 0.1;
 
             marker_distance.color.a = 1.0;
-            //marker_distance.color.r = 1.0;
-            //marker_distance.color.g = 1.0;
-            //marker_distance.color.b = 1.0;
+            // marker_distance.color.r = 1.0;
+            // marker_distance.color.g = 1.0;
+            // marker_distance.color.b = 1.0;
             marker_distance.color.r = 0.0;
             marker_distance.color.g = 0.0;
             marker_distance.color.b = 0.0;
@@ -140,18 +136,12 @@ public:
             marker_distance.pose.position.y = it->second.nearest_point_frame_vector.y + 0.05;
             marker_distance.pose.position.z = it->second.nearest_point_frame_vector.z;
 
-
             marker_array.markers.push_back(marker_distance);
         }
 
         this->marker_pub_.publish(marker_array);
     }
 };
-
-
-
-
-
 
 
 

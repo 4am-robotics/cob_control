@@ -1,4 +1,34 @@
-#include "ros/ros.h"
+/*
+ *****************************************************************
+ * \file
+ *
+ * \note
+ *   Copyright (c) 2014 \n
+ *   Fraunhofer Institute for Manufacturing Engineering
+ *   and Automation (IPA) \n\n
+ *
+ *****************************************************************
+ *
+ * \note
+ *   Project name: care-o-bot
+ * \note
+ *   ROS stack name: cob_control
+ * \note
+ *   ROS package name: cob_control_mode_adapter
+ *
+ * \author
+ *   Author: Felix Messmer, email: felix.messmer@ipa.fraunhofer.de
+ *
+ * \date Date of creation: September, 2014
+ *
+ * \brief
+ *   This node automatically switches desired controllers according to incoming command messages.
+ *
+ ****************************************************************/
+
+#include <string>
+#include <vector>
+#include <ros/ros.h>
 #include <std_msgs/Float64.h>
 #include <std_msgs/Float64MultiArray.h>
 #include <controller_manager_msgs/LoadController.h>
@@ -26,10 +56,10 @@ public:
 
         current_control_mode_ = NONE;
 
-        //wait for services from controller manager
-        while (not ros::service::waitForService("controller_manager/load_controller", ros::Duration(5.0))){;}
+        // wait for services from controller manager
+        while (!ros::service::waitForService("controller_manager/load_controller", ros::Duration(5.0))) {;}
 
-        if(ros::service::exists("controller_manager/load_controller", false))
+        if (ros::service::exists("controller_manager/load_controller", false))
         {
             load_client_ = nh_.serviceClient<controller_manager_msgs::LoadController>("controller_manager/load_controller");
         }
@@ -39,9 +69,9 @@ public:
             return false;
         }
 
-        while (not ros::service::waitForService("controller_manager/switch_controller", ros::Duration(5.0))){;}
+        while (!ros::service::waitForService("controller_manager/switch_controller", ros::Duration(5.0))) {;}
 
-        if(ros::service::exists("controller_manager/switch_controller", false))
+        if (ros::service::exists("controller_manager/switch_controller", false))
         {
             switch_client_ = nh_.serviceClient<controller_manager_msgs::SwitchController>("controller_manager/switch_controller");
         }
@@ -51,7 +81,7 @@ public:
             return false;
         }
 
-        std::string param="max_command_silence";
+        std::string param = "max_command_silence";
         if (nh_.hasParam(param))
         {
             nh_.getParam(param, max_command_silence_);
@@ -63,16 +93,16 @@ public:
         }
 
         // List of controlled joints
-        param="joint_names";
-        if(!nh_.getParam(param, joint_names_))
+        param = "joint_names";
+        if (!nh_.getParam(param, joint_names_))
         {
             ROS_ERROR("Parameter %s not set, shutting down node...", param.c_str());
             nh_.shutdown();
         }
-        
+
         std::string joint_trajectory_controller_name = nh_.param<std::string>("joint_trajectory_controller_name", "joint_trajectory_controller");
 
-        if(nh_.hasParam(joint_trajectory_controller_name))
+        if (nh_.hasParam(joint_trajectory_controller_name))
         {
             has_traj_controller_ = true;
             traj_controller_names_.push_back(joint_trajectory_controller_name);
@@ -81,7 +111,7 @@ public:
 
         std::string joint_group_position_controller_name = nh_.param<std::string>("joint_group_position_controller_name", "joint_group_position_controller");
 
-        if(nh_.hasParam(joint_group_position_controller_name))
+        if (nh_.hasParam(joint_group_position_controller_name))
         {
             has_pos_controller_ = true;
             pos_controller_names_.push_back(joint_group_position_controller_name);
@@ -91,48 +121,48 @@ public:
 
         std::string joint_group_velocity_controller_name = nh_.param<std::string>("joint_group_velocity_controller_name", "joint_group_velocity_controller");
 
-        if(nh_.hasParam(joint_group_velocity_controller_name))
+        if (nh_.hasParam(joint_group_velocity_controller_name))
         {
             has_vel_controller_ = true;
             vel_controller_names_.push_back(joint_group_velocity_controller_name);
             ROS_DEBUG_STREAM(nh_.getNamespace() << " supports '" << joint_group_velocity_controller_name << "'");
         }
 
-        //load all required controllers
-        if(has_traj_controller_)
+        // load all required controllers
+        if (has_traj_controller_)
         {
-            for (unsigned int i=0; i<traj_controller_names_.size(); i++)
+            for (unsigned int i = 0; i < traj_controller_names_.size(); i++)
             {
                 success = loadController(traj_controller_names_[i]);
             }
         }
-        if(has_pos_controller_)
+        if (has_pos_controller_)
         {
-            for (unsigned int i=0; i<pos_controller_names_.size(); i++)
+            for (unsigned int i = 0; i < pos_controller_names_.size(); i++)
             {
                 success = loadController(pos_controller_names_[i]);
             }
             cmd_pos_sub_ = nh_.subscribe(joint_group_position_controller_name+"/command", 1, &CobControlModeAdapter::cmd_pos_cb, this);
         }
-        if(has_vel_controller_)
+        if (has_vel_controller_)
         {
-            for (unsigned int i=0; i<vel_controller_names_.size(); i++)
+            for (unsigned int i = 0; i < vel_controller_names_.size(); i++)
             {
                 success = loadController(vel_controller_names_[i]);
             }
             cmd_vel_sub_ = nh_.subscribe(joint_group_velocity_controller_name+"/command", 1, &CobControlModeAdapter::cmd_vel_cb, this);
         }
 
-        //start trajectory controller by default
-        if(has_traj_controller_)
+        // start trajectory controller by default
+        if (has_traj_controller_)
         {
             success = switchController(traj_controller_names_, current_controller_names_);
             current_control_mode_ = TRAJECTORY;
         }
 
-        update_rate_ = 100;    //[hz]
+        update_rate_ = 100;    // [hz]
         timer_ = nh_.createTimer(ros::Duration(1/update_rate_), &CobControlModeAdapter::update, this);
-        
+
         return true;
     }
 
@@ -140,9 +170,9 @@ public:
     {
         controller_manager_msgs::LoadController load_srv;
         load_srv.request.name = load_controller;
-        if(load_client_.call(load_srv))
+        if (load_client_.call(load_srv))
         {
-            if(load_srv.response.ok)
+            if (load_srv.response.ok)
             {
                 ROS_INFO("%s loaded", load_controller.c_str());
                 return true;
@@ -166,16 +196,16 @@ public:
         controller_manager_msgs::SwitchController switch_srv;
         switch_srv.request.start_controllers = start_controllers;
         switch_srv.request.stop_controllers = stop_controllers;
-        switch_srv.request.strictness = 2; //STRICT
+        switch_srv.request.strictness = 2;  // STRICT
 
-        if(switch_client_.call(switch_srv))
+        if (switch_client_.call(switch_srv))
         {
-            if(switch_srv.response.ok)
+            if (switch_srv.response.ok)
             {
                 std::string str_start;
                 std::string str_stop;
 
-                if(start_controllers.empty())
+                if (start_controllers.empty())
                 {
                     str_start = "no_start_controller_defined";
                 }
@@ -183,7 +213,7 @@ public:
                 {
                     str_start = start_controllers.back();
                 }
-                if(stop_controllers.empty())
+                if (stop_controllers.empty())
                 {
                     str_stop = "no_stop_controller_defined";
                 }
@@ -225,7 +255,7 @@ public:
     void update(const ros::TimerEvent& event)
     {
         if (!nh_.ok()) {return;}
-        
+
         boost::mutex::scoped_lock lock(mutex_);
 
         ros::Duration period_vel = event.current_real - last_vel_command_;
@@ -233,43 +263,43 @@ public:
 
         lock.unlock();
 
-        if(has_vel_controller_ && (period_vel.toSec() < max_command_silence_))
+        if (has_vel_controller_ && (period_vel.toSec() < max_command_silence_))
         {
-            if(current_control_mode_!=VELOCITY)
+            if (current_control_mode_ != VELOCITY)
             {
                 bool success = switchController(vel_controller_names_, current_controller_names_);
-                if(!success)
+                if (!success)
                 {
                     ROS_ERROR("Unable to switch to velocity_controllers. Not executing command...");
                 }
                 else
                 {
                     ROS_INFO("Successfully switched to velocity_controllers");
-                    current_control_mode_=VELOCITY;
+                    current_control_mode_ = VELOCITY;
                 }
             }
         }
-        else if(has_pos_controller_ && (period_pos.toSec() < max_command_silence_))
+        else if (has_pos_controller_ && (period_pos.toSec() < max_command_silence_))
         {
-            if(current_control_mode_!=POSITION)
+            if (current_control_mode_ != POSITION)
             {
                 bool success = switchController(pos_controller_names_, current_controller_names_);
-                if(!success)
+                if (!success)
                 {
                     ROS_ERROR("Unable to switch to position_controllers. Not executing command...");
                 }
                 else
                 {
                     ROS_INFO("Successfully switched to position_controllers");
-                    current_control_mode_=POSITION;
+                    current_control_mode_ = POSITION;
                 }
             }
         }
-        else if(has_traj_controller_)
+        else if (has_traj_controller_)
         {
-            if(current_control_mode_!=TRAJECTORY)
+            if (current_control_mode_ != TRAJECTORY)
             {
-                if(current_control_mode_==POSITION)
+                if (current_control_mode_ == POSITION)
                 {
                     ROS_INFO("Have not heard a pos command for %f seconds, switched back to trajectory_controller", period_pos.toSec());
                 }
@@ -279,9 +309,9 @@ public:
                 }
                 bool success = switchController(traj_controller_names_, current_controller_names_);
 
-                if(success)
+                if (success)
                 {
-                    current_control_mode_=TRAJECTORY;
+                    current_control_mode_ = TRAJECTORY;
                 }
                 else
                 {

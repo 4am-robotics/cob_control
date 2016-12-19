@@ -26,6 +26,7 @@
  *
  ****************************************************************/
 
+#include <string>
 #include <vector>
 #include <iostream>
 #include <fstream>
@@ -45,14 +46,14 @@ bool OutputRecorder::initialize()
     ros::NodeHandle nh_identifier("model_identifier");
 
     // JointNames
-    if(!nh_.getParam("joint_names", joints_))
+    if (!nh_.getParam("joint_names", joints_))
     {
         ROS_ERROR("Parameter 'joint_names' not set");
         return false;
     }
     dof_ = joints_.size();
 
-    if(!nh_twist.getParam("chain_base_link", chain_base_link_))
+    if (!nh_twist.getParam("chain_base_link", chain_base_link_))
     {
         ROS_ERROR("Parameter 'chain_base_link' not set");
         return false;
@@ -63,7 +64,7 @@ bool OutputRecorder::initialize()
         return false;
     }
 
-    ///parse robot_description and generate KDL chains
+    /// parse robot_description and generate KDL chains
     KDL::Tree my_tree;
     if (!kdl_parser::treeFromParam("/robot_description", my_tree))
     {
@@ -71,7 +72,7 @@ bool OutputRecorder::initialize()
         return false;
     }
     my_tree.getChain(chain_base_link_, chain_tip_link_, chain_);
-    if(chain_.getNrOfJoints() == 0)
+    if (chain_.getNrOfJoints() == 0)
     {
         ROS_ERROR("Failed to initialize kinematic chain");
         return false;
@@ -84,20 +85,20 @@ bool OutputRecorder::initialize()
     }
     else
     {
-        output_file_path_="/tmp/model_identifier/";
+        output_file_path_ = "/tmp/model_identifier/";
         ROS_ERROR("No parameter 'output_file_path'! Using default %s", output_file_path_.c_str());
     }
     ROS_WARN("'output_file_path'! %s", output_file_path_.c_str());
 
-    ///initialize variables and current joint values and velocities
+    /// initialize variables and current joint values and velocities
     last_q_ = KDL::JntArray(chain_.getNrOfJoints());
     last_q_dot_ = KDL::JntArray(chain_.getNrOfJoints());
 
     jointstate_sub_ = nh_.subscribe("joint_states", 1, &OutputRecorder::jointstateCallback, this);
     twist_sub_ = nh_twist.subscribe("command_twist_stamped", 1, &OutputRecorder::twistCallback, this);
 
-    start_=false;
-    finished_recording_=false;
+    start_ = false;
+    finished_recording_ = false;
 
     ROS_INFO("...initialized!");
     return true;
@@ -122,7 +123,7 @@ void OutputRecorder::run()
 
     ROS_INFO("Waiting for Twist callback");
 
-    while (!start_&&ros::ok())
+    while (!start_ && ros::ok())
     {
         ros::spinOnce();
         r.sleep();
@@ -147,9 +148,9 @@ void OutputRecorder::run()
     tf::Quaternion q = tf::Quaternion(q_ist.orientation.x, q_ist.orientation.y, q_ist.orientation.z, q_ist.orientation.w);
     tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
 
-    while(!finished_recording_)
+    while (!finished_recording_)
     {
-        //start_thread.join();
+        // start_thread.join();
         start_thread.interrupt();
         time = ros::Time::now();
         period = time - last_update_time;
@@ -163,12 +164,12 @@ void OutputRecorder::run()
         tf::Matrix3x3(q).getRPY(roll, pitch, yaw);
 
         /// Sollgeschwindigkeit
-        x_dot_lin_in=x_dot_lin_in_;
-        y_dot_lin_in=y_dot_lin_in_;
-        z_dot_lin_in=z_dot_lin_in_;
-        x_dot_rot_in=x_dot_rot_in_;
-        y_dot_rot_in=y_dot_rot_in_;
-        z_dot_rot_in=z_dot_rot_in_;
+        x_dot_lin_in = x_dot_lin_in_;
+        y_dot_lin_in = y_dot_lin_in_;
+        z_dot_lin_in = z_dot_lin_in_;
+        x_dot_rot_in = x_dot_rot_in_;
+        y_dot_rot_in = y_dot_rot_in_;
+        z_dot_rot_in = z_dot_rot_in_;
 
         fillDataVectors(x_dot_lin_in, vector_vel_.x(),
                         y_dot_lin_in, vector_vel_.y(),
@@ -186,7 +187,7 @@ void OutputRecorder::run()
         euler(&y_dot_rot_integrated, vector_rot_.y(), period.toSec());
         euler(&z_dot_rot_integrated, vector_rot_.z(), period.toSec());
 
-        if(iterations<1)
+        if (iterations < 1)
         {
             time_vec_.push_back(period.toSec());
         }
@@ -237,20 +238,20 @@ void OutputRecorder::stopRecording()
     // get the console in raw mode
     tcgetattr(kfd, &cooked);
     memcpy(&raw, &cooked, sizeof(struct termios));
-    raw.c_lflag &=~ (ICANON | ECHO);
+    raw.c_lflag &= ~(ICANON | ECHO);
     // Setting a new line, then end of file
     raw.c_cc[VEOL] = 1;
     raw.c_cc[VEOF] = 2;
     tcsetattr(kfd, TCSANOW, &raw);
 
-    while(ros::ok())
+    while (ros::ok())
     {
-        if(read(kfd, &c, 1) < 0)
+        if (read(kfd, &c, 1) < 0)
         {
             perror("read():");
             exit(-1);
         }
-        if(c == 0x61)
+        if (c == 0x61)
         {
             finished_recording_ = true;
             break;
@@ -270,11 +271,11 @@ void OutputRecorder::jointstateCallback(const sensor_msgs::JointState::ConstPtr&
     KDL::JntArray q_dot_temp = last_q_dot_;
     int count = 0;
 
-    for(unsigned int j = 0; j < dof_; j++)
+    for (unsigned int j = 0; j < dof_; j++)
     {
-        for(unsigned int i = 0; i < msg->name.size(); i++)
+        for (unsigned int i = 0; i < msg->name.size(); i++)
         {
-            if(strcmp(msg->name[i].c_str(), joints_[j].c_str()) == 0)
+            if (strcmp(msg->name[i].c_str(), joints_[j].c_str()) == 0)
             {
                 q_temp(j) = msg->position[i];
                 q_dot_temp(j) = msg->velocity[i];
@@ -284,7 +285,7 @@ void OutputRecorder::jointstateCallback(const sensor_msgs::JointState::ConstPtr&
         }
     }
 
-    if(count == joints_.size())
+    if (count == joints_.size())
     {
         KDL::FrameVel FrameVel;
         last_q_ = q_temp;
@@ -294,12 +295,12 @@ void OutputRecorder::jointstateCallback(const sensor_msgs::JointState::ConstPtr&
         jntToCartSolver_vel_ = new KDL::ChainFkSolverVel_recursive(chain_);
         int ret = jntToCartSolver_vel_->JntToCart(jntArrayVel, FrameVel, -1);
 
-        if(ret>=0)
+        if (ret >= 0)
         {
             KDL::Twist twist = FrameVel.GetTwist();
             vector_vel_ = twist.vel;
             vector_rot_ = twist.rot;
-            //ROS_INFO("ist_vel: %f %f %f",twist.vel.x(), twist.vel.y(), twist.vel.z());
+            // ROS_INFO("ist_vel: %f %f %f",twist.vel.x(), twist.vel.y(), twist.vel.z());
         }
         else
         {
@@ -337,7 +338,7 @@ geometry_msgs::Pose OutputRecorder::getEndeffectorPose()
     }
     catch (tf::TransformException& ex)
     {
-        ROS_ERROR("%s",ex.what());
+        ROS_ERROR("%s", ex.what());
     }
 
     pos.position.x = stampedTransform.getOrigin().x();
@@ -353,7 +354,7 @@ geometry_msgs::Pose OutputRecorder::getEndeffectorPose()
 
 double OutputRecorder::calculateLS(std::vector<double>* vec_out, std::vector<double>* vec_in, int model_order, double& a1, double& a2, double& a3, double& b1, double& b2, double& b3)
 {
-    double err=0;
+    double err = 0;
     Eigen::MatrixXd F(vec_out->size()-model_order, model_order*2);
     Eigen::VectorXd y(vec_out->size()-model_order);
     Eigen::MatrixXd F_pinv;
@@ -362,103 +363,103 @@ double OutputRecorder::calculateLS(std::vector<double>* vec_out, std::vector<dou
     int d = 0;
 
     /// System 1. Ordnung
-    if(model_order==1)
+    if (model_order == 1)
     {
-        for(int i=0;i<vec_out->size()-model_order;i++)
+        for (int i = 0; i < vec_out->size()-model_order; i++)
         {
-            if(i<d)
+            if (i < d)
             {
-                F(i,0)=0;
+                F(i, 0) = 0;
                 y(i) = 0;
             }
             else
             {
-                F(i,0) = -1 * vec_out->at(i);
+                F(i, 0) = -1 * vec_out->at(i);
                 y(i) = vec_out->at(i+1);
             }
-            F(i,1) = vec_in->at(i);
+            F(i, 1) = vec_in->at(i);
         }
     }
 
     /// System 2. Ordnung
-    if(model_order==2)
+    if (model_order == 2)
     {
-        for(int i=0;i<vec_out->size()-model_order;i++)
+        for (int i = 0; i < vec_out->size()-model_order; i++)
         {
-            if(i<d)
+            if (i < d)
             {
-                F(i,0) = 0;
-                F(i,1) = 0;
+                F(i, 0) = 0;
+                F(i, 1) = 0;
                 y(i) = 0;
             }
             else
             {
-                F(i,0) = -1 * vec_out->at(i+1);
-                F(i,1) = -1 * vec_out->at(i);
+                F(i, 0) = -1 * vec_out->at(i+1);
+                F(i, 1) = -1 * vec_out->at(i);
                 y(i) = vec_out->at(i+2);
             }
-            F(i,2) = vec_in->at(i+1);
-            F(i,3) = vec_in->at(i);
+            F(i, 2) = vec_in->at(i+1);
+            F(i, 3) = vec_in->at(i);
         }
     }
 
     /// System 3. Ordnung
-    if(model_order==3)
+    if (model_order == 3)
     {
-        for(int i=0;i<vec_out->size()-model_order;i++)
+        for (int i = 0; i < vec_out->size()-model_order; i++)
         {
-            if(i<d)
+            if (i < d)
             {
-                F(i,0) = 0;
-                F(i,1) = 0;
-                F(i,2) = 0;
+                F(i, 0) = 0;
+                F(i, 1) = 0;
+                F(i, 2) = 0;
                 y(i) = 0;
             }
             else
             {
-                F(i,0) = -1 * vec_out->at(i+2);
-                F(i,1) = -1 * vec_out->at(i+1);
-                F(i,2) = -1 * vec_out->at(i);
+                F(i, 0) = -1 * vec_out->at(i+2);
+                F(i, 1) = -1 * vec_out->at(i+1);
+                F(i, 2) = -1 * vec_out->at(i);
                 y(i) = vec_out->at(i+3);
             }
-            F(i,3) = vec_in->at(i+2);
-            F(i,4) = vec_in->at(i+1);
-            F(i,5) = vec_in->at(i);
+            F(i, 3) = vec_in->at(i+2);
+            F(i, 4) = vec_in->at(i+1);
+            F(i, 5) = vec_in->at(i);
         }
     }
 
     /// 'double' machine precision http://freemat.sourceforge.net/help/constants_eps.html
-    pseudoInverse(F, F_pinv, (2.2204*pow(10,-16)));
+    pseudoInverse(F, F_pinv, (2.2204*pow(10, -16)));
     theta = F_pinv * y;
     Eigen::MatrixXd e = y - F * theta;
     Eigen::MatrixXd e_squared = e.transpose() * e;
-    err = e_squared(0,0);
+    err = e_squared(0, 0);
 
     errorVector.push_back(err);
 
     a1 = a2 = a3 = b1 = b2 = b3 = 0;
-    if(model_order == 1)
+    if (model_order == 1)
     {
-        a1 = theta(0,0);
-        b1 = theta(1,0);
+        a1 = theta(0, 0);
+        b1 = theta(1, 0);
     }
 
-    if(model_order==2)
+    if (model_order == 2)
     {
-        a1 = theta(0,0);
-        a2 = theta(1,0);
-        b1 = theta(2,0);
-        b2 = theta(3,0);
+        a1 = theta(0, 0);
+        a2 = theta(1, 0);
+        b1 = theta(2, 0);
+        b2 = theta(3, 0);
     }
 
-    if(model_order==3)
+    if (model_order == 3)
     {
-        a1 = theta(0,0);
-        a2 = theta(1,0);
-        a3 = theta(2,0);
-        b1 = theta(3,0);
-        b2 = theta(4,0);
-        b3 = theta(5,0);
+        a1 = theta(0, 0);
+        a2 = theta(1, 0);
+        a3 = theta(2, 0);
+        b1 = theta(3, 0);
+        b2 = theta(4, 0);
+        b3 = theta(5, 0);
     }
 
     std::cout << "\n\nTheta: \n" << theta << std::endl;
@@ -475,7 +476,7 @@ void OutputRecorder::pseudoInverse(const Eigen::MatrixXd& matrix, Eigen::MatrixX
     const Eigen::VectorXd S = svdOfM.singularValues();
     Eigen::VectorXd Sinv = S;
 
-    double maxsv = 0 ;
+    double maxsv = 0;
     for (std::size_t i = 0; i < S.rows(); ++i)
     {
         if (fabs(S(i)) > maxsv)
@@ -486,7 +487,7 @@ void OutputRecorder::pseudoInverse(const Eigen::MatrixXd& matrix, Eigen::MatrixX
 
     for (std::size_t i = 0; i < S.rows(); ++i)
     {
-        Sinv(i)=((S(i)< 0.0001 )?0:1/S(i));
+        Sinv(i) = ((S(i)< 0.0001)?0:1/S(i));
     }
 
     matrix_inv = V * Sinv.asDiagonal() * U.transpose();
@@ -494,7 +495,7 @@ void OutputRecorder::pseudoInverse(const Eigen::MatrixXd& matrix, Eigen::MatrixX
 
 void OutputRecorder::euler(std::vector<double>* out, double in, double dt)
 {
-    if(out->size()==0)
+    if (out->size() == 0)
     {
         out->push_back(in*dt);
     }
@@ -553,49 +554,49 @@ void OutputRecorder::stepResponsePlot(std::string file_name, std::vector<double>
 
     /// Get the vectors and write them to .m file-----------------------
     myfile << file_name << "_in = [" << std::endl;
-    for (int i=0;i<in->size()-1;i++)
+    for (int i = 0; i < in->size()-1; i++)
     {
         myfile << in->at(i) <<std::endl;
     }
     myfile << "]; \n" << std::endl;
 
     myfile << file_name << "_x_lin_out = [" << std::endl;
-    for (int i=0;i<x_lin_out->size()-1;i++)
+    for (int i = 0; i < x_lin_out->size()-1; i++)
     {
         myfile << x_lin_out->at(i) <<std::endl;
     }
     myfile << "]; \n" << std::endl;
 
     myfile << file_name << "_y_lin_out = [" << std::endl;
-    for (int i=0;i<y_lin_out->size()-1;i++)
+    for (int i = 0; i < y_lin_out->size()-1; i++)
     {
         myfile << y_lin_out->at(i) <<std::endl;
     }
     myfile << "]; \n" << std::endl;
 
     myfile << file_name << "_z_lin_out = [" << std::endl;
-    for (int i=0;i<z_lin_out->size()-1;i++)
+    for (int i = 0; i < z_lin_out->size()-1; i++)
     {
         myfile << z_lin_out->at(i) <<std::endl;
     }
     myfile << "]; \n" << std::endl;
 
     myfile << file_name << "_x_rot_out = [" << std::endl;
-    for (int i=0;i<x_rot_out->size()-1;i++)
+    for (int i = 0; i < x_rot_out->size()-1; i++)
     {
         myfile << x_rot_out->at(i) <<std::endl;
     }
     myfile << "]; \n" << std::endl;
 
     myfile << file_name << "_y_rot_out = [" << std::endl;
-    for (int i=0;i<y_rot_out->size()-1;i++)
+    for (int i = 0; i < y_rot_out->size()-1; i++)
     {
         myfile << y_rot_out->at(i) <<std::endl;
     }
     myfile << "]; \n" << std::endl;
 
     myfile << file_name << "_z_rot_out = [" << std::endl;
-    for (int i=0;i<z_rot_out->size()-1;i++)
+    for (int i = 0; i < z_rot_out->size()-1; i++)
     {
         myfile << z_rot_out->at(i) <<std::endl;
     }
@@ -618,55 +619,55 @@ void OutputRecorder::writeToMFile(std::string file_name, std::vector<double>* do
     std::ofstream myfile;
     std::string name;
     std::vector <double> errVec;
-    double a1,a2,a3,b1,b2,b3=0;
+    double a1, a2, a3, b1, b2, b3 = 0.0;
     std::ostringstream a1_str, a2_str, a3_str, b1_str, b2_str, b3_str;
 
     name = output_file_path_ + file_name + ".m";
     ROS_INFO("Writing results to: %s", name.c_str());
     const char* charPath = name.c_str();
 
-    myfile.open (charPath);
+    myfile.open(charPath);
 
     myfile << "clear all;close all;\n\n";
 
     /// Get the vectors and write them to .m file
     myfile << file_name << "_dot_in = [" << std::endl;
-    for (int i=0;i<dot_in->size()-1;i++)
+    for (int i = 0; i < dot_in->size()-1; i++)
     {
         myfile << dot_in->at(i) <<std::endl;
     }
     myfile << "]; \n" << std::endl;
 
     myfile << file_name << "_dot_out = [" << std::endl;
-    for (int i=0;i<dot_out->size()-1;i++)
+    for (int i = 0; i < dot_out->size()-1; i++)
     {
         myfile << dot_out->at(i) <<std::endl;
     }
     myfile << "]; \n" << std::endl;
 
     myfile << file_name << "_pos_out = [" << std::endl;
-    for (int i=0;i<pos_out->size()-1;i++)
+    for (int i = 0; i < pos_out->size()-1; i++)
     {
         myfile << pos_out->at(i) <<std::endl;
     }
     myfile << "]; \n" << std::endl;
 
     myfile << file_name << "_dot_integrated = [" << std::endl;
-    for (int i=0;i<dot_integrated->size()-1;i++)
+    for (int i=0; i < dot_integrated->size()-1; i++)
     {
         myfile << dot_integrated->at(i) <<std::endl;
     }
     myfile << "]; \n" << std::endl;
 
     myfile << "t = [" << std::endl;
-    for (int i=0;i<time_vec_.size()-1;i++)
+    for (int i = 0; i < time_vec_.size()-1; i++)
     {
         myfile << time_vec_.at(i) <<std::endl;
     }
     myfile << "]; \n" << std::endl;
     ///-----------------------------------------------------------------
 
-    ///Generate the time vector based on average sample time
+    /// Generate the time vector based on average sample time
     myfile << "k = size(" <<file_name << "_dot_in);" << std::endl;
     myfile << "t = linspace(0,k(1)*" << fabs(dt_) << ",size(" <<file_name << "_dot_in));" << std::endl;
     ///-----------------------------------------------------------------
@@ -677,10 +678,10 @@ void OutputRecorder::writeToMFile(std::string file_name, std::vector<double>* do
     errVec.clear();
 
     /// 1. Order
-    a1_str.str("");a2_str.str("");a3_str.str("");b1_str.str("");b2_str.str("");b3_str.str("");
-    a1_str.clear();a2_str.clear();a3_str.clear();b1_str.clear();b2_str.clear();b3_str.clear();
+    a1_str.str(""); a2_str.str(""); a3_str.str(""); b1_str.str(""); b2_str.str(""); b3_str.str("");
+    a1_str.clear(); a2_str.clear(); a3_str.clear(); b1_str.clear(); b2_str.clear(); b3_str.clear();
 
-    errVec.push_back(calculateLS(dot_out,dot_in,1,a1,a2,a3,b1,b2,b3));
+    errVec.push_back(calculateLS(dot_out, dot_in, 1, a1, a2, a3, b1, b2, b3));
 
     a1_str << a1;
     b1_str << b1;
@@ -694,10 +695,10 @@ void OutputRecorder::writeToMFile(std::string file_name, std::vector<double>* do
     myfile << Gz1;
 
     /// 2. Order
-    a1_str.str("");a2_str.str("");a3_str.str("");b1_str.str("");b2_str.str("");b3_str.str("");
-    a1_str.clear();a2_str.clear();a3_str.clear();b1_str.clear();b2_str.clear();b3_str.clear();
+    a1_str.str(""); a2_str.str(""); a3_str.str(""); b1_str.str(""); b2_str.str(""); b3_str.str("");
+    a1_str.clear(); a2_str.clear(); a3_str.clear(); b1_str.clear(); b2_str.clear(); b3_str.clear();
 
-    errVec.push_back(calculateLS(dot_out,dot_in,2,a1,a2,a3,b1,b2,b3));
+    errVec.push_back(calculateLS(dot_out, dot_in, 2, a1, a2, a3, b1, b2, b3));
 
     a1_str << a1;
     a2_str << a2;
@@ -716,10 +717,10 @@ void OutputRecorder::writeToMFile(std::string file_name, std::vector<double>* do
 
 
     /// 3. Order
-    a1_str.str("");a2_str.str("");a3_str.str("");b1_str.str("");b2_str.str("");b3_str.str("");
-    a1_str.clear();a2_str.clear();a3_str.clear();b1_str.clear();b2_str.clear();b3_str.clear();
+    a1_str.str(""); a2_str.str(""); a3_str.str(""); b1_str.str(""); b2_str.str(""); b3_str.str("");
+    a1_str.clear(); a2_str.clear(); a3_str.clear(); b1_str.clear(); b2_str.clear(); b3_str.clear();
 
-    errVec.push_back(calculateLS(dot_out,dot_in,3,a1,a2,a3,b1,b2,b3));
+    errVec.push_back(calculateLS(dot_out, dot_in, 3, a1, a2, a3, b1, b2, b3));
 
     a1_str << a1;
     a2_str << a2;
@@ -741,22 +742,22 @@ void OutputRecorder::writeToMFile(std::string file_name, std::vector<double>* do
     myfile << "figure; semilogy(e); grid;" << std::endl;
 
     double step = 0.0;
-    for(int i = 0;i<dot_in->size()-1;i++)
+    for (int i = 0; i < dot_in->size()-1; i++)
     {
         step+=dot_in->at(i);
     }
     step/=(dot_in->size()-1);
     std::cout << "step = " << step <<std::endl;
 
-    int length = (int)pos_out->size()*2/3 - (int)pos_out->size()/3;
-    double Ki = (pos_out->at((int)pos_out->size()*2/3) - pos_out->at((int)pos_out->size()/3))/(length * dt_) / step;
+    int length = static_cast<int>(pos_out->size()*2/3) - static_cast<int>(pos_out->size()/3);
+    double Ki = (pos_out->at(static_cast<int>(pos_out->size()*2/3)) - pos_out->at(static_cast<int>(pos_out->size()/3)))/(length * dt_) / step;
 
-    ROS_INFO("length: %i    dY: %f   Ki: %f",length, (pos_out->at((int)pos_out->size()*2/3) - pos_out->at((int)pos_out->size()/3)), Ki);
+    ROS_INFO("length: %i    dY: %f   Ki: %f", length, (pos_out->at(static_cast<int>(pos_out->size()*2/3)) - pos_out->at(static_cast<int>(pos_out->size()/3))), Ki);
 
     /// First order
     myfile << "Gz_" << file_name << "1 = minreal(Gz_" << file_name << "1);" << std::endl;
     myfile << "Gs_" << file_name << "1=d2c(Gz_" << file_name << "1,'matched');" << std::endl;
-    //myfile << "Gs_" << file_name << "_integrated1 = Gs_" << file_name << "1*(" << Ki << "/s);" << std::endl;
+    // myfile << "Gs_" << file_name << "_integrated1 = Gs_" << file_name << "1*(" << Ki << "/s);" << std::endl;
     myfile << "Gs_" << file_name << "_integrated1 = Gs_" << file_name << "1* (1/s);" << std::endl;
     myfile << "Gs_" << file_name << "_out1 = lsim(Gs_" << file_name << "1," << file_name << "_dot_in,t);" << std::endl;
     myfile << "Gs_" << file_name << "_out_integrated1 = lsim(Gs_" << file_name << "_integrated1," << file_name << "_dot_in,t);" << std::endl;
@@ -777,12 +778,12 @@ void OutputRecorder::writeToMFile(std::string file_name, std::vector<double>* do
     /// Second order
     myfile << "Gz_" << file_name << "2 = minreal(Gz_" << file_name << "2);"<< std::endl;
     myfile << "Gs_" << file_name << "2=d2c(Gz_" << file_name << "2,'matched');" << std::endl;
-    //myfile << "Gs_" << file_name << "_integrated2 = Gs_" << file_name << "2*(" << Ki << "/s);" << std::endl;
+    // myfile << "Gs_" << file_name << "_integrated2 = Gs_" << file_name << "2*(" << Ki << "/s);" << std::endl;
     myfile << "Gs_" << file_name << "_integrated2 = Gs_" << file_name << "2*(1/s);" << std::endl;
     myfile << "Gs_" << file_name << "_out2 = lsim(Gs_" << file_name << "2," << file_name << "_dot_in,t);" << std::endl;
     myfile << "Gs_" << file_name << "_out_integrated2 = lsim(Gs_" << file_name << "_integrated2," << file_name << "_dot_in,t);" << std::endl;
 
-    //Plot
+    // Plot
     myfile << "figure" << std::endl;
     myfile << "subplot(2,1,1);" << std::endl;
     myfile << "plot(t," << file_name << "_dot_in,t," << file_name << "_dot_out,t,Gs_" << file_name << "_out2)" << std::endl;
@@ -798,12 +799,12 @@ void OutputRecorder::writeToMFile(std::string file_name, std::vector<double>* do
     /// Third order
     myfile << "Gz_" << file_name << "3 = minreal(Gz_" << file_name << "3);" << std::endl;
     myfile << "Gs_" << file_name << "3=d2c(Gz_" << file_name << "3,'matched');" << std::endl;
-    //myfile << "Gs_" << file_name << "_integrated3 = Gs_" << file_name << "3*(" << Ki << "/s);" << std::endl;
+    // myfile << "Gs_" << file_name << "_integrated3 = Gs_" << file_name << "3*(" << Ki << "/s);" << std::endl;
     myfile << "Gs_" << file_name << "_integrated3 = Gs_" << file_name << "3*(1/s);" << std::endl;
     myfile << "Gs_" << file_name << "_out3 = lsim(Gs_" << file_name << "3," << file_name << "_dot_in,t);" << std::endl;
     myfile << "Gs_" << file_name << "_out_integrated3 = lsim(Gs_" << file_name << "_integrated3," << file_name << "_dot_in,t);" << std::endl;
 
-    //Plot
+    // Plot
     myfile << "figure" << std::endl;
     myfile << "subplot(2,1,1);" << std::endl;
     myfile << "plot(t," << file_name << "_dot_in,t," << file_name << "_dot_out,t,Gs_" << file_name << "_out3)" << std::endl;

@@ -30,6 +30,7 @@
 #include <string>
 #include <vector>
 #include <limits>
+#include <algorithm>
 #include <tf_conversions/tf_kdl.h>
 #include <eigen_conversions/eigen_kdl.h>
 #include "cob_twist_controller/kinematic_extensions/kinematic_extension_lookat.h"
@@ -222,7 +223,7 @@ void KinematicExtensionLookat::processResultExtension(const KDL::JntArray& q_dot
         {
             joint_states_ext_.last_q_(i) = this->joint_states_ext_.current_q_(i);
             joint_states_ext_.last_q_dot_(i) = this->joint_states_ext_.current_q_dot_(i);
-            joint_states_ext_.current_q_(i) = std::max(pos[i], 0.1); // do not look backwards
+            joint_states_ext_.current_q_(i) = std::max(pos[i], 0.1);  // do not look backwards
             joint_states_ext_.current_q_dot_(i) = vel[i];
         }
     }

@@ -13,6 +13,7 @@
   <depend>boost</depend>
   <depend>controller_manager_msgs</depend>
   <depend>roscpp</depend>
+  <depend>roslint</depend>
   <depend>std_msgs</depend>
 
 </package>

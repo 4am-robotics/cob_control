@@ -27,6 +27,7 @@
   <depend>pkg-config</depend>
   <depend>roscpp</depend>
   <depend>roslib</depend>
+  <depend>roslint</depend>
   <depend>sensor_msgs</depend>
   <depend>shape_msgs</depend>
   <depend>std_msgs</depend>

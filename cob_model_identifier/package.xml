@@ -16,6 +16,7 @@
   <depend>kdl_parser</depend>
   <depend>orocos_kdl</depend>
   <depend>roscpp</depend>
+  <depend>roslint</depend>
   <depend>sensor_msgs</depend>
   <depend>std_srvs</depend>
   <depend>tf</depend>
