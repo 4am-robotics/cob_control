@@ -141,8 +141,7 @@ Eigen::MatrixXd DampingLeastSingularValues::getDampingFactor(const Eigen::Vector
         //lambda(sorted_singular_values.rows() - 1,sorted_singular_values.rows() - 1)= sqrt( (1.0 - pow(least_singular_value / this->params_.eps_damping, 2.0)) * lambda_quad);
         //The value was powered squared later so the sqrt was removed
         lambda(sorted_singular_values.rows() - 1,sorted_singular_values.rows() - 1)= (1.0 - pow(least_singular_value / this->params_.eps_damping, 2.0)) * lambda_quad;
-        lambda_quad = lambda(sorted_singular_values.rows() - 1,sorted_singular_values.rows() - 1);
-        ROS_INFO_STREAM(lambda_quad);
+
         return lambda;
     }
     else
@@ -161,16 +160,19 @@ Eigen::MatrixXd DampingSigmoid::getDampingFactor(const Eigen::VectorXd& sorted_s
 {
     // Formula 15 Singularity-robust Task-priority Redundandancy Resolution
     double least_singular_value = sorted_singular_values(sorted_singular_values.rows() - 1);
-    Eigen::VectorXd singular_values;
+    uint32_t rows = sorted_singular_values.rows();
+    Eigen::MatrixXd damping_factor = Eigen::MatrixXd::Zero(rows,rows);
     for(unsigned i = 0; i < sorted_singular_values.rows(); i++)
     {
 		if (sorted_singular_values[i] < this->params_.eps_damping)
 		{
-			double lambda_sig = params_.lambda_max /( 1+ exp((sorted_singular_values[i] + params_.eps_truncation) / params_.slope_damping));
-			return singular_values;
+			double lambda_sig = params_.lambda_max /( 1+ exp((sorted_singular_values[i] + params_.w_threshold) / params_.slope_damping));
+			damping_factor(i,i)=lambda_sig;
 		}
+
     }
-    return singular_values;
+    ROS_INFO_STREAM(damping_factor);
+    return damping_factor;
 }
 /* END DampingLeastSingularValues ************************************************************************************/
 
