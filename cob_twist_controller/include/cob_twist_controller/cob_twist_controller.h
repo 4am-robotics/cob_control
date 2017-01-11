@@ -78,6 +78,7 @@ private:
     KDL::Chain chain_;
     JointStates joint_states_;
     KDL::Twist twist_odometry_cb_;
+    KDL::Twist twist_odometry_bl_;
 
     TwistControllerParams twist_controller_params_;
 
@@ -119,6 +120,7 @@ public:
 
     boost::recursive_mutex reconfig_mutex_;
     boost::shared_ptr< dynamic_reconfigure::Server<cob_twist_controller::TwistControllerConfig> > reconfigure_server_;
+    geometry_msgs::Pose pose_;
 };
 
 #endif  // COB_TWIST_CONTROLLER_COB_TWIST_CONTROLLER_H

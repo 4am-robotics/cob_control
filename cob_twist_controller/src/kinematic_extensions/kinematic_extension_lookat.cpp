@@ -165,7 +165,7 @@ KDL::Jacobian KinematicExtensionLookat::adjustJacobian(const KDL::Jacobian& jac_
     return jac_full;
 }
 
-JointStates KinematicExtensionLookat::adjustJointStates(const JointStates& joint_states)
+JointStates KinematicExtensionLookat::adjustJointStates(const JointStates& joint_states, const geometry_msgs::Pose& pose, const KDL::Twist& twist)
 {
     boost::mutex::scoped_lock lock(mutex_);
     unsigned int chain_dof = joint_states.current_q_.rows();

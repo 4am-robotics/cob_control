@@ -250,6 +250,53 @@ class JointLimitAvoidanceIneq : public ConstraintBase<T_PARAMS, PRIO>
 };
 /* END JointLimitAvoidanceIneq **************************************************************************************/
 
+/* BEGIN JointSingularityAvoidance ************************************************************************************/
+/// Class providing methods that realize a JointSingularityAvoidance constraint.
+template <typename T_PARAMS, typename PRIO = uint32_t>
+class JointSingularityAvoidance : public ConstraintBase<T_PARAMS, PRIO>
+{
+    public:
+        JointSingularityAvoidance(PRIO prio,
+                            T_PARAMS constraint_params,
+                            CallbackDataMediator& cbdm,
+                            KDL::ChainFkSolverVel_recursive& fk_solver_vel) :
+              ConstraintBase<T_PARAMS, PRIO>(prio, constraint_params, cbdm),
+              abs_delta_max_(std::numeric_limits<double>::max()),
+              abs_delta_min_(std::numeric_limits<double>::max()),
+              rel_max_(1.0),
+              rel_min_(1.0),
+              fk_solver_vel_(fk_solver_vel)
+        {}
+
+        virtual ~JointSingularityAvoidance()
+        {}
+
+        virtual Task_t createTask();
+        virtual std::string getTaskId() const;
+
+        virtual void calculate();
+        virtual Eigen::MatrixXd getTaskJacobian() const;
+        virtual Eigen::VectorXd getTaskDerivatives() const;
+
+        virtual double getActivationGain() const;
+        virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const;
+
+    private:
+        virtual ConstraintTypes getType() const;
+
+        void calcValue();
+        void calcDerivativeValue();
+        void calcPartialValues();
+
+        double abs_delta_max_;
+        double abs_delta_min_;
+        double rel_max_;
+        double rel_min_;
+        KDL::ChainFkSolverVel_recursive& fk_solver_vel_;
+
+};
+/* END JointSingularityAvoidance **************************************************************************************/
+
 typedef ConstraintsBuilder<uint32_t> ConstraintsBuilder_t;
 
 #include "cob_twist_controller/constraints/constraint_impl.h"   // implementation of templated class

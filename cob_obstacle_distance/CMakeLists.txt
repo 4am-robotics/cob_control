@@ -21,23 +21,31 @@ catkin_package(
   CATKIN_DEPENDS cob_control_msgs cob_srvs dynamic_reconfigure eigen_conversions geometry_msgs kdl_conversions kdl_parser moveit_msgs roscpp roslib sensor_msgs shape_msgs std_msgs tf_conversions tf urdf visualization_msgs
   DEPENDS assimp Boost fcl
   INCLUDE_DIRS include
-  LIBRARIES parsers marker_shapes_management
+  LIBRARIES helper_functions parsers marker_shapes_management distance_manager
 )
 
 ### BUILD ###
 include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${EIGEN_INCLUDE_DIRS} ${FCL_INCLUDE_DIRS} ${orocos_kdl_INCLUDE_DIRS} ${ASSIMP_INCLUDE_DIRS})
 
+add_library(helper_functions src/helpers/helper_functions.cpp)
+add_dependencies(helper_functions ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(helper_functions ${catkin_LIBRARIES})
+
 add_library(parsers src/parsers/stl_parser.cpp src/parsers/mesh_parser.cpp)
-add_dependencies(parsers ${catkin_EXPORTED_TARGETS})
-target_link_libraries(parsers assimp ${fcl_LIBRARIES} ${catkin_LIBRARIES})
+add_dependencies(parsers ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(parsers helper_functions assimp ${fcl_LIBRARIES} ${catkin_LIBRARIES})
 
 add_library(marker_shapes_management src/marker_shapes/marker_shapes_impl.cpp src/marker_shapes/marker_shapes_interface.cpp src/shapes_manager.cpp src/link_to_collision.cpp)
-add_dependencies(marker_shapes_management ${catkin_EXPORTED_TARGETS})
+add_dependencies(marker_shapes_management ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(marker_shapes_management parsers ${fcl_LIBRARIES} ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 
-add_executable(cob_obstacle_distance src/cob_obstacle_distance.cpp src/helpers/helper_functions.cpp src/distance_manager.cpp src/chainfk_solvers/advanced_chainfksolver_recursive.cpp)
+add_library(distance_manager src/distance_manager.cpp src/chainfk_solvers/advanced_chainfksolver_recursive.cpp)
+add_dependencies(distance_manager ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(distance_manager marker_shapes_management ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
+
+add_executable(cob_obstacle_distance src/cob_obstacle_distance.cpp)
 add_dependencies(cob_obstacle_distance ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(cob_obstacle_distance parsers marker_shapes_management ${fcl_LIBRARIES} ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
+target_link_libraries(cob_obstacle_distance helper_functions parsers marker_shapes_management distance_manager ${fcl_LIBRARIES} ${catkin_LIBRARIES})
 
 add_executable(debug_obstacle_distance_node src/debug/debug_obstacle_distance_node.cpp)
 add_dependencies(debug_obstacle_distance_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
@@ -46,7 +54,7 @@ target_link_libraries(debug_obstacle_distance_node ${catkin_LIBRARIES})
 roslint_cpp()
 
 ### Install ###
-install(TARGETS cob_obstacle_distance parsers marker_shapes_management debug_obstacle_distance_node
+install(TARGETS cob_obstacle_distance helper_functions parsers marker_shapes_management distance_manager debug_obstacle_distance_node
  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

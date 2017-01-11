@@ -40,7 +40,7 @@
 Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Vector6d_t& in_cart_velocities,
                                                       const JointStates& joint_states)
 {
-    Eigen::MatrixXd damped_pinv = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
+    Eigen::MatrixXd damped_pinv = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_,joint_states);
     Eigen::MatrixXd pinv = pinv_calc_.calculate(this->jacobian_data_);
 
     Eigen::MatrixXd particular_solution = damped_pinv * in_cart_velocities;
