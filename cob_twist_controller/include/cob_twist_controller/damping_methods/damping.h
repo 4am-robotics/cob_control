@@ -56,7 +56,7 @@ class DampingNone : public DampingBase
 
         ~DampingNone() {}
 
-        virtual double getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
+        virtual Eigen::MatrixXd getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
                                         const Eigen::MatrixXd& jacobian_data) const;
 };
 /* END DampingNone **********************************************************************************************/
@@ -72,7 +72,7 @@ class DampingConstant : public DampingBase
 
         ~DampingConstant() {}
 
-        virtual double getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
+        virtual Eigen::MatrixXd getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
                                         const Eigen::MatrixXd& jacobian_data) const;
 };
 /* END DampingConstant ******************************************************************************************/
@@ -88,7 +88,7 @@ class DampingManipulability : public DampingBase
 
         ~DampingManipulability() {}
 
-        virtual double getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
+        virtual Eigen::MatrixXd getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
                                         const Eigen::MatrixXd& jacobian_data) const;
 };
 /* END DampingManipulability ************************************************************************************/
@@ -104,7 +104,23 @@ class DampingLeastSingularValues : public DampingBase
 
         ~DampingLeastSingularValues() {}
 
-        virtual double getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
+        virtual Eigen::MatrixXd getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
+                                        const Eigen::MatrixXd& jacobian_data) const;
+};
+/* END DampingLeastSingularValues ************************************************************************************/
+
+/* BEGIN DampingLeastSingularValues **********************************************************************************/
+/// Class implementing a method to return a damping factor based on least singular value.
+class DampingSigmoid : public DampingBase
+{
+    public:
+        explicit DampingSigmoid(const TwistControllerParams& params)
+        : DampingBase(params)
+        {}
+
+        ~DampingSigmoid() {}
+
+        virtual Eigen::MatrixXd getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
                                         const Eigen::MatrixXd& jacobian_data) const;
 };
 /* END DampingLeastSingularValues ************************************************************************************/

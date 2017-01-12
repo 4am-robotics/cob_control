@@ -40,7 +40,7 @@ class DampingBase
 
         virtual ~DampingBase() {}
 
-        virtual double getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
+        virtual Eigen::MatrixXd getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
                                         const Eigen::MatrixXd& jacobian_data) const = 0;
 
     protected:

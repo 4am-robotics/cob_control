@@ -17,7 +17,8 @@
  *   ROS package name: cob_twist_controller
  *
  * \author
- *   Author: Marco Bezzon, email: Marco.Bezzon@ipa.fraunhofer.de
+ *   Authors: Marco Bezzon, email: Marco.Bezzon@ipa.fraunhofer.de
+ *   Bruno Brito, email: Bruno.Brito@ipa.fraunhofer.de
  *
  * \date Date of creation: May, 2015
  *
@@ -67,7 +68,7 @@ Eigen::MatrixXd PInvBySVD::calculate(const TwistControllerParams& params,
     double eps_truncation = params.eps_truncation;
     Eigen::VectorXd singularValues = svd.singularValues();
     Eigen::VectorXd singularValuesInv = Eigen::VectorXd::Zero(singularValues.rows());
-    double lambda = db->getDampingFactor(singularValues, jacobian);
+    Eigen::MatrixXd lambda = db->getDampingFactor(singularValues, jacobian);
 
     if (params.numerical_filtering)
     {
@@ -76,18 +77,18 @@ Eigen::MatrixXd PInvBySVD::calculate(const TwistControllerParams& params,
         for (uint32_t i = 0; i < singularValues.rows()-1; ++i)
         {
             // pow(beta, 2) << pow(lambda, 2)
-            singularValuesInv(i) = singularValues(i) / (pow(singularValues(i), 2) + pow(params.beta, 2));
+            singularValuesInv(i) = singularValues(i) / (pow(singularValues(i), 2) + pow(params.beta, 2)+ lambda(i,i));
         }
         // Formula 20 - additional part - numerical filtering for least singular value m
-        uint32_t m = singularValues.rows();
-        singularValuesInv(m) = singularValues(m) / (pow(singularValues(m), 2) + pow(params.beta, 2) + pow(lambda, 2));
+        //uint32_t m = singularValues.rows();
+        //singularValuesInv(m) = singularValues(m) / (pow(singularValues(m), 2) + pow(params.beta, 2) + pow(lambda, 2));
     }
     else
     {
         // small change to ref: here quadratic damping due to Control of Redundant Robot Manipulators : R.V. Patel, 2005, Springer [Page 13-14]
         for (uint32_t i = 0; i < singularValues.rows(); ++i)
         {
-            double denominator = (singularValues(i) * singularValues(i) + pow(lambda, 2) );
+            double denominator = (singularValues(i) * singularValues(i) + lambda(i,i) );
             // singularValuesInv(i) = (denominator < eps_truncation) ? 0.0 : singularValues(i) / denominator;
             singularValuesInv(i) = (singularValues(i) < eps_truncation) ? 0.0 : singularValues(i) / denominator;
         }
@@ -143,7 +144,7 @@ Eigen::MatrixXd PInvDirect::calculate(const TwistControllerParams& params,
         ROS_ERROR("PInvDirect does not support SVD. Use PInvBySVD class instead!");
     }
 
-    double lambda = db->getDampingFactor(Eigen::VectorXd::Zero(1, 1), jacobian);
+    Eigen::MatrixXd lambda = db->getDampingFactor(Eigen::VectorXd::Zero(1, 1), jacobian);
     if (cols >= rows)
     {
         Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(rows, rows);

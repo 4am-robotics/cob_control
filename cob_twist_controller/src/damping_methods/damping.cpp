@@ -175,4 +175,3 @@ Eigen::MatrixXd DampingSigmoid::getDampingFactor(const Eigen::VectorXd& sorted_s
     return damping_factor;
 }
 /* END DampingLeastSingularValues ************************************************************************************/
-
