@@ -52,19 +52,29 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Vector6d_t& in_cart_
 
     Eigen::MatrixXd homogeneous_solution = Eigen::MatrixXd::Zero(particular_solution.rows(), particular_solution.cols());
     KDL::JntArrayVel predict_jnts_vel(joint_states.current_q_.rows());
+    Eigen::FullPivLU<Eigen::MatrixXd> lu_decomp(projector);
+    Eigen::MatrixXd qdots_out;
 
-    for (std::set<ConstraintBase_t>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
+    if(lu_decomp.rank() != 0)
     {
-        ROS_DEBUG_STREAM("task id: " << (*it)->getTaskId());
-        (*it)->update(joint_states, predict_jnts_vel, this->jacobian_data_);
-        Eigen::VectorXd q_dot_0 = (*it)->getPartialValues();
-        Eigen::MatrixXd tmp_projection = projector * q_dot_0;
-        double activation_gain = (*it)->getActivationGain();  // contribution of the homo. solution to the part. solution
-        double constraint_k_H = (*it)->getSelfMotionMagnitude(particular_solution, tmp_projection);  // gain of homogenous solution (if active)
-        homogeneous_solution += (constraint_k_H * activation_gain * tmp_projection);
-    }
 
-    Eigen::MatrixXd qdots_out = particular_solution + this->params_.k_H * homogeneous_solution;  // weighting with k_H is done in loop
+		for (std::set<ConstraintBase_t>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
+		{
+			ROS_DEBUG_STREAM("task id: " << (*it)->getTaskId());
+			(*it)->update(joint_states, predict_jnts_vel, this->jacobian_data_);
+			Eigen::VectorXd q_dot_0 = (*it)->getPartialValues();
+			Eigen::MatrixXd tmp_projection = projector * q_dot_0;
+			double activation_gain = (*it)->getActivationGain();  // contribution of the homo. solution to the part. solution
+			double constraint_k_H = (*it)->getSelfMotionMagnitude(particular_solution, tmp_projection);  // gain of homogenous solution (if active)
+			homogeneous_solution += (constraint_k_H * activation_gain * tmp_projection);
+		}
+
+		qdots_out = particular_solution + this->params_.k_H * homogeneous_solution;  // weighting with k_H is done in loop
+    }
+    else{
+    	qdots_out = particular_solution;
+    	ROS_WARN("Null space projection matrix is null. The constraint may not be satisfied");
+    }
 
     // //DEBUG: for verification of nullspace projection
     // std::stringstream ss_part;
