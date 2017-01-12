@@ -171,7 +171,7 @@ Eigen::MatrixXd DampingSigmoid::getDampingFactor(const Eigen::VectorXd& sorted_s
 		}
 
     }
-    ROS_INFO_STREAM(damping_factor);
+
     return damping_factor;
 }
 /* END DampingLeastSingularValues ************************************************************************************/
