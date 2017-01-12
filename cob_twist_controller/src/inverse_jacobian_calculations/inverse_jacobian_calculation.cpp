@@ -148,13 +148,13 @@ Eigen::MatrixXd PInvDirect::calculate(const TwistControllerParams& params,
     if (cols >= rows)
     {
         Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(rows, rows);
-        Eigen::MatrixXd temp = jacobian * jac_t + lambda * lambda * ident;
+        Eigen::MatrixXd temp = jacobian * jac_t + lambda(1, 1) * lambda(1, 1) * ident;
         result = jac_t * temp.inverse();
     }
     else
     {
         Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(cols, cols);
-        Eigen::MatrixXd temp = jac_t * jacobian + lambda * lambda * ident;
+        Eigen::MatrixXd temp = jac_t * jacobian + lambda(1, 1) * lambda(1, 1) * ident;
         result = temp.inverse() * jac_t;
     }
 

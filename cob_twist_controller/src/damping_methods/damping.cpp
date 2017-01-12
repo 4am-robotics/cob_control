@@ -84,11 +84,10 @@ inline Eigen::MatrixXd DampingNone::getDampingFactor(const Eigen::VectorXd& sort
 inline Eigen::MatrixXd DampingConstant::getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
                                                 const Eigen::MatrixXd& jacobian_data) const
 {
-	uint32_t rows = sorted_singular_values.rows();
-	//uint32_t cols = sorted_singular_values.rows(); //NOt needed S matrix is always square
-	Eigen::MatrixXd damping_factor = Eigen::MatrixXd::Zero(rows,rows);
-	damping_factor(sorted_singular_values.rows() - 1,sorted_singular_values.rows() - 1) = pow(this->params_.damping_factor,2);
-	return damping_factor;
+    uint32_t rows = sorted_singular_values.rows();
+    Eigen::MatrixXd damping_factor = Eigen::MatrixXd::Zero(rows,rows);
+    damping_factor(sorted_singular_values.rows() - 1,sorted_singular_values.rows() - 1) = pow(this->params_.damping_factor,2);
+    return damping_factor;
 }
 /* END DampingConstant ******************************************************************************************/
 
@@ -164,11 +163,11 @@ Eigen::MatrixXd DampingSigmoid::getDampingFactor(const Eigen::VectorXd& sorted_s
     Eigen::MatrixXd damping_factor = Eigen::MatrixXd::Zero(rows,rows);
     for(unsigned i = 0; i < sorted_singular_values.rows(); i++)
     {
-		if (sorted_singular_values[i] < this->params_.eps_damping)
-		{
-			double lambda_sig = params_.lambda_max /( 1+ exp((sorted_singular_values[i] + params_.w_threshold) / params_.slope_damping));
-			damping_factor(i,i)=lambda_sig;
-		}
+      if (sorted_singular_values[i] < this->params_.eps_damping)
+      {
+        double lambda_sig = params_.lambda_max /( 1+ exp((sorted_singular_values[i] + params_.w_threshold) / params_.slope_damping));
+        damping_factor(i,i)=lambda_sig;
+      }
 
     }
 

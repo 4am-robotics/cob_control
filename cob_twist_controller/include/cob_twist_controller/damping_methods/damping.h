@@ -109,8 +109,8 @@ class DampingLeastSingularValues : public DampingBase
 };
 /* END DampingLeastSingularValues ************************************************************************************/
 
-/* BEGIN DampingLeastSingularValues **********************************************************************************/
-/// Class implementing a method to return a damping factor based on least singular value.
+/* BEGIN DampingSigmoid **********************************************************************************/
+/// Class implementing a method to return a damping factor based on a sigmoid function.
 class DampingSigmoid : public DampingBase
 {
     public:
@@ -123,6 +123,6 @@ class DampingSigmoid : public DampingBase
         virtual Eigen::MatrixXd getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
                                         const Eigen::MatrixXd& jacobian_data) const;
 };
-/* END DampingLeastSingularValues ************************************************************************************/
+/* END Dampingigmoid ************************************************************************************/
 
 #endif  // COB_TWIST_CONTROLLER_DAMPING_METHODS_DAMPING_H
