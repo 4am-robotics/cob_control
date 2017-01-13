@@ -77,11 +77,11 @@ Eigen::MatrixXd PInvBySVD::calculate(const TwistControllerParams& params,
         for (uint32_t i = 0; i < singularValues.rows()-1; ++i)
         {
             // pow(beta, 2) << pow(lambda, 2)
-            singularValuesInv(i) = singularValues(i) / (pow(singularValues(i), 2) + pow(params.beta, 2)+ lambda(i,i));
+            singularValuesInv(i) = singularValues(i) / (pow(singularValues(i), 2) + pow(params.beta, 2));
         }
         // Formula 20 - additional part - numerical filtering for least singular value m
-        //uint32_t m = singularValues.rows();
-        //singularValuesInv(m) = singularValues(m) / (pow(singularValues(m), 2) + pow(params.beta, 2) + pow(lambda, 2));
+        uint32_t m = singularValues.rows()-1;
+        singularValuesInv(m) = singularValues(m) / (pow(singularValues(m), 2) + pow(params.beta, 2) + lambda(m,m));
     }
     else
     {
@@ -148,13 +148,13 @@ Eigen::MatrixXd PInvDirect::calculate(const TwistControllerParams& params,
     if (cols >= rows)
     {
         Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(rows, rows);
-        Eigen::MatrixXd temp = jacobian * jac_t + lambda(1, 1) * ident;
+        Eigen::MatrixXd temp = jacobian * jac_t + lambda * ident;
         result = jac_t * temp.inverse();
     }
     else
     {
         Eigen::MatrixXd ident = Eigen::MatrixXd::Identity(cols, cols);
-        Eigen::MatrixXd temp = jac_t * jacobian + lambda(1, 1) * ident;
+        Eigen::MatrixXd temp = jac_t * jacobian + lambda * ident;
         result = temp.inverse() * jac_t;
     }
 

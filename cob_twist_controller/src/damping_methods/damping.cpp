@@ -86,7 +86,7 @@ inline Eigen::MatrixXd DampingConstant::getDampingFactor(const Eigen::VectorXd& 
 {
     uint32_t rows = sorted_singular_values.rows();
     Eigen::MatrixXd damping_factor = Eigen::MatrixXd::Zero(rows,rows);
-    damping_factor(sorted_singular_values.rows() - 1,sorted_singular_values.rows() - 1) = pow(this->params_.damping_factor,2);
+    damping_factor = Eigen::MatrixXd::Identity(rows,rows) * pow(this->params_.damping_factor,2);
     return damping_factor;
 }
 /* END DampingConstant ******************************************************************************************/
@@ -106,12 +106,12 @@ Eigen::MatrixXd DampingManipulability::getDampingFactor(const Eigen::VectorXd& s
     Eigen::MatrixXd prod = jacobian_data * jacobian_data.transpose();
     double d = prod.determinant();
     double w = std::sqrt(std::abs(d));
-    Eigen::MatrixXd damping_factor = Eigen::MatrixXd::Zero(rows,rows);
+    Eigen::MatrixXd damping_factor = Eigen::MatrixXd::Identity(rows,rows);
 
     if (w < w_threshold)
     {
         double tmp_w = (1 - w / w_threshold);
-        damping_factor(sorted_singular_values.rows() - 1,sorted_singular_values.rows() - 1) = pow(lambda_max * tmp_w * tmp_w,2);
+        damping_factor = Eigen::MatrixXd::Identity(rows,rows) * pow(lambda_max * tmp_w * tmp_w,2);
     }
     else
     {
@@ -133,13 +133,13 @@ Eigen::MatrixXd DampingLeastSingularValues::getDampingFactor(const Eigen::Vector
     // Formula 15 Singularity-robust Task-priority Redundandancy Resolution
     double least_singular_value = sorted_singular_values(sorted_singular_values.rows() - 1);
     uint32_t rows = sorted_singular_values.rows();
-    Eigen::MatrixXd lambda = Eigen::MatrixXd::Zero(rows,rows);
+    Eigen::MatrixXd lambda = Eigen::MatrixXd::Identity(rows,rows);
     if (least_singular_value < this->params_.eps_damping)
     {
         double lambda_quad = pow(this->params_.lambda_max, 2.0);
         //lambda(sorted_singular_values.rows() - 1,sorted_singular_values.rows() - 1)= sqrt( (1.0 - pow(least_singular_value / this->params_.eps_damping, 2.0)) * lambda_quad);
         //The value was powered squared later so the sqrt was removed
-        lambda(sorted_singular_values.rows() - 1,sorted_singular_values.rows() - 1)= (1.0 - pow(least_singular_value / this->params_.eps_damping, 2.0)) * lambda_quad;
+        lambda = Eigen::MatrixXd::Identity(rows,rows)* (1.0 - pow(least_singular_value / this->params_.eps_damping, 2.0)) * lambda_quad;
 
         return lambda;
     }
