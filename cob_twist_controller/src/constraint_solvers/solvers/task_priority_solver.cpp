@@ -66,36 +66,39 @@ Eigen::MatrixXd TaskPrioritySolver::solve(const Vector6d_t& in_cart_velocities,
     }
     Eigen::FullPivLU<Eigen::MatrixXd> lu_decomp(projector);
 
-    if ((this->constraints_.size() > 0) && (lu_decomp.rank() != 0))
+    if (this->constraints_.size() > 0)
     {
-        for (std::set<ConstraintBase_t>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
-        {
-            (*it)->update(joint_states, predict_jnts_vel, this->jacobian_data_);
-            current_cost_func_value = (*it)->getValue();
-            derivative_cost_func_value = (*it)->getDerivativeValue();
-            partial_cost_func = (*it)->getPartialValues();  // Equal to (partial g) / (partial q) = J_g
-            activation_gain = (*it)->getActivationGain();
-            magnitude = (*it)->getSelfMotionMagnitude(Eigen::MatrixXd::Zero(1, 1), Eigen::MatrixXd::Zero(1, 1));  // not necessary to pass valid values here.
+      if (lu_decomp.rank() != 0)
+      {
+         for (std::set<ConstraintBase_t>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
+         {
+           (*it)->update(joint_states, predict_jnts_vel, this->jacobian_data_);
+           current_cost_func_value = (*it)->getValue();
+           derivative_cost_func_value = (*it)->getDerivativeValue();
+           partial_cost_func = (*it)->getPartialValues();  // Equal to (partial g) / (partial q) = J_g
+           activation_gain = (*it)->getActivationGain();
+           magnitude = (*it)->getSelfMotionMagnitude(Eigen::MatrixXd::Zero(1, 1), Eigen::MatrixXd::Zero(1, 1));  // not necessary to pass valid values here.
 
-            ROS_INFO_STREAM("activation_gain: " << activation_gain);
-            ROS_INFO_STREAM("smm: " << magnitude);
-        }
+           ROS_INFO_STREAM("activation_gain: " << activation_gain);
+           ROS_INFO_STREAM("smm: " << magnitude);
+         }
 
-        Eigen::MatrixXd jac_inv_2nd_term = Eigen::MatrixXd::Zero(projector.cols(), partial_cost_func.cols());
-        if (activation_gain > 0.0)
-        {
-            Eigen::MatrixXd tmp_matrix = partial_cost_func.transpose() * projector;
-            jac_inv_2nd_term = pinv_calc_.calculate(tmp_matrix);
-        }
+         Eigen::MatrixXd jac_inv_2nd_term = Eigen::MatrixXd::Zero(projector.cols(), partial_cost_func.cols());
+         if (activation_gain > 0.0)
+         {
+           Eigen::MatrixXd tmp_matrix = partial_cost_func.transpose() * projector;
+           jac_inv_2nd_term = pinv_calc_.calculate(tmp_matrix);
 
-        Eigen::MatrixXd m_derivative_cost_func_value = derivative_cost_func_value * Eigen::MatrixXd::Identity(1, 1);
-        qdots_out = particular_solution + this->params_.k_H * activation_gain * jac_inv_2nd_term * (magnitude * m_derivative_cost_func_value - partial_cost_func.transpose() * particular_solution);
-    }
-    else
-    {
+           Eigen::MatrixXd m_derivative_cost_func_value = derivative_cost_func_value * Eigen::MatrixXd::Identity(1, 1);
+           qdots_out = particular_solution + this->params_.k_H * activation_gain * jac_inv_2nd_term * (magnitude * m_derivative_cost_func_value - partial_cost_func.transpose() * particular_solution);
+    	  }
+      }
+      else
+      {
         qdots_out = particular_solution;
         ROS_ERROR_STREAM("Should not occur solution: " << std::endl << qdots_out);
         ROS_WARN("Null space projection matrix is null. The constraint may not be satisfied");
+      }
     }
 
     // Eigen::MatrixXd qdots_out = particular_solution + homogeneousSolution; // weighting with k_H is done in loop
