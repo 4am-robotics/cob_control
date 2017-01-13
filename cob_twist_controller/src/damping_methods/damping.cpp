@@ -71,7 +71,7 @@ DampingBase* DampingBuilder::createDamping(const TwistControllerParams& params)
 inline Eigen::MatrixXd DampingNone::getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
                                             const Eigen::MatrixXd& jacobian_data) const
 {
-    Eigen::MatrixXd zero_matrix;
+    Eigen::MatrixXd zero_matrix = Eigen::MatrixXd::Zero(rows,rows);;
     return zero_matrix.setZero();
 }
 /* END DampingNone **********************************************************************************************/
@@ -79,14 +79,13 @@ inline Eigen::MatrixXd DampingNone::getDampingFactor(const Eigen::VectorXd& sort
 
 /* BEGIN DampingConstant ****************************************************************************************/
 /**
- * Method just returns the damping factor from ros parameter server.
+ * Method just returns the damping factor.
  */
 inline Eigen::MatrixXd DampingConstant::getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
                                                 const Eigen::MatrixXd& jacobian_data) const
 {
     uint32_t rows = sorted_singular_values.rows();
-    Eigen::MatrixXd damping_factor = Eigen::MatrixXd::Zero(rows,rows);
-    damping_factor = Eigen::MatrixXd::Identity(rows,rows) * pow(this->params_.damping_factor,2);
+    Eigen::MatrixXd damping_factor = Eigen::MatrixXd::Identity(rows,rows) * pow(this->params_.damping_factor,2);
     return damping_factor;
 }
 /* END DampingConstant ******************************************************************************************/
@@ -137,7 +136,6 @@ Eigen::MatrixXd DampingLeastSingularValues::getDampingFactor(const Eigen::Vector
     if (least_singular_value < this->params_.eps_damping)
     {
         double lambda_quad = pow(this->params_.lambda_max, 2.0);
-        //lambda(sorted_singular_values.rows() - 1,sorted_singular_values.rows() - 1)= sqrt( (1.0 - pow(least_singular_value / this->params_.eps_damping, 2.0)) * lambda_quad);
         //The value was powered squared later so the sqrt was removed
         lambda = Eigen::MatrixXd::Identity(rows,rows)* (1.0 - pow(least_singular_value / this->params_.eps_damping, 2.0)) * lambda_quad;
 
@@ -148,7 +146,7 @@ Eigen::MatrixXd DampingLeastSingularValues::getDampingFactor(const Eigen::Vector
         return lambda.setZero();
     }
 }
-/* END LeastSingularValues ************************************************************************************/
+/* END DampingLeastSingularValues ************************************************************************************/
 
 /* BEGIN DampingSigmoid **********************************************************************************/
 /**
@@ -158,7 +156,6 @@ Eigen::MatrixXd DampingSigmoid::getDampingFactor(const Eigen::VectorXd& sorted_s
                                                     const Eigen::MatrixXd& jacobian_data) const
 {
     // Formula will be described in a future paper (to add reference)
-    double least_singular_value = sorted_singular_values(sorted_singular_values.rows() - 1);
     uint32_t rows = sorted_singular_values.rows();
     Eigen::MatrixXd damping_factor = Eigen::MatrixXd::Zero(rows,rows);
     for(unsigned i = 0; i < sorted_singular_values.rows(); i++)
