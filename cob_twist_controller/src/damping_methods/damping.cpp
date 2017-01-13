@@ -71,7 +71,7 @@ DampingBase* DampingBuilder::createDamping(const TwistControllerParams& params)
 inline Eigen::MatrixXd DampingNone::getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
                                             const Eigen::MatrixXd& jacobian_data) const
 {
-	Eigen::MatrixXd zero_matrix;
+    Eigen::MatrixXd zero_matrix;
     return zero_matrix.setZero();
 }
 /* END DampingNone **********************************************************************************************/
@@ -148,7 +148,7 @@ Eigen::MatrixXd DampingLeastSingularValues::getDampingFactor(const Eigen::Vector
         return lambda.setZero();
     }
 }
-/* END DampingSigmoid ************************************************************************************/
+/* END LeastSingularValues ************************************************************************************/
 
 /* BEGIN DampingSigmoid **********************************************************************************/
 /**
@@ -157,7 +157,7 @@ Eigen::MatrixXd DampingLeastSingularValues::getDampingFactor(const Eigen::Vector
 Eigen::MatrixXd DampingSigmoid::getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
                                                     const Eigen::MatrixXd& jacobian_data) const
 {
-    // Formula 15 Singularity-robust Task-priority Redundandancy Resolution
+    // Formula will be described in a future paper (to add reference)
     double least_singular_value = sorted_singular_values(sorted_singular_values.rows() - 1);
     uint32_t rows = sorted_singular_values.rows();
     Eigen::MatrixXd damping_factor = Eigen::MatrixXd::Zero(rows,rows);
@@ -173,4 +173,4 @@ Eigen::MatrixXd DampingSigmoid::getDampingFactor(const Eigen::VectorXd& sorted_s
 
     return damping_factor;
 }
-/* END DampingLeastSingularValues ************************************************************************************/
+/* END DampingSigmoid ************************************************************************************/
