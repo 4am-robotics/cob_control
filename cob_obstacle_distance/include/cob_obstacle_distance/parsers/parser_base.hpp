@@ -74,7 +74,7 @@ class ParserBase
         int8_t createBVH(fcl::BVHModel<T>& bvh);
 
         template <typename T>
-        int8_t createBVH(boost::shared_ptr<fcl::BVHModel<T> > ptr_bvh);
+        int8_t createBVH(std::shared_ptr<fcl::BVHModel<T> > ptr_bvh);
 };
 
 
@@ -106,7 +106,7 @@ int8_t ParserBase::createBVH(fcl::BVHModel<T>& bvh)
 }
 
 template <typename T>
-int8_t ParserBase::createBVH(boost::shared_ptr<fcl::BVHModel<T> > ptr_bvh)
+int8_t ParserBase::createBVH(std::shared_ptr<fcl::BVHModel<T> > ptr_bvh)
 {
     int8_t success = -1;
     std::vector<TriangleSupport> tri_vec;
