@@ -64,8 +64,9 @@ Eigen::MatrixXd TaskPrioritySolver::solve(const Vector6d_t& in_cart_velocities,
         predict_jnts_vel.q(i) = particular_solution(i, 0) * cycle + joint_states.current_q_(i);
         predict_jnts_vel.qdot(i) = particular_solution(i, 0);
     }
+    Eigen::FullPivLU<Eigen::MatrixXd> lu_decomp(projector);
 
-    if (this->constraints_.size() > 0)
+    if ((this->constraints_.size() > 0) && (lu_decomp.rank() != 0))
     {
         for (std::set<ConstraintBase_t>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
         {
@@ -94,6 +95,7 @@ Eigen::MatrixXd TaskPrioritySolver::solve(const Vector6d_t& in_cart_velocities,
     {
         qdots_out = particular_solution;
         ROS_ERROR_STREAM("Should not occur solution: " << std::endl << qdots_out);
+        ROS_WARN("Null space projection matrix is null. The constraint may not be satisfied");
     }
 
     // Eigen::MatrixXd qdots_out = particular_solution + homogeneousSolution; // weighting with k_H is done in loop
