@@ -55,7 +55,7 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Vector6d_t& in_cart_
     Eigen::MatrixXd qdots_out;
     uint32_t rows = projector.rows();
     uint32_t cols = projector.cols();
-    if(projector.isApprox(Eigen::Matrix::Zero))
+    if(projector.isApprox(Eigen::MatrixXd::Zero(rows,cols)))
     {
 
 		for (std::set<ConstraintBase_t>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)

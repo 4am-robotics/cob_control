@@ -107,7 +107,9 @@ Eigen::MatrixXd StackOfTasksSolver::solve(const Vector6d_t& in_cart_velocities,
         Eigen::VectorXd v_task = it->task_;
         Eigen::MatrixXd J_temp_inv = pinv_calc_.calculate(J_temp);
         Eigen::FullPivLU<Eigen::MatrixXd> lu_decomp(J_temp_inv);
-        if(J_temp_inv.isApprox(Eigen::Matrix::Zeros)){
+        uint32_t rows = J_temp_inv.rows();
+        uint32_t cols = J_temp_inv.cols();
+        if(J_temp_inv.isApprox(Eigen::MatrixXd::Zero(rows,cols))){
           ROS_WARN("Null space projection matrix is null. It couldn't satisfy all constraints");
         }
         else{
@@ -115,8 +117,9 @@ Eigen::MatrixXd StackOfTasksSolver::solve(const Vector6d_t& in_cart_velocities,
         	projector_i = projector_i - J_temp_inv * J_temp;
         }
     }
-
-    if(projector_i.isApprox(Eigen::Matrix::Zeros)){
+    uint32_t rows = projector_i.rows();
+    uint32_t cols = projector_i.cols();
+    if(projector_i.isApprox(Eigen::MatrixXd::Zero(rows,cols))){
       qdots_out.col(0) = q_i;
       ROS_WARN("Null space projection matrix is null. It couldn't satisfy the global weighting for all constraints.");
       return qdots_out;

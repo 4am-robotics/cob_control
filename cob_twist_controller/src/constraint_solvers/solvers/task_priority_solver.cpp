@@ -64,10 +64,11 @@ Eigen::MatrixXd TaskPrioritySolver::solve(const Vector6d_t& in_cart_velocities,
         predict_jnts_vel.q(i) = particular_solution(i, 0) * cycle + joint_states.current_q_(i);
         predict_jnts_vel.qdot(i) = particular_solution(i, 0);
     }
-
+    uint32_t rows = projector.rows();
+    uint32_t cols = projector.cols();
     if (this->constraints_.size() > 0)
     {
-      if (projector.isApprox(Eigen::Matrix::Zeros))
+      if (projector.isApprox(Eigen::MatrixXd::Zero(rows,cols)))
       {
          for (std::set<ConstraintBase_t>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
          {
