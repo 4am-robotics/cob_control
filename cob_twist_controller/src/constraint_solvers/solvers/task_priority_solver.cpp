@@ -64,11 +64,10 @@ Eigen::MatrixXd TaskPrioritySolver::solve(const Vector6d_t& in_cart_velocities,
         predict_jnts_vel.q(i) = particular_solution(i, 0) * cycle + joint_states.current_q_(i);
         predict_jnts_vel.qdot(i) = particular_solution(i, 0);
     }
-    Eigen::FullPivLU<Eigen::MatrixXd> lu_decomp(projector);
 
     if (this->constraints_.size() > 0)
     {
-      if (lu_decomp.rank() != 0)
+      if (projector.isApprox(Eigen::Matrix::Zeros))
       {
          for (std::set<ConstraintBase_t>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
          {

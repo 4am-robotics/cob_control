@@ -52,10 +52,10 @@ Eigen::MatrixXd GradientProjectionMethodSolver::solve(const Vector6d_t& in_cart_
 
     Eigen::MatrixXd homogeneous_solution = Eigen::MatrixXd::Zero(particular_solution.rows(), particular_solution.cols());
     KDL::JntArrayVel predict_jnts_vel(joint_states.current_q_.rows());
-    Eigen::FullPivLU<Eigen::MatrixXd> lu_decomp(projector);
     Eigen::MatrixXd qdots_out;
-
-    if(lu_decomp.rank() != 0)
+    uint32_t rows = projector.rows();
+    uint32_t cols = projector.cols();
+    if(projector.isApprox(Eigen::Matrix::Zero))
     {
 
 		for (std::set<ConstraintBase_t>::iterator it = this->constraints_.begin(); it != this->constraints_.end(); ++it)
