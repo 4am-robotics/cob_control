@@ -57,6 +57,7 @@ class WLN_JointLimitAvoidanceSolver : public WeightedLeastNormSolver
          * @return Diagonal weighting matrix that adapts the Jacobian.
          */
         virtual Eigen::MatrixXd calculateWeighting(const JointStates& joint_states) const;
+
 };
 
 #endif  // COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_WLN_JOINT_LIMIT_AVOIDANCE_SOLVER_H

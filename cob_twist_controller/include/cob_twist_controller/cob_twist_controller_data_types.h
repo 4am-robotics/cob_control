@@ -70,6 +70,7 @@ enum SolverTypes
     GPM = cob_twist_controller::TwistController_GPM,
     STACK_OF_TASKS = cob_twist_controller::TwistController_STACK_OF_TASKS,
     TASK_2ND_PRIO = cob_twist_controller::TwistController_TASK_2ND_PRIO,
+	JLA_SIG = cob_twist_controller::TwistController_JLA_SIG,
 };
 
 enum ConstraintTypesCA
