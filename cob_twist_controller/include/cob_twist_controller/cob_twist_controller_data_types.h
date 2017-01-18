@@ -205,7 +205,7 @@ struct TwistControllerParams
         integrator_smoothing(0.2),
 
         numerical_filtering(false),
-        damping_method(MANIPULABILITY),
+        damping_method(SIGMOID),
         damping_factor(0.2),
         lambda_max(0.1),
         w_threshold(0.005),
@@ -213,16 +213,16 @@ struct TwistControllerParams
         slope_damping(0.003),
         eps_damping(0.003),
         eps_truncation(0.001),
-        solver(GPM),
+        solver(JLA_SIG),
         priority_main(500),
         k_H(1.0),
 
-        constraint_jla(JLA_ON),
+        constraint_jla(JLA_OFF),
         priority_jla(50),
         k_H_jla(-10.0),
         damping_jla(0.000001),
 
-        constraint_ca(CA_ON),
+        constraint_ca(CA_OFF),
         priority_ca(100),
         damping_ca(0.000001),
         k_H_ca(2.0),
