@@ -61,7 +61,7 @@ class WeightedLeastNormSigmoidSolver : public ConstraintSolver<>
          * @param q_dot The current joint velocities.
          * @return Diagonal weighting matrix that adapts the Jacobian.
          */
-        virtual Eigen::MatrixXd calculateWeighting(const Vector6d_t& in_cart_velocities, const JointStates& joint_states) const;
+        virtual Eigen::MatrixXd calculateWeighting(Eigen::VectorXd q_dot, const JointStates& joint_states) const;
 };
 
 #endif  // COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_WEIGHTED_LEAST_NORM_SIGMOID_SOLVER_H
