@@ -70,7 +70,7 @@ enum SolverTypes
     GPM = cob_twist_controller::TwistController_GPM,
     STACK_OF_TASKS = cob_twist_controller::TwistController_STACK_OF_TASKS,
     TASK_2ND_PRIO = cob_twist_controller::TwistController_TASK_2ND_PRIO,
-	JLA_SIG = cob_twist_controller::TwistController_JLA_SIG,
+	JLA_SIG_MODULATION = cob_twist_controller::TwistController_JLA_SIG_MODULATION,
 };
 
 enum ConstraintTypesCA
@@ -85,6 +85,7 @@ enum ConstraintTypesJLA
     JLA_ON = cob_twist_controller::TwistController_JLA,
     JLA_MID_ON = cob_twist_controller::TwistController_JLA_MID,
     JLA_INEQ_ON = cob_twist_controller::TwistController_JLA_INEQ,
+    JLA_SIG = cob_twist_controller::TwistController_JLA_SIG,
 };
 
 enum ConstraintTypes
@@ -94,6 +95,7 @@ enum ConstraintTypes
     JLA,
     JLA_MID,
     JLA_INEQ,
+	//JLA_SIG,
 };
 
 enum LookatAxisTypes
@@ -215,7 +217,7 @@ struct TwistControllerParams
         slope_damping(0.05),
         eps_damping(0.003),
         eps_truncation(0.001),
-        solver(JLA_SIG),
+        solver(JLA_SIG_MODULATION),
         priority_main(500),
         k_H(1.0),
 

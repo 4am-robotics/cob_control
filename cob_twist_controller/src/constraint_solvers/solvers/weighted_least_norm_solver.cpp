@@ -37,7 +37,8 @@
 Eigen::MatrixXd WeightedLeastNormSolver::solve(const Vector6d_t& in_cart_velocities,
                                                const JointStates& joint_states)
 {
-    Eigen::MatrixXd W_WLN = this->calculateWeighting(joint_states);
+
+	Eigen::MatrixXd W_WLN = this->calculateWeighting(in_cart_velocities, joint_states);
     // for the following formulas see Chan paper ISSN 1042-296X [Page 288]
     Eigen::MatrixXd root_W_WLN =  W_WLN.cwiseSqrt();            // element-wise sqrt -> ok because diag matrix W^(1/2)
     Eigen::MatrixXd inv_root_W_WLN =  root_W_WLN.inverse();     // -> W^(-1/2)
@@ -54,7 +55,7 @@ Eigen::MatrixXd WeightedLeastNormSolver::solve(const Vector6d_t& in_cart_velocit
 /**
  * This function returns the identity as weighting matrix for base functionality.
  */
-Eigen::MatrixXd WeightedLeastNormSolver::calculateWeighting(const JointStates& joint_states) const
+Eigen::MatrixXd WeightedLeastNormSolver::calculateWeighting(const Vector6d_t& in_cart_velocities, const JointStates& joint_states) const
 {
     uint32_t cols = this->jacobian_data_.cols();
     Eigen::VectorXd weighting = Eigen::VectorXd::Ones(cols);

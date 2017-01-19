@@ -43,7 +43,7 @@ add_library(inv_calculations src/inverse_jacobian_calculations/inverse_jacobian_
 add_dependencies(inv_calculations ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(inv_calculations ${catkin_LIBRARIES})
 
-add_library(constraint_solvers ${SRC_CS_DIR}/unconstraint_solver.cpp ${SRC_CS_DIR}/wln_joint_limit_avoidance_solver.cpp ${SRC_CS_DIR}/weighted_least_norm_solver.cpp ${SRC_CS_DIR}/gradient_projection_method_solver.cpp ${SRC_CS_DIR}/stack_of_tasks_solver.cpp ${SRC_CS_DIR}/task_priority_solver.cpp ${SRC_CS_DIR}/wln_sigmoid_joint_limit_avoidance_solver.cpp ${SRC_C_DIR}/constraint_solver_factory.cpp)
+add_library(constraint_solvers ${SRC_CS_DIR}/unconstraint_solver.cpp ${SRC_CS_DIR}/wln_joint_limit_avoidance_solver.cpp ${SRC_CS_DIR}/weighted_least_norm_solver.cpp ${SRC_CS_DIR}/gradient_projection_method_solver.cpp ${SRC_CS_DIR}/stack_of_tasks_solver.cpp ${SRC_CS_DIR}/task_priority_solver.cpp ${SRC_CS_DIR}/wln_sigmoid_joint_limit_avoidance_solver.cpp ${SRC_CS_DIR}/modulation_sigmoid_solver.cpp ${SRC_C_DIR}/constraint_solver_factory.cpp)
 add_dependencies(constraint_solvers ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(constraint_solvers damping_methods inv_calculations)
 

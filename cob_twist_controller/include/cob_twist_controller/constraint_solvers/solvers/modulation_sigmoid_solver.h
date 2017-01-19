@@ -28,23 +28,23 @@
  *
  ****************************************************************/
 
-#ifndef COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_WEIGHTED_LEAST_NORM_SOLVER_H
-#define COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_WEIGHTED_LEAST_NORM_SOLVER_H
+#ifndef COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_MODULATION_SIGMOID_SOLVER_H
+#define COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_MODULATION_SIGMOID_SOLVER_H
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/constraint_solvers/solvers/constraint_solver_base.h"
 
-/// Implementation of ConstraintSolver to solve inverse kinematics by using a weighted least norm
-class WeightedLeastNormSolver : public ConstraintSolver<>
+/// Implementation of ConstraintSolver to solve inverse kinematics by using a modulation on sigmoid function and avoid joint limits
+class ModulationSigmoidSolver : public ConstraintSolver<>
 {
     public:
-        WeightedLeastNormSolver(const TwistControllerParams& params,
+	ModulationSigmoidSolver(const TwistControllerParams& params,
                                 const LimiterParams& limiter_params,
                                 TaskStackController_t& task_stack_controller) :
                 ConstraintSolver(params, limiter_params, task_stack_controller)
         {}
 
-        virtual ~WeightedLeastNormSolver()
+        virtual ~ModulationSigmoidSolver()
         {}
 
         /**
@@ -61,7 +61,7 @@ class WeightedLeastNormSolver : public ConstraintSolver<>
          * @param q_dot The current joint velocities.
          * @return Diagonal weighting matrix that adapts the Jacobian.
          */
-        virtual Eigen::MatrixXd calculateWeighting(const Vector6d_t& in_cart_velocities, const JointStates& joint_states) const;
+        virtual Eigen::MatrixXd calculateWeighting(Eigen::VectorXd q_dot, const JointStates& joint_states) const;
 };
 
-#endif  // COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_WEIGHTED_LEAST_NORM_SOLVER_H
+#endif  // COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_MODULATION_SIGMOID_SOLVER_H
