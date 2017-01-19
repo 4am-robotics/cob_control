@@ -53,7 +53,7 @@ inline void ControllerInterfaceVelocity::processResult(const KDL::JntArray& q_do
     {
         vel_msg.data.push_back(q_dot_ik(i));
     }
-    ROS_INFO_STREAM("Joint Velocity:"<<q_dot_ik(1));
+    ROS_INFO_STREAM("Joint Velocity PUblished:"<<q_dot_ik(1));
     pub_.publish(vel_msg);
 }
 /* END ControllerInterfaceVelocity **********************************************************************************************/

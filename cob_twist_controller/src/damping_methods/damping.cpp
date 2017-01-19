@@ -155,11 +155,9 @@ Eigen::MatrixXd DampingSigmoid::getDampingFactor(const Eigen::VectorXd& sorted_s
 
     for (unsigned i = 0; i < sorted_singular_values.rows(); i++)
     {
-      if (sorted_singular_values[i] < this->params_.eps_damping)
-      {
+
         double lambda_sig = params_.lambda_max / (1 + exp((sorted_singular_values[i] + params_.w_threshold) / params_.slope_damping));
         damping_matrix(i, i) = lambda_sig;
-      }
     }
 
     return damping_matrix;

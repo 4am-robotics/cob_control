@@ -163,6 +163,8 @@ struct ConstraintThresholds
     double activation;
     double activation_with_buffer;
     double critical;
+    double activation_position_threshold_jla;
+    double activation_speed_threshold_jla;
 };
 
 struct LimiterParams
@@ -207,10 +209,10 @@ struct TwistControllerParams
         numerical_filtering(false),
         damping_method(SIGMOID),
         damping_factor(0.2),
-        lambda_max(0.1),
-        w_threshold(0.005),
+        lambda_max(0.01),
+        w_threshold(0.01),
         beta(0.005),
-        slope_damping(0.003),
+        slope_damping(0.05),
         eps_damping(0.003),
         eps_truncation(0.001),
         solver(JLA_SIG),
@@ -220,7 +222,8 @@ struct TwistControllerParams
         constraint_jla(JLA_OFF),
         priority_jla(50),
         k_H_jla(-10.0),
-        damping_jla(0.000001),
+        damping_jla(0.05),
+		damping_speed_jla(0.005),
 
         constraint_ca(CA_OFF),
         priority_ca(100),
@@ -237,6 +240,8 @@ struct TwistControllerParams
         this->thresholds_jla.activation = 0.1;
         this->thresholds_jla.critical = 0.05;
         this->thresholds_jla.activation_with_buffer = this->thresholds_jla.activation * 4.0;  // best experienced value
+        this->thresholds_jla.activation_position_threshold_jla = 0.5;
+        this->thresholds_jla.activation_speed_threshold_jla = 1.0;
     }
 
     uint8_t dof;
@@ -270,6 +275,7 @@ struct TwistControllerParams
     uint32_t priority_jla;
     double k_H_jla;
     double damping_jla;
+    double damping_speed_jla;
     ConstraintThresholds thresholds_jla;
 
     LimiterParams limiter_params;
