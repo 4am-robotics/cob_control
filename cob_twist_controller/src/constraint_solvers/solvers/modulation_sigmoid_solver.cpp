@@ -47,11 +47,11 @@ Eigen::MatrixXd ModulationSigmoidSolver::solve(const Vector6d_t& in_cart_velocit
 	Eigen::MatrixXd qdots_out =  ((W_WLN * Jt) * inv_W_WLN )* in_cart_velocities;
 */
     Eigen::MatrixXd Jw =W_WLN * pinv;
-    ROS_INFO_STREAM("wEIGTH:"<<W_WLN(1,1));
+
     Eigen::MatrixXd qdots_out2 = pinv * in_cart_velocities;
-    ROS_INFO_STREAM("Joint Velocity no JLA:"<<qdots_out2(1));
+
     Eigen::MatrixXd qdots_out =  Jw* in_cart_velocities;
-    ROS_INFO_STREAM("Joint Velocity:"<<qdots_out(1));
+
     return qdots_out;
 }
 
@@ -79,6 +79,10 @@ Eigen::MatrixXd ModulationSigmoidSolver::calculateWeighting(Eigen::VectorXd q_do
 
       if (weighting(i) > 1.0){
     	  weighting(i)=1.0;
+      }
+      ROS_INFO("OLA");
+      if( (fabs(q(i)-limits_min[i])<params_.limiter_params.limits_tolerance*0.01745329251) || (fabs(q(i)-limits_max[i])<params_.limiter_params.limits_tolerance*0.01745329251) ){
+      	    	ROS_INFO("Limit %i not respected",i);
       }
     }
 

@@ -45,7 +45,7 @@ Eigen::MatrixXd WLN_JointLimitAvoidanceSolver::calculateWeighting(const Vector6d
 
     KDL::JntArray q = joint_states.current_q_;
     KDL::JntArray q_dot = joint_states.current_q_dot_;
-
+    ROS_INFO("STATE OF ART WEIGHTING");
     for (uint32_t i = 0; i < cols ; ++i)
     {
         weighting(i) = 1.0;    // in the else cases -> weighting always 1
@@ -65,6 +65,10 @@ Eigen::MatrixXd WLN_JointLimitAvoidanceSolver::calculateWeighting(const Vector6d
                 }
             }
         }
+        if( (fabs(q(i)-limits_min[i])<params_.limiter_params.limits_tolerance*0.01745329251) || (fabs(q(i)-limits_max[i])<params_.limiter_params.limits_tolerance*0.01745329251) ){
+        	    	ROS_INFO("Limit %i not respected",i);
+        }
+        weighting(i) = 1.0/weighting(i); // New weights calculated acoording to General Weighted LeastNorm Control for Redudant Manipulators
     }
 
     return weighting.asDiagonal();

@@ -37,7 +37,7 @@
 Eigen::MatrixXd WeightedLeastNormSolver::solve(const Vector6d_t& in_cart_velocities,
                                                const JointStates& joint_states)
 {
-
+	/*
 	Eigen::MatrixXd W_WLN = this->calculateWeighting(in_cart_velocities, joint_states);
     // for the following formulas see Chan paper ISSN 1042-296X [Page 288]
     Eigen::MatrixXd root_W_WLN =  W_WLN.cwiseSqrt();            // element-wise sqrt -> ok because diag matrix W^(1/2)
@@ -47,9 +47,32 @@ Eigen::MatrixXd WeightedLeastNormSolver::solve(const Vector6d_t& in_cart_velocit
     Eigen::MatrixXd weighted_jacobian = this->jacobian_data_ * inv_root_W_WLN;
     Eigen::MatrixXd pinv = pinv_calc_.calculate(this->params_, this->damping_, weighted_jacobian);
 
+    ROS_INFO_STREAM("wEIGTH:"<<W_WLN(1,1));
+    Eigen::MatrixXd qdots_out2 = pinv * in_cart_velocities;
+    ROS_INFO_STREAM("Joint Velocity no JLA:"<<qdots_out2(1));
+
+
     // Take care: W^(1/2) * q_dot = weighted_pinv_J * x_dot -> One must consider the weighting!!!
+
     Eigen::MatrixXd qdots_out = inv_root_W_WLN * pinv * in_cart_velocities;
-    return qdots_out;
+    ROS_INFO_STREAM("Joint Velocity:"<<qdots_out(1));
+    return qdots_out;*/
+
+	//Method simplified based on General Weighted LeastNorm Control for Redudant Manipulators
+
+	Eigen::MatrixXd W_WLN = this->calculateWeighting(in_cart_velocities, joint_states);
+	ROS_INFO_STREAM("wEIGTH:"<<W_WLN(1,1));
+	Eigen::MatrixXd pinv2 = pinv_calc_.calculate(this->params_, this->damping_, this->jacobian_data_);
+	Eigen::MatrixXd qdots_out2 = pinv2 * in_cart_velocities;
+	ROS_INFO_STREAM("Joint Velocity no JLA:"<<qdots_out2(1));
+	Eigen::MatrixXd weighted_jacobian = W_WLN * this->jacobian_data_.transpose();
+	Eigen::MatrixXd J_W_WLN_Jt= this->jacobian_data_* weighted_jacobian;
+	Eigen::MatrixXd pinv = pinv_calc_.calculate(this->params_, this->damping_, J_W_WLN_Jt);
+
+	Eigen::MatrixXd qdots_out =  weighted_jacobian * pinv * in_cart_velocities;
+
+	ROS_INFO_STREAM("Joint Velocity:"<<qdots_out(1));
+	return qdots_out;
 }
 
 /**

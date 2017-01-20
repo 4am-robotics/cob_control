@@ -52,10 +52,20 @@ Eigen::MatrixXd WLN_Sigmoid_JointLimitAvoidanceSolver::calculateWeighting(const 
 	double sigma_speed = this->params_.damping_speed_jla;
 	double delta_pos = this->params_.thresholds_jla.activation_position_threshold_jla;
 	double delta_speed = this->params_.thresholds_jla.activation_speed_threshold_jla;
+	ROS_INFO("SIGMOID WEIGHTING");
 	for (uint32_t i = 0; i < cols ; ++i)
 	{
 
-	    weighting(i) = 1.0/((1.0/(1.0+exp(-(q(i)-limits_min[i]-delta_pos)/sigma)))*(1.0/(1.0+exp((q(i)-limits_max[i]+delta_pos)/sigma)))+(1.0/(1.0+exp((q(i)*q_dot(i)+delta_speed)*sigma_speed))));
+	    weighting(i) = (1.0/(1.0+exp(-(q(i)-limits_min[i]-delta_pos)/sigma)))*(1.0/(1.0+exp((q(i)-limits_max[i]+delta_pos)/sigma)))+(1.0/(1.0+exp((q(i)*q_dot(i)+delta_speed)*sigma_speed)));
+
+	    if( (fabs(q(i)-limits_min[i])<params_.limiter_params.limits_tolerance*0.01745329251) || (fabs(q(i)-limits_max[i])<params_.limiter_params.limits_tolerance*0.01745329251) ){
+	    	ROS_INFO("Limit %i not respected",i);
+	    }
+
+
+	    if (weighting(i) >1.0){
+	        	  weighting(i) = 1.0;
+	    }
 
     }
 
