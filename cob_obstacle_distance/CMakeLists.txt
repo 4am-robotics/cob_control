@@ -20,12 +20,15 @@ else()
 endif()
 add_definitions(${EIGEN3_DEFINITIONS})
 
-find_package(fcl)
 find_package(orocos_kdl REQUIRED)
 
 find_package(PkgConfig REQUIRED)
+
 pkg_check_modules(ASSIMP assimp)
 
+pkg_check_modules(LIBFCL REQUIRED fcl)
+find_library(LIBFCL_LIBRARIES_FULL ${LIBFCL_LIBRARIES} ${LIBFCL_LIBRARY_DIRS})
+set(fcl_LIBRARIES "${LIBFCL_LIBRARIES_FULL}")
 
 catkin_package(
   CATKIN_DEPENDS cob_control_msgs cob_srvs dynamic_reconfigure eigen_conversions geometry_msgs kdl_conversions kdl_parser moveit_msgs roscpp roslib sensor_msgs shape_msgs std_msgs tf_conversions tf urdf visualization_msgs
