@@ -1,5 +1,4 @@
 #include <ros/ros.h>
-#include <boost/thread.hpp>
 
 #include <cob_base_velocity_smoother/velocity_smoother.h>
 
@@ -18,28 +17,16 @@ int main(int argc, char** argv)
   std::string name = unresolvedName(resolved_name); // unresolve it ourselves
 
   boost::shared_ptr<VelocitySmoother> vel_smoother_;
-  boost::shared_ptr<boost::thread>   worker_thread_;
 
   vel_smoother_.reset(new VelocitySmoother(name));
-  if (vel_smoother_->init(nh_p))
-  {
-    ROS_DEBUG_STREAM("Velocity Smoother: initialised [" << name << "]");
-    worker_thread_.reset(new boost::thread(&VelocitySmoother::spin, vel_smoother_));
-  }
-  else
+  if (!vel_smoother_->init(nh_p))
   {
     ROS_ERROR_STREAM("Velocity Smoother: initialisation failed [" << name << "]");
+    return -1;
   }
 
-  ros::Rate r(100);
-  while (ros::ok())
-  {
-    ros::spinOnce();
-    r.sleep();
-  }
+  ROS_DEBUG_STREAM("Velocity Smoother: initialised [" << name << "]");
+  ros::spin();
 
-  vel_smoother_->shutdown();
-  worker_thread_->join();
-  
   return 0;
 }
