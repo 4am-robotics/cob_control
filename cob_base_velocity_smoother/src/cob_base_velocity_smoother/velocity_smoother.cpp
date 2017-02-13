@@ -125,7 +125,8 @@ void VelocitySmoother::spin(const ros::TimerEvent& event)
 {
   boost::mutex::scoped_lock lock(_mutex);
 
-  double period = 1.0/frequency;
+  //double period = 1.0/frequency;
+  double period = (event.current_real - event.last_real).toSec();
   double last_command = (event.current_real - last_cb_time).toSec();
 
   if ((input_active == true) && (cb_avg_time > 0.0) &&
@@ -177,36 +178,26 @@ void VelocitySmoother::spin(const ros::TimerEvent& event)
     double vx_inc, vy_inc, w_inc;
     double ax, ay, aw;
     double max_ax, max_ay, max_aw;
+    double actual_ax, actual_ay, actual_aw;
 
     vx_inc = target_vel.linear.x - last_cmd_vel.linear.x;
     ax = vx_inc/cb_avg_time;
     max_ax = (ax > 0.0)?accel_vx:decel_vx;
+    actual_ax = (std::abs(ax) > max_ax)?sign(ax)*max_ax:ax;
 
     vy_inc = target_vel.linear.y - last_cmd_vel.linear.y;
     ay = vy_inc/cb_avg_time;
     max_ay = (ay > 0.0)?accel_vy:decel_vy;
+    actual_ay = (std::abs(ay) > max_ay)?sign(ay)*max_ay:ay;
 
     w_inc = target_vel.angular.z - last_cmd_vel.angular.z;
     aw = w_inc/cb_avg_time;
     max_aw = (aw > 0.0)?accel_w:decel_w;
+    actual_aw = (std::abs(aw) > max_aw)?sign(aw)*max_aw:aw;
 
-    if (std::abs(ax) > max_ax)
-    {
-      // we must limit linear velocity
-      cmd_vel.linear.x  = last_cmd_vel.linear.x  + sign(ax)*max_ax*period;
-    }
-
-    if (std::abs(ay) > max_ay)
-    {
-      // we must limit linear velocity
-      cmd_vel.linear.y  = last_cmd_vel.linear.y  + sign(ay)*max_ay*period;
-    }
-
-    if (std::abs(aw) > max_aw)
-    {
-      // we must limit angular velocity
-      cmd_vel.angular.z = last_cmd_vel.angular.z + sign(aw)*max_aw*period;
-    }
+    cmd_vel.linear.x  = last_cmd_vel.linear.x  + actual_ax*period;
+    cmd_vel.linear.y  = last_cmd_vel.linear.y  + actual_ay*period;
+    cmd_vel.angular.z = last_cmd_vel.angular.z + actual_aw*period;
 
     smooth_vel_pub.publish(cmd_vel);
     last_cmd_vel = cmd_vel;
