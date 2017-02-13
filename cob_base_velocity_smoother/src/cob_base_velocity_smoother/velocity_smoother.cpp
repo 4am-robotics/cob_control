@@ -174,33 +174,38 @@ void VelocitySmoother::spin(const ros::TimerEvent& event)
     // Try to reach target velocity ensuring that we don't exceed the acceleration limits
     geometry_msgs::Twist cmd_vel = target_vel;
 
-    double vx_inc, vy_inc, w_inc, max_vx_inc, max_vy_inc, max_w_inc;
+    double vx_inc, vy_inc, w_inc;
+    double ax, ay, aw;
+    double max_ax, max_ay, max_aw;
 
     vx_inc = target_vel.linear.x - last_cmd_vel.linear.x;
-    max_vx_inc = ((vx_inc > 0.0)?accel_vx:decel_vx)*period;
+    ax = vx_inc/cb_avg_time;
+    max_ax = (ax > 0.0)?accel_vx:decel_vx;
 
     vy_inc = target_vel.linear.y - last_cmd_vel.linear.y;
-    max_vy_inc = ((vy_inc > 0.0)?accel_vy:decel_vy)*period;
+    ay = vy_inc/cb_avg_time;
+    max_ay = (ay > 0.0)?accel_vy:decel_vy;
 
     w_inc = target_vel.angular.z - last_cmd_vel.angular.z;
-    max_w_inc = ((w_inc > 0.0)?accel_w:decel_w)*period;
+    aw = w_inc/cb_avg_time;
+    max_aw = (aw > 0.0)?accel_w:decel_w;
 
-    if (std::abs(vx_inc) > max_vx_inc)
+    if (std::abs(ax) > max_ax)
     {
       // we must limit linear velocity
-      cmd_vel.linear.x  = last_cmd_vel.linear.x  + sign(vx_inc)*max_vx_inc;
+      cmd_vel.linear.x  = last_cmd_vel.linear.x  + sign(ax)*max_ax*period;
     }
 
-    if (std::abs(vy_inc) > max_vy_inc)
+    if (std::abs(ay) > max_ay)
     {
       // we must limit linear velocity
-      cmd_vel.linear.y  = last_cmd_vel.linear.y  + sign(vy_inc)*max_vy_inc;
+      cmd_vel.linear.y  = last_cmd_vel.linear.y  + sign(ay)*max_ay*period;
     }
 
-    if (std::abs(w_inc) > max_w_inc)
+    if (std::abs(aw) > max_aw)
     {
       // we must limit angular velocity
-      cmd_vel.angular.z = last_cmd_vel.angular.z + sign(w_inc)*max_w_inc;
+      cmd_vel.angular.z = last_cmd_vel.angular.z + sign(aw)*max_aw*period;
     }
 
     smooth_vel_pub.publish(cmd_vel);
