@@ -45,9 +45,10 @@ VelocitySmoother::VelocitySmoother(const std::string &name)
 
 void VelocitySmoother::reconfigCB(cob_base_velocity_smoother::paramsConfig &config, uint32_t level)
 {
-  ROS_INFO("Reconfigure request : \n\tSpeedLimit: %f %f %f \n\tAccLimit: %f %f %f\n\tDecelFactor: %f, SafeFactor: %f",
-           config.speed_lim_vx, config.speed_lim_vy, config.speed_lim_w, config.accel_lim_vx, config.accel_lim_vy, config.accel_lim_w, config.decel_factor, config.safe_factor);
+  ROS_INFO("Reconfigure request : \n\tSpeedLimit: %f %f %f \n\tAccLimit: %f %f %f\n\tDecelFactor: %f, SafeFactor: %f \n\tRobotFeedback: %d",
+           config.speed_lim_vx, config.speed_lim_vy, config.speed_lim_w, config.accel_lim_vx, config.accel_lim_vy, config.accel_lim_w, config.decel_factor, config.safe_factor, config.robot_feedback);
 
+  robot_feedback = (VelocitySmoother::RobotFeedbackType) config.robot_feedback;
   speed_lim_vx  = config.speed_lim_vx;
   speed_lim_vy  = config.speed_lim_vy;
   speed_lim_w   = config.speed_lim_w;

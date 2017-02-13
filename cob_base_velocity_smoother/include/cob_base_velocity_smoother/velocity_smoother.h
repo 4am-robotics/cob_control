@@ -50,9 +50,9 @@ public:
 private:
   enum RobotFeedbackType
   {
-    NONE,
-    ODOMETRY,
-    COMMANDS
+    NONE     = cob_base_velocity_smoother::params_NONE,
+    ODOMETRY = cob_base_velocity_smoother::params_ODOMETRY,
+    COMMANDS = cob_base_velocity_smoother::params_COMMANDS
   } robot_feedback;  /**< What source to use as robot velocity feedback */
 
   std::string name;
