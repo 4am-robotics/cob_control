@@ -210,14 +210,14 @@ void UndercarriageCtrl::CtrlData::calcControlStep(WheelCommand &command, double 
     // Impedance-Ctrl
     // Calculate resulting desired forces, velocities
     // double dForceDamp, dForceProp, dAccCmd, dVelCmdInt;
-    double dForceDamp = - params_.dDamp *m_dCtrlVelCmdInt;
-    double dForceProp = params_.dSpring * command.dAngGearSteerRadDelta;
+    double dForceDamp = - params_.pos_ctrl.dDamp *m_dCtrlVelCmdInt;
+    double dForceProp = params_.pos_ctrl.dSpring * command.dAngGearSteerRadDelta;
 
-    double dAccCmd = (dForceDamp + dForceProp) /  params_.dVirtM;
-    dAccCmd = limitValue(dAccCmd, params_.dDDPhiMax);
+    double dAccCmd = (dForceDamp + dForceProp) /  params_.pos_ctrl.dVirtM;
+    dAccCmd = limitValue(dAccCmd, params_.pos_ctrl.dDDPhiMax);
 
     double dVelCmdInt =m_dCtrlVelCmdInt + dCmdRateS * dAccCmd;
-    dVelCmdInt = limitValue(dVelCmdInt, params_.dDPhiMax);
+    dVelCmdInt = limitValue(dVelCmdInt, params_.pos_ctrl.dDPhiMax);
 
     // Store internal ctrlr-states
     m_dCtrlVelCmdInt = dVelCmdInt;
