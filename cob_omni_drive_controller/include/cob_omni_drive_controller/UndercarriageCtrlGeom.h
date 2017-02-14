@@ -247,7 +247,9 @@ public:
     void reset();
 
     static double limitValue(double value, double limit);
-
+    void configure(const std::vector<WheelParams> &params);
+    void configure(const std::vector<UndercarriageCtrl::PosCtrlParams> &pos_ctrls);
+    
 private:
     struct CtrlData : public WheelData {
         CtrlParams params_;
