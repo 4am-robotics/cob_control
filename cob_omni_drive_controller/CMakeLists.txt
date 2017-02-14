@@ -42,6 +42,10 @@ install(TARGETS cob_omni_drive_geom cob_omni_drive_controller cob_omni_drive_stu
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
+install(PROGRAMS scripts/test_publisher_twist_sine.py scripts/test_publisher_twist_step.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
 install(FILES controller_plugins.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
