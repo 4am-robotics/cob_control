@@ -271,5 +271,14 @@ void UndercarriageCtrl::reset()
     for(size_t i = 0; i < wheels_.size(); ++i){
         wheels_[i].reset();
     }
+}
 
+bool UndercarriageCtrl::reconfigureSteerCtrlParams(cob_omni_drive_controller::SteerCtrlConfig& config){
+    for(size_t i = 0; i < wheels_.size(); ++i){
+        wheels_[i].params_.dSpring = config.spring;
+        wheels_[i].params_.dDamp = config.damp;
+        wheels_[i].params_.dVirtM = config.virt_mass;
+        wheels_[i].params_.dDPhiMax = config.d_phi_max;
+        wheels_[i].params_.dDDPhiMax = config.dd_phi_max;
+    }
 }

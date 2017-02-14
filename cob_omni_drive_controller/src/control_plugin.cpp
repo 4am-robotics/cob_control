@@ -16,6 +16,9 @@
 #include <realtime_tools/realtime_publisher.h>
 #include <cob_omni_drive_controller/WheelCommands.h>
 
+#include <dynamic_reconfigure/server.h>
+#include <cob_omni_drive_controller/SteerCtrlConfig.h>
+
 namespace cob_omni_drive_controller
 {
 
@@ -25,6 +28,9 @@ public:
     WheelController() {}
 
     virtual bool init(hardware_interface::VelocityJointInterface* hw, ros::NodeHandle &root_nh, ros::NodeHandle& controller_nh){
+
+        reconfigure_server_.reset(new dynamic_reconfigure::Server<SteerCtrlConfig>(reconfig_mutex_, ros::NodeHandle(controller_nh, "defaults/steer_ctrl")));
+        reconfigure_server_->setCallback(boost::bind(&WheelController::reconfigureCallback, this, _1, _2));
 
         if(!GeomController::init(hw, controller_nh)) return false;
 
@@ -59,7 +65,7 @@ public:
         commands_pub_->msg_.steer_target_error.resize(wheel_states_.size());
 
         return true;
-  }
+    }
     virtual void starting(const ros::Time& time){
         geom_->reset();
         target_.updated = false;
@@ -149,7 +155,15 @@ private:
         }
     }
 
-
+    boost::recursive_mutex reconfig_mutex_;
+    boost::shared_ptr< dynamic_reconfigure::Server<SteerCtrlConfig> > reconfigure_server_;
+    
+    void reconfigureCallback(SteerCtrlConfig &config, uint32_t level) {
+        geom_->reconfigureSteerCtrlParams(config);
+        geom_->reset();
+        //target_.updated = false;
+        //cycles_ = 0;
+    }
 };
 
 }

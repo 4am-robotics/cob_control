@@ -58,6 +58,8 @@
 #include <string>
 #include <stdexcept>
 
+#include <cob_omni_drive_controller/SteerCtrlConfig.h>
+
 class UndercarriageGeomBase
 {
 public:
@@ -243,6 +245,8 @@ public:
     void reset();
 
     static double limitValue(double value, double limit);
+    
+    bool reconfigureSteerCtrlParams(cob_omni_drive_controller::SteerCtrlConfig& config);
 
 private:
     struct CtrlData : public WheelData {
