@@ -29,10 +29,8 @@ public:
 
     virtual bool init(hardware_interface::VelocityJointInterface* hw, ros::NodeHandle &root_nh, ros::NodeHandle& controller_nh){
 
-        reconfigure_server_.reset(new dynamic_reconfigure::Server<SteerCtrlConfig>(reconfig_mutex_, ros::NodeHandle(controller_nh, "defaults/steer_ctrl")));
-        reconfigure_server_->setCallback(boost::bind(&WheelController::reconfigureCallback, this, _1, _2));
-
-        if(!GeomController::init(hw, controller_nh)) return false;
+        wheel_params_t wheel_params;
+        if(!parseWheelParams(wheel_params, controller_nh) || !GeomController::init(hw, wheel_params)) return false;
 
         controller_nh.param("max_rot_velocity", max_vel_rot_, 0.0);
         if(max_vel_rot_ < 0){
@@ -64,6 +62,11 @@ public:
         commands_pub_->msg_.steer_target_position.resize(wheel_states_.size());
         commands_pub_->msg_.steer_target_error.resize(wheel_states_.size());
 
+        pos_ctrl_.set(wheel_params);
+
+        reconfigure_server_.reset(new dynamic_reconfigure::Server<SteerCtrlConfig>(ros::NodeHandle(controller_nh, "defaults/steer_ctrl")));
+        reconfigure_server_->setCallback(boost::bind(&PosCtrl::setForAll, &pos_ctrl_, _1, _2));
+
         return true;
     }
     virtual void starting(const ros::Time& time){
@@ -74,6 +77,14 @@ public:
     virtual void update(const ros::Time& time, const ros::Duration& period){
 
         GeomController::update();
+
+        {
+            boost::mutex::scoped_try_lock lock(pos_ctrl_.mutex);
+            if(lock && pos_ctrl_.updated){
+                geom_->configure(pos_ctrl_.pos_ctrl_params);
+                pos_ctrl_.updated = false;
+            }
+        }
 
         {
             boost::mutex::scoped_try_lock lock(mutex_);
@@ -127,6 +138,40 @@ private:
         ros::Time stamp;
     } target_;
 
+    struct PosCtrl {
+        std::vector<UndercarriageCtrl::PosCtrlParams> pos_ctrl_params;
+        boost::mutex mutex;
+        bool updated;
+        PosCtrl() : updated(false) {}
+        static void copy(UndercarriageCtrl::PosCtrlParams &params, const SteerCtrlConfig &config){
+            params.dSpring = config.spring;
+            params.dDamp = config.damp;
+            params.dVirtM = config.virt_mass;
+            params.dDPhiMax = config.d_phi_max;
+            params.dDDPhiMax = config.dd_phi_max;
+        }
+        void setForAll(SteerCtrlConfig &config, uint32_t /*level*/) {
+            boost::mutex::scoped_lock lock(mutex);
+            for(size_t i=0; i< pos_ctrl_params.size(); ++i) {
+                copy(pos_ctrl_params[i], config);
+            }
+            updated = true;
+        }
+        void setForOne(int i, SteerCtrlConfig &config, uint32_t /*level*/) {
+            boost::mutex::scoped_lock lock(mutex);
+            copy(pos_ctrl_params[i], config);
+            updated = true;
+        }
+        void set(const wheel_params_t &params){
+            pos_ctrl_params.resize(params.size());
+            boost::mutex::scoped_lock lock(mutex);
+            for(size_t i=0; i< pos_ctrl_params.size(); ++i) {
+                pos_ctrl_params[i] = params[i].ctrl.pos_ctrl;
+            }
+            updated = true;
+        }
+    } pos_ctrl_;
+
     std::vector<UndercarriageCtrl::WheelCommand> wheel_commands_;
 
     boost::mutex mutex_;
@@ -155,15 +200,7 @@ private:
         }
     }
 
-    boost::recursive_mutex reconfig_mutex_;
-    boost::shared_ptr< dynamic_reconfigure::Server<SteerCtrlConfig> > reconfigure_server_;
-    
-    void reconfigureCallback(SteerCtrlConfig &config, uint32_t level) {
-        geom_->reconfigureSteerCtrlParams(config);
-        geom_->reset();
-        //target_.updated = false;
-        //cycles_ = 0;
-    }
+    boost::scoped_ptr< dynamic_reconfigure::Server<SteerCtrlConfig> > reconfigure_server_;
 };
 
 }
