@@ -54,6 +54,7 @@
 #include <cob_omni_drive_controller/UndercarriageCtrlGeom.h>
 
 #include <math.h>
+#include <assert.h>
 #include <angles/angles.h>
 #include <stdexcept>
 
@@ -236,9 +237,7 @@ void UndercarriageCtrl::CtrlData::reset(){
 }
 
 UndercarriageCtrl::UndercarriageCtrl(const std::vector<WheelParams> &params){
-    for(std::vector<WheelParams>::const_iterator it = params.begin(); it != params.end(); ++it){
-        wheels_.push_back(CtrlData(*it));
-    }
+    configure(params);
 }
 
 void UndercarriageCtrl::calcDirect(PlatformState &state) const{
@@ -273,12 +272,15 @@ void UndercarriageCtrl::reset()
     }
 }
 
-bool UndercarriageCtrl::reconfigureSteerCtrlParams(cob_omni_drive_controller::SteerCtrlConfig& config){
+void UndercarriageCtrl::configure(const std::vector<WheelParams> &params){
+    wheels_.clear();
+    for(std::vector<WheelParams>::const_iterator it = params.begin(); it != params.end(); ++it){
+        wheels_.push_back(CtrlData(*it));
+    }
+}
+void UndercarriageCtrl::configure(const std::vector<UndercarriageCtrl::PosCtrlParams> &pos_ctrls){
+    assert(wheels_.size() == pos_ctrls.size());
     for(size_t i = 0; i < wheels_.size(); ++i){
-        wheels_[i].params_.dSpring = config.spring;
-        wheels_[i].params_.dDamp = config.damp;
-        wheels_[i].params_.dVirtM = config.virt_mass;
-        wheels_[i].params_.dDPhiMax = config.d_phi_max;
-        wheels_[i].params_.dDDPhiMax = config.dd_phi_max;
+        wheels_[i].params_.pos_ctrl= pos_ctrls[i];
     }
 }
