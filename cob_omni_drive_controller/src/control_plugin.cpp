@@ -16,6 +16,9 @@
 #include <realtime_tools/realtime_publisher.h>
 #include <cob_omni_drive_controller/WheelCommands.h>
 
+#include <dynamic_reconfigure/server.h>
+#include <cob_omni_drive_controller/SteerCtrlConfig.h>
+
 namespace cob_omni_drive_controller
 {
 
@@ -26,7 +29,8 @@ public:
 
     virtual bool init(hardware_interface::VelocityJointInterface* hw, ros::NodeHandle &root_nh, ros::NodeHandle& controller_nh){
 
-        if(!GeomController::init(hw, controller_nh)) return false;
+        wheel_params_t wheel_params;
+        if(!parseWheelParams(wheel_params, controller_nh) || !GeomController::init(hw, wheel_params)) return false;
 
         controller_nh.param("max_rot_velocity", max_vel_rot_, 0.0);
         if(max_vel_rot_ < 0){
@@ -45,7 +49,7 @@ public:
             return false;
         }
         timeout_.fromSec(timeout);
-        
+
         pub_divider_ =  controller_nh.param("pub_divider",0);
 
         wheel_commands_.resize(wheel_states_.size());
@@ -58,8 +62,10 @@ public:
         commands_pub_->msg_.steer_target_position.resize(wheel_states_.size());
         commands_pub_->msg_.steer_target_error.resize(wheel_states_.size());
 
+        pos_ctrl_.init(wheel_params, controller_nh);
+
         return true;
-  }
+    }
     virtual void starting(const ros::Time& time){
         geom_->reset();
         target_.updated = false;
@@ -68,6 +74,7 @@ public:
     virtual void update(const ros::Time& time, const ros::Duration& period){
 
         GeomController::update();
+        pos_ctrl_.try_configure(*geom_);
 
         {
             boost::mutex::scoped_try_lock lock(mutex_);
@@ -121,6 +128,74 @@ private:
         ros::Time stamp;
     } target_;
 
+    class PosCtrl {
+    public:
+        PosCtrl() : updated(false) {}
+        void try_configure(UndercarriageCtrl &ctrl){
+            boost::recursive_mutex::scoped_try_lock lock(mutex);
+            if(lock && updated){
+                ctrl.configure(pos_ctrl_params);
+                updated = false;
+            }
+        }
+        void init(const wheel_params_t &params, const ros::NodeHandle &nh){
+            boost::recursive_mutex::scoped_lock lock(mutex);
+            pos_ctrl_params.resize(params.size());
+            reconfigure_server_axes_.clear();
+
+            reconfigure_server_.reset( new dynamic_reconfigure::Server<SteerCtrlConfig>(mutex,ros::NodeHandle(nh, "default/steer_ctrl")));
+            reconfigure_server_->setCallback(boost::bind(&PosCtrl::setForAll, this, _1, _2)); // this writes the default into pos_ctrl_params
+            {
+                SteerCtrlConfig config;
+                copy(config, params.front().ctrl.pos_ctrl);
+                reconfigure_server_->setConfigDefault(config);
+            }
+
+            for(size_t i=0; i< pos_ctrl_params.size(); ++i) {
+                boost::shared_ptr<dynamic_reconfigure::Server<SteerCtrlConfig> > dr(new dynamic_reconfigure::Server<SteerCtrlConfig>(mutex, ros::NodeHandle(nh, params[i].geom.steer_name)));
+                for(size_t i=0; i< pos_ctrl_params.size(); ++i) {
+                    SteerCtrlConfig config;
+                    copy(config, params[i].ctrl.pos_ctrl);
+                    dr->setConfigDefault(config);
+                    dr->updateConfig(config);
+                    dr->setCallback(boost::bind(&PosCtrl::setForOne, this, i, _1, _2));  // this writes the joint-specific config into pos_ctrl_params
+                    reconfigure_server_axes_.push_back(dr);
+                }
+            }
+        }
+    private:
+        static void copy(UndercarriageCtrl::PosCtrlParams &params, const SteerCtrlConfig &config){
+            params.dSpring = config.spring;
+            params.dDamp = config.damp;
+            params.dVirtM = config.virt_mass;
+            params.dDPhiMax = config.d_phi_max;
+            params.dDDPhiMax = config.dd_phi_max;
+        }
+        static void copy(SteerCtrlConfig &config, const UndercarriageCtrl::PosCtrlParams &params){
+            config.spring = params.dSpring;
+            config.damp = params.dDamp;
+            config.virt_mass = params.dVirtM;
+            config.d_phi_max = params.dDPhiMax;
+            config.dd_phi_max = params.dDDPhiMax;
+        }
+        // these function don't get locked
+        void setForAll(SteerCtrlConfig &config, uint32_t /*level*/) {
+            for(size_t i=0; i< pos_ctrl_params.size(); ++i) {
+                copy(pos_ctrl_params[i], config);
+            }
+            updated = true;
+        }
+        void setForOne(size_t i, SteerCtrlConfig &config, uint32_t /*level*/) {
+            copy(pos_ctrl_params[i], config);
+            updated = true;
+        }
+        std::vector<UndercarriageCtrl::PosCtrlParams> pos_ctrl_params;
+        boost::recursive_mutex mutex; // dynamic_reconfigure::Server calls the callback from the setCallback function
+        bool updated;
+        boost::scoped_ptr< dynamic_reconfigure::Server<SteerCtrlConfig> > reconfigure_server_;
+        std::vector<boost::shared_ptr< dynamic_reconfigure::Server<SteerCtrlConfig> > > reconfigure_server_axes_; // TODO: use unique_ptr
+    } pos_ctrl_;
+
     std::vector<UndercarriageCtrl::WheelCommand> wheel_commands_;
 
     boost::mutex mutex_;
@@ -148,8 +223,6 @@ private:
             target_.stamp = ros::Time::now();
         }
     }
-
-
 };
 
 }
