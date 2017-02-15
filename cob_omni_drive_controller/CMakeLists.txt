@@ -27,7 +27,7 @@ add_library(cob_omni_drive_geom src/UndercarriageCtrlGeom.cpp src/param_parser.c
 add_dependencies(cob_omni_drive_geom ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cob_omni_drive_geom ${catkin_LIBRARIES})
 
-add_library(cob_omni_drive_controller src/odom_plugin.cpp src/control_plugin.cpp)
+add_library(cob_omni_drive_controller src/odom_plugin.cpp src/control_plugin.cpp src/control_multi_plugin.cpp)
 add_dependencies(cob_omni_drive_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cob_omni_drive_controller cob_omni_drive_geom ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 

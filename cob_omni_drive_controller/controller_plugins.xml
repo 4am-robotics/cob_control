@@ -8,5 +8,9 @@
             <description>
             </description>
         </class>
+        <class name="cob_omni_drive_controller/WheelMultiController" type="cob_omni_drive_controller::WheelMultiController" base_class_type="controller_interface::ControllerBase">
+            <description>
+            </description>
+        </class>
     </library>
 </class_libraries>
