@@ -82,7 +82,7 @@ public:
 
     virtual void update(const ros::Time& time, const ros::Duration& period){
 
-        GeomController::update();
+        updateState();
 
         geom_->calcDirect(platform_state_);
 
