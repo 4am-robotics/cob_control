@@ -54,6 +54,7 @@
 #include <cob_omni_drive_controller/UndercarriageCtrlGeom.h>
 
 #include <math.h>
+#include <assert.h>
 #include <angles/angles.h>
 #include <stdexcept>
 
@@ -210,14 +211,14 @@ void UndercarriageCtrl::CtrlData::calcControlStep(WheelCommand &command, double 
     // Impedance-Ctrl
     // Calculate resulting desired forces, velocities
     // double dForceDamp, dForceProp, dAccCmd, dVelCmdInt;
-    double dForceDamp = - params_.dDamp *m_dCtrlVelCmdInt;
-    double dForceProp = params_.dSpring * command.dAngGearSteerRadDelta;
+    double dForceDamp = - params_.pos_ctrl.dDamp *m_dCtrlVelCmdInt;
+    double dForceProp = params_.pos_ctrl.dSpring * command.dAngGearSteerRadDelta;
 
-    double dAccCmd = (dForceDamp + dForceProp) /  params_.dVirtM;
-    dAccCmd = limitValue(dAccCmd, params_.dDDPhiMax);
+    double dAccCmd = (dForceDamp + dForceProp) /  params_.pos_ctrl.dVirtM;
+    dAccCmd = limitValue(dAccCmd, params_.pos_ctrl.dDDPhiMax);
 
     double dVelCmdInt =m_dCtrlVelCmdInt + dCmdRateS * dAccCmd;
-    dVelCmdInt = limitValue(dVelCmdInt, params_.dDPhiMax);
+    dVelCmdInt = limitValue(dVelCmdInt, params_.pos_ctrl.dDPhiMax);
 
     // Store internal ctrlr-states
     m_dCtrlVelCmdInt = dVelCmdInt;
@@ -236,9 +237,7 @@ void UndercarriageCtrl::CtrlData::reset(){
 }
 
 UndercarriageCtrl::UndercarriageCtrl(const std::vector<WheelParams> &params){
-    for(std::vector<WheelParams>::const_iterator it = params.begin(); it != params.end(); ++it){
-        wheels_.push_back(CtrlData(*it));
-    }
+    configure(params);
 }
 
 void UndercarriageCtrl::calcDirect(PlatformState &state) const{
@@ -271,5 +270,17 @@ void UndercarriageCtrl::reset()
     for(size_t i = 0; i < wheels_.size(); ++i){
         wheels_[i].reset();
     }
+}
 
+void UndercarriageCtrl::configure(const std::vector<WheelParams> &params){
+    wheels_.clear();
+    for(std::vector<WheelParams>::const_iterator it = params.begin(); it != params.end(); ++it){
+        wheels_.push_back(CtrlData(*it));
+    }
+}
+void UndercarriageCtrl::configure(const std::vector<UndercarriageCtrl::PosCtrlParams> &pos_ctrls){
+    assert(wheels_.size() == pos_ctrls.size());
+    for(size_t i = 0; i < wheels_.size(); ++i){
+        wheels_[i].params_.pos_ctrl= pos_ctrls[i];
+    }
 }

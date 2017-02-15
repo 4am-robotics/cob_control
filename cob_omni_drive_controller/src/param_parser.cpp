@@ -72,11 +72,11 @@ bool parseCtrlParams(UndercarriageCtrl::CtrlParams & params, XmlRpc::XmlRpcValue
     }
     XmlRpc::XmlRpcValue &steer = wheel["steer_ctrl"];
 
-    return read(params.dSpring, "spring", steer)
-        && read(params.dDamp, "damp", steer)
-        && read(params.dVirtM, "virt_mass", steer)
-        && read(params.dDPhiMax, "d_phi_max", steer)
-        && read(params.dDDPhiMax, "dd_phi_max", steer);
+    return read(params.pos_ctrl.dSpring, "spring", steer)
+        && read(params.pos_ctrl.dDamp, "damp", steer)
+        && read(params.pos_ctrl.dVirtM, "virt_mass", steer)
+        && read(params.pos_ctrl.dDPhiMax, "d_phi_max", steer)
+        && read(params.pos_ctrl.dDDPhiMax, "dd_phi_max", steer);
 }
 
 bool parseWheelGeom(UndercarriageGeom::WheelGeom & geom, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcStruct &merged, urdf::Model* model){
