@@ -201,12 +201,7 @@ private:
 
 class UndercarriageCtrl : public UndercarriageGeomBase {
 public:
-    struct CtrlParams{
-        double dWheelNeutralPos;
-
-        double dMaxDriveRateRadpS;
-        double dMaxSteerRateRadpS;
-
+    struct PosCtrlParams {
         /** ------- Position Controller Steer Wheels -------
         * Impedance-Ctrlr Prms
         *  -> model Stiffness via Spring-Damper-Modell
@@ -218,6 +213,15 @@ public:
         *  m_dDDPhiMax maximum angular acceleration (cut-off)
         */
         double dSpring, dDamp, dVirtM, dDPhiMax, dDDPhiMax;
+    };
+    
+    struct CtrlParams{
+        double dWheelNeutralPos;
+
+        double dMaxDriveRateRadpS;
+        double dMaxSteerRateRadpS;
+        
+        PosCtrlParams pos_ctrl;
     };
 
     struct WheelParams {
@@ -243,7 +247,9 @@ public:
     void reset();
 
     static double limitValue(double value, double limit);
-
+    void configure(const std::vector<WheelParams> &params);
+    void configure(const std::vector<UndercarriageCtrl::PosCtrlParams> &pos_ctrls);
+    
 private:
     struct CtrlData : public WheelData {
         CtrlParams params_;
