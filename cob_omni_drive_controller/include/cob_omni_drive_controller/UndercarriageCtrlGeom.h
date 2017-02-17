@@ -331,6 +331,7 @@ struct PosCtrlData : public CtrlData {
 class UndercarriageCtrl : public UndercarriageCtrlBase < PosCtrlData > {
 public:
     typedef WheelCtrlPosParams WheelParams;
+    void configure(const std::vector<PosCtrlParams> &pos_ctrl);
     UndercarriageCtrl(const std::vector<WheelParams> &params) : UndercarriageCtrlBase(params) {}
 };
 

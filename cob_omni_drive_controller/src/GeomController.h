@@ -42,9 +42,13 @@ template<typename Interface, typename Controller> class GeomController:
     public GeomControllerBase<typename Interface::ResourceHandleType, Controller>,
         public controller_interface::Controller<Interface> {
 public:
+    typedef std::vector<typename Controller::WheelParams> wheel_params_t;
     bool init(Interface* hw, ros::NodeHandle& controller_nh){
         std::vector<typename Controller::WheelParams> wheel_params;
         if(!parseWheelParams(wheel_params, controller_nh)) return false;
+        return init(hw, wheel_params);
+    }
+    bool init(Interface* hw, const wheel_params_t & wheel_params){
         if(!this->setup(wheel_params)) return false;
         try{
             for (unsigned i=0; i<wheel_params.size(); i++){
