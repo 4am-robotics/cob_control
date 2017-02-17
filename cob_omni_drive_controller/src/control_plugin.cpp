@@ -182,6 +182,7 @@ private:
         void setForAll(SteerCtrlConfig &config, uint32_t /*level*/) {
             for(size_t i=0; i< pos_ctrl_params.size(); ++i) {
                 copy(pos_ctrl_params[i], config);
+                reconfigure_server_axes_[i]->updateConfig(config);
             }
             updated = true;
         }
