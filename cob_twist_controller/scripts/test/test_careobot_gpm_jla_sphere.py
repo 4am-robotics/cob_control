@@ -33,6 +33,8 @@ import subprocess
 from simple_script_server.simple_script_server import simple_script_server
 import twist_controller_config as tcc
 from dynamic_reconfigure.client import Client
+from visualization_msgs.msg import InteractiveMarkerFeedback
+from sensor_msgs.msg import JointState
 
 from data_collection import JointStateDataKraken
 from data_collection import TwistDataKraken
@@ -45,14 +47,14 @@ def init_dyn_recfg():
     cli.init()
     cli.set_config_param(tcc.CTRL_IF, tcc.TwistController_VELOCITY_INTERFACE)
 
-    cli.set_config_param(tcc.DAMP_METHOD, tcc.TwistController_SIGMOID)
-    cli.set_config_param(tcc.LAMBDA_MAX, 0.001)
-    cli.set_config_param(tcc.W_THRESH, 0.001)
-    cli.set_config_param(tcc.SLOPE_DAMPING, 0.001)
+    cli.set_config_param(tcc.DAMP_METHOD, tcc.TwistController_MANIPULABILITY)
+    cli.set_config_param(tcc.LAMBDA_MAX, 0.1)
+    cli.set_config_param(tcc.W_THRESH, 0.05)
+
     cli.set_config_param(tcc.PRIO_CA, 100)
     cli.set_config_param(tcc.PRIO_JLA, 50)
 
-    cli.set_config_param(tcc.SOLVER, tcc.TwistController_WLN)
+    cli.set_config_param(tcc.SOLVER, tcc.TwistController_GPM)
     cli.set_config_param(tcc.K_H, 1.0)
 
     cli.set_config_param(tcc.CONSTR_CA, tcc.TwistController_CA_OFF)
@@ -62,15 +64,12 @@ def init_dyn_recfg():
     cli.set_config_param(tcc.CRIT_THRESH_CA, 0.025)
     cli.set_config_param(tcc.DAMP_CA, 0.000001)
 
-    cli.set_config_param(tcc.CONSTR_JLA, tcc.TwistController_JLA_SIG)
+    cli.set_config_param(tcc.CONSTR_JLA, tcc.TwistController_JLA)
     cli.set_config_param(tcc.K_H_JLA, -1.0)
     cli.set_config_param(tcc.ACTIV_THRESH_JLA, 10.0)
     cli.set_config_param(tcc.ACTIV_BUF_JLA, 300.0)
-    cli.set_config_param(tcc.ACTIV_POS_THRESH_JLA, 0.35)
-    cli.set_config_param(tcc.ACTIV_SPEED_THRESH_JLA, 2.0)
     cli.set_config_param(tcc.CRIT_THRESH_JLA, 5.0)
-    cli.set_config_param(tcc.DAMP_JLA, 0.01)
-    cli.set_config_param(tcc.DAMP_SPEED_JLA, 5.0)
+    cli.set_config_param(tcc.DAMP_JLA, 0.00001)
 
     cli.set_config_param(tcc.KIN_EXT, tcc.TwistController_NO_EXTENSION)
     cli.set_config_param(tcc.KEEP_DIR, False)
@@ -84,13 +83,35 @@ def init_dyn_recfg():
     ft_param = {'cart_min_dist_threshold_lin' : 0.2, 'cart_min_dist_threshold_rot' : 0.2}
     cli.update_configuration(ft_param)
     cli.close()
+# receives the joint states
+def jointStateCallback(self, msg):
+    for i in range(0,len(msg.position)):
+         self.joint_states[i] = msg.position[i]
 
+# wait until arm goal pose reached
+def armWaitUntilGoalPoseReached(goal_state):
+        reached = False
+        while not rospy.is_shutdown() and reached==False:
+            reached = armGoalPoseReached(goal_state)
+            rospy.sleep(0.5)
+        print "arm goal pose reached"
 
-def init_pos():
+    # check if arm goal state is reached
+def armGoalPoseReached(goal_state):
+    eps = 0.01
+    for i in range(0,len(goal_state)):
+        if abs(joint_states[i]-goal_state[i])>eps:
+            return False
+    return True
+
+def init_pos(goal_state):
     sss = simple_script_server()
-    sss.move("arm_right", "home")
-    sss.move("arm_right", "home")
+    sss.move("arm_left", goal_state)
+    sss.move("arm_left", "home")
 
+def jointStateCallback(msg):
+    for i in range(0,len(msg.position)):
+        joint_states[i] = msg.position[i]
 
 if __name__ == "__main__":
     rospy.init_node("test_careobot_st_jla_ca_sphere")
@@ -122,17 +143,19 @@ if __name__ == "__main__":
 
     t = time.localtime()
     launch_time_stamp = time.strftime("%Y%m%d_%H_%M_%S", t)
-
+    rospy.Subscriber("/arm_left/joint_states", JointState, jointStateCallback)
     command = 'rosbag play -r 0.5 ' + base_dir + '/experiment1/experiment1.bag'
     # command = 'rosbag play -u 10 ' + base_dir + 'careobot_st_jla_ca_sphere.bag'
 
     data_krakens = [
-                    JointStateDataKraken(base_dir + 'joint_state_data_' + launch_time_stamp + 'SIG.csv'),
-                    TwistDataKraken(base_dir + 'twist_data_' + launch_time_stamp + 'SIG.csv'),
-                    JointVelocityDataKraken(base_dir + 'joint_vel_data_' + launch_time_stamp + 'SIG.csv'),
-                    FrameTrackingDataKraken(base_dir + 'frame_tracking_data_' + launch_time_stamp + 'SIG.csv', root_frame, chain_tip_link, tracking_frame), ]
+                    JointStateDataKraken(base_dir + 'joint_state_data_' + launch_time_stamp + 'GPM.csv'),
+                    TwistDataKraken(base_dir + 'twist_data_' + launch_time_stamp + 'GPM.csv'),
+                    JointVelocityDataKraken(base_dir + 'joint_vel_data_' + launch_time_stamp + 'GPM.csv'),
+                    FrameTrackingDataKraken(base_dir + 'frame_tracking_data_' + launch_time_stamp + 'GPM.csv', root_frame, chain_tip_link, tracking_frame), ]
 
-    init_pos()
+    joint_states=[1., 0., 0., 0., 0., 0.,0.]
+    init_pos(joint_states)
+    armWaitUntilGoalPoseReached(joint_states)
     init_dyn_recfg()
 
     status_open = True

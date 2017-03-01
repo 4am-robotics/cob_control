@@ -45,7 +45,7 @@ Eigen::MatrixXd WLN_JointLimitAvoidanceSolver::calculateWeighting(const Vector6d
 
     KDL::JntArray q = joint_states.current_q_;
     KDL::JntArray q_dot = joint_states.current_q_dot_;
-    ROS_INFO("STATE OF ART WEIGHTING");
+
     for (uint32_t i = 0; i < cols ; ++i)
     {
         weighting(i) = 1.0;    // in the else cases -> weighting always 1

@@ -80,7 +80,7 @@ Eigen::MatrixXd ModulationSigmoidSolver::calculateWeighting(Eigen::VectorXd q_do
       if (weighting(i) > 1.0){
     	  weighting(i)=1.0;
       }
-      ROS_INFO("OLA");
+
       if( (fabs(q(i)-limits_min[i])<params_.limiter_params.limits_tolerance*0.01745329251) || (fabs(q(i)-limits_max[i])<params_.limiter_params.limits_tolerance*0.01745329251) ){
       	    	ROS_INFO("Limit %i not respected",i);
       }

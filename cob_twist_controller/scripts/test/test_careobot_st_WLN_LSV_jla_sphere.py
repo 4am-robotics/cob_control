@@ -45,10 +45,10 @@ def init_dyn_recfg():
     cli.init()
     cli.set_config_param(tcc.CTRL_IF, tcc.TwistController_VELOCITY_INTERFACE)
 
-    cli.set_config_param(tcc.DAMP_METHOD, tcc.TwistController_SIGMOID)
-    cli.set_config_param(tcc.LAMBDA_MAX, 0.001)
+    cli.set_config_param(tcc.DAMP_METHOD, tcc.TwistController_LEAST_SINGULAR_VALUE)
+    cli.set_config_param(tcc.LAMBDA_MAX, 0.1)
     cli.set_config_param(tcc.W_THRESH, 0.001)
-    cli.set_config_param(tcc.SLOPE_DAMPING, 0.001)
+    cli.set_config_param(tcc.SLOPE_DAMPING, 0.005)
     cli.set_config_param(tcc.PRIO_CA, 100)
     cli.set_config_param(tcc.PRIO_JLA, 50)
 
@@ -62,14 +62,14 @@ def init_dyn_recfg():
     cli.set_config_param(tcc.CRIT_THRESH_CA, 0.025)
     cli.set_config_param(tcc.DAMP_CA, 0.000001)
 
-    cli.set_config_param(tcc.CONSTR_JLA, tcc.TwistController_JLA_SIG)
+    cli.set_config_param(tcc.CONSTR_JLA, tcc.TwistController_JLA)
     cli.set_config_param(tcc.K_H_JLA, -1.0)
     cli.set_config_param(tcc.ACTIV_THRESH_JLA, 10.0)
     cli.set_config_param(tcc.ACTIV_BUF_JLA, 300.0)
-    cli.set_config_param(tcc.ACTIV_POS_THRESH_JLA, 0.35)
+    cli.set_config_param(tcc.ACTIV_POS_THRESH_JLA, 0.5)
     cli.set_config_param(tcc.ACTIV_SPEED_THRESH_JLA, 2.0)
     cli.set_config_param(tcc.CRIT_THRESH_JLA, 5.0)
-    cli.set_config_param(tcc.DAMP_JLA, 0.01)
+    cli.set_config_param(tcc.DAMP_JLA, 0.05)
     cli.set_config_param(tcc.DAMP_SPEED_JLA, 5.0)
 
     cli.set_config_param(tcc.KIN_EXT, tcc.TwistController_NO_EXTENSION)
@@ -127,10 +127,10 @@ if __name__ == "__main__":
     # command = 'rosbag play -u 10 ' + base_dir + 'careobot_st_jla_ca_sphere.bag'
 
     data_krakens = [
-                    JointStateDataKraken(base_dir + 'joint_state_data_' + launch_time_stamp + 'SIG.csv'),
-                    TwistDataKraken(base_dir + 'twist_data_' + launch_time_stamp + 'SIG.csv'),
-                    JointVelocityDataKraken(base_dir + 'joint_vel_data_' + launch_time_stamp + 'SIG.csv'),
-                    FrameTrackingDataKraken(base_dir + 'frame_tracking_data_' + launch_time_stamp + 'SIG.csv', root_frame, chain_tip_link, tracking_frame), ]
+                    JointStateDataKraken(base_dir + 'joint_state_data_' + launch_time_stamp + 'WLN_LSV.csv'),
+                    TwistDataKraken(base_dir + 'twist_data_' + launch_time_stamp + 'WLN_LSV.csv'),
+                    JointVelocityDataKraken(base_dir + 'joint_vel_data_' + launch_time_stamp + 'WLN_LSV.csv'),
+                    FrameTrackingDataKraken(base_dir + 'frame_tracking_data_' + launch_time_stamp + 'WLN_LSV.csv', root_frame, chain_tip_link, tracking_frame), ]
 
     init_pos()
     init_dyn_recfg()
