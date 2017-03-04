@@ -1,9 +1,7 @@
 #!/usr/bin/env python
-
 import rospy
 import math
 from geometry_msgs.msg import Twist
-
 
 def twistPub():
   rospy.init_node("test_publisher_twist", anonymous=True)

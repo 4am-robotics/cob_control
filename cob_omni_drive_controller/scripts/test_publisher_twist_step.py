@@ -2,8 +2,6 @@
 import rospy
 import math
 import random
-import numpy as np
-from sympy import *
 from geometry_msgs.msg import Twist
 
 
