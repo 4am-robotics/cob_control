@@ -9,13 +9,7 @@ env:
   global:
     - UPSTREAM_WORKSPACE=file
   matrix:
-    - ROS_DISTRO="indigo" ROS_REPOSITORY_PATH=http://packages.ros.org/ros/ubuntu
-    - ROS_DISTRO="jade" ROS_REPOSITORY_PATH=http://packages.ros.org/ros/ubuntu
     - ROS_DISTRO="kinetic" ROS_REPOSITORY_PATH=http://packages.ros.org/ros/ubuntu
-matrix:
-  allow_failures:
-    - env: ROS_DISTRO="indigo" ROS_REPOSITORY_PATH=http://packages.ros.org/ros/ubuntu UPSTREAM_WORKSPACE=file
-    - env: ROS_DISTRO="jade" ROS_REPOSITORY_PATH=http://packages.ros.org/ros/ubuntu UPSTREAM_WORKSPACE=file
 install:
   - git clone https://github.com/ros-industrial/industrial_ci.git .ci_config
 script:
