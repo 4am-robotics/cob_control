@@ -17,9 +17,9 @@
  *   ROS package name: cob_twist_controller
  *
  * \author
- *   Author: Marco Bezzon, email: Marco.Bezzon@ipa.fraunhofer.de
+ *   Author: Bruno Brito, email: Bruno.Brito@ipa.fraunhofer.de
  *
- * \date Date of creation: July, 2015
+ * \date Date of creation: February, 2017
  *
  * \brief
  *   Simple Python node to collect data from several topics.
@@ -46,9 +46,9 @@ def init_dyn_recfg():
     cli.set_config_param(tcc.CTRL_IF, tcc.TwistController_VELOCITY_INTERFACE)
 
     cli.set_config_param(tcc.DAMP_METHOD, tcc.TwistController_SIGMOID)
-    cli.set_config_param(tcc.LAMBDA_MAX, 0.001)
-    cli.set_config_param(tcc.W_THRESH, 0.001)
-    cli.set_config_param(tcc.SLOPE_DAMPING, 0.001)
+    cli.set_config_param(tcc.LAMBDA_MAX, 0.1)
+    cli.set_config_param(tcc.W_THRESH, 0.1)
+    cli.set_config_param(tcc.SLOPE_DAMPING, 0.1)
     cli.set_config_param(tcc.PRIO_CA, 100)
     cli.set_config_param(tcc.PRIO_JLA, 50)
 
@@ -66,11 +66,11 @@ def init_dyn_recfg():
     cli.set_config_param(tcc.K_H_JLA, -1.0)
     cli.set_config_param(tcc.ACTIV_THRESH_JLA, 10.0)
     cli.set_config_param(tcc.ACTIV_BUF_JLA, 300.0)
-    cli.set_config_param(tcc.ACTIV_POS_THRESH_JLA, 0.35)
+    cli.set_config_param(tcc.ACTIV_POS_THRESH_JLA, 0.5)
     cli.set_config_param(tcc.ACTIV_SPEED_THRESH_JLA, 2.0)
     cli.set_config_param(tcc.CRIT_THRESH_JLA, 5.0)
-    cli.set_config_param(tcc.DAMP_JLA, 0.01)
-    cli.set_config_param(tcc.DAMP_SPEED_JLA, 5.0)
+    cli.set_config_param(tcc.DAMP_JLA, 0.05)
+    cli.set_config_param(tcc.DAMP_SPEED_JLA, 1.0)
 
     cli.set_config_param(tcc.KIN_EXT, tcc.TwistController_NO_EXTENSION)
     cli.set_config_param(tcc.KEEP_DIR, False)
@@ -123,7 +123,7 @@ if __name__ == "__main__":
     t = time.localtime()
     launch_time_stamp = time.strftime("%Y%m%d_%H_%M_%S", t)
 
-    command = 'rosbag play -r 0.5 ' + base_dir + '/experiment1/experiment1.bag'
+    command = 'rosbag play -r 0.5 ' + base_dir + '/experiment1/experiment2.bag'
     # command = 'rosbag play -u 10 ' + base_dir + 'careobot_st_jla_ca_sphere.bag'
 
     data_krakens = [

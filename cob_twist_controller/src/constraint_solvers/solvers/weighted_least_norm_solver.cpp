@@ -59,9 +59,8 @@ Eigen::MatrixXd WeightedLeastNormSolver::solve(const Vector6d_t& in_cart_velocit
     return qdots_out;
 */
 	//Method simplified based on General Weighted LeastNorm Control for Redudant Manipulators
-
+    /*
 	Eigen::MatrixXd W = this->calculateWeighting(in_cart_velocities, joint_states);
-
 	Eigen::JacobiSVD<Eigen::MatrixXd> svd(this->jacobian_data_, Eigen::ComputeThinU | Eigen::ComputeThinV);
 	Eigen::VectorXd singularValues = svd.singularValues();
 	Eigen::MatrixXd W_V=W*svd.matrixV();
@@ -69,7 +68,7 @@ Eigen::MatrixXd WeightedLeastNormSolver::solve(const Vector6d_t& in_cart_velocit
 	Eigen::MatrixXd J_W=svd.matrixU()*S*W_V.transpose();
 
 	Eigen::MatrixXd pinv = pinv_calc_.calculate(this->params_, this->damping_, J_W);
-/*
+
 	Eigen::VectorXd singularValues = svd.singularValues();
 	Eigen::VectorXd singularValuesInv = Eigen::VectorXd::Zero(singularValues.rows());
 	Eigen::MatrixXd lambda = damping_->getDampingFactor(singularValues, this->jacobian_data_);
@@ -92,15 +91,88 @@ Eigen::MatrixXd WeightedLeastNormSolver::solve(const Vector6d_t& in_cart_velocit
 	Eigen::MatrixXd pinv = pinv_calc_.calculate(this->params_, this->damping_, J_W_WLN_Jt);
 
 	Eigen::MatrixXd qdots_out =  weighted_jacobian * pinv * in_cart_velocities;
-*/
+*//* simulations
     Eigen::MatrixXd weighted_jacobian = W* this->jacobian_data_.transpose();
     Eigen::MatrixXd lambda = damping_->getDampingFactor(singularValues, this->jacobian_data_);
-    Eigen::MatrixXd J_W_WLN_Jt= this->jacobian_data_* weighted_jacobian+lambda;
+    Eigen::MatrixXd U= svd.matrixU();
+    Eigen::MatrixXd J_W_WLN_Jt= this->jacobian_data_* weighted_jacobian+svd.matrixU()*lambda*U.transpose();
+
+    Eigen::MatrixXd pinv2 = pinv_calc_.calculate(J_W_WLN_Jt);
+    Eigen::MatrixXd pinv3= weighted_jacobian*pinv2;
+	Eigen::MatrixXd qdots_out =  pinv3 * in_cart_velocities;
+    Eigen::MatrixXd weighted_jacobian = W* this->jacobian_data_.transpose();
+    Eigen::MatrixXd lambda = damping_->getDampingFactor(singularValues, this->jacobian_data_);
+    Eigen::MatrixXd J_W_WLN_Jt= this->jacobian_data_* weighted_jacobian;
 
     Eigen::MatrixXd pinv2 = pinv_calc_.calculate(this->params_, this->damping_, J_W_WLN_Jt);
     Eigen::MatrixXd pinv3= W*this->jacobian_data_.transpose()*pinv2;
-	Eigen::MatrixXd qdots_out =  pinv3 * in_cart_velocities;
+    Eigen::MatrixXd qdots_out =  pinv3 * in_cart_velocities;*/
 
+    //Final test
+ /*   Eigen::MatrixXd W = this->calculateWeighting(in_cart_velocities, joint_states);
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd(this->jacobian_data_, Eigen::ComputeThinU | Eigen::ComputeThinV);
+
+    Eigen::MatrixXd Q=svd.matrixV()*W;
+    Eigen::MatrixXd Qt=Q.transpose();
+    Eigen::MatrixXd U=svd.matrixU();
+    Eigen::MatrixXd Ut =U.transpose();
+    Eigen::MatrixXd Jt = this->jacobian_data_.transpose();
+    Eigen::MatrixXd S= Eigen::MatrixXd::Zero(6,7);
+    Eigen::MatrixXd Sinv= Eigen::MatrixXd::Zero(7,6);
+    Eigen::VectorXd singularValues = svd.singularValues();
+    Eigen::MatrixXd lambda = damping_->getDampingFactor(singularValues, this->jacobian_data_);
+    for (int i=0;i<6;i++){
+        S(i,i)=singularValues(i)*singularValues(i)*W(i,i)*W(i,i)+lambda(i,i)*lambda(i,i);
+
+        Sinv(i,i)=singularValues(i)/S(i,i);
+    }
+    Eigen::MatrixXd J_W_Wt_Jt=this->jacobian_data_*Q*Qt*Jt;
+    Eigen::MatrixXd J_lambda_Jt=J_W_Wt_Jt+U*lambda*lambda*Ut;
+    Eigen::MatrixXd pinv = J_lambda_Jt.inverse();
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd2(pinv, Eigen::ComputeThinU | Eigen::ComputeThinV);
+    ROS_INFO_STREAM("w not respected"<<W);
+    Eigen::MatrixXd qdots_out =  svd.matrixV() * Sinv * svd.matrixU().transpose() * in_cart_velocities;
+    ROS_INFO_STREAM("q dotd"<<Sinv);
+    */
+    //Another final test
+    //    Wt=Q*V;
+    //qd=Wt*Wt'*J'*inv(J*Wt*Wt'*J'+U*alfa*U')*e_T;
+
+    Eigen::JacobiSVD<Eigen::MatrixXd> svd(this->jacobian_data_, Eigen::ComputeThinU | Eigen::ComputeThinV);
+    Eigen::MatrixXd J=this->jacobian_data_;
+    Eigen::MatrixXd J_T=J.transpose();
+    Eigen::MatrixXd U=svd.matrixU();
+    Eigen::MatrixXd U_T =U.transpose();
+
+    Eigen::MatrixXd Q = this->calculateWeighting(in_cart_velocities, joint_states);
+    Eigen::VectorXd singularValues = svd.singularValues();
+    for (int i=0;i<singularValues.rows();i++){
+        singularValues(i)=singularValues(i)*Q(i,i);
+    }
+    Eigen::MatrixXd lambda = damping_->getDampingFactor(singularValues, this->jacobian_data_);
+
+    Eigen::MatrixXd Ulambda =U*lambda;
+    Eigen::MatrixXd UlambdaUt =Ulambda*U_T;
+
+    Eigen::MatrixXd Wt=Q*svd.matrixV();
+    Eigen::MatrixXd Wt_T=Wt.transpose();
+
+
+    Eigen::MatrixXd WtWt_T= Wt*Wt_T;
+    Eigen::MatrixXd JWtWt_T=J*Wt*Wt_T;
+    Eigen::MatrixXd JWtWt_TJ_T=JWtWt_T*J_T;
+
+    Eigen::MatrixXd J_robust=JWtWt_TJ_T+UlambdaUt;
+
+
+    Eigen::MatrixXd pinv=J_robust.inverse();
+    Eigen::MatrixXd J_Tpinv= J_T*pinv;
+    Eigen::MatrixXd WtWt_TJ_Tpinv= WtWt_T*J_Tpinv;
+    //Eigen::MatrixXd J_robust=J*Wt*Wt_T*J_T;
+    //Eigen::MatrixXd pinv=pinv_calc_.calculate(this->params_, this->damping_, J_robust);
+    //Eigen::MatrixXd qdots_out =Wt*Wt_T*J_T*pinv*in_cart_velocities;
+
+    Eigen::MatrixXd qdots_out =WtWt_TJ_Tpinv*in_cart_velocities;
 	return qdots_out;
 }
 

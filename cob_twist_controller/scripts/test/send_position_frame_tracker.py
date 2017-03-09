@@ -64,7 +64,7 @@ def talker():
     publisher_marker_object_name = rospy.Publisher("/arm_left/marker_server/feedback", InteractiveMarkerFeedback)
 
     marker_object_name = InteractiveMarkerFeedback()
-    marker_object_name.header.frame_id = "odom_combined"
+    marker_object_name.header.frame_id = "base_link"
     marker_object_name.header.stamp = rospy.Time.now()
     marker_object_name.marker_name = "interactive_target"
     marker_object_name.control_name = "move_rotate_3D"
@@ -110,6 +110,13 @@ def talker():
         t1 = rospy.get_time()
         marker_object_name.pose.position.x = 0.0
         marker_object_name.pose.position.y = 0.996738
+        publisher_marker_object_name.publish(marker_object_name)
+
+    t0 = rospy.get_time()
+    while t1 - t0 < 5.0:
+        t1 = rospy.get_time()
+        marker_object_name.pose.position.x = 0.0
+        marker_object_name.pose.position.y = 0.706738
         publisher_marker_object_name.publish(marker_object_name)
     rate.sleep()
 

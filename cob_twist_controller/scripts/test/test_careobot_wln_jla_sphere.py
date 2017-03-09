@@ -122,7 +122,7 @@ if __name__ == "__main__":
     t = time.localtime()
     launch_time_stamp = time.strftime("%Y%m%d_%H_%M_%S", t)
 
-    command = 'rosbag play -r 0.5 ' + base_dir + '/experiment1/experiment1.bag'
+    command = 'rosbag play -r 0.5 ' + base_dir + '/experiment1/experiment2.bag'
     # command = 'rosbag play -u 10 ' + base_dir + 'careobot_st_jla_ca_sphere.bag'
 
     data_krakens = [

@@ -70,10 +70,11 @@ Eigen::MatrixXd WLN_Sigmoid_JointLimitAvoidanceSolver::calculateWeighting(const 
 	    	ROS_INFO("Joint distance %f not respected",(fabs(q(i)-limits_max[i])));
 	    }
 
-	    //if(weighting(i)>1.0)
-	        //weighting(i)=1.0;
-
-
+	    //weighting(i)=1.0/weighting(i);
+	    if(weighting(i)>10000000.0)
+	                weighting(i)=10000000.0;
+        if(weighting(i)>1.0)
+                    weighting(i)=1.0;
     }
 
     return weighting.asDiagonal();
