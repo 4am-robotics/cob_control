@@ -30,6 +30,7 @@
 #include <ros/ros.h>
 
 #include <cob_twist_controller/constraint_solvers/constraint_solver_factory.h>
+
 #include "cob_twist_controller/constraint_solvers/solvers/constraint_solver_base.h"
 #include "cob_twist_controller/constraint_solvers/solvers/unconstraint_solver.h"
 #include "cob_twist_controller/constraint_solvers/solvers/wln_joint_limit_avoidance_solver.h"
@@ -37,8 +38,7 @@
 #include "cob_twist_controller/constraint_solvers/solvers/gradient_projection_method_solver.h"
 #include "cob_twist_controller/constraint_solvers/solvers/task_priority_solver.h"
 #include "cob_twist_controller/constraint_solvers/solvers/stack_of_tasks_solver.h"
-#include "cob_twist_controller/constraint_solvers/solvers/wln_sigmoid_joint_limit_avoidance_solver.h"
-#include "cob_twist_controller/constraint_solvers/solvers/modulation_sigmoid_solver.h"
+#include "cob_twist_controller/constraint_solvers/solvers/unified_joint_limit_singularity_solver.h"
 
 #include "cob_twist_controller/damping_methods/damping.h"
 #include "cob_twist_controller/constraints/constraint.h"
@@ -101,13 +101,10 @@ bool ConstraintSolverFactory::getSolverFactory(const TwistControllerParams& para
         	    case JLA_OFF:
                     solver_factory.reset(new SolverFactory<WeightedLeastNormSolver>(params, limiter_params, task_stack_controller));
                     break;
-        	    case JLA_SIG:
-        	        solver_factory.reset(new SolverFactory<WLN_Sigmoid_JointLimitAvoidanceSolver>(params, limiter_params, task_stack_controller));
-        	        break;
             }
         	break;
-        case JLA_SIG_MODULATION:
-        	 solver_factory.reset(new SolverFactory<ModulationSigmoidSolver>(params, limiter_params, task_stack_controller));
+        case UNIFIED_JLA_SA:
+        	 solver_factory.reset(new SolverFactory<UnifiedJointLimitSingularitySolver>(params, limiter_params, task_stack_controller));
         	 break;
         case GPM:
             solver_factory.reset(new SolverFactory<GradientProjectionMethodSolver>(params, limiter_params, task_stack_controller));

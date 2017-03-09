@@ -46,13 +46,13 @@ def init_dyn_recfg():
     cli.set_config_param(tcc.CTRL_IF, tcc.TwistController_VELOCITY_INTERFACE)
 
     cli.set_config_param(tcc.DAMP_METHOD, tcc.TwistController_SIGMOID)
-    cli.set_config_param(tcc.LAMBDA_MAX, 0.1)
-    cli.set_config_param(tcc.W_THRESH, 0.1)
-    cli.set_config_param(tcc.SLOPE_DAMPING, 0.1)
+    cli.set_config_param(tcc.LAMBDA_MAX, 0.001)
+    cli.set_config_param(tcc.W_THRESH, 0.001)
+    cli.set_config_param(tcc.SLOPE_DAMPING, 0.001)
     cli.set_config_param(tcc.PRIO_CA, 100)
     cli.set_config_param(tcc.PRIO_JLA, 50)
 
-    cli.set_config_param(tcc.SOLVER, tcc.TwistController_WLN)
+    cli.set_config_param(tcc.SOLVER, tcc.TwistController_UNIFIED_JLA_SA)
     cli.set_config_param(tcc.K_H, 1.0)
 
     cli.set_config_param(tcc.CONSTR_CA, tcc.TwistController_CA_OFF)
@@ -62,15 +62,15 @@ def init_dyn_recfg():
     cli.set_config_param(tcc.CRIT_THRESH_CA, 0.025)
     cli.set_config_param(tcc.DAMP_CA, 0.000001)
 
-    cli.set_config_param(tcc.CONSTR_JLA, tcc.TwistController_JLA_SIG)
+    cli.set_config_param(tcc.CONSTR_JLA, tcc.TwistController_JLA)
     cli.set_config_param(tcc.K_H_JLA, -1.0)
     cli.set_config_param(tcc.ACTIV_THRESH_JLA, 10.0)
     cli.set_config_param(tcc.ACTIV_BUF_JLA, 300.0)
     cli.set_config_param(tcc.ACTIV_POS_THRESH_JLA, 0.5)
-    cli.set_config_param(tcc.ACTIV_SPEED_THRESH_JLA, 2.0)
+    cli.set_config_param(tcc.ACTIV_SPEED_THRESH_JLA, 1.0)
     cli.set_config_param(tcc.CRIT_THRESH_JLA, 5.0)
     cli.set_config_param(tcc.DAMP_JLA, 0.05)
-    cli.set_config_param(tcc.DAMP_SPEED_JLA, 1.0)
+    cli.set_config_param(tcc.DAMP_SPEED_JLA, 5.0)
 
     cli.set_config_param(tcc.KIN_EXT, tcc.TwistController_NO_EXTENSION)
     cli.set_config_param(tcc.KEEP_DIR, False)

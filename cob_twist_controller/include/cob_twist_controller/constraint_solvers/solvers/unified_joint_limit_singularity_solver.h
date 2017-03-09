@@ -3,7 +3,7 @@
  * \file
  *
  * \note
- *   Copyright (c) 2015 \n
+ *   Copyright (c) 2017 \n
  *   Fraunhofer Institute for Manufacturing Engineering
  *   and Automation (IPA) \n\n
  *
@@ -17,34 +17,33 @@
  *   ROS package name: cob_twist_controller
  *
  * \author
- *   Author: Marco Bezzon, email: Marco.Bezzon@ipa.fraunhofer.de
+ *   Author: Bruno Brito, email: Bruno.Brito@ipa.fraunhofer.de
  *
- * \date Date of creation: March, 2015
+ * \date Date of creation: March, 2017
  *
  * \brief
- *   This header contains the description of the JLA solver
- *   Implements methods from constraint_solver_base
- *   Special constraint handling.
+ *   This header contains the interface description of constraint solvers
+ *   Pure virtual methods have to be implemented in subclasses
  *
  ****************************************************************/
 
-#ifndef COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_MODULATION_SIGMOID_SOLVER_H
-#define COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_MODULATION_SIGMOID_SOLVER_H
+#ifndef COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_UNIFIED_JOINT_LIMIT_SINGULARITY_SOLVER_H
+#define COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_UNIFIED_JOINT_LIMIT_SINGULARITY_SOLVER_H
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/constraint_solvers/solvers/constraint_solver_base.h"
 
-/// Implementation of ConstraintSolver to solve inverse kinematics by using a modulation on sigmoid function and avoid joint limits
-class ModulationSigmoidSolver : public ConstraintSolver<>
+/// Implementation of ConstraintSolver to solve inverse kinematics by using a weighted least norm
+class UnifiedJointLimitSingularitySolver : public ConstraintSolver<>
 {
     public:
-	ModulationSigmoidSolver(const TwistControllerParams& params,
+        UnifiedJointLimitSingularitySolver(const TwistControllerParams& params,
                                 const LimiterParams& limiter_params,
                                 TaskStackController_t& task_stack_controller) :
                 ConstraintSolver(params, limiter_params, task_stack_controller)
         {}
 
-        virtual ~ModulationSigmoidSolver()
+        virtual ~UnifiedJointLimitSingularitySolver()
         {}
 
         /**
@@ -61,7 +60,7 @@ class ModulationSigmoidSolver : public ConstraintSolver<>
          * @param q_dot The current joint velocities.
          * @return Diagonal weighting matrix that adapts the Jacobian.
          */
-        virtual Eigen::MatrixXd calculateWeighting(Eigen::VectorXd q_dot, const JointStates& joint_states) const;
+        virtual Eigen::MatrixXd calculateWeighting(const Vector6d_t& in_cart_velocities, const JointStates& joint_states) const;
 };
 
-#endif  // COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_MODULATION_SIGMOID_SOLVER_H
+#endif  // COB_TWIST_CONTROLLER_CONSTRAINT_SOLVERS_SOLVERS_UNIFIED_JOINT_LIMIT_SINGULARITY_SOLVER_H
