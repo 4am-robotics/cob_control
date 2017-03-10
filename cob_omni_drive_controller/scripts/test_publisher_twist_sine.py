@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 import rospy
 import math
-import numpy as np
-from sympy import *
 from geometry_msgs.msg import Twist
 
 
@@ -19,21 +17,14 @@ def velPub():
   b = 0.1 * (2.0*math.pi/freq)
   c = -math.pi/2.0
   d = a
-  x = Symbol('x')
-  #a = Symbol('a')
-  #b = Symbol('b')
-  #c = Symbol('c')
-  #d = Symbol('d')
   i = 0.0
-  f_vel = a*sin(b*x+c) + d
-  print f_vel
   
   vel_msg = Twist()
   time = rospy.Time.now()
 
   while not rospy.is_shutdown():
-    vel = f_vel.subs({'x': i}).evalf()
-    print("vel: ", vel)
+    vel = a*math.sin(b*i+c) + d
+    #print("vel: ", vel)
     vel_msg.angular.z = vel
     pub_vel.publish(vel_msg)
     i += 1.0
