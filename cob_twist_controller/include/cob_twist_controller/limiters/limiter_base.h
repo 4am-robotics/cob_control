@@ -51,7 +51,6 @@ class LimiterBase
          */
         virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const = 0;
 
-
     protected:
         const LimiterParams& limiter_params_;
 };
