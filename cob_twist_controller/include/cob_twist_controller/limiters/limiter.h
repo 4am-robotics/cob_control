@@ -47,7 +47,7 @@ class LimiterContainer : public LimiterBase
          */
         virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const;
 
-        virtual KDL::JntArray enforceCartesianLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const;
+        virtual KDL::Twist enforceCartesianLimits(const KDL::Twist& v_in) const;
 
         /**
          * Initialization for the container.
