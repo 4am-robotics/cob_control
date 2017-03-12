@@ -257,6 +257,8 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     twist_controller_params_.limiter_params.enforce_vel_limits = config.enforce_vel_limits;
     twist_controller_params_.limiter_params.enforce_acc_limits = config.enforce_acc_limits;
     twist_controller_params_.limiter_params.limits_tolerance = config.limits_tolerance;
+    twist_controller_params_.limiter_params.max_lin_vel = config.max_vel_lin_base;
+    twist_controller_params_.limiter_params.max_lin_rot = config.max_vel_rot_base;
 
     twist_controller_params_.kinematic_extension = static_cast<KinematicExtensionTypes>(config.kinematic_extension);
     twist_controller_params_.extension_ratio = config.extension_ratio;

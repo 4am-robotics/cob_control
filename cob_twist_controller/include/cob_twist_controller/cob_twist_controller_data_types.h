@@ -192,6 +192,10 @@ struct LimiterParams
     std::vector<double> limits_min;
     std::vector<double> limits_vel;
     std::vector<double> limits_acc;
+
+    double max_lin_vel;
+    double max_lin_rot;
+
 };
 
 struct TwistControllerParams

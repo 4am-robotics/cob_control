@@ -55,6 +55,8 @@ void LimiterContainer::init()
 {
     this->eraseAll();
 
+    this->add(new LimiterCartesianVelocities(limiter_params_));
+
     if (limiter_params_.keep_direction)
     {
         if (limiter_params_.enforce_pos_limits)
@@ -320,3 +322,40 @@ KDL::JntArray LimiterIndividualJointAccelerations::enforceLimits(const KDL::JntA
     return q_dot_norm;
 }
 /* END LimiterIndividualJointAccelerations **********************************************************************/
+
+/* BEGIN LimiterCartesianVelocities ********************************************************************/
+/**
+ * This implementation implements a saturation function to the Cartesian twists
+ */
+KDL::Twist LimiterCartesianVelocities::enforceCartesianLimits(const KDL::Twist& v_in) const
+{
+    KDL::Twist v_out(v_in);
+    double factor = 1.0;
+    // linear limts
+    for (unsigned int i = 0; i < 3; i++)
+    {
+            if (factor< v_out(i) / limiter_params_.max_lin_vel)
+            {
+            	v_out(i) = limiter_params_.max_lin_vel;
+            }
+            if (-factor > v_out(i) / limiter_params_.max_lin_vel)
+            {
+            	v_out(i) = -limiter_params_.max_lin_vel;
+            }
+    }
+    // Orientation limtis
+    for (unsigned int i = 3; i < 6; i++)
+    {
+        if (factor< v_out(i) / limiter_params_.max_lin_rot)
+        {
+        	v_out(i) = limiter_params_.max_lin_rot;
+        }
+        if (-factor > v_out(i) / limiter_params_.max_lin_rot)
+        {
+        	v_out(i) = -limiter_params_.max_lin_rot;
+        }
+    }
+
+    return v_out;
+}
+/* END LimiterCartesianVelocities **********************************************************************/

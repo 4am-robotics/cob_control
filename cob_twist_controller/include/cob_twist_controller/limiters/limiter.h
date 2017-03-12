@@ -3,7 +3,7 @@
  * \file
  *
  * \note
- *   Copyright (c) 2015 \n
+ *   Copyright (c) 2017 \n
  *   Fraunhofer Institute for Manufacturing Engineering
  *   and Automation (IPA) \n\n
  *
@@ -18,8 +18,9 @@
  *
  * \author
  *   Author: Marco Bezzon, email: Marco.Bezzon@ipa.fraunhofer.de
+ *   Bruno Brito, email: Bruno.Brito@fraunhofer.de
  *
- * \date Date of creation: April, 2015
+ * \date Date of creation: April, 2017
  *
  * \brief
  *   This header contains the class definitions of all limiter implementations.
@@ -45,6 +46,8 @@ class LimiterContainer : public LimiterBase
          * See base class LimiterBase for more details on params and returns.
          */
         virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const;
+
+        virtual KDL::JntArray enforceCartesianLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const;
 
         /**
          * Initialization for the container.
@@ -175,5 +178,24 @@ class LimiterIndividualJointAccelerations : public LimiterBase
         {}
 };
 /* END LimiterIndividualJointAccelerations *************************************************************************/
+
+/* BEGIN LimiterCartesianVelocities ***********************************************************************/
+/// Class for limiting the cartesian velocities commands in order to guarantee a BIBO system.
+class LimiterCartesianVelocities : public LimiterBase
+{
+    public:
+        /**
+         * Specific implementation of enforceLimits-method.
+         * See base class LimiterBase for more details on params and returns.
+         */
+        virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const;
+
+        virtual KDL::Twist enforceCartesianLimits(const KDL::Twist& v_in) const;
+
+        explicit LimiterCartesianVelocities(const LimiterParams& limiter_params) :
+            LimiterBase(limiter_params)
+        {}
+};
+/* END LimiterCartesianVelocities *************************************************************************/
 
 #endif  // COB_TWIST_CONTROLLER_LIMITERS_LIMITER_H

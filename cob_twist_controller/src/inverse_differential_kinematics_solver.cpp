@@ -3,7 +3,7 @@
  * \file
  *
  * \note
- *   Copyright (c) 2014 \n
+ *   Copyright (c) 2017 \n
  *   Fraunhofer Institute for Manufacturing Engineering
  *   and Automation (IPA) \n\n
  *
@@ -18,8 +18,9 @@
  *
  * \author
  *   Author: Felix Messmer, email: Felix.Messmer@ipa.fraunhofer.de
+ *   Bruno Brito, email: Bruno.Brito@fraunhofer.de
  *
- * \date Date of creation: April, 2014
+ * \date Date of creation: April, 2017
  *
  * \brief
  *   This package provides the implementation of an inverse kinematics solver.
@@ -55,7 +56,9 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const JointStates& joint_stat
     // ROS_INFO_STREAM("jac_full.rows: " << jac_full.rows() << ", jac_full.columns: " << jac_full.columns());
 
     Vector6d_t v_in_vec;
-    tf::twistKDLToEigen(v_in, v_in_vec);
+    KDL::Twist v_out;
+    v_out = this->limiters_->enforceCartesianLimits(v_in);
+    tf::twistKDLToEigen(v_out, v_in_vec);
 
     Eigen::MatrixXd qdot_out_vec;
     retStat = constraint_solver_factory_.calculateJointVelocities(jac_full.data,

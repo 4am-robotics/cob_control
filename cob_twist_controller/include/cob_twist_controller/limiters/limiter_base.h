@@ -3,7 +3,7 @@
  * \file
  *
  * \note
- *   Copyright (c) 2015 \n
+ *   Copyright (c) 2017 \n
  *   Fraunhofer Institute for Manufacturing Engineering
  *   and Automation (IPA) \n\n
  *
@@ -18,8 +18,9 @@
  *
  * \author
  *   Author: Marco Bezzon, email: Marco.Bezzon@ipa.fraunhofer.de
+ *   Bruno Brito, email: Bruno.Brito@fraunhofer.de
  *
- * \date Date of creation: April, 2015
+ * \date Date of creation: March, 2017
  *
  * \brief
  *   This header contains the interface description of limiters
@@ -43,12 +44,14 @@ class LimiterBase
         /**
          * Pure virtual method to mark as interface method which has to be implemented in inherited classes.
          * The intention is to implement a method which enforces limits to the q_dot_out vector according to
-         * the calculated joint velocities and / or joint positions.
+         * the calculated joint velocities and / or joint positions and or cartesian twists.
          * @param q_dot_ik The calculated joint velocities vector which has to be checked for limits.
          * @param q The last known joint positions.
          * @return Scaled joint velocities vector.
          */
         virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const = 0;
+
+        virtual KDL::JntArray enforceCartesianLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const = 0;
 
     protected:
         const LimiterParams& limiter_params_;
