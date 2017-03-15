@@ -36,7 +36,18 @@
  * This implementation calls enforce limits on all registered Limiters in the limiters vector.
  * The method is based on the last calculation of q_dot.
  */
-KDL::JntArray LimiterContainer::enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const
+KDL::Twist LimiterCartesianContainer::enforceCartesianLimits(const KDL::Twist& v_in) const
+{
+    // If nothing to do just return q_dot.
+    KDL::Twist v_out(v_in);
+    for (LimIter_t it = this->limiters_.begin(); it != this->limiters_.end(); it++)
+    {
+        v_out = (*it)->enforceCartesianLimits(v_in);
+    }
+
+    return v_out;
+}
+KDL::JntArray LimiterJointContainer::enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const
 {
     // If nothing to do just return q_dot.
     KDL::JntArray q_dot_norm(q_dot_ik);
@@ -47,15 +58,12 @@ KDL::JntArray LimiterContainer::enforceLimits(const KDL::JntArray& q_dot_ik, con
 
     return q_dot_norm;
 }
-
 /**
  * Building the limiters vector according the the chosen parameters.
  */
-void LimiterContainer::init()
+void LimiterJointContainer::init()
 {
     this->eraseAll();
-
-    this->add(new LimiterCartesianVelocities(limiter_params_));
 
     if (limiter_params_.keep_direction)
     {
@@ -93,24 +101,45 @@ void LimiterContainer::init()
     }
 }
 
+void LimiterCartesianContainer::init()
+{
+    this->eraseAll();
+
+    this->add(new LimiterCartesianVelocities(limiter_params_));
+}
 /**
  * Deletes all limiters and clears the vector holding them.
  */
-void LimiterContainer::eraseAll()
+void LimiterJointContainer::eraseAll()
 {
     for (uint32_t cnt = 0; cnt < this->limiters_.size(); ++cnt)
     {
-        const LimiterBase* lb = this->limiters_[cnt];
+        const LimiterJointBase* lb = this->limiters_[cnt];
         delete(lb);
     }
 
     this->limiters_.clear();
 }
 
+void LimiterCartesianContainer::eraseAll()
+{
+    for (uint32_t cnt = 0; cnt < this->limiters_.size(); ++cnt)
+    {
+        const LimiterCartesianBase* lb = this->limiters_[cnt];
+        delete(lb);
+    }
+
+    this->limiters_.clear();
+}
 /**
  * Adding new limiters to the vector.
  */
-void LimiterContainer::add(const LimiterBase* lb)
+void LimiterJointContainer::add(const LimiterJointBase* lb)
+{
+    this->limiters_.push_back(lb);
+}
+
+void LimiterCartesianContainer::add(const LimiterCartesianBase* lb)
 {
     this->limiters_.push_back(lb);
 }
@@ -118,7 +147,12 @@ void LimiterContainer::add(const LimiterBase* lb)
 /**
  * Destruction of the whole container
  */
-LimiterContainer::~LimiterContainer()
+LimiterJointContainer::~LimiterJointContainer()
+{
+    this->eraseAll();
+}
+
+LimiterCartesianContainer::~LimiterCartesianContainer()
 {
     this->eraseAll();
 }

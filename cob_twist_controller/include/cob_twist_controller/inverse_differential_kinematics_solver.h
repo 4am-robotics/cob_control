@@ -73,8 +73,11 @@ public:
         this->kinematic_extension_.reset(KinematicExtensionBuilder::createKinematicExtension(this->params_));
         this->limiter_params_ = this->kinematic_extension_->adjustLimiterParams(this->limiter_params_);
 
-        this->limiters_.reset(new LimiterContainer(this->limiter_params_));
+        this->limiters_.reset(new LimiterJointContainer(this->limiter_params_));
         this->limiters_->init();
+
+        this->cartesian_limiters_.reset(new LimiterCartesianContainer(this->limiter_params_));
+        this->cartesian_limiters_->init();
     }
 
     virtual ~InverseDifferentialKinematicsSolver()
@@ -98,7 +101,8 @@ private:
     TwistControllerParams params_;
     LimiterParams limiter_params_;
     CallbackDataMediator& callback_data_mediator_;
-    boost::shared_ptr<LimiterContainer> limiters_;
+    boost::shared_ptr<LimiterJointContainer> limiters_;
+    boost::shared_ptr<LimiterCartesianContainer> cartesian_limiters_;
     boost::shared_ptr<KinematicExtensionBase> kinematic_extension_;
     ConstraintSolverFactory constraint_solver_factory_;
 

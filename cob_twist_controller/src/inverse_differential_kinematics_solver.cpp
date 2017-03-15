@@ -57,7 +57,7 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const JointStates& joint_stat
 
     Vector6d_t v_in_vec;
     KDL::Twist v_out;
-    v_out = this->limiters_->enforceCartesianLimits(v_in);
+    v_out = this->cartesian_limiters_->enforceCartesianLimits(v_in);
     tf::twistKDLToEigen(v_out, v_in_vec);
 
     Eigen::MatrixXd qdot_out_vec;
@@ -103,8 +103,11 @@ void InverseDifferentialKinematicsSolver::resetAll(TwistControllerParams params)
     this->kinematic_extension_.reset(KinematicExtensionBuilder::createKinematicExtension(this->params_));
     this->limiter_params_ = this->kinematic_extension_->adjustLimiterParams(this->params_.limiter_params);
 
-    this->limiters_.reset(new LimiterContainer(this->limiter_params_));
+    this->limiters_.reset(new LimiterJointContainer(this->limiter_params_));
     this->limiters_->init();
+
+    this->cartesian_limiters_.reset(new LimiterCartesianContainer(this->limiter_params_));
+    this->cartesian_limiters_->init();
 
     this->task_stack_controller_.clearAllTasks();
     if (0 != this->constraint_solver_factory_.resetAll(this->params_, this->limiter_params_))  // params member as reference!!! else process will die!

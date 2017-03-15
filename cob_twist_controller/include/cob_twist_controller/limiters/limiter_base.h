@@ -49,7 +49,52 @@ class LimiterBase
          * @param q The last known joint positions.
          * @return Scaled joint velocities vector.
          */
+
+    protected:
+        const LimiterParams& limiter_params_;
+};
+
+/// Joint Base class for limiters, defining interface methods.
+class LimiterJointBase
+{
+    public:
+        explicit LimiterJointBase(const LimiterParams& limiter_params) : limiter_params_(limiter_params)
+        {}
+
+        virtual ~LimiterJointBase() {}
+
+        /**
+         * Pure virtual method to mark as interface method which has to be implemented in inherited classes.
+         * The intention is to implement a method which enforces limits to the q_dot_out vector according to
+         * the calculated joint velocities and / or joint positions and or cartesian twists.
+         * @param q_dot_ik The calculated joint velocities vector which has to be checked for limits.
+         * @param q The last known joint positions.
+         * @return Scaled joint velocities vector.
+         */
         virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const = 0;
+
+    protected:
+        const LimiterParams& limiter_params_;
+};
+
+/// Cartesian Base class for limiters, defining interface methods.
+class LimiterCartesianBase
+{
+    public:
+        explicit LimiterCartesianBase(const LimiterParams& limiter_params) : limiter_params_(limiter_params)
+        {}
+
+        virtual ~LimiterCartesianBase() {}
+
+        /**
+         * Pure virtual method to mark as interface method which has to be implemented in inherited classes.
+         * The intention is to implement a method which enforces limits to the q_dot_out vector according to
+         * the calculated joint velocities and / or joint positions and or cartesian twists.
+         * @param q_dot_ik The calculated joint velocities vector which has to be checked for limits.
+         * @param q The last known joint positions.
+         * @return Scaled joint velocities vector.
+         */
+        virtual KDL::Twist enforceCartesianLimits(const KDL::Twist& v_in) const = 0;
 
     protected:
         const LimiterParams& limiter_params_;
