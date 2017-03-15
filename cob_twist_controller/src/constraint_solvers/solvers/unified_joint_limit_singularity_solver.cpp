@@ -44,6 +44,11 @@ Eigen::MatrixXd UnifiedJointLimitSingularitySolver::solve(const Vector6d_t& in_c
     Eigen::MatrixXd U_T =U.transpose();
 
     Eigen::MatrixXd Q = this->calculateWeighting(in_cart_velocities, joint_states);
+
+    Eigen::MatrixXd Wt=Q*svd.matrixV();
+    Eigen::MatrixXd Wt_T=Wt.transpose();
+
+/*
     Eigen::VectorXd singularValues = svd.singularValues();
     for (int i=0;i<singularValues.rows();i++){
         singularValues(i)=singularValues(i)*Q(i,i);
@@ -53,10 +58,6 @@ Eigen::MatrixXd UnifiedJointLimitSingularitySolver::solve(const Vector6d_t& in_c
     Eigen::MatrixXd Ulambda =U*lambda;
     Eigen::MatrixXd UlambdaUt =Ulambda*U_T;
 
-    Eigen::MatrixXd Wt=Q*svd.matrixV();
-    Eigen::MatrixXd Wt_T=Wt.transpose();
-
-/*
     Eigen::MatrixXd WtWt_T= Wt*Wt_T;
     Eigen::MatrixXd JWtWt_T=J*Wt*Wt_T;
     Eigen::MatrixXd JWtWt_TJ_T=JWtWt_T*J_T;

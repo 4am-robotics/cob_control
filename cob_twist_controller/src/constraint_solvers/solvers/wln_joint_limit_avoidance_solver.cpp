@@ -36,7 +36,7 @@
  * This function calculates the weighting matrix used to penalize a joint when it is near and moving towards a limit.
  * The last joint velocity is used to determine if it that happens or not
  */
-Eigen::MatrixXd WLN_JointLimitAvoidanceSolver::calculateWeighting(const Vector6d_t& in_cart_velocities, const JointStates& joint_states) const
+Eigen::MatrixXd WLN_JointLimitAvoidanceSolver::calculateWeighting(const JointStates& joint_states) const
 {
     std::vector<double> limits_min = this->limiter_params_.limits_min;
     std::vector<double> limits_max = this->limiter_params_.limits_max;
@@ -65,10 +65,6 @@ Eigen::MatrixXd WLN_JointLimitAvoidanceSolver::calculateWeighting(const Vector6d
                 }
             }
         }
-        if( (fabs(q(i)-limits_min[i])<params_.limiter_params.limits_tolerance*0.01745329251) || (fabs(q(i)-limits_max[i])<params_.limiter_params.limits_tolerance*0.01745329251) ){
-        	    	ROS_INFO("Limit %i not respected",i);
-        }
-        weighting(i) = 1.0/weighting(i); // New weights calculated acoording to General Weighted LeastNorm Control for Redudant Manipulators
     }
 
     return weighting.asDiagonal();

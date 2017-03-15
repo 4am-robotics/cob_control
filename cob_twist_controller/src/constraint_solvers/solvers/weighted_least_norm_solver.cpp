@@ -37,49 +37,24 @@
 Eigen::MatrixXd WeightedLeastNormSolver::solve(const Vector6d_t& in_cart_velocities,
                                                const JointStates& joint_states)
 {
+    Eigen::MatrixXd W_WLN = this->calculateWeighting(joint_states);
+    // for the following formulas see Chan paper ISSN 1042-296X [Page 288]
+    Eigen::MatrixXd root_W_WLN =  W_WLN.cwiseSqrt();            // element-wise sqrt -> ok because diag matrix W^(1/2)
+    Eigen::MatrixXd inv_root_W_WLN =  root_W_WLN.inverse();     // -> W^(-1/2)
 
-    Eigen::JacobiSVD<Eigen::MatrixXd> svd(this->jacobian_data_, Eigen::ComputeThinU | Eigen::ComputeThinV);
-    Eigen::MatrixXd J=this->jacobian_data_;
-    Eigen::MatrixXd J_T=J.transpose();
-    Eigen::MatrixXd U=svd.matrixU();
-    Eigen::MatrixXd U_T =U.transpose();
+    // SVD of JLA weighted Jacobian: Damping will be done later in calculatePinvJacobianBySVD for pseudo-inverse Jacobian with additional truncation etc.
+    Eigen::MatrixXd weighted_jacobian = this->jacobian_data_ * inv_root_W_WLN;
+    Eigen::MatrixXd pinv = pinv_calc_.calculate(this->params_, this->damping_, weighted_jacobian);
 
-    Eigen::MatrixXd Q = this->calculateWeighting(in_cart_velocities, joint_states);
-    Eigen::VectorXd singularValues = svd.singularValues();
-    for (int i=0;i<singularValues.rows();i++){
-        singularValues(i)=singularValues(i)*Q(i,i);
-    }
-    Eigen::MatrixXd lambda = damping_->getDampingFactor(singularValues, this->jacobian_data_);
-
-    Eigen::MatrixXd Ulambda =U*lambda;
-    Eigen::MatrixXd UlambdaUt =Ulambda*U_T;
-
-    Eigen::MatrixXd Wt=Q*svd.matrixV();
-    Eigen::MatrixXd Wt_T=Wt.transpose();
-
-
-    Eigen::MatrixXd WtWt_T= Wt*Wt_T;
-    Eigen::MatrixXd JWtWt_T=J*Wt*Wt_T;
-    Eigen::MatrixXd JWtWt_TJ_T=JWtWt_T*J_T;
-
-    Eigen::MatrixXd J_robust=JWtWt_TJ_T+UlambdaUt;
-
-
-    Eigen::MatrixXd pinv=J_robust.inverse();
-    Eigen::MatrixXd J_Tpinv= J_T*pinv;
-    Eigen::MatrixXd WtWt_TJ_Tpinv= WtWt_T*J_Tpinv;
-    //Eigen::MatrixXd J_robust=J*Wt*Wt_T*J_T;
-    //Eigen::MatrixXd pinv=pinv_calc_.calculate(this->params_, this->damping_, J_robust);
-    //Eigen::MatrixXd qdots_out =Wt*Wt_T*J_T*pinv*in_cart_velocities;
-
-    Eigen::MatrixXd qdots_out =WtWt_TJ_Tpinv*in_cart_velocities;
-	return qdots_out;
+    // Take care: W^(1/2) * q_dot = weighted_pinv_J * x_dot -> One must consider the weighting!!!
+    Eigen::MatrixXd qdots_out = inv_root_W_WLN * pinv * in_cart_velocities;
+    return qdots_out;
 }
 
 /**
  * This function returns the identity as weighting matrix for base functionality.
  */
-Eigen::MatrixXd WeightedLeastNormSolver::calculateWeighting(const Vector6d_t& in_cart_velocities, const JointStates& joint_states) const
+Eigen::MatrixXd WeightedLeastNormSolver::calculateWeighting(const JointStates& joint_states) const
 {
     uint32_t cols = this->jacobian_data_.cols();
     Eigen::VectorXd weighting = Eigen::VectorXd::Ones(cols);
