@@ -20,7 +20,7 @@
  *   Author: Marco Bezzon, email: Marco.Bezzon@ipa.fraunhofer.de
  *   Bruno Brito, email: Bruno.Brito@fraunhofer.de
  *
- * \date Date of creation: April, 2017
+ * \date Date of creation: April, 2015
  *
  * \brief
  *   This header contains the class definitions of all limiter implementations.
@@ -59,8 +59,8 @@ class LimiterJointContainer : public LimiterJointBase
         {}
 
     protected:
-        std::vector<const LimiterJointBase*> limiters_;
-        typedef std::vector<const LimiterJointBase*>::const_iterator LimIter_t;
+        std::vector<const LimiterJointBase*> output_limiters_;
+        typedef std::vector<const LimiterJointBase*>::const_iterator output_LimIter_t;
 
         /**
          * Add method
@@ -85,7 +85,7 @@ class LimiterCartesianContainer : public LimiterCartesianBase
          * See base class LimiterCartesianBase for more details on params and returns.
          */
 
-        virtual KDL::Twist enforceCartesianLimits(const KDL::Twist& v_in) const;
+        virtual KDL::Twist enforceLimits(const KDL::Twist& v_in) const;
 
         /**
          * Initialization for the container.
@@ -99,8 +99,8 @@ class LimiterCartesianContainer : public LimiterCartesianBase
         {}
 
     protected:
-        std::vector<const LimiterCartesianBase*> limiters_;
-        typedef std::vector<const LimiterCartesianBase*>::const_iterator LimIter_t;
+        std::vector<const LimiterCartesianBase*> input_limiters_;
+        typedef std::vector<const LimiterCartesianBase*>::const_iterator input_LimIter_t;
 
         /**
          * Add method
@@ -227,7 +227,7 @@ class LimiterCartesianVelocities : public LimiterCartesianBase
          * See base class LimiterCartesianBase for more details on params and returns.
          */
 
-        virtual KDL::Twist enforceCartesianLimits(const KDL::Twist& v_in) const;
+        virtual KDL::Twist enforceLimits(const KDL::Twist& v_in) const;
 
         explicit LimiterCartesianVelocities(const LimiterParams& limiter_params) :
             LimiterCartesianBase(limiter_params)

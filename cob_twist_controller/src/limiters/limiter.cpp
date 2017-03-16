@@ -36,13 +36,13 @@
  * This implementation calls enforce limits on all registered Limiters in the limiters vector.
  * The method is based on the last calculation of q_dot.
  */
-KDL::Twist LimiterCartesianContainer::enforceCartesianLimits(const KDL::Twist& v_in) const
+KDL::Twist LimiterCartesianContainer::enforceLimits(const KDL::Twist& v_in) const
 {
     // If nothing to do just return q_dot.
     KDL::Twist v_out(v_in);
-    for (LimIter_t it = this->limiters_.begin(); it != this->limiters_.end(); it++)
+    for (input_LimIter_t it = this->input_limiters_.begin(); it != this->input_limiters_.end(); it++)
     {
-        v_out = (*it)->enforceCartesianLimits(v_in);
+        v_out = (*it)->enforceLimits(v_in);
     }
 
     return v_out;
@@ -51,7 +51,7 @@ KDL::JntArray LimiterJointContainer::enforceLimits(const KDL::JntArray& q_dot_ik
 {
     // If nothing to do just return q_dot.
     KDL::JntArray q_dot_norm(q_dot_ik);
-    for (LimIter_t it = this->limiters_.begin(); it != this->limiters_.end(); it++)
+    for (output_LimIter_t it = this->output_limiters_.begin(); it != this->output_limiters_.end(); it++)
     {
         q_dot_norm = (*it)->enforceLimits(q_dot_norm, q);
     }
@@ -112,36 +112,36 @@ void LimiterCartesianContainer::init()
  */
 void LimiterJointContainer::eraseAll()
 {
-    for (uint32_t cnt = 0; cnt < this->limiters_.size(); ++cnt)
+    for (uint32_t cnt = 0; cnt < this->output_limiters_.size(); ++cnt)
     {
-        const LimiterJointBase* lb = this->limiters_[cnt];
+        const LimiterJointBase* lb = this->output_limiters_[cnt];
         delete(lb);
     }
 
-    this->limiters_.clear();
+    this->output_limiters_.clear();
 }
 
 void LimiterCartesianContainer::eraseAll()
 {
-    for (uint32_t cnt = 0; cnt < this->limiters_.size(); ++cnt)
+    for (uint32_t cnt = 0; cnt < this->input_limiters_.size(); ++cnt)
     {
-        const LimiterCartesianBase* lb = this->limiters_[cnt];
+        const LimiterCartesianBase* lb = this->input_limiters_[cnt];
         delete(lb);
     }
 
-    this->limiters_.clear();
+    this->input_limiters_.clear();
 }
 /**
  * Adding new limiters to the vector.
  */
 void LimiterJointContainer::add(const LimiterJointBase* lb)
 {
-    this->limiters_.push_back(lb);
+    this->output_limiters_.push_back(lb);
 }
 
 void LimiterCartesianContainer::add(const LimiterCartesianBase* lb)
 {
-    this->limiters_.push_back(lb);
+    this->input_limiters_.push_back(lb);
 }
 
 /**
@@ -361,34 +361,26 @@ KDL::JntArray LimiterIndividualJointAccelerations::enforceLimits(const KDL::JntA
 /**
  * This implementation implements a saturation function to the Cartesian twists
  */
-KDL::Twist LimiterCartesianVelocities::enforceCartesianLimits(const KDL::Twist& v_in) const
+KDL::Twist LimiterCartesianVelocities::enforceLimits(const KDL::Twist& v_in) const
 {
     KDL::Twist v_out(v_in);
-    double factor = 1.0;
     // linear limts
-    for (unsigned int i = 0; i < 3; i++)
-    {
-            if (factor< v_out(i) / limiter_params_.max_lin_vel)
-            {
-            	v_out(i) = limiter_params_.max_lin_vel;
-            }
-            if (-factor > v_out(i) / limiter_params_.max_lin_vel)
-            {
-            	v_out(i) = -limiter_params_.max_lin_vel;
-            }
-    }
-    // Orientation limtis
-    for (unsigned int i = 3; i < 6; i++)
-    {
-        if (factor< v_out(i) / limiter_params_.max_lin_rot)
-        {
-        	v_out(i) = limiter_params_.max_lin_rot;
-        }
-        if (-factor > v_out(i) / limiter_params_.max_lin_rot)
-        {
-        	v_out(i) = -limiter_params_.max_lin_rot;
-        }
-    }
+    //Minimum limit
+    v_out.rot.x(copysign(std::min(limiter_params_.max_rot_twist, v_out.rot.x()), v_out.rot.x()));
+    v_out.rot.y(copysign(std::min(limiter_params_.max_rot_twist, v_out.rot.y()), v_out.rot.y()));
+    v_out.rot.z(copysign(std::min(limiter_params_.max_rot_twist, v_out.rot.z()), v_out.rot.z()));
+    //Maximum limit
+    v_out.rot.x(copysign(std::max(limiter_params_.max_rot_twist, v_out.rot.x()), v_out.rot.x()));
+    v_out.rot.y(copysign(std::max(limiter_params_.max_rot_twist, v_out.rot.y()), v_out.rot.y()));
+    v_out.rot.z(copysign(std::max(limiter_params_.max_rot_twist, v_out.rot.z()), v_out.rot.z()));
+    //Minimum limit
+    v_out.vel.x(copysign(std::min(limiter_params_.max_lin_twist, v_out.vel.x()), v_out.vel.x()));
+    v_out.vel.y(copysign(std::min(limiter_params_.max_lin_twist, v_out.vel.y()), v_out.vel.y()));
+    v_out.vel.z(copysign(std::min(limiter_params_.max_lin_twist, v_out.vel.z()), v_out.vel.z()));
+    //Maximum limit
+    v_out.vel.x(copysign(std::max(limiter_params_.max_lin_twist, v_out.vel.x()), v_out.vel.x()));
+    v_out.vel.y(copysign(std::max(limiter_params_.max_lin_twist, v_out.vel.y()), v_out.vel.y()));
+    v_out.vel.z(copysign(std::max(limiter_params_.max_lin_twist, v_out.vel.z()), v_out.vel.z()));
 
     return v_out;
 }

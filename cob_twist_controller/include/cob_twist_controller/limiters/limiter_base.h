@@ -20,7 +20,7 @@
  *   Author: Marco Bezzon, email: Marco.Bezzon@ipa.fraunhofer.de
  *   Bruno Brito, email: Bruno.Brito@fraunhofer.de
  *
- * \date Date of creation: March, 2017
+ * \date Date of creation: April, 2015
  *
  * \brief
  *   This header contains the interface description of limiters
@@ -41,15 +41,6 @@ class LimiterBase
 
         virtual ~LimiterBase() {}
 
-        /**
-         * Pure virtual method to mark as interface method which has to be implemented in inherited classes.
-         * The intention is to implement a method which enforces limits to the q_dot_out vector according to
-         * the calculated joint velocities and / or joint positions and or cartesian twists.
-         * @param q_dot_ik The calculated joint velocities vector which has to be checked for limits.
-         * @param q The last known joint positions.
-         * @return Scaled joint velocities vector.
-         */
-
     protected:
         const LimiterParams& limiter_params_;
 };
@@ -66,7 +57,7 @@ class LimiterJointBase
         /**
          * Pure virtual method to mark as interface method which has to be implemented in inherited classes.
          * The intention is to implement a method which enforces limits to the q_dot_out vector according to
-         * the calculated joint velocities and / or joint positions and or cartesian twists.
+         * the calculated joint velocities and / or joint positions.
          * @param q_dot_ik The calculated joint velocities vector which has to be checked for limits.
          * @param q The last known joint positions.
          * @return Scaled joint velocities vector.
@@ -74,7 +65,8 @@ class LimiterJointBase
         virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const = 0;
 
     protected:
-        const LimiterParams& limiter_params_;
+            const LimiterParams& limiter_params_;
+
 };
 
 /// Cartesian Base class for limiters, defining interface methods.
@@ -88,16 +80,16 @@ class LimiterCartesianBase
 
         /**
          * Pure virtual method to mark as interface method which has to be implemented in inherited classes.
-         * The intention is to implement a method which enforces limits to the q_dot_out vector according to
-         * the calculated joint velocities and / or joint positions and or cartesian twists.
-         * @param q_dot_ik The calculated joint velocities vector which has to be checked for limits.
-         * @param q The last known joint positions.
-         * @return Scaled joint velocities vector.
+         * The intention is to implement a method which enforces limits to the Cartesian twist vector according to
+         * the output of the Cartesian controller.
+         * @param v_in are the generated Cartesian twist velocities.
+         * @return Scaled Cartesian twist vector.
          */
-        virtual KDL::Twist enforceCartesianLimits(const KDL::Twist& v_in) const = 0;
+        virtual KDL::Twist enforceLimits(const KDL::Twist& v_in) const = 0;
 
     protected:
-        const LimiterParams& limiter_params_;
+            const LimiterParams& limiter_params_;
+
 };
 
 #endif  // COB_TWIST_CONTROLLER_LIMITERS_LIMITER_BASE_H

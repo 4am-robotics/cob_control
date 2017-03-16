@@ -20,7 +20,7 @@
  *   Author: Felix Messmer, email: Felix.Messmer@ipa.fraunhofer.de
  *   Bruno Brito, email: Bruno.Brito@fraunhofer.de
  *
- * \date Date of creation: April, 2017
+ * \date Date of creation: April, 2015
  *
  * \brief
  *   This package provides the implementation of an inverse kinematics solver.
@@ -55,14 +55,14 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const JointStates& joint_stat
     KDL::Jacobian jac_full = this->kinematic_extension_->adjustJacobian(jac_chain);
     // ROS_INFO_STREAM("jac_full.rows: " << jac_full.rows() << ", jac_full.columns: " << jac_full.columns());
 
-    Vector6d_t v_in_vec;
+    Vector6d_t v_in_limited;
     KDL::Twist v_out;
-    v_out = this->cartesian_limiters_->enforceCartesianLimits(v_in);
-    tf::twistKDLToEigen(v_out, v_in_vec);
+    v_out = this->input_limiters_->enforceLimits(v_in);
+    tf::twistKDLToEigen(v_out, v_in_limited);
 
     Eigen::MatrixXd qdot_out_vec;
     retStat = constraint_solver_factory_.calculateJointVelocities(jac_full.data,
-                                                                  v_in_vec,
+                                                                  v_in_limited,
                                                                   joint_states_full,
                                                                   qdot_out_vec);
 
@@ -76,7 +76,7 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const JointStates& joint_stat
     // ROS_INFO_STREAM("qdot_out_full.rows: " << qdot_out_full.rows());
 
     /// limiters shut be applied here in order to be able to consider the additional DoFs within "AllLimit", too
-    qdot_out_full = this->limiters_->enforceLimits(qdot_out_full, joint_states_full.current_q_);
+    qdot_out_full = this->output_limiters_->enforceLimits(qdot_out_full, joint_states_full.current_q_);
 
     // ROS_INFO_STREAM("qdot_out_full.rows enforced: " << qdot_out_full.rows());
     // for (int i = 0; i < jac_full.columns(); i++)
@@ -103,11 +103,11 @@ void InverseDifferentialKinematicsSolver::resetAll(TwistControllerParams params)
     this->kinematic_extension_.reset(KinematicExtensionBuilder::createKinematicExtension(this->params_));
     this->limiter_params_ = this->kinematic_extension_->adjustLimiterParams(this->params_.limiter_params);
 
-    this->limiters_.reset(new LimiterJointContainer(this->limiter_params_));
-    this->limiters_->init();
+    this->output_limiters_.reset(new LimiterJointContainer(this->limiter_params_));
+    this->output_limiters_->init();
 
-    this->cartesian_limiters_.reset(new LimiterCartesianContainer(this->limiter_params_));
-    this->cartesian_limiters_->init();
+    this->input_limiters_.reset(new LimiterCartesianContainer(this->limiter_params_));
+    this->input_limiters_->init();
 
     this->task_stack_controller_.clearAllTasks();
     if (0 != this->constraint_solver_factory_.resetAll(this->params_, this->limiter_params_))  // params member as reference!!! else process will die!

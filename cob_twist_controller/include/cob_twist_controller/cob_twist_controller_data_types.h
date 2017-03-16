@@ -193,8 +193,9 @@ struct LimiterParams
     std::vector<double> limits_vel;
     std::vector<double> limits_acc;
 
-    double max_lin_vel;
-    double max_lin_rot;
+    // limits for Cartesian input velocities
+    double max_lin_twist;
+    double max_rot_twist;
 
 };
 
