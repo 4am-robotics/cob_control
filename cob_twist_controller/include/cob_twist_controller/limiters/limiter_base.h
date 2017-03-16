@@ -32,19 +32,6 @@
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 
-/// Base class for limiters, defining interface methods.
-class LimiterBase
-{
-    public:
-        explicit LimiterBase(const LimiterParams& limiter_params) : limiter_params_(limiter_params)
-        {}
-
-        virtual ~LimiterBase() {}
-
-    protected:
-        const LimiterParams& limiter_params_;
-};
-
 /// Joint Base class for limiters, defining interface methods.
 class LimiterJointBase
 {
