@@ -365,22 +365,36 @@ KDL::Twist LimiterCartesianVelocities::enforceLimits(const KDL::Twist& v_in) con
 {
     KDL::Twist v_out(v_in);
     // linear limts
-    //Minimum limit
-    v_out.rot.x(copysign(std::min(limiter_params_.max_rot_twist, v_out.rot.x()), v_out.rot.x()));
-    v_out.rot.y(copysign(std::min(limiter_params_.max_rot_twist, v_out.rot.y()), v_out.rot.y()));
-    v_out.rot.z(copysign(std::min(limiter_params_.max_rot_twist, v_out.rot.z()), v_out.rot.z()));
-    //Maximum limit
-    v_out.rot.x(copysign(std::max(limiter_params_.max_rot_twist, v_out.rot.x()), v_out.rot.x()));
-    v_out.rot.y(copysign(std::max(limiter_params_.max_rot_twist, v_out.rot.y()), v_out.rot.y()));
-    v_out.rot.z(copysign(std::max(limiter_params_.max_rot_twist, v_out.rot.z()), v_out.rot.z()));
-    //Minimum limit
-    v_out.vel.x(copysign(std::min(limiter_params_.max_lin_twist, v_out.vel.x()), v_out.vel.x()));
-    v_out.vel.y(copysign(std::min(limiter_params_.max_lin_twist, v_out.vel.y()), v_out.vel.y()));
-    v_out.vel.z(copysign(std::min(limiter_params_.max_lin_twist, v_out.vel.z()), v_out.vel.z()));
-    //Maximum limit
-    v_out.vel.x(copysign(std::max(limiter_params_.max_lin_twist, v_out.vel.x()), v_out.vel.x()));
-    v_out.vel.y(copysign(std::max(limiter_params_.max_lin_twist, v_out.vel.y()), v_out.vel.y()));
-    v_out.vel.z(copysign(std::max(limiter_params_.max_lin_twist, v_out.vel.z()), v_out.vel.z()));
+
+    if (v_in.rot.x() >limiter_params_.max_rot_twist)
+        v_out.rot.x(limiter_params_.max_rot_twist);
+    if (v_in.rot.x() <-limiter_params_.max_rot_twist)
+        v_out.rot.x(-limiter_params_.max_rot_twist);
+
+    if (v_in.rot.y() >limiter_params_.max_rot_twist)
+        v_out.rot.y(limiter_params_.max_rot_twist);
+    if (v_in.rot.y() <-limiter_params_.max_rot_twist)
+        v_out.rot.y(-limiter_params_.max_rot_twist);
+
+    if (v_in.rot.z() >limiter_params_.max_rot_twist)
+        v_out.rot.z(limiter_params_.max_rot_twist);
+    if (v_in.rot.z() <-limiter_params_.max_rot_twist)
+        v_out.rot.z(-limiter_params_.max_rot_twist);
+
+    if (v_in.vel.x() >limiter_params_.max_lin_twist)
+        v_out.vel.x(limiter_params_.max_lin_twist);
+    if (v_in.vel.x() <-limiter_params_.max_lin_twist)
+        v_out.vel.x(-limiter_params_.max_lin_twist);
+
+    if (v_in.vel.y() >limiter_params_.max_lin_twist)
+        v_out.vel.y(limiter_params_.max_lin_twist);
+    if (v_in.vel.y() <-limiter_params_.max_lin_twist)
+        v_out.vel.y(-limiter_params_.max_lin_twist);
+
+    if (v_in.vel.z() >limiter_params_.max_lin_twist)
+        v_out.vel.z(limiter_params_.max_lin_twist);
+    if (v_in.vel.z() <-limiter_params_.max_lin_twist)
+        v_out.vel.z(-limiter_params_.max_lin_twist);
 
     return v_out;
 }
