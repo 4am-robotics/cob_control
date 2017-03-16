@@ -88,20 +88,21 @@ def init_dyn_recfg():
 
 def init_pos():
     sss = simple_script_server()
-    sss.move("arm_right", "home")
-    sss.move("arm_right", "home")
+    sss.move("arm_left", "home")
+    sss.move("arm_left", "home")
 
 
 if __name__ == "__main__":
     rospy.init_node("test_careobot_st_jla_ca_sphere")
 
-    base_dir = '/home/bbrito/bag-files/2016_02_22/'
+    base_dir = '/home/bfb/bag-files/2016_02_22/'
     if rospy.has_param('~base_dir'):
         base_dir = rospy.get_param('~base_dir')
     else:
         rospy.logwarn('Could not find parameter ~base_dir. Using default base_dir: ' + base_dir)
 
     action_name = rospy.get_namespace()
+    rospy.loginfo(action_name)
     if rospy.has_param(action_name+'chain_tip_link'):
         chain_tip_link = rospy.get_param(action_name+'chain_tip_link')
     else:
@@ -123,7 +124,7 @@ if __name__ == "__main__":
     t = time.localtime()
     launch_time_stamp = time.strftime("%Y%m%d_%H_%M_%S", t)
 
-    command = 'rosbag play -r 0.5 ' + base_dir + '/experiment1/experiment2.bag'
+    command = 'rosbag play -r 0.5 ' + base_dir + 'experiment2.bag'
     # command = 'rosbag play -u 10 ' + base_dir + 'careobot_st_jla_ca_sphere.bag'
 
     data_krakens = [
