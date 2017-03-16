@@ -47,15 +47,6 @@ Eigen::MatrixXd UnifiedJointLimitSingularitySolver::solve(const Vector6d_t& in_c
 
     Eigen::MatrixXd Wt=Q*svd.matrixV();
     Eigen::MatrixXd Wt_T=Wt.transpose();
-    Vector6d_t v_in=in_cart_velocities;
-    //Saturation block just for testing... Implemented in diferent branch with limiters
-    for (int i=0;i<v_in.rows();i++){
-        if(v_in(i)>2.0)
-            v_in(i)=2.0;
-        if(v_in(i)<-2.0)
-            v_in(i)=-2.0;
-    }
-
 /*
     Eigen::VectorXd singularValues = svd.singularValues();
     for (int i=0;i<singularValues.rows();i++){
