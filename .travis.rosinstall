@@ -1,1 +1,4 @@
-# empty
+- git:
+    uri: 'https://github.com/ipa320/cob_common.git'
+    local-name: cob_common
+    version: indigo_dev
