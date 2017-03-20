@@ -3,10 +3,10 @@
 
 int main(int argc, char **argv)
 {
-    ros::init (argc, argv, "cob_frame_tracker_node");
+    ros::init(argc, argv, "cob_frame_tracker_node");
     CobFrameTracker *cft = new CobFrameTracker();
 
-    if(!cft->initialize())
+    if (!cft->initialize())
     {
         ROS_ERROR("Failed to initialize FrameTracker");
         return -1;

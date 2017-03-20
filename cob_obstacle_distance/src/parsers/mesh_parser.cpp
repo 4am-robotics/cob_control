@@ -25,6 +25,10 @@
  *   Currently the implementation is fixed on one mesh per file!
  *
  */
+
+#include <string>
+#include <vector>
+
 #include <boost/filesystem.hpp>
 #include <ros/ros.h>
 #include <fstream>
@@ -58,39 +62,39 @@ int8_t MeshParser::read(std::vector<TriangleSupport>& tri_vec)
         return -1;
     }
 
-    if(0 >= scene->mNumMeshes)
+    if (0 >= scene->mNumMeshes)
     {
         ROS_ERROR("Found no meshes. Check mesh file. Aborting ...");
         return -2;
     }
 
-    if(MAX_NUM_MESHES < scene->mNumMeshes)
+    if (MAX_NUM_MESHES < scene->mNumMeshes)
     {
         ROS_WARN("Found more than one mesh in mesh file. The current implementation can only process %d mesh!!!", static_cast<uint32_t>(MAX_NUM_MESHES));
     }
 
     aiMesh** mesh = scene->mMeshes;
-    aiVector3D* vertex = mesh[0]->mVertices; // point to the first vertex
+    aiVector3D* vertex = mesh[0]->mVertices;  // point to the first vertex
 
     ROS_DEBUG_STREAM("mesh[0]->mNumVertices: " << mesh[0]->mNumVertices);
-    ROS_DEBUG_STREAM("mesh[0]->mNumFaces: " << mesh[0]->mNumFaces); // num of faces == num of triangles in STL
+    ROS_DEBUG_STREAM("mesh[0]->mNumFaces: " << mesh[0]->mNumFaces);  // num of faces == num of triangles in STL
 
-    //now read in all the triangles
-    for(uint32_t i = 0; i < mesh[0]->mNumFaces; ++i)
+    // now read in all the triangles
+    for (uint32_t i = 0; i < mesh[0]->mNumFaces; ++i)
     {
-        //populate each point of the triangle
+        // populate each point of the triangle
         TriangleSupport t;
-        if(0 != this->toVec3f(i, vertex++, t.a)) // after processing the pointer will be increased to point to the next vertex!
+        if (0 != this->toVec3f(i, vertex++, t.a))  // after processing the pointer will be increased to point to the next vertex!
         {
             break;
         }
 
-        if(0 != this->toVec3f(i, vertex++, t.b))
+        if (0 != this->toVec3f(i, vertex++, t.b))
         {
             break;
         }
 
-        if(0 != this->toVec3f(i, vertex++, t.c))
+        if (0 != this->toVec3f(i, vertex++, t.c))
         {
             break;
         }
@@ -110,7 +114,7 @@ int8_t MeshParser::read(std::vector<TriangleSupport>& tri_vec)
  */
 int8_t MeshParser::toVec3f(uint32_t num_current_face, aiVector3D* vertex, fcl::Vec3f& out)
 {
-    if(!vertex)
+    if (!vertex)
     {
         ROS_ERROR("No valid vertex found at face %d", num_current_face);
         return -3;

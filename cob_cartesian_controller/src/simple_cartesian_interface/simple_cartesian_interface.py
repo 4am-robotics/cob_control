@@ -9,9 +9,10 @@ from cob_cartesian_controller.msg import CartesianControllerAction, CartesianCon
 from cob_cartesian_controller.msg import Profile
 
 
-def move_lin(pose_goal, frame_id, profile, rotate_only=False):
-    client = actionlib.SimpleActionClient('cartesian_trajectory_action', CartesianControllerAction)
-    rospy.logwarn("Waiting for ActionServer...")
+def move_lin(pose_goal, frame_id, profile):
+    action_name = rospy.get_namespace()+'cartesian_trajectory_action'
+    client = actionlib.SimpleActionClient(action_name, CartesianControllerAction)
+    rospy.logwarn("Waiting for ActionServer: %s", action_name)
     success = client.wait_for_server(rospy.Duration(2.0))
     if(not success):
         return (success, "ActionServer not available within timeout")
@@ -26,15 +27,16 @@ def move_lin(pose_goal, frame_id, profile, rotate_only=False):
     client.send_goal(goal)
     print "goal sent"
     state = client.get_state()
-    print state
+    # print state
     client.wait_for_result()
     print "result received"
     result = client.get_result()
     return (result.success, result.message)
 
-def move_circ(pose_center, frame_id, start_angle, end_angle, radius, profile, rotate_only=False):
-    client = actionlib.SimpleActionClient('cartesian_trajectory_action', CartesianControllerAction)
-    rospy.logwarn("Waiting for ActionServer...")
+def move_circ(pose_center, frame_id, start_angle, end_angle, radius, profile):
+    action_name = rospy.get_namespace()+'cartesian_trajectory_action'
+    client = actionlib.SimpleActionClient(action_name, CartesianControllerAction)
+    rospy.logwarn("Waiting for ActionServer: %s", action_name)
     success = client.wait_for_server(rospy.Duration(2.0))
     if(not success):
         return (success, "ActionServer not available within timeout")
@@ -47,12 +49,12 @@ def move_circ(pose_center, frame_id, start_angle, end_angle, radius, profile, ro
     goal.move_circ.end_angle = end_angle
     goal.move_circ.radius = radius
     goal.profile = profile
-    print goal
+    # print goal
 
     client.send_goal(goal)
     print "goal sent"
     state = client.get_state()
-    print state
+    # print state
     client.wait_for_result()
     print "result received"
     result = client.get_result()

@@ -262,7 +262,7 @@ class NodeClass
     void topicCallbackTwistCmd(const geometry_msgs::Twist::ConstPtr& msg)
     {
       // create instance of pltState which is initialized with zero values
-      UndercarriageCtrl::PlatformState pltState;
+      PlatformState pltState;
 
       if( (fabs(msg->linear.x) > max_vel_trans_) || (fabs(msg->linear.y) > max_vel_trans_) || (fabs(msg->angular.z) > max_vel_rot_)){
         if(fabs(msg->linear.x) > max_vel_trans_){
@@ -304,7 +304,7 @@ class NodeClass
         //std::cout << "PLT_VELO_NEW: " << pltState.dVelLongMMS << " , " << pltState.dVelLatMMS << " , " << pltState.dRotRobRadS << std::endl;
         // Set desired values for Plattform State to zero (setpoint setting)
         // pltState will be initialized with zero values
-        pltState = UndercarriageCtrl::PlatformState();
+        pltState = PlatformState();
         ucar_ctrl_->setTarget(pltState);
 
         ROS_DEBUG("Forced platform-velocity cmds to zero");
@@ -328,7 +328,7 @@ class NodeClass
 
         // Set desired values for Plattform State to zero (setpoint setting)
         // pltState will be initialized with zero values
-        UndercarriageCtrl::PlatformState pltState;
+        PlatformState pltState;
         ucar_ctrl_->setTarget(pltState);
 
         ROS_DEBUG("Forced platform-velocity cmds to zero");
@@ -388,7 +388,7 @@ class NodeClass
 
             // Set desired values for Plattform State to zero (setpoint setting)
             // pltState will be initialized with zero values
-            UndercarriageCtrl::PlatformState pltState;
+            PlatformState pltState;
             ucar_ctrl_->setTarget(pltState);
 
             ROS_DEBUG("Forced platform-velocity cmds to zero");
@@ -410,8 +410,8 @@ class NodeClass
       int num_joints = msg->joint_names.size();
 
       // replaces the vectors per parameter with a vector of wheelStates which combines the wheel specfic params
-      std::vector<UndercarriageCtrl::WheelState> wStates;
-      wStates.assign(m_iNumWheels, UndercarriageCtrl::WheelState());
+      std::vector<WheelState> wStates;
+      wStates.assign(m_iNumWheels, WheelState());
 
       joint_state_odom_stamp_ = msg->header.stamp;
 
@@ -520,8 +520,8 @@ int main(int argc, char** argv)
 void NodeClass::CalcCtrlStep()
 {
   // WheelStates will be initialized with zero-values
-  std::vector<UndercarriageCtrl::WheelCommand> wStates;
-  wStates.assign(m_iNumWheels, UndercarriageCtrl::WheelCommand());
+  std::vector<WheelCommand> wStates;
+  wStates.assign(m_iNumWheels, WheelCommand());
 
   // create control_msg
   control_msgs::JointTrajectoryControllerState joint_state_cmd;
@@ -612,7 +612,7 @@ void NodeClass::UpdateOdometry()
 {
   // if drive chain already initialized process joint data
   //if (drive_chain_diagnostic_ != diagnostic_status_lookup_.OK)
-  UndercarriageCtrl::PlatformState pltState;
+  PlatformState pltState;
   if (is_initialized_bool_)
   {
 
@@ -652,11 +652,11 @@ void NodeClass::setEMStopActive(bool bEMStopActive)
 {
     m_bEMStopActive = bEMStopActive;
 
-    std::vector<UndercarriageCtrl::WheelState> wStates;
-    wStates.assign(m_iNumWheels, UndercarriageCtrl::WheelState());
+    std::vector<WheelState> wStates;
+    wStates.assign(m_iNumWheels, WheelState());
 
-    std::vector<UndercarriageCtrl::WheelCommand> wCommands;
-    wCommands.assign(m_iNumWheels, UndercarriageCtrl::WheelCommand());
+    std::vector<WheelCommand> wCommands;
+    wCommands.assign(m_iNumWheels, WheelCommand());
     
     // if emergency stop reset ctrlr to zero
     if(m_bEMStopActive)

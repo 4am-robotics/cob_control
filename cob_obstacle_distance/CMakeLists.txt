@@ -3,7 +3,7 @@ project(cob_obstacle_distance)
 
 set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 
-find_package(catkin REQUIRED COMPONENTS cmake_modules cob_control_msgs cob_srvs dynamic_reconfigure eigen_conversions geometry_msgs kdl_conversions kdl_parser moveit_msgs roscpp roslib sensor_msgs shape_msgs std_msgs tf_conversions tf urdf visualization_msgs)
+find_package(catkin REQUIRED COMPONENTS cmake_modules cob_control_msgs cob_srvs dynamic_reconfigure eigen_conversions geometry_msgs kdl_conversions kdl_parser moveit_msgs roscpp roslib roslint sensor_msgs shape_msgs std_msgs tf_conversions tf urdf visualization_msgs)
 
 find_package(Boost REQUIRED COMPONENTS filesystem)
 
@@ -55,6 +55,8 @@ target_link_libraries(cob_obstacle_distance parsers marker_shapes_management ${f
 add_executable(debug_obstacle_distance_node src/debug/debug_obstacle_distance_node.cpp)
 add_dependencies(debug_obstacle_distance_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(debug_obstacle_distance_node ${catkin_LIBRARIES})
+
+roslint_cpp()
 
 ### Install ###
 install(TARGETS cob_obstacle_distance parsers marker_shapes_management debug_obstacle_distance_node

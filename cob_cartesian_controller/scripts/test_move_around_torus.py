@@ -114,10 +114,11 @@ def init_dyn_recfg():
 if __name__ == '__main__':
     rospy.init_node('test_move_around_torus')
     
-    client = actionlib.SimpleActionClient('cartesian_trajectory_action', CartesianControllerAction)
-    rospy.logwarn("Waiting for ActionServer...")
+    action_name = rospy.get_namespace()+'cartesian_trajectory_action'
+    client = actionlib.SimpleActionClient(action_name, CartesianControllerAction)
+    rospy.logwarn("Waiting for ActionServer: %s", action_name)
     client.wait_for_server()
-    rospy.logwarn("...done")  
+    rospy.logwarn("...done")
     
     init_dyn_recfg()
     

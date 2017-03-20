@@ -51,6 +51,7 @@ enum DampingMethodTypes
     CONSTANT = cob_twist_controller::TwistController_CONSTANT,
     MANIPULABILITY = cob_twist_controller::TwistController_MANIPULABILITY,
     LEAST_SINGULAR_VALUE = cob_twist_controller::TwistController_LEAST_SINGULAR_VALUE,
+    SIGMOID = cob_twist_controller::TwistController_SIGMOID,
 };
 
 enum ControllerInterfaceTypes
@@ -206,9 +207,9 @@ struct TwistControllerParams
         lambda_max(0.1),
         w_threshold(0.005),
         beta(0.005),
+        slope_damping(0.003),
         eps_damping(0.003),
         eps_truncation(0.001),
-
         solver(GPM),
         priority_main(500),
         k_H(1.0),
@@ -248,6 +249,7 @@ struct TwistControllerParams
     double lambda_max;
     double w_threshold;
     double beta;
+    double slope_damping;
     double eps_damping;
     double eps_truncation;
 

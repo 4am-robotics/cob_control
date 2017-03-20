@@ -3,10 +3,10 @@
 
 int main(int argc, char **argv)
 {
-    ros::init (argc, argv, "output_recorder");
+    ros::init(argc, argv, "output_recorder");
     OutputRecorder *output_recorder = new OutputRecorder();
 
-    if(output_recorder->initialize())
+    if (output_recorder->initialize())
     {
         output_recorder->run();
     }

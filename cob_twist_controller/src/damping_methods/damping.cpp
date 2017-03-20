@@ -17,7 +17,8 @@
  *   ROS package name: cob_twist_controller
  *
  * \author
- *   Author: Marco Bezzon, email: Marco.Bezzon@ipa.fraunhofer.de
+ *   Authors: Marco Bezzon, email: Marco.Bezzon@ipa.fraunhofer.de
+ *            Bruno Brito, email: Bruno.Brito@ipa.fraunhofer.de
  *
  * \date Date of creation: March, 2015
  *
@@ -50,6 +51,9 @@ DampingBase* DampingBuilder::createDamping(const TwistControllerParams& params)
         case LEAST_SINGULAR_VALUE:
             db = new DampingLeastSingularValues(params);
             break;
+        case SIGMOID:
+            db = new DampingSigmoid(params);
+            break;
         default:
             ROS_ERROR("DampingMethod %d not defined! Aborting!", params.damping_method);
             break;
@@ -62,12 +66,13 @@ DampingBase* DampingBuilder::createDamping(const TwistControllerParams& params)
 
 /* BEGIN DampingNone ********************************************************************************************/
 /**
- * Method just returns the damping factor from ros parameter server.
+ * Method just returns a zero matrix.
  */
-inline double DampingNone::getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
-                                            const Eigen::MatrixXd& jacobian_data) const
+inline Eigen::MatrixXd DampingNone::getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
+                                                     const Eigen::MatrixXd& jacobian_data) const
 {
-    return 0.0;
+    uint32_t rows = sorted_singular_values.rows();
+    return Eigen::MatrixXd::Zero(rows, rows);
 }
 /* END DampingNone **********************************************************************************************/
 
@@ -76,10 +81,11 @@ inline double DampingNone::getDampingFactor(const Eigen::VectorXd& sorted_singul
 /**
  * Method just returns the damping factor from ros parameter server.
  */
-inline double DampingConstant::getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
-                                                const Eigen::MatrixXd& jacobian_data) const
+inline Eigen::MatrixXd DampingConstant::getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
+                                                         const Eigen::MatrixXd& jacobian_data) const
 {
-    return this->params_.damping_factor;
+    uint32_t rows = sorted_singular_values.rows();
+    return Eigen::MatrixXd::Identity(rows, rows) * pow(this->params_.damping_factor, 2);
 }
 /* END DampingConstant ******************************************************************************************/
 
@@ -89,8 +95,8 @@ inline double DampingConstant::getDampingFactor(const Eigen::VectorXd& sorted_si
  * Method returns the damping factor according to the manipulability measure.
  * [Nakamura, "Advanced Robotics Redundancy and Optimization", ISBN: 0-201-15198-7, Page 268]
  */
-double DampingManipulability::getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
-                                               const Eigen::MatrixXd& jacobian_data) const
+Eigen::MatrixXd DampingManipulability::getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
+                                                        const Eigen::MatrixXd& jacobian_data) const
 {
     double w_threshold = this->params_.w_threshold;
     double lambda_max = this->params_.lambda_max;
@@ -98,18 +104,17 @@ double DampingManipulability::getDampingFactor(const Eigen::VectorXd& sorted_sin
     double d = prod.determinant();
     double w = std::sqrt(std::abs(d));
     double damping_factor;
+    uint32_t rows = sorted_singular_values.rows();
+    Eigen::MatrixXd damping_matrix = Eigen::MatrixXd::Zero(rows, rows);
 
     if (w < w_threshold)
     {
         double tmp_w = (1 - w / w_threshold);
         damping_factor = lambda_max * tmp_w * tmp_w;
-    }
-    else
-    {
-        damping_factor = 0.0;
+        damping_matrix = Eigen::MatrixXd::Identity(rows, rows) * pow(damping_factor, 2);
     }
 
-    return damping_factor;
+    return damping_matrix;
 }
 /* END DampingManipulability ************************************************************************************/
 
@@ -118,20 +123,45 @@ double DampingManipulability::getDampingFactor(const Eigen::VectorXd& sorted_sin
 /**
  * Method returns the damping factor according to the least singular value.
  */
-double DampingLeastSingularValues::getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
-                                                    const Eigen::MatrixXd& jacobian_data) const
+Eigen::MatrixXd DampingLeastSingularValues::getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
+                                                             const Eigen::MatrixXd& jacobian_data) const
 {
     // Formula 15 Singularity-robust Task-priority Redundandancy Resolution
     double least_singular_value = sorted_singular_values(sorted_singular_values.rows() - 1);
+    uint32_t rows = sorted_singular_values.rows();
+    Eigen::MatrixXd damping_matrix = Eigen::MatrixXd::Zero(rows, rows);
+
     if (least_singular_value < this->params_.eps_damping)
     {
         double lambda_quad = pow(this->params_.lambda_max, 2.0);
-        return sqrt( (1.0 - pow(least_singular_value / this->params_.eps_damping, 2.0)) * lambda_quad);
+        double damping_factor = sqrt( (1.0 - pow(least_singular_value / this->params_.eps_damping, 2.0)) * lambda_quad);
+        damping_matrix = Eigen::MatrixXd::Identity(rows, rows) * pow(damping_factor, 2);
     }
-    else
-    {
-        return 0.0;
-    }
+
+    return damping_matrix;
 }
 /* END DampingLeastSingularValues ************************************************************************************/
 
+/* BEGIN DampingSigmoid **********************************************************************************/
+/**
+ * Method returns the damping factor based on a sigmoid function on the value of each singular value.
+ */
+Eigen::MatrixXd DampingSigmoid::getDampingFactor(const Eigen::VectorXd& sorted_singular_values,
+                                                 const Eigen::MatrixXd& jacobian_data) const
+{
+    // Formula will be described in a future paper (to add reference)
+    uint32_t rows = sorted_singular_values.rows();
+    Eigen::MatrixXd damping_matrix = Eigen::MatrixXd::Zero(rows, rows);
+
+    for (unsigned i = 0; i < sorted_singular_values.rows(); i++)
+    {
+      if (sorted_singular_values[i] < this->params_.eps_damping)
+      {
+        double lambda_sig = params_.lambda_max / (1 + exp((sorted_singular_values[i] + params_.w_threshold) / params_.slope_damping));
+        damping_matrix(i, i) = lambda_sig;
+      }
+    }
+
+    return damping_matrix;
+}
+/* END DampingSigmoid ************************************************************************************/

@@ -25,10 +25,13 @@
  *   Implementation of the DistanceManager definitions.
  ****************************************************************/
 
+#include <limits>
+#include <string>
+#include <vector>
 
 #include "cob_obstacle_distance/distance_manager.hpp"
 
-#include <string.h>
+
 #include <stdint.h>
 
 #include <ros/ros.h>
@@ -90,19 +93,19 @@ int DistanceManager::init()
         return -1;
     }
 
-    if(!nh_.getParam("joint_names", this->joints_))
+    if (!nh_.getParam("joint_names", this->joints_))
     {
         ROS_ERROR("Failed to get parameter \"joint_names\".");
         return -2;
     }
 
-    if(!nh_.getParam("root_frame", this->root_frame_id_))
+    if (!nh_.getParam("root_frame", this->root_frame_id_))
     {
         ROS_ERROR("Failed to get parameter \"chain_base_link\".");
         return -3;
     }
 
-    if(!nh_.getParam("chain_base_link", this->chain_base_link_))
+    if (!nh_.getParam("chain_base_link", this->chain_base_link_))
     {
         ROS_ERROR("Failed to get parameter \"chain_base_link\".");
         return -3;
@@ -115,13 +118,13 @@ int DistanceManager::init()
     }
 
     robot_structure.getChain(this->chain_base_link_, this->chain_tip_link_, this->chain_);
-    if(chain_.getNrOfJoints() == 0)
+    if (chain_.getNrOfJoints() == 0)
     {
         ROS_ERROR("Failed to initialize kinematic chain");
         return -5;
     }
 
-    for(uint16_t i = 0; i < chain_.getNrOfSegments(); ++i)
+    for (uint16_t i = 0; i < chain_.getNrOfSegments(); ++i)
     {
         KDL::Segment s = chain_.getSegment(i);
         this->segments_.push_back(s.getName());
@@ -131,7 +134,7 @@ int DistanceManager::init()
     adv_chn_fk_solver_vel_.reset(new AdvancedChainFkSolverVel_recursive(chain_));
     last_q_ = KDL::JntArray(chain_.getNrOfJoints());
     last_q_dot_ = KDL::JntArray(chain_.getNrOfJoints());
-    if(!this->link_to_collision_.initParameter(this->root_frame_id_, "/robot_description"))
+    if (!this->link_to_collision_.initParameter(this->root_frame_id_, "/robot_description"))
     {
         ROS_ERROR("Failed to initialize robot model from URDF by parameter \"/robot_description\".");
         return -6;
@@ -140,17 +143,17 @@ int DistanceManager::init()
     {
         XmlRpc::XmlRpcValue scm;
         bool success = false;
-        if(nh_.getParam("self_collision_map", scm))
+        if (nh_.getParam("self_collision_map", scm))
         {
             success = this->link_to_collision_.initSelfCollision(scm, obstacle_mgr_);
         }
 
-        if(!success)
+        if (!success)
         {
             ROS_WARN("Parameter 'self_collision_map' not found or map empty.");
         }
 
-        for(LinkToCollision::MapSelfCollisions_t::iterator it = this->link_to_collision_.getSelfCollisionsIterBegin();
+        for (LinkToCollision::MapSelfCollisions_t::iterator it = this->link_to_collision_.getSelfCollisionsIterBegin();
                 it != this->link_to_collision_.getSelfCollisionsIterEnd();
                 it++)
         {
@@ -164,7 +167,7 @@ int DistanceManager::init()
 void DistanceManager::clear()
 {
     this->stop_sca_threads_ = true;
-    for(std::vector<std::thread>::iterator it = this->self_collision_transform_threads_.begin();
+    for (std::vector<std::thread>::iterator it = this->self_collision_transform_threads_.begin();
             it != this->self_collision_transform_threads_.end(); it++)
     {
         it->join();
@@ -205,20 +208,20 @@ void DistanceManager::calculate()
 
     // Transform needs to be calculated only once for robot structure
     // and is same for all obstacles.
-    if(this->object_of_interest_mgr_->count() > 0)
+    if (this->object_of_interest_mgr_->count() > 0)
     {
         KDL::FrameVel p_dot_out;
         KDL::JntArrayVel jnt_arr(last_q_, last_q_dot_);
         adv_chn_fk_solver_vel_->JntToCart(jnt_arr, p_dot_out);
     }
 
-    for(ShapesManager::MapIter_t it = this->object_of_interest_mgr_->begin(); it != this->object_of_interest_mgr_->end(); ++it)
+    for (ShapesManager::MapIter_t it = this->object_of_interest_mgr_->begin(); it != this->object_of_interest_mgr_->end(); ++it)
     {
         std::string object_of_interest_name = it->first;
         std::vector<std::string>::const_iterator str_it = std::find(this->segments_.begin(),
                                                                     this->segments_.end(),
                                                                     object_of_interest_name);
-        if(this->segments_.end() == str_it)
+        if (this->segments_.end() == str_it)
         {
             ROS_ERROR_STREAM("Could not find: " << object_of_interest_name << ". Skipping it ...");
             continue;
@@ -245,7 +248,7 @@ void DistanceManager::calculate()
         Eigen::Vector3d abs_jnt_pos = tmp_inv_tf_cb_frame_bl * chainbase2frame_pos;
 
         Eigen::Quaterniond q;
-        tf::quaternionKDLToEigen (frame_with_offset.M, q);
+        tf::quaternionKDLToEigen(frame_with_offset.M, q);
         Eigen::Matrix3d x = (tmp_inv_tf_cb_frame_bl * q).rotation();
         Eigen::Quaterniond q_1(x);
         // ******* End Transformation part **************
@@ -258,12 +261,12 @@ void DistanceManager::calculate()
 
         fcl::CollisionObject ooi_co = ooi->getCollisionObject();
         fcl::FCL_REAL last_dist = std::numeric_limits<fcl::FCL_REAL>::max();
-        { // introduced the block to lock this critical section until block leaved.
+        {  // introduced the block to lock this critical section until block leaved.
             std::lock_guard<std::mutex> lock(obstacle_mgr_mtx_);
-            for(ShapesManager::MapIter_t it = this->obstacle_mgr_->begin(); it != this->obstacle_mgr_->end(); ++it)
+            for (ShapesManager::MapIter_t it = this->obstacle_mgr_->begin(); it != this->obstacle_mgr_->end(); ++it)
             {
                 const std::string obstacle_id = it->first;
-                if(this->link_to_collision_.ignoreSelfCollisionPart(object_of_interest_name, obstacle_id))
+                if (this->link_to_collision_.ignoreSelfCollisionPart(object_of_interest_name, obstacle_id))
                 {
                     // Ignore elements that can never be in collision
                     // (specified in parameter and parent / child frames)
@@ -289,7 +292,7 @@ void DistanceManager::calculate()
                 // vector from arm base link frame to nearest collision point on frame
                 Eigen::Vector3d rel_base_link_frame_pos = tmp_tf_cb_frame_bl * abs_jnt_pos_update;
                 ROS_DEBUG_STREAM("Link \"" << object_of_interest_name << "\": Minimal distance: " << dist_result.min_distance);
-                if(dist_result.min_distance < MIN_DISTANCE)
+                if (dist_result.min_distance < MIN_DISTANCE)
                 {
                     cob_control_msgs::ObstacleDistance od_msg;
                     od_msg.distance = dist_result.min_distance;
@@ -307,7 +310,7 @@ void DistanceManager::calculate()
         }
     }
 
-    if(obstacle_distances.distances.size() > 0)
+    if (obstacle_distances.distances.size() > 0)
     {
         this->obstacle_distances_pub_.publish(obstacle_distances);
     }
@@ -316,13 +319,13 @@ void DistanceManager::calculate()
 
 void DistanceManager::transform()
 {
-    while(!this->stop_sca_threads_)
+    while (!this->stop_sca_threads_)
     {
         try
         {
             tf::StampedTransform cb_transform_bl;
             ros::Time time = ros::Time(0);
-            if(tf_listener_.waitForTransform(chain_base_link_, root_frame_id_, time, ros::Duration(5.0)))
+            if (tf_listener_.waitForTransform(chain_base_link_, root_frame_id_, time, ros::Duration(5.0)))
             {
                 std::lock_guard<std::mutex> lock(mtx_);
                 tf_listener_.lookupTransform(chain_base_link_, root_frame_id_, time, cb_transform_bl);
@@ -331,7 +334,7 @@ void DistanceManager::transform()
         }
         catch (tf::TransformException& ex)
         {
-            ROS_ERROR("%s",ex.what());
+            ROS_ERROR("%s", ex.what());
         }
 
         ros::Duration(0.1).sleep();
@@ -341,22 +344,21 @@ void DistanceManager::transform()
 
 void DistanceManager::transformSelfCollisionLinks(const std::string link_name)
 {
-
     ROS_INFO_STREAM("Starting transform_listener thread for link name: " << link_name);
-    while(!this->stop_sca_threads_)
+    while (!this->stop_sca_threads_)
     {
         try
         {
             ros::Time time = ros::Time(0);
             // https://github.com/ros-visualization/rviz/issues/702: TF listener is thread safe
-            if(tf_listener_.waitForTransform(root_frame_id_, link_name, time, ros::Duration(5.0)))
+            if (tf_listener_.waitForTransform(root_frame_id_, link_name, time, ros::Duration(5.0)))
             {
                 std::lock_guard<std::mutex> lock(obstacle_mgr_mtx_);
                 tf::StampedTransform stamped_transform;
                 geometry_msgs::Transform msg_transform;
                 tf_listener_.lookupTransform(root_frame_id_, link_name, time, stamped_transform);
                 PtrIMarkerShape_t shape_ptr;
-                if(this->obstacle_mgr_->getShape(link_name, shape_ptr))
+                if (this->obstacle_mgr_->getShape(link_name, shape_ptr))
                 {
                     geometry_msgs::Pose origin_p = shape_ptr->getOriginRelToFrame();
                     tf::Transform tf_origin_pose;
@@ -369,7 +371,7 @@ void DistanceManager::transformSelfCollisionLinks(const std::string link_name)
         }
         catch (tf::TransformException& ex)
         {
-            ROS_ERROR("%s",ex.what());
+            ROS_ERROR("%s", ex.what());
         }
 
         ros::Duration(0.1).sleep();
@@ -383,11 +385,11 @@ void DistanceManager::jointstateCb(const sensor_msgs::JointState::ConstPtr& msg)
     KDL::JntArray q_dot_temp = last_q_dot_;
     uint16_t count = 0;
 
-    for(uint16_t j = 0; j < chain_.getNrOfJoints(); j++)
+    for (uint16_t j = 0; j < chain_.getNrOfJoints(); j++)
     {
-        for(uint16_t i = 0; i < msg->name.size(); i++)
+        for (uint16_t i = 0; i < msg->name.size(); i++)
         {
-            if(strcmp(msg->name[i].c_str(), joints_[j].c_str()) == 0)
+            if (strcmp(msg->name[i].c_str(), joints_[j].c_str()) == 0)
             {
                 q_temp(j) = msg->position[i];
                 q_dot_temp(j) = msg->velocity[i];
@@ -397,7 +399,7 @@ void DistanceManager::jointstateCb(const sensor_msgs::JointState::ConstPtr& msg)
         }
     }
 
-    if(joints_.size() == count)
+    if (joints_.size() == count)
     {
         last_q_ = q_temp;
         last_q_dot_ = q_dot_temp;
@@ -417,13 +419,13 @@ void DistanceManager::registerObstacle(const moveit_msgs::CollisionObject::Const
     tf::StampedTransform frame_transform_root;
     Eigen::Affine3d tf_frame_root;
 
-    if(msg->meshes.size() > 0 && msg->primitives.size() > 0)
+    if (msg->meshes.size() > 0 && msg->primitives.size() > 0)
     {
         ROS_ERROR_STREAM("registerObstacle: Can either build mesh or primitive but not both in one message for one id.");
         return;
     }
 
-    if(msg->operation == msg->ADD && this->obstacle_mgr_->count(msg->id) > 0)
+    if (msg->operation == msg->ADD && this->obstacle_mgr_->count(msg->id) > 0)
     {
         ROS_ERROR_STREAM("registerObstacle: Element " << msg->id << " exists already. ADD not allowed!");
         return;
@@ -438,17 +440,17 @@ void DistanceManager::registerObstacle(const moveit_msgs::CollisionObject::Const
     }
     catch (tf::TransformException& ex)
     {
-        ROS_ERROR("TransformException: %s",ex.what());
+        ROS_ERROR("TransformException: %s", ex.what());
         return;
     }
 
-    if((msg->type.db.length() > 0 && 0 < msg->mesh_poses.size()) ||
+    if ((msg->type.db.length() > 0 && 0 < msg->mesh_poses.size()) ||
        (msg->meshes.size() > 0 && msg->meshes.size() == msg->mesh_poses.size()))
     {
         this->buildObstacleMesh(msg, frame_transform_root);
     }
 
-    if(msg->primitives.size() > 0 && msg->primitives.size() == msg->primitive_poses.size())
+    if (msg->primitives.size() > 0 && msg->primitives.size() == msg->primitive_poses.size())
     {
         this->buildObstaclePrimitive(msg, frame_transform_root);
     }
@@ -460,23 +462,23 @@ void DistanceManager::registerObstacle(const moveit_msgs::CollisionObject::Const
 void DistanceManager::buildObstacleMesh(const moveit_msgs::CollisionObject::ConstPtr& msg, const tf::StampedTransform& transform)
 {
     uint32_t m_size = msg->mesh_poses.size();
-    const std::string package_file_name = msg->type.db; // using db field for package name instead of db json string
+    const std::string package_file_name = msg->type.db;  // using db field for package name instead of db json string
 
-    if(msg->mesh_poses.size() > 1)
+    if (msg->mesh_poses.size() > 1)
     {
         ROS_WARN("Currenty only one mesh per message is supported! So only the first one is processed ...");
         m_size = 1;
     }
 
-    if(package_file_name.length() <= 0 && msg->mesh_poses.size() != msg->meshes.size())
+    if (package_file_name.length() <= 0 && msg->mesh_poses.size() != msg->meshes.size())
     {
        ROS_ERROR("Mesh poses and meshes do not have the same size. If package resource string is empty then the sizes must be equal!");
        return;
     }
 
-    if(msg->ADD == msg->operation)
+    if (msg->ADD == msg->operation)
     {
-        for(uint32_t i = 0; i < m_size; ++i)
+        for (uint32_t i = 0; i < m_size; ++i)
         {
             geometry_msgs::Pose p = msg->mesh_poses[i];
             tf::Pose tf_p;
@@ -484,7 +486,7 @@ void DistanceManager::buildObstacleMesh(const moveit_msgs::CollisionObject::Cons
             tf::Pose new_tf_p = transform * tf_p;
             tf::poseTFToMsg(new_tf_p, p);
             PtrIMarkerShape_t sptr_Bvh;
-            if(package_file_name.length() > 0)
+            if (package_file_name.length() > 0)
             {
                 sptr_Bvh.reset(new MarkerShape<BVH_RSS_t>(this->root_frame_id_,
                                                           package_file_name,
@@ -493,7 +495,7 @@ void DistanceManager::buildObstacleMesh(const moveit_msgs::CollisionObject::Cons
             }
             else
             {
-                shape_msgs::Mesh m = msg->meshes[i]; // is only filled in case of no package file name has been given
+                shape_msgs::Mesh m = msg->meshes[i];  // is only filled in case of no package file name has been given
                 sptr_Bvh.reset(new MarkerShape<BVH_RSS_t>(this->root_frame_id_,
                                                           m,
                                                           p,
@@ -503,12 +505,12 @@ void DistanceManager::buildObstacleMesh(const moveit_msgs::CollisionObject::Cons
             this->addObstacle(msg->id, sptr_Bvh);
         }
     }
-    else if(msg->MOVE == msg->operation)
+    else if (msg->MOVE == msg->operation)
     {
         PtrIMarkerShape_t sptr;
-        for(uint32_t i = 0; i < m_size; ++i)
+        for (uint32_t i = 0; i < m_size; ++i)
         {
-            if(this->obstacle_mgr_->getShape(msg->id, sptr))
+            if (this->obstacle_mgr_->getShape(msg->id, sptr))
             {
                 geometry_msgs::Pose p = msg->mesh_poses[i];
                 tf::Pose tf_p;
@@ -519,7 +521,7 @@ void DistanceManager::buildObstacleMesh(const moveit_msgs::CollisionObject::Cons
             }
         }
     }
-    else if(msg->REMOVE == msg->operation)
+    else if (msg->REMOVE == msg->operation)
     {
         this->obstacle_mgr_->removeShape(msg->id);
     }
@@ -533,15 +535,15 @@ void DistanceManager::buildObstacleMesh(const moveit_msgs::CollisionObject::Cons
 void DistanceManager::buildObstaclePrimitive(const moveit_msgs::CollisionObject::ConstPtr& msg, const tf::StampedTransform& transform)
 {
     uint32_t p_size = msg->primitives.size();
-    if(msg->primitives.size() > 1)
+    if (msg->primitives.size() > 1)
     {
         ROS_WARN("Currenty only one primitive per message is supported! So only the first one is processed ...");
         p_size = 1;
     }
 
-    if(msg->ADD == msg->operation)
+    if (msg->ADD == msg->operation)
     {
-        for(uint32_t i = 0; i < p_size; ++i)
+        for (uint32_t i = 0; i < p_size; ++i)
         {
             shape_msgs::SolidPrimitive sp = msg->primitives[i];
             geometry_msgs::Pose p = msg->primitive_poses[i];
@@ -552,17 +554,17 @@ void DistanceManager::buildObstaclePrimitive(const moveit_msgs::CollisionObject:
 
             PtrIMarkerShape_t sptr;
             Eigen::Vector3d dim;
-            if(shape_msgs::SolidPrimitive::BOX == sp.type)
+            if (shape_msgs::SolidPrimitive::BOX == sp.type)
             {
                 dim(FCL_BOX_X) = sp.dimensions[shape_msgs::SolidPrimitive::BOX_X];
                 dim(FCL_BOX_Y) = sp.dimensions[shape_msgs::SolidPrimitive::BOX_Y];
                 dim(FCL_BOX_Z) = sp.dimensions[shape_msgs::SolidPrimitive::BOX_Z];
             }
-            else if(shape_msgs::SolidPrimitive::SPHERE == sp.type)
+            else if (shape_msgs::SolidPrimitive::SPHERE == sp.type)
             {
                 dim(FCL_RADIUS) = sp.dimensions[shape_msgs::SolidPrimitive::SPHERE_RADIUS];
             }
-            else if(shape_msgs::SolidPrimitive::CYLINDER == sp.type)
+            else if (shape_msgs::SolidPrimitive::CYLINDER == sp.type)
             {
                 dim(FCL_RADIUS) = sp.dimensions[shape_msgs::SolidPrimitive::CYLINDER_RADIUS];
                 dim(FCL_CYL_LENGTH) = sp.dimensions[shape_msgs::SolidPrimitive::CYLINDER_HEIGHT];
@@ -582,12 +584,12 @@ void DistanceManager::buildObstaclePrimitive(const moveit_msgs::CollisionObject:
             this->addObstacle(msg->id, sptr);
         }
     }
-    else if(msg->MOVE == msg->operation)
+    else if (msg->MOVE == msg->operation)
     {
         PtrIMarkerShape_t sptr;
-        for(uint32_t i = 0; i < p_size; ++i)
+        for (uint32_t i = 0; i < p_size; ++i)
         {
-            if(this->obstacle_mgr_->getShape(msg->id, sptr))
+            if (this->obstacle_mgr_->getShape(msg->id, sptr))
             {
                 geometry_msgs::Pose p = msg->primitive_poses[i];
                 tf::Pose tf_p;
@@ -598,7 +600,7 @@ void DistanceManager::buildObstaclePrimitive(const moveit_msgs::CollisionObject:
             }
         }
     }
-    else if(msg->REMOVE == msg->operation)
+    else if (msg->REMOVE == msg->operation)
     {
         this->obstacle_mgr_->removeShape(msg->id);
     }
@@ -612,7 +614,7 @@ void DistanceManager::buildObstaclePrimitive(const moveit_msgs::CollisionObject:
 bool DistanceManager::registerLinkOfInterest(cob_srvs::SetString::Request& request,
                                               cob_srvs::SetString::Response& response)
 {
-    if(this->object_of_interest_mgr_->count(request.data) > 0)
+    if (this->object_of_interest_mgr_->count(request.data) > 0)
     {
         response.success = true;
         response.message = "Element " + request.data + " already registered.";
@@ -624,7 +626,7 @@ bool DistanceManager::registerLinkOfInterest(cob_srvs::SetString::Request& reque
             PtrIMarkerShape_t ooi;
             Eigen::Quaterniond q;
             Eigen::Vector3d v3;
-            if(this->link_to_collision_.getMarkerShapeFromUrdf(v3, q, request.data, ooi))
+            if (this->link_to_collision_.getMarkerShapeFromUrdf(v3, q, request.data, ooi))
             {
                 this->addObjectOfInterest(request.data, ooi);
                 response.success = true;

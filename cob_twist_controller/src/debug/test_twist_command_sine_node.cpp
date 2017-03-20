@@ -27,20 +27,20 @@ public:
         double x = 0.0;
 
         double a = 0.6, b = 0.4, c = 0, d = 0;
-        
+
         geometry_msgs::Twist command_msg;
 
         while (ros::ok())
         {
             time = ros::Time::now();
             x = (time - start_time).toSec();
-            
+
             double vel = a*sin(b*x+c) + d;
-            
+
             command_msg.angular.z = vel;
-            
+
             output_pub_.publish(command_msg);
-            
+
             ros::spinOnce();
             r.sleep();
         }

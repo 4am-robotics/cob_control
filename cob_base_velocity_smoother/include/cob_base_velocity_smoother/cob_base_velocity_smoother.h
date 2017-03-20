@@ -61,9 +61,6 @@
 #include <iostream>
 #include <boost/circular_buffer.hpp>
 #include <boost/bind.hpp>
-#include <pthread.h>
-
-using namespace std;
 
 // ros includes
 #include <ros/ros.h>
@@ -107,7 +104,6 @@ private:
   bool get_new_msg_received();
 
 public:
-
   // constructor
   cob_base_velocity_smoother();
 
@@ -160,7 +156,6 @@ public:
   //calls the reviseCircBuff and the meanValue-functions and limits the acceleration under thresh
   //returns the resulting geometry message to be published to the base_controller
   geometry_msgs::Twist setOutput(ros::Time now, geometry_msgs::Twist cmd_vel);
-
 };
 
 #endif

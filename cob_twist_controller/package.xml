@@ -1,6 +1,6 @@
 <package format="2">
   <name>cob_twist_controller</name>
-  <version>0.6.11</version>
+  <version>0.6.14</version>
   <description>
   The main purpose of the cob_twist_controller is to convert target twists into joint velocities. 
   Therefore it makes use of several implemented inverse kinematics approaches at the first order differential level. 
@@ -43,7 +43,6 @@
   <depend>visualization_msgs</depend>
 
   <exec_depend>cob_frame_tracker</exec_depend>
-  <exec_depend>python-sympy</exec_depend>
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>rospy</exec_depend>
   <exec_depend>rviz</exec_depend>
