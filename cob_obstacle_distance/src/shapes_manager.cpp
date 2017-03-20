@@ -24,6 +24,7 @@
  * \brief
  *   Implementation of the ShapesManager definitions.
  ****************************************************************/
+#include <string>
 #include "cob_obstacle_distance/shapes_manager.hpp"
 
 ShapesManager::ShapesManager(const ros::Publisher& pub) : pub_(pub)
@@ -45,7 +46,7 @@ void ShapesManager::addShape(const std::string& id, PtrIMarkerShape_t s)
 
 void ShapesManager::removeShape(const std::string& id)
 {
-    if(this->shapes_.count(id))
+    if (this->shapes_.count(id))
     {
         PtrIMarkerShape_t s = this->shapes_[id];
         visualization_msgs::Marker marker = s->getMarker();
@@ -60,7 +61,7 @@ void ShapesManager::removeShape(const std::string& id)
 bool ShapesManager::getShape(const std::string& id, PtrIMarkerShape_t& s)
 {
     bool success = false;
-    if(this->shapes_.count(id))
+    if (this->shapes_.count(id))
     {
         s = this->shapes_[id];
         success = true;
@@ -73,7 +74,7 @@ bool ShapesManager::getShape(const std::string& id, PtrIMarkerShape_t& s)
 void ShapesManager::draw()
 {
     visualization_msgs::MarkerArray marker_array;
-    for(MapIter_t iter = shapes_.begin(); iter != shapes_.end(); ++iter)
+    for (MapIter_t iter = shapes_.begin(); iter != shapes_.end(); ++iter)
     {
         PtrIMarkerShape_t elem = iter->second;
         if(elem->isDrawable())
@@ -84,7 +85,7 @@ void ShapesManager::draw()
     }
 
     this->pub_.publish(marker_array);
-    sleep(0.1); // it takes some time for Rviz to compute and show the marker!
+    sleep(0.1);  // it takes some time for Rviz to compute and show the marker!
 }
 
 

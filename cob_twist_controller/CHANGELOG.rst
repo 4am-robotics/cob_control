@@ -2,6 +2,17 @@
 Changelog for package cob_twist_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.14 (2015-10-10)
+-------------------
+
+0.6.13 (2015-10-10)
+-------------------
+
+0.6.12 (2015-10-10)
+-------------------
+* cob_twist_controller: fix add_dependencies calls
+* Contributors: ipa-mig
+
 0.6.11 (2016-04-01)
 -------------------
 * reduce output

@@ -2,6 +2,17 @@
 Changelog for package cob_undercarriage_ctrl_node
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.14 (2015-10-10)
+-------------------
+
+0.6.13 (2015-10-10)
+-------------------
+
+0.6.12 (2015-10-10)
+-------------------
+* introduced WheelCommand, outputs state and steer target error
+* Contributors: Mathias Lüdtke
+
 0.6.11 (2016-04-01)
 -------------------
 * parametrizable odometry tracker in undercarriage_ctrl node

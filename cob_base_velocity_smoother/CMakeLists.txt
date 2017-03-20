@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(cob_base_velocity_smoother)
 
-find_package(catkin REQUIRED COMPONENTS dynamic_reconfigure geometry_msgs nav_msgs roscpp std_msgs)
+find_package(catkin REQUIRED COMPONENTS dynamic_reconfigure geometry_msgs nav_msgs roscpp roslint std_msgs)
 
 find_package(Boost REQUIRED thread)
 
@@ -25,6 +25,8 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${BOOST_LIBRARIES})
 add_executable(velocity_smoother src/cob_base_velocity_smoother/velocity_smoother.cpp src/velocity_smoother_node.cpp)
 add_dependencies(velocity_smoother ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(velocity_smoother ${catkin_LIBRARIES} ${BOOST_LIBRARIES})
+
+roslint_cpp()
 
 ### INSTALL ###
 install(TARGETS cob_base_velocity_smoother

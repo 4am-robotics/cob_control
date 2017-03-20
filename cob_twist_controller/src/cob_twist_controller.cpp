@@ -466,10 +466,10 @@ void CobTwistController::visualizeTwist(KDL::Twist twist)
     rot.setRPY(twist.rot.x(), twist.rot.y(), twist.rot.z());
 
     /// calculate rotation between twist-axis and z-axis of cylinder
-    tf::Vector3 z_axis = tf::Vector3(0,0,1);
+    tf::Vector3 z_axis = tf::Vector3(0, 0, 1);
     tf::Vector3 t_axis = rot.getAxis();
-    tf::Quaternion temp(0,0,0,1);
-    if(z_axis!=t_axis && z_axis!=-t_axis)
+    tf::Quaternion temp(0, 0, 0, 1);
+    if (z_axis != t_axis && z_axis != -t_axis)
     {
         tf::Vector3 cross = z_axis.cross(t_axis);
         temp = tf::Quaternion(cross.x(), cross.y(), cross.z(), (std::sqrt(z_axis.length2() * t_axis.length2()) + z_axis.dot(t_axis)));

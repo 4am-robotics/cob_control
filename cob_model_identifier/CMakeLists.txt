@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(cob_model_identifier)
 
-find_package(catkin REQUIRED COMPONENTS cmake_modules geometry_msgs kdl_parser roscpp sensor_msgs std_srvs tf)
+find_package(catkin REQUIRED COMPONENTS cmake_modules geometry_msgs kdl_parser roscpp roslint sensor_msgs std_srvs tf)
 
 find_package(Boost REQUIRED COMPONENTS thread)
 
@@ -32,6 +32,8 @@ target_link_libraries(output_recorder ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 add_executable(output_recorder_node src/output_recorder_node.cpp)
 target_link_libraries(output_recorder_node output_recorder ${catkin_LIBRARIES})
+
+roslint_cpp()
 
 ### INSTALL ###
 install(TARGETS output_recorder_node

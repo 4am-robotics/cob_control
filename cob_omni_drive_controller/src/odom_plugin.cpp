@@ -82,7 +82,7 @@ public:
 
     virtual void update(const ros::Time& time, const ros::Duration& period){
 
-        GeomController::update();
+        updateState();
 
         geom_->calcDirect(platform_state_);
 
@@ -101,7 +101,7 @@ public:
     virtual void stopping(const ros::Time& time) { stop_time_ = time; }
 
 private:
-    UndercarriageGeom::PlatformState platform_state_;
+    PlatformState platform_state_;
 
     ros::Publisher topic_pub_odometry_;                 // calculated (measured) velocity, rotation and pose (odometry-based) for the robot
     ros::ServiceServer service_reset_;                  // service to reset odometry to zero

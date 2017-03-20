@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(cob_omni_drive_controller)
 
-find_package(catkin REQUIRED COMPONENTS angles controller_interface geometry_msgs hardware_interface message_generation nav_msgs realtime_tools sensor_msgs std_msgs std_srvs tf urdf)
+find_package(catkin REQUIRED COMPONENTS angles controller_interface dynamic_reconfigure geometry_msgs hardware_interface message_generation nav_msgs realtime_tools sensor_msgs std_msgs std_srvs tf urdf)
 
 find_package(Boost REQUIRED COMPONENTS thread)
 
@@ -13,8 +13,12 @@ add_message_files(
 
 generate_messages(DEPENDENCIES std_msgs)
 
+generate_dynamic_reconfigure_options(
+  cfg/SteerCtrl.cfg
+)
+
 catkin_package(
-  CATKIN_DEPENDS angles controller_interface geometry_msgs hardware_interface message_runtime nav_msgs sensor_msgs std_msgs std_srvs tf urdf
+  CATKIN_DEPENDS angles controller_interface dynamic_reconfigure geometry_msgs hardware_interface message_runtime nav_msgs sensor_msgs std_msgs std_srvs tf urdf
   DEPENDS Boost
   INCLUDE_DIRS include
   LIBRARIES cob_omni_drive_geom cob_omni_drive_controller
@@ -40,6 +44,10 @@ install(TARGETS cob_omni_drive_geom cob_omni_drive_controller cob_omni_drive_stu
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(PROGRAMS scripts/test_publisher_twist_sine.py scripts/test_publisher_twist_step.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 install(FILES controller_plugins.xml

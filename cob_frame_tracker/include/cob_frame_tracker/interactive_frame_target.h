@@ -28,6 +28,7 @@
 #ifndef INTERACTIVE_FRAME_TARGET_H
 #define INTERACTIVE_FRAME_TARGET_H
 
+#include <string>
 #include <ros/ros.h>
 
 #include <std_srvs/Trigger.h>
@@ -61,8 +62,8 @@ private:
 
     std::string root_frame_;
     std::string chain_tip_link_;
-    std::string tracking_frame_;    //the frame tracking the target
-    std::string target_frame_;      //the frame to be tracked
+    std::string tracking_frame_;    // the frame tracking the target
+    std::string target_frame_;      // the frame to be tracked
 
     bool movable_trans_;
     bool movable_rot_;
@@ -83,11 +84,11 @@ private:
 
     void updateMarker(const std::string& frame);
     void sendTransform(const ros::TimerEvent& event);
-    void startTracking( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback );
-    void startLookat( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback );
-    void stop( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback );
-    void menuFeedback( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback );
-    void markerFeedback( const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback );
+    void startTracking(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
+    void startLookat(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
+    void stop(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
+    void menuFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
+    void markerFeedback(const visualization_msgs::InteractiveMarkerFeedbackConstPtr& feedback);
 };
 
 #endif

@@ -52,10 +52,10 @@ int main(int argc, char** argv)
         return -4;
     }
 
-    //addTestObstacles(sm); // Comment in to see what happens
+    // addTestObstacles(sm);  // Comment in to see what happens
 
     std::thread t(&DistanceManager::transform, std::ref(sm));
-    ros::Duration(1.0).sleep(); // Give some time for threads to run
+    ros::Duration(1.0).sleep();  // Give some time for threads to run
     ROS_INFO_STREAM("Started transform thread.");
 
     ros::Subscriber jointstate_sub = nh.subscribe("joint_states", 1, &DistanceManager::jointstateCb, &sm);
@@ -63,7 +63,7 @@ int main(int argc, char** argv)
     ros::ServiceServer registration_srv = nh.advertiseService("obstacle_distance/registerLinkOfInterest" , &DistanceManager::registerLinkOfInterest, &sm);
 
     ros::Rate loop_rate(20);
-    while(ros::ok())
+    while (ros::ok())
     {
         sm.calculate();
         ros::spinOnce();
@@ -81,14 +81,13 @@ int main(int argc, char** argv)
 void addTestObstacles(DistanceManager& dm)
 {
     fcl::Sphere s(0.1);
-    fcl::Box b(0.1, 0.1, 0.1); // Take care the nearest point for collision is one of the eight corners!!! This might lead to jittering
+    fcl::Box b(0.1, 0.1, 0.1);  // Take care the nearest point for collision is one of the eight corners!!! This might lead to jittering
 
     PtrIMarkerShape_t sptr_Bvh(new MarkerShape<BVH_RSS_t>(dm.getRootFrame(),
                                                           "package://cob_gazebo_objects/Media/models/milk.dae",
                                                            -0.35,
                                                            -0.35,
                                                             0.8));
-
 
     PtrIMarkerShape_t sptr_Sphere(new MarkerShape<fcl::Sphere>(dm.getRootFrame(), s, 0.35, -0.35, 0.8));
 
@@ -97,5 +96,4 @@ void addTestObstacles(DistanceManager& dm)
 
     ROS_INFO_ONCE("Subscriber to the marker has been created");
     dm.drawObstacles();
-
 }

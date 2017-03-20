@@ -7,8 +7,9 @@ from cob_cartesian_controller.msg import Profile
 
 if __name__ == '__main__':
     rospy.init_node('test_move_lin')
-    client = actionlib.SimpleActionClient('cartesian_trajectory_action', CartesianControllerAction)
-    rospy.logwarn("Waiting for ActionServer...")
+    action_name = rospy.get_namespace()+'cartesian_trajectory_action'
+    client = actionlib.SimpleActionClient(action_name, CartesianControllerAction)
+    rospy.logwarn("Waiting for ActionServer: %s", action_name)
     client.wait_for_server()
     rospy.logwarn("...done")
 
@@ -24,13 +25,12 @@ if __name__ == '__main__':
     goal.move_lin.pose_goal.orientation.z = 0.0
     goal.move_lin.pose_goal.orientation.w = 1.0
     goal.move_lin.frame_id = 'world'
-    goal.move_lin.rotate_only = False
 
-    goal.move_lin.profile.vel = 0.2
-    goal.move_lin.profile.accl = 0.1
-    goal.move_lin.profile.profile_type = Profile.SINOID
+    goal.profile.vel = 0.2
+    goal.profile.accl = 0.1
+    goal.profile.profile_type = Profile.SINOID
 
-    print goal
+    #print goal
 
     # Send the goal
     client.send_goal(goal)

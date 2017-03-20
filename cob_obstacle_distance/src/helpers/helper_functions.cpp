@@ -27,6 +27,10 @@
  *   Code from: https://svn.personalrobotics.ri.cmu.edu/public/13.3/or_plugins/or_urdf/src/urdf_loader.cpp
  *
  ****************************************************************/
+
+#include <string>
+#include <map>
+
 #include <ros/ros.h>
 #include <ros/package.h>
 #include <boost/filesystem.hpp>
@@ -41,18 +45,15 @@ const std::string resolveURI(const std::string& path)
 
     if (uri.find("file://") == 0)
     {
-
       // Strip off the file://
       uri.erase(0, strlen("file://"));
 
       // Resolve the mesh path as a file URI
       boost::filesystem::path file_path(uri);
       return file_path.string();
-
     }
     else if (uri.find("package://") == 0)
     {
-
       // Strip off the package://
       uri.erase(0, strlen("package://"));
 
@@ -87,7 +88,6 @@ const std::string resolveURI(const std::string& path)
 
       // Return the canonical path
       return file_path.string();
-
     }
     else
     {
