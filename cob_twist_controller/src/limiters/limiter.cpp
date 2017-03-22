@@ -33,14 +33,24 @@
 
 /* BEGIN LimiterContainer ***************************************************************************************/
 /**
- * This implementation calls enforce limits on all registered Limiters in the limiters vector.
- * The method is based on the last calculation of q_dot.
+ * This implementation calls enforce limits on all registered Limiters in the respective limiters vector.
  */
+KDL::Twist LimiterContainer::enforceLimits(const KDL::Twist& v_in) const
+{
+    // If nothing to do just return v_in.
+    KDL::Twist v_out(v_in);
+    for (input_LimIter_t it = this->input_limiters_.begin(); it != this->input_limiters_.end(); it++)
+    {
+        v_out = (*it)->enforceLimits(v_out);
+    }
+
+    return v_out;
+}
 KDL::JntArray LimiterContainer::enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const
 {
     // If nothing to do just return q_dot.
     KDL::JntArray q_dot_norm(q_dot_ik);
-    for (LimIter_t it = this->limiters_.begin(); it != this->limiters_.end(); it++)
+    for (output_LimIter_t it = this->output_limiters_.begin(); it != this->output_limiters_.end(); it++)
     {
         q_dot_norm = (*it)->enforceLimits(q_dot_norm, q);
     }
@@ -57,6 +67,11 @@ void LimiterContainer::init()
 
     if (limiter_params_.keep_direction)
     {
+        if (limiter_params_.enforce_input_limits)
+        {
+            this->add(new LimiterAllCartesianVelocities(limiter_params_));
+        }
+
         if (limiter_params_.enforce_pos_limits)
         {
             this->add(new LimiterAllJointPositions(limiter_params_));
@@ -74,6 +89,11 @@ void LimiterContainer::init()
     }
     else
     {
+        if (limiter_params_.enforce_input_limits)
+        {
+            this->add(new LimiterIndividualCartesianVelocities(limiter_params_));
+        }
+
         if (limiter_params_.enforce_pos_limits)
         {
             this->add(new LimiterIndividualJointPositions(limiter_params_));
@@ -96,21 +116,29 @@ void LimiterContainer::init()
  */
 void LimiterContainer::eraseAll()
 {
-    for (uint32_t cnt = 0; cnt < this->limiters_.size(); ++cnt)
+    for (uint32_t cnt = 0; cnt < this->input_limiters_.size(); ++cnt)
     {
-        const LimiterBase* lb = this->limiters_[cnt];
-        delete(lb);
+        delete(this->input_limiters_[cnt]);
+    }
+    for (uint32_t cnt = 0; cnt < this->output_limiters_.size(); ++cnt)
+    {
+        delete(this->output_limiters_[cnt]);
     }
 
-    this->limiters_.clear();
+    this->input_limiters_.clear();
+    this->output_limiters_.clear();
 }
 
 /**
  * Adding new limiters to the vector.
  */
-void LimiterContainer::add(const LimiterBase* lb)
+void LimiterContainer::add(const LimiterCartesianBase* lb)
 {
-    this->limiters_.push_back(lb);
+    this->input_limiters_.push_back(lb);
+}
+void LimiterContainer::add(const LimiterJointBase* lb)
+{
+    this->output_limiters_.push_back(lb);
 }
 
 /**
@@ -237,6 +265,39 @@ KDL::JntArray LimiterAllJointAccelerations::enforceLimits(const KDL::JntArray& q
 }
 /* END LimiterAllJointAccelerations *****************************************************************************/
 
+/* BEGIN LimiterAllCartesianVelocities ********************************************************************/
+/**
+ * This implementation implements a saturation function to the Cartesian twists
+ * Enforce limits on all Cartesian velocities proporionally to keep direction.
+ */
+KDL::Twist LimiterAllCartesianVelocities::enforceLimits(const KDL::Twist& v_in) const
+{
+    KDL::Twist v_out(v_in);
+
+    double max_factor = 1.0;
+    max_factor = std::max( max_factor, std::fabs(v_in.rot.x()/limiter_params_.max_rot_twist) );
+    max_factor = std::max( max_factor, std::fabs(v_in.rot.y()/limiter_params_.max_rot_twist) );
+    max_factor = std::max( max_factor, std::fabs(v_in.rot.z()/limiter_params_.max_rot_twist) );
+    max_factor = std::max( max_factor, std::fabs(v_in.vel.x()/limiter_params_.max_lin_twist) );
+    max_factor = std::max( max_factor, std::fabs(v_in.vel.y()/limiter_params_.max_lin_twist) );
+    max_factor = std::max( max_factor, std::fabs(v_in.vel.z()/limiter_params_.max_lin_twist) );
+
+    if (max_factor > 1.0)
+    {
+        ROS_WARN_STREAM_THROTTLE(1, "Cartesian velocity limit surpassed: Scaling ALL VELOCITIES with factor = " << max_factor);
+        v_out.rot.x(v_in.rot.x()/max_factor);
+        v_out.rot.y(v_in.rot.y()/max_factor);
+        v_out.rot.z(v_in.rot.z()/max_factor);
+        v_out.vel.x(v_in.vel.x()/max_factor);
+        v_out.vel.y(v_in.vel.y()/max_factor);
+        v_out.vel.z(v_in.vel.z()/max_factor);
+        
+    }
+
+    return v_out;
+}
+/* END LimiterAllCartesianVelocities **********************************************************************/
+
 /* BEGIN LimiterIndividualJointPositions ************************************************************************/
 /**
  * This implementation calculates limits for the joint positions without keeping the direction.
@@ -320,3 +381,48 @@ KDL::JntArray LimiterIndividualJointAccelerations::enforceLimits(const KDL::JntA
     return q_dot_norm;
 }
 /* END LimiterIndividualJointAccelerations **********************************************************************/
+
+/* BEGIN LimiterIndividualCartesianVelocities ********************************************************************/
+/**
+ * This implementation implements a saturation function to the Cartesian twists.
+ * Each Cartesian velocity is limited individually.
+ */
+KDL::Twist LimiterIndividualCartesianVelocities::enforceLimits(const KDL::Twist& v_in) const
+{
+    KDL::Twist v_out(v_in);
+
+    // limiting rotational velocities
+    if (v_in.rot.x() >limiter_params_.max_rot_twist)
+        v_out.rot.x(limiter_params_.max_rot_twist);
+    if (v_in.rot.x() <-limiter_params_.max_rot_twist)
+        v_out.rot.x(-limiter_params_.max_rot_twist);
+
+    if (v_in.rot.y() >limiter_params_.max_rot_twist)
+        v_out.rot.y(limiter_params_.max_rot_twist);
+    if (v_in.rot.y() <-limiter_params_.max_rot_twist)
+        v_out.rot.y(-limiter_params_.max_rot_twist);
+
+    if (v_in.rot.z() >limiter_params_.max_rot_twist)
+        v_out.rot.z(limiter_params_.max_rot_twist);
+    if (v_in.rot.z() <-limiter_params_.max_rot_twist)
+        v_out.rot.z(-limiter_params_.max_rot_twist);
+
+    // limiting linear velocities
+    if (v_in.vel.x() >limiter_params_.max_lin_twist)
+        v_out.vel.x(limiter_params_.max_lin_twist);
+    if (v_in.vel.x() <-limiter_params_.max_lin_twist)
+        v_out.vel.x(-limiter_params_.max_lin_twist);
+
+    if (v_in.vel.y() >limiter_params_.max_lin_twist)
+        v_out.vel.y(limiter_params_.max_lin_twist);
+    if (v_in.vel.y() <-limiter_params_.max_lin_twist)
+        v_out.vel.y(-limiter_params_.max_lin_twist);
+
+    if (v_in.vel.z() >limiter_params_.max_lin_twist)
+        v_out.vel.z(limiter_params_.max_lin_twist);
+    if (v_in.vel.z() <-limiter_params_.max_lin_twist)
+        v_out.vel.z(-limiter_params_.max_lin_twist);
+
+    return v_out;
+}
+/* END LimiterIndividualCartesianVelocities **********************************************************************/

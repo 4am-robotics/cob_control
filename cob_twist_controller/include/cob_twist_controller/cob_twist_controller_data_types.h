@@ -176,17 +176,27 @@ struct LimiterParams
 {
     LimiterParams() :
         keep_direction(true),
+        enforce_input_limits(true),
         enforce_pos_limits(true),
         enforce_vel_limits(true),
         enforce_acc_limits(false),
-        limits_tolerance(5.0)
+        limits_tolerance(5.0),
+        max_lin_twist(0.5),
+        max_rot_twist(0.5),
+        max_vel_lin_base(0.5),
+        max_vel_rot_base(0.5)
     {}
 
     bool keep_direction;
+    bool enforce_input_limits;
     bool enforce_pos_limits;
     bool enforce_vel_limits;
     bool enforce_acc_limits;
     double limits_tolerance;
+    double max_lin_twist;
+    double max_rot_twist;
+    double max_vel_lin_base;
+    double max_vel_rot_base;
 
     std::vector<double> limits_max;
     std::vector<double> limits_min;

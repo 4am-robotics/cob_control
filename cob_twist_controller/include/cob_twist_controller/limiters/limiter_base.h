@@ -3,7 +3,7 @@
  * \file
  *
  * \note
- *   Copyright (c) 2015 \n
+ *   Copyright (c) 2017 \n
  *   Fraunhofer Institute for Manufacturing Engineering
  *   and Automation (IPA) \n\n
  *
@@ -18,6 +18,7 @@
  *
  * \author
  *   Author: Marco Bezzon, email: Marco.Bezzon@ipa.fraunhofer.de
+ *   Bruno Brito, email: Bruno.Brito@fraunhofer.de
  *
  * \date Date of creation: April, 2015
  *
@@ -31,14 +32,14 @@
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 
-/// Base class for limiters, defining interface methods.
-class LimiterBase
+/// Base class for joint/output limiters, defining interface methods.
+class LimiterJointBase
 {
     public:
-        explicit LimiterBase(const LimiterParams& limiter_params) : limiter_params_(limiter_params)
+        explicit LimiterJointBase(const LimiterParams& limiter_params) : limiter_params_(limiter_params)
         {}
 
-        virtual ~LimiterBase() {}
+        virtual ~LimiterJointBase() {}
 
         /**
          * Pure virtual method to mark as interface method which has to be implemented in inherited classes.
@@ -52,6 +53,30 @@ class LimiterBase
 
     protected:
         const LimiterParams& limiter_params_;
+
+};
+
+/// Base class for cartesian/input limiters, defining interface methods.
+class LimiterCartesianBase
+{
+    public:
+        explicit LimiterCartesianBase(const LimiterParams& limiter_params) : limiter_params_(limiter_params)
+        {}
+
+        virtual ~LimiterCartesianBase() {}
+
+        /**
+         * Pure virtual method to mark as interface method which has to be implemented in inherited classes.
+         * The intention is to implement a method which enforces limits to the Cartesian twist vector according to
+         * the output of the Cartesian controller.
+         * @param v_in are the generated Cartesian twist velocities.
+         * @return Scaled Cartesian twist vector.
+         */
+        virtual KDL::Twist enforceLimits(const KDL::Twist& v_in) const = 0;
+
+    protected:
+        const LimiterParams& limiter_params_;
+
 };
 
 #endif  // COB_TWIST_CONTROLLER_LIMITERS_LIMITER_BASE_H
