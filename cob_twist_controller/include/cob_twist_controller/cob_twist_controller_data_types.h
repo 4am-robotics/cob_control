@@ -54,14 +54,6 @@ enum DampingMethodTypes
     SIGMOID = cob_twist_controller::TwistController_SIGMOID,
 };
 
-enum ControllerInterfaceTypes
-{
-    VELOCITY_INTERFACE = cob_twist_controller::TwistController_VELOCITY_INTERFACE,
-    POSITION_INTERFACE = cob_twist_controller::TwistController_POSITION_INTERFACE,
-    TRAJECTORY_INTERFACE = cob_twist_controller::TwistController_TRAJECTORY_INTERFACE,
-    JOINT_STATE_INTERFACE = cob_twist_controller::TwistController_JOINT_STATE_INTERFACE,
-};
-
 enum KinematicExtensionTypes
 {
     NO_EXTENSION = cob_twist_controller::TwistController_NO_EXTENSION,
@@ -208,7 +200,7 @@ struct TwistControllerParams
 {
     TwistControllerParams() :
         dof(0),
-        controller_interface(VELOCITY_INTERFACE),
+        controller_interface(""),
         integrator_smoothing(0.2),
 
         numerical_filtering(false),
@@ -250,7 +242,7 @@ struct TwistControllerParams
     std::string chain_base_link;
     std::string chain_tip_link;
 
-    ControllerInterfaceTypes controller_interface;
+    std::string controller_interface;
     double integrator_smoothing;
 
     bool numerical_filtering;

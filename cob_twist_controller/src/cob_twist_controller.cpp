@@ -137,6 +137,25 @@ bool CobTwistController::initialize()
         }
     }
 
+    // Configure Controller Interface
+    if (!nh_twist.getParam("controller_interface", twist_controller_params_.controller_interface))
+    {
+        ROS_ERROR("Parameter 'controller_interface' not set");
+        return false;
+    }
+    nh_twist.param<double>("integrator_smoothing", twist_controller_params_.integrator_smoothing, 0.2);
+    try
+    {
+        interface_loader_.reset(new pluginlib::ClassLoader<cob_twist_controller::ControllerInterfaceBase>("cob_twist_controller", "cob_twist_controller::ControllerInterfaceBase"));
+        this->controller_interface_ = interface_loader_->createInstance(twist_controller_params_.controller_interface);
+        this->controller_interface_->initialize(this->nh_, this->twist_controller_params_);
+    }
+    catch(pluginlib::PluginlibException& ex)
+    {
+        ROS_ERROR("The controller_interface plugin failed to load. Error: %s", ex.what());
+        return false;
+    }
+
     twist_controller_params_.frame_names.clear();
     for (uint16_t i = 0; i < chain_.getNrOfSegments(); ++i)
     {
@@ -170,8 +189,6 @@ bool CobTwistController::initialize()
     twist_stamped_sub_ = nh_twist.subscribe("command_twist_stamped", 1, &CobTwistController::twistStampedCallback, this);
 
     odometry_sub_ = nh_.subscribe("base/odometry", 1, &CobTwistController::odometryCallback, this);
-
-    this->controller_interface_.reset(ControllerInterfaceBuilder::createControllerInterface(this->nh_, this->twist_controller_params_, this->joint_states_));
 
     /// publisher for visualizing current twist direction
     twist_direction_pub_ = nh_.advertise<visualization_msgs::MarkerArray>("twist_direction", 1);
@@ -213,9 +230,6 @@ bool CobTwistController::registerCollisionLinks()
 void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControllerConfig& config, uint32_t level)
 {
     this->checkSolverAndConstraints(config);
-
-    twist_controller_params_.controller_interface = static_cast<ControllerInterfaceTypes>(config.controller_interface);
-    twist_controller_params_.integrator_smoothing = config.integrator_smoothing;
 
     twist_controller_params_.numerical_filtering = config.numerical_filtering;
     twist_controller_params_.damping_method = static_cast<DampingMethodTypes>(config.damping_method);
@@ -265,8 +279,6 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
 
     twist_controller_params_.kinematic_extension = static_cast<KinematicExtensionTypes>(config.kinematic_extension);
     twist_controller_params_.extension_ratio = config.extension_ratio;
-
-    this->controller_interface_.reset(ControllerInterfaceBuilder::createControllerInterface(this->nh_, this->twist_controller_params_, this->joint_states_));
 
     p_inv_diff_kin_solver_->resetAll(this->twist_controller_params_);
 }

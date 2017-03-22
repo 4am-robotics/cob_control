@@ -36,24 +36,25 @@
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/utils/simpson_integrator.h"
 
+namespace cob_twist_controller
+{
+
 /// Base class for controller interfaces.
 class ControllerInterfaceBase
 {
     public:
-        explicit ControllerInterfaceBase(ros::NodeHandle& nh,
-                                         const TwistControllerParams& params):
-            nh_(nh),
-            params_(params)
-        {}
-
         virtual ~ControllerInterfaceBase() {}
 
+        virtual void initialize(ros::NodeHandle& nh,
+                                const TwistControllerParams& params) = 0;
         virtual void processResult(const KDL::JntArray& q_dot_ik,
                                    const KDL::JntArray& current_q) = 0;
 
     protected:
-        const TwistControllerParams& params_;
-        ros::NodeHandle& nh_;
+        ControllerInterfaceBase() {}
+
+        TwistControllerParams params_;
+        ros::NodeHandle nh_;
         ros::Publisher pub_;
 };
 
@@ -61,18 +62,7 @@ class ControllerInterfaceBase
 class ControllerInterfacePositionBase : public ControllerInterfaceBase
 {
     public:
-        explicit ControllerInterfacePositionBase(ros::NodeHandle& nh,
-                                                 const TwistControllerParams& params)
-        : ControllerInterfaceBase(nh, params)
-        {
-            last_update_time_ = ros::Time(0.0);
-            integrator_.reset(new SimpsonIntegrator(params.dof, params.integrator_smoothing));
-        }
-
         ~ControllerInterfacePositionBase() {}
-
-        virtual void processResult(const KDL::JntArray& q_dot_ik,
-                                   const KDL::JntArray& current_q) = 0;
 
         bool updateIntegration(const KDL::JntArray& q_dot_ik,
                                const KDL::JntArray& current_q)
@@ -84,10 +74,14 @@ class ControllerInterfacePositionBase : public ControllerInterfaceBase
         }
 
     protected:
+        ControllerInterfacePositionBase() {}
+
         boost::shared_ptr<SimpsonIntegrator> integrator_;
         std::vector<double> pos_, vel_;
         ros::Time last_update_time_;
         ros::Duration period_;
 };
+
+}
 
 #endif  // COB_TWIST_CONTROLLER_CONTROLLER_INTERFACES_CONTROLLER_INTERFACE_BASE_H

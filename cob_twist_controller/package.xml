@@ -33,6 +33,7 @@
   <depend>kdl_parser</depend>
   <depend>nav_msgs</depend>
   <depend>orocos_kdl</depend>
+  <depend>pluginlib</depend>
   <depend>roscpp</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
@@ -49,4 +50,7 @@
   <exec_depend>topic_tools</exec_depend>
   <exec_depend>xacro</exec_depend>
 
+  <export>
+    <cob_twist_controller plugin="${prefix}/controller_interface_plugins.xml"/>
+  </export>
 </package>

@@ -51,11 +51,12 @@
 #include <boost/shared_ptr.hpp>
 
 #include <dynamic_reconfigure/server.h>
+#include <pluginlib/class_loader.h>
 
 #include <cob_twist_controller/TwistControllerConfig.h>
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include <cob_twist_controller/inverse_differential_kinematics_solver.h>
-#include "cob_twist_controller/controller_interfaces/controller_interface.h"
+#include "cob_twist_controller/controller_interfaces/controller_interface_base.h"
 #include "cob_twist_controller/callback_data_mediator.h"
 
 class CobTwistController
@@ -83,7 +84,8 @@ private:
 
     boost::shared_ptr<KDL::ChainFkSolverVel_recursive> jntToCartSolver_vel_;
     boost::shared_ptr<InverseDifferentialKinematicsSolver> p_inv_diff_kin_solver_;
-    boost::shared_ptr<ControllerInterfaceBase> controller_interface_;
+    boost::shared_ptr<cob_twist_controller::ControllerInterfaceBase> controller_interface_;
+    boost::shared_ptr<pluginlib::ClassLoader<cob_twist_controller::ControllerInterfaceBase> > interface_loader_;
 
     CallbackDataMediator callback_data_mediator_;
 
