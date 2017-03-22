@@ -33,12 +33,11 @@
 
 /* BEGIN LimiterContainer ***************************************************************************************/
 /**
- * This implementation calls enforce limits on all registered Limiters in the limiters vector.
- * The method is based on the last calculation of q_dot.
+ * This implementation calls enforce limits on all registered Limiters in the respective limiters vector.
  */
-KDL::Twist LimiterCartesianContainer::enforceLimits(const KDL::Twist& v_in) const
+KDL::Twist LimiterContainer::enforceLimits(const KDL::Twist& v_in) const
 {
-    // If nothing to do just return q_dot.
+    // If nothing to do just return v_in.
     KDL::Twist v_out(v_in);
     for (input_LimIter_t it = this->input_limiters_.begin(); it != this->input_limiters_.end(); it++)
     {
@@ -47,7 +46,7 @@ KDL::Twist LimiterCartesianContainer::enforceLimits(const KDL::Twist& v_in) cons
 
     return v_out;
 }
-KDL::JntArray LimiterJointContainer::enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const
+KDL::JntArray LimiterContainer::enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const
 {
     // If nothing to do just return q_dot.
     KDL::JntArray q_dot_norm(q_dot_ik);
@@ -58,10 +57,11 @@ KDL::JntArray LimiterJointContainer::enforceLimits(const KDL::JntArray& q_dot_ik
 
     return q_dot_norm;
 }
+
 /**
  * Building the limiters vector according the the chosen parameters.
  */
-void LimiterJointContainer::init()
+void LimiterContainer::init()
 {
     this->eraseAll();
 
@@ -99,63 +99,47 @@ void LimiterJointContainer::init()
             this->add(new LimiterIndividualJointAccelerations(limiter_params_));
         }
     }
-}
-
-void LimiterCartesianContainer::init()
-{
-    this->eraseAll();
-
     this->add(new LimiterCartesianVelocities(limiter_params_));
 }
+
 /**
  * Deletes all limiters and clears the vector holding them.
  */
-void LimiterJointContainer::eraseAll()
-{
-    for (uint32_t cnt = 0; cnt < this->output_limiters_.size(); ++cnt)
-    {
-        const LimiterJointBase* lb = this->output_limiters_[cnt];
-        delete(lb);
-    }
-
-    this->output_limiters_.clear();
-}
-
-void LimiterCartesianContainer::eraseAll()
+void LimiterContainer::eraseAll()
 {
     for (uint32_t cnt = 0; cnt < this->input_limiters_.size(); ++cnt)
     {
-        const LimiterCartesianBase* lb = this->input_limiters_[cnt];
-        delete(lb);
+        delete(this->input_limiters_[cnt]);
+    }
+    for (uint32_t cnt = 0; cnt < this->output_limiters_.size(); ++cnt)
+    {
+        delete(this->output_limiters_[cnt]);
     }
 
     this->input_limiters_.clear();
+    this->output_limiters_.clear();
 }
+
 /**
  * Adding new limiters to the vector.
  */
-void LimiterJointContainer::add(const LimiterJointBase* lb)
-{
-    this->output_limiters_.push_back(lb);
-}
-
-void LimiterCartesianContainer::add(const LimiterCartesianBase* lb)
+void LimiterContainer::add(const LimiterCartesianBase* lb)
 {
     this->input_limiters_.push_back(lb);
+}
+void LimiterContainer::add(const LimiterJointBase* lb)
+{
+    this->output_limiters_.push_back(lb);
 }
 
 /**
  * Destruction of the whole container
  */
-LimiterJointContainer::~LimiterJointContainer()
+LimiterContainer::~LimiterContainer()
 {
     this->eraseAll();
 }
 
-LimiterCartesianContainer::~LimiterCartesianContainer()
-{
-    this->eraseAll();
-}
 /* END LimiterContainer *****************************************************************************************/
 
 /* BEGIN LimiterAllJointPositions *******************************************************************************/

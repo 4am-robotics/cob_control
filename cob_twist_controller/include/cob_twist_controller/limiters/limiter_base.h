@@ -32,7 +32,7 @@
 
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 
-/// Joint Base class for limiters, defining interface methods.
+/// Base class for joint/output limiters, defining interface methods.
 class LimiterJointBase
 {
     public:
@@ -52,11 +52,11 @@ class LimiterJointBase
         virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const = 0;
 
     protected:
-            const LimiterParams& limiter_params_;
+        const LimiterParams& limiter_params_;
 
 };
 
-/// Cartesian Base class for limiters, defining interface methods.
+/// Base class for cartesian/input limiters, defining interface methods.
 class LimiterCartesianBase
 {
     public:
@@ -75,7 +75,7 @@ class LimiterCartesianBase
         virtual KDL::Twist enforceLimits(const KDL::Twist& v_in) const = 0;
 
     protected:
-            const LimiterParams& limiter_params_;
+        const LimiterParams& limiter_params_;
 
 };
 

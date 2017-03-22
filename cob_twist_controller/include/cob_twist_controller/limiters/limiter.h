@@ -37,14 +37,15 @@
 #define LIMIT_SAFETY_THRESHOLD 0.1/180.0*M_PI
 
 /* BEGIN LimiterJointContainer *******************************************************************************/
-/// Joint Container for limiters, implementing interface methods.
-class LimiterJointContainer : public LimiterJointBase
+/// Container for limiters, implementing interface methods.
+class LimiterContainer
 {
     public:
         /**
          * Specific implementation of enforceLimits-method.
          * See base class LimiterJointBase for more details on params and returns.
          */
+        virtual KDL::Twist enforceLimits(const KDL::Twist& v_in) const;
         virtual KDL::JntArray enforceLimits(const KDL::JntArray& q_dot_ik, const KDL::JntArray& q) const;
 
         /**
@@ -52,20 +53,25 @@ class LimiterJointContainer : public LimiterJointBase
          */
         void init();
 
-        virtual ~LimiterJointContainer();
+        virtual ~LimiterContainer();
 
-        explicit LimiterJointContainer(const LimiterParams& limiter_params)
-            : LimiterJointBase(limiter_params)
+        explicit LimiterContainer(const LimiterParams& limiter_params) :
+            limiter_params_(limiter_params)
         {}
 
     protected:
+        const LimiterParams& limiter_params_;
+
+        std::vector<const LimiterCartesianBase*> input_limiters_;
         std::vector<const LimiterJointBase*> output_limiters_;
+        typedef std::vector<const LimiterCartesianBase*>::const_iterator input_LimIter_t;
         typedef std::vector<const LimiterJointBase*>::const_iterator output_LimIter_t;
 
         /**
          * Add method
          * @param lb An implementation of a limiter.
          */
+        void add(const LimiterCartesianBase* lb);
         void add(const LimiterJointBase* lb);
 
         /**
@@ -74,46 +80,6 @@ class LimiterJointContainer : public LimiterJointBase
         void eraseAll();
 };
 /* END LimiterJointContainer *****************************************************************************************/
-
-/* BEGIN LimiterContainer *******************************************************************************/
-/// Container for limiters, implementing interface methods.
-class LimiterCartesianContainer : public LimiterCartesianBase
-{
-    public:
-        /**
-         * Specific implementation of enforceLimits-method.
-         * See base class LimiterCartesianBase for more details on params and returns.
-         */
-
-        virtual KDL::Twist enforceLimits(const KDL::Twist& v_in) const;
-
-        /**
-         * Initialization for the container.
-         */
-        void init();
-
-        virtual ~LimiterCartesianContainer();
-
-        explicit LimiterCartesianContainer(const LimiterParams& limiter_params)
-            : LimiterCartesianBase(limiter_params)
-        {}
-
-    protected:
-        std::vector<const LimiterCartesianBase*> input_limiters_;
-        typedef std::vector<const LimiterCartesianBase*>::const_iterator input_LimIter_t;
-
-        /**
-         * Add method
-         * @param lb An implementation of a limiter.
-         */
-        void add(const LimiterCartesianBase* lb);
-
-        /**
-         * Erase all
-         */
-        void eraseAll();
-};
-/* END LimiterCartesianContainer *****************************************************************************************/
 
 /* BEGIN LimiterAllJointPositions *******************************************************************************/
 /// Class for limiters, declaring the method to limit all joint positions.
