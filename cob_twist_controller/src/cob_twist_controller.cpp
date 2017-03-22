@@ -253,12 +253,15 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     twist_controller_params_.eps_truncation = config.eps_truncation;
 
     twist_controller_params_.limiter_params.keep_direction = config.keep_direction;
+    twist_controller_params_.limiter_params.enforce_input_limits = config.enforce_input_limits;
     twist_controller_params_.limiter_params.enforce_pos_limits = config.enforce_pos_limits;
     twist_controller_params_.limiter_params.enforce_vel_limits = config.enforce_vel_limits;
     twist_controller_params_.limiter_params.enforce_acc_limits = config.enforce_acc_limits;
     twist_controller_params_.limiter_params.limits_tolerance = config.limits_tolerance;
     twist_controller_params_.limiter_params.max_lin_twist = config.max_lin_twist;
-    twist_controller_params_.limiter_params.max_lin_twist = config.max_rot_twist;
+    twist_controller_params_.limiter_params.max_rot_twist = config.max_rot_twist;
+    twist_controller_params_.limiter_params.max_vel_lin_base = config.max_vel_lin_base;
+    twist_controller_params_.limiter_params.max_vel_rot_base = config.max_vel_rot_base;
 
     twist_controller_params_.kinematic_extension = static_cast<KinematicExtensionTypes>(config.kinematic_extension);
     twist_controller_params_.extension_ratio = config.extension_ratio;
@@ -331,10 +334,16 @@ void CobTwistController::checkSolverAndConstraints(cob_twist_controller::TwistCo
 
     if (twist_controller_params_.limiter_params.limits_tolerance <= DIV0_SAFE)
     {
-        ROS_ERROR("The limits_tolerance for enforce limits is smaller than DIV/0 threshold. Therefore both enforce_limits are set to false!");
+        ROS_ERROR("The limits_tolerance for enforce limits is smaller than DIV/0 threshold. Therefore output limiting is disabled");
         twist_controller_params_.limiter_params.enforce_pos_limits = config.enforce_pos_limits = false;
         twist_controller_params_.limiter_params.enforce_vel_limits = config.enforce_vel_limits = false;
         twist_controller_params_.limiter_params.enforce_acc_limits = config.enforce_acc_limits = false;
+    }
+    if (twist_controller_params_.limiter_params.max_lin_twist <= DIV0_SAFE ||
+        twist_controller_params_.limiter_params.max_rot_twist <= DIV0_SAFE)
+    {
+        ROS_ERROR("The limits used to limit Cartesian velocities are smaller than DIV/0 threshold. Therefore input limiting is disabled");
+        twist_controller_params_.limiter_params.enforce_input_limits = config.enforce_input_limits = false;
     }
 
     if (!warning)

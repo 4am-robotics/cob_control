@@ -132,6 +132,23 @@ class LimiterAllJointAccelerations : public LimiterJointBase
 };
 /* END LimiterAllJointAccelerations ******************************************************************************/
 
+/* BEGIN LimiterAllCartesianVelocities ***********************************************************************/
+/// Class for limiting the cartesian velocities commands in order to guarantee a BIBO system (all scaled to keep direction).
+class LimiterAllCartesianVelocities : public LimiterCartesianBase
+{
+    public:
+        /**
+         * Specific implementation of enforceLimits-method.
+         * See base class LimiterCartesianBase for more details on params and returns.
+         */
+        virtual KDL::Twist enforceLimits(const KDL::Twist& v_in) const;
+
+        explicit LimiterAllCartesianVelocities(const LimiterParams& limiter_params) :
+            LimiterCartesianBase(limiter_params)
+        {}
+};
+/* END LimiterAllCartesianVelocities *************************************************************************/
+
 /* BEGIN LimiterIndividualJointPositions *************************************************************************/
 /// Class for a limiter, declaring a method to limit joint positions individually
 class LimiterIndividualJointPositions : public LimiterJointBase
@@ -183,22 +200,21 @@ class LimiterIndividualJointAccelerations : public LimiterJointBase
 };
 /* END LimiterIndividualJointAccelerations *************************************************************************/
 
-/* BEGIN LimiterCartesianVelocities ***********************************************************************/
-/// Class for limiting the cartesian velocities commands in order to guarantee a BIBO system.
-class LimiterCartesianVelocities : public LimiterCartesianBase
+/* BEGIN LimiterIndividualCartesianVelocities ***********************************************************************/
+/// Class for limiting the cartesian velocities commands in order to guarantee a BIBO system (individually scaled -> changes direction).
+class LimiterIndividualCartesianVelocities : public LimiterCartesianBase
 {
     public:
         /**
          * Specific implementation of enforceLimits-method.
          * See base class LimiterCartesianBase for more details on params and returns.
          */
-
         virtual KDL::Twist enforceLimits(const KDL::Twist& v_in) const;
 
-        explicit LimiterCartesianVelocities(const LimiterParams& limiter_params) :
+        explicit LimiterIndividualCartesianVelocities(const LimiterParams& limiter_params) :
             LimiterCartesianBase(limiter_params)
         {}
 };
-/* END LimiterCartesianVelocities *************************************************************************/
+/* END LimiterIndividualCartesianVelocities *************************************************************************/
 
 #endif  // COB_TWIST_CONTROLLER_LIMITERS_LIMITER_H
