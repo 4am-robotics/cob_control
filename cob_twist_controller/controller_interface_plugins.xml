@@ -1,0 +1,14 @@
+<library path="lib/libcontroller_interfaces">
+	<class name="cob_twist_controller/ControllerInterfaceVelocity" type="cob_twist_controller::ControllerInterfaceVelocity" base_class_type="cob_twist_controller::ControllerInterfaceBase">
+		<description> A controller interface publishing target velocities as std_msgs/Float64MultiArray </description>
+	</class>
+	<class name="cob_twist_controller/ControllerInterfacePosition" type="cob_twist_controller::ControllerInterfacePosition" base_class_type="cob_twist_controller::ControllerInterfaceBase">
+		<description> A controller interface publishing target positions as std_msgs/Float64MultiArray </description>
+	</class>
+	<class name="cob_twist_controller/ControllerInterfaceTrajectory" type="cob_twist_controller::ControllerInterfaceTrajectory" base_class_type="cob_twist_controller::ControllerInterfaceBase">
+		<description> A controller interface publishing target positions as trajectory_msgs/JointTrajectory </description>
+	</class>
+	<class name="cob_twist_controller/ControllerInterfaceJointStates" type="cob_twist_controller::ControllerInterfaceJointStates" base_class_type="cob_twist_controller::ControllerInterfaceBase">
+		<description> A controller interface publishing target positions as sensor_msgs/JointStates </description>
+	</class>
+</library>

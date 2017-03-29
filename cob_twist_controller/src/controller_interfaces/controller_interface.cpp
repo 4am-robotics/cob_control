@@ -26,42 +26,21 @@
  *
  ****************************************************************/
 
+#include <pluginlib/class_list_macros.h>
 #include "cob_twist_controller/controller_interfaces/controller_interface.h"
+#include "cob_twist_controller/controller_interfaces/controller_interface_base.h"
 
-/* BEGIN ControllerInterfaceBuilder *****************************************************************************************/
-/**
- * Static builder method to create controller interface based on given parameterization.
- */
-ControllerInterfaceBase* ControllerInterfaceBuilder::createControllerInterface(ros::NodeHandle& nh,
-                                                                               const TwistControllerParams& params,
-                                                                               const JointStates& joint_states)
+namespace cob_twist_controller
 {
-    ControllerInterfaceBase* ib = NULL;
-    switch (params.controller_interface)
-    {
-        case VELOCITY_INTERFACE:
-            ib = new ControllerInterfaceVelocity(nh, params);
-            break;
-        case POSITION_INTERFACE:
-            ib = new ControllerInterfacePosition(nh, params);
-            break;
-        case TRAJECTORY_INTERFACE:
-            ib = new ControllerInterfaceTrajectory(nh, params);
-            break;
-        case JOINT_STATE_INTERFACE:
-            ib = new ControllerInterfaceJointStates(nh, params, joint_states);
-            break;
-        default:
-            ROS_ERROR("ControllerInterface %d not defined! Using default: 'VELOCITY_INTERFACE'!", params.controller_interface);
-            ib = new ControllerInterfaceVelocity(nh, params);
-            break;
-    }
-
-    return ib;
-}
-/* END ControllerInterfaceBuilder *******************************************************************************************/
 
 /* BEGIN ControllerInterfaceVelocity ********************************************************************************************/
+void ControllerInterfaceVelocity::initialize(ros::NodeHandle& nh,
+                                             const TwistControllerParams& params)
+{
+    nh_ = nh;
+    params_ = params;
+    pub_ = nh.advertise<std_msgs::Float64MultiArray>("joint_group_velocity_controller/command", 1);
+}
 /**
  * Method processing the result by publishing to the 'joint_group_velocity_controller/command' topic.
  */
@@ -81,6 +60,15 @@ inline void ControllerInterfaceVelocity::processResult(const KDL::JntArray& q_do
 
 
 /* BEGIN ControllerInterfacePosition ****************************************************************************************/
+void ControllerInterfacePosition::initialize(ros::NodeHandle& nh,
+                                             const TwistControllerParams& params)
+{
+    nh_ = nh;
+    params_ = params;
+    last_update_time_ = ros::Time(0.0);
+    integrator_.reset(new SimpsonIntegrator(params.dof, params.integrator_smoothing));
+    pub_ = nh.advertise<std_msgs::Float64MultiArray>("joint_group_position_controller/command", 1);
+}
 /**
  * Method processing the result using integration method (Simpson) and publishing to the 'joint_group_position_controller/command' topic.
  */
@@ -99,6 +87,15 @@ inline void ControllerInterfacePosition::processResult(const KDL::JntArray& q_do
 
 
 /* BEGIN ControllerInterfaceTrajectory ****************************************************************************************/
+void ControllerInterfaceTrajectory::initialize(ros::NodeHandle& nh,
+                                               const TwistControllerParams& params)
+{
+    nh_ = nh;
+    params_ = params;
+    last_update_time_ = ros::Time(0.0);
+    integrator_.reset(new SimpsonIntegrator(params.dof, params.integrator_smoothing));
+    pub_ = nh.advertise<trajectory_msgs::JointTrajectory>("joint_trajectory_controller/command", 1);
+}
 /**
  * Method processing the result using integration method (Simpson) and publishing to the 'joint_trajectory_controller/command' topic.
  */
@@ -127,6 +124,31 @@ inline void ControllerInterfaceTrajectory::processResult(const KDL::JntArray& q_
 
 
 /* BEGIN ControllerInterfaceJointStates ****************************************************************************************/
+void ControllerInterfaceJointStates::initialize(ros::NodeHandle& nh,
+                                                const TwistControllerParams& params)
+{
+    nh_ = nh;
+    params_ = params;
+    last_update_time_ = ros::Time(0.0);
+    integrator_.reset(new SimpsonIntegrator(params.dof, params.integrator_smoothing));
+    pub_ = nh.advertise<sensor_msgs::JointState>("joint_states", 1);
+
+    js_msg_.name = params_.joints;
+    js_msg_.position.clear();
+    js_msg_.velocity.clear();
+    js_msg_.effort.clear();
+
+    for (unsigned int i=0; i < params_.joints.size(); i++)
+    {
+        // start at center configuration
+        js_msg_.position.push_back(params_.limiter_params.limits_min[i] + (params_.limiter_params.limits_max[i] - params_.limiter_params.limits_min[i])/2.0);
+        js_msg_.velocity.push_back(0.0);
+        js_msg_.effort.push_back(0.0);
+    }
+
+    js_timer_ = nh.createTimer(ros::Duration(1/50.0), &ControllerInterfaceJointStates::publishJointState, this);
+    js_timer_.start();
+}
 /**
  * Method processing the result using integration method (Simpson) updating the internal JointState.
  */
@@ -153,5 +175,11 @@ void ControllerInterfaceJointStates::publishJointState(const ros::TimerEvent& ev
     js_msg_.header.stamp = ros::Time::now();
     pub_.publish(js_msg_);
 }
-
 /* END ControllerInterfaceJointStates ******************************************************************************************/
+
+}
+
+PLUGINLIB_EXPORT_CLASS( cob_twist_controller::ControllerInterfaceVelocity, cob_twist_controller::ControllerInterfaceBase)
+PLUGINLIB_EXPORT_CLASS( cob_twist_controller::ControllerInterfacePosition, cob_twist_controller::ControllerInterfaceBase)
+PLUGINLIB_EXPORT_CLASS( cob_twist_controller::ControllerInterfaceTrajectory, cob_twist_controller::ControllerInterfaceBase)
+PLUGINLIB_EXPORT_CLASS( cob_twist_controller::ControllerInterfaceJointStates, cob_twist_controller::ControllerInterfaceBase)
