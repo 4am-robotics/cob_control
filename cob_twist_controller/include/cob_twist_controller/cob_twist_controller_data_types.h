@@ -70,7 +70,7 @@ enum SolverTypes
     GPM = cob_twist_controller::TwistController_GPM,
     STACK_OF_TASKS = cob_twist_controller::TwistController_STACK_OF_TASKS,
     TASK_2ND_PRIO = cob_twist_controller::TwistController_TASK_2ND_PRIO,
-	UNIFIED_JLA_SA = cob_twist_controller::TwistController_UNIFIED_JLA_SA,
+    UNIFIED_JLA_SA = cob_twist_controller::TwistController_UNIFIED_JLA_SA,
 };
 
 enum ConstraintTypesCA
@@ -223,7 +223,7 @@ struct TwistControllerParams
         priority_jla(50),
         k_H_jla(-10.0),
         damping_jla(0.05),
-		damping_speed_jla(0.005),
+        damping_speed_jla(0.005),
 
         constraint_ca(CA_OFF),
         priority_ca(100),

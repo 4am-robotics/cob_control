@@ -27,7 +27,7 @@
  *
  ****************************************************************/
 
-#include "../../../include/cob_twist_controller/constraint_solvers/solvers/unified_joint_limit_singularity_solver.h"
+#include "cob_twist_controller/constraint_solvers/solvers/unified_joint_limit_singularity_solver.h"
 
 /**
  * Specific implementation simultaneous singularity and joint limit avoidance solver.

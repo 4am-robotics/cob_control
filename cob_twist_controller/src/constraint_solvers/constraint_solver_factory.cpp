@@ -30,7 +30,6 @@
 #include <ros/ros.h>
 
 #include <cob_twist_controller/constraint_solvers/constraint_solver_factory.h>
-
 #include "cob_twist_controller/constraint_solvers/solvers/constraint_solver_base.h"
 #include "cob_twist_controller/constraint_solvers/solvers/unconstraint_solver.h"
 #include "cob_twist_controller/constraint_solvers/solvers/wln_joint_limit_avoidance_solver.h"
@@ -99,8 +98,8 @@ bool ConstraintSolverFactory::getSolverFactory(const TwistControllerParams& para
         	        break;
 
         	    case JLA_OFF:
-                    solver_factory.reset(new SolverFactory<WeightedLeastNormSolver>(params, limiter_params, task_stack_controller));
-                    break;
+        	        solver_factory.reset(new SolverFactory<WeightedLeastNormSolver>(params, limiter_params, task_stack_controller));
+        	        break;
             }
         	break;
         case UNIFIED_JLA_SA:
