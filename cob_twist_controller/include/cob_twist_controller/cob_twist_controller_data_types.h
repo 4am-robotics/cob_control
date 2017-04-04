@@ -215,7 +215,7 @@ struct TwistControllerParams
         slope_damping(0.05),
         eps_damping(0.003),
         eps_truncation(0.001),
-        solver(UNIFIED_JLA_SA ),
+        solver(GPM),
         priority_main(500),
         k_H(1.0),
 
