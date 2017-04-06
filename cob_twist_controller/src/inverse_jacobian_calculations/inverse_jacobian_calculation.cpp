@@ -50,7 +50,6 @@ Eigen::MatrixXd PInvBySVD::calculate(const Eigen::MatrixXd& jacobian) const
         // singularValuesInv(i) = (denominator < eps_truncation) ? 0.0 : singularValues(i) / denominator;
         singularValuesInv(i) = (singularValues(i) < eps_truncation) ? 0.0 : singularValues(i) / denominator;
     }
-
     Eigen::MatrixXd result = svd.matrixV() * singularValuesInv.asDiagonal() * svd.matrixU().transpose();
 
     return result;

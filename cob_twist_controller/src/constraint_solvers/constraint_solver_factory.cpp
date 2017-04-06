@@ -37,6 +37,7 @@
 #include "cob_twist_controller/constraint_solvers/solvers/gradient_projection_method_solver.h"
 #include "cob_twist_controller/constraint_solvers/solvers/task_priority_solver.h"
 #include "cob_twist_controller/constraint_solvers/solvers/stack_of_tasks_solver.h"
+#include "cob_twist_controller/constraint_solvers/solvers/unified_joint_limit_singularity_solver.h"
 
 #include "cob_twist_controller/damping_methods/damping.h"
 #include "cob_twist_controller/constraints/constraint.h"
@@ -90,14 +91,19 @@ bool ConstraintSolverFactory::getSolverFactory(const TwistControllerParams& para
             solver_factory.reset(new SolverFactory<UnconstraintSolver>(params, limiter_params, task_stack_controller));
             break;
         case WLN:
-            if (params.constraint_jla == JLA_ON)
+            switch (params.constraint_jla)
             {
-                solver_factory.reset(new SolverFactory<WLN_JointLimitAvoidanceSolver>(params, limiter_params, task_stack_controller));
+                case JLA_ON:
+                    solver_factory.reset(new SolverFactory<WLN_JointLimitAvoidanceSolver>(params, limiter_params, task_stack_controller));
+                break;
+
+                case JLA_OFF:
+                    solver_factory.reset(new SolverFactory<WeightedLeastNormSolver>(params, limiter_params, task_stack_controller));
+                break;
             }
-            else
-            {
-                solver_factory.reset(new SolverFactory<WeightedLeastNormSolver>(params, limiter_params, task_stack_controller));
-            }
+            break;
+        case UNIFIED_JLA_SA:
+            solver_factory.reset(new SolverFactory<UnifiedJointLimitSingularitySolver>(params, limiter_params, task_stack_controller));
             break;
         case GPM:
             solver_factory.reset(new SolverFactory<GradientProjectionMethodSolver>(params, limiter_params, task_stack_controller));

@@ -3,7 +3,7 @@
  * \file
  *
  * \note
- *   Copyright (c) 2015 \n
+ *   Copyright (c) 2017 \n
  *   Fraunhofer Institute for Manufacturing Engineering
  *   and Automation (IPA) \n\n
  *
@@ -18,6 +18,7 @@
  *
  * \author
  *   Author: Marco Bezzon, email: Marco.Bezzon@ipa.fraunhofer.de
+ *   Bruno Brito, email: Bruno.Brito@ipa.fraunhofer.de
  *
  * \date Date of creation: March, 2015
  *
