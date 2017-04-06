@@ -104,8 +104,8 @@ if __name__ == "__main__":
         rospy.logwarn('Could not find parameter chain_tip_link.')
         exit(-1)
 
-    if rospy.has_param(action_name+'frame_tracker/target_frame'):
-        tracking_frame = rospy.get_param(action_name+'frame_tracker/target_frame')
+    if rospy.has_param('frame_tracker/target_frame'):
+        tracking_frame = rospy.get_param('frame_tracker/target_frame')
     else:
         rospy.logwarn('Could not find parameter frame_tracker/tracking_frame.')
         exit(-2)

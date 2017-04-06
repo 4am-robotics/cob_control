@@ -304,7 +304,7 @@ void CobTwistController::checkSolverAndConstraints(cob_twist_controller::TwistCo
 
     if (UNIFIED_JLA_SA == solver && CA_OFF != static_cast<ConstraintTypesCA>(config.constraint_ca))
     {
-        ROS_ERROR("The Unified JLA and SA solution doesn\'t support collision avoidance. Currently UNIFIED_JLA_SA is only implemented for Identity and JLA ...");
+        ROS_ERROR("The Unified JLA and SA solution doesn\'t support collision avoidance. Currently UNIFIED_JLA_SA is only implemented for SA and JLA ...");
         twist_controller_params_.constraint_ca = CA_OFF;
         config.constraint_ca = static_cast<int>(twist_controller_params_.constraint_ca);
         warning = true;
