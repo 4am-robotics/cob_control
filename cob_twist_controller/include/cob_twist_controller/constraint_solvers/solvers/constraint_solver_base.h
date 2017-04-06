@@ -20,7 +20,7 @@
  *   Author: Marco Bezzon, email: Marco.Bezzon@ipa.fraunhofer.de
  *   Bruno Brito, email: Bruno.Brito@ipa.fraunhofer.de
  *
- * \date Date of creation: March, 2017
+ * \date Date of creation: March, 2015
  *
  * \brief
  *   This header contains the interface description of constraint solvers

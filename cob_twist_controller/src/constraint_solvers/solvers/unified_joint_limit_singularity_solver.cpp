@@ -73,7 +73,7 @@ Eigen::MatrixXd UnifiedJointLimitSingularitySolver::solve(const Vector6d_t& in_c
     Eigen::MatrixXd pinv=pinv_calc_.calculate(this->params_, this->damping_, J_robust);
     Eigen::MatrixXd qdots_out =Wt*Wt_T*J_T*pinv*in_cart_velocities;
 
-	return qdots_out;
+    return qdots_out;
 }
 
 /**
