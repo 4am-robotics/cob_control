@@ -91,20 +91,20 @@ bool ConstraintSolverFactory::getSolverFactory(const TwistControllerParams& para
             solver_factory.reset(new SolverFactory<UnconstraintSolver>(params, limiter_params, task_stack_controller));
             break;
         case WLN:
-        	switch (params.constraint_jla)
+            switch (params.constraint_jla)
             {
-        	    case JLA_ON:
-        	        solver_factory.reset(new SolverFactory<WLN_JointLimitAvoidanceSolver>(params, limiter_params, task_stack_controller));
-        	        break;
+                case JLA_ON:
+                    solver_factory.reset(new SolverFactory<WLN_JointLimitAvoidanceSolver>(params, limiter_params, task_stack_controller));
+                break;
 
-        	    case JLA_OFF:
-        	        solver_factory.reset(new SolverFactory<WeightedLeastNormSolver>(params, limiter_params, task_stack_controller));
-        	        break;
+                case JLA_OFF:
+                    solver_factory.reset(new SolverFactory<WeightedLeastNormSolver>(params, limiter_params, task_stack_controller));
+                break;
             }
-        	break;
+            break;
         case UNIFIED_JLA_SA:
-        	 solver_factory.reset(new SolverFactory<UnifiedJointLimitSingularitySolver>(params, limiter_params, task_stack_controller));
-        	 break;
+            solver_factory.reset(new SolverFactory<UnifiedJointLimitSingularitySolver>(params, limiter_params, task_stack_controller));
+            break;
         case GPM:
             solver_factory.reset(new SolverFactory<GradientProjectionMethodSolver>(params, limiter_params, task_stack_controller));
             break;
