@@ -85,20 +85,19 @@ def init_dyn_recfg():
 def init_pos():
     sss = simple_script_server()
     sss.move("arm_right", "home")
-    sss.move("arm_right", "home")
 
 
 if __name__ == "__main__":
     rospy.init_node("test_careobot_st_jla_ca_sphere")
 
-    base_dir = '/home/bbrito/bag-files/2016_02_22/'
+    base_dir = ''
     if rospy.has_param('~base_dir'):
         base_dir = rospy.get_param('~base_dir')
     else:
-        rospy.logwarn('Could not find parameter ~base_dir. Using default base_dir: ' + base_dir)
+        rospy.logwarn('Could not find parameter ~base_dir.')
+        base_dir = raw_input("Enter name of bagfile base_dir: ")
 
-    action_name = rospy.get_namespace()
-    if rospy.has_param(action_name+'chain_tip_link'):
+    if rospy.has_param('chain_tip_link'):
         chain_tip_link = rospy.get_param('chain_tip_link')
     else:
         rospy.logwarn('Could not find parameter chain_tip_link.')
