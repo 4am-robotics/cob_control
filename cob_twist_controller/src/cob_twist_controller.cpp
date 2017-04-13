@@ -239,9 +239,11 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     twist_controller_params_.slope_damping = config.slope_damping;
     twist_controller_params_.beta = config.beta;
     twist_controller_params_.eps_damping = config.eps_damping;
+    twist_controller_params_.eps_truncation = config.eps_truncation;
 
     twist_controller_params_.solver = static_cast<SolverTypes>(config.solver);
     twist_controller_params_.priority_main = config.priority;
+    twist_controller_params_.k_H = config.k_H;
 
     twist_controller_params_.constraint_jla = static_cast<ConstraintTypesJLA>(config.constraint_jla);
     twist_controller_params_.priority_jla = config.priority_jla;
@@ -250,12 +252,9 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     const double activation_buffer_jla_in_percent = config.activation_buffer_jla;
     const double critical_jla_in_percent = config.critical_threshold_jla;
     twist_controller_params_.thresholds_jla.activation =  activation_jla_in_percent / 100.0;
-    twist_controller_params_.thresholds_jla.activation_position_threshold_jla=config.activation_position_threshold_jla;
-    twist_controller_params_.thresholds_jla.activation_speed_threshold_jla=config.activation_speed_threshold_jla;
     twist_controller_params_.thresholds_jla.activation_with_buffer = twist_controller_params_.thresholds_jla.activation * (1.0 + activation_buffer_jla_in_percent / 100.0);
     twist_controller_params_.thresholds_jla.critical =  critical_jla_in_percent / 100.0;
     twist_controller_params_.damping_jla = config.damping_jla;
-    twist_controller_params_.damping_speed_jla = config.damping_speed_jla;
 
     twist_controller_params_.constraint_ca = static_cast<ConstraintTypesCA>(config.constraint_ca);
     twist_controller_params_.priority_ca = config.priority_ca;
@@ -266,9 +265,10 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
     twist_controller_params_.thresholds_ca.critical = config.critical_threshold_ca;  // in [m]
     twist_controller_params_.damping_ca = config.damping_ca;
 
-    twist_controller_params_.k_H = config.k_H;
-
-    twist_controller_params_.eps_truncation = config.eps_truncation;
+    twist_controller_params_.ujs_solver_params.sigma = config.sigma;
+    twist_controller_params_.ujs_solver_params.sigma_speed = config.sigma_speed;
+    twist_controller_params_.ujs_solver_params.delta_pos = config.delta_pos;
+    twist_controller_params_.ujs_solver_params.delta_speed = config.delta_speed;
 
     twist_controller_params_.limiter_params.keep_direction = config.keep_direction;
     twist_controller_params_.limiter_params.enforce_input_limits = config.enforce_input_limits;

@@ -163,8 +163,6 @@ struct ConstraintThresholds
     double activation;
     double activation_with_buffer;
     double critical;
-    double activation_position_threshold_jla;
-    double activation_speed_threshold_jla;
 };
 
 struct LimiterParams
@@ -199,6 +197,21 @@ struct LimiterParams
     std::vector<double> limits_acc;
 };
 
+struct UJSSolverParams
+{
+    UJSSolverParams() :
+        sigma(0.05),
+        sigma_speed(0.005),
+        delta_pos(0.5),
+        delta_speed(1.0)
+    {}
+
+    double sigma;
+    double sigma_speed;
+    double delta_pos;
+    double delta_speed;
+};
+
 struct TwistControllerParams
 {
     TwistControllerParams() :
@@ -219,16 +232,15 @@ struct TwistControllerParams
         priority_main(500),
         k_H(1.0),
 
-        constraint_jla(JLA_OFF),
+        constraint_jla(JLA_ON),
         priority_jla(50),
         k_H_jla(-10.0),
-        damping_jla(0.05),
-        damping_speed_jla(0.005),
+        damping_jla(0.000001),
 
-        constraint_ca(CA_OFF),
+        constraint_ca(CA_ON),
         priority_ca(100),
-        damping_ca(0.000001),
         k_H_ca(2.0),
+        damping_ca(0.000001),
 
         kinematic_extension(NO_EXTENSION),
         extension_ratio(0.0)
@@ -240,8 +252,6 @@ struct TwistControllerParams
         this->thresholds_jla.activation = 0.1;
         this->thresholds_jla.critical = 0.05;
         this->thresholds_jla.activation_with_buffer = this->thresholds_jla.activation * 4.0;  // best experienced value
-        this->thresholds_jla.activation_position_threshold_jla = 0.5;
-        this->thresholds_jla.activation_speed_threshold_jla = 1.0;
     }
 
     uint8_t dof;
@@ -275,9 +285,9 @@ struct TwistControllerParams
     uint32_t priority_jla;
     double k_H_jla;
     double damping_jla;
-    double damping_speed_jla;
     ConstraintThresholds thresholds_jla;
 
+    UJSSolverParams ujs_solver_params;
     LimiterParams limiter_params;
 
     KinematicExtensionTypes kinematic_extension;
