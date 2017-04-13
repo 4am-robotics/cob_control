@@ -221,13 +221,14 @@ struct TwistControllerParams
 
         numerical_filtering(false),
         damping_method(SIGMOID),
-        damping_factor(0.2),
-        lambda_max(0.01),
-        w_threshold(0.01),
+        damping_factor(0.01),
+        lambda_max(0.001),
+        w_threshold(0.001),
         beta(0.005),
         slope_damping(0.05),
         eps_damping(0.003),
         eps_truncation(0.001),
+
         solver(GPM),
         priority_main(500),
         k_H(1.0),

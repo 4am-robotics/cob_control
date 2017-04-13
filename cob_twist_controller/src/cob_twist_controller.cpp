@@ -290,6 +290,32 @@ void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControll
 void CobTwistController::checkSolverAndConstraints(cob_twist_controller::TwistControllerConfig& config)
 {
     bool warning = false;
+
+    DampingMethodTypes damping = static_cast<DampingMethodTypes>(config.damping_method);
+    if (damping != twist_controller_params_.damping_method)
+    {
+        //damping method has changed - setting back to proper default values
+        if (damping == CONSTANT)
+        {
+            config.damping_factor = 0.01;
+        }
+        else if (damping == MANIPULABILITY)
+        {
+            config.lambda_max = 0.1;
+            config.w_threshold = 0.005;
+        }
+        else if (damping == LEAST_SINGULAR_VALUE)
+        {
+            config.lambda_max = 0.1;
+            config.w_threshold = 0.005;
+        }
+        else if (damping == SIGMOID)
+        {
+            config.lambda_max = 0.001;
+            config.w_threshold = 0.001;
+        }
+    }
+
     SolverTypes solver = static_cast<SolverTypes>(config.solver);
 
     if (DEFAULT_SOLVER == solver && (JLA_OFF != static_cast<ConstraintTypesJLA>(config.constraint_jla) || CA_OFF != static_cast<ConstraintTypesCA>(config.constraint_ca)))
@@ -298,14 +324,6 @@ void CobTwistController::checkSolverAndConstraints(cob_twist_controller::TwistCo
         twist_controller_params_.constraint_jla = JLA_OFF;
         twist_controller_params_.constraint_ca = CA_OFF;
         config.constraint_jla = static_cast<int>(twist_controller_params_.constraint_jla);
-        config.constraint_ca = static_cast<int>(twist_controller_params_.constraint_ca);
-        warning = true;
-    }
-
-    if (UNIFIED_JLA_SA == solver && CA_OFF != static_cast<ConstraintTypesCA>(config.constraint_ca))
-    {
-        ROS_ERROR("The Unified JLA and SA solution doesn\'t support collision avoidance. Currently UNIFIED_JLA_SA is only implemented for SA and JLA ...");
-        twist_controller_params_.constraint_ca = CA_OFF;
         config.constraint_ca = static_cast<int>(twist_controller_params_.constraint_ca);
         warning = true;
     }
@@ -330,6 +348,14 @@ void CobTwistController::checkSolverAndConstraints(cob_twist_controller::TwistCo
         twist_controller_params_.constraint_jla = JLA_OFF;
         twist_controller_params_.constraint_ca = CA_ON;
         config.constraint_jla = static_cast<int>(twist_controller_params_.constraint_jla);
+        config.constraint_ca = static_cast<int>(twist_controller_params_.constraint_ca);
+        warning = true;
+    }
+
+    if (UNIFIED_JLA_SA == solver && CA_OFF != static_cast<ConstraintTypesCA>(config.constraint_ca))
+    {
+        ROS_ERROR("The Unified JLA and SA solution doesn\'t support collision avoidance. Currently UNIFIED_JLA_SA is only implemented for SA and JLA ...");
+        twist_controller_params_.constraint_ca = CA_OFF;
         config.constraint_ca = static_cast<int>(twist_controller_params_.constraint_ca);
         warning = true;
     }
