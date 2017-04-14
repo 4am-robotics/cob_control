@@ -39,29 +39,6 @@
 #include "cob_twist_controller/constraints/constraint_base.h"
 #include "cob_twist_controller/callback_data_mediator.h"
 
-/* BEGIN ConstraintParamFactory *********************************************************************************/
-/// Creates constraint parameters and fills them with the values provided by CallbackDataMediator.
-template
-<typename T>
-class ConstraintParamFactory
-{
-    public:
-        static T createConstraintParams(const TwistControllerParams& twist_controller_params,
-                                        const LimiterParams& limiter_params,
-                                        CallbackDataMediator& data_mediator,
-                                        const std::string& id = std::string())
-        {
-            T params(twist_controller_params, limiter_params, id);
-            data_mediator.fill(params);
-            return params;
-        }
-
-    private:
-        ConstraintParamFactory()
-        {}
-};
-/* END ConstraintParamFactory ***********************************************************************************/
-
 /* BEGIN ConstraintsBuilder *************************************************************************************/
 /// Class providing a static method to create constraints.
 template <typename PRIO = uint32_t>
