@@ -51,17 +51,6 @@
 
 /* BEGIN JointLimitAvoidance ************************************************************************************/
 template <typename T_PARAMS, typename PRIO>
-Task_t JointLimitAvoidance<T_PARAMS, PRIO>::createTask()
-{
-    Task_t task(this->getPriority(),
-                this->getTaskId(),
-                this->getTaskJacobian(),
-                this->getTaskDerivatives());
-
-    return task;
-}
-
-template <typename T_PARAMS, typename PRIO>
 std::string JointLimitAvoidance<T_PARAMS, PRIO>::getTaskId() const
 {
     std::ostringstream oss;
@@ -320,17 +309,6 @@ void JointLimitAvoidanceMid<T_PARAMS, PRIO>::calcPartialValues()
 /* END JointLimitAvoidanceMid ************************************************************************************/
 
 /* BEGIN JointLimitAvoidanceIneq ************************************************************************************/
-template <typename T_PARAMS, typename PRIO>
-Task_t JointLimitAvoidanceIneq<T_PARAMS, PRIO>::createTask()
-{
-    Task_t task(this->getPriority(),
-                this->getTaskId(),
-                this->getTaskJacobian(),
-                this->getTaskDerivatives());
-
-    return task;
-}
-
 template <typename T_PARAMS, typename PRIO>
 std::string JointLimitAvoidanceIneq<T_PARAMS, PRIO>::getTaskId() const
 {

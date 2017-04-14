@@ -76,7 +76,6 @@ class CollisionAvoidance : public ConstraintBase<T_PARAMS, PRIO>
         virtual ~CollisionAvoidance()
         {}
 
-        virtual Task_t createTask();
         virtual std::string getTaskId() const;
         virtual Eigen::MatrixXd getTaskJacobian() const;
         virtual Eigen::VectorXd getTaskDerivatives() const;
@@ -127,7 +126,6 @@ class JointLimitAvoidance : public ConstraintBase<T_PARAMS, PRIO>
         virtual ~JointLimitAvoidance()
         {}
 
-        virtual Task_t createTask();
         virtual std::string getTaskId() const;
 
         virtual void calculate();
@@ -197,7 +195,6 @@ class JointLimitAvoidanceIneq : public ConstraintBase<T_PARAMS, PRIO>
         virtual ~JointLimitAvoidanceIneq()
         {}
 
-        virtual Task_t createTask();
         virtual std::string getTaskId() const;
         virtual Eigen::MatrixXd getTaskJacobian() const;
         virtual Eigen::VectorXd getTaskDerivatives() const;

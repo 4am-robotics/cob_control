@@ -51,17 +51,6 @@
 
 /* BEGIN CollisionAvoidance *************************************************************************************/
 template <typename T_PARAMS, typename PRIO>
-Task_t CollisionAvoidance<T_PARAMS, PRIO>::createTask()
-{
-    Task_t task(this->getPriority(),
-                this->getTaskId(),
-                this->getTaskJacobian(),
-                this->getTaskDerivatives());
-
-    return task;
-}
-
-template <typename T_PARAMS, typename PRIO>
 std::string CollisionAvoidance<T_PARAMS, PRIO>::getTaskId() const
 {
     const std::string frame_id = this->constraint_params_.id_;
