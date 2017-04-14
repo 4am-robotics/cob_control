@@ -50,7 +50,6 @@ struct Task
     Eigen::VectorXd task_;
     std::string id_;
     bool is_active_;
-    boost::shared_ptr<DampingBase> db_;
     TwistControllerParams tcp_;
 
     Task(PRIO prio, std::string id) : prio_(prio), id_(id), is_active_(true)
@@ -66,14 +65,11 @@ struct Task
       task_jacobian_(task.task_jacobian_),
       task_(task.task_),
       is_active_(task.is_active_),
-      tcp_(task.tcp_),
-      db_(task.db_)
+      tcp_(task.tcp_)
     {}
 
     ~Task()
-    {
-        this->db_.reset();
-    }
+    {}
 
     inline void setPriority(PRIO prio)
     {
@@ -174,7 +170,6 @@ void TaskStackController<PRIO>::addTask(Task<PRIO> t)
             it->task_jacobian_ = t.task_jacobian_;
             it->task_ = t.task_;
             it->tcp_ = t.tcp_;
-            it->db_ = t.db_;
             break;
         }
     }

@@ -58,8 +58,6 @@ Task_t JointLimitAvoidance<T_PARAMS, PRIO>::createTask()
                 this->getTaskJacobian(),
                 this->getTaskDerivatives());
 
-    task.tcp_ = this->adaptDampingParamsForTask(this->constraint_params_.params_.damping);
-    task.db_.reset(DampingBuilder::createDamping(task.tcp_));
     return task;
 }
 
@@ -330,8 +328,6 @@ Task_t JointLimitAvoidanceIneq<T_PARAMS, PRIO>::createTask()
                 this->getTaskJacobian(),
                 this->getTaskDerivatives());
 
-    task.tcp_ = this->adaptDampingParamsForTask(this->constraint_params_.params_.damping);
-    task.db_.reset(DampingBuilder::createDamping(task.tcp_));
     return task;
 }
 
