@@ -56,12 +56,10 @@ Task_t CollisionAvoidance<T_PARAMS, PRIO>::createTask()
     Task_t task(this->getPriority(),
                 this->getTaskId(),
                 this->getTaskJacobian(),
-                this->getTaskDerivatives(),
-                this->getType());
+                this->getTaskDerivatives());
 
-    task.tcp_ = this->adaptDampingParamsForTask(this->constraint_params_.tc_params_.damping_ca);
+    task.tcp_ = this->adaptDampingParamsForTask(this->constraint_params_.params_.damping);
     task.db_.reset(DampingBuilder::createDamping(task.tcp_));
-
     return task;
 }
 
@@ -104,7 +102,7 @@ Eigen::VectorXd CollisionAvoidance<T_PARAMS, PRIO>::getTaskDerivatives() const
 template <typename T_PARAMS, typename PRIO>
 void CollisionAvoidance<T_PARAMS, PRIO>::calculate()
 {
-    const TwistControllerParams& params = this->constraint_params_.tc_params_;
+    const ConstraintParams& params = this->constraint_params_.params_;
 
     this->calcValue();
     this->calcDerivativeValue();
@@ -112,9 +110,9 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calculate()
     this->calcPredictionValue();
 
     const double pred_min_dist = this->getPredictionValue();
-    const double activation = params.thresholds_ca.activation;
-    const double critical = params.thresholds_ca.critical;
-    const double activation_buffer = params.thresholds_ca.activation_with_buffer;
+    const double activation = params.thresholds.activation;
+    const double critical = params.thresholds.critical;
+    const double activation_buffer = params.thresholds.activation_with_buffer;
     const double crit_min_distance = this->getCriticalValue();
 
     if (this->state_.getCurrent() == CRITICAL && pred_min_dist < crit_min_distance)
@@ -138,10 +136,10 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calculate()
 template <typename T_PARAMS, typename PRIO>
 double CollisionAvoidance<T_PARAMS, PRIO>::getActivationGain(double current_cost_func_value) const
 {
-    const TwistControllerParams& params = this->constraint_params_.tc_params_;
+    const ConstraintParams& params = this->constraint_params_.params_;
     double activation_gain;
-    const double activation = params.thresholds_ca.activation;
-    const double activation_buffer_region = params.thresholds_ca.activation_with_buffer;
+    const double activation = params.thresholds.activation;
+    const double activation_buffer_region = params.thresholds.activation_with_buffer;
 
     if (current_cost_func_value < activation)  // activation == d_m
     {
@@ -169,8 +167,8 @@ double CollisionAvoidance<T_PARAMS, PRIO>::getActivationGain() const
 template <typename T_PARAMS, typename PRIO>
 double CollisionAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(double current_distance_value) const
 {
-    const TwistControllerParams& params = this->constraint_params_.tc_params_;
-    const double activation_with_buffer = params.thresholds_ca.activation_with_buffer;
+    const ConstraintParams& params = this->constraint_params_.params_;
+    const double activation_with_buffer = params.thresholds.activation_with_buffer;
     double magnitude = 0.0;
 
     if (current_distance_value < activation_with_buffer)
@@ -185,7 +183,7 @@ double CollisionAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(double current
         }
     }
 
-    double k_H = params.k_H_ca;
+    double k_H = params.k_H;
     return k_H * magnitude;
 }
 
@@ -194,12 +192,6 @@ template <typename T_PARAMS, typename PRIO>
 double CollisionAvoidance<T_PARAMS, PRIO>::getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const
 {
     return 1.0;
-}
-
-template <typename T_PARAMS, typename PRIO>
-ConstraintTypes CollisionAvoidance<T_PARAMS, PRIO>::getType() const
-{
-    return CA;
 }
 
 template <typename T_PARAMS, typename PRIO>
@@ -222,17 +214,17 @@ double CollisionAvoidance<T_PARAMS, PRIO>::getCriticalValue() const
 template <typename T_PARAMS, typename PRIO>
 void CollisionAvoidance<T_PARAMS, PRIO>::calcValue()
 {
-    const TwistControllerParams& params = this->constraint_params_.tc_params_;
+    const ConstraintParams& params = this->constraint_params_.params_;
     std::vector<double> relevant_values;
     for (std::vector<ObstacleDistanceData>::const_iterator it = this->constraint_params_.current_distances_.begin();
          it != this->constraint_params_.current_distances_.end();
          ++it)
     {
-        if (params.thresholds_ca.activation_with_buffer > it->min_distance)
+        if (params.thresholds.activation_with_buffer > it->min_distance)
         {
             const double activation_gain = this->getActivationGain(it->min_distance);
             const double magnitude = std::abs(this->getSelfMotionMagnitude(it->min_distance));  // important only for task!
-            double value = activation_gain * magnitude * pow(it->min_distance - params.thresholds_ca.activation_with_buffer, 2.0);
+            double value = activation_gain * magnitude * pow(it->min_distance - params.thresholds.activation_with_buffer, 2.0);
             relevant_values.push_back(value);
         }
     }
@@ -269,23 +261,23 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
     Eigen::VectorXd sum_partial_values = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
     this->partial_values_ = Eigen::VectorXd::Zero(this->jacobian_data_.cols());
 
-    const TwistControllerParams& params = this->constraint_params_.tc_params_;
+    const ConstraintParams& params = this->constraint_params_.params_;
     std::vector<Eigen::VectorXd> vec_partial_values;
 
     // ROS_INFO_STREAM("this->jacobian_data_.cols: " << this->jacobian_data_.cols());
     // ROS_INFO_STREAM("this->joint_states_.current_q_.rows: " << this->joint_states_.current_q_.rows());
 
-    std::vector<std::string>::const_iterator str_it = std::find(params.frame_names.begin(),
-                                                                params.frame_names.end(),
+    std::vector<std::string>::const_iterator str_it = std::find(this->constraint_params_.frame_names_.begin(),
+                                                                this->constraint_params_.frame_names_.end(),
                                                                 this->constraint_params_.id_);
 
     for (std::vector<ObstacleDistanceData>::const_iterator it = this->constraint_params_.current_distances_.begin();
          it != this->constraint_params_.current_distances_.end();
          ++it)
     {
-        if (params.thresholds_ca.activation_with_buffer > it->min_distance)
+        if (params.thresholds.activation_with_buffer > it->min_distance)
         {
-            if (params.frame_names.end() != str_it)
+            if (this->constraint_params_.frame_names_.end() != str_it)
             {
                 Eigen::Vector3d collision_pnt_vector = it->nearest_point_frame_vector - it->frame_vector;
                 Eigen::Vector3d distance_vec = it->nearest_point_frame_vector - it->nearest_point_obstacle_vector;
@@ -304,7 +296,7 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
                 T.block(3, 3, 3, 3) << ident;
                 // ****************************************************************************************************
 
-                uint32_t idx = str_it - params.frame_names.begin();
+                uint32_t idx = str_it - this->constraint_params_.frame_names_.begin();
                 uint32_t frame_number = idx + 1;  // segment nr not index represents frame number
 
                 KDL::JntArray ja = this->joint_states_.current_q_;
@@ -339,7 +331,7 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
                 const double denom = it->min_distance > 0.0 ? it->min_distance : DIV0_SAFE;
                 const double activation_gain = this->getActivationGain(it->min_distance);
                 const double magnitude = this->getSelfMotionMagnitude(it->min_distance);
-                partial_values = (2.0 * ((it->min_distance - params.thresholds_ca.activation_with_buffer) / denom) * term_2nd);
+                partial_values = (2.0 * ((it->min_distance - params.thresholds.activation_with_buffer) / denom) * term_2nd);
                 // only consider the gain for the partial values, because of GPM, not for the task jacobian!
                 sum_partial_values += (activation_gain * magnitude * partial_values);
                 vec_partial_values.push_back(partial_values);
@@ -351,7 +343,7 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
         }
         else
         {
-            // ROS_INFO_STREAM("min_dist not within activation_buffer: " << params.thresholds_ca.activation_with_buffer << " <= " << it->min_distance);
+            // ROS_INFO_STREAM("min_dist not within activation_buffer: " << params.thresholds.activation_with_buffer << " <= " << it->min_distance);
         }
     }
     // ROS_INFO_STREAM("Done all distances");
@@ -375,33 +367,24 @@ void CollisionAvoidance<T_PARAMS, PRIO>::calcPartialValues()
 template <typename T_PARAMS, typename PRIO>
 void CollisionAvoidance<T_PARAMS, PRIO>::calcPredictionValue()
 {
-    const TwistControllerParams& params = this->constraint_params_.tc_params_;
+    const ConstraintParams& params = this->constraint_params_.params_;
     this->prediction_value_ = std::numeric_limits<double>::max();
 
     ros::Time now = ros::Time::now();
     double cycle = (now - this->last_pred_time_).toSec();
     this->last_pred_time_ = now;
 
-    std::vector<std::string>::const_iterator str_it = std::find(params.frame_names.begin(),
-                                                                params.frame_names.end(),
+    std::vector<std::string>::const_iterator str_it = std::find(this->constraint_params_.frame_names_.begin(),
+                                                                this->constraint_params_.frame_names_.end(),
                                                                 this->constraint_params_.id_);
     // ROS_INFO_STREAM("constraint_params_.id_: " << this->constraint_params_.id_);
 
-    if (params.frame_names.end() != str_it)
+    if (this->constraint_params_.frame_names_.end() != str_it)
     {
         if (this->constraint_params_.current_distances_.size() > 0)
         {
-            uint32_t frame_number = (str_it - params.frame_names.begin()) + 1;  // segment nr not index represents frame number
+            uint32_t frame_number = (str_it - this->constraint_params_.frame_names_.begin()) + 1;  // segment nr not index represents frame number
             KDL::FrameVel frame_vel;
-
-            // ToDo: the fk_solver_vel_ is only initialized for the primary chain - kinematic extensions cannot be considered yet!
-            KDL::JntArrayVel jnts_prediction_chain(params.dof);
-            for (unsigned int i = 0; i < params.dof; i++)
-            {
-                jnts_prediction_chain.q(i) = this->jnts_prediction_.q(i);
-                jnts_prediction_chain.qdot(i) = this->jnts_prediction_.qdot(i);
-            }
-            // ROS_INFO_STREAM("jnts_prediction_chain.q.rows: " << jnts_prediction_chain.q.rows());
 
             // Calculate prediction for pos and vel
             int error = this->fk_solver_vel_.JntToCart(this->jnts_prediction_, frame_vel, frame_number);

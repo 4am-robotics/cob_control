@@ -50,15 +50,14 @@ struct Task
     Eigen::VectorXd task_;
     std::string id_;
     bool is_active_;
-    ConstraintTypes constraint_type_;
     boost::shared_ptr<DampingBase> db_;
     TwistControllerParams tcp_;
 
-    Task(PRIO prio, std::string id) : prio_(prio), id_(id), is_active_(true), constraint_type_(None)
+    Task(PRIO prio, std::string id) : prio_(prio), id_(id), is_active_(true)
     {}
 
-    Task(PRIO prio, std::string id, Eigen::MatrixXd task_jacobian, Eigen::VectorXd task, ConstraintTypes ct = None)
-    : prio_(prio), id_(id), task_jacobian_(task_jacobian), task_(task), is_active_(true), constraint_type_(ct)
+    Task(PRIO prio, std::string id, Eigen::MatrixXd task_jacobian, Eigen::VectorXd task)
+    : prio_(prio), id_(id), task_jacobian_(task_jacobian), task_(task), is_active_(true)
     {}
 
     Task(const Task& task)
@@ -67,7 +66,6 @@ struct Task
       task_jacobian_(task.task_jacobian_),
       task_(task.task_),
       is_active_(task.is_active_),
-      constraint_type_(task.constraint_type_),
       tcp_(task.tcp_),
       db_(task.db_)
     {}

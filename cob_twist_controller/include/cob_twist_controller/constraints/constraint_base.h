@@ -108,7 +108,6 @@ class PriorityBase
     protected:
         PRIO priority_;
 
-        virtual ConstraintTypes getType() const = 0;
         virtual double getCriticalValue() const = 0;
         virtual TwistControllerParams adaptDampingParamsForTask(double const_damping_factor) = 0;
 };
@@ -153,8 +152,7 @@ class ConstraintBase : public PriorityBase<PRIO>
             Task_t task(this->getPriority(),
                         this->getTaskId(),
                         this->getTaskJacobian(),
-                        this->getTaskDerivatives(),
-                        this->getType());
+                        this->getTaskDerivatives());
             return task;
         }
 
@@ -234,8 +232,6 @@ class ConstraintBase : public PriorityBase<PRIO>
         uint32_t member_inst_cnt_;
         static uint32_t instance_ctr_;
 
-        virtual ConstraintTypes getType() const = 0;
-
         virtual double getCriticalValue() const
         {
             return 0.0;
@@ -251,7 +247,6 @@ class ConstraintBase : public PriorityBase<PRIO>
          */
         virtual TwistControllerParams adaptDampingParamsForTask(double const_damping_factor)
         {
-            const TwistControllerParams& params = this->constraint_params_.tc_params_;
             TwistControllerParams adapted_params;
             adapted_params.damping_method = CONSTANT;
             adapted_params.damping_factor = const_damping_factor;

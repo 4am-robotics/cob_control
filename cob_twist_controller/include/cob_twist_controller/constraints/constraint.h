@@ -38,7 +38,6 @@
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/constraints/constraint_base.h"
 #include "cob_twist_controller/callback_data_mediator.h"
-#include "cob_twist_controller/utils/moving_average.h"
 
 /* BEGIN ConstraintParamFactory *********************************************************************************/
 /// Creates constraint parameters and fills them with the values provided by CallbackDataMediator.
@@ -115,7 +114,6 @@ class CollisionAvoidance : public ConstraintBase<T_PARAMS, PRIO>
         double getSelfMotionMagnitude(double current_cost_func_value) const;
 
     private:
-        virtual ConstraintTypes getType() const;
         virtual double getCriticalValue() const;
 
         void calcValue();
@@ -163,8 +161,6 @@ class JointLimitAvoidance : public ConstraintBase<T_PARAMS, PRIO>
         virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const;
 
     private:
-        virtual ConstraintTypes getType() const;
-
         void calcValue();
         void calcDerivativeValue();
         void calcPartialValues();
@@ -199,8 +195,6 @@ class JointLimitAvoidanceMid : public ConstraintBase<T_PARAMS, PRIO>
         virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const;
 
     private:
-        virtual ConstraintTypes getType() const;
-
         void calcValue();
         void calcDerivativeValue();
         void calcPartialValues();
@@ -237,8 +231,6 @@ class JointLimitAvoidanceIneq : public ConstraintBase<T_PARAMS, PRIO>
         virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const;
 
     private:
-        virtual ConstraintTypes getType() const;
-
         void calcValue();
         void calcDerivativeValue();
         void calcPartialValues();
