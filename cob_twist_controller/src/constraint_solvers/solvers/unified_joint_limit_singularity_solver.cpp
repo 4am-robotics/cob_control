@@ -93,19 +93,19 @@ Eigen::MatrixXd UnifiedJointLimitSingularitySolver::calculateWeighting(const Vec
 
     KDL::JntArray q = joint_states.current_q_;
 
-    double sigma = this->params_.damping_jla;
-    double sigma_speed = this->params_.damping_speed_jla;
-    double delta_pos = this->params_.thresholds_jla.activation_position_threshold_jla;
-    double delta_speed = this->params_.thresholds_jla.activation_speed_threshold_jla;
+    double sigma = this->params_.ujs_solver_params.sigma;
+    double sigma_speed = this->params_.ujs_solver_params.sigma_speed;
+    double delta_pos = this->params_.ujs_solver_params.delta_pos;
+    double delta_speed = this->params_.ujs_solver_params.delta_speed;
     for (uint32_t i = 0; i < cols ; ++i)
     {
 
         weighting(i) = (1.0/(1.0+exp(-(q(i)-limits_min[i]-delta_pos)/sigma)))*(1.0/(1.0+exp((q(i)-limits_max[i]+delta_pos)/sigma)))+(1.0/(1.0+exp((q(i)*q_dot(i)+delta_speed)*sigma_speed)));
 
-        if( (fabs(q(i)-limits_min[i])<params_.limiter_params.limits_tolerance*0.01745329251)){
+        if( (fabs(q(i)-limits_min[i])<params_.limiter_params.limits_tolerance*M_PI/180.0)){
             ROS_WARN("Joint %i tolerance distance to minimum position %f not respected",i,(fabs(q(i)-limits_min[i])));
         }
-        if( (fabs(q(i)-limits_max[i])<params_.limiter_params.limits_tolerance*0.01745329251) ){
+        if( (fabs(q(i)-limits_max[i])<params_.limiter_params.limits_tolerance*M_PI/180.0) ){
             ROS_WARN("Joint %i tolerance distance to maximum position %f not respected",i,(fabs(q(i)-limits_max[i])));
         }
         if( (fabs(q(i)-limits_min[i])<0.0)){
@@ -115,8 +115,9 @@ Eigen::MatrixXd UnifiedJointLimitSingularitySolver::calculateWeighting(const Vec
             ROS_ERROR("Joint %i distance to maximum position %f not respected",i,(fabs(q(i)-limits_max[i])));
         }
 
-        if(weighting(i)>1.0)
-                    weighting(i)=1.0;
+        if(weighting(i)>1.0){
+            weighting(i)=1.0;
+        }
     }
 
     return weighting.asDiagonal();

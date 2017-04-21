@@ -42,11 +42,9 @@
 class ConstraintParamsBase
 {
     public:
-        ConstraintParamsBase(const TwistControllerParams& params,
-                             const LimiterParams& limiter_params,
+        ConstraintParamsBase(const ConstraintParams& params,
                              const std::string& id = std::string()) :
-                tc_params_(params),
-                limiter_params_(limiter_params),
+                params_(params),
                 id_(id)
         {}
 
@@ -54,8 +52,7 @@ class ConstraintParamsBase
         {}
 
         const std::string id_;
-        const TwistControllerParams& tc_params_;
-        const LimiterParams& limiter_params_;
+        const ConstraintParams params_;
 };
 /* END ConstraintParamsBase *************************************************************************************/
 
@@ -64,21 +61,23 @@ class ConstraintParamsBase
 class ConstraintParamsCA : public ConstraintParamsBase
 {
     public:
-        ConstraintParamsCA(const TwistControllerParams& params,
-                           const LimiterParams& limiter_params,
+        ConstraintParamsCA(const ConstraintParams& params,
+                           const std::vector<std::string>& frame_names = std::vector<std::string>(),
                            const std::string& id = std::string()) :
-                ConstraintParamsBase(params, limiter_params, id)
+                ConstraintParamsBase(params, id),
+                frame_names_(frame_names)
         {}
 
         ConstraintParamsCA(const ConstraintParamsCA& cpca) :
-                ConstraintParamsBase(cpca.tc_params_, cpca.limiter_params_, cpca.id_)
-        {
-            current_distances_ = cpca.current_distances_;
-        }
+                ConstraintParamsBase(cpca.params_, cpca.id_),
+                frame_names_(cpca.frame_names_),
+                current_distances_(cpca.current_distances_)
+        {}
 
         virtual ~ConstraintParamsCA()
         {}
 
+        std::vector<std::string> frame_names_;
         std::vector<ObstacleDistanceData> current_distances_;
 };
 /* END ConstraintParamsCA ***************************************************************************************/
@@ -88,17 +87,19 @@ class ConstraintParamsCA : public ConstraintParamsBase
 class ConstraintParamsJLA : public ConstraintParamsBase
 {
     public:
-        ConstraintParamsJLA(const TwistControllerParams& params,
-                            const LimiterParams& limiter_params,
+        ConstraintParamsJLA(const ConstraintParams& params,
+                            const LimiterParams& limiter_params = LimiterParams(),
                             const std::string& id = std::string()) :
-                ConstraintParamsBase(params, limiter_params, id),
-                joint_idx_(-1)
+                ConstraintParamsBase(params, id),
+                joint_idx_(-1),
+                limiter_params_(limiter_params)
         {}
 
         ConstraintParamsJLA(const ConstraintParamsJLA& cpjla) :
-                ConstraintParamsBase(cpjla.tc_params_, cpjla.limiter_params_, cpjla.id_),
+                ConstraintParamsBase(cpjla.params_, cpjla.id_),
                 joint_(cpjla.joint_),
-                joint_idx_(cpjla.joint_idx_)
+                joint_idx_(cpjla.joint_idx_),
+                limiter_params_(cpjla.limiter_params_)
         {}
 
         virtual ~ConstraintParamsJLA()
@@ -106,6 +107,7 @@ class ConstraintParamsJLA : public ConstraintParamsBase
 
         std::string joint_;
         int32_t joint_idx_;
+        const LimiterParams& limiter_params_;
 };
 /* END ConstraintParamsJLA **************************************************************************************/
 

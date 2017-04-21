@@ -38,8 +38,8 @@ class UnifiedJointLimitSingularitySolver : public ConstraintSolver<>
 {
     public:
         UnifiedJointLimitSingularitySolver(const TwistControllerParams& params,
-                                const LimiterParams& limiter_params,
-                                TaskStackController_t& task_stack_controller) :
+                                           const LimiterParams& limiter_params,
+                                           TaskStackController_t& task_stack_controller) :
                 ConstraintSolver(params, limiter_params, task_stack_controller)
         {}
 

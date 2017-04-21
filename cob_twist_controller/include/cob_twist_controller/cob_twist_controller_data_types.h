@@ -87,15 +87,6 @@ enum ConstraintTypesJLA
     JLA_INEQ_ON = cob_twist_controller::TwistController_JLA_INEQ,
 };
 
-enum ConstraintTypes
-{
-    None,
-    CA,
-    JLA,
-    JLA_MID,
-    JLA_INEQ,
-};
-
 enum LookatAxisTypes
 {
     X_POSITIVE,
@@ -163,8 +154,20 @@ struct ConstraintThresholds
     double activation;
     double activation_with_buffer;
     double critical;
-    double activation_position_threshold_jla;
-    double activation_speed_threshold_jla;
+};
+
+struct ConstraintParams
+{
+    uint32_t priority;
+    double k_H;
+    double damping;
+    ConstraintThresholds thresholds;
+};
+
+enum ConstraintTypes
+{
+    CA,
+    JLA,
 };
 
 struct LimiterParams
@@ -199,6 +202,21 @@ struct LimiterParams
     std::vector<double> limits_acc;
 };
 
+struct UJSSolverParams
+{
+    UJSSolverParams() :
+        sigma(0.05),
+        sigma_speed(0.005),
+        delta_pos(0.5),
+        delta_speed(1.0)
+    {}
+
+    double sigma;
+    double sigma_speed;
+    double delta_pos;
+    double delta_speed;
+};
+
 struct TwistControllerParams
 {
     TwistControllerParams() :
@@ -208,40 +226,41 @@ struct TwistControllerParams
 
         numerical_filtering(false),
         damping_method(SIGMOID),
-        damping_factor(0.2),
-        lambda_max(0.01),
-        w_threshold(0.01),
+        damping_factor(0.01),
+        lambda_max(0.001),
+        w_threshold(0.001),
         beta(0.005),
         slope_damping(0.05),
         eps_damping(0.003),
         eps_truncation(0.001),
+
         solver(GPM),
         priority_main(500),
         k_H(1.0),
 
-        constraint_jla(JLA_OFF),
-        priority_jla(50),
-        k_H_jla(-10.0),
-        damping_jla(0.05),
-        damping_speed_jla(0.005),
-
-        constraint_ca(CA_OFF),
-        priority_ca(100),
-        damping_ca(0.000001),
-        k_H_ca(2.0),
+        constraint_jla(JLA_ON),
+        constraint_ca(CA_ON),
 
         kinematic_extension(NO_EXTENSION),
         extension_ratio(0.0)
     {
-        this->thresholds_ca.activation = 0.1;
-        this->thresholds_ca.critical = 0.025;
-        this->thresholds_ca.activation_with_buffer = this->thresholds_ca.activation * 1.5;  // best experienced value
+        ConstraintParams cp_ca;
+        cp_ca.priority = 100;
+        cp_ca.k_H = 2.0;
+        cp_ca.damping = 0.000001;
+        cp_ca.thresholds.activation = 0.1;
+        cp_ca.thresholds.critical = 0.025;
+        cp_ca.thresholds.activation_with_buffer = cp_ca.thresholds.activation * 1.5;  // best experienced value
+        constraint_params.insert(std::pair<ConstraintTypes, ConstraintParams>(CA, cp_ca));
 
-        this->thresholds_jla.activation = 0.1;
-        this->thresholds_jla.critical = 0.05;
-        this->thresholds_jla.activation_with_buffer = this->thresholds_jla.activation * 4.0;  // best experienced value
-        this->thresholds_jla.activation_position_threshold_jla = 0.5;
-        this->thresholds_jla.activation_speed_threshold_jla = 1.0;
+        ConstraintParams cp_jla;
+        cp_jla.priority = 50;
+        cp_jla.k_H = -10.0;
+        cp_jla.damping = 0.000001;
+        cp_jla.thresholds.activation = 0.1;
+        cp_jla.thresholds.critical = 0.05;
+        cp_jla.thresholds.activation_with_buffer = cp_jla.thresholds.activation * 4.0;  // best experienced value
+        constraint_params.insert(std::pair<ConstraintTypes, ConstraintParams>(JLA, cp_jla));
     }
 
     uint8_t dof;
@@ -266,18 +285,10 @@ struct TwistControllerParams
     double k_H;
 
     ConstraintTypesCA constraint_ca;
-    uint32_t priority_ca;
-    double k_H_ca;
-    double damping_ca;
-    ConstraintThresholds thresholds_ca;
-
     ConstraintTypesJLA constraint_jla;
-    uint32_t priority_jla;
-    double k_H_jla;
-    double damping_jla;
-    double damping_speed_jla;
-    ConstraintThresholds thresholds_jla;
+    std::map<ConstraintTypes, ConstraintParams> constraint_params;
 
+    UJSSolverParams ujs_solver_params;
     LimiterParams limiter_params;
 
     KinematicExtensionTypes kinematic_extension;

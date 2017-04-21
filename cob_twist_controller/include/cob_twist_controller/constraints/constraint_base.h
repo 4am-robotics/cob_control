@@ -108,9 +108,7 @@ class PriorityBase
     protected:
         PRIO priority_;
 
-        virtual ConstraintTypes getType() const = 0;
         virtual double getCriticalValue() const = 0;
-        virtual TwistControllerParams adaptDampingParamsForTask(double const_damping_factor) = 0;
 };
 
 
@@ -153,8 +151,7 @@ class ConstraintBase : public PriorityBase<PRIO>
             Task_t task(this->getPriority(),
                         this->getTaskId(),
                         this->getTaskJacobian(),
-                        this->getTaskDerivatives(),
-                        this->getType());
+                        this->getTaskDerivatives());
             return task;
         }
 
@@ -234,30 +231,9 @@ class ConstraintBase : public PriorityBase<PRIO>
         uint32_t member_inst_cnt_;
         static uint32_t instance_ctr_;
 
-        virtual ConstraintTypes getType() const = 0;
-
         virtual double getCriticalValue() const
         {
             return 0.0;
-        }
-
-        /**
-         * Copy the parameters and adapt them for the task damping.
-         * Currently only constant damping is supported without numerical filtering.
-         * (Tasks sometimes consist of a row "vector" Jacobian. The inverse is a
-         * column vector with the reciprocal compontents. Another damping method might not be sufficient here!)
-         * @param const_damping_factor The constant damping factor, usually from parameter server.
-         * @return Adapted twist controller params struct.
-         */
-        virtual TwistControllerParams adaptDampingParamsForTask(double const_damping_factor)
-        {
-            const TwistControllerParams& params = this->constraint_params_.tc_params_;
-            TwistControllerParams adapted_params;
-            adapted_params.damping_method = CONSTANT;
-            adapted_params.damping_factor = const_damping_factor;
-            adapted_params.eps_truncation = 0.0;
-            adapted_params.numerical_filtering = false;
-            return adapted_params;
         }
 };
 
