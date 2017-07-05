@@ -98,8 +98,16 @@ bool CobTwistController::initialize()
 
     for (uint16_t i = 0; i < twist_controller_params_.dof; i++)
     {
-        twist_controller_params_.limiter_params.limits_min.push_back(model.getJoint(twist_controller_params_.joints[i])->limits->lower);
-        twist_controller_params_.limiter_params.limits_max.push_back(model.getJoint(twist_controller_params_.joints[i])->limits->upper);
+        if (model.getJoint(twist_controller_params_.joints[i])->type == urdf::Joint::CONTINUOUS)
+        {
+            twist_controller_params_.limiter_params.limits_min.push_back(-std::numeric_limits<double>::max());
+            twist_controller_params_.limiter_params.limits_max.push_back(std::numeric_limits<double>::max());
+        }
+        else
+        {
+            twist_controller_params_.limiter_params.limits_min.push_back(model.getJoint(twist_controller_params_.joints[i])->limits->lower);
+            twist_controller_params_.limiter_params.limits_max.push_back(model.getJoint(twist_controller_params_.joints[i])->limits->upper);
+        }
         twist_controller_params_.limiter_params.limits_vel.push_back(model.getJoint(twist_controller_params_.joints[i])->limits->velocity);
     }
 
