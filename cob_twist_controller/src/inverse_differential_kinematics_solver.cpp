@@ -3,7 +3,7 @@
  * \file
  *
  * \note
- *   Copyright (c) 2014 \n
+ *   Copyright (c) 2017 \n
  *   Fraunhofer Institute for Manufacturing Engineering
  *   and Automation (IPA) \n\n
  *
@@ -18,8 +18,9 @@
  *
  * \author
  *   Author: Felix Messmer, email: Felix.Messmer@ipa.fraunhofer.de
+ *   Bruno Brito, email: Bruno.Brito@fraunhofer.de
  *
- * \date Date of creation: April, 2014
+ * \date Date of creation: April, 2015
  *
  * \brief
  *   This package provides the implementation of an inverse kinematics solver.
@@ -54,8 +55,11 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const JointStates& joint_stat
     KDL::Jacobian jac_full = this->kinematic_extension_->adjustJacobian(jac_chain);
     // ROS_INFO_STREAM("jac_full.rows: " << jac_full.rows() << ", jac_full.columns: " << jac_full.columns());
 
+    /// apply input limiters for limiting Cartesian velocities (input Twist)
     Vector6d_t v_in_vec;
-    tf::twistKDLToEigen(v_in, v_in_vec);
+    KDL::Twist v_temp;
+    v_temp = this->limiters_->enforceLimits(v_in);
+    tf::twistKDLToEigen(v_temp, v_in_vec);
 
     Eigen::MatrixXd qdot_out_vec;
     retStat = constraint_solver_factory_.calculateJointVelocities(jac_full.data,
@@ -72,7 +76,7 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const JointStates& joint_stat
     }
     // ROS_INFO_STREAM("qdot_out_full.rows: " << qdot_out_full.rows());
 
-    /// limiters shut be applied here in order to be able to consider the additional DoFs within "AllLimit", too
+    /// output limiters shut be applied here in order to be able to consider the additional DoFs within "AllLimit", too
     qdot_out_full = this->limiters_->enforceLimits(qdot_out_full, joint_states_full.current_q_);
 
     // ROS_INFO_STREAM("qdot_out_full.rows enforced: " << qdot_out_full.rows());

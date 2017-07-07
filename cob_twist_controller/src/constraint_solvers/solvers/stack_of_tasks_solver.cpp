@@ -95,7 +95,6 @@ Eigen::MatrixXd StackOfTasksSolver::solve(const Vector6d_t& in_cart_velocities,
     const Vector6d_t scaled_in_cart_velocities = (1.0 / pow(this->in_cart_vel_damping_, 2.0)) * in_cart_velocities;
     Task_t t(this->params_.priority_main, "Main task", this->jacobian_data_, scaled_in_cart_velocities);
     t.tcp_ = this->params_;
-    t.db_ = this->damping_;
     this->task_stack_controller_.addTask(t);
 
     // ROS_INFO_STREAM("============== Task output ============= with main task damping: " << this->in_cart_vel_damping_);
@@ -105,7 +104,7 @@ Eigen::MatrixXd StackOfTasksSolver::solve(const Vector6d_t& in_cart_velocities,
         Eigen::MatrixXd J_task = it->task_jacobian_;
         Eigen::MatrixXd J_temp = J_task * projector_i;
         Eigen::VectorXd v_task = it->task_;
-        Eigen::MatrixXd J_temp_inv = pinv_calc_.calculate(J_temp);
+        Eigen::MatrixXd J_temp_inv = pinv_calc_.calculate(J_temp);  //ToDo: Do we need damping here?
         q_i = q_i + J_temp_inv * (v_task - J_task * q_i);
         projector_i = projector_i - J_temp_inv * J_temp;
     }

@@ -38,30 +38,6 @@
 #include "cob_twist_controller/cob_twist_controller_data_types.h"
 #include "cob_twist_controller/constraints/constraint_base.h"
 #include "cob_twist_controller/callback_data_mediator.h"
-#include "cob_twist_controller/utils/moving_average.h"
-
-/* BEGIN ConstraintParamFactory *********************************************************************************/
-/// Creates constraint parameters and fills them with the values provided by CallbackDataMediator.
-template
-<typename T>
-class ConstraintParamFactory
-{
-    public:
-        static T createConstraintParams(const TwistControllerParams& twist_controller_params,
-                                        const LimiterParams& limiter_params,
-                                        CallbackDataMediator& data_mediator,
-                                        const std::string& id = std::string())
-        {
-            T params(twist_controller_params, limiter_params, id);
-            data_mediator.fill(params);
-            return params;
-        }
-
-    private:
-        ConstraintParamFactory()
-        {}
-};
-/* END ConstraintParamFactory ***********************************************************************************/
 
 /* BEGIN ConstraintsBuilder *************************************************************************************/
 /// Class providing a static method to create constraints.
@@ -100,7 +76,6 @@ class CollisionAvoidance : public ConstraintBase<T_PARAMS, PRIO>
         virtual ~CollisionAvoidance()
         {}
 
-        virtual Task_t createTask();
         virtual std::string getTaskId() const;
         virtual Eigen::MatrixXd getTaskJacobian() const;
         virtual Eigen::VectorXd getTaskDerivatives() const;
@@ -115,7 +90,6 @@ class CollisionAvoidance : public ConstraintBase<T_PARAMS, PRIO>
         double getSelfMotionMagnitude(double current_cost_func_value) const;
 
     private:
-        virtual ConstraintTypes getType() const;
         virtual double getCriticalValue() const;
 
         void calcValue();
@@ -152,7 +126,6 @@ class JointLimitAvoidance : public ConstraintBase<T_PARAMS, PRIO>
         virtual ~JointLimitAvoidance()
         {}
 
-        virtual Task_t createTask();
         virtual std::string getTaskId() const;
 
         virtual void calculate();
@@ -163,8 +136,6 @@ class JointLimitAvoidance : public ConstraintBase<T_PARAMS, PRIO>
         virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const;
 
     private:
-        virtual ConstraintTypes getType() const;
-
         void calcValue();
         void calcDerivativeValue();
         void calcPartialValues();
@@ -199,8 +170,6 @@ class JointLimitAvoidanceMid : public ConstraintBase<T_PARAMS, PRIO>
         virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const;
 
     private:
-        virtual ConstraintTypes getType() const;
-
         void calcValue();
         void calcDerivativeValue();
         void calcPartialValues();
@@ -226,7 +195,6 @@ class JointLimitAvoidanceIneq : public ConstraintBase<T_PARAMS, PRIO>
         virtual ~JointLimitAvoidanceIneq()
         {}
 
-        virtual Task_t createTask();
         virtual std::string getTaskId() const;
         virtual Eigen::MatrixXd getTaskJacobian() const;
         virtual Eigen::VectorXd getTaskDerivatives() const;
@@ -237,8 +205,6 @@ class JointLimitAvoidanceIneq : public ConstraintBase<T_PARAMS, PRIO>
         virtual double getSelfMotionMagnitude(const Eigen::MatrixXd& particular_solution, const Eigen::MatrixXd& homogeneous_solution) const;
 
     private:
-        virtual ConstraintTypes getType() const;
-
         void calcValue();
         void calcDerivativeValue();
         void calcPartialValues();

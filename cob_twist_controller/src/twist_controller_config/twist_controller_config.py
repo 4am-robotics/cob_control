@@ -32,13 +32,12 @@ from cob_twist_controller.cfg.TwistControllerConfig import *
 '''
 Available keys for the dynamic_reconfigure update call
 '''
-CTRL_IF = 'controller_interface'
-
 NUM_FILT = 'numerical_filtering'
 DAMP_METHOD = 'damping_method'
 DAMP_FACT = 'damping_factor'
 LAMBDA_MAX = 'lambda_max'
 W_THRESH = 'w_threshold'
+SLOPE_DAMPING='slope_damping'
 BETA = 'beta'
 EPS_DAMP = 'eps_damping'
 EPS_TRUNC = 'eps_truncation'
@@ -62,6 +61,11 @@ ACTIV_THRESH_CA = 'activation_threshold_ca'
 ACTIV_BUF_CA = 'activation_buffer_ca'
 CRIT_THRESH_CA = 'critical_threshold_ca'
 DAMP_CA = 'damping_ca'
+
+SIGMA_UJS = 'sigma_ujs'
+SIGMA_SPEED_UJS = 'sigma_speed_ujs'
+DELTA_POS_UJS = 'delta_pos_ujs'
+SIGMA_SPEED_UJS = 'delta_speed_ujs'
 
 KEEP_DIR = 'keep_direction'
 ENF_POS_LIM = 'enforce_pos_limits'

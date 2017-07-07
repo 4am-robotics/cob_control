@@ -8,7 +8,7 @@ root_frame: world
 
 # twist controller parameters
 twist_controller:
-  controller_interface: 3    #Velocity 0, Position 1, Trajectory 2, JointStates 3
+  controller_interface: cob_twist_controller/ControllerInterfaceJointStates
 
 # frame_tracker + interactive_marker
 frame_tracker:

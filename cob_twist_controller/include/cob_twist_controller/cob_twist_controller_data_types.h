@@ -54,14 +54,6 @@ enum DampingMethodTypes
     SIGMOID = cob_twist_controller::TwistController_SIGMOID,
 };
 
-enum ControllerInterfaceTypes
-{
-    VELOCITY_INTERFACE = cob_twist_controller::TwistController_VELOCITY_INTERFACE,
-    POSITION_INTERFACE = cob_twist_controller::TwistController_POSITION_INTERFACE,
-    TRAJECTORY_INTERFACE = cob_twist_controller::TwistController_TRAJECTORY_INTERFACE,
-    JOINT_STATE_INTERFACE = cob_twist_controller::TwistController_JOINT_STATE_INTERFACE,
-};
-
 enum KinematicExtensionTypes
 {
     NO_EXTENSION = cob_twist_controller::TwistController_NO_EXTENSION,
@@ -78,6 +70,7 @@ enum SolverTypes
     GPM = cob_twist_controller::TwistController_GPM,
     STACK_OF_TASKS = cob_twist_controller::TwistController_STACK_OF_TASKS,
     TASK_2ND_PRIO = cob_twist_controller::TwistController_TASK_2ND_PRIO,
+    UNIFIED_JLA_SA = cob_twist_controller::TwistController_UNIFIED_JLA_SA,
 };
 
 enum ConstraintTypesCA
@@ -92,15 +85,6 @@ enum ConstraintTypesJLA
     JLA_ON = cob_twist_controller::TwistController_JLA,
     JLA_MID_ON = cob_twist_controller::TwistController_JLA_MID,
     JLA_INEQ_ON = cob_twist_controller::TwistController_JLA_INEQ,
-};
-
-enum ConstraintTypes
-{
-    None,
-    CA,
-    JLA,
-    JLA_MID,
-    JLA_INEQ,
 };
 
 enum LookatAxisTypes
@@ -172,21 +156,45 @@ struct ConstraintThresholds
     double critical;
 };
 
+struct ConstraintParams
+{
+    uint32_t priority;
+    double k_H;
+    double damping;
+    ConstraintThresholds thresholds;
+};
+
+enum ConstraintTypes
+{
+    CA,
+    JLA,
+};
+
 struct LimiterParams
 {
     LimiterParams() :
         keep_direction(true),
+        enforce_input_limits(true),
         enforce_pos_limits(true),
         enforce_vel_limits(true),
         enforce_acc_limits(false),
-        limits_tolerance(5.0)
+        limits_tolerance(5.0),
+        max_lin_twist(0.5),
+        max_rot_twist(0.5),
+        max_vel_lin_base(0.5),
+        max_vel_rot_base(0.5)
     {}
 
     bool keep_direction;
+    bool enforce_input_limits;
     bool enforce_pos_limits;
     bool enforce_vel_limits;
     bool enforce_acc_limits;
     double limits_tolerance;
+    double max_lin_twist;
+    double max_rot_twist;
+    double max_vel_lin_base;
+    double max_vel_rot_base;
 
     std::vector<double> limits_max;
     std::vector<double> limits_min;
@@ -194,53 +202,72 @@ struct LimiterParams
     std::vector<double> limits_acc;
 };
 
+struct UJSSolverParams
+{
+    UJSSolverParams() :
+        sigma(0.05),
+        sigma_speed(0.005),
+        delta_pos(0.5),
+        delta_speed(1.0)
+    {}
+
+    double sigma;
+    double sigma_speed;
+    double delta_pos;
+    double delta_speed;
+};
+
 struct TwistControllerParams
 {
     TwistControllerParams() :
         dof(0),
-        controller_interface(VELOCITY_INTERFACE),
+        controller_interface(""),
         integrator_smoothing(0.2),
 
         numerical_filtering(false),
-        damping_method(MANIPULABILITY),
-        damping_factor(0.2),
-        lambda_max(0.1),
-        w_threshold(0.005),
+        damping_method(SIGMOID),
+        damping_factor(0.01),
+        lambda_max(0.001),
+        w_threshold(0.001),
         beta(0.005),
-        slope_damping(0.003),
+        slope_damping(0.05),
         eps_damping(0.003),
         eps_truncation(0.001),
+
         solver(GPM),
         priority_main(500),
         k_H(1.0),
 
         constraint_jla(JLA_ON),
-        priority_jla(50),
-        k_H_jla(-10.0),
-        damping_jla(0.000001),
-
         constraint_ca(CA_ON),
-        priority_ca(100),
-        damping_ca(0.000001),
-        k_H_ca(2.0),
 
         kinematic_extension(NO_EXTENSION),
         extension_ratio(0.0)
     {
-        this->thresholds_ca.activation = 0.1;
-        this->thresholds_ca.critical = 0.025;
-        this->thresholds_ca.activation_with_buffer = this->thresholds_ca.activation * 1.5;  // best experienced value
+        ConstraintParams cp_ca;
+        cp_ca.priority = 100;
+        cp_ca.k_H = 2.0;
+        cp_ca.damping = 0.000001;
+        cp_ca.thresholds.activation = 0.1;
+        cp_ca.thresholds.critical = 0.025;
+        cp_ca.thresholds.activation_with_buffer = cp_ca.thresholds.activation * 1.5;  // best experienced value
+        constraint_params.insert(std::pair<ConstraintTypes, ConstraintParams>(CA, cp_ca));
 
-        this->thresholds_jla.activation = 0.1;
-        this->thresholds_jla.critical = 0.05;
-        this->thresholds_jla.activation_with_buffer = this->thresholds_jla.activation * 4.0;  // best experienced value
+        ConstraintParams cp_jla;
+        cp_jla.priority = 50;
+        cp_jla.k_H = -10.0;
+        cp_jla.damping = 0.000001;
+        cp_jla.thresholds.activation = 0.1;
+        cp_jla.thresholds.critical = 0.05;
+        cp_jla.thresholds.activation_with_buffer = cp_jla.thresholds.activation * 4.0;  // best experienced value
+        constraint_params.insert(std::pair<ConstraintTypes, ConstraintParams>(JLA, cp_jla));
     }
 
     uint8_t dof;
     std::string chain_base_link;
     std::string chain_tip_link;
 
-    ControllerInterfaceTypes controller_interface;
+    std::string controller_interface;
     double integrator_smoothing;
 
     bool numerical_filtering;
@@ -258,17 +285,10 @@ struct TwistControllerParams
     double k_H;
 
     ConstraintTypesCA constraint_ca;
-    uint32_t priority_ca;
-    double k_H_ca;
-    double damping_ca;
-    ConstraintThresholds thresholds_ca;
-
     ConstraintTypesJLA constraint_jla;
-    uint32_t priority_jla;
-    double k_H_jla;
-    double damping_jla;
-    ConstraintThresholds thresholds_jla;
+    std::map<ConstraintTypes, ConstraintParams> constraint_params;
 
+    UJSSolverParams ujs_solver_params;
     LimiterParams limiter_params;
 
     KinematicExtensionTypes kinematic_extension;
