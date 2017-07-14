@@ -140,8 +140,23 @@ void ControllerInterfaceJointStates::initialize(ros::NodeHandle& nh,
 
     for (unsigned int i=0; i < params_.joints.size(); i++)
     {
-        // start at center configuration
-        js_msg_.position.push_back(params_.limiter_params.limits_min[i] + (params_.limiter_params.limits_max[i] - params_.limiter_params.limits_min[i])/2.0);
+        // reflect the joint_state_publisher behavior
+        double pos = 0.0;
+        if (params_.limiter_params.limits_min[i] > 0.0 || params_.limiter_params.limits_max[i] < 0.0)
+        {
+            ROS_WARN("Zero is not within JointLimits [%f, %f] of %s! Using mid-configuration", params_.limiter_params.limits_min[i], params_.limiter_params.limits_max[i], params_.joints[i].c_str());
+            
+            // check whether limits are finite (required when dealing with CONTINUOUS joints)
+            if (std::isfinite(params_.limiter_params.limits_min[i]) && std::isfinite(params_.limiter_params.limits_max[i]))
+            {
+                pos = params_.limiter_params.limits_min[i] + (params_.limiter_params.limits_max[i] - params_.limiter_params.limits_min[i])/2.0;
+            }
+            else
+            {
+                ROS_ERROR("JointLimits are infinite (%s is a CONTINUOUS joint)", params_.joints[i].c_str());
+            }
+        }
+        js_msg_.position.push_back(pos);
         js_msg_.velocity.push_back(0.0);
         js_msg_.effort.push_back(0.0);
     }
