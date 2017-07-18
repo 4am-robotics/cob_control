@@ -2,6 +2,27 @@
 Changelog for package cob_obstacle_distance
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'indigo_release_candidate' into kinetic_release_candidate
+* Merge branch 'indigo_dev' of github.com:ipa320/cob_control into multi_distro_travis_kinetic
+  Conflicts:
+  .travis.yml
+  README.md
+* [kinetic] migration (`#115 <https://github.com/ipa320/cob_control/issues/115>`_)
+  * [kinetic] find package Eigen3 instead of Eigen
+  * [kinetic] switched from fcl to libfcl-dev dependency
+  * ignore cob_obstacle_distance for now
+  * [kinetic] use industrial_ci for travis
+  * [kinetic] use industrial_cis ipa320 fork & notify on_success only on change
+  * fixed fcl dependency
+  * new fcl version switched from boost::shared to std::shared
+  * whitelist package
+  * use ros-industrials fork
+  * cleaned up travis.yml
+* Added Eigen3 Indigo/Kinetic compatibility
+* Contributors: Benjamin Maidel, Denis Štogl, Richard Bormann, ipa-fxm
+
 0.6.15 (2017-07-18)
 -------------------
 * use xacro --inorder

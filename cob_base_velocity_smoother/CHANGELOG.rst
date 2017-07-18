@@ -2,6 +2,9 @@
 Changelog for package cob_base_velocity_smoother
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.6.15 (2017-07-18)
 -------------------
 * Merge pull request `#122 <https://github.com/ipa320/cob_control/issues/122>`_ from ipa-fxm/indigo_roslint

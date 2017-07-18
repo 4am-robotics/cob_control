@@ -2,6 +2,15 @@
 Changelog for package cob_model_identifier
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'indigo_dev' of github.com:ipa320/cob_control into multi_distro_travis_kinetic
+  Conflicts:
+  .travis.yml
+  README.md
+* Added Eigen3 Indigo/Kinetic compatibility
+* Contributors: Denis Štogl, ipa-fxm
+
 0.6.15 (2017-07-18)
 -------------------
 * Merge pull request `#122 <https://github.com/ipa320/cob_control/issues/122>`_ from ipa-fxm/indigo_roslint

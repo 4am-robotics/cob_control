@@ -2,6 +2,9 @@
 Changelog for package cob_control_msgs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.6.15 (2017-07-18)
 -------------------
 * manually fix changelog
