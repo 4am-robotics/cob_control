@@ -2,8 +2,8 @@
 Changelog for package cob_undercarriage_ctrl_node
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.15 (2017-07-18)
+-------------------
 * refactored cob_omni_wheel_controller classes
 * manually fix changelog
 * Contributors: Mathias Lüdtke, ipa-fxm

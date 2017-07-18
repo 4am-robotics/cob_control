@@ -2,8 +2,8 @@
 Changelog for package cob_cartesian_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.15 (2017-07-18)
+-------------------
 * cleanup leftovers
 * use xacro --inorder
 * remove inline keywords

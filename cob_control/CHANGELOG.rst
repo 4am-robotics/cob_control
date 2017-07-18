@@ -2,8 +2,8 @@
 Changelog for package cob_control
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.15 (2017-07-18)
+-------------------
 * manually fix changelog
 * Contributors: ipa-fxm
 

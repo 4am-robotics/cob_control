@@ -2,8 +2,8 @@
 Changelog for package cob_twist_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.15 (2017-07-18)
+-------------------
 * handle continuous joints in ControllerInterfaceJointStates
 * handle continuous joints in position_limiter
 * harmonize createTask
