@@ -2,13 +2,23 @@
 Changelog for package cob_obstacle_distance
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-0.6.14 (2015-10-10)
+Forthcoming
+-----------
+* use xacro --inorder
+* Merge pull request `#122 <https://github.com/ipa320/cob_control/issues/122>`_ from ipa-fxm/indigo_roslint
+  roslint some packages
+* starting to roslint some packages
+* manually fix changelog
+* add possiblitiy to add shelf as obstacle
+* Contributors: Nadia Hammoudeh García, ipa-fxm
+
+0.6.14 (2016-10-10)
 -------------------
 
-0.6.13 (2015-10-10)
+0.6.13 (2016-10-10)
 -------------------
 
-0.6.12 (2015-10-10)
+0.6.12 (2016-10-10)
 -------------------
 * Two publishers where publishing to the same frame name
 * Contributors: ipa-bfb

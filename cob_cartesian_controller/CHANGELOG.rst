@@ -2,13 +2,27 @@
 Changelog for package cob_cartesian_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-0.6.14 (2015-10-10)
+Forthcoming
+-----------
+* cleanup leftovers
+* use xacro --inorder
+* remove inline keywords
+* manually fix changelog
+* optimize output
+* clear preview
+* remove obsolete script
+* add install tags
+* fix and harmonize scripts
+* broadcast target_frame before tracking
+* Contributors: ipa-fxm
+
+0.6.14 (2016-10-10)
 -------------------
 
-0.6.13 (2015-10-10)
+0.6.13 (2016-10-10)
 -------------------
 
-0.6.12 (2015-10-10)
+0.6.12 (2016-10-10)
 -------------------
 
 0.6.11 (2016-04-01)

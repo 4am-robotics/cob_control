@@ -2,13 +2,19 @@
 Changelog for package cob_undercarriage_ctrl_node
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-0.6.14 (2015-10-10)
+Forthcoming
+-----------
+* refactored cob_omni_wheel_controller classes
+* manually fix changelog
+* Contributors: Mathias Lüdtke, ipa-fxm
+
+0.6.14 (2016-10-10)
 -------------------
 
-0.6.13 (2015-10-10)
+0.6.13 (2016-10-10)
 -------------------
 
-0.6.12 (2015-10-10)
+0.6.12 (2016-10-10)
 -------------------
 * introduced WheelCommand, outputs state and steer target error
 * Contributors: Mathias Lüdtke
