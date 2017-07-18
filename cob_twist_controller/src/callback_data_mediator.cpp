@@ -1,32 +1,20 @@
-/*!
- *****************************************************************
- * \file
+/*
+ * Copyright 2017 Fraunhofer Institute for Manufacturing Engineering and Automation (IPA)
  *
- * \note
- *   Copyright (c) 2014 \n
- *   Fraunhofer Institute for Manufacturing Engineering
- *   and Automation (IPA) \n\n
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *****************************************************************
- *
- * \note
- *   Project name: care-o-bot
- * \note
- *   ROS stack name: cob_control
- * \note
- *   ROS package name: cob_twist_controller
- *
- * \author
- *   Author: Marco Bezzon, email: Marco.Bezzon@ipa.fraunhofer.de
- *
- * \date Date of creation: June, 2015
- *
- * \brief
- *   Methods implementation of the callback data mediator.
- *   Collects data from ROS callbacks and provides the data
- *   for constraint parameters.
- *
- ****************************************************************/
+ *   http://www.apache.org/licenses/LICENSE-2.0
+
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
 #include <limits>
 #include <ros/ros.h>
 

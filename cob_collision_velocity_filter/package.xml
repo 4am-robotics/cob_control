@@ -3,7 +3,7 @@
   <version>0.6.14</version>
   <description>The cob_collision_velocity_filter package is a package for collision avoidance using teleoperation.</description>
 
-  <license>LGPL</license>
+  <license>Apache 2.0</license>
 
   <url type="website">http://ros.org/wiki/cob_collision_velocity_filter</url>
   <!-- <url type="bugtracker"></url> -->
