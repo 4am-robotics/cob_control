@@ -2,8 +2,8 @@
 Changelog for package cob_twist_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.0 (2017-07-18)
+------------------
 * Merge branch 'indigo_dev' of https://github.com/ipa320/cob_control into kinetic_dev
 * [kinetic] migration (`#115 <https://github.com/ipa320/cob_control/issues/115>`_)
   * [kinetic] find package Eigen3 instead of Eigen

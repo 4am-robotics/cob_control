@@ -2,8 +2,8 @@
 Changelog for package cob_obstacle_distance
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.0 (2017-07-18)
+------------------
 * Merge branch 'indigo_release_candidate' into kinetic_release_candidate
 * Merge branch 'indigo_dev' of github.com:ipa320/cob_control into multi_distro_travis_kinetic
   Conflicts:
