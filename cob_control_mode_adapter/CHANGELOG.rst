@@ -2,13 +2,23 @@
 Changelog for package cob_control_mode_adapter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-0.6.14 (2015-10-10)
+0.6.15 (2017-07-18)
+-------------------
+* Merge pull request `#122 <https://github.com/ipa320/cob_control/issues/122>`_ from ipa-fxm/indigo_roslint
+  roslint some packages
+* update date
+* starting to roslint some packages
+* manually fix changelog
+* added params for mode switching controllers
+* Contributors: Felix Messmer, Mathias Lüdtke, Nadia Hammoudeh García, ipa-fxm
+
+0.6.14 (2016-10-10)
 -------------------
 
-0.6.13 (2015-10-10)
+0.6.13 (2016-10-10)
 -------------------
 
-0.6.12 (2015-10-10)
+0.6.12 (2016-10-10)
 -------------------
 
 0.6.11 (2016-04-01)
