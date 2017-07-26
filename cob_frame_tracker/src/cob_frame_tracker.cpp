@@ -165,6 +165,7 @@ bool CobFrameTracker::initialize()
 
     jointstate_sub_ = nh_.subscribe("joint_states", 1, &CobFrameTracker::jointstateCallback, this);
     twist_pub_ = nh_twist.advertise<geometry_msgs::TwistStamped> ("command_twist_stamped", 1);
+    error_pub_ = nh_twist.advertise<geometry_msgs::TwistStamped> ("controller_errors", 1);
 
     start_tracking_server_ = nh_tracker.advertiseService("start_tracking", &CobFrameTracker::startTrackingCallback, this);
     start_lookat_server_ = nh_tracker.advertiseService("start_lookat", &CobFrameTracker::startLookatCallback, this);
@@ -243,7 +244,9 @@ void CobFrameTracker::publishZeroTwist()
 {
     // publish zero Twist for stopping
     geometry_msgs::TwistStamped twist_msg;
+    ros::Time now = ros::Time::now();
     twist_msg.header.frame_id = tracking_frame_;
+    twist_msg.header.stamp = now;
     twist_pub_.publish(twist_msg);
 }
 
@@ -252,9 +255,12 @@ void CobFrameTracker::publishTwist(ros::Duration period, bool do_publish)
     tf::StampedTransform transform_tf;
     bool success = this->getTransform(tracking_frame_, target_frame_, transform_tf);
 
-    geometry_msgs::TwistStamped twist_msg;
+    geometry_msgs::TwistStamped twist_msg, error_msg;
+    ros::Time now = ros::Time::now();
     twist_msg.header.frame_id = tracking_frame_;
-    twist_msg.header.stamp = ros::Time::now();
+    twist_msg.header.stamp = now;
+    error_msg.header.frame_id = tracking_frame_;
+    error_msg.header.stamp = now;
 
     if (!success)
     {
@@ -262,11 +268,25 @@ void CobFrameTracker::publishTwist(ros::Duration period, bool do_publish)
         return;
     }
 
+    double error_trans_x = transform_tf.getOrigin().x();
+    double error_trans_y = transform_tf.getOrigin().y();
+    double error_trans_z = transform_tf.getOrigin().z();
+    double error_rot_x = transform_tf.getRotation().x();
+    double error_rot_y = transform_tf.getRotation().y();
+    double error_rot_z = transform_tf.getRotation().z();
+
+    error_msg.twist.linear.x = error_trans_x;
+    error_msg.twist.linear.y = error_trans_y;
+    error_msg.twist.linear.z = error_trans_z;
+    error_msg.twist.angular.x = error_rot_x;
+    error_msg.twist.angular.y = error_rot_y;
+    error_msg.twist.angular.z = error_rot_z;
+
     if (movable_trans_)
     {
-        twist_msg.twist.linear.x = pid_controller_trans_x_.computeCommand(transform_tf.getOrigin().x(), period);
-        twist_msg.twist.linear.y = pid_controller_trans_y_.computeCommand(transform_tf.getOrigin().y(), period);
-        twist_msg.twist.linear.z = pid_controller_trans_z_.computeCommand(transform_tf.getOrigin().z(), period);
+        twist_msg.twist.linear.x = pid_controller_trans_x_.computeCommand(error_trans_x, period);
+        twist_msg.twist.linear.y = pid_controller_trans_y_.computeCommand(error_trans_y, period);
+        twist_msg.twist.linear.z = pid_controller_trans_z_.computeCommand(error_trans_z, period);
     }
 
     if (movable_rot_)
@@ -274,9 +294,9 @@ void CobFrameTracker::publishTwist(ros::Duration period, bool do_publish)
         /// ToDo: Consider angular error as RPY or Quaternion?
         /// ToDo: What to do about sign conversion (pi->-pi) in angular rotation?
 
-        twist_msg.twist.angular.x = pid_controller_rot_x_.computeCommand(transform_tf.getRotation().x(), period);
-        twist_msg.twist.angular.y = pid_controller_rot_y_.computeCommand(transform_tf.getRotation().y(), period);
-        twist_msg.twist.angular.z = pid_controller_rot_z_.computeCommand(transform_tf.getRotation().z(), period);
+        twist_msg.twist.angular.x = pid_controller_rot_x_.computeCommand(error_rot_x, period);
+        twist_msg.twist.angular.y = pid_controller_rot_y_.computeCommand(error_rot_y, period);
+        twist_msg.twist.angular.z = pid_controller_rot_z_.computeCommand(error_rot_z, period);
     }
 
     /// debug only
@@ -319,7 +339,9 @@ void CobFrameTracker::publishTwist(ros::Duration period, bool do_publish)
 
     if (do_publish)
     {
+        ROS_INFO_STREAM("[publishTwist] Period: " << period.toSec());
         twist_pub_.publish(twist_msg);
+        error_pub_.publish(error_msg);
     }
 }
 
@@ -328,8 +350,12 @@ void CobFrameTracker::publishHoldTwist(const ros::Duration& period)
     tf::StampedTransform transform_tf;
     bool success = this->getTransform(chain_base_link_, tracking_frame_, transform_tf);
 
-    geometry_msgs::TwistStamped twist_msg;
+    geometry_msgs::TwistStamped twist_msg, error_msg;
+    ros::Time now = ros::Time::now();
     twist_msg.header.frame_id = tracking_frame_;
+    twist_msg.header.stamp = now;
+    error_msg.header.frame_id = tracking_frame_;
+    error_msg.header.stamp = now;
 
     if (!this->ht_.hold)
     {
@@ -339,20 +365,37 @@ void CobFrameTracker::publishHoldTwist(const ros::Duration& period)
     }
     else
     {
-        ROS_ERROR_STREAM_THROTTLE(1, "Abortion active: Publishing hold posture twist");
         if (success)
         {
-            twist_msg.twist.linear.x = pid_controller_trans_x_.computeCommand(ht_.transform_tf.getOrigin().x() - transform_tf.getOrigin().x(), period);
-            twist_msg.twist.linear.y = pid_controller_trans_y_.computeCommand(ht_.transform_tf.getOrigin().y() - transform_tf.getOrigin().y(), period);
-            twist_msg.twist.linear.z = pid_controller_trans_z_.computeCommand(ht_.transform_tf.getOrigin().z() - transform_tf.getOrigin().z(), period);
+            ROS_ERROR_STREAM_THROTTLE(1, "Abortion active: Publishing hold posture twist");
 
-            twist_msg.twist.angular.x = pid_controller_rot_x_.computeCommand(ht_.transform_tf.getRotation().x() - transform_tf.getRotation().x(), period);
-            twist_msg.twist.angular.y = pid_controller_rot_y_.computeCommand(ht_.transform_tf.getRotation().y() - transform_tf.getRotation().y(), period);
-            twist_msg.twist.angular.z = pid_controller_rot_z_.computeCommand(ht_.transform_tf.getRotation().z() - transform_tf.getRotation().z(), period);
+            double error_trans_x = ht_.transform_tf.getOrigin().x() - transform_tf.getOrigin().x();
+            double error_trans_y = ht_.transform_tf.getOrigin().y() - transform_tf.getOrigin().y();
+            double error_trans_z = ht_.transform_tf.getOrigin().z() - transform_tf.getOrigin().z();
+            double error_rot_x = ht_.transform_tf.getRotation().x() - transform_tf.getRotation().x();
+            double error_rot_y = ht_.transform_tf.getRotation().y() - transform_tf.getRotation().y();
+            double error_rot_z = ht_.transform_tf.getRotation().z() - transform_tf.getRotation().z();
+
+            error_msg.twist.linear.x = error_trans_x;
+            error_msg.twist.linear.y = error_trans_y;
+            error_msg.twist.linear.z = error_trans_z;
+            error_msg.twist.angular.x = error_rot_x;
+            error_msg.twist.angular.y = error_rot_y;
+            error_msg.twist.angular.z = error_rot_z;
+
+            twist_msg.twist.linear.x = pid_controller_trans_x_.computeCommand(error_trans_x, period);
+            twist_msg.twist.linear.y = pid_controller_trans_y_.computeCommand(error_trans_y, period);
+            twist_msg.twist.linear.z = pid_controller_trans_z_.computeCommand(error_trans_z, period);
+
+            twist_msg.twist.angular.x = pid_controller_rot_x_.computeCommand(error_rot_x, period);
+            twist_msg.twist.angular.y = pid_controller_rot_y_.computeCommand(error_rot_y, period);
+            twist_msg.twist.angular.z = pid_controller_rot_z_.computeCommand(error_rot_z, period);
         }
     }
 
+    ROS_INFO_STREAM("[publishHoldTwist] Period: " << period.toSec());
     twist_pub_.publish(twist_msg);
+    error_pub_.publish(error_msg);
 }
 
 bool CobFrameTracker::startTrackingCallback(cob_srvs::SetString::Request& request, cob_srvs::SetString::Response& response)
