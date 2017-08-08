@@ -5,6 +5,9 @@ find_package(catkin REQUIRED COMPONENTS actionlib_msgs actionlib cob_srvs geomet
 
 find_package(Boost REQUIRED)
 
+set(CMAKE_CXX_COMPILER "clang++")
+set(CMAKE_C_COMPILER "clang") 
+
 catkin_python_setup()
 
 ### Message Generation ###

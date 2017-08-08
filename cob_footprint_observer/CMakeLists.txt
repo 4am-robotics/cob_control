@@ -11,6 +11,11 @@ else()
   add_definitions(-std=c++0x)
 endif()
 
+
+set(CMAKE_CXX_COMPILER "clang++")
+set(CMAKE_C_COMPILER "clang") 
+
+
 ### Message Generation ###
 add_service_files(
   FILES
@@ -24,7 +29,6 @@ generate_messages(
 catkin_package(
   CATKIN_DEPENDS geometry_msgs message_runtime std_msgs
 )
-
 ### BUILD ###
 include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 

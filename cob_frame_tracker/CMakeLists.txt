@@ -7,6 +7,10 @@ find_package(Boost REQUIRED COMPONENTS thread)
 
 find_package(orocos_kdl REQUIRED)
 
+set(CMAKE_CXX_COMPILER "clang++")
+set(CMAKE_C_COMPILER "clang") 
+
+
 ### Message Generation ###
 generate_dynamic_reconfigure_options(cfg/FrameTracker.cfg)
 

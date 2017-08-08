@@ -24,6 +24,10 @@ find_package(orocos_kdl REQUIRED)
 
 find_package(PkgConfig REQUIRED)
 
+set(CMAKE_CXX_COMPILER "clang++")
+set(CMAKE_C_COMPILER "clang") 
+
+
 pkg_check_modules(ASSIMP assimp)
 
 pkg_check_modules(LIBFCL REQUIRED fcl)
