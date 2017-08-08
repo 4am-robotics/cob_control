@@ -1,32 +1,20 @@
 #!/usr/bin/env python
-"""
- * \file
- *
- * \note
- *   Copyright (c) 2014 \n
- *   Fraunhofer Institute for Manufacturing Engineering
- *   and Automation (IPA) \n\n
- *
- *****************************************************************
- *
- * \note
- *   Project name: care-o-bot
- * \note
- *   ROS stack name: cob_control
- * \note
- *   ROS package name: cob_twist_controller
- *
- * \author
- *   Author: Marco Bezzon, email: Marco.Bezzon@ipa.fraunhofer.de
- *
- * \date Date of creation: July, 2015
- *
- * \brief
- *   Implementation of special data kraken classes to subscribe to several topics.
- *   In callback methods data is collected, put into a list representing rows.
- *   Then the rows can be written to a csv file.
- *
-"""
+#
+# Copyright 2017 Fraunhofer Institute for Manufacturing Engineering and Automation (IPA)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
 import time
 import csv
 import datetime
