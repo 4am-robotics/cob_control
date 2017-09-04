@@ -8,7 +8,7 @@
   <url type="website">http://ros.org/wiki/cob_collision_velocity_filter</url>
   <!-- <url type="bugtracker"></url> -->
 
-  <maintainer email="mig@ipa.fhg.de">Matthias Gruhler</maintainer>
+  <maintainer email="flg@ipa.fhg.de">Felipe Garcia Lopez</maintainer>
   <author>Matthias Gruhler</author>
   <author>Michal Spanel</author>
 
