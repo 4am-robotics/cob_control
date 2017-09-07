@@ -63,7 +63,7 @@ public:
 
         // could be made a parameter or even dynamically reconfigurable
         ros::NodeHandle nh_priv("~");
-        nh_priv.param<double>("scaling_factor", scaling_factor_, 0.1);
+        nh_priv.param<double>("scaling_factor", scaling_factor_, 0.3);
         dead_man_enabled_ = false;
         frame_id_ = root_frame_;
 
