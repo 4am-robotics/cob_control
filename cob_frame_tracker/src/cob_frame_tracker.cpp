@@ -283,12 +283,11 @@ void CobFrameTracker::publishTwist(ros::Duration period, bool do_publish)
     error_msg.twist.angular.z = error_rot_z;
     
     if (movable_trans_)    
-        {
-                twist_msg.twist.linear.x = pid_controller_trans_x_.computeCommand(error_trans_x, period);
-                twist_msg.twist.linear.y = pid_controller_trans_y_.computeCommand(error_trans_y, period);
-                twist_msg.twist.linear.z = pid_controller_trans_z_.computeCommand(error_trans_z, period);
-                ROS_INFO_STREAM("PUBLISHING x: " << twist_msg.twist.linear.x <<" y "<< twist_msg.twist.linear.y << " z: " <<twist_msg.twist.linear.z);
-        }
+    {
+             twist_msg.twist.linear.x = pid_controller_trans_x_.computeCommand(error_trans_x, period);
+             twist_msg.twist.linear.y = pid_controller_trans_y_.computeCommand(error_trans_y, period);
+             twist_msg.twist.linear.z = pid_controller_trans_z_.computeCommand(error_trans_z, period);
+    }
   
 
     if (movable_rot_)
