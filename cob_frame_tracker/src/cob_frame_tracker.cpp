@@ -281,14 +281,14 @@ void CobFrameTracker::publishTwist(ros::Duration period, bool do_publish)
     error_msg.twist.angular.x = error_rot_x;
     error_msg.twist.angular.y = error_rot_y;
     error_msg.twist.angular.z = error_rot_z;
-    
-    if (movable_trans_)    
+
+    if (movable_trans_)
     {
         twist_msg.twist.linear.x = pid_controller_trans_x_.computeCommand(error_trans_x, period);
         twist_msg.twist.linear.y = pid_controller_trans_y_.computeCommand(error_trans_y, period);
         twist_msg.twist.linear.z = pid_controller_trans_z_.computeCommand(error_trans_z, period);
     }
-  
+
     if (movable_rot_)
     {
         /// ToDo: Consider angular error as RPY or Quaternion?
