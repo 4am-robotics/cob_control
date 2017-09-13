@@ -141,7 +141,7 @@ bool CobFrameTracker::initialize()
     lookat_focus_frame_ = "lookat_focus_frame";
 
     // ABORTION CRITERIA:
-    enable_abortion_checking_ = false;
+    enable_abortion_checking_ = true;
     cart_min_dist_threshold_lin_ = 0.01;
     cart_min_dist_threshold_rot_ = 0.01;
     twist_dead_threshold_lin_ = 0.05;
@@ -149,15 +149,6 @@ bool CobFrameTracker::initialize()
     twist_deviation_threshold_lin_ = 0.5;
     twist_deviation_threshold_rot_ = 0.5;
 
-
-/*   enable_abortion_checking_ = true;
-    cart_min_dist_threshold_lin_ = 0.01;
-    cart_min_dist_threshold_rot_ = 0.01;
-    twist_dead_threshold_lin_ = 0.05;
-    twist_dead_threshold_rot_ = 0.05;
-    twist_deviation_threshold_lin_ = 0.5;
-    twist_deviation_threshold_rot_ = 0.5;
-*/
     cart_distance_ = 0.0;
     rot_distance_ = 0.0;
 
@@ -290,42 +281,24 @@ void CobFrameTracker::publishTwist(ros::Duration period, bool do_publish)
     error_msg.twist.angular.x = error_rot_x;
     error_msg.twist.angular.y = error_rot_y;
     error_msg.twist.angular.z = error_rot_z;
-
-	//T2
     
-	if (movable_trans_)    
-		{
-			if ((fabs(error_msg.twist.linear.x) <= 0.005) && (fabs(error_msg.twist.linear.y) <= 0.005) && (fabs(error_msg.twist.linear.z) <= 0.005))
-			{
-					this->publishHoldTwist(period);
-					ROS_INFO_STREAM("PUBLISHING ZERO SPEED...");
-			}
-			else
-				{
-					twist_msg.twist.linear.x = pid_controller_trans_x_.computeCommand(error_trans_x, period);
-					twist_msg.twist.linear.y = pid_controller_trans_y_.computeCommand(error_trans_y, period);
-					twist_msg.twist.linear.z = pid_controller_trans_z_.computeCommand(error_trans_z, period);
-					ROS_INFO_STREAM("PUBLISHING x: " << twist_msg.twist.linear.x <<" y "<< twist_msg.twist.linear.y << " z: " <<twist_msg.twist.linear.z);
-				} 
-		}
+    if (movable_trans_)    
+        {
+                twist_msg.twist.linear.x = pid_controller_trans_x_.computeCommand(error_trans_x, period);
+                twist_msg.twist.linear.y = pid_controller_trans_y_.computeCommand(error_trans_y, period);
+                twist_msg.twist.linear.z = pid_controller_trans_z_.computeCommand(error_trans_z, period);
+                ROS_INFO_STREAM("PUBLISHING x: " << twist_msg.twist.linear.x <<" y "<< twist_msg.twist.linear.y << " z: " <<twist_msg.twist.linear.z);
+        }
   
 
-	if (movable_rot_)
-		{
+    if (movable_rot_)
+    {
         /// ToDo: Consider angular error as RPY or Quaternion?
         /// ToDo: What to do about sign conversion (pi->-pi) in angular rotation?
-			if ((fabs(error_msg.twist.angular.x) <= 0.005) && (fabs(error_msg.twist.angular.y) <= 0.005) && (fabs(error_msg.twist.angular.z) <= 0.005))
-				{   
-					this->publishHoldTwist(period);
-					ROS_INFO_STREAM("PUBLISHING ZERO SPEED...");
-				}
-			else
-				{
-					twist_msg.twist.angular.x = pid_controller_rot_x_.computeCommand(error_rot_x, period);
-					twist_msg.twist.angular.y = pid_controller_rot_y_.computeCommand(error_rot_y, period);
-					twist_msg.twist.angular.z = pid_controller_rot_z_.computeCommand(error_rot_z, period);
-				}
-		}
+            twist_msg.twist.angular.x = pid_controller_rot_x_.computeCommand(error_rot_x, period);
+            twist_msg.twist.angular.y = pid_controller_rot_y_.computeCommand(error_rot_y, period);
+            twist_msg.twist.angular.z = pid_controller_rot_z_.computeCommand(error_rot_z, period);
+    }
 
     /// debug only
     /**
@@ -352,6 +325,7 @@ void CobFrameTracker::publishTwist(ros::Duration period, bool do_publish)
 
     // eukl distance
     cart_distance_ = sqrt(pow(transform_tf.getOrigin().x(), 2) + pow(transform_tf.getOrigin().y(), 2) + pow(transform_tf.getOrigin().z(), 2));
+    rot_distance_ = sqrt(pow(transform_tf.getRotation().x(), 2) + pow(transform_tf.getRotation().y(), 2) + pow(transform_tf.getRotation().z(), 2));
 
     // rot distance
     // // TODO: change to cartesian rot
@@ -684,7 +658,7 @@ int CobFrameTracker::checkStatus()
     }
 
     bool infinitesimal_twist = checkInfinitesimalTwist(current_twist_);
-    bool distance_violation = checkCartDistanceViolation(cart_distance_, 0.0);
+    bool distance_violation = checkCartDistanceViolation(cart_distance_, rot_distance_);
     bool twist_violation = checkTwistViolation(current_twist_, target_twist_);
 
     if (stop_on_goal_)
@@ -725,7 +699,7 @@ int CobFrameTracker::checkServiceCallStatus()
         return status;
     }
 
-    bool distance_violation = checkCartDistanceViolation(cart_distance_, 0.0);
+    bool distance_violation = checkCartDistanceViolation(cart_distance_, rot_distance_);
 
     if (distance_violation)
     {
