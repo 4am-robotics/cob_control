@@ -314,6 +314,7 @@ void CobFrameTracker::publishTwist(ros::Duration period, bool do_publish)
 
     // eukl distance
     cart_distance_ = sqrt(pow(transform_tf.getOrigin().x(), 2) + pow(transform_tf.getOrigin().y(), 2) + pow(transform_tf.getOrigin().z(), 2));
+    rot_distance_ = sqrt(pow(transform_tf.getRotation().x(), 2) + pow(transform_tf.getRotation().y(), 2) + pow(transform_tf.getRotation().z(), 2));
 
     // rot distance
     // // TODO: change to cartesian rot
@@ -646,7 +647,7 @@ int CobFrameTracker::checkStatus()
     }
 
     bool infinitesimal_twist = checkInfinitesimalTwist(current_twist_);
-    bool distance_violation = checkCartDistanceViolation(cart_distance_, 0.0);
+    bool distance_violation = checkCartDistanceViolation(cart_distance_, rot_distance_);
     bool twist_violation = checkTwistViolation(current_twist_, target_twist_);
 
     if (stop_on_goal_)
@@ -687,7 +688,7 @@ int CobFrameTracker::checkServiceCallStatus()
         return status;
     }
 
-    bool distance_violation = checkCartDistanceViolation(cart_distance_, 0.0);
+    bool distance_violation = checkCartDistanceViolation(cart_distance_, rot_distance_);
 
     if (distance_violation)
     {
@@ -778,11 +779,11 @@ bool CobFrameTracker::checkInfinitesimalTwist(const KDL::Twist current)
     {
         return false;
     }
-    if (fabs(current.rot.x()) > twist_dead_threshold_rot_)
+    if (fabs(current.rot.y()) > twist_dead_threshold_rot_)
     {
         return false;
     }
-    if (fabs(current.rot.x()) > twist_dead_threshold_rot_)
+    if (fabs(current.rot.z()) > twist_dead_threshold_rot_)
     {
         return false;
     }
