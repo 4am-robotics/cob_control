@@ -779,11 +779,11 @@ bool CobFrameTracker::checkInfinitesimalTwist(const KDL::Twist current)
     {
         return false;
     }
-    if (fabs(current.rot.x()) > twist_dead_threshold_rot_)
+    if (fabs(current.rot.y()) > twist_dead_threshold_rot_)
     {
         return false;
     }
-    if (fabs(current.rot.x()) > twist_dead_threshold_rot_)
+    if (fabs(current.rot.z()) > twist_dead_threshold_rot_)
     {
         return false;
     }
