@@ -30,7 +30,7 @@ catkin_package(
     tf
   DEPENDS Boost
   INCLUDE_DIRS include
-  LIBRARIES cob_tricycle_geom cob_tricycle_controller
+  LIBRARIES cob_tricycle_controller #cob_tricycle_geom
 )
 
 ### BUILD ###
@@ -40,7 +40,7 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 #add_dependencies(cob_tricycle_geom ${catkin_EXPORTED_TARGETS})
 #target_link_libraries(cob_tricycle_geom ${catkin_LIBRARIES})
 
-add_library(cob_tricycle_controller src/odom_plugin.cpp)# src/control_plugin.cpp)
+add_library(cob_tricycle_controller src/odom_plugin.cpp src/control_plugin.cpp)
 add_dependencies(cob_tricycle_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cob_tricycle_controller ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 #target_link_libraries(cob_tricycle_controller cob_omni_drive_geom ${catkin_LIBRARIES} ${Boost_LIBRARIES})

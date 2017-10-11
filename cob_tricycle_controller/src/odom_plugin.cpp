@@ -136,7 +136,6 @@ private:
     WheelState wheel_state_;
     hardware_interface::JointStateHandle steer_joint_;
     hardware_interface::JointStateHandle drive_joint_;
-    
 
     ros::Publisher topic_pub_odometry_;                 // calculated (measured) velocity, rotation and pose (odometry-based) for the robot
     ros::ServiceServer service_reset_;                  // service to reset odometry to zero
@@ -149,7 +148,6 @@ private:
     boost::mutex mutex_;
     geometry_msgs::TransformStamped odom_tf_;
     ros::Time stop_time_;
-
 
     void publish(const ros::TimerEvent&){
         if(!isRunning()) return;
