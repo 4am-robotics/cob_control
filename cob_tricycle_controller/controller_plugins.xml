@@ -1,0 +1,12 @@
+<class_libraries>
+    <library path="lib/libcob_omni_drive_controller">
+        <class name="cob_omni_drive_controller/OdometryController" type="cob_omni_drive_controller::OdometryController" base_class_type="controller_interface::ControllerBase">
+            <description>
+            </description>
+        </class>
+        <class name="cob_omni_drive_controller/WheelController" type="cob_omni_drive_controller::WheelController" base_class_type="controller_interface::ControllerBase">
+            <description>
+            </description>
+        </class>
+    </library>
+</class_libraries>
