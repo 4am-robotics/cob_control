@@ -44,8 +44,10 @@ public:
         updateCtrl(time, period);
 
         for (unsigned i=0; i<wheel_commands_.size(); i++){
-            steer_joints_[i].setCommand(wheel_commands_[i].dVelGearSteerRadS);
-            drive_joints_[i].setCommand(wheel_commands_[i].dVelGearDriveRadS);
+            if (!geom_->wheels_[i]->geom_.passive){
+                steer_joints_[i].setCommand(wheel_commands_[i].dVelGearSteerRadS);
+                drive_joints_[i].setCommand(wheel_commands_[i].dVelGearDriveRadS);
+            }
         }
 
     }

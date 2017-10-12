@@ -106,6 +106,11 @@ bool parseWheelGeom(WheelGeom & geom, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcSt
     read_with_default(geom.drive_name, "drive", wheel, std::string());
     read_with_default(geom.dSteerDriveCoupling, "steer_drive_coupling", wheel, 0.0);
 
+    read_with_default(geom.passive, "passive", wheel, false);
+    double deg;
+    read_with_default(deg, "steer_neutral_position", wheel, 0.0);
+    geom.dWheelNeutralPos = angles::from_degrees(deg);
+
     boost::shared_ptr<const urdf::Joint> steer_joint;
     urdf::Vector3 steer_pos;
 

@@ -36,9 +36,17 @@ public:
     void updateState(){
 
         for (unsigned i=0; i<wheel_states_.size(); i++){
-            wheel_states_[i].dAngGearSteerRad = steer_joints_[i].getPosition();
-            wheel_states_[i].dVelGearSteerRadS = steer_joints_[i].getVelocity();
-            wheel_states_[i].dVelGearDriveRadS = drive_joints_[i].getVelocity();
+            if (!geom_->wheels_[i]->geom_.passive){
+                wheel_states_[i].dAngGearSteerRad = steer_joints_[i].getPosition();
+                wheel_states_[i].dVelGearSteerRadS = steer_joints_[i].getVelocity();
+                wheel_states_[i].dVelGearDriveRadS = drive_joints_[i].getVelocity();
+            }
+            else{
+                /////ToDo: VelGearDriveRadS?
+                //wheel_states_[i].dAngGearSteerRad = geom_->wheels_[i]->geom_.dWheelNeutralPos;
+                //wheel_states_[i].dVelGearSteerRadS = 0.0;
+                //wheel_states_[i].dVelGearDriveRadS = 0.0;
+            }
         }
         geom_->updateWheelStates(wheel_states_);
     }
@@ -47,6 +55,29 @@ protected:
         if (wheel_params.size() < 3){
             ROS_ERROR("At least three wheel are needed.");
             return false;
+        }
+        ///check for tricycle mode (1 active + 2 passive wheels)
+        unsigned int active = 0;
+        unsigned int passive = 0;
+        for (unsigned int i=0; i<wheel_params.size(); i++){
+            if (wheel_params[i].geom.passive){
+                passive++;
+                ROS_INFO_STREAM(wheel_params[i].geom.steer_name << " is passive");
+            }
+            else
+            {
+                active++;
+                ROS_INFO_STREAM(wheel_params[i].geom.steer_name << " is aktive");
+            }
+        }
+        if (passive > 0){
+            if (wheel_params.size() == 3 && active == 1 && passive == 2){
+                ROS_INFO("Using tricycle_mode");
+            }
+            else{
+                ROS_ERROR("Passive wheels are only allowed in tricycle_mode (1 active + 2 passive)");
+                return false;
+            }
         }
         wheel_states_.resize(wheel_params.size());
         geom_.reset(new Controller(wheel_params));
@@ -69,8 +100,20 @@ public:
         if(!this->setup(wheel_params)) return false;
         try{
             for (unsigned i=0; i<wheel_params.size(); i++){
-                this->steer_joints_.push_back(hw->getHandle(wheel_params[i].geom.steer_name));
-                this->drive_joints_.push_back(hw->getHandle(wheel_params[i].geom.drive_name));
+                ROS_INFO_STREAM("wheel_params.size: " << wheel_params.size());
+                if (!wheel_params[i].geom.passive){
+                    ROS_INFO_STREAM("adding aktive joint " << wheel_params[i].geom.steer_name << ", size: " << this->steer_joints_.size());
+                    this->steer_joints_.push_back(hw->getHandle(wheel_params[i].geom.steer_name));
+                    this->drive_joints_.push_back(hw->getHandle(wheel_params[i].geom.drive_name));
+                    ROS_INFO_STREAM("size: " << this->steer_joints_.size());
+                }
+                else {
+                    //add fake handles for passive wheels
+                    ROS_INFO_STREAM("adding fake joint " << wheel_params[i].geom.steer_name << ", size: " << this->steer_joints_.size());
+                    this->steer_joints_.resize(this->steer_joints_.size()+1);
+                    this->drive_joints_.resize(this->drive_joints_.size()+1);
+                    ROS_INFO_STREAM("size: " << this->steer_joints_.size());
+                }
             }
         }
         catch(const std::exception &e){

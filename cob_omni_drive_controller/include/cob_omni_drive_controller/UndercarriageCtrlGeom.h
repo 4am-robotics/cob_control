@@ -48,6 +48,8 @@ struct WheelCommand : public WheelState {
 };
 struct WheelGeom{
     std::string steer_name, drive_name;
+    bool passive;
+    double dWheelNeutralPos;
 
     /** Position of the Wheels' Steering Axis'
     *  in cartesian (X/Y) coordinates
@@ -161,7 +163,7 @@ public:
     // Set actual values of wheels (steer/drive velocity/position) (Istwerte)
     virtual void updateWheelStates(const std::vector<WheelState> &states);
 
-private:
+//private:
     std::vector<boost::shared_ptr<WheelData> > wheels_;
 };
 
@@ -207,7 +209,7 @@ public:
         }
     }
 
-protected:
+//protected:
     std::vector<boost::shared_ptr<T> > wheels_;
 };
 
