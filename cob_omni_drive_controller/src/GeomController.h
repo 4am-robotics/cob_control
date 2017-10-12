@@ -42,13 +42,19 @@ public:
                 wheel_states_[i].dVelGearDriveRadS = drive_joints_[i].getVelocity();
             }
             else{
-                /////ToDo: VelGearDriveRadS?
-                //wheel_states_[i].dAngGearSteerRad = geom_->wheels_[i]->geom_.dWheelNeutralPos;
-                //wheel_states_[i].dVelGearSteerRadS = 0.0;
-                //wheel_states_[i].dVelGearDriveRadS = 0.0;
+                ///ToDo: for fake wheels state as command
+                //ROS_INFO_STREAM("updateState - wheel " << i << ": steer_name " << geom_->wheels_[i]->geom_.steer_name << 
+                                            //", dAngGearSteerRad: " << wheel_states_[i].dAngGearSteerRad <<
+                                            //", dVelGearSteerRadS: " << wheel_states_[i].dVelGearSteerRadS <<
+                                            //", dVelGearDriveRadS: " << wheel_states_[i].dVelGearDriveRadS);
             }
         }
         geom_->updateWheelStates(wheel_states_);
+    }
+    void updateFakeState(unsigned i, double dAngGearSteerRad, double dVelGearSteerRadS, double dVelGearDriveRadS){
+        wheel_states_[i].dAngGearSteerRad = dAngGearSteerRad;
+        wheel_states_[i].dVelGearSteerRadS = dVelGearSteerRadS;
+        wheel_states_[i].dVelGearDriveRadS = dVelGearDriveRadS;
     }
 protected:
     bool setup(const std::vector<typename Controller::WheelParams> &wheel_params){
