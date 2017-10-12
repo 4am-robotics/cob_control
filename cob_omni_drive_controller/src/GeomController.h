@@ -55,6 +55,7 @@ public:
         wheel_states_[i].dAngGearSteerRad = dAngGearSteerRad;
         wheel_states_[i].dVelGearSteerRadS = dVelGearSteerRadS;
         wheel_states_[i].dVelGearDriveRadS = dVelGearDriveRadS;
+        geom_->updateWheelStates(wheel_states_);
     }
 protected:
     bool setup(const std::vector<typename Controller::WheelParams> &wheel_params){

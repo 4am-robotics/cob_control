@@ -50,7 +50,7 @@ public:
             }
             else{
                 ///ToDo: for fake wheels state as command
-                updateFakeState(i, geom_->wheels_[i]->geom_.dWheelNeutralPos, wheel_commands_[i].dVelGearSteerRadS, wheel_commands_[i].dVelGearDriveRadS);
+                //updateFakeState(i, geom_->wheels_[i]->geom_.dWheelNeutralPos, wheel_commands_[i].dVelGearSteerRadS, wheel_commands_[i].dVelGearDriveRadS);
                 //ROS_INFO_STREAM("ControlPlugin - wheel " << i << ":: steer_name " << geom_->wheels_[i]->geom_.steer_name
                                                          //<< ", dAngGearSteerRad: " << geom_->wheels_[i]->geom_.dWheelNeutralPos
                                                          //<< ", dVelGearSteerRadS: " << wheel_commands_[i].dVelGearSteerRadS
