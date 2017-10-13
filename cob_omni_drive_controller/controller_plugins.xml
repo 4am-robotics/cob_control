@@ -4,6 +4,10 @@
             <description>
             </description>
         </class>
+        <class name="cob_omni_drive_controller/OdometryTricycleController" type="cob_omni_drive_controller::OdometryTricycleController" base_class_type="controller_interface::ControllerBase">
+            <description>
+            </description>
+        </class>
         <class name="cob_omni_drive_controller/WheelController" type="cob_omni_drive_controller::WheelController" base_class_type="controller_interface::ControllerBase">
             <description>
             </description>
