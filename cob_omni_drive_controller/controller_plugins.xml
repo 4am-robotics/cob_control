@@ -10,7 +10,11 @@
         </class>
     </library>
     <library path="lib/libcob_tricycle_controller">
-        <class name="cob_tricycle_controller/TricycleController" type="cob_tricycle_controller::TricycleController" base_class_type="controller_interface::ControllerBase">
+        <class name="cob_tricycle_controller/OdometryController" type="cob_tricycle_controller::OdometryController" base_class_type="controller_interface::ControllerBase">
+            <description>
+            </description>
+        </class>
+        <class name="cob_tricycle_controller/WheelController" type="cob_tricycle_controller::WheelController" base_class_type="controller_interface::ControllerBase">
             <description>
             </description>
         </class>

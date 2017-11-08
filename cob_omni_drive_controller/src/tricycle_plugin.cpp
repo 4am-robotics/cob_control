@@ -45,16 +45,22 @@ public:
     bool init(Interface* hw, const wheel_params_t & wheel_params){
         if(!this->setup(wheel_params)) return false;
         try{
-            //for (unsigned i=0; i<wheel_params.size(); i++){
-                //this->steer_joints_.push_back(hw->getHandle(wheel_params[i].geom.steer_name));
-                //this->drive_joints_.push_back(hw->getHandle(wheel_params[i].geom.drive_name));
-            //}
-            this->steer_joints_.push_back(typename Interface::ResourceHandleType(hardware_interface::JointStateHandle("fl_caster_rotation_joint", &fake_steer_pos_[0], &fake_steer_vel_[0], &fake_steer_eff_[0]), &fake_steer_vel_[0]));
-            this->drive_joints_.push_back(typename Interface::ResourceHandleType(hardware_interface::JointStateHandle("fl_caster_r_wheel_joint", &fake_drive_pos_[0], &fake_drive_vel_[0], &fake_drive_eff_[0]), &fake_drive_vel_[0]));
+            ////for (unsigned i=0; i<wheel_params.size(); i++){
+                ////this->steer_joints_.push_back(hw->getHandle(wheel_params[i].geom.steer_name));
+                ////this->drive_joints_.push_back(hw->getHandle(wheel_params[i].geom.drive_name));
+            ////}
+            //this->steer_joints_.push_back(typename Interface::ResourceHandleType(hardware_interface::JointStateHandle("fl_caster_rotation_joint", &fake_steer_pos_[0], &fake_steer_vel_[0], &fake_steer_eff_[0]), &fake_steer_vel_[0]));
+            //this->drive_joints_.push_back(typename Interface::ResourceHandleType(hardware_interface::JointStateHandle("fl_caster_r_wheel_joint", &fake_drive_pos_[0], &fake_drive_vel_[0], &fake_drive_eff_[0]), &fake_drive_vel_[0]));
+            //this->steer_joints_.push_back(hw->getHandle("b_caster_rotation_joint"));
+            //this->drive_joints_.push_back(hw->getHandle("b_caster_r_wheel_joint"));
+            //this->steer_joints_.push_back(typename Interface::ResourceHandleType(hardware_interface::JointStateHandle("fr_caster_rotation_joint", &fake_steer_pos_[1], &fake_steer_vel_[1], &fake_steer_eff_[1]), &fake_steer_vel_[1]));
+            //this->drive_joints_.push_back(typename Interface::ResourceHandleType(hardware_interface::JointStateHandle("fr_caster_r_wheel_joint", &fake_drive_pos_[1], &fake_drive_vel_[1], &fake_drive_eff_[1]), &fake_drive_vel_[1]));
+            this->steer_joints_.push_back(hardware_interface::JointStateHandle("fl_caster_rotation_joint", &fake_steer_pos_[0], &fake_steer_vel_[0], &fake_steer_eff_[0]));
+            this->drive_joints_.push_back(hardware_interface::JointStateHandle("fl_caster_r_wheel_joint", &fake_drive_pos_[0], &fake_drive_vel_[0], &fake_drive_eff_[0]));
             this->steer_joints_.push_back(hw->getHandle("b_caster_rotation_joint"));
             this->drive_joints_.push_back(hw->getHandle("b_caster_r_wheel_joint"));
-            this->steer_joints_.push_back(typename Interface::ResourceHandleType(hardware_interface::JointStateHandle("fr_caster_rotation_joint", &fake_steer_pos_[1], &fake_steer_vel_[1], &fake_steer_eff_[1]), &fake_steer_vel_[1]));
-            this->drive_joints_.push_back(typename Interface::ResourceHandleType(hardware_interface::JointStateHandle("fr_caster_r_wheel_joint", &fake_drive_pos_[1], &fake_drive_vel_[1], &fake_drive_eff_[1]), &fake_drive_vel_[1]));
+            this->steer_joints_.push_back(hardware_interface::JointStateHandle("fr_caster_rotation_joint", &fake_steer_pos_[1], &fake_steer_vel_[1], &fake_steer_eff_[1]));
+            this->drive_joints_.push_back(hardware_interface::JointStateHandle("fr_caster_r_wheel_joint", &fake_drive_pos_[1], &fake_drive_vel_[1], &fake_drive_eff_[1]));
         }
         catch(const std::exception &e){
             ROS_ERROR_STREAM("Error while attaching handles: " << e.what());
@@ -67,72 +73,21 @@ protected:
 };
 
 
-class TricycleController : public cob_omni_drive_controller::WheelControllerBase< TricycleGeomController<hardware_interface::VelocityJointInterface, UndercarriageCtrl> >
+class WheelController : public cob_omni_drive_controller::WheelControllerBase< TricycleGeomController<hardware_interface::VelocityJointInterface, UndercarriageCtrl> >
 {
 public:
     virtual bool init(hardware_interface::VelocityJointInterface* hw, ros::NodeHandle &root_nh, ros::NodeHandle& controller_nh){
-        //common part
+
         wheel_params_t wheel_params;
         if(!cob_omni_drive_controller::parseWheelParams(wheel_params, controller_nh) || !TricycleGeomController::init(hw, wheel_params)) return false;
 
-        //odometry part
-        double publish_rate;
-        if (!controller_nh.getParam("publish_rate", publish_rate)){
-            ROS_ERROR("Parameter 'publish_rate' not set");
-            return false;
-        }
-        if(publish_rate <= 0){
-            ROS_ERROR_STREAM("publish_rate must be positive.");
-            return false;
-        }
-
-        const std::string frame_id = controller_nh.param("frame_id", std::string("odom"));
-        const std::string child_frame_id = controller_nh.param("child_frame_id", std::string("base_footprint"));
-        const double cov_pose = controller_nh.param("cov_pose", 0.1);
-        const double cov_twist = controller_nh.param("cov_twist", 0.1);
-
-        odom_tracker_.reset(new OdometryTracker(frame_id, child_frame_id, cov_pose, cov_twist));
-        odom_ = odom_tracker_->getOdometry();
-
-        //topic_pub_odometry_ = controller_nh.advertise<nav_msgs::Odometry>("odometry", 1);
-        topic_pub_odometry_ = root_nh.advertise<nav_msgs::Odometry>("odometry_controller/odometry", 1);
-
-        bool broadcast_tf = true;
-        controller_nh.getParam("broadcast_tf", broadcast_tf);
-
-        if(broadcast_tf){
-            odom_tf_.header.frame_id = frame_id;
-            odom_tf_.child_frame_id = child_frame_id;
-            tf_broadcast_odometry_.reset(new tf::TransformBroadcaster);
-        }
-
-        publish_timer_ = controller_nh.createTimer(ros::Duration(1/publish_rate), &TricycleController::publish, this);
-        service_reset_ = controller_nh.advertiseService("reset_odometry", &TricycleController::srv_reset, this);
-        
-        //control part
         pos_ctrl_.init(wheel_params, controller_nh);
 
         return setup(root_nh, controller_nh);
     }
     virtual void update(const ros::Time& time, const ros::Duration& period){
-        //common part
+
         updateState();
-
-        //odometry part
-        geom_->calcDirect(platform_state_);
-
-        odom_tracker_->track(time, period.toSec(), platform_state_.getVelX(), platform_state_.getVelY(), platform_state_.dRotRobRadS);
-
-        boost::mutex::scoped_try_lock lock(mutex_);
-        if(lock){
-            if(reset_){
-                odom_tracker_->init(time);
-                reset_ = false;
-            }
-            odom_ =  odom_tracker_->getOdometry();
-        }
-
-        //control part
         pos_ctrl_.try_configure(*geom_);
 
         updateCtrl(time, period);
@@ -148,13 +103,7 @@ public:
         drive_joints_[1].setCommand(wheel_commands_[1].dVelGearDriveRadS);
         drive_joints_[2].setCommand(cos(steer_joints_[1].getPosition()) * drive_joints_[1].getVelocity());
     }
-    virtual void starting(const ros::Time& time){
-        if(time != stop_time_) odom_tracker_->init(time); // do not init odometry on restart
-        reset_ = false;
-    }
-    virtual void stopping(const ros::Time& time) { stop_time_ = time; }
 
-//control part
     class PosCtrl {
     public:
         PosCtrl() : updated(false) {}
@@ -226,9 +175,75 @@ public:
         boost::scoped_ptr< dynamic_reconfigure::Server<cob_omni_drive_controller::SteerCtrlConfig> > reconfigure_server_;
         std::vector<boost::shared_ptr< dynamic_reconfigure::Server<cob_omni_drive_controller::SteerCtrlConfig> > > reconfigure_server_axes_; // TODO: use unique_ptr
     } pos_ctrl_;
+};
 
-//odometry part
+
+class OdometryController: public TricycleGeomController<hardware_interface::JointStateInterface, UndercarriageGeom>
+{
 public:
+    OdometryController() {}
+
+    virtual bool init(hardware_interface::JointStateInterface* hw, ros::NodeHandle &root_nh, ros::NodeHandle& controller_nh){
+
+        if(!TricycleGeomController::init(hw, controller_nh)) return false;
+
+        double publish_rate;
+        if (!controller_nh.getParam("publish_rate", publish_rate)){
+            ROS_ERROR("Parameter 'publish_rate' not set");
+            return false;
+        }
+        if(publish_rate <= 0){
+            ROS_ERROR_STREAM("publish_rate must be positive.");
+            return false;
+        }
+
+        const std::string frame_id = controller_nh.param("frame_id", std::string("odom"));
+        const std::string child_frame_id = controller_nh.param("child_frame_id", std::string("base_footprint"));
+        const double cov_pose = controller_nh.param("cov_pose", 0.1);
+        const double cov_twist = controller_nh.param("cov_twist", 0.1);
+
+        odom_tracker_.reset(new OdometryTracker(frame_id, child_frame_id, cov_pose, cov_twist));
+        odom_ = odom_tracker_->getOdometry();
+
+        //topic_pub_odometry_ = controller_nh.advertise<nav_msgs::Odometry>("odometry", 1);
+        topic_pub_odometry_ = root_nh.advertise<nav_msgs::Odometry>("odometry_controller/odometry", 1);
+
+        bool broadcast_tf = true;
+        controller_nh.getParam("broadcast_tf", broadcast_tf);
+
+        if(broadcast_tf){
+            odom_tf_.header.frame_id = frame_id;
+            odom_tf_.child_frame_id = child_frame_id;
+            tf_broadcast_odometry_.reset(new tf::TransformBroadcaster);
+        }
+
+        publish_timer_ = controller_nh.createTimer(ros::Duration(1/publish_rate), &OdometryController::publish, this);
+        service_reset_ = controller_nh.advertiseService("reset_odometry", &OdometryController::srv_reset, this);
+
+        return true;
+    }
+    virtual void starting(const ros::Time& time){
+        if(time != stop_time_) odom_tracker_->init(time); // do not init odometry on restart
+        reset_ = false;
+    }
+    virtual void stopping(const ros::Time& time) { stop_time_ = time; }
+    virtual void update(const ros::Time& time, const ros::Duration& period){
+
+        updateState();
+        geom_->calcDirect(platform_state_);
+
+        odom_tracker_->track(time, period.toSec(), platform_state_.getVelX(), platform_state_.getVelY(), platform_state_.dRotRobRadS);
+
+        boost::mutex::scoped_try_lock lock(mutex_);
+        if(lock){
+            if(reset_){
+                odom_tracker_->init(time);
+                reset_ = false;
+            }
+            odom_ =  odom_tracker_->getOdometry();
+        }
+    }
+
     virtual bool srv_reset(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
     {
         if(!isRunning()){
@@ -244,6 +259,7 @@ public:
 
         return true;
     }
+
 private:
     PlatformState platform_state_;
 
@@ -283,4 +299,5 @@ private:
 
 }
 
-PLUGINLIB_EXPORT_CLASS( cob_tricycle_controller::TricycleController, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS( cob_tricycle_controller::WheelController, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS( cob_tricycle_controller::OdometryController, controller_interface::ControllerBase)
