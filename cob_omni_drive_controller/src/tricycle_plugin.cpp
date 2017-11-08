@@ -29,17 +29,17 @@
 
 #include <pluginlib/class_list_macros.h>
 
-namespace cob_omni_drive_controller
+namespace cob_tricycle_controller
 {
 
 template<typename Interface, typename Controller> class TricycleGeomController:
-    public GeomControllerBase<typename Interface::ResourceHandleType, Controller>,
+    public cob_omni_drive_controller::GeomControllerBase<typename Interface::ResourceHandleType, Controller>,
         public controller_interface::Controller<Interface> {
 public:
     typedef std::vector<typename Controller::WheelParams> wheel_params_t;
     bool init(Interface* hw, ros::NodeHandle& controller_nh){
         std::vector<typename Controller::WheelParams> wheel_params;
-        if(!parseWheelParams(wheel_params, controller_nh)) return false;
+        if(!cob_omni_drive_controller::parseWheelParams(wheel_params, controller_nh)) return false;
         return init(hw, wheel_params);
     }
     bool init(Interface* hw, const wheel_params_t & wheel_params){
@@ -67,13 +67,13 @@ protected:
 };
 
 
-class TricycleController : public WheelControllerBase< TricycleGeomController<hardware_interface::VelocityJointInterface, UndercarriageCtrl> >
+class TricycleController : public cob_omni_drive_controller::WheelControllerBase< TricycleGeomController<hardware_interface::VelocityJointInterface, UndercarriageCtrl> >
 {
 public:
     virtual bool init(hardware_interface::VelocityJointInterface* hw, ros::NodeHandle &root_nh, ros::NodeHandle& controller_nh){
         //common part
         wheel_params_t wheel_params;
-        if(!parseWheelParams(wheel_params, controller_nh) || !TricycleGeomController::init(hw, wheel_params)) return false;
+        if(!cob_omni_drive_controller::parseWheelParams(wheel_params, controller_nh) || !TricycleGeomController::init(hw, wheel_params)) return false;
 
         //odometry part
         double publish_rate;
@@ -169,17 +169,17 @@ public:
             pos_ctrl_params.resize(params.size());
             reconfigure_server_axes_.clear();
 
-            reconfigure_server_.reset( new dynamic_reconfigure::Server<SteerCtrlConfig>(mutex,ros::NodeHandle(nh, "default/steer_ctrl")));
+            reconfigure_server_.reset( new dynamic_reconfigure::Server<cob_omni_drive_controller::SteerCtrlConfig>(mutex,ros::NodeHandle(nh, "default/steer_ctrl")));
             reconfigure_server_->setCallback(boost::bind(&PosCtrl::setForAll, this, _1, _2)); // this writes the default into pos_ctrl_params
             {
-                SteerCtrlConfig config;
+                cob_omni_drive_controller::SteerCtrlConfig config;
                 copy(config, params.front().pos_ctrl);
                 reconfigure_server_->setConfigDefault(config);
             }
 
             for(size_t i=0; i< pos_ctrl_params.size(); ++i) {
-                boost::shared_ptr<dynamic_reconfigure::Server<SteerCtrlConfig> > dr(new dynamic_reconfigure::Server<SteerCtrlConfig>(mutex, ros::NodeHandle(nh, params[i].geom.steer_name)));
-                SteerCtrlConfig config;
+                boost::shared_ptr<dynamic_reconfigure::Server<cob_omni_drive_controller::SteerCtrlConfig> > dr(new dynamic_reconfigure::Server<cob_omni_drive_controller::SteerCtrlConfig>(mutex, ros::NodeHandle(nh, params[i].geom.steer_name)));
+                cob_omni_drive_controller::SteerCtrlConfig config;
                 copy(config, params[i].pos_ctrl);
                 dr->setConfigDefault(config);
                 dr->updateConfig(config);
@@ -188,14 +188,14 @@ public:
             }
         }
     private:
-        static void copy(PosCtrlParams &params, const SteerCtrlConfig &config){
+        static void copy(PosCtrlParams &params, const cob_omni_drive_controller::SteerCtrlConfig &config){
             params.dSpring = config.spring;
             params.dDamp = config.damp;
             params.dVirtM = config.virt_mass;
             params.dDPhiMax = config.d_phi_max;
             params.dDDPhiMax = config.dd_phi_max;
         }
-        static void copy(SteerCtrlConfig &config, const PosCtrlParams &params){
+        static void copy(cob_omni_drive_controller::SteerCtrlConfig &config, const PosCtrlParams &params){
             config.spring = params.dSpring;
             config.damp = params.dDamp;
             config.virt_mass = params.dVirtM;
@@ -203,7 +203,7 @@ public:
             config.dd_phi_max = params.dDDPhiMax;
         }
         // these function don't get locked
-        void setForAll(SteerCtrlConfig &config, uint32_t /*level*/) {
+        void setForAll(cob_omni_drive_controller::SteerCtrlConfig &config, uint32_t /*level*/) {
             ROS_INFO("configure all steers: s: %lf, d: %lf, m: %lf, v: %lf, a: %lf", config.spring, config.damp, config.virt_mass, config.d_phi_max, config.dd_phi_max);
             for(size_t i=0; i< pos_ctrl_params.size(); ++i) {
                 copy(pos_ctrl_params[i], config);
@@ -214,7 +214,7 @@ public:
             }
             updated = true;
         }
-        void setForOne(size_t i, SteerCtrlConfig &config, uint32_t /*level*/) {
+        void setForOne(size_t i, cob_omni_drive_controller::SteerCtrlConfig &config, uint32_t /*level*/) {
             ROS_INFO("configure steer %d: s: %lf, d: %lf, m: %lf, v: %lf, a: %lf", (int)i, config.spring, config.damp, config.virt_mass, config.d_phi_max, config.dd_phi_max);
             copy(pos_ctrl_params[i], config);
             updated = true;
@@ -222,8 +222,8 @@ public:
         std::vector<PosCtrlParams> pos_ctrl_params;
         boost::recursive_mutex mutex; // dynamic_reconfigure::Server calls the callback from the setCallback function
         bool updated;
-        boost::scoped_ptr< dynamic_reconfigure::Server<SteerCtrlConfig> > reconfigure_server_;
-        std::vector<boost::shared_ptr< dynamic_reconfigure::Server<SteerCtrlConfig> > > reconfigure_server_axes_; // TODO: use unique_ptr
+        boost::scoped_ptr< dynamic_reconfigure::Server<cob_omni_drive_controller::SteerCtrlConfig> > reconfigure_server_;
+        std::vector<boost::shared_ptr< dynamic_reconfigure::Server<cob_omni_drive_controller::SteerCtrlConfig> > > reconfigure_server_axes_; // TODO: use unique_ptr
     } pos_ctrl_;
 
 //odometry part
@@ -282,4 +282,4 @@ private:
 
 }
 
-PLUGINLIB_EXPORT_CLASS( cob_omni_drive_controller::TricycleController, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS( cob_tricycle_controller::TricycleController, controller_interface::ControllerBase)
