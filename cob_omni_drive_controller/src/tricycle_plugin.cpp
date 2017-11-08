@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
+#include <controller_interface/controller.h>
+#include <boost/scoped_ptr.hpp>
 
-#include "GeomController.h"
 #include "WheelControllerBase.h"
 
 #include <cob_omni_drive_controller/UndercarriageCtrlGeom.h>
@@ -32,186 +33,162 @@
 namespace cob_tricycle_controller
 {
 
-class FakeJoint {
+bool parseWheelParams(std::vector<UndercarriageGeom::WheelParams> &params, const ros::NodeHandle &nh, bool read_urdf = true);
+
+template<typename Interface> class TricycleControllerBase : public controller_interface::Controller<Interface> {
+    typename Interface::ResourceHandleType steer_back_, drive_back_;
+    std::vector<WheelState> wheel_states_;
+protected:
+    boost::scoped_ptr<UndercarriageGeom> geom_;
 public:
-    FakeJoint()
-        : pos_(0), vel_(0), eff_(0), cmd_(0) {}
-    double pos_, vel_, eff_, cmd_;
-    template <typename T > T getHandle(const std::string& name);
-};
+    void updateState(){
 
-template<> hardware_interface::JointStateHandle FakeJoint::getHandle(const std::string& name) {
-    return hardware_interface::JointStateHandle(name, &pos_, &vel_, &eff_);
-}
+        wheel_states_[1].dAngGearSteerRad = steer_back_.getPosition();
+        wheel_states_[1].dVelGearSteerRadS = steer_back_.getVelocity();
+        wheel_states_[1].dVelGearDriveRadS = drive_back_.getVelocity();
 
-template<> hardware_interface::JointHandle FakeJoint::getHandle(const std::string& name) {
-    hardware_interface::JointStateHandle jsh = this->getHandle<hardware_interface::JointStateHandle>(name);
-    return hardware_interface::JointHandle(jsh, &cmd_);
-}
+        wheel_states_[0].dVelGearDriveRadS = wheel_states_[2].dVelGearDriveRadS = cos(steer_back_.getPosition()) * drive_back_.getVelocity(); // TODO;
 
-template<typename Interface, typename Controller> class TricycleGeomController:
-    public cob_omni_drive_controller::GeomControllerBase<typename Interface::ResourceHandleType, Controller>,
-        public controller_interface::Controller<Interface> {
-public:
-    typedef std::vector<typename Controller::WheelParams> wheel_params_t;
-    bool init(Interface* hw, ros::NodeHandle& controller_nh){
-        std::vector<typename Controller::WheelParams> wheel_params;
-        if(!cob_omni_drive_controller::parseWheelParams(wheel_params, controller_nh)) return false;
-        return init(hw, wheel_params);
+        geom_->updateWheelStates(wheel_states_);
     }
-    bool init(Interface* hw, const wheel_params_t & wheel_params){
-        if(!this->setup(wheel_params)) return false;
+
+    bool init(Interface* hw, ros::NodeHandle& controller_nh){
+        std::vector<UndercarriageGeom::WheelParams> wheel_params;
+        if(!cob_tricycle_controller::parseWheelParams(wheel_params, controller_nh)) return false; // read from rosparam/URDF
+
+        if (wheel_params.size() < 3){ // TODO
+            ROS_ERROR("At least three wheel are needed.");
+            return false;
+        }
+        wheel_states_.resize(wheel_params.size());
+        geom_.reset(new UndercarriageGeom(wheel_params));
         try{
-            ////for (unsigned i=0; i<wheel_params.size(); i++){
-                ////this->steer_joints_.push_back(hw->getHandle(wheel_params[i].geom.steer_name));
-                ////this->drive_joints_.push_back(hw->getHandle(wheel_params[i].geom.drive_name));
-            ////}
-            //this->steer_joints_.push_back(typename Interface::ResourceHandleType(hardware_interface::JointStateHandle("fl_caster_rotation_joint", &fake_steer_pos_[0], &fake_steer_vel_[0], &fake_steer_eff_[0]), &fake_steer_vel_[0]));
-            //this->drive_joints_.push_back(typename Interface::ResourceHandleType(hardware_interface::JointStateHandle("fl_caster_r_wheel_joint", &fake_drive_pos_[0], &fake_drive_vel_[0], &fake_drive_eff_[0]), &fake_drive_vel_[0]));
-            //this->steer_joints_.push_back(hw->getHandle("b_caster_rotation_joint"));
-            //this->drive_joints_.push_back(hw->getHandle("b_caster_r_wheel_joint"));
-            //this->steer_joints_.push_back(typename Interface::ResourceHandleType(hardware_interface::JointStateHandle("fr_caster_rotation_joint", &fake_steer_pos_[1], &fake_steer_vel_[1], &fake_steer_eff_[1]), &fake_steer_vel_[1]));
-            //this->drive_joints_.push_back(typename Interface::ResourceHandleType(hardware_interface::JointStateHandle("fr_caster_r_wheel_joint", &fake_drive_pos_[1], &fake_drive_vel_[1], &fake_drive_eff_[1]), &fake_drive_vel_[1]));
-            //this->steer_joints_.push_back(hardware_interface::JointStateHandle("fl_caster_rotation_joint", &fake_steer_pos_[0], &fake_steer_vel_[0], &fake_steer_eff_[0]));
-            //this->drive_joints_.push_back(hardware_interface::JointStateHandle("fl_caster_r_wheel_joint", &fake_drive_pos_[0], &fake_drive_vel_[0], &fake_drive_eff_[0]));
-            //this->steer_joints_.push_back(hw->getHandle("b_caster_rotation_joint"));
-            //this->drive_joints_.push_back(hw->getHandle("b_caster_r_wheel_joint"));
-            //this->steer_joints_.push_back(hardware_interface::JointStateHandle("fr_caster_rotation_joint", &fake_steer_pos_[1], &fake_steer_vel_[1], &fake_steer_eff_[1]));
-            //this->drive_joints_.push_back(hardware_interface::JointStateHandle("fr_caster_r_wheel_joint", &fake_drive_pos_[1], &fake_drive_vel_[1], &fake_drive_eff_[1]));
-
-            this->steer_joints_.push_back(steer_left_.getHandle<typename Interface::ResourceHandleType>("fl_caster_rotation_joint"));
-            this->drive_joints_.push_back(drive_left_.getHandle<typename Interface::ResourceHandleType>("fr_caster_r_wheel_joint"));
-            this->steer_joints_.push_back(hw->getHandle("b_caster_rotation_joint"));
-            this->drive_joints_.push_back(hw->getHandle("b_caster_r_wheel_joint"));
-            this->steer_joints_.push_back(steer_right_.getHandle<typename Interface::ResourceHandleType>("fr_caster_rotation_joint"));
-            this->drive_joints_.push_back(drive_right_.getHandle<typename Interface::ResourceHandleType>("fr_caster_r_wheel_joint"));
-
+            steer_back_ = hw->getHandle("b_caster_rotation_joint");
+            drive_back_ = hw->getHandle("b_caster_r_wheel_joint");
         }
         catch(const std::exception &e){
             ROS_ERROR_STREAM("Error while attaching handles: " << e.what());
             return false;
         }
+
         return true;
     }
-protected:
-    double fake_steer_pos_[2], fake_drive_pos_[2], fake_steer_vel_[2], fake_drive_vel_[2], fake_steer_eff_[2], fake_drive_eff_[2]; // set zero in contructor
-    FakeJoint steer_left_, drive_left_, steer_right_, drive_right_;
 };
 
 
-class WheelController : public cob_omni_drive_controller::WheelControllerBase< TricycleGeomController<hardware_interface::VelocityJointInterface, UndercarriageCtrl> >
-{
-public:
-    virtual bool init(hardware_interface::VelocityJointInterface* hw, ros::NodeHandle &root_nh, ros::NodeHandle& controller_nh){
+//class WheelController : public cob_omni_drive_controller::WheelControllerBase< TricycleControllerBase<hardware_interface::VelocityJointInterface> >
+//{
+//public:
+    //virtual bool init(hardware_interface::VelocityJointInterface* hw, ros::NodeHandle &root_nh, ros::NodeHandle& controller_nh){
 
-        wheel_params_t wheel_params;
-        if(!cob_omni_drive_controller::parseWheelParams(wheel_params, controller_nh) || !TricycleGeomController::init(hw, wheel_params)) return false;
+        //wheel_params_t wheel_params;
+        //if(!cob_omni_drive_controller::parseWheelParams(wheel_params, controller_nh) || !TricycleGeomController::init(hw, wheel_params)) return false;
 
-        pos_ctrl_.init(wheel_params, controller_nh);
+        //pos_ctrl_.init(wheel_params, controller_nh);
 
-        return setup(root_nh, controller_nh);
-    }
-    virtual void update(const ros::Time& time, const ros::Duration& period){
+        //return setup(root_nh, controller_nh);
+    //}
+    //virtual void update(const ros::Time& time, const ros::Duration& period){
 
-        updateState();
-        pos_ctrl_.try_configure(*geom_);
+        //updateState();
+        //pos_ctrl_.try_configure(*geom_);
 
-        updateCtrl(time, period);
+        //updateCtrl(time, period);
 
-        ////for (unsigned i=0; i<wheel_commands_.size(); i++){
-            ////steer_joints_[i].setCommand(wheel_commands_[i].dVelGearSteerRadS);
-            ////drive_joints_[i].setCommand(wheel_commands_[i].dVelGearDriveRadS);
-        ////}
-        steer_joints_[0].setCommand(0.0);
-        steer_joints_[1].setCommand(wheel_commands_[1].dVelGearSteerRadS);
-        steer_joints_[2].setCommand(0.0);
-        drive_joints_[0].setCommand(cos(steer_joints_[1].getPosition()) * drive_joints_[1].getVelocity());
-        drive_joints_[1].setCommand(wheel_commands_[1].dVelGearDriveRadS);
-        drive_joints_[2].setCommand(cos(steer_joints_[1].getPosition()) * drive_joints_[1].getVelocity());
-    }
+        //////for (unsigned i=0; i<wheel_commands_.size(); i++){
+            //////steer_joints_[i].setCommand(wheel_commands_[i].dVelGearSteerRadS);
+            //////drive_joints_[i].setCommand(wheel_commands_[i].dVelGearDriveRadS);
+        //////}
+        //steer_joints_[0].setCommand(0.0);
+        //steer_joints_[1].setCommand(wheel_commands_[1].dVelGearSteerRadS);
+        //steer_joints_[2].setCommand(0.0);
+        //drive_joints_[0].setCommand(cos(steer_joints_[1].getPosition()) * drive_joints_[1].getVelocity());
+        //drive_joints_[1].setCommand(wheel_commands_[1].dVelGearDriveRadS);
+        //drive_joints_[2].setCommand(cos(steer_joints_[1].getPosition()) * drive_joints_[1].getVelocity());
+    //}
 
-    class PosCtrl {
-    public:
-        PosCtrl() : updated(false) {}
-        void try_configure(UndercarriageCtrl &ctrl){
-            boost::recursive_mutex::scoped_try_lock lock(mutex);
-            if(lock && updated){
-                ctrl.configure(pos_ctrl_params);
-                updated = false;
-            }
-        }
-        void init(const wheel_params_t &params, const ros::NodeHandle &nh){
-            boost::recursive_mutex::scoped_lock lock(mutex);
-            pos_ctrl_params.resize(params.size());
-            reconfigure_server_axes_.clear();
+    //class PosCtrl {
+    //public:
+        //PosCtrl() : updated(false) {}
+        //void try_configure(UndercarriageCtrl &ctrl){
+            //boost::recursive_mutex::scoped_try_lock lock(mutex);
+            //if(lock && updated){
+                //ctrl.configure(pos_ctrl_params);
+                //updated = false;
+            //}
+        //}
+        //void init(const wheel_params_t &params, const ros::NodeHandle &nh){
+            //boost::recursive_mutex::scoped_lock lock(mutex);
+            //pos_ctrl_params.resize(params.size());
+            //reconfigure_server_axes_.clear();
 
-            reconfigure_server_.reset( new dynamic_reconfigure::Server<cob_omni_drive_controller::SteerCtrlConfig>(mutex,ros::NodeHandle(nh, "default/steer_ctrl")));
-            reconfigure_server_->setCallback(boost::bind(&PosCtrl::setForAll, this, _1, _2)); // this writes the default into pos_ctrl_params
-            {
-                cob_omni_drive_controller::SteerCtrlConfig config;
-                copy(config, params.front().pos_ctrl);
-                reconfigure_server_->setConfigDefault(config);
-            }
+            //reconfigure_server_.reset( new dynamic_reconfigure::Server<cob_omni_drive_controller::SteerCtrlConfig>(mutex,ros::NodeHandle(nh, "default/steer_ctrl")));
+            //reconfigure_server_->setCallback(boost::bind(&PosCtrl::setForAll, this, _1, _2)); // this writes the default into pos_ctrl_params
+            //{
+                //cob_omni_drive_controller::SteerCtrlConfig config;
+                //copy(config, params.front().pos_ctrl);
+                //reconfigure_server_->setConfigDefault(config);
+            //}
 
-            for(size_t i=0; i< pos_ctrl_params.size(); ++i) {
-                boost::shared_ptr<dynamic_reconfigure::Server<cob_omni_drive_controller::SteerCtrlConfig> > dr(new dynamic_reconfigure::Server<cob_omni_drive_controller::SteerCtrlConfig>(mutex, ros::NodeHandle(nh, params[i].geom.steer_name)));
-                cob_omni_drive_controller::SteerCtrlConfig config;
-                copy(config, params[i].pos_ctrl);
-                dr->setConfigDefault(config);
-                dr->updateConfig(config);
-                dr->setCallback(boost::bind(&PosCtrl::setForOne, this, i, _1, _2));  // this writes the joint-specific config into pos_ctrl_params
-                reconfigure_server_axes_.push_back(dr);
-            }
-        }
-    private:
-        static void copy(PosCtrlParams &params, const cob_omni_drive_controller::SteerCtrlConfig &config){
-            params.dSpring = config.spring;
-            params.dDamp = config.damp;
-            params.dVirtM = config.virt_mass;
-            params.dDPhiMax = config.d_phi_max;
-            params.dDDPhiMax = config.dd_phi_max;
-        }
-        static void copy(cob_omni_drive_controller::SteerCtrlConfig &config, const PosCtrlParams &params){
-            config.spring = params.dSpring;
-            config.damp = params.dDamp;
-            config.virt_mass = params.dVirtM;
-            config.d_phi_max = params.dDPhiMax;
-            config.dd_phi_max = params.dDDPhiMax;
-        }
-        // these function don't get locked
-        void setForAll(cob_omni_drive_controller::SteerCtrlConfig &config, uint32_t /*level*/) {
-            ROS_INFO("configure all steers: s: %lf, d: %lf, m: %lf, v: %lf, a: %lf", config.spring, config.damp, config.virt_mass, config.d_phi_max, config.dd_phi_max);
-            for(size_t i=0; i< pos_ctrl_params.size(); ++i) {
-                copy(pos_ctrl_params[i], config);
-                if(!reconfigure_server_axes_.empty()){
-                    reconfigure_server_axes_[i]->setConfigDefault(config);
-                    reconfigure_server_axes_[i]->updateConfig(config);
-                }
-            }
-            updated = true;
-        }
-        void setForOne(size_t i, cob_omni_drive_controller::SteerCtrlConfig &config, uint32_t /*level*/) {
-            ROS_INFO("configure steer %d: s: %lf, d: %lf, m: %lf, v: %lf, a: %lf", (int)i, config.spring, config.damp, config.virt_mass, config.d_phi_max, config.dd_phi_max);
-            copy(pos_ctrl_params[i], config);
-            updated = true;
-        }
-        std::vector<PosCtrlParams> pos_ctrl_params;
-        boost::recursive_mutex mutex; // dynamic_reconfigure::Server calls the callback from the setCallback function
-        bool updated;
-        boost::scoped_ptr< dynamic_reconfigure::Server<cob_omni_drive_controller::SteerCtrlConfig> > reconfigure_server_;
-        std::vector<boost::shared_ptr< dynamic_reconfigure::Server<cob_omni_drive_controller::SteerCtrlConfig> > > reconfigure_server_axes_; // TODO: use unique_ptr
-    } pos_ctrl_;
-};
+            //for(size_t i=0; i< pos_ctrl_params.size(); ++i) {
+                //boost::shared_ptr<dynamic_reconfigure::Server<cob_omni_drive_controller::SteerCtrlConfig> > dr(new dynamic_reconfigure::Server<cob_omni_drive_controller::SteerCtrlConfig>(mutex, ros::NodeHandle(nh, params[i].geom.steer_name)));
+                //cob_omni_drive_controller::SteerCtrlConfig config;
+                //copy(config, params[i].pos_ctrl);
+                //dr->setConfigDefault(config);
+                //dr->updateConfig(config);
+                //dr->setCallback(boost::bind(&PosCtrl::setForOne, this, i, _1, _2));  // this writes the joint-specific config into pos_ctrl_params
+                //reconfigure_server_axes_.push_back(dr);
+            //}
+        //}
+    //private:
+        //static void copy(PosCtrlParams &params, const cob_omni_drive_controller::SteerCtrlConfig &config){
+            //params.dSpring = config.spring;
+            //params.dDamp = config.damp;
+            //params.dVirtM = config.virt_mass;
+            //params.dDPhiMax = config.d_phi_max;
+            //params.dDDPhiMax = config.dd_phi_max;
+        //}
+        //static void copy(cob_omni_drive_controller::SteerCtrlConfig &config, const PosCtrlParams &params){
+            //config.spring = params.dSpring;
+            //config.damp = params.dDamp;
+            //config.virt_mass = params.dVirtM;
+            //config.d_phi_max = params.dDPhiMax;
+            //config.dd_phi_max = params.dDDPhiMax;
+        //}
+        //// these function don't get locked
+        //void setForAll(cob_omni_drive_controller::SteerCtrlConfig &config, uint32_t /*level*/) {
+            //ROS_INFO("configure all steers: s: %lf, d: %lf, m: %lf, v: %lf, a: %lf", config.spring, config.damp, config.virt_mass, config.d_phi_max, config.dd_phi_max);
+            //for(size_t i=0; i< pos_ctrl_params.size(); ++i) {
+                //copy(pos_ctrl_params[i], config);
+                //if(!reconfigure_server_axes_.empty()){
+                    //reconfigure_server_axes_[i]->setConfigDefault(config);
+                    //reconfigure_server_axes_[i]->updateConfig(config);
+                //}
+            //}
+            //updated = true;
+        //}
+        //void setForOne(size_t i, cob_omni_drive_controller::SteerCtrlConfig &config, uint32_t /*level*/) {
+            //ROS_INFO("configure steer %d: s: %lf, d: %lf, m: %lf, v: %lf, a: %lf", (int)i, config.spring, config.damp, config.virt_mass, config.d_phi_max, config.dd_phi_max);
+            //copy(pos_ctrl_params[i], config);
+            //updated = true;
+        //}
+        //std::vector<PosCtrlParams> pos_ctrl_params;
+        //boost::recursive_mutex mutex; // dynamic_reconfigure::Server calls the callback from the setCallback function
+        //bool updated;
+        //boost::scoped_ptr< dynamic_reconfigure::Server<cob_omni_drive_controller::SteerCtrlConfig> > reconfigure_server_;
+        //std::vector<boost::shared_ptr< dynamic_reconfigure::Server<cob_omni_drive_controller::SteerCtrlConfig> > > reconfigure_server_axes_; // TODO: use unique_ptr
+    //} pos_ctrl_;
+//};
 
 
-class OdometryController: public TricycleGeomController<hardware_interface::JointStateInterface, UndercarriageGeom>
+class OdometryController: public TricycleControllerBase<hardware_interface::JointStateInterface>
 {
 public:
     OdometryController() {}
 
     virtual bool init(hardware_interface::JointStateInterface* hw, ros::NodeHandle &root_nh, ros::NodeHandle& controller_nh){
 
-        if(!TricycleGeomController::init(hw, controller_nh)) return false;
+        if(!TricycleControllerBase::init(hw, controller_nh)) return false;
 
         double publish_rate;
         if (!controller_nh.getParam("publish_rate", publish_rate)){
@@ -231,8 +208,7 @@ public:
         odom_tracker_.reset(new OdometryTracker(frame_id, child_frame_id, cov_pose, cov_twist));
         odom_ = odom_tracker_->getOdometry();
 
-        //topic_pub_odometry_ = controller_nh.advertise<nav_msgs::Odometry>("odometry", 1);
-        topic_pub_odometry_ = root_nh.advertise<nav_msgs::Odometry>("odometry_controller/odometry", 1);
+        topic_pub_odometry_ = controller_nh.advertise<nav_msgs::Odometry>("odometry", 1);
 
         bool broadcast_tf = true;
         controller_nh.getParam("broadcast_tf", broadcast_tf);
@@ -325,5 +301,5 @@ private:
 
 }
 
-PLUGINLIB_EXPORT_CLASS( cob_tricycle_controller::WheelController, controller_interface::ControllerBase)
+//PLUGINLIB_EXPORT_CLASS( cob_tricycle_controller::WheelController, controller_interface::ControllerBase)
 PLUGINLIB_EXPORT_CLASS( cob_tricycle_controller::OdometryController, controller_interface::ControllerBase)
