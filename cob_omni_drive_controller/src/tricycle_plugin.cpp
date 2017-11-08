@@ -32,6 +32,23 @@
 namespace cob_tricycle_controller
 {
 
+class FakeJoint {
+public:
+    FakeJoint()
+        : pos_(0), vel_(0), eff_(0), cmd_(0) {}
+    double pos_, vel_, eff_, cmd_;
+    template <typename T > T getHandle(const std::string& name);
+};
+
+template<> hardware_interface::JointStateHandle FakeJoint::getHandle(const std::string& name) {
+    return hardware_interface::JointStateHandle(name, &pos_, &vel_, &eff_);
+}
+
+template<> hardware_interface::JointHandle FakeJoint::getHandle(const std::string& name) {
+    hardware_interface::JointStateHandle jsh = this->getHandle<hardware_interface::JointStateHandle>(name);
+    return hardware_interface::JointHandle(jsh, &cmd_);
+}
+
 template<typename Interface, typename Controller> class TricycleGeomController:
     public cob_omni_drive_controller::GeomControllerBase<typename Interface::ResourceHandleType, Controller>,
         public controller_interface::Controller<Interface> {
@@ -55,12 +72,20 @@ public:
             //this->drive_joints_.push_back(hw->getHandle("b_caster_r_wheel_joint"));
             //this->steer_joints_.push_back(typename Interface::ResourceHandleType(hardware_interface::JointStateHandle("fr_caster_rotation_joint", &fake_steer_pos_[1], &fake_steer_vel_[1], &fake_steer_eff_[1]), &fake_steer_vel_[1]));
             //this->drive_joints_.push_back(typename Interface::ResourceHandleType(hardware_interface::JointStateHandle("fr_caster_r_wheel_joint", &fake_drive_pos_[1], &fake_drive_vel_[1], &fake_drive_eff_[1]), &fake_drive_vel_[1]));
-            this->steer_joints_.push_back(hardware_interface::JointStateHandle("fl_caster_rotation_joint", &fake_steer_pos_[0], &fake_steer_vel_[0], &fake_steer_eff_[0]));
-            this->drive_joints_.push_back(hardware_interface::JointStateHandle("fl_caster_r_wheel_joint", &fake_drive_pos_[0], &fake_drive_vel_[0], &fake_drive_eff_[0]));
+            //this->steer_joints_.push_back(hardware_interface::JointStateHandle("fl_caster_rotation_joint", &fake_steer_pos_[0], &fake_steer_vel_[0], &fake_steer_eff_[0]));
+            //this->drive_joints_.push_back(hardware_interface::JointStateHandle("fl_caster_r_wheel_joint", &fake_drive_pos_[0], &fake_drive_vel_[0], &fake_drive_eff_[0]));
+            //this->steer_joints_.push_back(hw->getHandle("b_caster_rotation_joint"));
+            //this->drive_joints_.push_back(hw->getHandle("b_caster_r_wheel_joint"));
+            //this->steer_joints_.push_back(hardware_interface::JointStateHandle("fr_caster_rotation_joint", &fake_steer_pos_[1], &fake_steer_vel_[1], &fake_steer_eff_[1]));
+            //this->drive_joints_.push_back(hardware_interface::JointStateHandle("fr_caster_r_wheel_joint", &fake_drive_pos_[1], &fake_drive_vel_[1], &fake_drive_eff_[1]));
+
+            this->steer_joints_.push_back(steer_left_.getHandle<typename Interface::ResourceHandleType>("fl_caster_rotation_joint"));
+            this->drive_joints_.push_back(drive_left_.getHandle<typename Interface::ResourceHandleType>("fr_caster_r_wheel_joint"));
             this->steer_joints_.push_back(hw->getHandle("b_caster_rotation_joint"));
             this->drive_joints_.push_back(hw->getHandle("b_caster_r_wheel_joint"));
-            this->steer_joints_.push_back(hardware_interface::JointStateHandle("fr_caster_rotation_joint", &fake_steer_pos_[1], &fake_steer_vel_[1], &fake_steer_eff_[1]));
-            this->drive_joints_.push_back(hardware_interface::JointStateHandle("fr_caster_r_wheel_joint", &fake_drive_pos_[1], &fake_drive_vel_[1], &fake_drive_eff_[1]));
+            this->steer_joints_.push_back(steer_right_.getHandle<typename Interface::ResourceHandleType>("fr_caster_rotation_joint"));
+            this->drive_joints_.push_back(drive_right_.getHandle<typename Interface::ResourceHandleType>("fr_caster_r_wheel_joint"));
+
         }
         catch(const std::exception &e){
             ROS_ERROR_STREAM("Error while attaching handles: " << e.what());
@@ -70,6 +95,7 @@ public:
     }
 protected:
     double fake_steer_pos_[2], fake_drive_pos_[2], fake_steer_vel_[2], fake_drive_vel_[2], fake_steer_eff_[2], fake_drive_eff_[2]; // set zero in contructor
+    FakeJoint steer_left_, drive_left_, steer_right_, drive_right_;
 };
 
 
