@@ -94,7 +94,8 @@ public:
         odom_tracker_.reset(new OdometryTracker(frame_id, child_frame_id, cov_pose, cov_twist));
         odom_ = odom_tracker_->getOdometry();
 
-        topic_pub_odometry_ = controller_nh.advertise<nav_msgs::Odometry>("odometry", 1);
+        //topic_pub_odometry_ = controller_nh.advertise<nav_msgs::Odometry>("odometry", 1);
+        topic_pub_odometry_ = root_nh.advertise<nav_msgs::Odometry>("odometry_controller/odometry", 1);
 
         bool broadcast_tf = true;
         controller_nh.getParam("broadcast_tf", broadcast_tf);
