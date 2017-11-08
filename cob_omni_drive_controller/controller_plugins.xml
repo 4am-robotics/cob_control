@@ -9,4 +9,10 @@
             </description>
         </class>
     </library>
+    <library path="lib/libcob_tricycle_controller">
+        <class name="cob_omni_drive_controller/TricycleController" type="cob_omni_drive_controller::TricycleController" base_class_type="controller_interface::ControllerBase">
+            <description>
+            </description>
+        </class>
+    </library>
 </class_libraries>
