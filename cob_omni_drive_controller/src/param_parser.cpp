@@ -237,5 +237,19 @@ bool parseWheelParams(std::vector<UndercarriageCtrl::WheelParams> &params, const
     return parseWheels(params, nh, read_urdf);
 }
 
+}
+
+namespace cob_tricycle_controller{
+
+bool parseWheelParams(std::vector<UndercarriageGeom::WheelParams> &params, const ros::NodeHandle &nh, bool read_urdf /* = true*/){
+    return parseWheels(params, nh, read_urdf);
+}
+//bool parseWheelParams(std::vector<UndercarriageDirectCtrl::WheelParams> &params, const ros::NodeHandle &nh, bool read_urdf /* = true*/){
+    //return parseWheels(params, nh, read_urdf);
+//}
+//bool parseWheelParams(std::vector<UndercarriageCtrl::WheelParams> &params, const ros::NodeHandle &nh, bool read_urdf /* = true*/){
+    //return parseWheels(params, nh, read_urdf);
+//}
 
 }
+
