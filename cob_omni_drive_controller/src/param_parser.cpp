@@ -134,8 +134,9 @@ bool parseWheelGeom(WheelGeom & geom, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcSt
     }
 
     geometry_msgs::TransformStamped transformStamped;
+
     try{
-      transformStamped = buffer.lookupTransform(steer_joint->child_link_name, "base_link", ros::Time(0), ros::Duration(5.0));
+      transformStamped = buffer.lookupTransform(steer_joint->parent_link_name, "base_link", ros::Time(0), ros::Duration(5.0));
     }
     catch (tf2::TransformException &ex) {
       ROS_WARN("%s",ex.what());
