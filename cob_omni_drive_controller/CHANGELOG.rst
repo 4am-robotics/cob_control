@@ -2,13 +2,26 @@
 Changelog for package cob_omni_drive_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-0.6.14 (2015-10-10)
+0.7.0 (2017-07-18)
+------------------
+
+0.6.15 (2017-07-18)
+-------------------
+* remove sympy implementation and dependency
+* implement setting pos ctrl params with  dynamic_reconfigure
+* dynamic reconfigure config for SteerCtrl parameter
+* refactored cob_omni_wheel_controller classes
+* add test scripts
+* manually fix changelog
+* Contributors: Felix Messmer, Mathias Lüdtke, ipa-fxm
+
+0.6.14 (2016-10-10)
 -------------------
 
-0.6.13 (2015-10-10)
+0.6.13 (2016-10-10)
 -------------------
 
-0.6.12 (2015-10-10)
+0.6.12 (2016-10-10)
 -------------------
 * added stuck detector node
 * publish WheelCommands, rate devided by pub_divider

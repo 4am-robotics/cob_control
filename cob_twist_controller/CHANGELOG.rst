@@ -2,13 +2,90 @@
 Changelog for package cob_twist_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-0.6.14 (2015-10-10)
+0.7.0 (2017-07-18)
+------------------
+* Merge branch 'indigo_dev' of https://github.com/ipa320/cob_control into kinetic_dev
+* [kinetic] migration (`#115 <https://github.com/ipa320/cob_control/issues/115>`_)
+  * [kinetic] find package Eigen3 instead of Eigen
+  * [kinetic] switched from fcl to libfcl-dev dependency
+  * ignore cob_obstacle_distance for now
+  * [kinetic] use industrial_ci for travis
+  * [kinetic] use industrial_cis ipa320 fork & notify on_success only on change
+  * fixed fcl dependency
+  * new fcl version switched from boost::shared to std::shared
+  * whitelist package
+  * use ros-industrials fork
+  * cleaned up travis.yml
+* Contributors: Benjamin Maidel, ipa-fxm
+
+0.6.15 (2017-07-18)
+-------------------
+* handle continuous joints in ControllerInterfaceJointStates
+* handle continuous joints in position_limiter
+* harmonize createTask
+* remove unused TaskDamping
+* remove ConstraintParamFactory
+* harmonize ConstraintParams
+* set default values for damping methods
+* own param struct for unified solver
+* New singularity and joint limit avoidance method (`#149 <https://github.com/ipa320/cob_control/issues/149>`_)
+  * first implementation of new jla solver using sigmoid functions
+  * first version of new JLA method working
+  * last fix to new JLA solver
+  * correction in parameter used in sigmoid damping method
+  * new solver added and new jla method added to be tested and selected according to performance comparison
+  * fix to rqt_reconfigure parameters
+  * final correction to new solver and new weighting method
+  * prints removed
+  * square trajectory added
+  * wln with sigmoid solver corrected
+  * final corrections
+  * final corrections to the solver formula
+  * created unified singularity and joint limit avoidance class... other classes moved
+  * restoring wln previous version of the solver
+  * saturation block added in unified solver just for testing
+  * saturation block corrected
+  * checking new solver and constraints
+  * corrected new test script for the new method
+  * removed test files and corrected identation
+  * defining GPM solver as default
+  * fix identation
+  * comment corrected
+  * identation fix in contraint solver factory
+  * finalize PR
+* cleanup leftovers
+* pluginlib approach for controller interfaces
+* add toggle for enforce_input_limits, implement both All and Individual Cartesian limiting
+* combine LimiterXContainer
+* limiter fixed
+* Limiter Base class removed
+* pull request changes
+* final implementation of cartesian limiter
+* bug fixed in class limiter container
+* bug fixed in class limiter container
+* cartesian limits introduced
+* remove sympy implementation and dependency
+* use xacro --inorder
+* final roslint
+* applied changes request in the pull request review
+* damping factor for old method replaced by a diagonal matrix
+* last corretions to pull request
+* corrections added according to last Felix comments
+* fixed changes done by rebase
+* prints removed for new damping function calculations
+* new method based of sigmoid function to singularity avoidance implemented
+* bug fix in least square calculation when changing to return matrix
+* starting to roslint some packages
+* manually fix changelog
+* Contributors: Bruno Brito, ipa-fxm
+
+0.6.14 (2016-10-10)
 -------------------
 
-0.6.13 (2015-10-10)
+0.6.13 (2016-10-10)
 -------------------
 
-0.6.12 (2015-10-10)
+0.6.12 (2016-10-10)
 -------------------
 * cob_twist_controller: fix add_dependencies calls
 * Contributors: ipa-mig
