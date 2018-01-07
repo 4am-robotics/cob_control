@@ -1,12 +1,12 @@
 <package format="2">
   <name>cob_model_identifier</name>
-  <version>0.7.0</version>
+  <version>0.7.1</version>
   <description>The cob_model_identifier package</description>
 
   <author email="fxm-cm@ipa.fhg.de">Christoph Mark</author>
   <maintainer email="fxm@ipa.fhg.de">Felix Messmer</maintainer>
 
-  <license>LGPL</license>
+  <license>Apache 2.0</license>
 
   <buildtool_depend>catkin</buildtool_depend>
 

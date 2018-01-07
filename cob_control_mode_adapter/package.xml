@@ -1,12 +1,12 @@
 <package format="2">
   <name>cob_control_mode_adapter</name>
-  <version>0.7.0</version>
+  <version>0.7.1</version>
   <description>The cob_control_mode_adapter package</description>
 
   <maintainer email="fxm@ipa.fhg.de">Felix Messmer</maintainer>
   <author email="fxm@ipa.fhg.de">Felix Messmer</author>
 
-  <license>BSD</license>
+  <license>Apache 2.0</license>
 
   <buildtool_depend>catkin</buildtool_depend>
 

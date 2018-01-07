@@ -1,15 +1,13 @@
 <package format="2">
   <name>cob_control</name>
-  <version>0.7.0</version>
+  <version>0.7.1</version>
   <description>cob_control meta-package</description>
 
-  <license>LGPL</license>
+  <license>Apache 2.0</license>
 
   <url type="website">http://ros.org/wiki/cob_control</url>
   <!-- <url type="bugtracker"></url> -->
 
-  <maintainer email="fmw@ipa.fhg.de">Florian Weisshardt</maintainer>
-  <maintainer email="nhg@ipa.fhg.de">Nadia Hammoudeh Garcia</maintainer>
   <maintainer email="fxm@ipa.fhg.de">Felix Messmer</maintainer>
 
   <buildtool_depend>catkin</buildtool_depend>
@@ -26,7 +24,6 @@
   <exec_depend>cob_omni_drive_controller</exec_depend>
   <exec_depend>cob_trajectory_controller</exec_depend>
   <exec_depend>cob_twist_controller</exec_depend>
-  <exec_depend>cob_undercarriage_ctrl_node</exec_depend>
 
   <export>
     <metapackage/>

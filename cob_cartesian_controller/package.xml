@@ -1,6 +1,6 @@
 <package format="2">
   <name>cob_cartesian_controller</name>
-  <version>0.7.0</version>
+  <version>0.7.1</version>
   <description>
     This package provides nodes that broadcast tf-frames along various (model-based) Cartesian paths (e.g. Linear, Circular).
     The tf-frames are interpolated using a given velocity profile (e.g. Ramp, Sinoid) and can be used as targets for the cob_frame_tracker/cob_twist_controller.
@@ -9,7 +9,7 @@
   <author email="fxm-cm@ipa.fhg.de">Christoph Mark</author>
   <maintainer email="fxm@ipa.fhg.de">Felix Messmer</maintainer>
 
-  <license>LGPL</license>
+  <license>Apache 2.0</license>
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>roslint</build_depend>

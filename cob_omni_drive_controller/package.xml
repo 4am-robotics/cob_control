@@ -1,13 +1,13 @@
 <package format="2">
   <name>cob_omni_drive_controller</name>
-  <version>0.7.0</version>
+  <version>0.7.1</version>
   <description>The cob_omni_drive_controller package</description>
 
-  <maintainer email="mig@ipa.fhg.de">Matthias Gruhler</maintainer>
+  <maintainer email="fxm@ipa.fhg.de">Felix Messmer</maintainer>
   <author>Christian Connette</author>
   <author>Mathias Lüdtke</author>
 
-  <license>LGPL</license>
+  <license>Apache 2.0</license>
 
   <buildtool_depend>catkin</buildtool_depend>
 
