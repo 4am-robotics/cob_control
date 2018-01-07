@@ -2,13 +2,18 @@
 Changelog for package cob_collision_velocity_filter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-0.6.14 (2015-10-10)
+0.6.15 (2017-07-18)
+-------------------
+* manually fix changelog
+* Contributors: ipa-fxm
+
+0.6.14 (2016-10-10)
 -------------------
 
-0.6.13 (2015-10-10)
+0.6.13 (2016-10-10)
 -------------------
 
-0.6.12 (2015-10-10)
+0.6.12 (2016-10-10)
 -------------------  
 * Integrate costmap in velocity filter
 * Added public nodehandle
