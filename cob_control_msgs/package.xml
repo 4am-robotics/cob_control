@@ -1,12 +1,12 @@
 <package format="2">
   <name>cob_control_msgs</name>
-  <version>0.6.15</version>
+  <version>0.6.16</version>
   <description>
     Common messages and services used in various packages within cob_control.
   </description>
 
 
-  <license>LGPL</license>
+  <license>Apache 2.0</license>
 
   <author email="fxm@ipa.fhg.de">Felix Messmer</author>
   <maintainer email="fxm@ipa.fhg.de">Felix Messmer</maintainer>

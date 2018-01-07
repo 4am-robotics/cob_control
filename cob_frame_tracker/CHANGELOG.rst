@@ -2,6 +2,22 @@
 Changelog for package cob_frame_tracker
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.16 (2018-01-07)
+-------------------
+* Merge remote-tracking branch 'origin/indigo_release_candidate' into indigo_dev
+* Merge pull request `#168 <https://github.com/ipa320/cob_control/issues/168>`_ from ipa-aep/bugfix/checkInfinitesimalTwist
+  Bugfix/check infinitesimal twist
+* fix wrong axes bug in Infinitesimal distance check
+* add rotational distance computation to abortion criteria
+* Merge pull request `#159 <https://github.com/ipa320/cob_control/issues/159>`_ from ipa-fxm/APACHE_license
+  use license apache 2.0
+* Merge pull request `#160 <https://github.com/ipa320/cob_control/issues/160>`_ from ipa-aep/feature/frametracker_pid_debugging
+  add publisher for controller error
+* remove terminal output of period
+* add publisher for controller error
+* use license apache 2.0
+* Contributors: Alexander Pekarovskiy, Felix Messmer, ipa-fxm, ipa-uhr-mk
+
 0.6.15 (2017-07-18)
 -------------------
 * Merge pull request `#122 <https://github.com/ipa320/cob_control/issues/122>`_ from ipa-fxm/indigo_roslint

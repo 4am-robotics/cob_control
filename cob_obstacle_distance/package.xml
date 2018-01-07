@@ -1,12 +1,12 @@
 <package format="2">
   <name>cob_obstacle_distance</name>
-  <version>0.6.15</version>
+  <version>0.6.16</version>
   <description>The cob_obstacle_distance package</description>
 
   <author email="fxm-mb@ipa.fhg.de">Marco Bezzon</author>
   <maintainer email="fxm@ipa.fhg.de">Felix Messmer</maintainer>
 
-  <license>LGPL</license>
+  <license>Apache 2.0</license>
 
   <buildtool_depend>catkin</buildtool_depend>
 
