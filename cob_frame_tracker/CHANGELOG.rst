@@ -2,6 +2,27 @@
 Changelog for package cob_frame_tracker
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.1 (2018-01-07)
+------------------
+* Merge remote-tracking branch 'origin/kinetic_release_candidate' into kinetic_dev
+* Merge pull request `#169 <https://github.com/ipa320/cob_control/issues/169>`_ from ipa-fxm/kinetic_updates_indigo
+  Kinetic updates indigo
+* Merge branch 'indigo_dev' of github.com:ipa320/cob_control into kinetic_dev
+  Conflicts:
+  .travis.yml
+* Merge pull request `#168 <https://github.com/ipa320/cob_control/issues/168>`_ from ipa-aep/bugfix/checkInfinitesimalTwist
+  Bugfix/check infinitesimal twist
+* fix wrong axes bug in Infinitesimal distance check
+* add rotational distance computation to abortion criteria
+* Merge pull request `#159 <https://github.com/ipa320/cob_control/issues/159>`_ from ipa-fxm/APACHE_license
+  use license apache 2.0
+* Merge pull request `#160 <https://github.com/ipa320/cob_control/issues/160>`_ from ipa-aep/feature/frametracker_pid_debugging
+  add publisher for controller error
+* remove terminal output of period
+* add publisher for controller error
+* use license apache 2.0
+* Contributors: Alexander Pekarovskiy, Felix Messmer, ipa-fxm, ipa-uhr-mk
+
 0.7.0 (2017-07-18)
 ------------------
 

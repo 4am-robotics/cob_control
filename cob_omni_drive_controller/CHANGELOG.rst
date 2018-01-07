@@ -2,6 +2,22 @@
 Changelog for package cob_omni_drive_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.1 (2018-01-07)
+------------------
+* Merge remote-tracking branch 'origin/kinetic_release_candidate' into kinetic_dev
+* Merge pull request `#169 <https://github.com/ipa320/cob_control/issues/169>`_ from ipa-fxm/kinetic_updates_indigo
+  Kinetic updates indigo
+* Merge branch 'indigo_dev' of github.com:ipa320/cob_control into kinetic_dev
+  Conflicts:
+  .travis.yml
+* Merge pull request `#164 <https://github.com/ipa320/cob_control/issues/164>`_ from ipa-fxm/update_maintainer
+  update maintainer
+* update maintainer
+* Merge pull request `#159 <https://github.com/ipa320/cob_control/issues/159>`_ from ipa-fxm/APACHE_license
+  use license apache 2.0
+* use license apache 2.0
+* Contributors: Felix Messmer, ipa-fxm, ipa-uhr-mk
+
 0.7.0 (2017-07-18)
 ------------------
 
