@@ -21,6 +21,7 @@
 #include <XmlRpcException.h>
 #include <tf2_ros/transform_listener.h>
 #include <geometry_msgs/TransformStamped.h>
+#include <urdf_geometry_parser/urdf_geometry_parser.h>
 
 class MergedXmlRpcStruct : public XmlRpc::XmlRpcValue{
     MergedXmlRpcStruct(const XmlRpc::XmlRpcValue& a) :XmlRpc::XmlRpcValue(a){ assertStruct(); }
@@ -102,7 +103,7 @@ bool parsePosCtrlParams(PosCtrlParams & params, XmlRpc::XmlRpcValue &wheel){
         && read(params.dDDPhiMax, "dd_phi_max", steer);
 }
 
-bool parseWheelGeom(WheelGeom & geom, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcStruct &merged, tf2_ros::Buffer &buffer, urdf::Model* model){
+bool parseWheelGeom(WheelGeom & geom, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcStruct &merged, const ros::NodeHandle &nh, tf2_ros::Buffer &buffer, urdf::Model* model){
 
     read_with_default(geom.steer_name, "steer", wheel, std::string());
     read_with_default(geom.drive_name, "drive", wheel, std::string());
@@ -148,6 +149,14 @@ bool parseWheelGeom(WheelGeom & geom, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcSt
     steer_pos.y = transformStamped.transform.translation.y;
     steer_pos.z = transformStamped.transform.translation.z;
 
+    ROS_INFO_STREAM("Transform tf: steer_name: "<<geom.steer_name<<" x:"<< steer_pos.x << " y:"<<steer_pos.y<<" z:"<<steer_pos.z);
+
+    urdf::Vector3 transformVector;
+    urdf_geometry_parser::UrdfGeometryParser geomParser(nh, "base_link");
+    geomParser.getTransformVector(geom.steer_name, "base_link", transformVector);
+
+    ROS_INFO_STREAM("Transform urdf: steer_name: "<<geom.steer_name<<" x:"<< transformVector.x << " y:"<<transformVector.y<<" z:"<<transformVector.z);
+
     if(steer_pos.z == 0){
         ROS_ERROR_STREAM("wheel_radius must be non-zero");
         return false;
@@ -176,18 +185,18 @@ bool parseWheelGeom(WheelGeom & geom, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcSt
     return true;
 }
 
-template<typename W> bool parseWheel(W & params, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcStruct &merged, tf2_ros::Buffer &buffer, urdf::Model* model);
+template<typename W> bool parseWheel(W & params, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcStruct &merged, const ros::NodeHandle &nh, tf2_ros::Buffer &buffer, urdf::Model* model);
 
-template<> bool parseWheel(UndercarriageGeom::WheelParams & params, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcStruct &merged, tf2_ros::Buffer &buffer, urdf::Model* model){
-    return parseWheelGeom(params.geom, wheel, merged, buffer, model);
+template<> bool parseWheel(UndercarriageGeom::WheelParams & params, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcStruct &merged, const ros::NodeHandle &nh, tf2_ros::Buffer &buffer, urdf::Model* model){
+    return parseWheelGeom(params.geom, wheel, merged, nh, buffer, model);
 }
 
-template<> bool parseWheel(UndercarriageDirectCtrl::WheelParams & params, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcStruct &merged, tf2_ros::Buffer &buffer, urdf::Model* model){
-    return parseWheelGeom(params.geom, wheel, merged, buffer, model) && parseCtrlParams(params.ctrl, merged);
+template<> bool parseWheel(UndercarriageDirectCtrl::WheelParams & params, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcStruct &merged, const ros::NodeHandle &nh, tf2_ros::Buffer &buffer, urdf::Model* model){
+    return parseWheelGeom(params.geom, wheel, merged, nh, buffer, model) && parseCtrlParams(params.ctrl, merged);
 }
 
-template<> bool parseWheel(UndercarriageCtrl::WheelParams & params, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcStruct &merged, tf2_ros::Buffer &buffer, urdf::Model* model){
-    return parseWheelGeom(params.geom, wheel, merged, buffer, model) && parseCtrlParams(params.ctrl, merged) && parsePosCtrlParams(params.pos_ctrl, merged);
+template<> bool parseWheel(UndercarriageCtrl::WheelParams & params, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcStruct &merged, const ros::NodeHandle &nh, tf2_ros::Buffer &buffer, urdf::Model* model){
+    return parseWheelGeom(params.geom, wheel, merged, nh, buffer, model) && parseCtrlParams(params.ctrl, merged) && parsePosCtrlParams(params.pos_ctrl, merged);
 }
 
 bool make_wheel_struct(XmlRpc::XmlRpcValue &wheel_list){
@@ -235,7 +244,7 @@ template<typename W> bool parseWheels(std::vector<W> &wheel_params, const ros::N
         W params;
         MergedXmlRpcStruct merged(it->second, defaults);
 
-        if(!parseWheel(params, it->second, merged, tfBuffer, has_model?&model:0)){
+        if(!parseWheel(params, it->second, merged, nh, tfBuffer, has_model?&model:0)){
             return false;
         }
 

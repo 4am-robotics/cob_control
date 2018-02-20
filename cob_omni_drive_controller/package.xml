@@ -21,6 +21,7 @@
   <depend>dynamic_reconfigure</depend>
   <depend>geometry_msgs</depend>
   <depend>hardware_interface</depend>
+  <depend>urdf_geometry_parser</depend>
   <depend>nav_msgs</depend>
   <depend>realtime_tools</depend>
   <depend>roscpp</depend>

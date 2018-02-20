@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(cob_omni_drive_controller)
 
-find_package(catkin REQUIRED COMPONENTS angles controller_interface dynamic_reconfigure geometry_msgs hardware_interface message_generation nav_msgs realtime_tools sensor_msgs std_msgs std_srvs tf urdf)
+find_package(catkin REQUIRED COMPONENTS angles controller_interface dynamic_reconfigure geometry_msgs hardware_interface message_generation urdf_geometry_parser nav_msgs realtime_tools sensor_msgs std_msgs std_srvs tf urdf)
 
 find_package(Boost REQUIRED COMPONENTS thread)
 
