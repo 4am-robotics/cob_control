@@ -19,7 +19,10 @@
 #include <urdf/model.h>
 #include <angles/angles.h>
 #include <XmlRpcException.h>
-#include <tf2/utils.h>
+
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2/LinearMath/Vector3.h>
 
 class MergedXmlRpcStruct : public XmlRpc::XmlRpcValue{
     MergedXmlRpcStruct(const XmlRpc::XmlRpcValue& a) :XmlRpc::XmlRpcValue(a){ assertStruct(); }
