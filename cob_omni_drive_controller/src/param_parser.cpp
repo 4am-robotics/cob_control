@@ -189,7 +189,7 @@ bool parseWheelGeom(WheelGeom & geom, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcSt
         steer_joint = model->getJoint(geom.steer_name);
         if(steer_joint){
             tf2::Transform transform;
-            if(parseWheelTransform(geom.steer_name, "base_link", transform, model)){
+            if(parseWheelTransform(geom.steer_name, model->getRoot()->name, transform, model)){
                 steer_pos.x = transform.getOrigin().getX();
                 steer_pos.y = transform.getOrigin().getY();
                 steer_pos.z = transform.getOrigin().getZ();
