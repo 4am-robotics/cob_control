@@ -22,32 +22,12 @@
 #include <stdexcept>
 #include <boost/shared_ptr.hpp>
 
-
 namespace MathSup {
-    const double PI = 3.14159265358979323846;
-    void normalizePi(double &val) { val = angles::normalize_angle(val); }
-
     double atan4quad(double y, double x)
     {
         if((x==0.0) && (y==0.0)) return 0; // special case (?)
         return atan2(y,x);
     }
-}
-
-double getWeightedDelta(double current_position, double old_target, double new_target){
-    // current_position =  angles::normalize_angle(current_position); not needed if current Pos is alread normalized
-
-    // Calculate differences between current config to possible set-points
-    double dtempDeltaPhi1RAD = angles::normalize_angle( new_target - current_position );
-    double dtempDeltaPhiCmd1RAD = angles::normalize_angle(new_target - old_target);
-
-    // determine optimal setpoint value
-    // 1st which set point is closest to current cinfog
-    //     but: avoid permanent switching (if next target is about PI/2 from current config)
-    // 2nd which set point is closest to last set point
-    // "fitness criteria" to choose optimal set point:
-    // calculate accumulted (+ weighted) difference between targets, current config. and last command
-    return 0.6*fabs(dtempDeltaPhi1RAD) + 0.4*fabs(dtempDeltaPhiCmd1RAD);
 }
 
 void WheelData::updateState(const WheelState &state){
@@ -106,7 +86,6 @@ void CtrlData::setTarget(const PlatformState &plt_state){
     if((plt_state.dVelLongMMS == 0) && (plt_state.dVelLatMMS == 0) && (plt_state.dRotRobRadS == 0))
     {
         m_dVelGearDriveTargetRadS = 0.0;
-        m_dAngGearSteerTargetRad = state_.dAngGearSteerRad;
         return;
     }
 
@@ -114,6 +93,7 @@ void CtrlData::setTarget(const PlatformState &plt_state){
     // Translational Portion
     double dtempAxVelXRobMMS = plt_state.dVelLongMMS;
     double dtempAxVelYRobMMS = plt_state.dVelLatMMS;
+
     // Rotational Portion
     dtempAxVelXRobMMS += plt_state.dRotRobRadS * m_dExWheelDistMM * -sin(m_dExWheelAngRad);
     dtempAxVelYRobMMS += plt_state.dRotRobRadS * m_dExWheelDistMM * cos(m_dExWheelAngRad);
@@ -122,30 +102,31 @@ void CtrlData::setTarget(const PlatformState &plt_state){
     // Wheel has to move in direction of resulting velocity vector of steering axis
     double dAngGearSteerTarget1Rad = MathSup::atan4quad(dtempAxVelYRobMMS, dtempAxVelXRobMMS);
     // calculate corresponding angle in opposite direction (+180 degree)
-    double dAngGearSteerTarget2Rad = dAngGearSteerTarget1Rad + MathSup::PI;
-    MathSup::normalizePi(dAngGearSteerTarget2Rad);
+    double dAngGearSteerTarget2Rad = dAngGearSteerTarget1Rad + M_PI;
+    dAngGearSteerTarget2Rad = angles::normalize_angle(dAngGearSteerTarget2Rad);
 
     // calculate absolute value of rotational rate of driving wheels in rad/s
     double dVelGearDriveTarget1RadS = sqrt( (dtempAxVelXRobMMS * dtempAxVelXRobMMS) +
                                         (dtempAxVelYRobMMS * dtempAxVelYRobMMS) ) / geom_.dRadiusWheelMM;
     // now adapt to direction (forward/backward) of wheel
     double dVelGearDriveTarget2RadS = -dVelGearDriveTarget1RadS;
+ 
+    // calculate shortes distance for forward and backward facing wheel
+    double dist_current_to_desired = angles::shortest_angular_distance(state_.dAngGearSteerRad, dAngGearSteerTarget1Rad);
+    double dist_current_to_desired_inv = angles::shortest_angular_distance(state_.dAngGearSteerRad, dAngGearSteerTarget2Rad);
 
-
-    if(getWeightedDelta(state_.dAngGearSteerRad,  m_dAngGearSteerTargetRad, dAngGearSteerTarget1Rad)
-        <= getWeightedDelta(state_.dAngGearSteerRad, m_dAngGearSteerTargetRad, dAngGearSteerTarget2Rad))
+    //add shortes calculated distance to current position for new desired position
+    if(fabs(dist_current_to_desired) <= fabs(dist_current_to_desired_inv))
     {
-        // Target1 is "optimal"
         m_dVelGearDriveTargetRadS = dVelGearDriveTarget1RadS;
-        m_dAngGearSteerTargetRad = dAngGearSteerTarget1Rad;
+        m_dAngGearSteerTargetRad = state_.dAngGearSteerRad + dist_current_to_desired;
     }
     else
     {
-        // Target2 is "optimal"
         m_dVelGearDriveTargetRadS = dVelGearDriveTarget2RadS;
-        m_dAngGearSteerTargetRad = dAngGearSteerTarget2Rad;
+        m_dAngGearSteerTargetRad = state_.dAngGearSteerRad + dist_current_to_desired_inv;
     }
-
+    //TODO: test if this still works with velocity controller
 }
 
 double limitValue(double value, double limit){
@@ -166,6 +147,7 @@ void CtrlData::calcControlStep(WheelCommand &command, double dCmdRateS, bool res
         command.dVelGearSteerRadS = 0.0;
         command.dAngGearSteerRad = state_.dAngGearSteerRad;
         command.dAngGearSteerRadDelta = 0.0;
+        m_dAngGearSteerTargetRad = state_.dAngGearSteerRad;
         return;
     }
 
