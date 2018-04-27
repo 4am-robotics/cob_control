@@ -182,7 +182,7 @@ bool parseWheelGeom(WheelGeom & geom, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcSt
     read_with_default(geom.drive_name, "drive", wheel, std::string());
     read_with_default(geom.dSteerDriveCoupling, "steer_drive_coupling", wheel, 0.0);
 
-    boost::shared_ptr<const urdf::Joint> steer_joint;
+    std::shared_ptr<const urdf::Joint> steer_joint;
     urdf::Vector3 steer_pos;
 
     if(model && !geom.steer_name.empty()){
@@ -226,7 +226,7 @@ bool parseWheelGeom(WheelGeom & geom, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcSt
     double offset = 0;
 
     if(!read_optional(offset, "wheel_offset", merged)){
-        boost::shared_ptr<const urdf::Joint> drive_joint;
+        std::shared_ptr<const urdf::Joint> drive_joint;
         if(model && !geom.drive_name.empty()){
             drive_joint = model->getJoint(geom.drive_name);
         }
