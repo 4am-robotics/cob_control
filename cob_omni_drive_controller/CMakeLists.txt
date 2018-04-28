@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(cob_omni_drive_controller)
 
-set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS angles controller_interface dynamic_reconfigure geometry_msgs hardware_interface message_generation nav_msgs realtime_tools sensor_msgs std_msgs std_srvs tf tf2 urdf)
 
