@@ -309,7 +309,7 @@ bool VelocitySmoother::init(ros::NodeHandle& nh)
   int feedback;
   nh.param("frequency",      frequency,     20.0);
   nh.param("decel_factor",   decel_factor,   1.0);
-  nh.param("decel_factor_safty",   decel_factor_safe,   1.0);
+  nh.param("decel_factor_safe",   decel_factor_safe,   1.0);
   nh.param("robot_feedback", feedback, (int)NONE);
 
   if ((int(feedback) < NONE) || (int(feedback) > COMMANDS))
