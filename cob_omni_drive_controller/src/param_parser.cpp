@@ -75,13 +75,41 @@ template<typename T> bool read(T& val, const std::string &name, XmlRpc::XmlRpcVa
     return true;
 }
 
-bool parseCtrlParams(CtrlParams & params, XmlRpc::XmlRpcValue &wheel){
+bool parseCtrlParams(CtrlParams & params, XmlRpc::XmlRpcValue &wheel, urdf::Model* model){
     double deg;
     read_with_default(deg, "steer_neutral_position", wheel, 0.0);
     params.dWheelNeutralPos = angles::from_degrees(deg);
 
-    read_with_default(params.dMaxSteerRateRadpS, "max_steer_rate", wheel, 0.0);
-    read_with_default(params.dMaxDriveRateRadpS, "max_drive_rate", wheel, 0.0);
+    std::string steer_name, drive_name;
+    double max_steer_rate, max_drive_rate;
+    read_with_default(steer_name, "steer", wheel, std::string());
+    read_with_default(drive_name, "drive", wheel, std::string());
+
+    boost::shared_ptr<const urdf::Joint> steer_joint;
+    if(model && !steer_name.empty()){
+        steer_joint = model->getJoint(steer_name);
+        if(steer_joint){
+            params.dMaxSteerRateRadpS = steer_joint->limits->velocity;
+        }
+    }
+    if(!read_optional(params.dMaxSteerRateRadpS, "max_steer_rate", wheel) && !steer_joint){
+        ROS_WARN_STREAM("max_steer_rate not set - defaulting to 0.0");
+        params.dMaxSteerRateRadpS = 0.0;
+    }
+    boost::shared_ptr<const urdf::Joint> drive_joint;
+    if(model && !drive_name.empty()){
+        drive_joint = model->getJoint(drive_name);
+        if(drive_joint){
+            params.dMaxDriveRateRadpS = drive_joint->limits->velocity;
+        }
+    }
+    if(!read_optional(params.dMaxDriveRateRadpS, "max_drive_rate", wheel) && !drive_joint){
+        ROS_WARN_STREAM("max_drive_rate not set - defaulting to 0.0");
+        params.dMaxDriveRateRadpS = 0.0;
+    }
+
+    ROS_WARN_STREAM("max_steer_rate: " <<  params.dMaxSteerRateRadpS);
+    ROS_WARN_STREAM("max_drive_rate: " <<  params.dMaxDriveRateRadpS);
     
     return true;
 }
@@ -166,11 +194,11 @@ template<> bool parseWheel(UndercarriageGeom::WheelParams & params, XmlRpc::XmlR
 }
 
 template<> bool parseWheel(UndercarriageDirectCtrl::WheelParams & params, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcStruct &merged, urdf::Model* model){
-    return parseWheelGeom(params.geom, wheel, merged, model) && parseCtrlParams(params.ctrl, merged);
+    return parseWheelGeom(params.geom, wheel, merged, model) && parseCtrlParams(params.ctrl, merged, model);
 }
 
 template<> bool parseWheel(UndercarriageCtrl::WheelParams & params, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcStruct &merged, urdf::Model* model){
-    return parseWheelGeom(params.geom, wheel, merged, model) && parseCtrlParams(params.ctrl, merged) && parsePosCtrlParams(params.pos_ctrl, merged);
+    return parseWheelGeom(params.geom, wheel, merged, model) && parseCtrlParams(params.ctrl, merged, model) && parsePosCtrlParams(params.pos_ctrl, merged);
 }
 
 bool make_wheel_struct(XmlRpc::XmlRpcValue &wheel_list){
