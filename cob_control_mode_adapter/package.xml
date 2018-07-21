@@ -3,7 +3,7 @@
   <version>0.6.16</version>
   <description>The cob_control_mode_adapter package</description>
 
-  <maintainer email="fxm@ipa.fhg.de">Felix Messmer</maintainer>
+  <maintainer email="felixmessmer@gmail.com">Felix Messmer</maintainer>
   <author email="fxm@ipa.fhg.de">Felix Messmer</author>
 
   <license>Apache 2.0</license>

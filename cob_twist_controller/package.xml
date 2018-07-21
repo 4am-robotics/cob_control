@@ -10,11 +10,11 @@
   Via parameter server users can dynamically configure the solving strategy. 
   </description>
 
+  <maintainer email="felixmessmer@gmail.com">Felix Messmer</maintainer>
   <author email="fxm@ipa.fhg.de">Felix Messmer</author>
   <author email="marco.bezzon@googlemail.com">Marco Bezzon</author>
   <author email="christoph.mark@googlemail.com">Christoph Mark</author>
   <author email="fjmorenom@unal.edu.co">Francisco Moreno</author>
-  <maintainer email="fxm@ipa.fhg.de">Felix Messmer</maintainer>
 
   <license>Apache 2.0</license>
 

@@ -8,8 +8,8 @@
 
   <license>Apache 2.0</license>
 
+  <maintainer email="felixmessmer@gmail.com">Felix Messmer</maintainer>
   <author email="fxm@ipa.fhg.de">Felix Messmer</author>
-  <maintainer email="fxm@ipa.fhg.de">Felix Messmer</maintainer>
 
   <buildtool_depend>catkin</buildtool_depend>
 
