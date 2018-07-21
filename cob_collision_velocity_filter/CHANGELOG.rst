@@ -2,6 +2,9 @@
 Changelog for package cob_collision_velocity_filter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.6.16 (2018-01-07)
 -------------------
 * Merge remote-tracking branch 'origin/indigo_release_candidate' into indigo_dev
