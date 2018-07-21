@@ -2,6 +2,19 @@
 Changelog for package cob_omni_drive_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.17 (2018-07-21)
+-------------------
+* update maintainer
+* Merge pull request `#178 <https://github.com/ipa320/cob_control/issues/178>`_ from benmaidel/fix/wheel_transform_indigo
+  fix wheel transformation from urdf (indigo_dev)
+* user robotmodel root link for wheel transformation
+* fixed tf2 includes
+* read whole transformation chain between wheel and base_link
+* Merge pull request `#185 <https://github.com/ipa320/cob_control/issues/185>`_ from ipa-fxm/indigo/fix/max_wheel_rate_from_urdf
+  read max_wheel_rates from urdf
+* read max_wheel_rates from urdf
+* Contributors: Benjamin Maidel, Felix Messmer, fmessmer, ipa-fxm
+
 0.6.16 (2018-01-07)
 -------------------
 * Merge remote-tracking branch 'origin/indigo_release_candidate' into indigo_dev

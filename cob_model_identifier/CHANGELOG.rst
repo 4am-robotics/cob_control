@@ -2,6 +2,11 @@
 Changelog for package cob_model_identifier
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.17 (2018-07-21)
+-------------------
+* update maintainer
+* Contributors: fmessmer
+
 0.6.16 (2018-01-07)
 -------------------
 * Merge remote-tracking branch 'origin/indigo_release_candidate' into indigo_dev

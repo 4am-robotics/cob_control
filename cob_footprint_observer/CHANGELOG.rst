@@ -2,6 +2,9 @@
 Changelog for package cob_footprint_observer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.6.17 (2018-07-21)
+-------------------
+
 0.6.16 (2018-01-07)
 -------------------
 * Merge remote-tracking branch 'origin/indigo_release_candidate' into indigo_dev

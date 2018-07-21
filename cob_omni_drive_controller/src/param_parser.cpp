@@ -20,6 +20,10 @@
 #include <angles/angles.h>
 #include <XmlRpcException.h>
 
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2/LinearMath/Vector3.h>
+
 class MergedXmlRpcStruct : public XmlRpc::XmlRpcValue{
     MergedXmlRpcStruct(const XmlRpc::XmlRpcValue& a) :XmlRpc::XmlRpcValue(a){ assertStruct(); }
 public:
@@ -75,13 +79,85 @@ template<typename T> bool read(T& val, const std::string &name, XmlRpc::XmlRpcVa
     return true;
 }
 
-bool parseCtrlParams(CtrlParams & params, XmlRpc::XmlRpcValue &wheel){
+bool parseWheelTransform(const std::string& joint_name, const std::string& parent_link_name,
+                         tf2::Transform &transform, urdf::Model* model)
+{
+    urdf::Pose transform_pose;
+    if(model)
+    {
+        urdf::JointConstSharedPtr joint(model->getJoint(joint_name));
+        if (!joint)
+        {
+            ROS_ERROR_STREAM(joint_name
+                             << " couldn't be retrieved from model description");
+            return false;
+        }
+
+        transform_pose.position = joint->parent_to_joint_origin_transform.position;
+        transform_pose.rotation = joint->parent_to_joint_origin_transform.rotation;
+        while(joint->parent_link_name != parent_link_name)
+        {
+            urdf::LinkConstSharedPtr link_parent(model->getLink(joint->parent_link_name));
+            if (!link_parent || !link_parent->parent_joint)
+            {
+                ROS_ERROR_STREAM(joint->parent_link_name
+                                 << " couldn't be retrieved from model description or his parent joint");
+                return false;
+            }
+            joint = link_parent->parent_joint;
+            transform_pose.position = transform_pose.position + joint->parent_to_joint_origin_transform.position;
+            transform_pose.rotation = transform_pose.rotation * joint->parent_to_joint_origin_transform.rotation;
+        }
+
+        tf2::Transform rot(tf2::Quaternion(transform_pose.rotation.x,transform_pose.rotation.y,transform_pose.rotation.z,transform_pose.rotation.w),
+                           tf2::Vector3(0,0,0));
+
+        tf2::Transform trans; trans.setIdentity();
+        trans.setOrigin(tf2::Vector3(transform_pose.position.x,transform_pose.position.y,transform_pose.position.z));
+
+        transform.setIdentity();
+        transform = rot * trans;
+        return true;
+    }
+    else
+        return false;
+}
+
+bool parseCtrlParams(CtrlParams & params, XmlRpc::XmlRpcValue &wheel, urdf::Model* model){
     double deg;
     read_with_default(deg, "steer_neutral_position", wheel, 0.0);
     params.dWheelNeutralPos = angles::from_degrees(deg);
 
-    read_with_default(params.dMaxSteerRateRadpS, "max_steer_rate", wheel, 0.0);
-    read_with_default(params.dMaxDriveRateRadpS, "max_drive_rate", wheel, 0.0);
+    std::string steer_name, drive_name;
+    double max_steer_rate, max_drive_rate;
+    read_with_default(steer_name, "steer", wheel, std::string());
+    read_with_default(drive_name, "drive", wheel, std::string());
+
+    boost::shared_ptr<const urdf::Joint> steer_joint;
+    if(model && !steer_name.empty()){
+        steer_joint = model->getJoint(steer_name);
+        if(steer_joint){
+            params.dMaxSteerRateRadpS = steer_joint->limits->velocity;
+        }
+    }
+    if(!read_optional(params.dMaxSteerRateRadpS, "max_steer_rate", wheel) && !steer_joint){
+        ROS_WARN_STREAM("max_steer_rate not set - defaulting to 0.0");
+        params.dMaxSteerRateRadpS = 0.0;
+    }
+    boost::shared_ptr<const urdf::Joint> drive_joint;
+    if(model && !drive_name.empty()){
+        drive_joint = model->getJoint(drive_name);
+        if(drive_joint){
+            params.dMaxDriveRateRadpS = drive_joint->limits->velocity;
+        }
+    }
+    if(!read_optional(params.dMaxDriveRateRadpS, "max_drive_rate", wheel) && !drive_joint){
+        ROS_WARN_STREAM("max_drive_rate not set - defaulting to 0.0");
+        params.dMaxDriveRateRadpS = 0.0;
+    }
+
+    ROS_WARN_STREAM("max_steer_rate: " <<  params.dMaxSteerRateRadpS);
+    ROS_WARN_STREAM("max_drive_rate: " <<  params.dMaxDriveRateRadpS);
     
     return true;
 }
@@ -112,7 +188,12 @@ bool parseWheelGeom(WheelGeom & geom, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcSt
     if(model && !geom.steer_name.empty()){
         steer_joint = model->getJoint(geom.steer_name);
         if(steer_joint){
-            steer_pos = steer_joint->parent_to_joint_origin_transform.position;
+            tf2::Transform transform;
+            if(parseWheelTransform(geom.steer_name, model->getRoot()->name, transform, model)){
+                steer_pos.x = transform.getOrigin().getX();
+                steer_pos.y = transform.getOrigin().getY();
+                steer_pos.z = transform.getOrigin().getZ();
+            }
         }
     }
 
@@ -135,6 +216,8 @@ bool parseWheelGeom(WheelGeom & geom, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcSt
         ROS_ERROR_STREAM("wheel_radius must be non-zero");
         return false;
     }
+
+    ROS_DEBUG_STREAM(geom.steer_name<<" steer_pos \tx:"<<steer_pos.x<<" \ty:"<<steer_pos.y<<" \tz:"<<steer_pos.z);
 
     geom.dWheelXPosMM = steer_pos.x * 1000;
     geom.dWheelYPosMM = steer_pos.y * 1000;
@@ -166,11 +249,11 @@ template<> bool parseWheel(UndercarriageGeom::WheelParams & params, XmlRpc::XmlR
 }
 
 template<> bool parseWheel(UndercarriageDirectCtrl::WheelParams & params, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcStruct &merged, urdf::Model* model){
-    return parseWheelGeom(params.geom, wheel, merged, model) && parseCtrlParams(params.ctrl, merged);
+    return parseWheelGeom(params.geom, wheel, merged, model) && parseCtrlParams(params.ctrl, merged, model);
 }
 
 template<> bool parseWheel(UndercarriageCtrl::WheelParams & params, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcStruct &merged, urdf::Model* model){
-    return parseWheelGeom(params.geom, wheel, merged, model) && parseCtrlParams(params.ctrl, merged) && parsePosCtrlParams(params.pos_ctrl, merged);
+    return parseWheelGeom(params.geom, wheel, merged, model) && parseCtrlParams(params.ctrl, merged, model) && parsePosCtrlParams(params.pos_ctrl, merged);
 }
 
 bool make_wheel_struct(XmlRpc::XmlRpcValue &wheel_list){
