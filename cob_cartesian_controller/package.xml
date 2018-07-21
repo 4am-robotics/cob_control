@@ -6,8 +6,8 @@
     The tf-frames are interpolated using a given velocity profile (e.g. Ramp, Sinoid) and can be used as targets for the cob_frame_tracker/cob_twist_controller.
   </description>
 
+  <maintainer email="felixmessmer@gmail.com">Felix Messmer</maintainer>
   <author email="fxm-cm@ipa.fhg.de">Christoph Mark</author>
-  <maintainer email="fxm@ipa.fhg.de">Felix Messmer</maintainer>
 
   <license>Apache 2.0</license>
 

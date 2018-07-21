@@ -3,8 +3,8 @@
   <version>0.7.1</version>
   <description>The cob_model_identifier package</description>
 
+  <maintainer email="felixmessmer@gmail.com">Felix Messmer</maintainer>
   <author email="fxm-cm@ipa.fhg.de">Christoph Mark</author>
-  <maintainer email="fxm@ipa.fhg.de">Felix Messmer</maintainer>
 
   <license>Apache 2.0</license>
 
