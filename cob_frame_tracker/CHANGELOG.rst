@@ -2,8 +2,8 @@
 Changelog for package cob_frame_tracker
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.17 (2018-07-21)
+-------------------
 * update maintainer
 * Contributors: fmessmer
 

@@ -2,8 +2,8 @@
 Changelog for package cob_base_velocity_smoother
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.6.17 (2018-07-21)
+-------------------
 * Merge pull request `#183 <https://github.com/ipa320/cob_control/issues/183>`_ from ipa-bnm/hotfix/velocity_smoother
   [velocity_smoother] fixed ros param name for velocity smoother decel_factor_safe
 * fixed ros param name for velocity smoother decel_factor_safe
