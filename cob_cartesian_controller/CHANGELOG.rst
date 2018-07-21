@@ -2,6 +2,11 @@
 Changelog for package cob_cartesian_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* update maintainer
+* Contributors: fmessmer
+
 0.7.1 (2018-01-07)
 ------------------
 * Merge remote-tracking branch 'origin/kinetic_release_candidate' into kinetic_dev

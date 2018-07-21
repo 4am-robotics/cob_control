@@ -2,6 +2,11 @@
 Changelog for package cob_model_identifier
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* update maintainer
+* Contributors: fmessmer
+
 0.7.1 (2018-01-07)
 ------------------
 * Merge remote-tracking branch 'origin/kinetic_release_candidate' into kinetic_dev
