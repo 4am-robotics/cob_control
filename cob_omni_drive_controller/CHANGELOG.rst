@@ -2,8 +2,8 @@
 Changelog for package cob_omni_drive_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.2 (2018-07-21)
+------------------
 * update maintainer
 * Merge pull request `#177 <https://github.com/ipa320/cob_control/issues/177>`_ from benmaidel/fix/wheel_transform
   fix wheel transformation from urdf
