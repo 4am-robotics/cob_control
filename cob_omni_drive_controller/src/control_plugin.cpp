@@ -44,8 +44,18 @@ public:
         updateCtrl(time, period);
 
         for (unsigned i=0; i<wheel_commands_.size(); i++){
-            steer_joints_[i].setCommand(wheel_commands_[i].dVelGearSteerRadS);
-            drive_joints_[i].setCommand(wheel_commands_[i].dVelGearDriveRadS);
+            if (!geom_->wheels_[i]->geom_.passive){
+                steer_joints_[i].setCommand(wheel_commands_[i].dVelGearSteerRadS);
+                drive_joints_[i].setCommand(wheel_commands_[i].dVelGearDriveRadS);
+            }
+            else{
+                ///ToDo: for fake wheels state as command
+                //updateFakeState(i, geom_->wheels_[i]->geom_.dWheelNeutralPos, wheel_commands_[i].dVelGearSteerRadS, wheel_commands_[i].dVelGearDriveRadS);
+                //ROS_INFO_STREAM("ControlPlugin - wheel " << i << ":: steer_name " << geom_->wheels_[i]->geom_.steer_name
+                                                         //<< ", dAngGearSteerRad: " << geom_->wheels_[i]->geom_.dWheelNeutralPos
+                                                         //<< ", dVelGearSteerRadS: " << wheel_commands_[i].dVelGearSteerRadS
+                                                         //<< ", dVelGearDriveRadS: " << wheel_commands_[i].dVelGearDriveRadS);
+            }
         }
 
     }
