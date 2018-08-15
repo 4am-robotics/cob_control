@@ -222,7 +222,7 @@ void VelocitySmoother::spin()
       }
       else
       {
-        max_vy_inc = ((vy_inc*target_vel.linear.x > 0.0)?accel_lim_vy:decel_vy)*period;
+        max_vy_inc = ((vy_inc*target_vel.linear.y > 0.0)?accel_lim_vy:decel_vy)*period;
       }
 
       w_inc = target_vel.angular.z - last_cmd_vel.angular.z;
