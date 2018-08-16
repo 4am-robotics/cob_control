@@ -4,8 +4,8 @@
   <version>0.6.14</version>
   <description>The cob_tricycle_controller package</description>
 
-  <author email="felix.messmer@unity-robotics.de">Felix Messmer</author>
-  <maintainer email="felix.messmer@unity-robotics.de">Felix Messmer</maintainer>
+  <author email="felix.messmer@mojin-robotics.de">Felix Messmer</author>
+  <maintainer email="felix.messmer@mojin-robotics.de">Felix Messmer</maintainer>
 
   <license>Apache 2.0</license>
 

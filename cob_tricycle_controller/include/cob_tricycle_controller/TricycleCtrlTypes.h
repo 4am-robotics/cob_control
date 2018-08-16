@@ -18,6 +18,10 @@
 #ifndef COB_TRICYCLE_CONTROLLER_TRICYCLECTRLTYPES_H
 #define COB_TRICYCLE_CONTROLLER_TRICYCLECTRLTYPES_H
 
+#include <urdf/model.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2/LinearMath/Transform.h>
+#include <tf2/LinearMath/Vector3.h>
 
 
 struct PlatformState{
@@ -29,15 +33,22 @@ struct PlatformState{
 };
 
 struct WheelState{
+    std::string steer_name, drive_name;
+
     double steer_pos;
     double steer_vel;
     double drive_pos;
     double drive_vel;
 
+    double pos_x;
+    double pos_y;
+
     double radius;
+
     WheelState() : steer_pos(0.0), steer_vel(0.0), drive_pos(0.0), drive_vel(0.0),
+                   pos_x(0.0), pos_y(0.0),
                    radius(0.0)
-     {}
+    {}
 };
 
 #endif

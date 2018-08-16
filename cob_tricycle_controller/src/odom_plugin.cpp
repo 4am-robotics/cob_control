@@ -19,6 +19,7 @@
 #include <controller_interface/controller.h>
 #include <hardware_interface/joint_state_interface.h>
 
+#include <cob_omni_drive_controller/param_parser.h>
 #include <cob_omni_drive_controller/OdometryTracker.h>
 #include <cob_tricycle_controller/TricycleCtrlTypes.h>
 
@@ -28,6 +29,9 @@
 #include <std_srvs/Trigger.h>
 
 #include <pluginlib/class_list_macros.h>
+
+#include <urdf/model.h>
+#include <tf2/LinearMath/Transform.h>
 
 namespace cob_tricycle_controller
 {
@@ -40,24 +44,37 @@ public:
 
     virtual bool init(hardware_interface::JointStateInterface* hw, ros::NodeHandle &nh)
     {
-        std::string steer_joint_name;
-        if (!nh.getParam("steer_joint", steer_joint_name)){
+        if (!nh.getParam("steer_joint", wheel_state_.steer_name)){
             ROS_ERROR("Parameter 'steer_joint' not set");
             return false;
         }
-        std::string drive_joint_name;
-        if (!nh.getParam("drive_joint", drive_joint_name)){
+        if (!nh.getParam("drive_joint", wheel_state_.drive_name)){
             ROS_ERROR("Parameter 'drive_joint' not set");
             return false;
         }
-        steer_joint_ = hw->getHandle(steer_joint_name);
-        drive_joint_ = hw->getHandle(drive_joint_name);
+        steer_joint_ = hw->getHandle(wheel_state_.steer_name);
+        drive_joint_ = hw->getHandle(wheel_state_.drive_name);
 
-        ///ToDo:
-        //init WheelState
-        wheel_state_.radius = 0.1;
 
-        
+        urdf::Model model;
+        std::string description_name;
+        bool has_model = nh.searchParam("robot_description", description_name) &&  model.initParam(description_name);
+
+        urdf::Vector3 steer_pos;
+        boost::shared_ptr<const urdf::Joint> steer_joint;
+
+        if(has_model){
+            steer_joint = model.getJoint(wheel_state_.steer_name);
+            if(steer_joint){
+                tf2::Transform transform;
+                if(parseWheelTransform(wheel_state_.steer_name, model.getRoot()->name, transform, &model)){
+                    wheel_state_.pos_x = transform.getOrigin().getX();
+                    wheel_state_.pos_y = transform.getOrigin().getY();
+                    wheel_state_.radius = transform.getOrigin().getZ();
+                }
+            }
+        }
+
         double publish_rate;
         if (!nh.getParam("publish_rate", publish_rate)){
             ROS_ERROR("Parameter 'publish_rate' not set");

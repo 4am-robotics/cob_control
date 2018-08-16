@@ -15,6 +15,7 @@
  */
 
 
+#include <cob_omni_drive_controller/param_parser.h>
 #include <cob_omni_drive_controller/UndercarriageCtrlGeomROS.h>
 #include <urdf/model.h>
 #include <angles/angles.h>
@@ -77,50 +78,6 @@ template<typename T> bool read(T& val, const std::string &name, XmlRpc::XmlRpcVa
         return false;
     }
     return true;
-}
-
-bool parseWheelTransform(const std::string& joint_name, const std::string& parent_link_name,
-                         tf2::Transform &transform, urdf::Model* model)
-{
-    urdf::Pose transform_pose;
-    if(model)
-    {
-        urdf::JointConstSharedPtr joint(model->getJoint(joint_name));
-        if (!joint)
-        {
-            ROS_ERROR_STREAM(joint_name
-                             << " couldn't be retrieved from model description");
-            return false;
-        }
-
-        transform_pose.position = joint->parent_to_joint_origin_transform.position;
-        transform_pose.rotation = joint->parent_to_joint_origin_transform.rotation;
-        while(joint->parent_link_name != parent_link_name)
-        {
-            urdf::LinkConstSharedPtr link_parent(model->getLink(joint->parent_link_name));
-            if (!link_parent || !link_parent->parent_joint)
-            {
-                ROS_ERROR_STREAM(joint->parent_link_name
-                                 << " couldn't be retrieved from model description or his parent joint");
-                return false;
-            }
-            joint = link_parent->parent_joint;
-            transform_pose.position = transform_pose.position + joint->parent_to_joint_origin_transform.position;
-            transform_pose.rotation = transform_pose.rotation * joint->parent_to_joint_origin_transform.rotation;
-        }
-
-        tf2::Transform rot(tf2::Quaternion(transform_pose.rotation.x,transform_pose.rotation.y,transform_pose.rotation.z,transform_pose.rotation.w),
-                           tf2::Vector3(0,0,0));
-
-        tf2::Transform trans; trans.setIdentity();
-        trans.setOrigin(tf2::Vector3(transform_pose.position.x,transform_pose.position.y,transform_pose.position.z));
-
-        transform.setIdentity();
-        transform = rot * trans;
-        return true;
-    }
-    else
-        return false;
 }
 
 bool parseCtrlParams(CtrlParams & params, XmlRpc::XmlRpcValue &wheel, urdf::Model* model){
