@@ -19,8 +19,8 @@
 #include <controller_interface/controller.h>
 #include <hardware_interface/joint_state_interface.h>
 
-#include <cob_omni_drive_controller/param_parser.h>
-#include <cob_omni_drive_controller/OdometryTracker.h>
+#include <cob_base_controller_utils/param_parser.h>
+#include <cob_base_controller_utils/OdometryTracker.h>
 #include <cob_tricycle_controller/TricycleCtrlTypes.h>
 
 #include <tf/transform_broadcaster.h>

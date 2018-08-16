@@ -13,7 +13,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>boost</depend>
-  <depend>cob_omni_drive_controller</depend>
+  <depend>cob_base_controller_utils</depend>
   <depend>controller_interface</depend>
   <depend>geometry_msgs</depend>
   <depend>hardware_interface</depend>

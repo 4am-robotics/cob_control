@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(cob_tricycle_controller)
 
 find_package(catkin REQUIRED COMPONENTS 
-  cob_omni_drive_controller
+  cob_base_controller_utils
   controller_interface
   geometry_msgs
   hardware_interface
@@ -18,7 +18,7 @@ find_package(Boost REQUIRED COMPONENTS thread)
 
 catkin_package(
   CATKIN_DEPENDS
-    cob_omni_drive_controller
+    cob_base_controller_utils
     controller_interface
     geometry_msgs
     hardware_interface
@@ -36,17 +36,12 @@ catkin_package(
 ### BUILD ###
 include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
-#add_library(cob_tricycle_geom src/UndercarriageCtrlGeom.cpp src/param_parser.cpp)
-#add_dependencies(cob_tricycle_geom ${catkin_EXPORTED_TARGETS})
-#target_link_libraries(cob_tricycle_geom ${catkin_LIBRARIES})
-
 add_library(cob_tricycle_controller src/odom_plugin.cpp src/control_plugin.cpp)
 add_dependencies(cob_tricycle_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cob_tricycle_controller ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-#target_link_libraries(cob_tricycle_controller cob_omni_drive_geom ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 ### INSTALL ###
-install(TARGETS cob_tricycle_controller #cob_tricycle_geom 
+install(TARGETS cob_tricycle_controller
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

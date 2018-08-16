@@ -12,11 +12,10 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <build_depend>message_generation</build_depend>
-  <build_export_depend>message_runtime</build_export_depend>
-  <exec_depend>message_runtime</exec_depend>
   
   <depend>angles</depend>
   <depend>boost</depend>
+  <depend>cob_base_controller_utils</depend>
   <depend>controller_interface</depend>
   <depend>dynamic_reconfigure</depend>
   <depend>geometry_msgs</depend>

@@ -12,6 +12,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
+  <exec_depend>cob_base_controller_utils</exec_depend>
   <exec_depend>cob_base_velocity_smoother</exec_depend>
   <exec_depend>cob_cartesian_controller</exec_depend>
   <exec_depend>cob_collision_velocity_filter</exec_depend>

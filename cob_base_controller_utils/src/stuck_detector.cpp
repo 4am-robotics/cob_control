@@ -16,7 +16,7 @@
 
 
 #include <std_srvs/Trigger.h>
-#include <cob_omni_drive_controller/WheelCommands.h>
+#include <cob_base_controller_utils/WheelCommands.h>
 #include <ros/ros.h>
 
 ros::ServiceClient g_halt_client;
@@ -25,7 +25,7 @@ double g_threshold;
 ros::Duration g_timeout;
 bool g_halt_requested;
 
-void commandsCallback(const cob_omni_drive_controller::WheelCommands::ConstPtr& msg){
+void commandsCallback(const cob_base_controller_utils::WheelCommands::ConstPtr& msg){
     g_last_ok.resize(msg->steer_target_error.size(), msg->header.stamp);
 
     bool valid = true;
