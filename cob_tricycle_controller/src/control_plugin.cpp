@@ -19,7 +19,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/thread/mutex.hpp>
 
-#include <controller_interface/controller.h>
+#include <controller_interface/multi_interface_controller.h>
 #include <hardware_interface/joint_command_interface.h>
 
 #include <cob_tricycle_controller/TricycleCtrlTypes.h>
@@ -44,10 +44,10 @@ double limitValue(double value, double limit){
 }
 
 
-class WheelController : public controller_interface::Controller<hardware_interface::VelocityJointInterface>
+class WheelController : public controller_interface::MultiInterfaceController<hardware_interface::VelocityJointInterface, hardware_interface::PositionJointInterface>
 {
 public:
-    virtual bool init(hardware_interface::VelocityJointInterface* hw, ros::NodeHandle &nh)
+    virtual bool init(hardware_interface::RobotHW* robot_hw, ros::NodeHandle &nh)
     {
         std::string steer_joint_name;
         if (!nh.getParam("steer_joint", steer_joint_name)){
@@ -59,8 +59,11 @@ public:
             ROS_ERROR("Parameter 'drive_joint' not set");
             return false;
         }
-        steer_joint_ = hw->getHandle(steer_joint_name);
-        drive_joint_ = hw->getHandle(drive_joint_name);
+
+        hardware_interface::VelocityJointInterface* v = robot_hw->get<hardware_interface::VelocityJointInterface>();
+        hardware_interface::PositionJointInterface* p = robot_hw->get<hardware_interface::PositionJointInterface>();
+        steer_joint_ = p->getHandle(steer_joint_name);
+        drive_joint_ = v->getHandle(drive_joint_name);
 
 
         nh.param("max_trans_velocity", max_vel_trans_, 0.0);
