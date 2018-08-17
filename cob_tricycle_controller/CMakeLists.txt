@@ -30,7 +30,7 @@ catkin_package(
     tf
   DEPENDS Boost
   INCLUDE_DIRS include
-  LIBRARIES cob_tricycle_controller #cob_tricycle_geom
+  LIBRARIES cob_tricycle_controller
 )
 
 ### BUILD ###

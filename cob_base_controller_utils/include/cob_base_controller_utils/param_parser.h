@@ -15,6 +15,8 @@
  */
 
 
+#ifndef COB_BASE_CONTROLLER_UTILS_PARAM_PARSER_H
+#define COB_BASE_CONTROLLER_UTILS_PARAM_PARSER_H
 
 #include <urdf/model.h>
 
@@ -22,7 +24,7 @@
 #include <tf2/LinearMath/Transform.h>
 #include <tf2/LinearMath/Vector3.h>
 
-bool parseWheelTransform(const std::string& joint_name, const std::string& parent_link_name,
+inline bool parseWheelTransform(const std::string& joint_name, const std::string& parent_link_name,
                          tf2::Transform &transform, urdf::Model* model)
 {
     urdf::Pose transform_pose;
@@ -65,3 +67,5 @@ bool parseWheelTransform(const std::string& joint_name, const std::string& paren
     else
         return false;
 }
+
+#endif  // COB_BASE_CONTROLLER_UTILS_PARAM_PARSER_H
