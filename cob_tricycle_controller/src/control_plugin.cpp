@@ -194,11 +194,11 @@ private:
             double v_wheel = k/r_base;
             double a1 = -2 * atan2(r_base*target_.state.velX - k, target_.state.rotTheta);
             a1 = angles::normalize_angle(a1);
-            double b1 = v_wheel / (2*M_PI*wheel_state_.radius);
+            double b1 = v_wheel / wheel_state_.radius;
 
             double a2 = -2 * atan2(k + r_base*target_.state.velX, target_.state.rotTheta);
             a2 = angles::normalize_angle(a2);
-            double b2 = - v_wheel / (2*M_PI*wheel_state_.radius);
+            double b2 = - v_wheel / wheel_state_.radius;
 
             if (fabs(a1-wheel_state_.steer_pos) <= fabs(a2-wheel_state_.steer_pos))
             {
@@ -216,12 +216,12 @@ private:
             if (fabs(0.0-wheel_state_.steer_pos) <= fabs(M_PI-wheel_state_.steer_pos))
             {
                 wheel_command_.steer_pos = 0.0;
-                wheel_command_.drive_vel = target_.state.velX / (2*M_PI*wheel_state_.radius);
+                wheel_command_.drive_vel = target_.state.velX / wheel_state_.radius;
             }
             else
             {
                 wheel_command_.steer_pos = M_PI;
-                wheel_command_.drive_vel = -target_.state.velX / (2*M_PI*wheel_state_.radius);
+                wheel_command_.drive_vel = -target_.state.velX / wheel_state_.radius;
             }
         }
     }

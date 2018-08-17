@@ -195,7 +195,7 @@ private:
         wheel_state_.drive_vel = drive_joint_.getVelocity();
 
         //calculate forward kinematics
-        double v_wheel = 2*M_PI*wheel_state_.radius*wheel_state_.drive_vel;
+        double v_wheel = wheel_state_.radius*wheel_state_.drive_vel;
         platform_state_.velX = v_wheel * cos(wheel_state_.steer_pos);
         platform_state_.velY = 0.0;
         platform_state_.rotTheta = 1.5*wheel_state_.pos_x*v_wheel*sin(wheel_state_.steer_pos);
