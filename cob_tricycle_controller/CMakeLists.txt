@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8.3)
 project(cob_tricycle_controller)
 
 find_package(catkin REQUIRED COMPONENTS 
+  angles
   cob_base_controller_utils
   controller_interface
   geometry_msgs
@@ -18,6 +19,7 @@ find_package(Boost REQUIRED COMPONENTS thread)
 
 catkin_package(
   CATKIN_DEPENDS
+    angles
     cob_base_controller_utils
     controller_interface
     geometry_msgs

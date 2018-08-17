@@ -16,6 +16,7 @@
 
 
 #include <math.h>
+#include <angles/angles.h>
 #include <boost/scoped_ptr.hpp>
 #include <boost/thread/mutex.hpp>
 
@@ -186,9 +187,43 @@ private:
         wheel_state_.drive_vel = drive_joint_.getVelocity();
 
         //calculate inverse kinematics
-        wheel_command_.steer_pos = atan2(target_.state.rotTheta, 3*M_PI*wheel_state_.pos_x*target_.state.velX);
-        double v_wheel = target_.state.velX / cos(wheel_command_.steer_pos);
-        wheel_command_.drive_vel = v_wheel / (2*M_PI*wheel_state_.radius);
+        double r_base = 1.5*wheel_state_.pos_x;
+        double k = sqrt(pow(r_base,2)*pow(target_.state.velX,2) + pow(target_.state.rotTheta,2));
+        if (target_.state.rotTheta != 0)
+        {
+            double v_wheel = k/r_base;
+            double a1 = -2 * atan2(r_base*target_.state.velX - k, target_.state.rotTheta);
+            a1 = angles::normalize_angle(a1);
+            double b1 = v_wheel / (2*M_PI*wheel_state_.radius);
+
+            double a2 = -2 * atan2(k + r_base*target_.state.velX, target_.state.rotTheta);
+            a2 = angles::normalize_angle(a2);
+            double b2 = - v_wheel / (2*M_PI*wheel_state_.radius);
+
+            if (fabs(a1-wheel_state_.steer_pos) <= fabs(a2-wheel_state_.steer_pos))
+            {
+                wheel_command_.steer_pos = a1;
+                wheel_command_.drive_vel = b1;
+            }
+            else
+            {
+                wheel_command_.steer_pos = a2;
+                wheel_command_.drive_vel = b2;
+            }
+        }
+        else
+        {
+            if (fabs(0.0-wheel_state_.steer_pos) <= fabs(M_PI-wheel_state_.steer_pos))
+            {
+                wheel_command_.steer_pos = 0.0;
+                wheel_command_.drive_vel = target_.state.velX / (2*M_PI*wheel_state_.radius);
+            }
+            else
+            {
+                wheel_command_.steer_pos = M_PI;
+                wheel_command_.drive_vel = -target_.state.velX / (2*M_PI*wheel_state_.radius);
+            }
+        }
     }
 };
 

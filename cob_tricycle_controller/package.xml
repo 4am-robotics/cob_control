@@ -12,6 +12,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
+  <depend>angles</depend>
   <depend>boost</depend>
   <depend>cob_base_controller_utils</depend>
   <depend>controller_interface</depend>
