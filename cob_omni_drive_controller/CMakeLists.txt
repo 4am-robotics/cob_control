@@ -3,7 +3,7 @@ project(cob_omni_drive_controller)
 
 add_compile_options(-std=c++11)
 
-find_package(catkin REQUIRED COMPONENTS angles controller_interface dynamic_reconfigure geometry_msgs hardware_interface message_generation nav_msgs realtime_tools sensor_msgs std_msgs std_srvs tf urdf)
+find_package(catkin REQUIRED COMPONENTS angles controller_interface dynamic_reconfigure geometry_msgs hardware_interface message_generation nav_msgs realtime_tools sensor_msgs std_msgs std_srvs tf tf2 urdf)
 
 find_package(Boost REQUIRED COMPONENTS thread)
 
@@ -20,7 +20,7 @@ generate_dynamic_reconfigure_options(
 )
 
 catkin_package(
-  CATKIN_DEPENDS angles controller_interface dynamic_reconfigure geometry_msgs hardware_interface message_runtime nav_msgs sensor_msgs std_msgs std_srvs tf urdf
+  CATKIN_DEPENDS angles controller_interface dynamic_reconfigure geometry_msgs hardware_interface message_runtime nav_msgs sensor_msgs std_msgs std_srvs tf tf2 urdf
   DEPENDS Boost
   INCLUDE_DIRS include
   LIBRARIES cob_omni_drive_geom cob_omni_drive_controller

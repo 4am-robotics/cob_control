@@ -2,6 +2,11 @@
 Changelog for package cob_control
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.2 (2018-07-21)
+------------------
+* update maintainer
+* Contributors: fmessmer
+
 0.7.1 (2018-01-07)
 ------------------
 * Merge remote-tracking branch 'origin/kinetic_release_candidate' into kinetic_dev

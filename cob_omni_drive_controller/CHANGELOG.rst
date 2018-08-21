@@ -2,6 +2,22 @@
 Changelog for package cob_omni_drive_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.2 (2018-07-21)
+------------------
+* update maintainer
+* Merge pull request `#177 <https://github.com/ipa320/cob_control/issues/177>`_ from benmaidel/fix/wheel_transform
+  fix wheel transformation from urdf
+* user robotmodel root link for wheel transformation
+* fixed tf2 includes
+* read whole transformation chain between wheel and base_link
+* Merge pull request `#186 <https://github.com/ipa320/cob_control/issues/186>`_ from ipa-fxm/kinetic/fix/max_wheel_rate_from_urdf
+  read max_wheel_rates from urdf
+* read max_wheel_rates from urdf
+* Merge pull request `#140 <https://github.com/ipa320/cob_control/issues/140>`_ from ipa-mdl/feature/wheel-multi-controller-refactored
+  [kinetic] wheel multi controller refactored
+* add multi interface wheel controller
+* Contributors: Benjamin Maidel, Felix Messmer, Mathias Lüdtke, fmessmer, ipa-fxm
+
 0.7.1 (2018-01-07)
 ------------------
 * Merge remote-tracking branch 'origin/kinetic_release_candidate' into kinetic_dev

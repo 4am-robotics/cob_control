@@ -1,10 +1,10 @@
 <package format="2">
   <name>cob_frame_tracker</name>
-  <version>0.7.1</version>
+  <version>0.7.2</version>
   <description>The cob_frame_tracker package</description>
 
+  <maintainer email="felixmessmer@gmail.com">Felix Messmer</maintainer>
   <author email="fxm@ipa.fhg.de">Felix Messmer</author>
-  <maintainer email="fxm@ipa.fhg.de">Felix Messmer</maintainer>
 
   <license>Apache 2.0</license>
 

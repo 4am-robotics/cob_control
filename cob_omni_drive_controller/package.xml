@@ -1,9 +1,9 @@
 <package format="2">
   <name>cob_omni_drive_controller</name>
-  <version>0.7.1</version>
+  <version>0.7.2</version>
   <description>The cob_omni_drive_controller package</description>
 
-  <maintainer email="fxm@ipa.fhg.de">Felix Messmer</maintainer>
+  <maintainer email="felixmessmer@gmail.com">Felix Messmer</maintainer>
   <author>Christian Connette</author>
   <author>Mathias Lüdtke</author>
 
@@ -28,6 +28,7 @@
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
   <depend>tf</depend>
+  <depend>tf2</depend>
   <depend>urdf</depend>
 
   <export>
