@@ -72,6 +72,7 @@ public:
 
         urdf::Vector3 steer_pos;
         boost::shared_ptr<const urdf::Joint> steer_joint;
+        boost::shared_ptr<const urdf::Joint> drive_joint;
 
         if(has_model){
             steer_joint = model.getJoint(wheel_state_.steer_name);
@@ -82,6 +83,13 @@ public:
                     wheel_state_.pos_y = transform.getOrigin().getY();
                     wheel_state_.radius = transform.getOrigin().getZ();
                 }
+                nh.param("max_steer_rate", max_steer_rate_, 0.0);
+                max_steer_rate_ = (max_steer_rate_ != 0.0 && max_steer_rate_ < steer_joint->limits->velocity) ? max_steer_rate_ : steer_joint->limits->velocity;
+            }
+            drive_joint = model.getJoint(wheel_state_.drive_name);
+            if(drive_joint){
+                nh.param("max_drive_rate", max_drive_rate_, 0.0);
+                max_drive_rate_ = (max_drive_rate_ != 0.0 && max_drive_rate_ < drive_joint->limits->velocity) ? max_drive_rate_ : drive_joint->limits->velocity;
             }
         }
 
@@ -121,6 +129,22 @@ public:
 
     virtual void update(const ros::Time& time, const ros::Duration& period)
     {
+        {
+            boost::mutex::scoped_try_lock lock(mutex_);
+            if(lock){
+                Target target = target_;
+                target_.updated = false;
+
+                if(!target.stamp.isZero() && !timeout_.isZero() && (time - target.stamp) > timeout_){
+                    ROS_WARN_STREAM("target timed out");
+                    target_.stamp = ros::Time(); // only reset once
+                    target.state  = PlatformState();
+                    target.updated = true;
+                }
+                lock.unlock();
+            }
+        }
+
         updateCommand();
 
         steer_joint_.setCommand(wheel_command_.steer_pos);
@@ -162,6 +186,7 @@ private:
 
     ros::Duration timeout_;
     double max_vel_trans_, max_vel_rot_;
+    double max_steer_rate_, max_drive_rate_;
 
     void topicCallbackTwistCmd(const geometry_msgs::Twist::ConstPtr& msg){
         if(this->isRunning()){
@@ -224,6 +249,8 @@ private:
                 wheel_command_.drive_vel = -target_.state.velX / wheel_state_.radius;
             }
         }
+
+        wheel_command_.drive_vel = limitValue(wheel_command_.drive_vel, max_drive_rate_);
     }
 };
 

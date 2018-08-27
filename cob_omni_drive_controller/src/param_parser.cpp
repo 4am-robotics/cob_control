@@ -113,8 +113,8 @@ bool parseCtrlParams(CtrlParams & params, XmlRpc::XmlRpcValue &wheel, urdf::Mode
         params.dMaxDriveRateRadpS = 0.0;
     }
 
-    ROS_WARN_STREAM("max_steer_rate: " <<  params.dMaxSteerRateRadpS);
-    ROS_WARN_STREAM("max_drive_rate: " <<  params.dMaxDriveRateRadpS);
+    ROS_DEBUG_STREAM("max_steer_rate: " <<  params.dMaxSteerRateRadpS);
+    ROS_DEBUG_STREAM("max_drive_rate: " <<  params.dMaxDriveRateRadpS);
     
     return true;
 }
