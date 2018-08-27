@@ -212,7 +212,9 @@ private:
         wheel_state_.drive_vel = drive_joint_.getVelocity();
 
         //calculate inverse kinematics
-        double r_base = 1.5*fabs(wheel_state_.pos_x);
+        //Hint: the sign of pos_x is important, it affects the angular.z direction
+        //      pos_x < 0: active fdm is back wheel, pos_x > active fdm is front wheel
+        double r_base = 1.5*wheel_state_.pos_x;
         double k = sqrt(pow(r_base,2)*pow(target_.state.velX,2) + pow(target_.state.rotTheta,2));
         if (target_.state.rotTheta != 0)
         {
