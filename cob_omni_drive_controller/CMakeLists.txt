@@ -1,24 +1,16 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(cob_omni_drive_controller)
 
-find_package(catkin REQUIRED COMPONENTS angles controller_interface dynamic_reconfigure geometry_msgs hardware_interface message_generation nav_msgs realtime_tools sensor_msgs std_msgs std_srvs tf tf2 urdf)
+find_package(catkin REQUIRED COMPONENTS angles cob_base_controller_utils controller_interface dynamic_reconfigure geometry_msgs hardware_interface nav_msgs realtime_tools sensor_msgs std_msgs std_srvs tf tf2 urdf)
 
 find_package(Boost REQUIRED COMPONENTS thread)
-
-add_message_files(
-  DIRECTORY msg
-  FILES
-  WheelCommands.msg
-)
-
-generate_messages(DEPENDENCIES std_msgs)
 
 generate_dynamic_reconfigure_options(
   cfg/SteerCtrl.cfg
 )
 
 catkin_package(
-  CATKIN_DEPENDS angles controller_interface dynamic_reconfigure geometry_msgs hardware_interface message_runtime nav_msgs sensor_msgs std_msgs std_srvs tf tf2 urdf
+  CATKIN_DEPENDS angles cob_base_controller_utils controller_interface dynamic_reconfigure geometry_msgs hardware_interface nav_msgs sensor_msgs std_msgs std_srvs tf tf2 urdf
   DEPENDS Boost
   INCLUDE_DIRS include
   LIBRARIES cob_omni_drive_geom cob_omni_drive_controller
@@ -35,19 +27,11 @@ add_library(cob_omni_drive_controller src/odom_plugin.cpp src/control_plugin.cpp
 add_dependencies(cob_omni_drive_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cob_omni_drive_controller cob_omni_drive_geom ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
-add_executable(cob_omni_drive_stuck_detector src/stuck_detector.cpp)
-add_dependencies(cob_omni_drive_stuck_detector ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(cob_omni_drive_stuck_detector ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-
 ### INSTALL ###
-install(TARGETS cob_omni_drive_geom cob_omni_drive_controller cob_omni_drive_stuck_detector
+install(TARGETS cob_omni_drive_geom cob_omni_drive_controller
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-install(PROGRAMS scripts/test_publisher_twist_sine.py scripts/test_publisher_twist_step.py
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 install(FILES controller_plugins.xml
@@ -56,8 +40,4 @@ install(FILES controller_plugins.xml
 
 install(DIRECTORY include/${PROJECT_NAME}/
  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-)
-
-install(DIRECTORY launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

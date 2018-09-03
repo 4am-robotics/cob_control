@@ -31,7 +31,7 @@
 #include <boost/thread/mutex.hpp>
 
 #include <realtime_tools/realtime_publisher.h>
-#include <cob_omni_drive_controller/WheelCommands.h>
+#include <cob_base_controller_utils/WheelCommands.h>
 
 namespace cob_omni_drive_controller
 {
@@ -63,7 +63,7 @@ public:
         wheel_commands_.resize(this->wheel_states_.size());
         twist_subscriber_ = controller_nh.subscribe("command", 1, &WheelControllerBase::topicCallbackTwistCmd, this);
 
-        commands_pub_.reset(new realtime_tools::RealtimePublisher<cob_omni_drive_controller::WheelCommands>(controller_nh, "wheel_commands", 5));
+        commands_pub_.reset(new realtime_tools::RealtimePublisher<cob_base_controller_utils::WheelCommands>(controller_nh, "wheel_commands", 5));
        
         commands_pub_->msg_.drive_target_velocity.resize(this->wheel_states_.size());
         commands_pub_->msg_.steer_target_velocity.resize(this->wheel_states_.size());
@@ -130,7 +130,7 @@ protected:
     boost::mutex mutex_;
     ros::Subscriber twist_subscriber_;
     
-    boost::scoped_ptr<realtime_tools::RealtimePublisher<cob_omni_drive_controller::WheelCommands> > commands_pub_;
+    boost::scoped_ptr<realtime_tools::RealtimePublisher<cob_base_controller_utils::WheelCommands> > commands_pub_;
     uint32_t cycles_;
     uint32_t pub_divider_;
     

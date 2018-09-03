@@ -15,34 +15,68 @@
  */
 
 
+#include <math.h>
+#include <controller_interface/controller.h>
 #include <hardware_interface/joint_state_interface.h>
 
-#include <pluginlib/class_list_macros.h>
+#include <cob_base_controller_utils/param_parser.h>
+#include <cob_base_controller_utils/OdometryTracker.h>
+#include <cob_tricycle_controller/TricycleCtrlTypes.h>
 
 #include <tf/transform_broadcaster.h>
 
-#include <cob_base_controller_utils/OdometryTracker.h>
-#include <cob_omni_drive_controller/UndercarriageCtrlGeom.h>
-
+#include <nav_msgs/Odometry.h>
 #include <std_srvs/Trigger.h>
 
-#include "GeomController.h"
+#include <pluginlib/class_list_macros.h>
 
-namespace cob_omni_drive_controller
+#include <urdf/model.h>
+#include <tf2/LinearMath/Transform.h>
+
+namespace cob_tricycle_controller
 {
 
 // this controller gets access to the JointStateInterface
-class OdometryController: public GeomController<hardware_interface::JointStateInterface, UndercarriageGeom>
+class OdometryController: public controller_interface::Controller<hardware_interface::JointStateInterface>
 {
 public:
     OdometryController() {}
 
-    virtual bool init(hardware_interface::JointStateInterface* hw, ros::NodeHandle &root_nh, ros::NodeHandle& controller_nh){
+    virtual bool init(hardware_interface::JointStateInterface* hw, ros::NodeHandle &nh)
+    {
+        if (!nh.getParam("steer_joint", wheel_state_.steer_name)){
+            ROS_ERROR("Parameter 'steer_joint' not set");
+            return false;
+        }
+        if (!nh.getParam("drive_joint", wheel_state_.drive_name)){
+            ROS_ERROR("Parameter 'drive_joint' not set");
+            return false;
+        }
+        steer_joint_ = hw->getHandle(wheel_state_.steer_name);
+        drive_joint_ = hw->getHandle(wheel_state_.drive_name);
 
-        if(!GeomController::init(hw, controller_nh)) return false;
+
+        urdf::Model model;
+        std::string description_name;
+        bool has_model = nh.searchParam("robot_description", description_name) &&  model.initParam(description_name);
+
+        urdf::Vector3 steer_pos;
+        boost::shared_ptr<const urdf::Joint> steer_joint;
+
+        if(has_model){
+            steer_joint = model.getJoint(wheel_state_.steer_name);
+            if(steer_joint){
+                tf2::Transform transform;
+                if(parseWheelTransform(wheel_state_.steer_name, model.getRoot()->name, transform, &model)){
+                    wheel_state_.pos_x = transform.getOrigin().getX();
+                    wheel_state_.pos_y = transform.getOrigin().getY();
+                    wheel_state_.radius = transform.getOrigin().getZ();
+                }
+            }
+        }
 
         double publish_rate;
-        if (!controller_nh.getParam("publish_rate", publish_rate)){
+        if (!nh.getParam("publish_rate", publish_rate)){
             ROS_ERROR("Parameter 'publish_rate' not set");
             return false;
         }
@@ -51,18 +85,18 @@ public:
             return false;
         }
 
-        const std::string frame_id = controller_nh.param("frame_id", std::string("odom"));
-        const std::string child_frame_id = controller_nh.param("child_frame_id", std::string("base_footprint"));
-        const double cov_pose = controller_nh.param("cov_pose", 0.1);
-        const double cov_twist = controller_nh.param("cov_twist", 0.1);
+        const std::string frame_id = nh.param("frame_id", std::string("odom"));
+        const std::string child_frame_id = nh.param("child_frame_id", std::string("base_footprint"));
+        const double cov_pose = nh.param("cov_pose", 0.1);
+        const double cov_twist = nh.param("cov_twist", 0.1);
 
         odom_tracker_.reset(new OdometryTracker(frame_id, child_frame_id, cov_pose, cov_twist));
         odom_ = odom_tracker_->getOdometry();
 
-        topic_pub_odometry_ = controller_nh.advertise<nav_msgs::Odometry>("odometry", 1);
+        topic_pub_odometry_ = nh.advertise<nav_msgs::Odometry>("odometry", 1);
 
         bool broadcast_tf = true;
-        controller_nh.getParam("broadcast_tf", broadcast_tf);
+        nh.getParam("broadcast_tf", broadcast_tf);
 
         if(broadcast_tf){
             odom_tf_.header.frame_id = frame_id;
@@ -70,12 +104,13 @@ public:
             tf_broadcast_odometry_.reset(new tf::TransformBroadcaster);
         }
 
-        publish_timer_ = controller_nh.createTimer(ros::Duration(1/publish_rate), &OdometryController::publish, this);
-        service_reset_ = controller_nh.advertiseService("reset_odometry", &OdometryController::srv_reset, this);
+        publish_timer_ = nh.createTimer(ros::Duration(1/publish_rate), &OdometryController::publish, this);
+        service_reset_ = nh.advertiseService("reset_odometry", &OdometryController::srv_reset, this);
 
         return true;
     }
-    virtual void starting(const ros::Time& time){
+    virtual void starting(const ros::Time& time)
+    {
         if(time != stop_time_) odom_tracker_->init(time); // do not init odometry on restart
         reset_ = false;
     }
@@ -96,13 +131,11 @@ public:
         return true;
     }
 
-    virtual void update(const ros::Time& time, const ros::Duration& period){
-
+    virtual void update(const ros::Time& time, const ros::Duration& period)
+    {
         updateState();
 
-        geom_->calcDirect(platform_state_);
-
-        odom_tracker_->track(time, period.toSec(), platform_state_.getVelX(), platform_state_.getVelY(), platform_state_.dRotRobRadS);
+        odom_tracker_->track(time, period.toSec(), platform_state_.velX, platform_state_.velY, platform_state_.rotTheta);
 
         boost::mutex::scoped_try_lock lock(mutex_);
         if(lock){
@@ -112,12 +145,14 @@ public:
             }
             odom_ =  odom_tracker_->getOdometry();
         }
-
     }
     virtual void stopping(const ros::Time& time) { stop_time_ = time; }
 
 private:
     PlatformState platform_state_;
+    WheelState wheel_state_;
+    hardware_interface::JointStateHandle steer_joint_;
+    hardware_interface::JointStateHandle drive_joint_;
 
     ros::Publisher topic_pub_odometry_;                 // calculated (measured) velocity, rotation and pose (odometry-based) for the robot
     ros::ServiceServer service_reset_;                  // service to reset odometry to zero
@@ -130,7 +165,6 @@ private:
     boost::mutex mutex_;
     geometry_msgs::TransformStamped odom_tf_;
     ros::Time stop_time_;
-
 
     void publish(const ros::TimerEvent&){
         if(!isRunning()) return;
@@ -152,8 +186,22 @@ private:
             tf_broadcast_odometry_->sendTransform(odom_tf_);
         }
     }
+
+    void updateState(){
+        //get JointState from JointHandles
+        wheel_state_.steer_pos = steer_joint_.getPosition();
+        wheel_state_.steer_vel = steer_joint_.getVelocity();
+        wheel_state_.drive_pos = drive_joint_.getPosition();
+        wheel_state_.drive_vel = drive_joint_.getVelocity();
+
+        //calculate forward kinematics
+        double v_wheel = wheel_state_.radius*wheel_state_.drive_vel;
+        platform_state_.velX = v_wheel * cos(wheel_state_.steer_pos);
+        platform_state_.velY = 0.0;
+        platform_state_.rotTheta = 1.5*wheel_state_.pos_x*v_wheel*sin(wheel_state_.steer_pos);
+    }
 };
 
 }
 
-PLUGINLIB_EXPORT_CLASS( cob_omni_drive_controller::OdometryController, controller_interface::ControllerBase)
+PLUGINLIB_EXPORT_CLASS( cob_tricycle_controller::OdometryController, controller_interface::ControllerBase)
