@@ -67,6 +67,7 @@ public:
             steer_joint = model.getJoint(wheel_state_.steer_name);
             if(steer_joint){
                 tf2::Transform transform;
+                //root link for tricycle is "base_pivot_link"
                 if(parseWheelTransform(wheel_state_.steer_name, model.getRoot()->name, transform, &model)){
                     wheel_state_.pos_x = transform.getOrigin().getX();
                     wheel_state_.pos_y = transform.getOrigin().getY();
@@ -195,10 +196,9 @@ private:
         wheel_state_.drive_vel = drive_joint_.getVelocity();
 
         //calculate forward kinematics
-        double v_wheel = wheel_state_.radius*wheel_state_.drive_vel;
-        platform_state_.velX = v_wheel * cos(wheel_state_.steer_pos);
+        platform_state_.velX = wheel_state_.radius*wheel_state_.drive_vel*cos(wheel_state_.steer_pos);
         platform_state_.velY = 0.0;
-        platform_state_.rotTheta = 1.5*wheel_state_.pos_x*v_wheel*sin(wheel_state_.steer_pos);
+        platform_state_.rotTheta = wheel_state_.radius*wheel_state_.drive_vel*sin(wheel_state_.steer_pos)/wheel_state_.pos_x;
     }
 };
 

@@ -78,6 +78,7 @@ public:
             steer_joint = model.getJoint(wheel_state_.steer_name);
             if(steer_joint){
                 tf2::Transform transform;
+                //root link for tricycle is "base_pivot_link"
                 if(parseWheelTransform(wheel_state_.steer_name, model.getRoot()->name, transform, &model)){
                     wheel_state_.pos_x = transform.getOrigin().getX();
                     wheel_state_.pos_y = transform.getOrigin().getY();
@@ -211,21 +212,22 @@ private:
         wheel_state_.drive_pos = drive_joint_.getPosition();
         wheel_state_.drive_vel = drive_joint_.getVelocity();
 
-        //calculate inverse kinematics
-        //Hint: the sign of pos_x is important, it affects the angular.z direction
-        //      pos_x < 0: active fdm is back wheel, pos_x > active fdm is front wheel
-        double r_base = 1.5*wheel_state_.pos_x;
-        double k = sqrt(pow(r_base,2)*pow(target_.state.velX,2) + pow(target_.state.rotTheta,2));
+        // calculate inverse kinematics
+        // http://www.wolframalpha.com/input/?i=Solve%5Bx%3D%3Dw*cos(a),+phi%3D%3Dw*sin(a)%2Fr,a,w%5D
+        //
+        // Hint: the sign of pos_x is important, it affects the angular.z direction
+        //       pos_x < 0: active fdm is back wheel, pos_x > active fdm is front wheel
+        double r_base = wheel_state_.pos_x;
+        double k = sqrt(pow(r_base,2)*pow(target_.state.rotTheta,2) + pow(target_.state.velX,2));
         if (target_.state.rotTheta != 0)
         {
-            double v_wheel = k/r_base;
-            double a1 = -2 * atan2(r_base*target_.state.velX - k, target_.state.rotTheta);
+            double a1 = 2 * atan2(k - target_.state.velX, r_base*target_.state.rotTheta);
             a1 = angles::normalize_angle(a1);
-            double b1 = v_wheel / wheel_state_.radius;
+            double b1 = k / wheel_state_.radius;
 
-            double a2 = -2 * atan2(k + r_base*target_.state.velX, target_.state.rotTheta);
+            double a2 = -2 * atan2(k + target_.state.velX, r_base*target_.state.rotTheta);
             a2 = angles::normalize_angle(a2);
-            double b2 = - v_wheel / wheel_state_.radius;
+            double b2 = - k / wheel_state_.radius;
 
             if (fabs(a1-wheel_state_.steer_pos) <= fabs(a2-wheel_state_.steer_pos))
             {
