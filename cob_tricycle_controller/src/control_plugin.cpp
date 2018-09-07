@@ -240,7 +240,7 @@ private:
                 wheel_command_.drive_vel = b2;
             }
         }
-        else
+        else if (target_.state.velX != 0)
         {
             if (fabs(0.0-wheel_state_.steer_pos) <= fabs(M_PI-wheel_state_.steer_pos))
             {
@@ -252,6 +252,10 @@ private:
                 wheel_command_.steer_pos = M_PI;
                 wheel_command_.drive_vel = -target_.state.velX / wheel_state_.radius;
             }
+        }
+        else {
+            wheel_command_.steer_pos = wheel_state_.steer_pos;
+            wheel_command_.drive_vel = 0.0;
         }
 
         wheel_command_.drive_vel = limitValue(wheel_command_.drive_vel, max_drive_rate_);
