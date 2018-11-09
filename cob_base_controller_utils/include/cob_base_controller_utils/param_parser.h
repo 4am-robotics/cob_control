@@ -27,6 +27,7 @@
 inline bool parseWheelTransform(const std::string& joint_name, const std::string& parent_link_name,
                          tf2::Transform &transform, urdf::Model* model)
 {
+    tf2::Transform transform_inc; transform_inc.setIdentity();
     urdf::Pose transform_pose;
     if(model)
     {
@@ -38,11 +39,19 @@ inline bool parseWheelTransform(const std::string& joint_name, const std::string
             return false;
         }
 
+        transform_inc = tf2::Transform(tf2::Quaternion(joint->parent_to_joint_origin_transform.rotation.x,
+                                                       joint->parent_to_joint_origin_transform.rotation.y,
+                                                       joint->parent_to_joint_origin_transform.rotation.z,
+                                                       joint->parent_to_joint_origin_transform.rotation.w), 
+                                       tf2::Vector3(joint->parent_to_joint_origin_transform.position.x,
+                                                    joint->parent_to_joint_origin_transform.position.y,
+                                                    joint->parent_to_joint_origin_transform.position.z));
         transform_pose.position = joint->parent_to_joint_origin_transform.position;
         transform_pose.rotation = joint->parent_to_joint_origin_transform.rotation;
         while(joint->parent_link_name != parent_link_name)
         {
             urdf::LinkConstSharedPtr link_parent(model->getLink(joint->parent_link_name));
+            ROS_WARN_STREAM("joint: "<<joint->name<<", parent_link_name: "<<joint->parent_link_name);
             if (!link_parent || !link_parent->parent_joint)
             {
                 ROS_ERROR_STREAM(joint->parent_link_name
@@ -52,6 +61,16 @@ inline bool parseWheelTransform(const std::string& joint_name, const std::string
             joint = link_parent->parent_joint;
             transform_pose.position = transform_pose.position + joint->parent_to_joint_origin_transform.position;
             transform_pose.rotation = transform_pose.rotation * joint->parent_to_joint_origin_transform.rotation;
+            transform_inc *= tf2::Transform(tf2::Quaternion(joint->parent_to_joint_origin_transform.rotation.x,
+                                                           joint->parent_to_joint_origin_transform.rotation.y,
+                                                           joint->parent_to_joint_origin_transform.rotation.z,
+                                                           joint->parent_to_joint_origin_transform.rotation.w), 
+                                           tf2::Vector3(joint->parent_to_joint_origin_transform.position.x,
+                                                        joint->parent_to_joint_origin_transform.position.y,
+                                                        joint->parent_to_joint_origin_transform.position.z));
+            ROS_WARN_STREAM("Jx: "<<joint->parent_to_joint_origin_transform.position.x<<", Jy: "<<joint->parent_to_joint_origin_transform.position.y<<", Jz: "<<joint->parent_to_joint_origin_transform.position.z);
+            ROS_WARN_STREAM("Px: "<<transform_pose.position.x<<", Py: "<<transform_pose.position.y<<", Pz: "<<transform_pose.position.z);
+            ROS_WARN_STREAM("Tx: "<<transform_inc.getOrigin().x()<<", Ty: "<<transform_inc.getOrigin().y()<<", Tz: "<<transform_inc.getOrigin().z());
         }
 
         tf2::Transform rot(tf2::Quaternion(transform_pose.rotation.x,transform_pose.rotation.y,transform_pose.rotation.z,transform_pose.rotation.w),

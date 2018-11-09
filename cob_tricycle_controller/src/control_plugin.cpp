@@ -80,10 +80,14 @@ public:
                 tf2::Transform transform;
                 //root link for tricycle is "base_pivot_link"
                 if(parseWheelTransform(wheel_state_.steer_name, model.getRoot()->name, transform, &model)){
+                    ROS_INFO_STREAM("parseWheelTransform: ok");
                     wheel_state_.pos_x = transform.getOrigin().getX();
                     wheel_state_.pos_y = transform.getOrigin().getY();
                     wheel_state_.radius = transform.getOrigin().getZ();
                 }
+                ROS_INFO_STREAM("steer_name: "<<wheel_state_.steer_name<<", root_name: "<<model.getRoot()->name<<", pos_x: "<<wheel_state_.pos_x);
+                ROS_INFO_STREAM("steer_name: "<<wheel_state_.steer_name<<", root_name: "<<model.getRoot()->name<<", pos_y: "<<wheel_state_.pos_y);
+                ROS_INFO_STREAM("steer_name: "<<wheel_state_.steer_name<<", root_name: "<<model.getRoot()->name<<", radius: "<<wheel_state_.radius);
                 nh.param("max_steer_rate", max_steer_rate_, 0.0);
                 max_steer_rate_ = (max_steer_rate_ != 0.0 && max_steer_rate_ < steer_joint->limits->velocity) ? max_steer_rate_ : steer_joint->limits->velocity;
             }
