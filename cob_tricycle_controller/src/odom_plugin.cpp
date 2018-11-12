@@ -72,6 +72,7 @@ public:
                     wheel_state_.pos_x = transform.getOrigin().getX();
                     wheel_state_.pos_y = transform.getOrigin().getY();
                     wheel_state_.radius = transform.getOrigin().getZ();
+                    wheel_state_.sign = cos(transform.getRotation().getAngle());
                 }
             }
         }
@@ -196,9 +197,11 @@ private:
         wheel_state_.drive_vel = drive_joint_.getVelocity();
 
         //calculate forward kinematics
+        // http://www.wolframalpha.com/input/?i=Solve%5Bx%3D%3Dw*cos(a),+phi%3D%3Dw*sin(a)%2Fr,a,w%5D
+        double r_base = wheel_state_.pos_x * wheel_state_.sign;
         platform_state_.velX = wheel_state_.radius*wheel_state_.drive_vel*cos(wheel_state_.steer_pos);
         platform_state_.velY = 0.0;
-        platform_state_.rotTheta = wheel_state_.radius*wheel_state_.drive_vel*sin(wheel_state_.steer_pos)/wheel_state_.pos_x;
+        platform_state_.rotTheta = wheel_state_.radius*wheel_state_.drive_vel*sin(wheel_state_.steer_pos)/r_base;
     }
 };
 
