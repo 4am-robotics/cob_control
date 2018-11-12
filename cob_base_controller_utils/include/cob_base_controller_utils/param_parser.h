@@ -45,9 +45,14 @@ inline bool parseWheelTransform(const std::string& joint_name, const std::string
                                        tf2::Vector3(joint->parent_to_joint_origin_transform.position.x,
                                                     joint->parent_to_joint_origin_transform.position.y,
                                                     joint->parent_to_joint_origin_transform.position.z));
+        ROS_DEBUG_STREAM("transform_inc first");
+        ROS_DEBUG_STREAM("Tx: "<<transform_inc.getOrigin().x()<<", Ty: "<<transform_inc.getOrigin().y()<<", Tz: "<<transform_inc.getOrigin().z());
+        ROS_DEBUG_STREAM("Ax: "<<transform_inc.getRotation().getAxis().x()<<", Ay: "<<transform_inc.getRotation().getAxis().y()<<", Az: "<<transform_inc.getRotation().getAxis().z());
+        ROS_DEBUG_STREAM("a: "<<transform_inc.getRotation().getAngle());
         while(joint->parent_link_name != parent_link_name)
         {
             urdf::LinkConstSharedPtr link_parent(model->getLink(joint->parent_link_name));
+            ROS_DEBUG_STREAM("joint: "<<joint->name<<", parent_link_name: "<<joint->parent_link_name);
             if (!link_parent || !link_parent->parent_joint)
             {
                 ROS_ERROR_STREAM(joint->parent_link_name
@@ -55,17 +60,30 @@ inline bool parseWheelTransform(const std::string& joint_name, const std::string
                 return false;
             }
             joint = link_parent->parent_joint;
-            transform_inc *= tf2::Transform(tf2::Quaternion(joint->parent_to_joint_origin_transform.rotation.x,
+            transform = tf2::Transform(tf2::Quaternion(joint->parent_to_joint_origin_transform.rotation.x,
                                                            joint->parent_to_joint_origin_transform.rotation.y,
                                                            joint->parent_to_joint_origin_transform.rotation.z,
                                                            joint->parent_to_joint_origin_transform.rotation.w), 
                                            tf2::Vector3(joint->parent_to_joint_origin_transform.position.x,
                                                         joint->parent_to_joint_origin_transform.position.y,
                                                         joint->parent_to_joint_origin_transform.position.z));
+            transform_inc *= transform;
+            ROS_DEBUG_STREAM("transform");
+            ROS_DEBUG_STREAM("Tx: "<<transform.getOrigin().x()<<", Ty: "<<transform.getOrigin().y()<<", Tz: "<<transform.getOrigin().z());
+            ROS_DEBUG_STREAM("Ax: "<<transform.getRotation().getAxis().x()<<", Ay: "<<transform.getRotation().getAxis().y()<<", Az: "<<transform.getRotation().getAxis().z());
+            ROS_DEBUG_STREAM("a: "<<transform.getRotation().getAngle());
+            ROS_DEBUG_STREAM("transform_inc");
+            ROS_DEBUG_STREAM("Tx: "<<transform_inc.getOrigin().x()<<", Ty: "<<transform_inc.getOrigin().y()<<", Tz: "<<transform_inc.getOrigin().z());
+            ROS_DEBUG_STREAM("Ax: "<<transform_inc.getRotation().getAxis().x()<<", Ay: "<<transform_inc.getRotation().getAxis().y()<<", Az: "<<transform_inc.getRotation().getAxis().z());
+            ROS_DEBUG_STREAM("a: "<<transform_inc.getRotation().getAngle());
         }
 
         transform.setIdentity();
         transform = transform_inc;
+        ROS_DEBUG_STREAM("final");
+        ROS_DEBUG_STREAM("Tx: "<<transform.getOrigin().x()<<", Ty: "<<transform.getOrigin().y()<<", Tz: "<<transform.getOrigin().z());
+        ROS_DEBUG_STREAM("Ax: "<<transform.getRotation().getAxis().x()<<", Ay: "<<transform.getRotation().getAxis().y()<<", Az: "<<transform.getRotation().getAxis().z());
+        ROS_DEBUG_STREAM("a: "<<transform.getRotation().getAngle());
         return true;
     }
     else

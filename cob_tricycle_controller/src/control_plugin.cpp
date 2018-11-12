@@ -83,6 +83,7 @@ public:
                     wheel_state_.pos_x = transform.getOrigin().getX();
                     wheel_state_.pos_y = transform.getOrigin().getY();
                     wheel_state_.radius = transform.getOrigin().getZ();
+                    wheel_state_.sign = cos(transform.getRotation().getAngle());
                 }
                 nh.param("max_steer_rate", max_steer_rate_, 0.0);
                 max_steer_rate_ = (max_steer_rate_ != 0.0 && max_steer_rate_ < steer_joint->limits->velocity) ? max_steer_rate_ : steer_joint->limits->velocity;
@@ -214,7 +215,7 @@ private:
 
         // calculate inverse kinematics
         // http://www.wolframalpha.com/input/?i=Solve%5Bx%3D%3Dw*cos(a),+phi%3D%3Dw*sin(a)%2Fr,a,w%5D
-        double r_base = std::fabs(wheel_state_.pos_x);
+        double r_base = wheel_state_.pos_x * wheel_state_.sign;
         double k = sqrt(pow(r_base,2)*pow(target_.state.rotTheta,2) + pow(target_.state.velX,2));
         if (target_.state.rotTheta != 0)
         {
