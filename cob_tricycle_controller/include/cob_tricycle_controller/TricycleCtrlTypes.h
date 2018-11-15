@@ -44,11 +44,10 @@ struct WheelState{
     double pos_y;
 
     double radius;
-    double sign;
 
     WheelState() : steer_pos(0.0), steer_vel(0.0), drive_pos(0.0), drive_vel(0.0),
                    pos_x(0.0), pos_y(0.0),
-                   radius(0.0), sign(1.0)
+                   radius(0.0)
     {}
 };
 
