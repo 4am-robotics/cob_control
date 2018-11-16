@@ -15,7 +15,7 @@
  */
 
 
-#include <cob_base_controller_utils/param_parser.h>
+#include <cob_omni_drive_controller/param_parser.h>
 #include <cob_omni_drive_controller/UndercarriageCtrlGeomROS.h>
 #include <urdf/model.h>
 #include <angles/angles.h>

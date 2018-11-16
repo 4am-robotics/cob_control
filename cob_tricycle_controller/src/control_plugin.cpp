@@ -24,7 +24,7 @@
 #include <hardware_interface/joint_command_interface.h>
 #include <realtime_tools/realtime_publisher.h>
 
-#include <cob_base_controller_utils/param_parser.h>
+#include <cob_tricycle_controller/param_parser.h>
 #include <cob_base_controller_utils/WheelCommands.h>
 #include <geometry_msgs/Twist.h>
 
