@@ -176,8 +176,8 @@ bool parseWheelGeom(WheelGeom & geom, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcSt
 
     ROS_DEBUG_STREAM(geom.steer_name<<" steer_pos \tx:"<<steer_pos.x<<" \ty:"<<steer_pos.y<<" \tz:"<<steer_pos.z);
 
-    geom.dWheelXPosMM = steer_pos.x * 1000;
-    geom.dWheelYPosMM = steer_pos.y * 1000;
+    geom.dWheelXPosMM = fabs(steer_pos.x * 1000);
+    geom.dWheelYPosMM = fabs(steer_pos.y * 1000);
     geom.dRadiusWheelMM = fabs(steer_pos.z * 1000);
 
     double offset = 0;
