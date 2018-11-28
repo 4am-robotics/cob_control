@@ -15,8 +15,8 @@
  */
 
 
-#ifndef COB_BASE_CONTROLLER_UTILS_PARAM_PARSER_H
-#define COB_BASE_CONTROLLER_UTILS_PARAM_PARSER_H
+#ifndef COB_TRICYCLE_CONTROLLER_PARAM_PARSER_H
+#define COB_TRICYCLE_CONTROLLER_PARAM_PARSER_H
 
 #include <urdf/model.h>
 
@@ -90,4 +90,4 @@ inline bool parseWheelTransform(const std::string& joint_name, const std::string
         return false;
 }
 
-#endif  // COB_BASE_CONTROLLER_UTILS_PARAM_PARSER_H
+#endif  // COB_TRICYCLE_CONTROLLER_PARAM_PARSER_H
