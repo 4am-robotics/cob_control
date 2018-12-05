@@ -123,3 +123,7 @@ install(PROGRAMS scripts/test_publisher_twist.py scripts/test_publisher_twist_st
 install(FILES controller_interface_plugins.xml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
+
+install(DIRECTORY config files launch
+ DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
