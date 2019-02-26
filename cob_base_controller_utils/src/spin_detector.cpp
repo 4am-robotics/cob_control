@@ -27,12 +27,12 @@ bool g_stop_requested;
 bool g_shutdown;
 
 void commandsCallback(const cob_base_controller_utils::WheelCommands::ConstPtr& msg){
-    g_last_ok.resize(msg->steer_target_error.size(), msg->header.stamp);
+    g_last_ok.resize(msg->steer_target_velocity.size(), msg->header.stamp);
 
     bool valid = true;
-    for(size_t i = 0; i < msg->steer_target_error.size(); ++i){
+    for(size_t i = 0; i < msg->steer_target_velocity.size(); ++i){
 
-        if(fabs(msg->steer_target_error[i]) >= g_threshold){
+        if(fabs(msg->steer_target_velocity[i]) >= g_threshold){
             valid = false;
             if( (msg->header.stamp - g_last_ok[i]) >= g_timeout  && !g_stop_requested) {
                 g_stop_requested = true;
@@ -50,7 +50,7 @@ void commandsCallback(const cob_base_controller_utils::WheelCommands::ConstPtr& 
 
 int main(int argc, char* argv[])
 {
-    ros::init(argc, argv, "cob_stuck_detector");
+    ros::init(argc, argv, "cob_spin_detector");
     
     ros::NodeHandle nh;
     ros::NodeHandle nh_priv("~");
@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
     }
 
     if(!nh_priv.getParam("threshold", g_threshold)){
-        ROS_ERROR("Please provide stuck threshold");
+        ROS_ERROR("Please provide spin threshold");
         return 1;
     }
 
