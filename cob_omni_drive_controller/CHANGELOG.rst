@@ -2,8 +2,8 @@
 Changelog for package cob_omni_drive_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.3 (2019-03-14)
+------------------
 * Merge pull request `#196 <https://github.com/ipa320/cob_control/issues/196>`_ from fmessmer/split_parseWheelTransform
   controller specific parseWheelTransform
 * split parseWheelTransform

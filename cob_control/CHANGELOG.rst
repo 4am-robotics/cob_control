@@ -2,8 +2,8 @@
 Changelog for package cob_control
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.3 (2019-03-14)
+------------------
 * Merge pull request `#190 <https://github.com/ipa320/cob_control/issues/190>`_ from fmessmer/new_tricycle_controller_kinetic
   new tricycle controller kinetic
 * introduce cob_base_controller_utils package

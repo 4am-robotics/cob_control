@@ -2,8 +2,8 @@
 Changelog for package cob_base_controller_utils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.3 (2019-03-14)
+------------------
 * Merge pull request `#199 <https://github.com/ipa320/cob_control/issues/199>`_ from fmessmer/spin_detector
   Spin detector
 * Revert "tmp: add spin_detector to launch"
