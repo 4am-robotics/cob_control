@@ -2,6 +2,19 @@
 Changelog for package cob_omni_drive_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.3 (2019-03-14)
+------------------
+* Merge pull request `#196 <https://github.com/ipa320/cob_control/issues/196>`_ from fmessmer/split_parseWheelTransform
+  controller specific parseWheelTransform
+* split parseWheelTransform
+* Merge pull request `#190 <https://github.com/ipa320/cob_control/issues/190>`_ from fmessmer/new_tricycle_controller_kinetic
+  new tricycle controller kinetic
+* implement additional config parameter
+* introduce cob_base_controller_utils package
+* parseWheelTransform from urdf
+* missing includes for cob_omni_drive_controller
+* Contributors: Felix Messmer, fmessmer, ipa-fxm
+
 0.7.2 (2018-07-21)
 ------------------
 * update maintainer

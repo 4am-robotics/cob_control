@@ -2,6 +2,13 @@
 Changelog for package cob_base_velocity_smoother
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.3 (2019-03-14)
+------------------
+* Merge pull request `#189 <https://github.com/ipa320/cob_control/issues/189>`_ from JerrelU/kinetic_dev
+  Fixed wrong velocity used for linear y
+* Fixed wrong velocity used for linear y
+* Contributors: Felix Messmer, Jerrel
+
 0.7.2 (2018-07-21)
 ------------------
 * Merge pull request `#184 <https://github.com/ipa320/cob_control/issues/184>`_ from ipa-bnm/hotfix/velocity_smoother_kinetic

@@ -2,6 +2,13 @@
 Changelog for package cob_twist_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.3 (2019-03-14)
+------------------
+* Merge pull request `#197 <https://github.com/ipa320/cob_control/issues/197>`_ from ipa320/fmessmer-patch-1
+  add missing install tags
+* add missing install tags
+* Contributors: Felix Messmer
+
 0.7.2 (2018-07-21)
 ------------------
 * update maintainer

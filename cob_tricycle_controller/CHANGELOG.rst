@@ -1,0 +1,36 @@
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changelog for package cob_tricycle_controller
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+0.7.3 (2019-03-14)
+------------------
+* Merge pull request `#196 <https://github.com/ipa320/cob_control/issues/196>`_ from fmessmer/split_parseWheelTransform
+  controller specific parseWheelTransform
+* split parseWheelTransform
+* Merge pull request `#192 <https://github.com/ipa320/cob_control/issues/192>`_ from fmessmer/fix/parseWheelTransform
+  fix/parse wheel transform
+* fix rotatory direction with proper sign
+* fix rotatory direction
+* fix parseWheelTransform
+* debug parseWheelTransform
+* Merge pull request `#191 <https://github.com/ipa320/cob_control/issues/191>`_ from fmessmer/fix_tricycle_odometry
+  fix tricycle kinematic formulae
+* keep steer pos for zero command
+* fix tricycle kinematic formulae
+* Merge pull request `#190 <https://github.com/ipa320/cob_control/issues/190>`_ from fmessmer/new_tricycle_controller_kinetic
+  new tricycle controller kinetic
+* fix angular.z direction
+* implement additional config parameter
+* fix drive velocity factor
+* base radius abs value
+* fix inverse kinematics, choose solution
+* fix forward kinematics
+* implement inverse kinematics for control_plugin
+* fix forward kinematics in odom_plugin
+* use PositionJointInterface for steer_joint
+* fake twist_controller
+* introduce cob_base_controller_utils package
+* parseWheelTransform from urdf
+* add fake control_plugin
+* initial tricycle_controller, fake odom
+* Contributors: Felix Messmer, fmessmer, ipa-fxm, robot@cob4-21

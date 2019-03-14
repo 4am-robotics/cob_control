@@ -21,8 +21,8 @@
 
 #include <tf/transform_broadcaster.h>
 
+#include <cob_base_controller_utils/OdometryTracker.h>
 #include <cob_omni_drive_controller/UndercarriageCtrlGeom.h>
-#include <cob_omni_drive_controller/OdometryTracker.h>
 
 #include <std_srvs/Trigger.h>
 

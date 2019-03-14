@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>cob_base_controller_utils</name>
+  <version>0.7.3</version>
+  <description>The cob_base_controller_utils package</description>
+
+  <maintainer email="felixmessmer@gmail.com">Felix Messmer</maintainer>
+  <author email="felixmessmer@gmail.com">Felix Messmer</author>
+  <author>Mathias Lüdtke</author>
+
+  <license>Apache 2.0</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>message_generation</build_depend>
+  <build_export_depend>message_runtime</build_export_depend>
+  <exec_depend>message_runtime</exec_depend>
+  
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>roscpp</depend>
+  <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
+  <depend>tf</depend>
+  <depend>tf2</depend>
+  <depend>urdf</depend>
+
+  <exec_depend>rospy</exec_depend>
+</package>
