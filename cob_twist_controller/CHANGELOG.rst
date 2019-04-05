@@ -2,6 +2,9 @@
 Changelog for package cob_twist_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.4 (2019-04-05)
+------------------
+
 0.7.3 (2019-03-14)
 ------------------
 * Merge pull request `#197 <https://github.com/ipa320/cob_control/issues/197>`_ from ipa320/fmessmer-patch-1

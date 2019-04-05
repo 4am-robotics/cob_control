@@ -2,6 +2,13 @@
 Changelog for package cob_base_controller_utils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.4 (2019-04-05)
+------------------
+* Merge pull request `#200 <https://github.com/ipa320/cob_control/issues/200>`_ from iirob/stuck_detector_shutdown
+  Added shutdown in stuck detector
+* Added shutdown in stuck detector
+* Contributors: Felix Messmer, andreeatulbure
+
 0.7.3 (2019-03-14)
 ------------------
 * Merge pull request `#199 <https://github.com/ipa320/cob_control/issues/199>`_ from fmessmer/spin_detector

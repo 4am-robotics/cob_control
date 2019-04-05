@@ -2,6 +2,9 @@
 Changelog for package cob_base_velocity_smoother
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.4 (2019-04-05)
+------------------
+
 0.7.3 (2019-03-14)
 ------------------
 * Merge pull request `#189 <https://github.com/ipa320/cob_control/issues/189>`_ from JerrelU/kinetic_dev
