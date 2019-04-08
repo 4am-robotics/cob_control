@@ -606,7 +606,12 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "cob_collision_velocity_filter");
 
   // create nodeClass
+
+#if ROS_VERSION_MINIMUM(1, 14, 0)
+  tf2_ros::Buffer tf(ros::Duration(10));
+#else
   tf::TransformListener tf(ros::Duration(10));
+#endif
   costmap_2d::Costmap2DROS* costmap = new costmap_2d::Costmap2DROS("anti_collision_costmap", tf);
   CollisionVelocityFilter collisionVelocityFilter(costmap);
 
