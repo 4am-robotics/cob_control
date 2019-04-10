@@ -108,7 +108,9 @@ public:
             marker_distance.ns = it->first;
             marker_distance.id = 69;
             marker_distance.header.frame_id = chain_base_link_;
-            marker_distance.text = boost::lexical_cast<std::string>(boost::format("%.3f") % it->second.distance);
+            std::stringstream sstream;
+            sstream << std::setprecision(3) << it->second.distance;
+            marker_distance.text = sstream.str();
 
             marker_distance.scale.x = 0.1;
             marker_distance.scale.y = 0.1;
