@@ -47,15 +47,15 @@
 class LinkToCollision
 {
     private:
-        typedef boost::shared_ptr<const urdf::Link> PtrConstLink_t;
-        typedef boost::shared_ptr<urdf::Link> PtrLink_t;
-        typedef std::vector<boost::shared_ptr<urdf::Link> > VecPtrLink_t;
-        typedef boost::shared_ptr<urdf::Collision> PtrCollision_t;
-        typedef boost::shared_ptr<urdf::Geometry> PtrGeometry_t;
-        typedef boost::shared_ptr<urdf::Mesh> PtrMesh_t;
-        typedef boost::shared_ptr<urdf::Box> PtrBox_t;
-        typedef boost::shared_ptr<urdf::Sphere> PtrSphere_t;
-        typedef boost::shared_ptr<urdf::Cylinder> PtrCylinder_t;
+        typedef urdf::LinkConstSharedPtr PtrConstLink_t;
+        typedef urdf::LinkSharedPtr PtrLink_t;
+        typedef std::vector<PtrLink_t> VecPtrLink_t;
+        typedef urdf::CollisionSharedPtr PtrCollision_t;
+        typedef urdf::GeometrySharedPtr PtrGeometry_t;
+        typedef urdf::MeshSharedPtr PtrMesh_t;
+        typedef urdf::BoxSharedPtr PtrBox_t;
+        typedef urdf::SphereSharedPtr PtrSphere_t;
+        typedef urdf::CylinderSharedPtr PtrCylinder_t;
         typedef std::unordered_map<std::string, std::vector<std::string> >::iterator MapIter_t;
 
         urdf::Model model_;
