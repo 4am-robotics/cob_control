@@ -81,13 +81,14 @@ class AdvancedChainFkSolverVel_recursive : public KDL::ChainFkSolverVel
          * @return An error code (0 == success)
          */
         virtual int JntToCart(const KDL::JntArrayVel& q_in, KDL::FrameVel& out, int seg_nr = -1);
+        virtual int JntToCart(const KDL::JntArrayVel& q_in, std::vector<KDL::FrameVel>& out, int segmentNr = -1);
 
         /**
          * @param seg_idx Index of the segment starting with 0.
          * @return The reference frame of the segment.
          */
         KDL::FrameVel getFrameVelAtSegment(uint16_t seg_idx) const;
-
+        virtual void updateInternalDataStructures(){};
 
     private:
         const KDL::Chain& chain_;

@@ -173,6 +173,53 @@ int AdvancedChainFkSolverVel_recursive::JntToCart(const KDL::JntArrayVel& q_in, 
     }
 }
 
+int AdvancedChainFkSolverVel_recursive::JntToCart(const KDL::JntArrayVel& in,
+                                                  std::vector<KDL::FrameVel>& out,
+                                                  int seg_nr)
+{
+    unsigned int segmentNr;
+    if (seg_nr < 0)
+        segmentNr = chain_.getNrOfSegments();
+    else
+        segmentNr = seg_nr;
+
+    if (!(in.q.rows() == chain_.getNrOfJoints() && in.qdot.rows() == chain_.getNrOfJoints()))
+        return -1;
+    else if (segmentNr > chain_.getNrOfSegments())
+        return -1;
+    else if (out.size() != segmentNr)
+        return -1;
+    else if (segmentNr == 0)
+        return -1;
+    else
+    {
+        int j = 0;
+        // Initialization
+        if (chain_.getSegment(0).getJoint().getType() != KDL::Joint::None)
+        {
+            out[0] = KDL::FrameVel(chain_.getSegment(0).pose(in.q(0)), chain_.getSegment(0).twist(in.q(0), in.qdot(0)));
+            j++;
+        }
+        else
+            out[0] = KDL::FrameVel(chain_.getSegment(0).pose(0.0), chain_.getSegment(0).twist(0.0, 0.0));
+
+        for (unsigned int i = 1; i < segmentNr; i++)
+        {
+            // Calculate new Frame_base_ee
+            if (chain_.getSegment(i).getJoint().getType() != KDL::Joint::None)
+            {
+                out[i] =
+                  out[i - 1] * KDL::FrameVel(chain_.getSegment(i).pose(in.q(j)), chain_.getSegment(i).twist(in.q(j), in.qdot(j)));
+                j++;    // Only increase jointnr if the segment has a joint
+            }
+            else
+            {
+                out[i] = out[i - 1] * KDL::FrameVel(chain_.getSegment(i).pose(0.0), chain_.getSegment(i).twist(0.0, 0.0));
+            }
+        }
+        return 0;
+    }
+}
 
 KDL::FrameVel AdvancedChainFkSolverVel_recursive::getFrameVelAtSegment(uint16_t seg_idx) const
 {
