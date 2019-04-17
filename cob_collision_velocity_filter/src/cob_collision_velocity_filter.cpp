@@ -17,6 +17,13 @@
 
 #include <cob_collision_velocity_filter.h>
 
+// Backwards compatibility of tf2 (tf for pre-kinetic) for costmap 
+#if ROS_VERSION_MINIMUM(1, 14, 0)
+#include <tf2_ros/transform_listener.h>
+#else
+#include <tf/transform_listener.h>
+#endif
+
 #include <visualization_msgs/Marker.h>
 
 // Constructor

@@ -51,13 +51,8 @@
 #include "velocity_limited_marker.h"
 
 // Costmap for obstacle detection
-#if ROS_VERSION_MINIMUM(1, 14, 0)
-#include <tf2_ros/transform_listener.h>	
-#else
-#include <tf/transform_listener.h>
-#endif
-
 #include <costmap_2d/costmap_2d_ros.h>
+
 ///
 /// @class CollisionVelocityFilter
 /// @brief checks for obstacles in driving direction and stops the robot
