@@ -281,6 +281,7 @@ struct TwistControllerParams
     LimiterParams limiter_params;
 
     KinematicExtensionTypes kinematic_extension;
+    std::string lookat_pointing_frame;
     LookatOffset lookat_offset;
     double extension_ratio;
 

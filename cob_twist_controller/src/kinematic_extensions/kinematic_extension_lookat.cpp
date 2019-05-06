@@ -73,8 +73,19 @@ bool KinematicExtensionLookat::initExtension()
     }
 
     KDL::Frame offset;
-    offset.p = KDL::Vector(params_.lookat_offset.translation_x, params_.lookat_offset.translation_y, params_.lookat_offset.translation_z);
-    offset.M = KDL::Rotation::Quaternion(params_.lookat_offset.rotation_x, params_.lookat_offset.rotation_y, params_.lookat_offset.rotation_z, params_.lookat_offset.rotation_w);
+    try
+    {
+        tf::StampedTransform offset_transform;
+        tf_listener_.lookupTransform(params_.chain_tip_link, params_.lookat_pointing_frame, ros::Time(0), offset_transform);
+        tf::transformTFToKDL(offset_transform, offset);
+    }
+    catch (tf::TransformException& ex)
+    {
+        ROS_ERROR("LookatAction: %s", ex.what());
+        ROS_WARN_STREAM("Using 'lookat_offset' instead");
+        offset.p = KDL::Vector(params_.lookat_offset.translation_x, params_.lookat_offset.translation_y, params_.lookat_offset.translation_z);
+        offset.M = KDL::Rotation::Quaternion(params_.lookat_offset.rotation_x, params_.lookat_offset.rotation_y, params_.lookat_offset.rotation_z, params_.lookat_offset.rotation_w);
+    }
 
     //fixed pointing offset
     KDL::Joint offset_joint("offset_joint", KDL::Joint::None);

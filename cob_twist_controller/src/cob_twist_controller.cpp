@@ -118,20 +118,27 @@ bool CobTwistController::initialize()
         nh_twist.getParam("lookat_axis_type", lookat_axis_type);
         twist_controller_params_.lookat_offset.lookat_axis_type = static_cast<LookatAxisTypes>(lookat_axis_type);
     }
-    if (nh_twist.hasParam("lookat_offset"))
+    if (nh_twist.hasParam("lookat_pointing_frame"))
     {
-        if (nh_twist.hasParam("lookat_offset/translation"))
+        nh_twist.getParam("lookat_pointing_frame", twist_controller_params_.lookat_pointing_frame);
+    }
+    else
+    {
+        if (nh_twist.hasParam("lookat_offset"))
         {
-            twist_controller_params_.lookat_offset.translation_x = nh_twist.param("lookat_offset/translation/x", 0.0);
-            twist_controller_params_.lookat_offset.translation_y = nh_twist.param("lookat_offset/translation/y", 0.0);
-            twist_controller_params_.lookat_offset.translation_z = nh_twist.param("lookat_offset/translation/z", 0.0);
-        }
-        if (nh_twist.hasParam("lookat_offset/rotation"))
-        {
-            twist_controller_params_.lookat_offset.rotation_x = nh_twist.param("lookat_offset/rotation/x", 0.0);
-            twist_controller_params_.lookat_offset.rotation_y = nh_twist.param("lookat_offset/rotation/y", 0.0);
-            twist_controller_params_.lookat_offset.rotation_z = nh_twist.param("lookat_offset/rotation/z", 0.0);
-            twist_controller_params_.lookat_offset.rotation_w = nh_twist.param("lookat_offset/rotation/w", 1.0);
+            if (nh_twist.hasParam("lookat_offset/translation"))
+            {
+                twist_controller_params_.lookat_offset.translation_x = nh_twist.param("lookat_offset/translation/x", 0.0);
+                twist_controller_params_.lookat_offset.translation_y = nh_twist.param("lookat_offset/translation/y", 0.0);
+                twist_controller_params_.lookat_offset.translation_z = nh_twist.param("lookat_offset/translation/z", 0.0);
+            }
+            if (nh_twist.hasParam("lookat_offset/rotation"))
+            {
+                twist_controller_params_.lookat_offset.rotation_x = nh_twist.param("lookat_offset/rotation/x", 0.0);
+                twist_controller_params_.lookat_offset.rotation_y = nh_twist.param("lookat_offset/rotation/y", 0.0);
+                twist_controller_params_.lookat_offset.rotation_z = nh_twist.param("lookat_offset/rotation/z", 0.0);
+                twist_controller_params_.lookat_offset.rotation_w = nh_twist.param("lookat_offset/rotation/w", 1.0);
+            }
         }
     }
 
