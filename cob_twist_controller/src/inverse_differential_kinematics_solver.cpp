@@ -85,11 +85,12 @@ int InverseDifferentialKinematicsSolver::CartToJnt(const JointStates& joint_stat
     return retStat;
 }
 
-void InverseDifferentialKinematicsSolver::resetAll(TwistControllerParams params)
+bool InverseDifferentialKinematicsSolver::resetAll(TwistControllerParams params)
 {
     this->params_ = params;
 
     this->kinematic_extension_.reset(KinematicExtensionBuilder::createKinematicExtension(this->params_));
+    if (this->kinematic_extension_ == NULL) { return false; }
     this->limiter_params_ = this->kinematic_extension_->adjustLimiterParams(this->params_.limiter_params);
 
     this->limiters_.reset(new LimiterContainer(this->limiter_params_));
@@ -99,5 +100,7 @@ void InverseDifferentialKinematicsSolver::resetAll(TwistControllerParams params)
     if (0 != this->constraint_solver_factory_.resetAll(this->params_, this->limiter_params_))  // params member as reference!!! else process will die!
     {
         ROS_ERROR("Failed to reset IDK constraint solver after dynamic_reconfigure.");
+        return false;
     }
+    return true;
 }

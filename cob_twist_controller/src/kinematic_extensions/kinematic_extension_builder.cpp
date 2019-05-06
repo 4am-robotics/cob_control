@@ -50,6 +50,11 @@ KinematicExtensionBase* KinematicExtensionBuilder::createKinematicExtension(cons
             keb = new KinematicExtensionNone(params);
             break;
     }
+    if (!keb->initExtension())
+    {
+        ROS_ERROR("Failed to createKinematicExtension %d! Using default: 'NO_EXTENSION'!", params.kinematic_extension);
+        keb = NULL;
+    }
 
     return keb;
 }
