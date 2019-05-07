@@ -74,20 +74,25 @@ class KinematicExtensionTorso : public KinematicExtensionURDF
     public:
         explicit KinematicExtensionTorso(const TwistControllerParams& params)
         : KinematicExtensionURDF(params)
-        {
-            ext_base_ = "torso_base_link";
-            ext_tip_ = params.chain_base_link;
-
-            if (!initExtension())
-            {
-                ROS_ERROR("Initialization failed");
-            }
-
-            joint_state_sub_ = nh_.subscribe("/torso/joint_states", 1, &KinematicExtensionURDF::jointstateCallback, dynamic_cast<KinematicExtensionURDF*>(this));
-            command_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("/torso/joint_group_velocity_controller/command", 1);
-        }
+        {}
 
         ~KinematicExtensionTorso() {}
+
+        bool initExtension()
+        {
+            ext_base_ = "torso_base_link";
+            ext_tip_ = params_.chain_base_link;
+            if (!KinematicExtensionURDF::initExtension())
+            {
+                return false;
+            }
+            else
+            {
+                joint_state_sub_ = nh_.subscribe("/torso/joint_states", 1, &KinematicExtensionURDF::jointstateCallback, dynamic_cast<KinematicExtensionURDF*>(this));
+                command_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("/torso/joint_group_velocity_controller/command", 1);
+                return true;
+            }
+        }
 };
 /* END KinematicExtensionTorso **********************************************************************************************/
 

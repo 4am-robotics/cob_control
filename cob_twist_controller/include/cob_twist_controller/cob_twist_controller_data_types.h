@@ -281,6 +281,7 @@ struct TwistControllerParams
     LimiterParams limiter_params;
 
     KinematicExtensionTypes kinematic_extension;
+    std::string lookat_pointing_frame;
     LookatOffset lookat_offset;
     double extension_ratio;
 
@@ -289,6 +290,120 @@ struct TwistControllerParams
 
     // vector of links of the chain to be considered for collision avoidance
     std::vector<std::string> collision_check_links;
+
+    void from_config(cob_twist_controller::TwistControllerConfig config)
+    {
+        numerical_filtering = config.numerical_filtering;
+        damping_method = static_cast<DampingMethodTypes>(config.damping_method);
+        damping_factor = config.damping_factor;
+        lambda_max = config.lambda_max;
+        w_threshold = config.w_threshold;
+        slope_damping = config.slope_damping;
+        beta = config.beta;
+        eps_damping = config.eps_damping;
+        eps_truncation = config.eps_truncation;
+
+        solver = static_cast<SolverTypes>(config.solver);
+        priority_main = config.priority;
+        k_H = config.k_H;
+
+        constraint_jla = static_cast<ConstraintTypesJLA>(config.constraint_jla);
+        constraint_ca = static_cast<ConstraintTypesCA>(config.constraint_ca);
+
+        ConstraintParams cp_jla;
+        cp_jla.priority = config.priority_jla;
+        cp_jla.k_H = config.k_H_jla;
+        cp_jla.damping = config.damping_jla;
+        const double activation_jla_in_percent = config.activation_threshold_jla;
+        const double activation_buffer_jla_in_percent = config.activation_buffer_jla;
+        const double critical_jla_in_percent = config.critical_threshold_jla;
+        cp_jla.thresholds.activation = activation_jla_in_percent / 100.0;
+        cp_jla.thresholds.critical = critical_jla_in_percent / 100.0;
+        cp_jla.thresholds.activation_with_buffer = cp_jla.thresholds.activation * (1.0 + activation_buffer_jla_in_percent / 100.0);
+        constraint_params[JLA] = cp_jla;
+
+        ConstraintParams cp_ca;
+        cp_ca.priority = config.priority_ca;
+        cp_ca.k_H = config.k_H_ca;
+        cp_ca.damping = config.damping_ca;
+        const double activaton_buffer_ca_in_percent = config.activation_buffer_ca;
+        cp_ca.thresholds.activation = config.activation_threshold_ca;  // in [m]
+        cp_ca.thresholds.critical = config.critical_threshold_ca;  // in [m]
+        cp_ca.thresholds.activation_with_buffer = cp_ca.thresholds.activation * (1.0 + activaton_buffer_ca_in_percent / 100.0);
+        constraint_params[CA] = cp_ca;
+
+        ujs_solver_params.sigma = config.sigma;
+        ujs_solver_params.sigma_speed = config.sigma_speed;
+        ujs_solver_params.delta_pos = config.delta_pos;
+        ujs_solver_params.delta_speed = config.delta_speed;
+
+        limiter_params.keep_direction = config.keep_direction;
+        limiter_params.enforce_input_limits = config.enforce_input_limits;
+        limiter_params.enforce_pos_limits = config.enforce_pos_limits;
+        limiter_params.enforce_vel_limits = config.enforce_vel_limits;
+        limiter_params.enforce_acc_limits = config.enforce_acc_limits;
+        limiter_params.limits_tolerance = config.limits_tolerance;
+        limiter_params.max_lin_twist = config.max_lin_twist;
+        limiter_params.max_rot_twist = config.max_rot_twist;
+        limiter_params.max_vel_lin_base = config.max_vel_lin_base;
+        limiter_params.max_vel_rot_base = config.max_vel_rot_base;
+
+        kinematic_extension = static_cast<KinematicExtensionTypes>(config.kinematic_extension);
+        extension_ratio = config.extension_ratio;
+    }
+
+    void to_config(cob_twist_controller::TwistControllerConfig& config)
+    {
+        config.numerical_filtering = numerical_filtering;
+        config.damping_method = damping_method;
+        config.damping_factor = damping_factor;
+        config.lambda_max = lambda_max;
+        config.w_threshold = w_threshold;
+        config.slope_damping = slope_damping;
+        config.beta = beta;
+        config.eps_damping = eps_damping;
+        config.eps_truncation = eps_truncation;
+
+        config.solver = solver;
+        config.priority = priority_main;
+        config.k_H = k_H;
+
+        config.constraint_jla = config.constraint_jla;
+        config.constraint_ca = constraint_ca;
+
+        config.priority_jla = constraint_params[JLA].priority;
+        config.k_H_jla = constraint_params[JLA].k_H;
+        config.damping_jla = constraint_params[JLA].damping;
+        config.activation_threshold_jla = constraint_params[JLA].thresholds.activation * 100.0;
+        config.critical_threshold_jla = constraint_params[JLA].thresholds.critical * 100.0;
+        config.activation_buffer_jla = (constraint_params[JLA].thresholds.activation_with_buffer/constraint_params[JLA].thresholds.activation - 1.0)*100.0;
+
+        config.priority_ca = constraint_params[CA].priority;
+        config.k_H_ca = constraint_params[CA].k_H;
+        config.damping_ca = constraint_params[CA].damping;
+        config.activation_threshold_ca = constraint_params[CA].thresholds.activation;
+        config.critical_threshold_ca = constraint_params[CA].thresholds.critical;
+        config.activation_buffer_ca = (constraint_params[CA].thresholds.activation_with_buffer/constraint_params[CA].thresholds.activation - 1.0)*100.0;
+
+        config.sigma = ujs_solver_params.sigma;
+        config.sigma_speed = ujs_solver_params.sigma_speed;
+        config.delta_pos = ujs_solver_params.delta_pos;
+        config.delta_speed = ujs_solver_params.delta_speed;
+
+        config.keep_direction = limiter_params.keep_direction;
+        config.enforce_input_limits = limiter_params.enforce_input_limits;
+        config.enforce_pos_limits = limiter_params.enforce_pos_limits;
+        config.enforce_vel_limits = limiter_params.enforce_vel_limits;
+        config.enforce_acc_limits = limiter_params.enforce_acc_limits;
+        config.limits_tolerance = limiter_params.limits_tolerance;
+        config.max_lin_twist = limiter_params.max_lin_twist;
+        config.max_rot_twist = limiter_params.max_rot_twist;
+        config.max_vel_lin_base = limiter_params.max_vel_lin_base;
+        config.max_vel_rot_base = limiter_params.max_vel_rot_base;
+
+        config.kinematic_extension = kinematic_extension;
+        config.extension_ratio = extension_ratio;
+    }
 };
 
 enum EN_ConstraintStates

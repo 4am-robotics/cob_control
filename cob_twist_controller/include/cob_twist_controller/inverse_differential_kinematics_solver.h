@@ -77,7 +77,7 @@ public:
                           const KDL::Twist& v_in,
                           KDL::JntArray& qdot_out);
 
-    void resetAll(TwistControllerParams params);
+    bool resetAll(TwistControllerParams params);
 
 private:
     const KDL::Chain chain_;

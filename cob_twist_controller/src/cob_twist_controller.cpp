@@ -118,20 +118,27 @@ bool CobTwistController::initialize()
         nh_twist.getParam("lookat_axis_type", lookat_axis_type);
         twist_controller_params_.lookat_offset.lookat_axis_type = static_cast<LookatAxisTypes>(lookat_axis_type);
     }
-    if (nh_twist.hasParam("lookat_offset"))
+    if (nh_twist.hasParam("lookat_pointing_frame"))
     {
-        if (nh_twist.hasParam("lookat_offset/translation"))
+        nh_twist.getParam("lookat_pointing_frame", twist_controller_params_.lookat_pointing_frame);
+    }
+    else
+    {
+        if (nh_twist.hasParam("lookat_offset"))
         {
-            twist_controller_params_.lookat_offset.translation_x = nh_twist.param("lookat_offset/translation/x", 0.0);
-            twist_controller_params_.lookat_offset.translation_y = nh_twist.param("lookat_offset/translation/y", 0.0);
-            twist_controller_params_.lookat_offset.translation_z = nh_twist.param("lookat_offset/translation/z", 0.0);
-        }
-        if (nh_twist.hasParam("lookat_offset/rotation"))
-        {
-            twist_controller_params_.lookat_offset.rotation_x = nh_twist.param("lookat_offset/rotation/x", 0.0);
-            twist_controller_params_.lookat_offset.rotation_y = nh_twist.param("lookat_offset/rotation/y", 0.0);
-            twist_controller_params_.lookat_offset.rotation_z = nh_twist.param("lookat_offset/rotation/z", 0.0);
-            twist_controller_params_.lookat_offset.rotation_w = nh_twist.param("lookat_offset/rotation/w", 1.0);
+            if (nh_twist.hasParam("lookat_offset/translation"))
+            {
+                twist_controller_params_.lookat_offset.translation_x = nh_twist.param("lookat_offset/translation/x", 0.0);
+                twist_controller_params_.lookat_offset.translation_y = nh_twist.param("lookat_offset/translation/y", 0.0);
+                twist_controller_params_.lookat_offset.translation_z = nh_twist.param("lookat_offset/translation/z", 0.0);
+            }
+            if (nh_twist.hasParam("lookat_offset/rotation"))
+            {
+                twist_controller_params_.lookat_offset.rotation_x = nh_twist.param("lookat_offset/rotation/x", 0.0);
+                twist_controller_params_.lookat_offset.rotation_y = nh_twist.param("lookat_offset/rotation/y", 0.0);
+                twist_controller_params_.lookat_offset.rotation_z = nh_twist.param("lookat_offset/rotation/z", 0.0);
+                twist_controller_params_.lookat_offset.rotation_w = nh_twist.param("lookat_offset/rotation/w", 1.0);
+            }
         }
     }
 
@@ -227,67 +234,18 @@ bool CobTwistController::registerCollisionLinks()
 
 void CobTwistController::reconfigureCallback(cob_twist_controller::TwistControllerConfig& config, uint32_t level)
 {
+    TwistControllerParams backup = this->twist_controller_params_;
     this->checkSolverAndConstraints(config);
+    
+    this->twist_controller_params_.from_config(config);
 
-    twist_controller_params_.numerical_filtering = config.numerical_filtering;
-    twist_controller_params_.damping_method = static_cast<DampingMethodTypes>(config.damping_method);
-    twist_controller_params_.damping_factor = config.damping_factor;
-    twist_controller_params_.lambda_max = config.lambda_max;
-    twist_controller_params_.w_threshold = config.w_threshold;
-    twist_controller_params_.slope_damping = config.slope_damping;
-    twist_controller_params_.beta = config.beta;
-    twist_controller_params_.eps_damping = config.eps_damping;
-    twist_controller_params_.eps_truncation = config.eps_truncation;
-
-    twist_controller_params_.solver = static_cast<SolverTypes>(config.solver);
-    twist_controller_params_.priority_main = config.priority;
-    twist_controller_params_.k_H = config.k_H;
-
-    twist_controller_params_.constraint_jla = static_cast<ConstraintTypesJLA>(config.constraint_jla);
-    twist_controller_params_.constraint_ca = static_cast<ConstraintTypesCA>(config.constraint_ca);
-
-    ConstraintParams cp_jla;
-    cp_jla.priority = config.priority_jla;
-    cp_jla.k_H = config.k_H_jla;
-    cp_jla.damping = config.damping_jla;
-    const double activation_jla_in_percent = config.activation_threshold_jla;
-    const double activation_buffer_jla_in_percent = config.activation_buffer_jla;
-    const double critical_jla_in_percent = config.critical_threshold_jla;
-    cp_jla.thresholds.activation = activation_jla_in_percent / 100.0;
-    cp_jla.thresholds.critical = critical_jla_in_percent / 100.0;
-    cp_jla.thresholds.activation_with_buffer = cp_jla.thresholds.activation * (1.0 + activation_buffer_jla_in_percent / 100.0);
-    twist_controller_params_.constraint_params[JLA] = cp_jla;
-
-    ConstraintParams cp_ca;
-    cp_ca.priority = config.priority_ca;
-    cp_ca.k_H = config.k_H_ca;
-    cp_ca.damping = config.damping_ca;
-    const double activaton_buffer_ca_in_percent = config.activation_buffer_ca;
-    cp_ca.thresholds.activation = config.activation_threshold_ca;  // in [m]
-    cp_ca.thresholds.critical = config.critical_threshold_ca;  // in [m]
-    cp_ca.thresholds.activation_with_buffer = cp_ca.thresholds.activation * (1.0 + activaton_buffer_ca_in_percent / 100.0);
-    twist_controller_params_.constraint_params[JLA] = cp_ca;
-
-    twist_controller_params_.ujs_solver_params.sigma = config.sigma;
-    twist_controller_params_.ujs_solver_params.sigma_speed = config.sigma_speed;
-    twist_controller_params_.ujs_solver_params.delta_pos = config.delta_pos;
-    twist_controller_params_.ujs_solver_params.delta_speed = config.delta_speed;
-
-    twist_controller_params_.limiter_params.keep_direction = config.keep_direction;
-    twist_controller_params_.limiter_params.enforce_input_limits = config.enforce_input_limits;
-    twist_controller_params_.limiter_params.enforce_pos_limits = config.enforce_pos_limits;
-    twist_controller_params_.limiter_params.enforce_vel_limits = config.enforce_vel_limits;
-    twist_controller_params_.limiter_params.enforce_acc_limits = config.enforce_acc_limits;
-    twist_controller_params_.limiter_params.limits_tolerance = config.limits_tolerance;
-    twist_controller_params_.limiter_params.max_lin_twist = config.max_lin_twist;
-    twist_controller_params_.limiter_params.max_rot_twist = config.max_rot_twist;
-    twist_controller_params_.limiter_params.max_vel_lin_base = config.max_vel_lin_base;
-    twist_controller_params_.limiter_params.max_vel_rot_base = config.max_vel_rot_base;
-
-    twist_controller_params_.kinematic_extension = static_cast<KinematicExtensionTypes>(config.kinematic_extension);
-    twist_controller_params_.extension_ratio = config.extension_ratio;
-
-    p_inv_diff_kin_solver_->resetAll(this->twist_controller_params_);
+    if (!p_inv_diff_kin_solver_->resetAll(this->twist_controller_params_))
+    {
+        ROS_ERROR_STREAM("ResetAll during DynamicReconfigureCallback failed! Resetting to previous config");
+        twist_controller_params_ = backup;
+        p_inv_diff_kin_solver_->resetAll(this->twist_controller_params_);
+        this->twist_controller_params_.to_config(config);
+    }
 }
 
 void CobTwistController::checkSolverAndConstraints(cob_twist_controller::TwistControllerConfig& config)
