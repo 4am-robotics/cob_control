@@ -42,12 +42,7 @@ class KinematicExtensionLookat : public KinematicExtensionBase
     public:
         explicit KinematicExtensionLookat(const TwistControllerParams& params)
         : KinematicExtensionBase(params)
-        {
-            if (!initExtension())
-            {
-                ROS_ERROR("Initialization failed");
-            }
-        }
+        {}
 
         ~KinematicExtensionLookat() {}
 

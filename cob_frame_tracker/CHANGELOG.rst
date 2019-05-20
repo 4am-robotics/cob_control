@@ -2,6 +2,13 @@
 Changelog for package cob_frame_tracker
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.5 (2019-05-20)
+------------------
+* Merge pull request `#206 <https://github.com/ipa320/cob_control/issues/206>`_ from fmessmer/improve_lookat_extension
+  improve lookat extension
+* do not start lookat if KinematicExtension service failed
+* Contributors: Felix Messmer, fmessmer
+
 0.7.4 (2019-04-05)
 ------------------
 

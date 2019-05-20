@@ -479,23 +479,44 @@ bool CobFrameTracker::startLookatCallback(cob_srvs::SetString::Request& request,
             srv.request.config.ints.push_back(int_param);
 
             bool success = reconfigure_client_.call(srv);
+            ROS_DEBUG_STREAM("srv.request: " << srv.request << ", srv.response: " << srv.response);
 
             if (success)
             {
-                std::string msg = "CobFrameTracker: StartLookat started with CART_DIST_SECURITY MONITORING enabled";
-                ROS_INFO_STREAM(msg);
-                response.success = true;
-                response.message = msg;
+                success = false;
+                for (std::vector<dynamic_reconfigure::IntParameter>::iterator it = srv.response.config.ints.begin() ; it != srv.response.config.ints.end(); ++it)
+                {
+                    if (it->name == int_param.name && it->value == int_param.value)
+                    {
+                        success = true;
+                        break;
+                    }
+                }
 
-                tracking_ = false;
-                tracking_goal_ = false;
-                lookat_ = true;
-                tracking_frame_ = lookat_focus_frame_;
-                target_frame_ = request.data;
+                if (success)
+                {
+                    std::string msg = "CobFrameTracker: StartLookat started with CART_DIST_SECURITY MONITORING enabled";
+                    ROS_INFO_STREAM(msg);
+                    response.success = true;
+                    response.message = msg;
+
+                    tracking_ = false;
+                    tracking_goal_ = false;
+                    lookat_ = true;
+                    tracking_frame_ = lookat_focus_frame_;
+                    target_frame_ = request.data;
+                }
+                else
+                {
+                    std::string msg = "CobFrameTracker: StartLookat denied because DynamicReconfigure failed to set vaulues";
+                    ROS_ERROR_STREAM(msg);
+                    response.success = false;
+                    response.message = msg;
+                }
             }
             else
             {
-                std::string msg = "CobFrameTracker: StartLookat denied because DynamicReconfigure failed";
+                std::string msg = "CobFrameTracker: StartLookat denied because DynamicReconfigure failed to call service";
                 ROS_ERROR_STREAM(msg);
                 response.success = false;
                 response.message = msg;

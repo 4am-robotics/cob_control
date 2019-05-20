@@ -42,48 +42,66 @@ bool KinematicExtensionLookat::initExtension()
         return false;
     }
 
-    /// ToDo: orientation of lin_AXIS should be determined by a parameter
-    KDL::Vector lookat_lin_axis(0.0, 0.0, 0.0);
+    KDL::Joint::JointType lookat_lin_joint_type = KDL::Joint::None;
     switch (params_.lookat_offset.lookat_axis_type)
     {
         case X_POSITIVE:
-            lookat_lin_axis.x(1.0);
+            lookat_lin_joint_type = KDL::Joint::TransX;
             break;
         case Y_POSITIVE:
-            lookat_lin_axis.y(1.0);
+            lookat_lin_joint_type = KDL::Joint::TransY;
             break;
         case Z_POSITIVE:
-            lookat_lin_axis.z(1.0);
+            lookat_lin_joint_type = KDL::Joint::TransZ;
             break;
         case X_NEGATIVE:
-            lookat_lin_axis.x(-1.0);
-            break;
+            lookat_lin_joint_type = KDL::Joint::TransX;
+            ROS_ERROR("X_NEGATIVE axis_type not supported");
+            return false;
         case Y_NEGATIVE:
-            lookat_lin_axis.y(-1.0);
-            break;
+            lookat_lin_joint_type = KDL::Joint::TransY;
+            ROS_ERROR("Y_NEGATIVE axis_type not supported");
+            return false;
         case Z_NEGATIVE:
-            lookat_lin_axis.z(-1.0);
-            break;
+            lookat_lin_joint_type = KDL::Joint::TransZ;
+            ROS_ERROR("Z_NEGATIVE axis_type not supported");
+            return false;
         default:
             ROS_ERROR("LookatAxisType %d not defined! Using default: 'X_POSITIVE'!", params_.lookat_offset.lookat_axis_type);
-            lookat_lin_axis.x(1.0);
+            lookat_lin_joint_type = KDL::Joint::TransX;
             break;
     }
-    KDL::Joint lookat_lin_joint("lookat_lin_joint", KDL::Vector(), lookat_lin_axis, KDL::Joint::TransAxis);
 
     KDL::Frame offset;
-    offset.p = KDL::Vector(params_.lookat_offset.translation_x, params_.lookat_offset.translation_y, params_.lookat_offset.translation_z);
-    offset.M = KDL::Rotation::Quaternion(params_.lookat_offset.rotation_x, params_.lookat_offset.rotation_y, params_.lookat_offset.rotation_z, params_.lookat_offset.rotation_w);
+    try
+    {
+        tf::StampedTransform offset_transform;
+        tf_listener_.lookupTransform(params_.chain_tip_link, params_.lookat_pointing_frame, ros::Time(0), offset_transform);
+        tf::transformTFToKDL(offset_transform, offset);
+    }
+    catch (tf::TransformException& ex)
+    {
+        ROS_ERROR("LookatAction: %s", ex.what());
+        ROS_WARN_STREAM("Using 'lookat_offset' instead");
+        offset.p = KDL::Vector(params_.lookat_offset.translation_x, params_.lookat_offset.translation_y, params_.lookat_offset.translation_z);
+        offset.M = KDL::Rotation::Quaternion(params_.lookat_offset.rotation_x, params_.lookat_offset.rotation_y, params_.lookat_offset.rotation_z, params_.lookat_offset.rotation_w);
+    }
 
-    KDL::Segment lookat_rotx_link("lookat_rotx_link", lookat_lin_joint, offset);
+    //fixed pointing offset
+    KDL::Joint offset_joint("offset_joint", KDL::Joint::None);
+    KDL::Segment offset_link("offset_link", offset_joint, offset);
+    chain_ext_.addSegment(offset_link);
+
+    //lookat chain
+    KDL::Joint lookat_lin_joint("lookat_lin_joint", lookat_lin_joint_type);
+    KDL::Segment lookat_rotx_link("lookat_rotx_link", lookat_lin_joint);
     chain_ext_.addSegment(lookat_rotx_link);
     limits_ext_max_.push_back(std::numeric_limits<double>::max());
     limits_ext_min_.push_back(-std::numeric_limits<double>::max());
     limits_ext_vel_.push_back(5.0);
     limits_ext_acc_.push_back(std::numeric_limits<double>::max());
 
-    KDL::Vector lookat_rotx_axis(1.0, 0.0, 0.0);
-    KDL::Joint lookat_rotx_joint("lookat_rotx_joint", KDL::Vector(), lookat_rotx_axis, KDL::Joint::RotAxis);
+    KDL::Joint lookat_rotx_joint("lookat_rotx_joint", KDL::Joint::RotX);
     KDL::Segment lookat_roty_link("lookat_roty_link", lookat_rotx_joint);
     chain_ext_.addSegment(lookat_roty_link);
     // limits_ext_max_.push_back(M_PI);
@@ -94,8 +112,7 @@ bool KinematicExtensionLookat::initExtension()
     limits_ext_vel_.push_back(M_PI);
     limits_ext_acc_.push_back(std::numeric_limits<double>::max());
 
-    KDL::Vector lookat_roty_axis(0.0, 1.0, 0.0);
-    KDL::Joint lookat_roty_joint("lookat_roty_joint", KDL::Vector(), lookat_roty_axis, KDL::Joint::RotAxis);
+    KDL::Joint lookat_roty_joint("lookat_roty_joint", KDL::Joint::RotY);
     KDL::Segment lookat_rotz_link("lookat_rotz_link", lookat_roty_joint);
     chain_ext_.addSegment(lookat_rotz_link);
     // limits_ext_max_.push_back(M_PI);
@@ -106,8 +123,7 @@ bool KinematicExtensionLookat::initExtension()
     limits_ext_vel_.push_back(M_PI);
     limits_ext_acc_.push_back(std::numeric_limits<double>::max());
 
-    KDL::Vector lookat_rotz_axis(0.0, 0.0, 1.0);
-    KDL::Joint lookat_rotz_joint("lookat_rotz_joint", KDL::Vector(), lookat_rotz_axis, KDL::Joint::RotAxis);
+    KDL::Joint lookat_rotz_joint("lookat_rotz_joint", KDL::Joint::RotZ);
     KDL::Segment lookat_focus_frame("lookat_focus_frame", lookat_rotz_joint);
     chain_ext_.addSegment(lookat_focus_frame);
     // limits_ext_max_.push_back(M_PI);

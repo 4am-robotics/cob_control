@@ -2,6 +2,9 @@
 Changelog for package cob_base_controller_utils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.5 (2019-05-20)
+------------------
+
 0.7.4 (2019-04-05)
 ------------------
 * Merge pull request `#200 <https://github.com/ipa320/cob_control/issues/200>`_ from iirob/stuck_detector_shutdown

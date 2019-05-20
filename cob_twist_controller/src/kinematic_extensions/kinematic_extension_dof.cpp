@@ -133,6 +133,13 @@ KDL::Jacobian KinematicExtensionDOF::adjustJacobianDof(const KDL::Jacobian& jac_
 /* BEGIN KinematicExtensionBaseActive ********************************************************************************************/
 bool KinematicExtensionBaseActive::initExtension()
 {
+    base_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("base/command", 1);
+
+    min_vel_lin_base_ = 0.005;  // used to avoid infinitesimal motion
+    min_vel_rot_base_ = 0.005;  // used to avoid infinitesimal motion
+    max_vel_lin_base_ = 0.5;
+    max_vel_rot_base_ = 0.5;
+
     this->ext_dof_ = 6;
     this->joint_states_.last_q_.resize(ext_dof_);
     this->joint_states_.last_q_dot_.resize(ext_dof_);

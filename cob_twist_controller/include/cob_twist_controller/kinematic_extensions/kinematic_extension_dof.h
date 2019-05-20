@@ -64,19 +64,7 @@ class KinematicExtensionBaseActive : public KinematicExtensionDOF
     public:
         explicit KinematicExtensionBaseActive(const TwistControllerParams& params)
         : KinematicExtensionDOF(params)
-        {
-            base_vel_pub_ = nh_.advertise<geometry_msgs::Twist>("base/command", 1);
-
-            min_vel_lin_base_ = 0.005;  // used to avoid infinitesimal motion
-            min_vel_rot_base_ = 0.005;  // used to avoid infinitesimal motion
-            max_vel_lin_base_ = 0.5;
-            max_vel_rot_base_ = 0.5;
-
-            if (!initExtension())
-            {
-                ROS_ERROR("Initialization failed");
-            }
-        }
+        {}
 
         ~KinematicExtensionBaseActive() {}
 
