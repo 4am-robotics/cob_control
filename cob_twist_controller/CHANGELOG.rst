@@ -2,8 +2,8 @@
 Changelog for package cob_twist_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.5 (2019-05-20)
+------------------
 * Merge pull request `#206 <https://github.com/ipa320/cob_control/issues/206>`_ from fmessmer/improve_lookat_extension
   improve lookat extension
 * implement lookat_pointing_frame
