@@ -30,6 +30,8 @@ CollisionVelocityFilter::CollisionVelocityFilter(costmap_2d::Costmap2DROS * cost
 
   anti_collision_costmap_ = costmap;
 
+  if (!pnh_.hasParam("costmap_obstacle_treshold"))
+    ROS_WARN("Used default parameter for 'costmap_obstacle_treshold' [250].");
   pnh_.param("costmap_obstacle_treshold", costmap_obstacle_treshold_, 250);
 
   // implementation of topics to publish (command for base and list of relevant obstacles)
@@ -43,33 +45,33 @@ CollisionVelocityFilter::CollisionVelocityFilter(costmap_2d::Costmap2DROS * cost
   // create Timer and call getFootprint Service periodically
   double footprint_update_frequency;
   if (!pnh_.hasParam("footprint_update_frequency"))
-    ROS_WARN("Used default parameter for footprint_update_frequency [1.0 Hz].");
+    ROS_WARN("Used default parameter for 'footprint_update_frequency' [1.0 Hz].");
   pnh_.param("footprint_update_frequency", footprint_update_frequency, 1.0);
   get_footprint_timer_ = pnh_.createTimer(ros::Duration(1 / footprint_update_frequency),
                                          &CollisionVelocityFilter::getFootprint, this);
   // read parameters from parameter server
   // parameters from costmap
   if (!pnh_.hasParam("global_frame"))
-    ROS_WARN("Used default parameter for global_frame [/base_link]");
+    ROS_WARN("Used default parameter for 'global_frame' [/base_link]");
   pnh_.param("global_frame", global_frame_, std::string("/base_link"));
 
   if (!pnh_.hasParam("robot_base_frame"))
-    ROS_WARN("Used default parameter for robot_frame [/base_link]");
+    ROS_WARN("Used default parameter for 'robot_base_frame' [/base_link]");
   pnh_.param("robot_base_frame", robot_frame_, std::string("/base_link"));
 
   if (!pnh_.hasParam("influence_radius"))
-    ROS_WARN("Used default parameter for influence_radius [1.5 m]");
+    ROS_WARN("Used default parameter for 'influence_radius' [1.5 m]");
   pnh_.param("influence_radius", influence_radius_, 1.5);
   closest_obstacle_dist_ = influence_radius_;
   closest_obstacle_angle_ = 0.0;
 
   // parameters for obstacle avoidance and velocity adjustment
   if (!pnh_.hasParam("stop_threshold"))
-    ROS_WARN("Used default parameter for stop_threshold [0.1 m]");
+    ROS_WARN("Used default parameter for 'stop_threshold' [0.1 m]");
   pnh_.param("stop_threshold", stop_threshold_, 0.10);
 
-  if (!nh_.hasParam("obstacle_damping_dist"))
-    ROS_WARN("Used default parameter for obstacle_damping_dist [5.0 m]");
+  if (!pnh_.hasParam("obstacle_damping_dist"))
+    ROS_WARN("Used default parameter for 'obstacle_damping_dist' [5.0 m]");
   pnh_.param("obstacle_damping_dist", obstacle_damping_dist_, 5.0);
   if (obstacle_damping_dist_ <= stop_threshold_)
   {
@@ -78,27 +80,27 @@ CollisionVelocityFilter::CollisionVelocityFilter(costmap_2d::Costmap2DROS * cost
   }
 
   if (!pnh_.hasParam("use_circumscribed_threshold"))
-    ROS_WARN("Used default parameter for use_circumscribed_threshold_ [0.2 rad/s]");
+    ROS_WARN("Used default parameter for 'use_circumscribed_threshold' [0.2 rad/s]");
   pnh_.param("use_circumscribed_threshold", use_circumscribed_threshold_, 0.20);
 
   if (!pnh_.hasParam("pot_ctrl_vmax"))
-    ROS_WARN("Used default parameter for pot_ctrl_vmax [0.6]");
+    ROS_WARN("Used default parameter for 'pot_ctrl_vmax' [0.6]");
   pnh_.param("pot_ctrl_vmax", v_max_, 0.6);
 
   if (!pnh_.hasParam("pot_ctrl_vtheta_max"))
-    ROS_WARN("Used default parameter for pot_ctrl_vtheta_max [0.8]");
+    ROS_WARN("Used default parameter for 'pot_ctrl_vtheta_max' [0.8]");
   pnh_.param("pot_ctrl_vtheta_max", vtheta_max_, 0.8);
 
   if (!pnh_.hasParam("pot_ctrl_kv"))
-    ROS_WARN("Used default parameter for pot_ctrl_kv [1.0]");
+    ROS_WARN("Used default parameter for 'pot_ctrl_kv' [1.0]");
   pnh_.param("pot_ctrl_kv", kv_, 1.0);
 
   if (!pnh_.hasParam("pot_ctrl_kp"))
-    ROS_WARN("Used default parameter for pot_ctrl_kp [2.0]");
+    ROS_WARN("Used default parameter for 'pot_ctrl_kp' [2.0]");
   pnh_.param("pot_ctrl_kp", kp_, 2.0);
 
   if (!pnh_.hasParam("pot_ctrl_virt_mass"))
-    ROS_WARN("Used default parameter for pot_ctrl_virt_mass [0.8]");
+    ROS_WARN("Used default parameter for 'pot_ctrl_virt_mass' [0.8]");
   pnh_.param("pot_ctrl_virt_mass", virt_mass_, 0.8);
 
   robot_footprint_ = anti_collision_costmap_->getRobotFootprint();
@@ -109,7 +111,7 @@ CollisionVelocityFilter::CollisionVelocityFilter(costmap_2d::Costmap2DROS * cost
 
   // try to get the max_acceleration values from the parameter server
   if (!pnh_.hasParam("max_acceleration"))
-    ROS_WARN("Used default parameter for max_acceleration [0.5, 0.5, 0.7]");
+    ROS_WARN("Used default parameter for 'max_acceleration' [0.5, 0.5, 0.7]");
   XmlRpc::XmlRpcValue max_acc;
   if (pnh_.getParam("max_acceleration", max_acc))
   {
