@@ -2,6 +2,13 @@
 Changelog for package cob_collision_velocity_filter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.6 (2019-06-07)
+------------------
+* Merge pull request `#207 <https://github.com/ipa320/cob_control/issues/207>`_ from fmessmer/fix_collision_velocity_filter
+  fix collision_velocity_filter parameter initialization
+* fix collision_velocity_filter parameter initializatin
+* Contributors: Felix Messmer, fmessmer
+
 0.7.5 (2019-05-20)
 ------------------
 
