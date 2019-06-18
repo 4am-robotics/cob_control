@@ -616,6 +616,7 @@ int main(int argc, char** argv)
 
 #if ROS_VERSION_MINIMUM(1, 14, 0)
   tf2_ros::Buffer tf(ros::Duration(10));
+  tf2_ros::TransformListener tf_listener(tf);
 #else
   tf::TransformListener tf(ros::Duration(10));
 #endif
