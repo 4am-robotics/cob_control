@@ -1,6 +1,6 @@
 <package format="2">
   <name>cob_footprint_observer</name>
-  <version>0.7.6</version>
+  <version>0.7.7</version>
   <description>The cob_footprint_observer package adjusts the footprint of the robot based on the setup (e.g. arm and/or tray).</description>
 
   <license>Apache 2.0</license>
