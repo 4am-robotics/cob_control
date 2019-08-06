@@ -2,6 +2,16 @@
 Changelog for package cob_collision_velocity_filter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.7 (2019-08-06)
+------------------
+* Merge pull request `#208 <https://github.com/ipa320/cob_control/issues/208>`_ from ipa-jba/melodic_dev
+  [Melodic] melodify
+* initialize tf buffer properly
+* move include to where it is needed
+* add missing tf2_ros dependency
+* tf2ify/melodify collision_velocity_filter
+* Contributors: Felix Messmer, Jannik Abbenseth
+
 0.7.6 (2019-06-07)
 ------------------
 * Merge pull request `#207 <https://github.com/ipa320/cob_control/issues/207>`_ from fmessmer/fix_collision_velocity_filter

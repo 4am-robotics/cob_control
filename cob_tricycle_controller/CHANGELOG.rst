@@ -2,6 +2,13 @@
 Changelog for package cob_tricycle_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.7 (2019-08-06)
+------------------
+* Merge pull request `#208 <https://github.com/ipa320/cob_control/issues/208>`_ from ipa-jba/melodic_dev
+  [Melodic] melodify
+* use urdf::JointConstSharedPtr instead of boost...
+* Contributors: Felix Messmer, Jannik Abbenseth
+
 0.7.6 (2019-06-07)
 ------------------
 
