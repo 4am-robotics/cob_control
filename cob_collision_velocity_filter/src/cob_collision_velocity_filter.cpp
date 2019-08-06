@@ -17,6 +17,13 @@
 
 #include <cob_collision_velocity_filter.h>
 
+// Backwards compatibility of tf2 (tf for pre-kinetic) for costmap 
+#if ROS_VERSION_MINIMUM(1, 14, 0)
+#include <tf2_ros/transform_listener.h>
+#else
+#include <tf/transform_listener.h>
+#endif
+
 #include <visualization_msgs/Marker.h>
 
 // Constructor
@@ -606,7 +613,13 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "cob_collision_velocity_filter");
 
   // create nodeClass
+
+#if ROS_VERSION_MINIMUM(1, 14, 0)
+  tf2_ros::Buffer tf(ros::Duration(10));
+  tf2_ros::TransformListener tf_listener(tf);
+#else
   tf::TransformListener tf(ros::Duration(10));
+#endif
   costmap_2d::Costmap2DROS* costmap = new costmap_2d::Costmap2DROS("anti_collision_costmap", tf);
   CollisionVelocityFilter collisionVelocityFilter(costmap);
 

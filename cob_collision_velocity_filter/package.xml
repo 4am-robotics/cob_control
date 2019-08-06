@@ -22,6 +22,7 @@
   <depend>nav_msgs</depend>
   <depend>roscpp</depend>
   <depend>tf</depend>
+  <depend>tf2_ros</depend>
   <depend>visualization_msgs</depend>
 
 </package>

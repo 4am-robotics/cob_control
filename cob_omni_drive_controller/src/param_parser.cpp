@@ -90,7 +90,7 @@ bool parseCtrlParams(CtrlParams & params, XmlRpc::XmlRpcValue &wheel, urdf::Mode
     read_with_default(steer_name, "steer", wheel, std::string());
     read_with_default(drive_name, "drive", wheel, std::string());
 
-    boost::shared_ptr<const urdf::Joint> steer_joint;
+    urdf::JointConstSharedPtr steer_joint;
     if(model && !steer_name.empty()){
         steer_joint = model->getJoint(steer_name);
         if(steer_joint){
@@ -101,7 +101,7 @@ bool parseCtrlParams(CtrlParams & params, XmlRpc::XmlRpcValue &wheel, urdf::Mode
         ROS_WARN_STREAM("max_steer_rate not set - defaulting to 0.0");
         params.dMaxSteerRateRadpS = 0.0;
     }
-    boost::shared_ptr<const urdf::Joint> drive_joint;
+    urdf::JointConstSharedPtr drive_joint;
     if(model && !drive_name.empty()){
         drive_joint = model->getJoint(drive_name);
         if(drive_joint){
@@ -139,7 +139,7 @@ bool parseWheelGeom(WheelGeom & geom, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcSt
     read_with_default(geom.drive_name, "drive", wheel, std::string());
     read_with_default(geom.dSteerDriveCoupling, "steer_drive_coupling", wheel, 0.0);
 
-    boost::shared_ptr<const urdf::Joint> steer_joint;
+    urdf::JointConstSharedPtr steer_joint;
     urdf::Vector3 steer_pos;
 
     if(model && !geom.steer_name.empty()){
@@ -183,7 +183,7 @@ bool parseWheelGeom(WheelGeom & geom, XmlRpc::XmlRpcValue &wheel, MergedXmlRpcSt
     double offset = 0;
 
     if(!read_optional(offset, "wheel_offset", merged)){
-        boost::shared_ptr<const urdf::Joint> drive_joint;
+        urdf::JointConstSharedPtr drive_joint;
         if(model && !geom.drive_name.empty()){
             drive_joint = model->getJoint(geom.drive_name);
         }

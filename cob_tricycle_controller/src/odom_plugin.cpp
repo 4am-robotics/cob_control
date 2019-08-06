@@ -61,7 +61,7 @@ public:
         bool has_model = nh.searchParam("robot_description", description_name) &&  model.initParam(description_name);
 
         urdf::Vector3 steer_pos;
-        boost::shared_ptr<const urdf::Joint> steer_joint;
+        urdf::JointConstSharedPtr steer_joint;
 
         if(has_model){
             steer_joint = model.getJoint(wheel_state_.steer_name);
