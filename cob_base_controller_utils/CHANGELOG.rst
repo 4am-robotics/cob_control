@@ -2,6 +2,9 @@
 Changelog for package cob_base_controller_utils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.7.6 (2019-06-07)
 ------------------
 
