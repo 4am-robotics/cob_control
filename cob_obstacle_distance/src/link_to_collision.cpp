@@ -190,7 +190,7 @@ void LinkToCollision::createSpecificMarkerShape(const std::string& link_of_inter
         test_col.a = 0.0;
         test_col.r = 0.0;
 
-        PtrMesh_t mesh = boost::static_pointer_cast<urdf::Mesh>(geometry);
+        PtrMesh_t mesh = std::static_pointer_cast<urdf::Mesh>(geometry);
         segment_of_interest_marker_shape.reset(new MarkerShape<BVH_RSS_t>(this->root_frame_id_,
                                                                           mesh->filename,
                                                                           pose,
@@ -198,7 +198,7 @@ void LinkToCollision::createSpecificMarkerShape(const std::string& link_of_inter
     }
     else if (urdf::Geometry::BOX == geometry->type)
     {
-        PtrBox_t urdf_box = boost::static_pointer_cast<urdf::Box>(geometry);
+        PtrBox_t urdf_box = std::static_pointer_cast<urdf::Box>(geometry);
         fcl::Box b(urdf_box->dim.x,
                    urdf_box->dim.y,
                    urdf_box->dim.z);
@@ -216,7 +216,7 @@ void LinkToCollision::createSpecificMarkerShape(const std::string& link_of_inter
         test_col.a = 1.0;
         test_col.b = 1.0;
 
-        PtrSphere_t urdf_sphere = boost::static_pointer_cast<urdf::Sphere>(geometry);
+        PtrSphere_t urdf_sphere = std::static_pointer_cast<urdf::Sphere>(geometry);
         fcl::Sphere s(urdf_sphere->radius);
         segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Sphere>(this->root_frame_id_, s, pose, test_col));
     }
@@ -226,7 +226,7 @@ void LinkToCollision::createSpecificMarkerShape(const std::string& link_of_inter
         test_col.a = 1.0;
         test_col.g = 1.0;
 
-        PtrCylinder_t urdf_cyl = boost::static_pointer_cast<urdf::Cylinder>(geometry);
+        PtrCylinder_t urdf_cyl = std::static_pointer_cast<urdf::Cylinder>(geometry);
         fcl::Cylinder c(urdf_cyl->radius, urdf_cyl->length);
         segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Cylinder>(this->root_frame_id_, c, pose, test_col));
     }
@@ -276,7 +276,7 @@ bool LinkToCollision::getMarkerShapeFromType(const uint32_t& shape_type,
                 NULL != link->collision->geometry &&
                 link->collision->geometry->type == urdf::Geometry::MESH)
         {
-            PtrMesh_t mesh = boost::static_pointer_cast<urdf::Mesh>(link->collision->geometry);
+            PtrMesh_t mesh = std::static_pointer_cast<urdf::Mesh>(link->collision->geometry);
             mesh_resource = mesh->filename;
         }
         else
