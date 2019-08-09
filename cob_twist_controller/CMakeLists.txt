@@ -70,7 +70,7 @@ target_link_libraries(cob_twist_controller_node twist_controller ${catkin_LIBRAR
 
 ### DEBUG NODES ###
 add_executable(debug_trajectory_marker_node src/debug/debug_trajectory_marker_node.cpp)
-add_dependencies(debug_trajectory_marker_node ${catkin_EXPORTED_TARGETS})
+add_dependencies(debug_trajectory_marker_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(debug_trajectory_marker_node ${catkin_LIBRARIES})
 
 add_executable(debug_evaluate_jointstates_node src/debug/debug_evaluate_jointstates_node.cpp)
