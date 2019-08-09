@@ -2,6 +2,9 @@
 Changelog for package cob_omni_drive_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.7.8 (2019-08-09)
 ------------------
 

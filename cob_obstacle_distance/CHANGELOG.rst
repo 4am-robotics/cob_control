@@ -2,6 +2,13 @@
 Changelog for package cob_obstacle_distance
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#209 <https://github.com/ipa320/cob_control/issues/209>`_ from fmessmer/release_fixes
+  [Melodic] release fixes
+* proper cast of urdf pointer
+* Contributors: Felix Messmer, fmessmer
+
 0.7.8 (2019-08-09)
 ------------------
 
