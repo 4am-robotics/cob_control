@@ -13,7 +13,7 @@ class emulation():
         # - service reset
         # - speed factor
         # - interpolated movement for joint states
-        # - interpolated movement for odometry
+        # - action preemption and cancel
         
         
         params = rospy.get_param('~')
@@ -29,11 +29,12 @@ class emulation():
         js.velocity = [0]*len(js.name)
         js.effort = [0]*len(js.name)
         self.joint_states = js
-        rospy.loginfo("Emulator running for action %s of type follow_joint_trajectory"%(action_name))
-        
+
         self.as_fjta.start()
 
-        rospy.Timer(rospy.Duration(0.1), self.js_cb)
+        rospy.Timer(rospy.Duration(0.1), self.timer_cb)
+
+        rospy.loginfo("Emulator running for action %s of type follow_joint_trajectory"%(action_name))
 
     def fjta_cb(self, goal):
         joint_names = copy.deepcopy(self.joint_names)
@@ -72,7 +73,7 @@ class emulation():
             rospy.logerr("received unexpected joint names in goal")
             self.as_fjta.set_aborted()
 
-    def js_cb(self, event):
+    def timer_cb(self, event):
         msg = copy.deepcopy(self.joint_states)
         msg.header.stamp = rospy.Time.now() # update to current time stamp
         self.pub_joint_states.publish(msg)
@@ -80,5 +81,5 @@ class emulation():
 if __name__ == '__main__':
     rospy.init_node('emulation')
     emulation()
-    rospy.loginfo("emulation is running")
+    rospy.loginfo("follow joint trajectory emulation is running")
     rospy.spin()
