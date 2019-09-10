@@ -13,6 +13,7 @@
 
   <exec_depend>actionlib</exec_depend>
   <exec_depend>control_msgs</exec_depend>
+  <exec_depend>move_base_msgs</exec_depend>
   <exec_depend>nav_msgs</exec_depend>
   <exec_depend>rospy</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>

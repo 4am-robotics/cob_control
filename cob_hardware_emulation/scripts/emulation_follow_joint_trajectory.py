@@ -1,21 +1,21 @@
 #!/usr/bin/env python
 
-import actionlib
 import copy
-import rospy
 
+import rospy
+import actionlib
 from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryResult
 from sensor_msgs.msg import JointState
 
-class emulation():
+class EmulationFollowJointTrajectory():
     def __init__(self):
         # TODO
         # - service reset
         # - speed factor
         # - interpolated movement for joint states
         # - action preemption and cancel
-        
-        
+
+
         params = rospy.get_param('~')
         self.joint_names = params['joint_names']
 
@@ -34,7 +34,7 @@ class emulation():
 
         rospy.Timer(rospy.Duration(0.1), self.timer_cb)
 
-        rospy.loginfo("Emulator running for action %s of type follow_joint_trajectory"%(action_name))
+        rospy.loginfo("Emulation running for action %s of type FollowJointTrajectoryAction"%(action_name))
 
     def fjta_cb(self, goal):
         joint_names = copy.deepcopy(self.joint_names)
@@ -60,7 +60,7 @@ class emulation():
 
                 js = copy.deepcopy(self.joint_states)
                 js.position = point.positions
-                
+
                 # this assumes that the joint_state flips to the new position once the time_from_start has passed. 
                 # FIXME calculate interpolated ramp based on time_from_start
                 rospy.sleep((point.time_from_start - latest_time_from_start).to_sec())
@@ -79,7 +79,6 @@ class emulation():
         self.pub_joint_states.publish(msg)
 
 if __name__ == '__main__':
-    rospy.init_node('emulation')
-    emulation()
-    rospy.loginfo("follow joint trajectory emulation is running")
+    rospy.init_node('emulation_follow_joint_trajectory')
+    EmulationFollowJointTrajectory()
     rospy.spin()
