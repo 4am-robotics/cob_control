@@ -4,9 +4,10 @@ import copy
 import math
 
 import rospy
-import tf
+import tf_conversions
+import tf2_ros
 import actionlib
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, TransformStamped
 from move_base_msgs.msg import MoveBaseAction, MoveBaseActionResult
 from nav_msgs.msg import Odometry
 
@@ -29,7 +30,7 @@ class EmulationBase():
 
         rospy.Subscriber("/base/twist_controller/command", Twist, self.twist_callback, queue_size=1)
         self.pub_odom = rospy.Publisher("/base/odometry_controller/odometry", Odometry, queue_size=1)
-        self.br = tf.TransformBroadcaster()
+        self.br = tf2_ros.TransformBroadcaster()
 
         self.timestamp_last_update = rospy.Time.now()
 
@@ -59,8 +60,8 @@ class EmulationBase():
         # we assume we're not moving any more if there is no new twist after 0.1 sec
         if time_since_last_twist < rospy.Duration(0.1):
             new_pose = copy.deepcopy(self.odom.pose.pose)
-            yaw = tf.transformations.euler_from_quaternion([self.odom.pose.pose.orientation.x, self.odom.pose.pose.orientation.y, self.odom.pose.pose.orientation.z, self.odom.pose.pose.orientation.w])[2] + self.twist.angular.z * dt.to_sec()
-            quat = tf.transformations.quaternion_from_euler(0, 0, yaw)
+            yaw = tf_conversions.transformations.euler_from_quaternion([self.odom.pose.pose.orientation.x, self.odom.pose.pose.orientation.y, self.odom.pose.pose.orientation.z, self.odom.pose.pose.orientation.w])[2] + self.twist.angular.z * dt.to_sec()
+            quat = tf_conversions.transformations.quaternion_from_euler(0, 0, yaw)
             new_pose.orientation.x = quat[0]
             new_pose.orientation.y = quat[1]
             new_pose.orientation.z = quat[2]
@@ -84,19 +85,24 @@ class EmulationBase():
 
         # publish tf
         # pub base_footprint --> odom_combined
-        self.br.sendTransform((self.odom.pose.pose.position.x, self.odom.pose.pose.position.y, 0),
-                     (self.odom.pose.pose.orientation.x, self.odom.pose.pose.orientation.y, self.odom.pose.pose.orientation.z, self.odom.pose.pose.orientation.w),
-                     rospy.Time.now(),
-                     "base_footprint",
-                     "odom_combined")
+        t_loc = TransformStamped()
+        t_loc.header.stamp = rospy.Time.now()
+        t_loc.header.frame_id = "odom_combined"
+        t_loc.child_frame_id = "base_footprint"
+        t_loc.transform.translation = self.odom.pose.pose.position
+        t_loc.transform.rotation = self.odom.pose.pose.orientation
 
         # pub odom_combined --> map
         # we emulate 'perfect' odometry, so /odom_combined is always the same as /map
-        self.br.sendTransform((0, 0, 0),
-                     tf.transformations.quaternion_from_euler(0, 0, 0),
-                     rospy.Time.now(),
-                     "odom_combined",
-                     "map")
+        t_odom = TransformStamped()
+        t_odom.header.stamp = rospy.Time.now()
+        t_odom.header.frame_id = "map"
+        t_odom.child_frame_id = "odom_combined"
+        t_odom.transform.rotation.w = 1.0
+
+        transforms = [t_loc, t_odom]
+
+        self.br.sendTransform(transforms)
 
 if __name__ == '__main__':
     rospy.init_node('emulation_base')
