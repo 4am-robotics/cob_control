@@ -45,8 +45,14 @@ class EmulationFollowJointTrajectory():
 
             goal_sorted = copy.deepcopy(goal)
             goal_sorted.trajectory.joint_names = self.joint_names
+            
+            # keep track of the current time 
+            latest_time_from_start = rospy.Duration(0)  
+            # the point in time of a previous computation. 
+            # This is used to compute the interpolation weight as a function of current and goal time point      
+            time_since_start_of_previous_point = rospy.Duration(0)    
 
-            latest_time_from_start = rospy.Duration(0)
+            # for all points in the desired trajectory    
             for point in goal_sorted.trajectory.points:
 
                 # we need to resort the positions array because moveit sorts alphabetically but all other ROS components sort in the URDF order
@@ -57,14 +63,40 @@ class EmulationFollowJointTrajectory():
                 point.positions = positions_sorted
 
                 js = copy.deepcopy(self.joint_states)
-                js.position = point.positions
 
-                # this assumes that the joint_state flips to the new position once the time_from_start has passed. 
-                # FIXME calculate interpolated ramp based on time_from_start
-                rospy.sleep((point.time_from_start - latest_time_from_start).to_sec())
+                # linear interpolation of the given trajectory samples is used 
+                # to compute smooth intermediate joints positions at a fixed resolution 
 
-                latest_time_from_start = point.time_from_start
-                self.joint_states = js
+                # fixed frequency to control the granularity of the sampling resolution
+                sample_rate_hz = 10
+                # duration from one sample to the next
+                sample_rate_dur_secs = (1.0 / float(sample_rate_hz)) 
+                # rospy loop rate
+                sample_rate = rospy.Rate(sample_rate_hz) # 10Hz for now                 
+                # upper bound of local duration segment
+                t1 = point.time_from_start - time_since_start_of_previous_point
+
+                # this loop samples the time segment from the current states to the next goal state in "points"
+                while not rospy.is_shutdown() and ((point.time_from_start - latest_time_from_start) > rospy.Duration(0)):  
+                    # current time passed in local duration segment 
+                    t0 = latest_time_from_start - time_since_start_of_previous_point
+                    # compute the interpolation weight as a fraction of passed time and upper bound time in this local segment  
+                    alpha = t0 / t1                        
+                    # interpolate linearly (lerp) each component
+                    interpolated_positions = copy.deepcopy(js.position)
+                    for i in range(len(point.positions)):                        
+                        interpolated_positions[i] = (1.0 - alpha) * js.position[i] + alpha * point.positions[i]   
+                    self.joint_states.position = interpolated_positions                     
+                    # sleep until next sample update
+                    sample_rate.sleep()    
+                    # increment passed time   
+                    latest_time_from_start += rospy.Duration(sample_rate_dur_secs)  
+                
+                # ensure that the goal and time point is always exactly reached  
+                latest_time_from_start = point.time_from_start  
+                self.joint_states.position = point.positions  
+                # set lower time bound for the next point  
+                time_since_start_of_previous_point = latest_time_from_start                  
 
             self.as_fjta.set_succeeded(FollowJointTrajectoryResult())
         else:
@@ -74,7 +106,7 @@ class EmulationFollowJointTrajectory():
     def publish_joint_states(self):
         msg = copy.deepcopy(self.joint_states)
         msg.header.stamp = rospy.Time.now() # update to current time stamp
-        self.pub_joint_states.publish(msg)
+        self.pub_joint_states.publish(msg)    
 
 if __name__ == '__main__':
     rospy.init_node('emulation_follow_joint_trajectory')
