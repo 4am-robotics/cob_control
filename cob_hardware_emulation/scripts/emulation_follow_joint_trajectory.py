@@ -32,8 +32,6 @@ class EmulationFollowJointTrajectory():
 
         self.as_fjta.start()
 
-        rospy.Timer(rospy.Duration(0.1), self.timer_cb)
-
         rospy.loginfo("Emulation running for action %s of type FollowJointTrajectoryAction"%(action_name))
 
     def fjta_cb(self, goal):
@@ -73,12 +71,18 @@ class EmulationFollowJointTrajectory():
             rospy.logerr("received unexpected joint names in goal")
             self.as_fjta.set_aborted()
 
-    def timer_cb(self, event):
+    def publish_joint_states(self):
         msg = copy.deepcopy(self.joint_states)
         msg.header.stamp = rospy.Time.now() # update to current time stamp
         self.pub_joint_states.publish(msg)
 
 if __name__ == '__main__':
     rospy.init_node('emulation_follow_joint_trajectory')
-    EmulationFollowJointTrajectory()
-    rospy.spin()
+
+    emulation_follow_joint_trajectory = EmulationFollowJointTrajectory()
+
+    # updating the joint states: 10Hz 
+    joint_states_pub_rate = rospy.Rate(10) 
+    while not rospy.is_shutdown():
+        emulation_follow_joint_trajectory.publish_joint_states()
+        joint_states_pub_rate.sleep()
