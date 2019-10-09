@@ -12,8 +12,6 @@ from geometry_msgs.msg import PoseWithCovarianceStamped
 from move_base_msgs.msg import MoveBaseAction, MoveBaseActionResult
 from nav_msgs.msg import Odometry
 
-from tf_conversions import
-
 class EmulationBase():
     def __init__(self):
         # this node emulates a base including localization
@@ -28,11 +26,12 @@ class EmulationBase():
 
 
         # TODO
-        # - add service reset odometry
+        # - add service reset odometry (/base/odometry_controller/reset_odometry [std_srvs::Trigger])
+        # - add topic for 2D Pose Estimate (/initialpose [geometry_msgs::PoseWithCovarianceStamped])
         # - speed factor
 
         rospy.Subscriber("/base/twist_controller/command", Twist, self.twist_callback, queue_size=1)
-        rospy.Subscriber("/initalpose", PoseWithCovarianceStamped, self.initalpose_callback, queue_size=1)
+        rospy.Subscriber("/initialpose", PoseWithCovarianceStamped, self.initalpose_callback, queue_size=1)
         self.pub_odom = rospy.Publisher("/base/odometry_controller/odometry", Odometry, queue_size=1)
         self.br = tf2_ros.TransformBroadcaster()
 
@@ -114,7 +113,7 @@ class EmulationBase():
         t_odom.header.stamp = rospy.Time.now()
         t_odom.header.frame_id = "map"
         t_odom.child_frame_id = "odom_combined"
-        t_odom.transform. = self.initial_pose
+        t_odom.transform = self.initial_pose
 
         transforms = [t_loc, t_odom]
 
