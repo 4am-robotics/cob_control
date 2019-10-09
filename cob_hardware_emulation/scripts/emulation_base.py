@@ -8,7 +8,7 @@ import tf_conversions
 import tf2_ros
 import actionlib
 from geometry_msgs.msg import Twist, Transform, TransformStamped
-from geometry_msgs.msg import PoseWithCovarianceStamped
+from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Quaternion
 from move_base_msgs.msg import MoveBaseAction, MoveBaseActionResult
 from nav_msgs.msg import Odometry
 
@@ -27,7 +27,6 @@ class EmulationBase():
 
         # TODO
         # - add service reset odometry (/base/odometry_controller/reset_odometry [std_srvs::Trigger])
-        # - add topic for 2D Pose Estimate (/initialpose [geometry_msgs::PoseWithCovarianceStamped])
         # - speed factor
 
         rospy.Subscriber("/base/twist_controller/command", Twist, self.twist_callback, queue_size=1)
@@ -57,10 +56,23 @@ class EmulationBase():
         self.initial_pose.translation.y = msg.pose.pose.position.y
         self.initial_pose.translation.z = msg.pose.pose.position.z
 
-        self.initial_pose.rotation.w = msg.pose.pose.orientation.w
-        self.initial_pose.rotation.x = msg.pose.pose.orientation.x
-        self.initial_pose.rotation.y = msg.pose.pose.orientation.y
-        self.initial_pose.rotation.z = msg.pose.pose.orientation.z
+        yaw1 = tf_conversions.transformations.euler_from_quaternion(
+            [msg.pose.pose.orientation.x,
+            msg.pose.pose.orientation.y,
+            msg.pose.pose.orientation.z,
+            msg.pose.pose.orientation.w])[2]
+        yaw2 = tf_conversions.transformations.euler_from_quaternion(
+            [self.odom.pose.pose.orientation.x,
+            self.odom.pose.pose.orientation.y,
+            self.odom.pose.pose.orientation.z,
+            self.odom.pose.pose.orientation.w])[2]
+
+        self.initial_pose.rotation = Quaternion(*[msg.pose.pose.orientation.x,
+                                                msg.pose.pose.orientation.y,
+                                                msg.pose.pose.orientation.z,
+                                                msg.pose.pose.orientation.w])
+        self.odom.pose.pose = Pose()
+        self.odom.pose.pose.orientation.w = 1
 
     def twist_callback(self, msg):
         self.twist = msg
