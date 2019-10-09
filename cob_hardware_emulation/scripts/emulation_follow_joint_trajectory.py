@@ -12,10 +12,7 @@ class EmulationFollowJointTrajectory():
         # TODO
         # - service reset
         # - speed factor
-        # - interpolated movement for joint states
-        # - action preemption and cancel
-
-
+   
         params = rospy.get_param('~')
         self.joint_names = params['joint_names']
 
@@ -78,12 +75,17 @@ class EmulationFollowJointTrajectory():
 
                 # this loop samples the time segment from the current states to the next goal state in "points"
                 while not rospy.is_shutdown() and ((point.time_from_start - latest_time_from_start) > rospy.Duration(0)):  
+                    # check that preempt has not been requested by the client
+                    if self.as_fjta.is_preempt_requested():
+                        rospy.loginfo("preempt requested")
+                        self.as_fjta.set_preempted()
+                        return                    
                     # current time passed in local duration segment 
                     t0 = latest_time_from_start - time_since_start_of_previous_point
                     # compute the interpolation weight as a fraction of passed time and upper bound time in this local segment  
                     alpha = t0 / t1                        
                     # interpolate linearly (lerp) each component
-                    interpolated_positions = copy.deepcopy(js.position)
+                    interpolated_positions = [0]*len(point.positions)
                     for i in range(len(point.positions)):                        
                         interpolated_positions[i] = (1.0 - alpha) * js.position[i] + alpha * point.positions[i]   
                     self.joint_states.position = interpolated_positions                     
