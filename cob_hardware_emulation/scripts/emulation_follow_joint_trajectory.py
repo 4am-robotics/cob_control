@@ -6,11 +6,11 @@ import rospy
 import actionlib
 from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryResult
 from sensor_msgs.msg import JointState
+from std_srvs.srv import Trigger, TriggerResponse
 
 class EmulationFollowJointTrajectory():
     def __init__(self):
         # TODO
-        # - service reset
         # - speed factor
 
         params = rospy.get_param('~')
@@ -29,8 +29,21 @@ class EmulationFollowJointTrajectory():
 
         self.as_fjta.start()
 
+        # reset service
+        self.service_reset_fjta = rospy.Service("reset_joint_states", Trigger, self.reset_cb)
+
         rospy.loginfo("Emulation running for action %s of type FollowJointTrajectoryAction"%(action_name))
 
+    def reset_cb(self, req):
+        self.joint_states.position = [0.0] * len(self.joint_states.position)
+        self.joint_states.velocity = [0.0] * len(self.joint_states.velocity)
+        self.joint_states.effort   = [0.0] * len(self.joint_states.effort)
+
+        return TriggerResponse(
+            success = True,
+            message = "Succesfully reset joint states"
+        )           
+        
     def fjta_cb(self, goal):
         joint_names = copy.deepcopy(self.joint_names)
         joint_names.sort()
