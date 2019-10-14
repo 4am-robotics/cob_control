@@ -122,7 +122,11 @@ class EmulationFollowJointTrajectory():
                 self.joint_states.position = point.positions
                 # set lower time bound for the next point
                 time_since_start_of_previous_point = latest_time_from_start
-
+            
+            # set joint velocities to zero after the robot stopped moving (reaching final point of trajectory)
+            self.joint_states.velocity = [0.0] * len(self.joint_states.velocity)    
+            self.joint_states.effort   = [0.0] * len(self.joint_states.effort)
+            
             self.as_fjta.set_succeeded(FollowJointTrajectoryResult())
         else:
             rospy.logerr("received unexpected joint names in goal")
