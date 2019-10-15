@@ -7,7 +7,8 @@ import rospy
 import tf_conversions
 import tf2_ros
 import actionlib
-from geometry_msgs.msg import Twist, TransformStamped
+from geometry_msgs.msg import Twist, Transform, TransformStamped
+from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Quaternion
 from move_base_msgs.msg import MoveBaseAction, MoveBaseActionResult
 from nav_msgs.msg import Odometry
 
@@ -18,17 +19,18 @@ class EmulationBase():
         # interfaces
         # - subscribers:
         #   - /base/twist_controller/command [geometry_msgs/Twist]
+        #   - /initialpose [geometry_msgs/PoseWithCovarianceStamped]
         # - publishers:
         #   - /base/odometry_controller/odometry [nav_msgs/Odometry]
         #   - tf (odom_combined --> base_footprint, map --> odom_combined)
 
 
         # TODO
-        # - add service reset odometry
+        # - add service reset odometry (/base/odometry_controller/reset_odometry [std_srvs::Trigger])
         # - speed factor
-        # - add 2D Pose Estimation through topic
 
         rospy.Subscriber("/base/twist_controller/command", Twist, self.twist_callback, queue_size=1)
+        rospy.Subscriber("/initialpose", PoseWithCovarianceStamped, self.initalpose_callback, queue_size=1)
         self.pub_odom = rospy.Publisher("/base/odometry_controller/odometry", Odometry, queue_size=1)
         self.br = tf2_ros.TransformBroadcaster()
 
@@ -42,9 +44,35 @@ class EmulationBase():
         self.odom.child_frame_id = "base_footprint"
         self.odom.pose.pose.orientation.w = 1 # initialize orientation with a valid quaternion
 
+        self.initial_pose = Transform()
+        self.initial_pose.rotation.w = 1
+
         rospy.Timer(rospy.Duration(0.1), self.timer_cb)
 
         rospy.loginfo("Emulation for base running")
+
+    def initalpose_callback(self, msg):
+        self.initial_pose.translation.x = msg.pose.pose.position.x
+        self.initial_pose.translation.y = msg.pose.pose.position.y
+        self.initial_pose.translation.z = msg.pose.pose.position.z
+
+        yaw1 = tf_conversions.transformations.euler_from_quaternion(
+            [msg.pose.pose.orientation.x,
+            msg.pose.pose.orientation.y,
+            msg.pose.pose.orientation.z,
+            msg.pose.pose.orientation.w])[2]
+        yaw2 = tf_conversions.transformations.euler_from_quaternion(
+            [self.odom.pose.pose.orientation.x,
+            self.odom.pose.pose.orientation.y,
+            self.odom.pose.pose.orientation.z,
+            self.odom.pose.pose.orientation.w])[2]
+
+        self.initial_pose.rotation = Quaternion(*[msg.pose.pose.orientation.x,
+                                                msg.pose.pose.orientation.y,
+                                                msg.pose.pose.orientation.z,
+                                                msg.pose.pose.orientation.w])
+        self.odom.pose.pose = Pose()
+        self.odom.pose.pose.orientation.w = 1
 
     def twist_callback(self, msg):
         self.twist = msg
@@ -93,12 +121,11 @@ class EmulationBase():
         t_loc.transform.rotation = self.odom.pose.pose.orientation
 
         # pub odom_combined --> map
-        # we emulate 'perfect' odometry, so /odom_combined is always the same as /map
         t_odom = TransformStamped()
         t_odom.header.stamp = rospy.Time.now()
         t_odom.header.frame_id = "map"
         t_odom.child_frame_id = "odom_combined"
-        t_odom.transform.rotation.w = 1.0
+        t_odom.transform = self.initial_pose
 
         transforms = [t_loc, t_odom]
 
