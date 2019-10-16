@@ -44,8 +44,23 @@ class EmulationBase():
         self.odom.child_frame_id = "base_footprint"
         self.odom.pose.pose.orientation.w = 1 # initialize orientation with a valid quaternion
 
+
+
+        initialpose = rospy.get_param("~initialpose", None)
+        if type(initialpose) == list:
+            rospy.loginfo("using initialpose from parameter server: %s", str(initialpose))
+        elif type(initialpose) == str:
+            rospy.loginfo("using initialpose from script server: %s", str(initialpose))
+            initialpose = rospy.get_param("/script_server/base/" + initialpose)
+        else:
+            rospy.loginfo("initialpose not set, using [0, 0, 0] as initialpose")
+            initialpose = [0, 0, 0]
+
         self.initial_pose = Transform()
-        self.initial_pose.rotation.w = 1
+        self.initial_pose.translation.x = initialpose[0]
+        self.initial_pose.translation.y = initialpose[1]
+        quat = tf_conversions.transformations.quaternion_from_euler(0, 0, initialpose[2])
+        self.initial_pose.rotation = Quaternion(*quat)
 
         rospy.Timer(rospy.Duration(0.1), self.timer_cb)
 
