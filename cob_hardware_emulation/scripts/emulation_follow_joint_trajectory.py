@@ -90,7 +90,10 @@ class EmulationFollowJointTrajectory():
                 # and the corresponding time t1
                 velocities = [0] * pos_length
                 for i in range(pos_length):
-                    velocities[i] = (point.positions[i] - joint_states_prev.position[i]) / float(t1.to_sec())
+                    if t1.to_sec() != 0.0:
+                        velocities[i] = (point.positions[i] - joint_states_prev.position[i]) / float(t1.to_sec())
+                    else:
+                        velocities[i] = 0.0
                 self.joint_states.velocity = velocities
 
                 # this loop samples the time segment from the current states to the next goal state in "points"
@@ -104,7 +107,10 @@ class EmulationFollowJointTrajectory():
                     # current time passed in local duration segment
                     t0 = latest_time_from_start - time_since_start_of_previous_point
                     # compute the interpolation weight as a fraction of passed time and upper bound time in this local segment
-                    alpha = t0 / t1
+                    if t1 != 0.0:
+                        alpha = t0 / t1
+                    else:
+                        alpha = 0.0
 
                     # interpolate linearly (lerp) each component
                     interpolated_positions = [0] * pos_length
