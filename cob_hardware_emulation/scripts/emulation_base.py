@@ -6,10 +6,8 @@ import math
 import rospy
 import tf_conversions
 import tf2_ros
-import actionlib
 from geometry_msgs.msg import Twist, Transform, TransformStamped
 from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Quaternion
-from move_base_msgs.msg import MoveBaseAction, MoveBaseActionResult
 from nav_msgs.msg import Odometry
 
 class EmulationBase():
