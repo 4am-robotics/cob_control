@@ -4,6 +4,7 @@ Changelog for package cob_hardware_emulation
 
 Forthcoming
 -----------
+* add CHANGELOG for cob_hardware_emulation
 * Merge pull request `#221 <https://github.com/ipa320/cob_control/issues/221>`_ from fmessmer/post_vacation_qa
   [WIP] post vacation qa
 * fix missing dependencies
