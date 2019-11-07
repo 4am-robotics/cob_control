@@ -1,6 +1,6 @@
 <package format="2">
   <name>cob_control</name>
-  <version>0.7.8</version>
+  <version>0.7.9</version>
   <description>cob_control meta-package</description>
 
   <license>Apache 2.0</license>
@@ -20,6 +20,7 @@
   <exec_depend>cob_control_msgs</exec_depend>
   <exec_depend>cob_footprint_observer</exec_depend>
   <exec_depend>cob_frame_tracker</exec_depend>
+  <exec_depend>cob_hardware_emulation</exec_depend>
   <exec_depend>cob_model_identifier</exec_depend>
   <exec_depend>cob_obstacle_distance</exec_depend>
   <exec_depend>cob_omni_drive_controller</exec_depend>

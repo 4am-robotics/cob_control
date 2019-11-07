@@ -2,6 +2,9 @@
 Changelog for package cob_twist_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.9 (2019-11-07)
+------------------
+
 0.7.8 (2019-08-09)
 ------------------
 * Merge pull request `#210 <https://github.com/ipa320/cob_control/issues/210>`_ from fmessmer/missing_target_dependency

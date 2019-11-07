@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>cob_hardware_emulation</name>
+  <version>0.7.9</version>
+  <description>The cob_hardware_emulation package</description>
+
+  <maintainer email="florian.weisshardt@mojin-robotics.de">Florian Weisshardt</maintainer>
+  <author>Florian Weisshardt</author>
+
+  <license>Apache 2.0</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <exec_depend>actionlib</exec_depend>
+  <exec_depend>control_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>rospy</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>std_srvs</exec_depend>
+  <exec_depend>tf_conversions</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+
+</package>
