@@ -2,8 +2,8 @@
 Changelog for package cob_hardware_emulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.8.1 (2019-11-07)
+------------------
 * Merge branch 'kinetic_dev' of github.com:ipa320/cob_control into melodic_dev
 * add CHANGELOG for cob_hardware_emulation
 * Merge pull request `#221 <https://github.com/ipa320/cob_control/issues/221>`_ from fmessmer/post_vacation_qa
