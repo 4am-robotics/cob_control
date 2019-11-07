@@ -2,6 +2,12 @@
 Changelog for package cob_control
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#213 <https://github.com/ipa320/cob_control/issues/213>`_ from fmessmer/emulator
+  [melodic] add cob_hardware_emulation
+* add cob_hardware_emulation to meta package
+
 0.8.0 (2019-08-09)
 ------------------
 
