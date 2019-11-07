@@ -2,6 +2,49 @@
 Changelog for package cob_hardware_emulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge branch 'kinetic_dev' of github.com:ipa320/cob_control into melodic_dev
+* add CHANGELOG for cob_hardware_emulation
+* Merge pull request `#221 <https://github.com/ipa320/cob_control/issues/221>`_ from fmessmer/post_vacation_qa
+  [WIP] post vacation qa
+* fix missing dependencies
+* Merge pull request `#218 <https://github.com/ipa320/cob_control/issues/218>`_ from floweisshardt/fix/emulator
+  catch zero division if two trajectory points have the same time_from_start
+* catch zero division if two trajectory points have the same time_from_start
+* Merge pull request `#217 <https://github.com/ipa320/cob_control/issues/217>`_ from floweisshardt/emulator
+  initialpose from yaml file for base emulator
+* initialpose from yaml file for base emulator
+* Merge pull request `#216 <https://github.com/ipa320/cob_control/issues/216>`_ from benmaidel/feature/base_emulation_initialpose
+  add initialpose to emulation_base
+* Merge pull request `#215 <https://github.com/ipa320/cob_control/issues/215>`_ from lindemeier/feature/1238-joint-trajectory-controller-emulator-linear-interpolation
+  Feature/1238 joint trajectory controller emulator linear interpolation
+* 1238 Setting joint velocity and effort to zero after eaching final trajectory point
+* reset odom on initialpose
+* syntax fixes
+* 1238 added  service reset
+* 1238 joint velocities added
+* 1238 adding preempt polling
+  1238 readme adjusted and small improvements
+* add initialpose to emulation_base
+* 1238 linear interpolation of joint states sampling the given trajectory
+  1238 lerping start and goal works
+  1238 Fixed error in lerp
+  1238 using only local time segments for computing the interpolation weight
+  1238 added more comments
+* 1238 replacing timer with rospy loop rate
+  + publishing joint_states with 10Hz controlled by loop rate instead of timer
+* Merge pull request `#214 <https://github.com/ipa320/cob_control/issues/214>`_ from floweisshardt/feature/emulator_base
+  emulator base can be used with real navigation
+* migrate tf to tf2
+* emulator base can be used with real navigation
+* Merge pull request `#213 <https://github.com/ipa320/cob_control/issues/213>`_ from fmessmer/emulator
+  [melodic] add cob_hardware_emulation
+* review comments
+* initial version of move_base emulator
+* add hardware_emulation package
+* Contributors: Felix Messmer, floweisshardt, fmessmer
+
 0.7.9 (2019-11-07)
 ------------------
 * add CHANGELOG for cob_hardware_emulation
