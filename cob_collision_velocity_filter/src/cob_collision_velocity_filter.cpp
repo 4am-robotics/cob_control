@@ -442,6 +442,12 @@ void CollisionVelocityFilter::obstacleHandler()
   pthread_mutex_lock(&m_mutex);
   relevant_obstacles_.header.frame_id = global_frame_;
   relevant_obstacles_.header.stamp = ros::Time::now();
+  relevant_obstacles_.info.resolution = anti_collision_costmap_->getCostmap()->getResolution();
+  relevant_obstacles_.info.width = anti_collision_costmap_->getCostmap()->getSizeInCellsX();
+  relevant_obstacles_.info.height = anti_collision_costmap_->getCostmap()->getSizeInCellsY();
+  relevant_obstacles_.info.origin.position.x = anti_collision_costmap_->getCostmap()->getOriginX();
+  relevant_obstacles_.info.origin.position.y = anti_collision_costmap_->getCostmap()->getOriginY();
+  relevant_obstacles_.info.origin.orientation.w = 1.0;
   relevant_obstacles_.data.clear();
   for (unsigned int i = 0;
       i
