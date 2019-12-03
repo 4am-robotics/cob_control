@@ -43,7 +43,7 @@ CollisionVelocityFilter::CollisionVelocityFilter(costmap_2d::Costmap2DROS * cost
 
   // implementation of topics to publish (command for base and list of relevant obstacles)
   topic_pub_command_ = nh_.advertise<geometry_msgs::Twist>("command", 1);
-  topic_pub_relevant_obstacles_ = nh_.advertise<nav_msgs::OccupancyGrid>("relevant_obstacles_grid", 1);
+  topic_pub_relevant_obstacles_ = pnh_.advertise<nav_msgs::OccupancyGrid>("relevant_obstacles_grid", 1);
 
   // subscribe to twist-movement of teleop
   joystick_velocity_sub_ = nh_.subscribe<geometry_msgs::Twist>("command_in", 10,
