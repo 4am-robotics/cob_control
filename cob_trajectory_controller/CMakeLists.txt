@@ -8,12 +8,14 @@ generate_dynamic_reconfigure_options(
   cfg/CobTrajectoryController.cfg
 )
 
-catkin_package()
+catkin_package(
+  CATKIN_DEPENDS control_msgs sensor_msgs std_msgs trajectory_msgs
+)
 
 ### BUILD ###
 include_directories(common/include ${catkin_INCLUDE_DIRS})
 
-add_executable(${PROJECT_NAME} ros/src/${PROJECT_NAME}.cpp common/src/genericArmCtrl.cpp common/src/RefValJS_PTP.cpp common/src/RefValJS_PTP_Trajectory.cpp common/src/TimeStamp.cpp)
+add_executable(${PROJECT_NAME} common/src/RefValJS_PTP.cpp common/src/RefValJS_PTP_Trajectory.cpp common/src/TimeStamp.cpp common/src/genericArmCtrl.cpp ros/src/${PROJECT_NAME}.cpp)
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 

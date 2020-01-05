@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(cob_cartesian_controller)
 
-find_package(catkin REQUIRED COMPONENTS actionlib_msgs actionlib cob_srvs geometry_msgs message_generation roscpp roslint std_msgs std_srvs tf visualization_msgs)
+find_package(catkin REQUIRED COMPONENTS actionlib actionlib_msgs cob_srvs geometry_msgs message_generation roscpp roslint std_msgs std_srvs tf visualization_msgs)
 
 find_package(Boost REQUIRED)
 
@@ -15,8 +15,8 @@ add_action_files(
 
 add_message_files(
   DIRECTORY msg
-  FILES MoveLin.msg
-        MoveCirc.msg
+  FILES MoveCirc.msg
+        MoveLin.msg
         Profile.msg
 )
 
@@ -25,7 +25,7 @@ generate_messages(
 )
 
 catkin_package(
-  CATKIN_DEPENDS actionlib_msgs actionlib cob_srvs geometry_msgs message_runtime roscpp std_msgs std_srvs tf visualization_msgs
+  CATKIN_DEPENDS actionlib actionlib_msgs cob_srvs geometry_msgs message_runtime roscpp std_msgs std_srvs tf visualization_msgs
   DEPENDS Boost
   INCLUDE_DIRS include
   LIBRARIES profile_generator trajectory_interpolator cartesian_controller cartesian_controller_utils
@@ -56,7 +56,7 @@ target_link_libraries(cartesian_controller_node cartesian_controller ${catkin_LI
 roslint_cpp()
 
 ### INSTALL ##
-install(TARGETS profile_generator trajectory_interpolator cartesian_controller cartesian_controller_utils cartesian_controller_node
+install(TARGETS cartesian_controller cartesian_controller_node cartesian_controller_utils profile_generator trajectory_interpolator
  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -66,9 +66,14 @@ install(DIRECTORY include/${PROJECT_NAME}/
  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
 
-install(PROGRAMS scripts/test_move_lin.py scripts/test_move_circ.py scripts/test_move_santa.py
-                 scripts/test_move_lin_interface.py scripts/test_move_circ_interface.py
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/scripts
+catkin_install_python(
+  PROGRAMS scripts/test_move_around_torus.py
+           scripts/test_move_circ_interface.py
+           scripts/test_move_circ.py
+           scripts/test_move_lin_interface.py
+           scripts/test_move_lin.py
+           scripts/test_move_santa.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
 install(DIRECTORY config launch
