@@ -5,23 +5,15 @@ find_package(catkin REQUIRED COMPONENTS cmake_modules geometry_msgs kdl_parser r
 
 find_package(Boost REQUIRED COMPONENTS thread)
 
-find_package(Eigen3)
-if(NOT EIGEN3_FOUND)
-  # Fallback to cmake_modules
-  find_package(cmake_modules REQUIRED)
-  find_package(Eigen REQUIRED)
-  set(EIGEN3_INCLUDE_DIRS ${EIGEN_INCLUDE_DIRS})
-  set(EIGEN3_LIBRARIES ${EIGEN_LIBRARIES})  # Not strictly necessary as Eigen is head only
-  set(EIGEN3_DEFINITIONS ${EIGEN_DEFINITIONS})
-  # Possibly map additional variables to the EIGEN3_ prefix.
-else()
-  set(EIGEN3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
-endif()
+find_package(Eigen3 REQUIRED)
+set(EIGEN3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
 add_definitions(${EIGEN3_DEFINITIONS})
 
 find_package(TinyXML REQUIRED)
 
-catkin_package()
+catkin_package(
+  CATKIN_DEPENDS geometry_msgs sensor_msgs
+)
 
 ### BUILD ###
 include_directories(include ${catkin_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
@@ -36,13 +28,13 @@ target_link_libraries(output_recorder_node output_recorder ${catkin_LIBRARIES})
 roslint_cpp()
 
 ### INSTALL ###
-install(TARGETS output_recorder_node
+install(TARGETS output_recorder output_recorder_node
  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-install(PROGRAMS scripts/input_series_twist.py
+catkin_install_python(PROGRAMS scripts/input_series_twist.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}/scripts
 )
 
