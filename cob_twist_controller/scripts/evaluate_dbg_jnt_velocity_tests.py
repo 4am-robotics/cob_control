@@ -105,16 +105,16 @@ def evaluateFiles(basedir, testdir):
                 testResults.append((file, file.replace('_new_', '_old_'), ))
 
         if len(files) != len(testResults) * 2:
-            print('<<<< WARN >>>>: Could not process all files in dir %s. Expected %d files but found %d' % (dirs, len(testResults) * 2, len(files)))
+            print(('<<<< WARN >>>>: Could not process all files in dir %s. Expected %d files but found %d' % (dirs, len(testResults) * 2, len(files))))
 
     for testResultNewOld in testResults:
         filepathNew = os.path.join(baseTestDir, testResultNewOld[0])
         filepathOld = os.path.join(baseTestDir, testResultNewOld[1])
         if not os.path.exists(filepathNew):
-            print('Could not find path "%s" -> Trying next files for comparison' % filepathNew)
+            print(('Could not find path "%s" -> Trying next files for comparison' % filepathNew))
             continue
         if not os.path.exists(filepathOld):
-            print('Could not find path "%s" -> Trying next files for comparison' % filepathOld)
+            print(('Could not find path "%s" -> Trying next files for comparison' % filepathOld))
             continue
 
         doEvaluation(filepathNew, filepathOld, testDir + '_' + testResultNewOld[0].replace('_new_', ''))
@@ -125,5 +125,5 @@ if __name__ == '__main__':
     for root, dirs, files in os.walk(baseDir):
         for testDir in dirs:
             if True: # 'manip_none' in testDir:
-                print('Evaluating files in dir %s' % testDir)
+                print(('Evaluating files in dir %s' % testDir))
                 evaluateFiles(baseDir, testDir)

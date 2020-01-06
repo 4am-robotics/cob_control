@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from builtins import str
+from builtins import object
 import copy
 import math
 
@@ -10,7 +12,7 @@ from geometry_msgs.msg import Twist, Transform, TransformStamped
 from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Quaternion
 from nav_msgs.msg import Odometry
 
-class EmulationBase():
+class EmulationBase(object):
     def __init__(self):
         # this node emulates a base including localization
         #

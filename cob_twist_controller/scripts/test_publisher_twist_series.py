@@ -88,7 +88,7 @@ def twistPub():
     pub.publish(twist_msg)
     r.sleep()
 
-  print "done"
+  print("done")
 
 if __name__ == '__main__':
   try:

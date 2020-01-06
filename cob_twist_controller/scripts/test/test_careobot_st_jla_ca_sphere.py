@@ -84,7 +84,7 @@ if __name__ == "__main__":
         base_dir = rospy.get_param('~base_dir')
     else:
         rospy.logwarn('Could not find parameter ~base_dir.')
-        base_dir = raw_input("Enter name of bagfile base_dir: ")
+        base_dir = input("Enter name of bagfile base_dir: ")
 
     if rospy.has_param('chain_tip_link'):
         chain_tip_link = rospy.get_param('chain_tip_link')
