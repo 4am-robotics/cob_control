@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+from __future__ import division
+from builtins import range
+from builtins import object
+from past.utils import old_div
 import copy
 
 import rospy
@@ -8,7 +12,7 @@ from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryR
 from sensor_msgs.msg import JointState
 from std_srvs.srv import Trigger, TriggerResponse
 
-class EmulationFollowJointTrajectory():
+class EmulationFollowJointTrajectory(object):
     def __init__(self):
         # TODO
         # - speed factor
@@ -108,7 +112,7 @@ class EmulationFollowJointTrajectory():
                     t0 = latest_time_from_start - time_since_start_of_previous_point
                     # compute the interpolation weight as a fraction of passed time and upper bound time in this local segment
                     if t1 != 0.0:
-                        alpha = t0 / t1
+                        alpha = old_div(t0, t1)
                     else:
                         alpha = 0.0
 

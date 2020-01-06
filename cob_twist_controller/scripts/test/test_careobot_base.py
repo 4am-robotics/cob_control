@@ -80,9 +80,9 @@ def init_dyn_recfg():
 def init_pos():
     # Trick to move base back to odom_combined
     switch_controller = rospy.ServiceProxy('/base/controller_manager/switch_controller', SwitchController)
-    print(switch_controller(None, ['odometry_controller', ], 1))  # switch off
+    print((switch_controller(None, ['odometry_controller', ], 1)))  # switch off
     time.sleep(1.0)
-    print(switch_controller(['odometry_controller', ], None, 1))  # switch on
+    print((switch_controller(['odometry_controller', ], None, 1)))  # switch on
     time.sleep(1.0)
 
     sss = simple_script_server()

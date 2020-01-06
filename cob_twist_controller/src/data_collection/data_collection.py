@@ -35,9 +35,7 @@ QUOTE = '"'
 DATE_TIME_FMT = '%d.%m.%Y %H:%M:%S.%f'  # should not consist the DEL char!!!
 
 
-class DataKraken(object):
-
-    __metaclass__ = abc.ABCMeta
+class DataKraken(object, metaclass=abc.ABCMeta):
 
     def __init__(self, file_path, topic_name, data_class):
         self.file_path_ = file_path
@@ -300,7 +298,7 @@ class FrameTrackingDataKraken(DataKraken):
             (trans_root_tip, quat_root_tip) = self.tf_.lookupTransform(self.root_frame_, self.chain_tip_link_, rospy.Time(0))
             rpy_root_tip = tf.transformations.euler_from_quaternion(quat_root_tip)
         except Exception as e:
-            print('Exception chain_tip_link_: ' + str(e))
+            print(('Exception chain_tip_link_: ' + str(e)))
 
         trans_root_track, quat_root_track, rpy_root_track = None, None, None
         try:
@@ -310,7 +308,7 @@ class FrameTrackingDataKraken(DataKraken):
             rpy_root_track = tf.transformations.euler_from_quaternion(quat_root_track)
 
         except Exception as e:
-            print('Exception tracking_frame_: ' + str(e))
+            print(('Exception tracking_frame_: ' + str(e)))
 
 
         if rpy_root_tip is not None and rpy_root_track is not None:

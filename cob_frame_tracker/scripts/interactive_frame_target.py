@@ -64,14 +64,14 @@ class InteractiveFrameTarget:
             self.movable_rot = True
 
         self.tracking = False
-        print "Waiting for StartTrackingServer..."
+        print("Waiting for StartTrackingServer...")
         rospy.wait_for_service('frame_tracker/start_tracking')
-        print "...done!"
+        print("...done!")
         self.start_tracking_client = rospy.ServiceProxy('frame_tracker/start_tracking', SetString)
 
-        print "Waiting for StopTrackingServer..."
+        print("Waiting for StopTrackingServer...")
         rospy.wait_for_service('frame_tracker/stop_tracking')
-        print "...done!"
+        print("...done!")
         self.stop_tracking_client = rospy.ServiceProxy('frame_tracker/stop_tracking', Empty)
 
         self.target_pose = PoseStamped()
@@ -198,20 +198,20 @@ class InteractiveFrameTarget:
         #print "start_tracking pressed"
         try:
             res = self.start_tracking_client(data=self.tracking_frame)
-            print res
+            print(res)
             self.tracking = True
-        except rospy.ServiceException, e:
-            print "Service call failed: %s"%e
+        except rospy.ServiceException as e:
+            print("Service call failed: %s"%e)
             self.tracking = False
 
     def stop_tracking(self, fb):
         #print "stop_tracking pressed"
         try:
             res = self.stop_tracking_client()
-            print res
+            print(res)
             self.tracking = False
-        except rospy.ServiceException, e:
-            print "Service call failed: %s"%e
+        except rospy.ServiceException as e:
+            print("Service call failed: %s"%e)
             self.tracking = False
 
     def reset_tracking(self, fb):
@@ -259,8 +259,8 @@ class InteractiveFrameTarget:
         self.target_pose.pose = fb.pose
         self.ia_server.applyChanges()
 
-     def run(self):
-        if(not self.tracking):
+    def run(self):
+        if not self.tracking:
             self.update_marker()
 
         self.br.sendTransform(
