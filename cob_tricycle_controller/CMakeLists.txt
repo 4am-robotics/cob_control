@@ -32,18 +32,18 @@ catkin_package(
     tf
   DEPENDS Boost
   INCLUDE_DIRS include
-  LIBRARIES cob_tricycle_controller
+  LIBRARIES ${PROJECT_NAME}
 )
 
 ### BUILD ###
 include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
-add_library(cob_tricycle_controller src/odom_plugin.cpp src/control_plugin.cpp)
-add_dependencies(cob_tricycle_controller ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
-target_link_libraries(cob_tricycle_controller ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+add_library(${PROJECT_NAME} src/control_plugin.cpp src/odom_plugin.cpp)
+add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 ### INSTALL ###
-install(TARGETS cob_tricycle_controller
+install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

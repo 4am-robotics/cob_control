@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   nav_msgs
   roscpp
   tf
+  tf2_ros
   visualization_msgs
 )
 
@@ -23,12 +24,14 @@ endif()
 ### Dynamic reconfigure ###
 generate_dynamic_reconfigure_options(cfg/CollisionVelocityFilter.cfg)
 
-catkin_package()
+catkin_package(
+  CATKIN_DEPENDS geometry_msgs nav_msgs visualization_msgs
+)
 
 ### BUILD ###
 include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
-add_executable(collision_velocity_filter src/cob_collision_velocity_filter.cpp src/velocity_limited_marker.cpp)
+add_executable(collision_velocity_filter src/${PROJECT_NAME}.cpp src/velocity_limited_marker.cpp)
 add_dependencies(collision_velocity_filter ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(collision_velocity_filter ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
