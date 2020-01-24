@@ -4,6 +4,7 @@ project(cob_mecanum_controller)
 add_compile_options(-std=c++14)
 
 find_package(catkin REQUIRED
+  COMPONENTS
   geometry_msgs
   nav_msgs
   roscpp
