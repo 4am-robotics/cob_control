@@ -17,6 +17,7 @@
 
 import time
 import rospy
+import signal
 import subprocess
 
 from controller_manager_msgs.srv import SwitchController
@@ -80,9 +81,9 @@ def init_dyn_recfg():
 def init_pos():
     # Trick to move base back to odom_combined
     switch_controller = rospy.ServiceProxy('/base/controller_manager/switch_controller', SwitchController)
-    print((switch_controller(None, ['odometry_controller', ], 1)))  # switch off
+    print(switch_controller(None, ['odometry_controller', ], 1))  # switch off
     time.sleep(1.0)
-    print((switch_controller(['odometry_controller', ], None, 1)))  # switch on
+    print(switch_controller(['odometry_controller', ], None, 1))  # switch on
     time.sleep(1.0)
 
     sss = simple_script_server()
@@ -159,8 +160,6 @@ if __name__ == "__main__":
             # save data
             for data_kraken in data_krakens:
                 data_kraken.writeAllData()
-        except rospy.ROSInterruptException as e:
-            rospy.logwarn('ROSInterruptException: ' + str(e))
         except:
             rospy.logerr('Else exception.')
         else:
@@ -168,9 +167,9 @@ if __name__ == "__main__":
                 data_kraken.writeAllData()
 
         try:
-            # pid.send_signal(subprocess.signal.SIGINT)
+            # pid.send_signal(signal.SIGINT)
             pid.kill()
-            pid.send_signal(subprocess.signal.SIGINT)
+            pid.send_signal(signal.SIGINT)
         except Exception as e:
             rospy.logerr('Failed to stop rosbag play due to exception: ' + str(e))
     else:

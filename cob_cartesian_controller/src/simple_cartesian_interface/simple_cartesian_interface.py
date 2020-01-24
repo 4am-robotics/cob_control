@@ -19,7 +19,7 @@ import rospy
 import threading
 import actionlib
 
-from tf.transformations import *
+import tf
 from geometry_msgs.msg import Pose
 from cob_cartesian_controller.msg import CartesianControllerAction, CartesianControllerGoal
 from cob_cartesian_controller.msg import Profile
@@ -41,11 +41,11 @@ def move_lin(pose_goal, frame_id, profile):
     # print goal
 
     client.send_goal(goal)
-    print "goal sent"
+    print("goal sent")
     state = client.get_state()
     # print state
     client.wait_for_result()
-    print "result received"
+    print("result received")
     result = client.get_result()
     return (result.success, result.message)
 
@@ -68,11 +68,11 @@ def move_circ(pose_center, frame_id, start_angle, end_angle, radius, profile):
     # print goal
 
     client.send_goal(goal)
-    print "goal sent"
+    print("goal sent")
     state = client.get_state()
     # print state
     client.wait_for_result()
-    print "result received"
+    print("result received")
     result = client.get_result()
     return (result.success, result.message)
 
@@ -89,7 +89,6 @@ Generates a geometry_msgs.Pose from (x,y,z) and (r,p,y)
 def gen_pose(pos=[0,0,0], rpy=[0,0,0]):
     pose = Pose()
     pose.position.x, pose.position.y, pose.position.z = pos
-    pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w = quaternion_from_euler(*rpy)
-
+    pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w = tf.transformations.quaternion_from_euler(*rpy)
 
     return pose
