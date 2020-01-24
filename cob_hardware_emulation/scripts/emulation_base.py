@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 
-from builtins import str
-from builtins import object
 import copy
 import math
 
 import rospy
-import tf_conversions
+import tf
 import tf2_ros
 from geometry_msgs.msg import Twist, Transform, TransformStamped
 from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Quaternion
@@ -59,7 +57,7 @@ class EmulationBase(object):
         self.initial_pose = Transform()
         self.initial_pose.translation.x = initialpose[0]
         self.initial_pose.translation.y = initialpose[1]
-        quat = tf_conversions.transformations.quaternion_from_euler(0, 0, initialpose[2])
+        quat = tf.transformations.quaternion_from_euler(0, 0, initialpose[2])
         self.initial_pose.rotation = Quaternion(*quat)
 
         rospy.Timer(rospy.Duration(0.1), self.timer_cb)
@@ -71,12 +69,12 @@ class EmulationBase(object):
         self.initial_pose.translation.y = msg.pose.pose.position.y
         self.initial_pose.translation.z = msg.pose.pose.position.z
 
-        yaw1 = tf_conversions.transformations.euler_from_quaternion(
+        yaw1 = tf.transformations.euler_from_quaternion(
             [msg.pose.pose.orientation.x,
             msg.pose.pose.orientation.y,
             msg.pose.pose.orientation.z,
             msg.pose.pose.orientation.w])[2]
-        yaw2 = tf_conversions.transformations.euler_from_quaternion(
+        yaw2 = tf.transformations.euler_from_quaternion(
             [self.odom.pose.pose.orientation.x,
             self.odom.pose.pose.orientation.y,
             self.odom.pose.pose.orientation.z,
@@ -103,8 +101,8 @@ class EmulationBase(object):
         # we assume we're not moving any more if there is no new twist after 0.1 sec
         if time_since_last_twist < rospy.Duration(0.1):
             new_pose = copy.deepcopy(self.odom.pose.pose)
-            yaw = tf_conversions.transformations.euler_from_quaternion([self.odom.pose.pose.orientation.x, self.odom.pose.pose.orientation.y, self.odom.pose.pose.orientation.z, self.odom.pose.pose.orientation.w])[2] + self.twist.angular.z * dt.to_sec()
-            quat = tf_conversions.transformations.quaternion_from_euler(0, 0, yaw)
+            yaw = tf.transformations.euler_from_quaternion([self.odom.pose.pose.orientation.x, self.odom.pose.pose.orientation.y, self.odom.pose.pose.orientation.z, self.odom.pose.pose.orientation.w])[2] + self.twist.angular.z * dt.to_sec()
+            quat = tf.transformations.quaternion_from_euler(0, 0, yaw)
             new_pose.orientation.x = quat[0]
             new_pose.orientation.y = quat[1]
             new_pose.orientation.z = quat[2]
