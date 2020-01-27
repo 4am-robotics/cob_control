@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-#include "cob_mecanum_controller/mecanum_controller.h"
+#include <cob_mecanum_controller/mecanum_controller.h>
+
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
 #include <sensor_msgs/JointState.h>

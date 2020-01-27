@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "cob_mecanum_controller/mecanum_controller.h"
+#include <cob_mecanum_controller/mecanum_controller.h>
 
 // Maths from https://research.ijcaonline.org/volume113/number3/pxc3901586.pdf
 
