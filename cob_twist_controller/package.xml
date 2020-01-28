@@ -34,6 +34,7 @@
   <depend>nav_msgs</depend>
   <depend>orocos_kdl</depend>
   <depend>pluginlib</depend>
+  <depend>python-six</depend>
   <depend>roscpp</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
