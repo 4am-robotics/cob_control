@@ -51,39 +51,20 @@ public:
       throw std::runtime_error("At least one parameter is missing.");
     }
 
-    std::string static_frame = "map";
-    pnh.getParam("static_frame", static_frame);
-    std::string odom_frame = "map";
-    pnh.getParam("odom_frame", odom_frame);
+    static_frame_ = "map";
+    pnh.getParam("static_frame", static_frame_);
+    odom_frame_ = "map";
+    pnh.getParam("odom_frame", odom_frame_);
 
     controller_ = std::make_shared<cob_mecanum_controller::MecanumController>(lx, ly, r);
 
     odom_pub_ = nh_.advertise<nav_msgs::Odometry>("odom", 10, false);
     joint_cmd_pub_ = nh_.advertise<sensor_msgs::JointState>("wheel_command", 10, false);
 
-    twist_sub_ = nh_.subscribe<geometry_msgs::Twist>("cmd_vel", 1, [this](auto const& msg) {
-      Eigen::Vector3d twist;
-      twist << msg->linear.x, msg->linear.y, msg->angular.z;
-      auto wheel_velocities = controller_->twistToWheel(twist);
-      sensor_msgs::JointState joint_command;
-      joint_command.velocity = std::vector<double>(
-          wheel_velocities.data(), wheel_velocities.data() + wheel_velocities.rows() * wheel_velocities.cols());
-      joint_cmd_pub_.publish(joint_command);
-    });
+    twist_sub_ = nh_.subscribe<geometry_msgs::Twist>("cmd_vel", 1, &MecanumControllerNode::twistCallback, this);
 
     joint_state_sub_ =
-        nh_.subscribe<sensor_msgs::JointState>("wheel_state", 1, [this, static_frame, odom_frame](auto const& msg) {
-          Eigen::Vector4d wheel_velocities(msg->velocity.data());
-          auto twist = controller_->wheelToTwist(wheel_velocities);
-          nav_msgs::Odometry odom_msg;
-          odom_msg.header.frame_id = static_frame;
-          odom_msg.child_frame_id = odom_frame;
-
-          odom_msg.twist.twist.linear.x = twist.x();
-          odom_msg.twist.twist.linear.y = twist.y();
-          odom_msg.twist.twist.angular.z = twist.z();
-          odom_pub_.publish(odom_msg);
-        });
+        nh_.subscribe<sensor_msgs::JointState>("wheel_state", 1, &MecanumControllerNode::jointStateCallback, this);
   }
 
 protected:
@@ -94,6 +75,34 @@ protected:
   ros::Publisher odom_pub_;
   ros::Publisher joint_cmd_pub_;
   std::shared_ptr<cob_mecanum_controller::MecanumController> controller_;
+
+  std::string static_frame_;
+  std::string odom_frame_;
+
+  void twistCallback(const geometry_msgs::Twist msg)
+  {
+    Eigen::Vector3d twist;
+    twist << msg.linear.x, msg.linear.y, msg.angular.z;
+    Eigen::Vector4d wheel_velocities = controller_->twistToWheel(twist);
+    sensor_msgs::JointState joint_command;
+    joint_command.velocity = std::vector<double>(
+        wheel_velocities.data(), wheel_velocities.data() + wheel_velocities.rows() * wheel_velocities.cols());
+    joint_cmd_pub_.publish(joint_command);
+  }
+
+  void jointStateCallback(const sensor_msgs::JointState msg)
+  {
+    Eigen::Vector4d wheel_velocities(msg.velocity.data());
+    Eigen::Vector3d twist = controller_->wheelToTwist(wheel_velocities);
+    nav_msgs::Odometry odom_msg;
+    odom_msg.header.frame_id = static_frame_;
+    odom_msg.child_frame_id = odom_frame_;
+
+    odom_msg.twist.twist.linear.x = twist.x();
+    odom_msg.twist.twist.linear.y = twist.y();
+    odom_msg.twist.twist.angular.z = twist.z();
+    odom_pub_.publish(odom_msg);
+  }
 };
 
 int main(int argc, char* argv[])
