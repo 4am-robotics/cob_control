@@ -19,9 +19,8 @@ catkin_package(
    nav_msgs
    roscpp
    sensor_msgs
-
-
 )
+
 include_directories(
  include
  ${catkin_INCLUDE_DIRS}
@@ -38,9 +37,6 @@ target_link_libraries(${PROJECT_NAME}_node
   ${PROJECT_NAME}
   ${catkin_LIBRARIES}
 )
-
-
-
 
 install(TARGETS ${PROJECT_NAME}_node
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
