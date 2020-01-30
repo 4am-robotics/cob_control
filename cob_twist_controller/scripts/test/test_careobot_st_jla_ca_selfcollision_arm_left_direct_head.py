@@ -20,7 +20,7 @@ import rospy
 import signal
 import subprocess
 
-from simple_script_server.simple_script_server import simple_script_server
+from simple_script_server import simple_script_server  ## pylint: disable=no-name-in-module
 import twist_controller_config as tcc
 from dynamic_reconfigure.client import Client
 
