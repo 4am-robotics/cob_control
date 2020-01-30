@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2020 Fraunhofer Institute for Manufacturing Engineering and Automation (IPA)
  *
