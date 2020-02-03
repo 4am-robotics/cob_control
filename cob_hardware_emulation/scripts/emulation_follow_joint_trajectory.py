@@ -8,7 +8,7 @@ from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryR
 from sensor_msgs.msg import JointState
 from std_srvs.srv import Trigger, TriggerResponse
 
-class EmulationFollowJointTrajectory():
+class EmulationFollowJointTrajectory(object):
     def __init__(self):
         # TODO
         # - speed factor

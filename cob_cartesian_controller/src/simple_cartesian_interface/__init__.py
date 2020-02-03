@@ -1,1 +1,1 @@
-from simple_cartesian_interface import *
+from .simple_cartesian_interface import *

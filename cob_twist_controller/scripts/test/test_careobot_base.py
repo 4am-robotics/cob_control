@@ -17,11 +17,12 @@
 
 import time
 import rospy
+import signal
 import subprocess
 
 from controller_manager_msgs.srv import SwitchController
 
-from simple_script_server.simple_script_server import simple_script_server
+from simple_script_server import simple_script_server  ## pylint: disable=no-name-in-module
 import twist_controller_config as tcc
 from dynamic_reconfigure.client import Client
 
@@ -159,8 +160,6 @@ if __name__ == "__main__":
             # save data
             for data_kraken in data_krakens:
                 data_kraken.writeAllData()
-        except rospy.ROSInterruptException as e:
-            rospy.logwarn('ROSInterruptException: ' + str(e))
         except:
             rospy.logerr('Else exception.')
         else:
@@ -168,9 +167,9 @@ if __name__ == "__main__":
                 data_kraken.writeAllData()
 
         try:
-            # pid.send_signal(subprocess.signal.SIGINT)
+            # pid.send_signal(signal.SIGINT)
             pid.kill()
-            pid.send_signal(subprocess.signal.SIGINT)
+            pid.send_signal(signal.SIGINT)
         except Exception as e:
             rospy.logerr('Failed to stop rosbag play due to exception: ' + str(e))
     else:
