@@ -17,9 +17,10 @@
 
 import time
 import rospy
+import signal
 import subprocess
 
-from simple_script_server.simple_script_server import simple_script_server
+from simple_script_server import simple_script_server  ## pylint: disable=no-name-in-module
 import twist_controller_config as tcc
 from dynamic_reconfigure.client import Client
 
@@ -130,10 +131,10 @@ if __name__ == "__main__":
 
         if traj_marker_pid.poll() is not None:
             rospy.logerr("traj_marker_pid returned code. Aborting ...")
-            pid.send_signal(subprocess.signal.SIGINT)
+            pid.send_signal(signal.SIGINT)
             pid.kill()
-            # traj_marker_pid.send_signal(subprocess.signal.SIGINT)
-            traj_marker_pid.send_signal(subprocess.signal.CTRL_C_EVENT)
+            # traj_marker_pid.send_signal(signal.SIGINT)
+            traj_marker_pid.send_signal(signal.SIGTERM)
             traj_marker_pid.kill()
             exit()
 
@@ -152,8 +153,6 @@ if __name__ == "__main__":
             # save data
             for data_kraken in data_krakens:
                 data_kraken.writeAllData()
-        except rospy.ROSInterruptException as e:
-            rospy.logwarn('ROSInterruptException: ' + str(e))
         except:
             rospy.logerr('Else exception.')
         else:
@@ -161,14 +160,14 @@ if __name__ == "__main__":
                 data_kraken.writeAllData()
 
         try:
-            # pid.send_signal(subprocess.signal.SIGINT)
+            # pid.send_signal(signal.SIGINT)
             pid.kill()
-            pid.send_signal(subprocess.signal.SIGINT)
+            pid.send_signal(signal.SIGINT)
         except Exception as e:
             rospy.logerr('Failed to stop rosbag play due to exception: ' + str(e))
         try:
             traj_marker_pid.kill()
-            traj_marker_pid.send_signal(subprocess.signal.SIGINT)
+            traj_marker_pid.send_signal(signal.SIGINT)
         except Exception as e:
             rospy.logerr('Failed to stop debug_trajectory_marker_node due to exception: ' + str(e))
     else:
