@@ -43,6 +43,10 @@ class EmulationBase(object):
         self.odom.pose.pose.orientation.w = 1 # initialize orientation with a valid quaternion
 
 
+        self.time_factor = rospy.get_param('/emulation_time_factor', 1.0)
+        if not self.time_factor > 0.0:
+            rospy.logerr("emulation_time_factor must be >0.0, but is {}. exiting...".format(self.time_factor))
+            exit(-1)
 
         initialpose = rospy.get_param("~initialpose", None)
         if type(initialpose) == list:
@@ -88,7 +92,18 @@ class EmulationBase(object):
         self.odom.pose.pose.orientation.w = 1
 
     def twist_callback(self, msg):
+        # adjust goal to emulation_time_factor
         self.twist = msg
+        #self.twist.linear.x*=self.time_factor
+        #self.twist.linear.y*=self.time_factor
+        #self.twist.linear.z*=self.time_factor
+        #self.twist.angular.x*=self.time_factor
+        #self.twist.angular.y*=self.time_factor
+        #self.twist.angular.z*=self.time_factor
+        #rospy.logerr("time_factor: {}".format(self.time_factor))
+        #rospy.logwarn("msg: {}".format(msg))
+        #rospy.logwarn("mod: {}".format(self.twist))
+
         self.timestamp_last_twist = rospy.Time.now()
 
     def timer_cb(self, event):
