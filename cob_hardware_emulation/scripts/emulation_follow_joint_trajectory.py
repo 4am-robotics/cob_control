@@ -15,6 +15,10 @@ class EmulationFollowJointTrajectory(object):
 
         params = rospy.get_param('~')
         self.joint_names = params['joint_names']
+        self.time_factor = rospy.get_param('/emulation_time_factor', 1.0)
+        if not self.time_factor > 0.0:
+            rospy.logerr("emulation_time_factor must be >0.0, but is {}. exiting...".format(self.time_factor))
+            exit(-1)
 
         action_name = "joint_trajectory_controller/follow_joint_trajectory"
 
@@ -40,9 +44,16 @@ class EmulationFollowJointTrajectory(object):
         return TriggerResponse(
             success = True,
             message = "Succesfully reset joint states"
-        )           
-        
+        )
+
     def fjta_cb(self, goal):
+        # adjust goal to emulation_time_factor
+        # fixed frequency to control the granularity of the sampling resolution
+        sample_rate_hz = 10*self.time_factor
+        for i, point in enumerate(goal.trajectory.points):
+            goal.trajectory.points[i].velocities = [v*self.time_factor for v in goal.trajectory.points[i].velocities]
+            goal.trajectory.points[i].time_from_start = goal.trajectory.points[i].time_from_start/self.time_factor
+
         joint_names = copy.deepcopy(self.joint_names)
         joint_names.sort()
         fjta_joint_names = copy.deepcopy(goal.trajectory.joint_names)
@@ -76,12 +87,10 @@ class EmulationFollowJointTrajectory(object):
                 # linear interpolation of the given trajectory samples is used
                 # to compute smooth intermediate joints positions at a fixed resolution
 
-                # fixed frequency to control the granularity of the sampling resolution
-                sample_rate_hz = 10
                 # duration from one sample to the next
                 sample_rate_dur_secs = (1.0 / float(sample_rate_hz))
                 # rospy loop rate
-                sample_rate = rospy.Rate(sample_rate_hz) # 10Hz for now
+                sample_rate = rospy.Rate(sample_rate_hz)
                 # upper bound of local duration segment
                 t1 = point.time_from_start - time_since_start_of_previous_point
                 # compute velocity as the fraction of distance from prev point to next point in trajectory
@@ -126,11 +135,11 @@ class EmulationFollowJointTrajectory(object):
                 self.joint_states.position = point.positions
                 # set lower time bound for the next point
                 time_since_start_of_previous_point = latest_time_from_start
-            
+
             # set joint velocities to zero after the robot stopped moving (reaching final point of trajectory)
-            self.joint_states.velocity = [0.0] * len(self.joint_states.velocity)    
+            self.joint_states.velocity = [0.0] * len(self.joint_states.velocity)
             self.joint_states.effort   = [0.0] * len(self.joint_states.effort)
-            
+
             self.as_fjta.set_succeeded(FollowJointTrajectoryResult())
         else:
             rospy.logerr("received unexpected joint names in goal")
