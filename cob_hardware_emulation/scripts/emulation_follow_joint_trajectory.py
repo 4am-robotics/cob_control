@@ -18,8 +18,6 @@ class EmulationFollowJointTrajectory(object):
 
         action_name = "joint_trajectory_controller/follow_joint_trajectory"
 
-        self.as_fjta = actionlib.SimpleActionServer(action_name, FollowJointTrajectoryAction, execute_cb=self.fjta_cb, auto_start = False)
-        self.pub_joint_states = rospy.Publisher("joint_states", JointState, queue_size=1)
         js = JointState()
         js.name = copy.deepcopy(self.joint_names)
         js.position = [0]*len(js.name)
@@ -27,12 +25,12 @@ class EmulationFollowJointTrajectory(object):
         js.effort = [0]*len(js.name)
         self.joint_states = js
 
+        self.pub_joint_states = rospy.Publisher("joint_states", JointState, queue_size=1)
+        self.service_reset_fjta = rospy.Service("reset_joint_states", Trigger, self.reset_cb)
+        self.as_fjta = actionlib.SimpleActionServer(action_name, FollowJointTrajectoryAction, execute_cb=self.fjta_cb, auto_start = False)
         self.as_fjta.start()
 
-        # reset service
-        self.service_reset_fjta = rospy.Service("reset_joint_states", Trigger, self.reset_cb)
-
-        rospy.loginfo("Emulation running for action %s of type FollowJointTrajectoryAction"%(action_name))
+        rospy.loginfo("Emulation running for action {} of type FollowJointTrajectoryAction".format(action_name))
 
     def reset_cb(self, req):
         self.joint_states.position = [0.0] * len(self.joint_states.position)
@@ -50,7 +48,7 @@ class EmulationFollowJointTrajectory(object):
         fjta_joint_names = copy.deepcopy(goal.trajectory.joint_names)
         fjta_joint_names.sort()
         if joint_names == fjta_joint_names:
-            rospy.loginfo("got a new joint trajectory goal for %s", joint_names)
+            rospy.loginfo("got a new joint trajectory goal for {}".format(joint_names))
             # sort goal to fit joint_names order in joint_states
 
             goal_sorted = copy.deepcopy(goal)
