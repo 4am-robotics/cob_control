@@ -24,11 +24,12 @@ from geometry_msgs.msg import Pose
 from cob_cartesian_controller.msg import CartesianControllerAction, CartesianControllerGoal
 from cob_cartesian_controller.msg import Profile
 
-from simple_script_server import simple_script_server  ## pylint: disable=no-name-in-module
+from simple_script_server.simple_script_server import simple_script_server
 
 import simple_cartesian_interface as sci
 import twist_controller_config as tcc
 
+from tf.transformations import *
 '''
 Test precondition!
 

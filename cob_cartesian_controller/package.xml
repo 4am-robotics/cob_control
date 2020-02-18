@@ -29,7 +29,6 @@
   <depend>visualization_msgs</depend>
 
   <exec_depend>cob_frame_tracker</exec_depend>
-  <exec_depend>cob_script_server</exec_depend>
   <exec_depend>cob_twist_controller</exec_depend>
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>rospy</exec_depend>

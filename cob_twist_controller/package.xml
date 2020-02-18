@@ -34,7 +34,6 @@
   <depend>nav_msgs</depend>
   <depend>orocos_kdl</depend>
   <depend>pluginlib</depend>
-  <depend>python-six</depend>
   <depend>roscpp</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
@@ -45,8 +44,6 @@
   <depend>visualization_msgs</depend>
 
   <exec_depend>cob_frame_tracker</exec_depend>
-  <exec_depend>cob_script_server</exec_depend>
-  <exec_depend>python-matplotlib</exec_depend>
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>rospy</exec_depend>
   <exec_depend>rviz</exec_depend>

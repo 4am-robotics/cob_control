@@ -52,6 +52,8 @@ if __name__=="__main__":
             # save data
             for data_kraken in data_krakens:
                 data_kraken.writeAllData()
+        except rospy.ROSInterruptException as e:
+            rospy.logwarn('ROSInterruptException: ' + str(e))
         except:
             rospy.logerr('Else exception.')
         else:
