@@ -7,7 +7,7 @@ from rosgraph_msgs.msg import Clock
 class EmulationClock(object):
     def __init__(self):
         self.t = time.time()
-        self.dt = 0.01
+        self.dt = rospy.get_param('/emulation_dt', 0.01)
         self.time_factor = rospy.get_param('/emulation_time_factor', 1.0)
         if not self.time_factor > 0.0:
             rospy.logerr("emulation_time_factor must be >0.0, but is {}. exiting...".format(self.time_factor))
