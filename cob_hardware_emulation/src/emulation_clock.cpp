@@ -10,49 +10,52 @@
 class EmulationClock
 {
 public:
-    EmulationClock(boost::asio::io_service& io, double dt, double time_factor):
-        dt_(dt),
-        time_factor_(time_factor),
-        timer_(boost::asio::deadline_timer(io, boost::posix_time::seconds(1/dt)))
+    EmulationClock(boost::asio::io_service& io, int dt_ms, double time_factor)
+        : dt_ms_(dt_ms),
+          time_factor_(time_factor),
+          timer_(io, boost::posix_time::milliseconds(dt_ms))
     {
         t_ = (double)std::time(NULL);
         pub_ = nh_.advertise<rosgraph_msgs::Clock>("/clock", 1);
-        //timer_ = nh_.createTimer(ros::Duration(dt_), &EmulationClock::timer_cb, this);
         timer_.async_wait(boost::bind(&EmulationClock::timer_cb, this));
     }
 
-    //void timer_cb(const ros::TimerEvent& event)
-    void timer_cb(const boost::system::error_code& /*e*/)
+    void timer_cb()
     {
-        t_ += dt_*time_factor_;
+        t_ += time_factor_*dt_ms_/1000;
+        ROS_DEBUG_STREAM("WALL: "<<(double)std::time(NULL)<<"; ROS: "<<t_<<"; dt_ms: "<<dt_ms_<<"; time_factor: "<<time_factor_);
         rosgraph_msgs::Clock msg;
         msg.clock = ros::Time(t_);
         pub_.publish(msg);
 
-        timer_.expires_at(timer_.expires_at() + boost::posix_time::seconds(1/dt_));
+        timer_.expires_at(timer_.expires_at() + boost::posix_time::milliseconds(dt_ms_));
         timer_.async_wait(boost::bind(&EmulationClock::timer_cb, this));
     }
 
-private:
     ros::NodeHandle nh_;
     ros::Publisher pub_;
-    //ros::Timer timer_;
-    boost::asio::deadline_timer timer_;
-    double t_;
-    double dt_;
+
+    int dt_ms_;
     double time_factor_;
+    double t_;
+
+private:
+    boost::asio::deadline_timer timer_;
 };
 
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "emulation_clock");
     ros::NodeHandle nh;
-    double dt;
+
+    int dt_ms;
     double time_factor;
-    nh.param<double>("/emulation_dt", dt, 0.01);
+    nh.param<int>("/emulation_dt_ms", dt_ms, 10);
     nh.param<double>("/emulation_time_factor", time_factor, 1.0);
 
     boost::asio::io_service io;
-    EmulationClock ec(io, dt, time_factor);
+    EmulationClock ec(io, dt_ms, time_factor);
     io.run();
+
+    return 0;
 }
