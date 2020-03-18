@@ -1,1 +1,1 @@
-from data_collection import *
+from .data_collection import *

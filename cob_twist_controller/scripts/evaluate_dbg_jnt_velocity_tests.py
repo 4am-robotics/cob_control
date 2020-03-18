@@ -16,7 +16,7 @@
 
 
 import os
-from pylab import *
+from pylab import figure
 
 EPS = 0.001
 

@@ -13,32 +13,30 @@ else()
   add_definitions(-std=c++0x)
 endif()
 
-catkin_package()
+catkin_package(
+  CATKIN_DEPENDS geometry_msgs nav_msgs std_msgs
+)
 
 ### BUILD ###
-include_directories(include include/cob_base_velocity_smoother ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
-add_executable(${PROJECT_NAME} src/cob_base_velocity_smoother.cpp)
+add_executable(${PROJECT_NAME} src/${PROJECT_NAME}.cpp)
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${BOOST_LIBRARIES})
 
-add_executable(velocity_smoother src/cob_base_velocity_smoother/velocity_smoother.cpp src/velocity_smoother_node.cpp)
+add_executable(velocity_smoother src/${PROJECT_NAME}/velocity_smoother.cpp src/velocity_smoother_node.cpp)
 add_dependencies(velocity_smoother ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(velocity_smoother ${catkin_LIBRARIES} ${BOOST_LIBRARIES})
 
 roslint_cpp()
 
 ### INSTALL ###
-install(TARGETS cob_base_velocity_smoother
+install(TARGETS ${PROJECT_NAME} velocity_smoother
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
-install(TARGETS velocity_smoother
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
+
 install(DIRECTORY config
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

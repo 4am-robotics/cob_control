@@ -2,6 +2,27 @@
 Changelog for package cob_hardware_emulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.10 (2020-03-18)
+-------------------
+* Merge pull request `#235 <https://github.com/ipa320/cob_control/issues/235>`_ from fmessmer/kinetic/emulation_clock_cpp
+  [kinetic] add emulation_clock publisher - cpp variant
+* fix boost timer + use dt_ms
+* use boost timer
+* configurable emulation dt
+* add emulation_clock publisher - cpp variant
+* Merge pull request `#232 <https://github.com/ipa320/cob_control/issues/232>`_ from fmessmer/emulation_custom_clock
+  add emulation_clock publisher
+* implement emulation_clock with timer callback
+* add emulation_clock publisher
+* Merge pull request `#227 <https://github.com/ipa320/cob_control/issues/227>`_ from LoyVanBeek/feature/python3_compatibility
+  [ci_updates] pylint + Python3 compatibility - kinetic
+* fix pylint errors
+* python3 compatibility via 2to3
+* Merge pull request `#225 <https://github.com/ipa320/cob_control/issues/225>`_ from fmessmer/ci_updates_kinetic
+  [travis] ci updates - kinetic
+* catkin_lint fixes
+* Contributors: Felix Messmer, Florian Weisshardt, Loy van Beek, fmessmer
+
 0.7.9 (2019-11-07)
 ------------------
 * add CHANGELOG for cob_hardware_emulation

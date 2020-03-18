@@ -2,6 +2,13 @@
 Changelog for package cob_base_controller_utils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.10 (2020-03-18)
+-------------------
+* Merge pull request `#225 <https://github.com/ipa320/cob_control/issues/225>`_ from fmessmer/ci_updates_kinetic
+  [travis] ci updates - kinetic
+* catkin_lint fixes
+* Contributors: Felix Messmer, fmessmer
+
 0.7.9 (2019-11-07)
 ------------------
 

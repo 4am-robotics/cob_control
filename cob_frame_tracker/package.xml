@@ -1,7 +1,7 @@
 <package format="2">
   <name>cob_frame_tracker</name>
-  <version>0.7.9</version>
-  <description>The cob_frame_tracker package</description>
+  <version>0.7.10</version>
+  <description>The cob_frame_tracker package contains nodes that publish Twist commands based on the distance to the desired tf frame target.</description>
 
   <maintainer email="felixmessmer@gmail.com">Felix Messmer</maintainer>
   <author email="fxm@ipa.fhg.de">Felix Messmer</author>
@@ -13,8 +13,8 @@
   <build_depend>message_generation</build_depend>
   <exec_depend>message_runtime</exec_depend>
 
-  <depend>actionlib_msgs</depend>
   <depend>actionlib</depend>
+  <depend>actionlib_msgs</depend>
   <depend>boost</depend>
   <depend>cob_srvs</depend>
   <depend>control_toolbox</depend>

@@ -15,7 +15,7 @@
  */
 
 
-#include <cob_base_velocity_smoother.h>
+#include <cob_base_velocity_smoother/cob_base_velocity_smoother.h>
 
 /****************************************************************
  * the ros navigation doesn't run very smoothly because acceleration is too high
