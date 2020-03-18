@@ -2,8 +2,8 @@
 Changelog for package cob_cartesian_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.8.10 (2020-03-18)
+-------------------
 * Merge pull request `#228 <https://github.com/ipa320/cob_control/issues/228>`_ from fmessmer/feature/python3_compatibility_melodic
   [ci_updates] pylint + Python3 compatibility - melodic
 * disable simple_script_server import error

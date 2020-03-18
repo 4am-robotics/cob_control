@@ -2,8 +2,8 @@
 Changelog for package cob_hardware_emulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.8.10 (2020-03-18)
+-------------------
 * Merge pull request `#236 <https://github.com/ipa320/cob_control/issues/236>`_ from fmessmer/melodic/emulation_clock_cpp
   [melodic] add emulation_clock publisher - cpp variant
 * fix boost timer + use dt_ms

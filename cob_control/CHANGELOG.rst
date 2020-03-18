@@ -2,8 +2,8 @@
 Changelog for package cob_control
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.8.10 (2020-03-18)
+-------------------
 * Merge pull request `#230 <https://github.com/ipa320/cob_control/issues/230>`_ from ipa-jba/feature/melodic/raw-mini
   [melodic] add a mecanum controller
 * add mecanum controller to cob_control
