@@ -2,6 +2,13 @@
 Changelog for package cob_omni_drive_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#226 <https://github.com/ipa320/cob_control/issues/226>`_ from fmessmer/ci_updates_melodic
+  [travis] ci updates - melodic
+* catkin_lint fixes
+* Contributors: Felix Messmer, fmessmer
+
 0.8.1 (2019-11-07)
 ------------------
 

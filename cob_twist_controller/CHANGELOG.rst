@@ -2,6 +2,20 @@
 Changelog for package cob_twist_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#228 <https://github.com/ipa320/cob_control/issues/228>`_ from fmessmer/feature/python3_compatibility_melodic
+  [ci_updates] pylint + Python3 compatibility - melodic
+* disable simple_script_server import error
+* Use six.moves.input for all uses of raw_input/input
+* fix modules
+* fix pylint errors
+* python3 compatibility via 2to3
+* Merge pull request `#226 <https://github.com/ipa320/cob_control/issues/226>`_ from fmessmer/ci_updates_melodic
+  [travis] ci updates - melodic
+* catkin_lint fixes
+* Contributors: Felix Messmer, Loy van Beek, fmessmer
+
 0.8.1 (2019-11-07)
 ------------------
 

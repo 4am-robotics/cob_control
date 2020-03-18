@@ -2,6 +2,17 @@
 Changelog for package cob_collision_velocity_filter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#226 <https://github.com/ipa320/cob_control/issues/226>`_ from fmessmer/ci_updates_melodic
+  [travis] ci updates - melodic
+* catkin_lint fixes
+* Merge pull request `#224 <https://github.com/ipa320/cob_control/issues/224>`_ from HannesBachter/fix/relevant_obstacle
+  [melodic] fix info of relevant_obstacles message
+* publish relevant_obstacles_grid in private namespace
+* fix info of relevant_obstacles message
+* Contributors: Felix Messmer, fmessmer, hyb
+
 0.8.1 (2019-11-07)
 ------------------
 

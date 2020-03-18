@@ -2,6 +2,28 @@
 Changelog for package cob_hardware_emulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#236 <https://github.com/ipa320/cob_control/issues/236>`_ from fmessmer/melodic/emulation_clock_cpp
+  [melodic] add emulation_clock publisher - cpp variant
+* fix boost timer + use dt_ms
+* use boost timer
+* configurable emulation dt
+* add emulation_clock publisher - cpp variant
+* Merge pull request `#234 <https://github.com/ipa320/cob_control/issues/234>`_ from fmessmer/emulation_custom_clock_melodic
+  [melodic] add emulation_clock publisher
+* implement emulation_clock with timer callback
+* add emulation_clock publisher
+* Merge pull request `#228 <https://github.com/ipa320/cob_control/issues/228>`_ from fmessmer/feature/python3_compatibility_melodic
+  [ci_updates] pylint + Python3 compatibility - melodic
+* fix pylint errors
+* python3 compatibility via 2to3
+* Merge pull request `#226 <https://github.com/ipa320/cob_control/issues/226>`_ from fmessmer/ci_updates_melodic
+  [travis] ci updates - melodic
+* catkin_lint fixes
+* remove outdated script
+* Contributors: Felix Messmer, Loy van Beek, fmessmer
+
 0.8.1 (2019-11-07)
 ------------------
 * Merge branch 'kinetic_dev' of github.com:ipa320/cob_control into melodic_dev
