@@ -5,11 +5,16 @@ add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED
   COMPONENTS
+  cmake_modules
   geometry_msgs
   nav_msgs
   roscpp
   sensor_msgs
 )
+
+find_package(Eigen3 REQUIRED)
+set(EIGEN3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
+add_definitions(${EIGEN3_DEFINITIONS})
 
 catkin_package(
   INCLUDE_DIRS include
@@ -24,6 +29,7 @@ catkin_package(
 include_directories(
  include
  ${catkin_INCLUDE_DIRS}
+ ${EIGEN3_INCLUDE_DIRS}
 )
 
 add_library(${PROJECT_NAME}

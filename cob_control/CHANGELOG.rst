@@ -2,6 +2,9 @@
 Changelog for package cob_control
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.11 (2020-03-21)
+-------------------
+
 0.7.10 (2020-03-18)
 -------------------
 * Merge pull request `#229 <https://github.com/ipa320/cob_control/issues/229>`_ from ipa-jba/feature/raw-mini
