@@ -15,7 +15,7 @@
 
 #pragma once
 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 namespace cob_mecanum_controller
 {
 class MecanumController
