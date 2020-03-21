@@ -2,8 +2,8 @@
 Changelog for package cob_mecanum_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.11 (2020-03-21)
+-------------------
 * Merge pull request `#237 <https://github.com/ipa320/cob_control/issues/237>`_ from fmessmer/kinetic/fix_mecanum
   [kinetic] fix eigen in mecanum controller
 * fix eigen
