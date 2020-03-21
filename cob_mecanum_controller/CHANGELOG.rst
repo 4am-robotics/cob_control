@@ -2,6 +2,13 @@
 Changelog for package cob_mecanum_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#238 <https://github.com/ipa320/cob_control/issues/238>`_ from fmessmer/melodic/fix_mecanum
+  [melodic] fix eigen in mecanum controller
+* fix eigen
+* Contributors: Felix Messmer, fmessmer
+
 0.8.10 (2020-03-18)
 -------------------
 * Merge pull request `#230 <https://github.com/ipa320/cob_control/issues/230>`_ from ipa-jba/feature/melodic/raw-mini
