@@ -9,6 +9,7 @@ import tf2_ros
 from geometry_msgs.msg import Twist, Transform, TransformStamped
 from geometry_msgs.msg import Pose, PoseWithCovarianceStamped, Quaternion
 from nav_msgs.msg import Odometry
+from std_srvs.srv import Trigger, TriggerRequest, TriggerResponse
 
 class EmulationBase(object):
     def __init__(self):
@@ -30,7 +31,10 @@ class EmulationBase(object):
         rospy.Subscriber("/base/twist_controller/command", Twist, self.twist_callback, queue_size=1)
         rospy.Subscriber("/initialpose", PoseWithCovarianceStamped, self.initalpose_callback, queue_size=1)
         self.pub_odom = rospy.Publisher("/base/odometry_controller/odometry", Odometry, queue_size=1)
+        rospy.Service("/base/odometry_controller/reset_odometry", Trigger, self.reset_odometry)
         self.br = tf2_ros.TransformBroadcaster()
+        self.tf_buffer = tf2_ros.Buffer()
+        self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
         self.timestamp_last_update = rospy.Time.now()
 
@@ -86,6 +90,16 @@ class EmulationBase(object):
                                                 msg.pose.pose.orientation.w])
         self.odom.pose.pose = Pose()
         self.odom.pose.pose.orientation.w = 1
+
+    def reset_odometry(self, req):
+        transform = self.tf_buffer.lookup_transform("map", "base_link", rospy.Time(0))
+
+        self.initial_pose = transform.transform
+
+        self.odom.pose.pose = Pose()
+        self.odom.pose.pose.orientation.w = 1
+
+        return TriggerResponse(True, "odometry resetted")
 
     def twist_callback(self, msg):
         self.twist = msg
