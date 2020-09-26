@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.2)
 project(cob_footprint_observer)
 
 find_package(catkin REQUIRED COMPONENTS geometry_msgs message_generation roscpp std_msgs tf)

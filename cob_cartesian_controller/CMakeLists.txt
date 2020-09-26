@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.2)
 project(cob_cartesian_controller)
 
 find_package(catkin REQUIRED COMPONENTS actionlib actionlib_msgs cob_srvs geometry_msgs message_generation roscpp roslint std_msgs std_srvs tf visualization_msgs)

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.2)
 project(cob_frame_tracker)
 
 find_package(catkin REQUIRED COMPONENTS actionlib actionlib_msgs cob_srvs control_toolbox dynamic_reconfigure geometry_msgs interactive_markers kdl_conversions kdl_parser message_generation roscpp roslint sensor_msgs std_msgs std_srvs tf visualization_msgs)
