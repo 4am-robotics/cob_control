@@ -38,7 +38,9 @@
   <depend>kdl_conversions</depend>
   <depend>kdl_parser</depend>
   <depend>nav_msgs</depend>
-  <depend>orocos_kdl</depend>
+  <depend condition="$ROS_DISTRO == melodic">orocos_kdl</depend>
+  <depend condition="$ROS_DISTRO == noetic">liborocos-kdl-dev</depend>
+  <depend condition="$ROS_DISTRO == noetic">liborocos-kdl</depend>
   <depend>pluginlib</depend>
   <depend>python-six</depend>
   <depend>roscpp</depend>

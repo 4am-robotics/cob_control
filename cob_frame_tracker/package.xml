@@ -1,4 +1,8 @@
-<package format="2">
+<?xml version="1.0"?>
+<?xml-model
+  href="http://download.ros.org/schema/package_format3.xsd"
+  schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
   <name>cob_frame_tracker</name>
   <version>0.8.11</version>
   <description>The cob_frame_tracker package contains nodes that publish Twist commands based on the distance to the desired tf frame target.</description>
@@ -23,7 +27,9 @@
   <depend>interactive_markers</depend>
   <depend>kdl_conversions</depend>
   <depend>kdl_parser</depend>
-  <depend>orocos_kdl</depend>
+  <depend condition="$ROS_DISTRO == melodic">orocos_kdl</depend>
+  <depend condition="$ROS_DISTRO == noetic">liborocos-kdl-dev</depend>
+  <depend condition="$ROS_DISTRO == noetic">liborocos-kdl</depend>
   <depend>roscpp</depend>
   <depend>roslint</depend>
   <depend>sensor_msgs</depend>
