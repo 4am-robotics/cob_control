@@ -54,7 +54,8 @@
 
   <exec_depend>cob_frame_tracker</exec_depend>
   <exec_depend>cob_script_server</exec_depend>
-  <exec_depend>python-matplotlib</exec_depend>
+  <exec_depend condition="$ROS_PYTHON_VERSION == 2">python-matplotlib</exec_depend>
+  <exec_depend condition="$ROS_PYTHON_VERSION == 3">python3-matplotlib</exec_depend>
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>rospy</exec_depend>
   <exec_depend>rviz</exec_depend>
