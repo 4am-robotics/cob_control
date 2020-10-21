@@ -42,8 +42,8 @@ class EmulationFollowJointTrajectory(object):
         return TriggerResponse(
             success = True,
             message = "Succesfully reset joint states"
-        )           
-        
+        )
+
     def fjta_cb(self, goal):
         joint_names = copy.deepcopy(self.joint_names)
         joint_names.sort()
@@ -62,8 +62,14 @@ class EmulationFollowJointTrajectory(object):
             # This is used to compute the interpolation weight as a function of current and goal time point
             time_since_start_of_previous_point = rospy.Duration(0)
 
+            nr_points_dof = len(self.joint_names)
+
             # for all points in the desired trajectory
             for point in goal_sorted.trajectory.points:
+
+                if len(point.positions) != nr_points_dof:
+                    self.as_fjta.set_aborted()
+                    return
 
                 # we need to resort the positions array because moveit sorts alphabetically but all other ROS components sort in the URDF order
                 positions_sorted = []
@@ -71,7 +77,6 @@ class EmulationFollowJointTrajectory(object):
                     idx = goal.trajectory.joint_names.index(joint_name)
                     positions_sorted.append(point.positions[idx])
                 point.positions = positions_sorted
-                pos_length = len(point.positions)
 
                 joint_states_prev = copy.deepcopy(self.joint_states)
 
@@ -88,8 +93,8 @@ class EmulationFollowJointTrajectory(object):
                 t1 = point.time_from_start - time_since_start_of_previous_point
                 # compute velocity as the fraction of distance from prev point to next point in trajectory
                 # and the corresponding time t1
-                velocities = [0] * pos_length
-                for i in range(pos_length):
+                velocities = [0] * nr_points_dof
+                for i in range(nr_points_dof):
                     if t1.to_sec() != 0.0:
                         velocities[i] = (point.positions[i] - joint_states_prev.position[i]) / float(t1.to_sec())
                     else:
@@ -113,8 +118,8 @@ class EmulationFollowJointTrajectory(object):
                         alpha = 0.0
 
                     # interpolate linearly (lerp) each component
-                    interpolated_positions = [0] * pos_length
-                    for i in range(pos_length):
+                    interpolated_positions = [0] * nr_points_dof
+                    for i in range(nr_points_dof):
                         interpolated_positions[i] = (1.0 - alpha) * joint_states_prev.position[i] + alpha * point.positions[i]
                     self.joint_states.position = interpolated_positions
 
@@ -128,11 +133,11 @@ class EmulationFollowJointTrajectory(object):
                 self.joint_states.position = point.positions
                 # set lower time bound for the next point
                 time_since_start_of_previous_point = latest_time_from_start
-            
+
             # set joint velocities to zero after the robot stopped moving (reaching final point of trajectory)
-            self.joint_states.velocity = [0.0] * len(self.joint_states.velocity)    
-            self.joint_states.effort   = [0.0] * len(self.joint_states.effort)
-            
+            self.joint_states.velocity = [0.0] * nr_points_dof
+            self.joint_states.effort = [0.0] * nr_points_dof
+
             self.as_fjta.set_succeeded(FollowJointTrajectoryResult())
         else:
             rospy.logerr("received unexpected joint names in goal")
