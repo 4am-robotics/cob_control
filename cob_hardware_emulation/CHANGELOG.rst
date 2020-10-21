@@ -2,8 +2,8 @@
 Changelog for package cob_hardware_emulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.12 (2020-10-21)
+-------------------
 * Merge pull request `#245 <https://github.com/ipa320/cob_control/issues/245>`_ from lindemeier/bugfix/length_bug_kinetic
   [kinetic] bugfix/length-bug
 * sets correct length and checks for length
