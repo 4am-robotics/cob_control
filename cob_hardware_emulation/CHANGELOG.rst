@@ -2,6 +2,19 @@
 Changelog for package cob_hardware_emulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#243 <https://github.com/ipa320/cob_control/issues/243>`_ from fmessmer/test_noetic
+  test noetic
+* Bump CMake version to avoid CMP0048 warning
+* Merge pull request `#244 <https://github.com/ipa320/cob_control/issues/244>`_ from lindemeier/bugfix/length-bug
+  [melodic] bugfix/length-bug
+* sets correct length and checks for length
+* Merge pull request `#240 <https://github.com/ipa320/cob_control/issues/240>`_ from benmaidel/feature/base_emu_reset_odom_melodic
+  reset odometry service for base emulation
+* reset odometry service for base emulation
+* Contributors: Benjamin Maidel, Felix Messmer, fmessmer, tsl
+
 0.8.11 (2020-03-21)
 -------------------
 

@@ -2,6 +2,16 @@
 Changelog for package cob_twist_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#243 <https://github.com/ipa320/cob_control/issues/243>`_ from fmessmer/test_noetic
+  test noetic
+* ROS_PYTHON_VERSION conditional dependency for matplotlib
+* conditional depend for orocos-kdl
+* use setuptools instead of distutils
+* Bump CMake version to avoid CMP0048 warning
+* Contributors: Felix Messmer, fmessmer
+
 0.8.11 (2020-03-21)
 -------------------
 
