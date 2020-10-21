@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.2)
 project(cob_model_identifier)
 
 find_package(catkin REQUIRED COMPONENTS cmake_modules geometry_msgs kdl_parser roscpp roslint sensor_msgs std_srvs tf)
