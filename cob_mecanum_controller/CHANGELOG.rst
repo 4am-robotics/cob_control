@@ -2,6 +2,9 @@
 Changelog for package cob_mecanum_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.12 (2020-10-21)
+-------------------
+
 0.7.11 (2020-03-21)
 -------------------
 * Merge pull request `#237 <https://github.com/ipa320/cob_control/issues/237>`_ from fmessmer/kinetic/fix_mecanum

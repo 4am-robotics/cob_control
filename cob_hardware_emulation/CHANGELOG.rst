@@ -2,6 +2,16 @@
 Changelog for package cob_hardware_emulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.12 (2020-10-21)
+-------------------
+* Merge pull request `#245 <https://github.com/ipa320/cob_control/issues/245>`_ from lindemeier/bugfix/length_bug_kinetic
+  [kinetic] bugfix/length-bug
+* sets correct length and checks for length
+* Merge pull request `#239 <https://github.com/ipa320/cob_control/issues/239>`_ from benmaidel/feature/base_emu_reset_odom
+  reset odometry service for base emulation
+* reset odometry service for base emulation
+* Contributors: Benjamin Maidel, Felix Messmer, tsl
+
 0.7.11 (2020-03-21)
 -------------------
 
