@@ -10,7 +10,7 @@ generate_dynamic_reconfigure_options(
 )
 
 catkin_package(
-  CATKIN_DEPENDS angles cob_base_controller_utils controller_interface dynamic_reconfigure geometry_msgs hardware_interface nav_msgs sensor_msgs std_msgs std_srvs tf tf2 urdf
+  CATKIN_DEPENDS angles cob_base_controller_utils controller_interface dynamic_reconfigure geometry_msgs hardware_interface nav_msgs roscpp sensor_msgs std_msgs std_srvs tf tf2 urdf
   DEPENDS Boost
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME} cob_omni_drive_geom

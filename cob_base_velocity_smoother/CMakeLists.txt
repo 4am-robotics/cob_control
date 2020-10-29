@@ -14,7 +14,7 @@ else()
 endif()
 
 catkin_package(
-  CATKIN_DEPENDS geometry_msgs nav_msgs std_msgs
+  CATKIN_DEPENDS dynamic_reconfigure geometry_msgs nav_msgs roscpp std_msgs
 )
 
 ### BUILD ###
