@@ -6,7 +6,7 @@ find_package(catkin REQUIRED COMPONENTS controller_manager_msgs roscpp roslint s
 find_package(Boost REQUIRED COMPONENTS thread)
 
 catkin_package(
-  CATKIN_DEPENDS controller_manager_msgs std_msgs
+  CATKIN_DEPENDS controller_manager_msgs roscpp std_msgs
 )
 
 ### BUILD ###

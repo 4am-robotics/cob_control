@@ -5,7 +5,7 @@ find_package(catkin REQUIRED COMPONENTS roscpp rosgraph_msgs)
 find_package(Boost REQUIRED COMPONENTS thread)
 
 catkin_package(
-  CATKIN_DEPENDS rosgraph_msgs
+  CATKIN_DEPENDS roscpp rosgraph_msgs
   DEPENDS Boost
 )
 
