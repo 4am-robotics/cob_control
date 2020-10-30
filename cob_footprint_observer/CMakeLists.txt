@@ -22,7 +22,7 @@ generate_messages(
 )
 
 catkin_package(
-  CATKIN_DEPENDS geometry_msgs message_runtime std_msgs
+  CATKIN_DEPENDS geometry_msgs message_runtime roscpp std_msgs tf
 )
 
 ### BUILD ###
