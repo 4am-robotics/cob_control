@@ -15,6 +15,12 @@ class EmulationFollowJointTrajectory(object):
 
         params = rospy.get_param('~')
         self.joint_names = params['joint_names']
+        # fixed frequency to control the granularity of the sampling resolution
+        self.sample_rate_hz = rospy.get_param("~sample_rate_hz", 10)
+        # duration from one sample to the next
+        self.sample_rate_dur_secs = (1.0 / float(self.sample_rate_hz))
+        # rospy loop rate
+        self.sample_rate = rospy.Rate(self.sample_rate_hz)
 
         action_name = "joint_trajectory_controller/follow_joint_trajectory"
 
@@ -83,12 +89,6 @@ class EmulationFollowJointTrajectory(object):
                 # linear interpolation of the given trajectory samples is used
                 # to compute smooth intermediate joints positions at a fixed resolution
 
-                # fixed frequency to control the granularity of the sampling resolution
-                sample_rate_hz = 10
-                # duration from one sample to the next
-                sample_rate_dur_secs = (1.0 / float(sample_rate_hz))
-                # rospy loop rate
-                sample_rate = rospy.Rate(sample_rate_hz) # 10Hz for now
                 # upper bound of local duration segment
                 t1 = point.time_from_start - time_since_start_of_previous_point
                 # compute velocity as the fraction of distance from prev point to next point in trajectory
@@ -124,9 +124,9 @@ class EmulationFollowJointTrajectory(object):
                     self.joint_states.position = interpolated_positions
 
                     # sleep until next sample update
-                    sample_rate.sleep()
+                    self.sample_rate.sleep()
                     # increment passed time
-                    latest_time_from_start += rospy.Duration(sample_rate_dur_secs)
+                    latest_time_from_start += rospy.Duration(self.sample_rate_dur_secs)
 
                 # ensure that the goal and time point is always exactly reached
                 latest_time_from_start = point.time_from_start
