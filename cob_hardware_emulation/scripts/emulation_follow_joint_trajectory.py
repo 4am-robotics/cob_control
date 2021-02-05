@@ -22,22 +22,23 @@ class EmulationFollowJointTrajectory(object):
         # rospy loop rate
         self.sample_rate = rospy.Rate(self.sample_rate_hz)
 
-        action_name = "joint_trajectory_controller/follow_joint_trajectory"
-
-        self.as_fjta = actionlib.SimpleActionServer(action_name, FollowJointTrajectoryAction, execute_cb=self.fjta_cb, auto_start = False)
-        self.pub_joint_states = rospy.Publisher("joint_states", JointState, queue_size=1)
+        # joint_states publisher
         js = JointState()
         js.name = copy.deepcopy(self.joint_names)
         js.position = [0]*len(js.name)
         js.velocity = [0]*len(js.name)
         js.effort = [0]*len(js.name)
         self.joint_states = js
-
-        self.as_fjta.start()
+        self.pub_joint_states = rospy.Publisher("joint_states", JointState, queue_size=1)
+        self.js_timer = rospy.Timer(rospy.Duration(self.sample_rate_dur_secs), self.publish_joint_states)
 
         # reset service
         self.service_reset_fjta = rospy.Service("reset_joint_states", Trigger, self.reset_cb)
 
+        # follow_joint_trajectory action
+        action_name = "joint_trajectory_controller/follow_joint_trajectory"
+        self.as_fjta = actionlib.SimpleActionServer(action_name, FollowJointTrajectoryAction, execute_cb=self.fjta_cb, auto_start = False)
+        self.as_fjta.start()
         rospy.loginfo("Emulation running for action %s of type FollowJointTrajectoryAction"%(action_name))
 
     def reset_cb(self, req):
@@ -148,18 +149,12 @@ class EmulationFollowJointTrajectory(object):
             rospy.logerr("received unexpected joint names in goal")
             self.as_fjta.set_aborted()
 
-    def publish_joint_states(self):
+    def publish_joint_states(self, event):
         msg = copy.deepcopy(self.joint_states)
         msg.header.stamp = rospy.Time.now() # update to current time stamp
         self.pub_joint_states.publish(msg)
 
 if __name__ == '__main__':
     rospy.init_node('emulation_follow_joint_trajectory')
-
     emulation_follow_joint_trajectory = EmulationFollowJointTrajectory()
-
-    # updating the joint states: 10Hz
-    joint_states_pub_rate = rospy.Rate(10)
-    while not rospy.is_shutdown():
-        emulation_follow_joint_trajectory.publish_joint_states()
-        joint_states_pub_rate.sleep()
+    rospy.spin()
