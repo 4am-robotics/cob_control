@@ -77,6 +77,11 @@ class EmulationFollowJointTrajectory(object):
                     self.as_fjta.set_aborted()
                     return
 
+                point_time_delta = point.time_from_start - time_since_start_of_previous_point
+                if point_time_delta.to_sec() < self.sample_rate_dur_secs:
+                    rospy.logwarn("current trajectory point has time_delta smaller than sample_rate: {} < {}! Skipping".format(point_time_delta.to_sec(), self.sample_rate_dur_secs))
+                    continue
+
                 # we need to resort the positions array because moveit sorts alphabetically but all other ROS components sort in the URDF order
                 positions_sorted = []
                 for joint_name in self.joint_names:
