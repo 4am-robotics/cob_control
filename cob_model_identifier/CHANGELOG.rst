@@ -2,6 +2,13 @@
 Changelog for package cob_model_identifier
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#247 <https://github.com/ipa320/cob_control/issues/247>`_ from fmessmer/fix_catkin_lint_melodic
+  [melodic] fix catkin_lint
+* fix catkin_lint
+* Contributors: Felix Messmer, fmessmer
+
 0.8.12 (2020-10-21)
 -------------------
 * Merge pull request `#243 <https://github.com/ipa320/cob_control/issues/243>`_ from fmessmer/test_noetic

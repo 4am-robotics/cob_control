@@ -2,6 +2,21 @@
 Changelog for package cob_hardware_emulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#253 <https://github.com/ipa320/cob_control/issues/253>`_ from floweisshardt/feature/emulator_move_base_melodic
+  melodic/noetic: add optional move_base interface to base emulator
+* add optional move_base interface to base emulator
+* Merge pull request `#249 <https://github.com/ipa320/cob_control/issues/249>`_ from fmessmer/fix/fjt_emulation_melodic
+  [melodic] fix fjt emulation
+* use timer for joint_states
+* skip trajectory points faster than sample_rate
+* introduce sample_rate_hz parameter
+* Merge pull request `#247 <https://github.com/ipa320/cob_control/issues/247>`_ from fmessmer/fix_catkin_lint_melodic
+  [melodic] fix catkin_lint
+* fix catkin_lint
+* Contributors: Felix Messmer, Florian Weisshardt, floweisshardt, fmessmer
+
 0.8.12 (2020-10-21)
 -------------------
 * Merge pull request `#243 <https://github.com/ipa320/cob_control/issues/243>`_ from fmessmer/test_noetic
