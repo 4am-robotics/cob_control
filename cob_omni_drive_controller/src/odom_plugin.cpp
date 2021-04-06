@@ -132,7 +132,7 @@ private:
     ros::Time stop_time_;
 
 
-    void publish(const ros::TimerEvent&){
+    void publish(const ros::TimerEvent& event){
         if(!isRunning()) return;
 
         boost::mutex::scoped_lock lock(mutex_);
@@ -140,16 +140,27 @@ private:
         topic_pub_odometry_.publish(odom_);
 
         if(tf_broadcast_odometry_){
-            // compose and publish transform for tf package
-            // compose header
-            odom_tf_.header.stamp = odom_.header.stamp;
-            // compose data container
-            odom_tf_.transform.translation.x = odom_.pose.pose.position.x;
-            odom_tf_.transform.translation.y = odom_.pose.pose.position.y;
-            odom_tf_.transform.rotation = odom_.pose.pose.orientation;
+            // check prevents TF_REPEATED_DATA warning
+            if (odom_tf_.header.stamp == odom_.header.stamp){
+                // ROS_WARN_STREAM("OdometryController: already published odom_tf before");
+                // ROS_WARN_STREAM("\todom_tf: " << odom_tf_);
+                // ROS_WARN_STREAM("\todom_: " << odom_);
+                // ROS_WARN_STREAM("\tevent.last_expected: " << event.last_expected);
+                // ROS_WARN_STREAM("\tevent.last_real: " << event.last_real);
+                // ROS_WARN_STREAM("\tevent.current_expected: " << event.current_expected);
+                // ROS_WARN_STREAM("\tevent.current_real: " << event.current_real);
+            } else {
+                // compose and publish transform for tf package
+                // compose header
+                odom_tf_.header.stamp = odom_.header.stamp;
+                // compose data container
+                odom_tf_.transform.translation.x = odom_.pose.pose.position.x;
+                odom_tf_.transform.translation.y = odom_.pose.pose.position.y;
+                odom_tf_.transform.rotation = odom_.pose.pose.orientation;
 
-            // publish the transform (for debugging, conflicts with robot-pose-ekf)
-            tf_broadcast_odometry_->sendTransform(odom_tf_);
+                // publish the transform (for debugging, conflicts with robot-pose-ekf)
+                tf_broadcast_odometry_->sendTransform(odom_tf_);
+            }
         }
     }
 };

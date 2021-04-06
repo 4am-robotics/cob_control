@@ -2,6 +2,16 @@
 Changelog for package cob_omni_drive_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.13 (2021-04-06)
+-------------------
+* Merge pull request `#250 <https://github.com/ipa320/cob_control/issues/250>`_ from fmessmer/kinetic/TF_REPEATED_DATA
+  [kinetic] add check and logs for TF_REPEATED_DATA
+* add check and logs for TF_REPEATED_DATA
+* Merge pull request `#246 <https://github.com/ipa320/cob_control/issues/246>`_ from fmessmer/fix_catkin_lint_kinetic
+  [kinetic] fix catkin_lint
+* fix catkin_lint
+* Contributors: Felix Messmer, fmessmer
+
 0.7.12 (2020-10-21)
 -------------------
 

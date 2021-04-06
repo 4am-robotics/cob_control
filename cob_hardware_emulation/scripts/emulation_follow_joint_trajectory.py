@@ -15,23 +15,30 @@ class EmulationFollowJointTrajectory(object):
 
         params = rospy.get_param('~')
         self.joint_names = params['joint_names']
+        # fixed frequency to control the granularity of the sampling resolution
+        self.sample_rate_hz = rospy.get_param("~sample_rate_hz", 10)
+        # duration from one sample to the next
+        self.sample_rate_dur_secs = (1.0 / float(self.sample_rate_hz))
+        # rospy loop rate
+        self.sample_rate = rospy.Rate(self.sample_rate_hz)
 
-        action_name = "joint_trajectory_controller/follow_joint_trajectory"
-
-        self.as_fjta = actionlib.SimpleActionServer(action_name, FollowJointTrajectoryAction, execute_cb=self.fjta_cb, auto_start = False)
-        self.pub_joint_states = rospy.Publisher("joint_states", JointState, queue_size=1)
+        # joint_states publisher
         js = JointState()
         js.name = copy.deepcopy(self.joint_names)
         js.position = [0]*len(js.name)
         js.velocity = [0]*len(js.name)
         js.effort = [0]*len(js.name)
         self.joint_states = js
-
-        self.as_fjta.start()
+        self.pub_joint_states = rospy.Publisher("joint_states", JointState, queue_size=1)
+        self.js_timer = rospy.Timer(rospy.Duration(self.sample_rate_dur_secs), self.publish_joint_states)
 
         # reset service
         self.service_reset_fjta = rospy.Service("reset_joint_states", Trigger, self.reset_cb)
 
+        # follow_joint_trajectory action
+        action_name = "joint_trajectory_controller/follow_joint_trajectory"
+        self.as_fjta = actionlib.SimpleActionServer(action_name, FollowJointTrajectoryAction, execute_cb=self.fjta_cb, auto_start = False)
+        self.as_fjta.start()
         rospy.loginfo("Emulation running for action %s of type FollowJointTrajectoryAction"%(action_name))
 
     def reset_cb(self, req):
@@ -71,6 +78,11 @@ class EmulationFollowJointTrajectory(object):
                     self.as_fjta.set_aborted()
                     return
 
+                point_time_delta = point.time_from_start - time_since_start_of_previous_point
+                if point_time_delta.to_sec() < self.sample_rate_dur_secs:
+                    rospy.logwarn("current trajectory point has time_delta smaller than sample_rate: {} < {}! Skipping".format(point_time_delta.to_sec(), self.sample_rate_dur_secs))
+                    continue
+
                 # we need to resort the positions array because moveit sorts alphabetically but all other ROS components sort in the URDF order
                 positions_sorted = []
                 for joint_name in self.joint_names:
@@ -83,12 +95,6 @@ class EmulationFollowJointTrajectory(object):
                 # linear interpolation of the given trajectory samples is used
                 # to compute smooth intermediate joints positions at a fixed resolution
 
-                # fixed frequency to control the granularity of the sampling resolution
-                sample_rate_hz = 10
-                # duration from one sample to the next
-                sample_rate_dur_secs = (1.0 / float(sample_rate_hz))
-                # rospy loop rate
-                sample_rate = rospy.Rate(sample_rate_hz) # 10Hz for now
                 # upper bound of local duration segment
                 t1 = point.time_from_start - time_since_start_of_previous_point
                 # compute velocity as the fraction of distance from prev point to next point in trajectory
@@ -124,9 +130,9 @@ class EmulationFollowJointTrajectory(object):
                     self.joint_states.position = interpolated_positions
 
                     # sleep until next sample update
-                    sample_rate.sleep()
+                    self.sample_rate.sleep()
                     # increment passed time
-                    latest_time_from_start += rospy.Duration(sample_rate_dur_secs)
+                    latest_time_from_start += rospy.Duration(self.sample_rate_dur_secs)
 
                 # ensure that the goal and time point is always exactly reached
                 latest_time_from_start = point.time_from_start
@@ -143,18 +149,12 @@ class EmulationFollowJointTrajectory(object):
             rospy.logerr("received unexpected joint names in goal")
             self.as_fjta.set_aborted()
 
-    def publish_joint_states(self):
+    def publish_joint_states(self, event):
         msg = copy.deepcopy(self.joint_states)
         msg.header.stamp = rospy.Time.now() # update to current time stamp
         self.pub_joint_states.publish(msg)
 
 if __name__ == '__main__':
     rospy.init_node('emulation_follow_joint_trajectory')
-
     emulation_follow_joint_trajectory = EmulationFollowJointTrajectory()
-
-    # updating the joint states: 10Hz
-    joint_states_pub_rate = rospy.Rate(10)
-    while not rospy.is_shutdown():
-        emulation_follow_joint_trajectory.publish_joint_states()
-        joint_states_pub_rate.sleep()
+    rospy.spin()

@@ -12,7 +12,7 @@ add_definitions(${EIGEN3_DEFINITIONS})
 find_package(TinyXML REQUIRED)
 
 catkin_package(
-  CATKIN_DEPENDS geometry_msgs sensor_msgs
+  CATKIN_DEPENDS geometry_msgs roscpp sensor_msgs std_srvs tf
 )
 
 ### BUILD ###

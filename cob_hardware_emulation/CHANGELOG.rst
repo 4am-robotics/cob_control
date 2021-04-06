@@ -2,6 +2,21 @@
 Changelog for package cob_hardware_emulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.7.13 (2021-04-06)
+-------------------
+* Merge pull request `#252 <https://github.com/ipa320/cob_control/issues/252>`_ from floweisshardt/feature/emulator_move_base_kinetic
+  kinetic: add optional move_base interface to base emulator
+* add optional move_base interface to base emulator
+* Merge pull request `#248 <https://github.com/ipa320/cob_control/issues/248>`_ from fmessmer/fix/fjt_emulation_kinetic
+  [kinetic] fix fjt emulation
+* use timer for joint_states
+* skip trajectory points faster than sample_rate
+* introduce sample_rate_hz parameter
+* Merge pull request `#246 <https://github.com/ipa320/cob_control/issues/246>`_ from fmessmer/fix_catkin_lint_kinetic
+  [kinetic] fix catkin_lint
+* fix catkin_lint
+* Contributors: Felix Messmer, Florian Weisshardt, floweisshardt, fmessmer
+
 0.7.12 (2020-10-21)
 -------------------
 * Merge pull request `#245 <https://github.com/ipa320/cob_control/issues/245>`_ from lindemeier/bugfix/length_bug_kinetic
