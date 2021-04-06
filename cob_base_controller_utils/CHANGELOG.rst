@@ -2,8 +2,8 @@
 Changelog for package cob_base_controller_utils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.8.13 (2021-04-06)
+-------------------
 * Merge pull request `#247 <https://github.com/ipa320/cob_control/issues/247>`_ from fmessmer/fix_catkin_lint_melodic
   [melodic] fix catkin_lint
 * fix catkin_lint
