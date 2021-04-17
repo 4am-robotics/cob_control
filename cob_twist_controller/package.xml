@@ -42,7 +42,8 @@
   <depend condition="$ROS_DISTRO == noetic">liborocos-kdl-dev</depend>
   <depend condition="$ROS_DISTRO == noetic">liborocos-kdl</depend>
   <depend>pluginlib</depend>
-  <depend>python-six</depend>
+  <depend condition="$ROS_PYTHON_VERSION == 2">python-six</depend>
+  <depend condition="$ROS_PYTHON_VERSION == 3">python3-six</depend>
   <depend>roscpp</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
