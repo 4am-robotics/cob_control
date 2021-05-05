@@ -126,18 +126,13 @@ inline visualization_msgs::Marker MarkerShape<T>::getMarker()
 template <typename T>
 FCL_CollisionObject MarkerShape<T>::getCollisionObject() const
 {
-    // FIXME
-    // fcl::Transform3f x(FCL_Quaternion(this->marker_.pose.orientation.w,
-    //                                   this->marker_.pose.orientation.x,
-    //                                   this->marker_.pose.orientation.y,
-    //                                   this->marker_.pose.orientation.z),
-    //                     FCL_Vec3(this->marker_.pose.position.x,
-    //                              this->marker_.pose.position.y,
-    //                              this->marker_.pose.position.z));
     fcl::Transform3f x(FCL_Quaternion(this->marker_.pose.orientation.w,
                                       this->marker_.pose.orientation.x,
                                       this->marker_.pose.orientation.y,
-                                      this->marker_.pose.orientation.z));
+                                      this->marker_.pose.orientation.z),
+                        FCL_Vec3(this->marker_.pose.position.x,
+                                 this->marker_.pose.position.y,
+                                 this->marker_.pose.position.z));
 
     FCL_CollisionObject cobj(this->ptr_fcl_bvh_, x);
     return cobj;
