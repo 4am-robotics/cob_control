@@ -165,13 +165,18 @@ inline visualization_msgs::Marker MarkerShape<BVH_RSS_t>::getMarker()
 
 FCL_CollisionObject MarkerShape<BVH_RSS_t>::getCollisionObject() const
 {
+    // FIXME
+    // fcl::Transform3f x(FCL_Quaternion(this->marker_.pose.orientation.w,
+    //                                   this->marker_.pose.orientation.x,
+    //                                   this->marker_.pose.orientation.y,
+    //                                   this->marker_.pose.orientation.z),
+    //                    FCL_Vec3(this->marker_.pose.position.x,
+    //                             this->marker_.pose.position.y,
+    //                             this->marker_.pose.position.z));
     fcl::Transform3f x(FCL_Quaternion(this->marker_.pose.orientation.w,
                                       this->marker_.pose.orientation.x,
                                       this->marker_.pose.orientation.y,
-                                      this->marker_.pose.orientation.z),
-                       FCL_Vec3(this->marker_.pose.position.x,
-                                this->marker_.pose.position.y,
-                                this->marker_.pose.position.z));
+                                      this->marker_.pose.orientation.z));
     FCL_CollisionObject cobj(this->ptr_fcl_bvh_, x);
     return cobj;
 }

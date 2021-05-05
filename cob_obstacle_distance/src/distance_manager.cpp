@@ -273,7 +273,9 @@ void DistanceManager::calculate()
                 FCL_CollisionObject collision_obj = obstacle->getCollisionObject();
                 FCL_DistanceResult dist_result;
                 FCL_DistanceRequest dist_request(true, 5.0, 0.01);
-                fcl::FCL_REAL dist = fcl::distance(&ooi_co, &collision_obj, dist_request, dist_result);
+                //FIXME
+                // double dist = fcl::distance(&ooi_co, &collision_obj, dist_request, dist_result);
+                double dist = 0;
 
 
                 Eigen::Vector3d abs_obst_vector(dist_result.nearest_points[1][VEC_X],
