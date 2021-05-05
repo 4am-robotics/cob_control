@@ -95,13 +95,13 @@ int8_t MeshParser::read(std::vector<TriangleSupport>& tri_vec)
 }
 
 /**
- * Uses the current vertex (assimp 3d vector) and converts into fcl::Vec3f.
+ * Uses the current vertex (assimp 3d vector) and converts into FCL_Vec3.
  * @param num_current_face The number of the current face for error logging.
  * @param vertex Pointer to the current vertex.
  * @param out The fcl vector description.
  * @return Success status (0 means ok).
  */
-int8_t MeshParser::toVec3f(uint32_t num_current_face, aiVector3D* vertex, fcl::Vec3f& out)
+int8_t MeshParser::toVec3f(uint32_t num_current_face, aiVector3D* vertex, FCL_Vec3& out)
 {
     if (!vertex)
     {
@@ -109,7 +109,7 @@ int8_t MeshParser::toVec3f(uint32_t num_current_face, aiVector3D* vertex, fcl::V
         return -3;
     }
 
-    out = fcl::Vec3f((*vertex)[0], (*vertex)[1], (*vertex)[2]);
+    out = FCL_Vec3((*vertex)[0], (*vertex)[1], (*vertex)[2]);
     return 0;
 }
 

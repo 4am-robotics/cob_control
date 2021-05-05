@@ -21,8 +21,19 @@
 #include <boost/shared_ptr.hpp>
 #include <stdint.h>
 #include <visualization_msgs/Marker.h>
-#include <fcl/collision_object.h>
-#include <fcl/BVH/BVH_model.h>
+
+#include <fcl/config.h>
+#if FCL_MINOR_VERSION == 5
+    #include <fcl/collision_object.h>
+    #include <fcl/BVH/BVH_model.h>
+    typedef fcl::RSS FCL_RSS;
+    typedef fcl::CollisionObject FCL_CollisionObject;
+#else
+    #include <fcl/narrowphase/collision_object.h>
+    #include <fcl/geometry/bvh/BVH_model.h>
+    typedef fcl::RSSf FCL_RSS;
+    typedef fcl::CollisionObjectf FCL_CollisionObject;
+#endif
 
 /* BEGIN IMarkerShape *******************************************************************************************/
 /// Interface class marking methods that have to be implemented in derived classes.
@@ -41,7 +52,7 @@ class IMarkerShape
          virtual visualization_msgs::Marker getMarker() = 0;
          virtual void updatePose(const geometry_msgs::Vector3& pos, const geometry_msgs::Quaternion& quat) = 0;
          virtual void updatePose(const geometry_msgs::Pose& pose) = 0;
-         virtual fcl::CollisionObject getCollisionObject() const = 0;
+         virtual FCL_CollisionObject getCollisionObject() const = 0;
          virtual geometry_msgs::Pose getMarkerPose() const = 0;
          virtual geometry_msgs::Pose getOriginRelToFrame() const = 0;
 
@@ -66,6 +77,6 @@ class IMarkerShape
 /* END IMarkerShape *********************************************************************************************/
 
 typedef std::shared_ptr< IMarkerShape > PtrIMarkerShape_t;
-typedef fcl::BVHModel<fcl::RSS> BVH_RSS_t;
+typedef fcl::BVHModel<FCL_RSS> BVH_RSS_t;
 
 #endif /* MARKER_SHAPES_INTERFACE_HPP_ */

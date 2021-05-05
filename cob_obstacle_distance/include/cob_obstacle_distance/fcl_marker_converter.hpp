@@ -19,9 +19,25 @@
 #define FCL_MARKER_CONVERTER_HPP_
 
 #include <boost/scoped_ptr.hpp>
-#include <fcl/shape/geometric_shapes.h>
-#include <fcl/BVH/BVH_model.h>
-#include <fcl/shape/geometric_shape_to_BVH_model.h>
+
+#include <fcl/config.h>
+#if FCL_MINOR_VERSION == 5
+    #include <fcl/shape/geometric_shapes.h>
+    #include <fcl/BVH/BVH_model.h>
+    #include <fcl/shape/geometric_shape_to_BVH_model.h>
+    typedef fcl::Box FCL_Box;
+    typedef fcl::Sphere FCL_Sphere;
+    typedef fcl::Cylinder FCL_Cylinder;
+#else
+    #include <fcl/geometry/shape/box.h>
+    #include <fcl/geometry/shape/sphere.h>
+    #include <fcl/geometry/shape/cylinder.h>
+    #include <fcl/geometry/bvh/BVH_model.h>
+    #include <fcl/geometry/geometric_shape_to_BVH_model.h>
+    typedef fcl::Boxf FCL_Box;
+    typedef fcl::Spheref FCL_Sphere;
+    typedef fcl::Cylinderf FCL_Cylinder;
+#endif
 
 
 #include "cob_obstacle_distance/marker_shapes/marker_shapes_interface.hpp"
@@ -43,16 +59,16 @@ class FclMarkerConverter
 };
 
 template<>
-class FclMarkerConverter<fcl::Box>
+class FclMarkerConverter<FCL_Box>
 {
-    typedef boost::scoped_ptr<fcl::Box> sPtrBox;
+    typedef boost::scoped_ptr<FCL_Box> sPtrBox;
 
     private:
-        fcl::Box geo_shape_;
+        FCL_Box geo_shape_;
 
     public:
-        FclMarkerConverter() : geo_shape_(fcl::Box(1.0, 1.0, 1.0)) {}
-        FclMarkerConverter(fcl::Box& box) : geo_shape_(box) {}
+        FclMarkerConverter() : geo_shape_(FCL_Box(1.0, 1.0, 1.0)) {}
+        FclMarkerConverter(FCL_Box& box) : geo_shape_(box) {}
 
         void assignValues(visualization_msgs::Marker& marker)
         {
@@ -62,7 +78,7 @@ class FclMarkerConverter<fcl::Box>
             marker.type = visualization_msgs::Marker::CUBE;
         }
 
-        fcl::Box getGeoShape() const
+        FCL_Box getGeoShape() const
         {
             return geo_shape_;
         }
@@ -75,16 +91,16 @@ class FclMarkerConverter<fcl::Box>
 };
 
 template<>
-class FclMarkerConverter<fcl::Sphere>
+class FclMarkerConverter<FCL_Sphere>
 {
-    typedef boost::scoped_ptr<fcl::Sphere> sPtrSphere;
+    typedef boost::scoped_ptr<FCL_Sphere> sPtrSphere;
 
     private:
-        fcl::Sphere geo_shape_;
+        FCL_Sphere geo_shape_;
 
     public:
-        FclMarkerConverter() : geo_shape_(fcl::Sphere(1.0)) {}
-        FclMarkerConverter(fcl::Sphere &sphere) : geo_shape_(sphere) {}
+        FclMarkerConverter() : geo_shape_(FCL_Sphere(1.0)) {}
+        FclMarkerConverter(FCL_Sphere &sphere) : geo_shape_(sphere) {}
 
         void assignValues(visualization_msgs::Marker &marker)
         {
@@ -94,7 +110,7 @@ class FclMarkerConverter<fcl::Sphere>
             marker.type = visualization_msgs::Marker::SPHERE;
         }
 
-        fcl::Sphere getGeoShape() const
+        FCL_Sphere getGeoShape() const
         {
             return geo_shape_;
         }
@@ -113,16 +129,16 @@ class FclMarkerConverter<fcl::Sphere>
 };
 
 template<>
-class FclMarkerConverter<fcl::Cylinder>
+class FclMarkerConverter<FCL_Cylinder>
 {
-    typedef boost::scoped_ptr<fcl::Cylinder> sPtrCylinder;
+    typedef boost::scoped_ptr<FCL_Cylinder> sPtrCylinder;
 
     private:
-        fcl::Cylinder geo_shape_;
+        FCL_Cylinder geo_shape_;
 
     public:
-        FclMarkerConverter() : geo_shape_(fcl::Cylinder(1.0, 1.0)) {}
-        FclMarkerConverter(fcl::Cylinder &cyl) : geo_shape_(cyl) {}
+        FclMarkerConverter() : geo_shape_(FCL_Cylinder(1.0, 1.0)) {}
+        FclMarkerConverter(FCL_Cylinder &cyl) : geo_shape_(cyl) {}
 
         void assignValues(visualization_msgs::Marker &marker)
         {
@@ -132,7 +148,7 @@ class FclMarkerConverter<fcl::Cylinder>
             marker.type = visualization_msgs::Marker::CYLINDER;
         }
 
-        fcl::Cylinder getGeoShape() const
+        FCL_Cylinder getGeoShape() const
         {
             return geo_shape_;
         }

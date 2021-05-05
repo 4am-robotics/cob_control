@@ -93,13 +93,13 @@ int8_t StlParser::read(std::vector<TriangleSupport>& tri_vec)
  * @param facet Pointer to the current face / triangle in file.
  * @return An fcl::Vec3f containing the 3 vertices describing a triangle.
  */
-fcl::Vec3f StlParser::toVec3f(char* facet)
+FCL_Vec3 StlParser::toVec3f(char* facet)
 {
     double x = this->toDouble(facet, 0);
     double y = this->toDouble(facet, 4);
     double z = this->toDouble(facet, 8);
 
-    fcl::Vec3f v3(x, y, z);
+    FCL_Vec3 v3(x, y, z);
     return v3;
 }
 
