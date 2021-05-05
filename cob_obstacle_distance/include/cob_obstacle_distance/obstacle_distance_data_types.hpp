@@ -24,6 +24,13 @@
 #include <shape_msgs/SolidPrimitive.h>
 #include <visualization_msgs/Marker.h>
 
+#include <fcl/config.h>
+#if FCL_MINOR_VERSION == 5
+    typedef fcl::Vec3f FCL_Vec3;
+#else
+    typedef fcl::Vector3f FCL_Vec3;
+#endif
+
 #define FCL_BOX_X 0u
 #define FCL_BOX_Y 1u
 #define FCL_BOX_Z 2u
@@ -57,9 +64,9 @@ struct ShapeMsgTypeToVisMarkerType
 
 struct TriangleSupport
 {
-    fcl::Vec3f a;
-    fcl::Vec3f b;
-    fcl::Vec3f c;
+    FCL_Vec3 a;
+    FCL_Vec3 b;
+    FCL_Vec3 c;
 };
 
 static ShapeMsgTypeToVisMarkerType g_shapeMsgTypeToVisMarkerType;

@@ -28,11 +28,6 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/pointer_cast.hpp>
 
-#include <fcl/collision_object.h>
-#include <fcl/collision.h>
-#include <fcl/distance.h>
-#include <fcl/collision_data.h>
-
 #include <std_msgs/ColorRGBA.h>
 #include <geometry_msgs/Vector3.h>
 #include <geometry_msgs/Quaternion.h>

@@ -26,7 +26,7 @@ class StlParser : public ParserBase
 
         double toDouble(char* facet, uint8_t start_idx);
 
-        fcl::Vec3f toVec3f(char* facet);
+        FCL_Vec3 toVec3f(char* facet);
 
     public:
         StlParser(const std::string& file_path)

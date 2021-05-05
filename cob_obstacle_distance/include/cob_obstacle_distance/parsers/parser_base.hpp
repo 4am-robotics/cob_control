@@ -19,8 +19,13 @@
 #define PARSER_BASE_HPP_
 
 #include <stdint.h>
-#include <fcl/BVH/BVH_model.h>
-#include <fcl/math/vec_3f.h>
+
+#include <fcl/config.h>
+#if FCL_MINOR_VERSION == 5
+    #include <fcl/BVH/BVH_model.h>
+#else
+    #include <fcl/geometry/bvh/BVH_model.h>
+#endif
 
 #include "cob_obstacle_distance/obstacle_distance_data_types.hpp"
 

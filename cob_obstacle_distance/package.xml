@@ -21,7 +21,8 @@
   <depend>dynamic_reconfigure</depend>
   <depend>eigen_conversions</depend>
   <depend>eigen</depend>
-  <depend>libfcl-dev</depend>
+  <depend condition="$ROS_DISTRO != noetic">libfcl-dev</depend>
+  <depend condition="$ROS_DISTRO == noetic">fcl</depend>
   <depend>geometry_msgs</depend>
   <depend>kdl_conversions</depend>
   <depend>kdl_parser</depend>

@@ -199,16 +199,16 @@ void LinkToCollision::createSpecificMarkerShape(const std::string& link_of_inter
     else if (urdf::Geometry::BOX == geometry->type)
     {
         PtrBox_t urdf_box = std::static_pointer_cast<urdf::Box>(geometry);
-        fcl::Box b(urdf_box->dim.x,
-                   urdf_box->dim.y,
-                   urdf_box->dim.z);
+        FCL_Box b(urdf_box->dim.x,
+                  urdf_box->dim.y,
+                  urdf_box->dim.z);
 
         std_msgs::ColorRGBA test_col;
         test_col.a = 1.0;
         test_col.r = 1.0;
 
-        // segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Box>(this->root_frame_id_, b, pose, col));
-        segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Box>(this->root_frame_id_, b, pose, test_col));
+        // segment_of_interest_marker_shape.reset(new MarkerShape<FCL_Box>(this->root_frame_id_, b, pose, col));
+        segment_of_interest_marker_shape.reset(new MarkerShape<FCL_Box>(this->root_frame_id_, b, pose, test_col));
     }
     else if (urdf::Geometry::SPHERE == geometry->type)
     {
@@ -217,8 +217,8 @@ void LinkToCollision::createSpecificMarkerShape(const std::string& link_of_inter
         test_col.b = 1.0;
 
         PtrSphere_t urdf_sphere = std::static_pointer_cast<urdf::Sphere>(geometry);
-        fcl::Sphere s(urdf_sphere->radius);
-        segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Sphere>(this->root_frame_id_, s, pose, test_col));
+        FCL_Sphere s(urdf_sphere->radius);
+        segment_of_interest_marker_shape.reset(new MarkerShape<FCL_Sphere>(this->root_frame_id_, s, pose, test_col));
     }
     else if (urdf::Geometry::CYLINDER == geometry->type)
     {
@@ -227,8 +227,8 @@ void LinkToCollision::createSpecificMarkerShape(const std::string& link_of_inter
         test_col.g = 1.0;
 
         PtrCylinder_t urdf_cyl = std::static_pointer_cast<urdf::Cylinder>(geometry);
-        fcl::Cylinder c(urdf_cyl->radius, urdf_cyl->length);
-        segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Cylinder>(this->root_frame_id_, c, pose, test_col));
+        FCL_Cylinder c(urdf_cyl->radius, urdf_cyl->length);
+        segment_of_interest_marker_shape.reset(new MarkerShape<FCL_Cylinder>(this->root_frame_id_, c, pose, test_col));
     }
     else
     {
@@ -262,9 +262,9 @@ bool LinkToCollision::getMarkerShapeFromType(const uint32_t& shape_type,
                                              PtrIMarkerShape_t& segment_of_interest_marker_shape)
 {
     // Representation of segment_of_interest as specific fcl::Shape
-    fcl::Box b(dimension(FCL_BOX_X), dimension(FCL_BOX_Y), dimension(FCL_BOX_Z));
-    fcl::Sphere s(dimension(FCL_RADIUS));
-    fcl::Cylinder c(dimension(FCL_RADIUS), dimension(FCL_CYL_LENGTH));
+    FCL_Box b(dimension(FCL_BOX_X), dimension(FCL_BOX_Y), dimension(FCL_BOX_Z));
+    FCL_Sphere s(dimension(FCL_RADIUS));
+    FCL_Cylinder c(dimension(FCL_RADIUS), dimension(FCL_CYL_LENGTH));
     uint32_t loc_shape_type = shape_type;
     std::string mesh_resource;
     if (visualization_msgs::Marker::MESH_RESOURCE == loc_shape_type)
@@ -294,17 +294,17 @@ bool LinkToCollision::getMarkerShapeFromType(const uint32_t& shape_type,
         case visualization_msgs::Marker::CUBE:
             test_col.a = 1.0;
             test_col.r = 1.0;
-            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Box>(this->root_frame_id_, b, pose, test_col));
+            segment_of_interest_marker_shape.reset(new MarkerShape<FCL_Box>(this->root_frame_id_, b, pose, test_col));
             break;
         case visualization_msgs::Marker::SPHERE:
             test_col.a = 1.0;
             test_col.b = 1.0;
-            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Sphere>(this->root_frame_id_, s, pose, test_col));
+            segment_of_interest_marker_shape.reset(new MarkerShape<FCL_Sphere>(this->root_frame_id_, s, pose, test_col));
             break;
         case visualization_msgs::Marker::CYLINDER:
             test_col.a = 1.0;
             test_col.g = 1.0;
-            segment_of_interest_marker_shape.reset(new MarkerShape<fcl::Cylinder>(this->root_frame_id_, c, pose, test_col));
+            segment_of_interest_marker_shape.reset(new MarkerShape<FCL_Cylinder>(this->root_frame_id_, c, pose, test_col));
             break;
         case visualization_msgs::Marker::MESH_RESOURCE:
             segment_of_interest_marker_shape.reset(new MarkerShape<BVH_RSS_t>(this->root_frame_id_,

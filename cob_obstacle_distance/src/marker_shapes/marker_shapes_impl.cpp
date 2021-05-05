@@ -34,9 +34,9 @@ MarkerShape<BVH_RSS_t>::MarkerShape(const std::string& root_frame,
         uint32_t v_idx_2 = tri.vertex_indices.elems[1];
         uint32_t v_idx_3 = tri.vertex_indices.elems[2];
 
-        fcl::Vec3f v1(mesh.vertices[v_idx_1].x, mesh.vertices[v_idx_1].y, mesh.vertices[v_idx_1].z);
-        fcl::Vec3f v2(mesh.vertices[v_idx_2].x, mesh.vertices[v_idx_2].y, mesh.vertices[v_idx_2].z);
-        fcl::Vec3f v3(mesh.vertices[v_idx_3].x, mesh.vertices[v_idx_3].y, mesh.vertices[v_idx_3].z);
+        FCL_Vec3 v1(mesh.vertices[v_idx_1].x, mesh.vertices[v_idx_1].y, mesh.vertices[v_idx_1].z);
+        FCL_Vec3 v2(mesh.vertices[v_idx_2].x, mesh.vertices[v_idx_2].y, mesh.vertices[v_idx_2].z);
+        FCL_Vec3 v3(mesh.vertices[v_idx_3].x, mesh.vertices[v_idx_3].y, mesh.vertices[v_idx_3].z);
 
         this->ptr_fcl_bvh_->addTriangle(v1, v2, v3);
     }
@@ -163,17 +163,21 @@ inline visualization_msgs::Marker MarkerShape<BVH_RSS_t>::getMarker()
 }
 
 
-fcl::CollisionObject MarkerShape<BVH_RSS_t>::getCollisionObject() const
+FCL_CollisionObject MarkerShape<BVH_RSS_t>::getCollisionObject() const
 {
-    fcl::Transform3f x(fcl::Quaternion3f(this->marker_.pose.orientation.w,
-                                         this->marker_.pose.orientation.x,
-                                         this->marker_.pose.orientation.y,
-                                         this->marker_.pose.orientation.z),
-                       fcl::Vec3f(this->marker_.pose.position.x,
-                                  this->marker_.pose.position.y,
-                                  this->marker_.pose.position.z));
-
-    fcl::CollisionObject cobj(this->ptr_fcl_bvh_, x);
+    // FIXME
+    // fcl::Transform3f x(FCL_Quaternion(this->marker_.pose.orientation.w,
+    //                                   this->marker_.pose.orientation.x,
+    //                                   this->marker_.pose.orientation.y,
+    //                                   this->marker_.pose.orientation.z),
+    //                    FCL_Vec3(this->marker_.pose.position.x,
+    //                             this->marker_.pose.position.y,
+    //                             this->marker_.pose.position.z));
+    fcl::Transform3f x(FCL_Quaternion(this->marker_.pose.orientation.w,
+                                      this->marker_.pose.orientation.x,
+                                      this->marker_.pose.orientation.y,
+                                      this->marker_.pose.orientation.z));
+    FCL_CollisionObject cobj(this->ptr_fcl_bvh_, x);
     return cobj;
 }
 

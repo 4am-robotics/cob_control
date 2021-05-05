@@ -18,9 +18,24 @@
 #include <ctime>
 #include <vector>
 #include <ros/ros.h>
-#include <fcl/shape/geometric_shapes.h>
 #include <fstream>
 #include <thread>
+
+#include <fcl/config.h>
+#if FCL_MINOR_VERSION == 5
+    #include <fcl/shape/geometric_shapes.h>
+    typedef fcl::Box FCL_Box;
+    typedef fcl::Sphere FCL_Sphere;
+    typedef fcl::Cylinder FCL_Cylinder;
+#else
+    #include <fcl/geometry/shape/box.h>
+    #include <fcl/geometry/shape/sphere.h>
+    #include <fcl/geometry/shape/cylinder.h>
+    typedef fcl::Boxf FCL_Box;
+    typedef fcl::Spheref FCL_Sphere;
+    typedef fcl::Cylinderf FCL_Cylinder;
+#endif
+
 
 #include "cob_obstacle_distance/obstacle_distance_data_types.hpp"
 #include "cob_obstacle_distance/distance_manager.hpp"
@@ -70,8 +85,8 @@ int main(int argc, char** argv)
  */
 void addTestObstacles(DistanceManager& dm)
 {
-    fcl::Sphere s(0.1);
-    fcl::Box b(0.1, 0.1, 0.1);  // Take care the nearest point for collision is one of the eight corners!!! This might lead to jittering
+    FCL_Sphere s(0.1);
+    FCL_Box b(0.1, 0.1, 0.1);  // Take care the nearest point for collision is one of the eight corners!!! This might lead to jittering
 
     PtrIMarkerShape_t sptr_Bvh(new MarkerShape<BVH_RSS_t>(dm.getRootFrame(),
                                                           "package://cob_gazebo_objects/Media/models/milk.dae",
@@ -79,7 +94,7 @@ void addTestObstacles(DistanceManager& dm)
                                                            -0.35,
                                                             0.8));
 
-    PtrIMarkerShape_t sptr_Sphere(new MarkerShape<fcl::Sphere>(dm.getRootFrame(), s, 0.35, -0.35, 0.8));
+    PtrIMarkerShape_t sptr_Sphere(new MarkerShape<FCL_Sphere>(dm.getRootFrame(), s, 0.35, -0.35, 0.8));
 
     dm.addObstacle("Funny Sphere", sptr_Sphere);
     dm.addObstacle("Funny Mesh", sptr_Bvh);

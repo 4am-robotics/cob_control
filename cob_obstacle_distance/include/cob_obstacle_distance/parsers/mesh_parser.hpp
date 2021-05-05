@@ -27,7 +27,7 @@
 class MeshParser : public ParserBase
 {
     private:
-        int8_t toVec3f(uint32_t num_current_face, aiVector3D* vertex, fcl::Vec3f& out);
+        int8_t toVec3f(uint32_t num_current_face, aiVector3D* vertex, FCL_Vec3& out);
 
     public:
         MeshParser(const std::string& file_path)

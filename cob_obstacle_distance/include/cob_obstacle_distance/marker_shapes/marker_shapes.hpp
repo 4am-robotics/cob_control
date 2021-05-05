@@ -23,14 +23,17 @@
 #include <shape_msgs/Mesh.h>
 #include <shape_msgs/MeshTriangle.h>
 
-#include "fcl/shape/geometric_shapes.h"
-#include "fcl/collision_object.h"
+#include <fcl/config.h>
+#if FCL_MINOR_VERSION == 5
+    #include "fcl/collision_object.h"
+    typedef fcl::CollisionObject FCL_CollisionObject;
+#else
+    #include <fcl/narrowphase/collision_object.h>
+    typedef fcl::CollisionObjectf FCL_CollisionObject;
+#endif
 
 #include "cob_obstacle_distance/fcl_marker_converter.hpp"
 #include "cob_obstacle_distance/marker_shapes/marker_shapes_interface.hpp"
-
-#include <fcl/distance.h>
-#include <fcl/collision_data.h>
 
 static const std::string g_marker_namespace = "collision_object";
 
@@ -92,9 +95,9 @@ class MarkerShape : public IMarkerShape
         inline void updatePose(const geometry_msgs::Pose& pose);
 
         /**
-         * @return A fcl::CollisionObject to calculate distances to other objects or check whether collision occurred or not.
+         * @return A FCL_CollisionObject to calculate distances to other objects or check whether collision occurred or not.
          */
-        fcl::CollisionObject getCollisionObject() const;
+        FCL_CollisionObject getCollisionObject() const;
 
         virtual ~MarkerShape(){}
 };
@@ -155,9 +158,9 @@ class MarkerShape<BVH_RSS_t> : public IMarkerShape
         inline void updatePose(const geometry_msgs::Pose& pose);
 
         /**
-         * @return A fcl::CollisionObject to calculate distances to other objects or check whether collision occurred or not.
+         * @return A FCL_CollisionObject to calculate distances to other objects or check whether collision occurred or not.
          */
-        fcl::CollisionObject getCollisionObject() const;
+        FCL_CollisionObject getCollisionObject() const;
 
         virtual ~MarkerShape(){}
 };

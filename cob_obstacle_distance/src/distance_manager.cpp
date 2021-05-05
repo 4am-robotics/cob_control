@@ -26,10 +26,16 @@
 
 #include <ros/ros.h>
 
-#include <fcl/collision_object.h>
-#include <fcl/collision.h>
-#include <fcl/distance.h>
-#include <fcl/collision_data.h>
+#include <fcl/config.h>
+#if FCL_MINOR_VERSION == 5
+    #include <fcl/distance.h>
+    typedef fcl::DistanceRequest FCL_DistanceRequest;
+    typedef fcl::DistanceResult FCL_DistanceResult;
+#else
+    #include <fcl/narrowphase/distance.h>
+    typedef fcl::DistanceRequest<double> FCL_DistanceRequest;
+    typedef fcl::DistanceResult<double> FCL_DistanceResult;
+#endif
 
 #include <std_msgs/Float64.h>
 #include <visualization_msgs/Marker.h>
@@ -249,8 +255,8 @@ void DistanceManager::calculate()
         tf::vectorEigenToMsg(abs_jnt_pos, v3);
         ooi->updatePose(v3, quat);
 
-        fcl::CollisionObject ooi_co = ooi->getCollisionObject();
-        fcl::FCL_REAL last_dist = std::numeric_limits<fcl::FCL_REAL>::max();
+        FCL_CollisionObject ooi_co = ooi->getCollisionObject();
+        double last_dist = std::numeric_limits<double>::max();
         {  // introduced the block to lock this critical section until block leaved.
             std::lock_guard<std::mutex> lock(obstacle_mgr_mtx_);
             for (ShapesManager::MapIter_t it = this->obstacle_mgr_->begin(); it != this->obstacle_mgr_->end(); ++it)
@@ -264,10 +270,12 @@ void DistanceManager::calculate()
                 }
 
                 PtrIMarkerShape_t obstacle = it->second;
-                fcl::CollisionObject collision_obj = obstacle->getCollisionObject();
-                fcl::DistanceResult dist_result;
-                fcl::DistanceRequest dist_request(true, 5.0, 0.01);
-                fcl::FCL_REAL dist = fcl::distance(&ooi_co, &collision_obj, dist_request, dist_result);
+                FCL_CollisionObject collision_obj = obstacle->getCollisionObject();
+                FCL_DistanceResult dist_result;
+                FCL_DistanceRequest dist_request(true, 5.0, 0.01);
+                //FIXME
+                // double dist = fcl::distance(&ooi_co, &collision_obj, dist_request, dist_result);
+                double dist = 0;
 
 
                 Eigen::Vector3d abs_obst_vector(dist_result.nearest_points[1][VEC_X],

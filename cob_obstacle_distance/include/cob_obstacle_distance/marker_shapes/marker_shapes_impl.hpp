@@ -18,6 +18,15 @@
 #ifndef MARKER_SHAPES_IMPL_HPP_
 #define MARKER_SHAPES_IMPL_HPP_
 
+#include <fcl/config.h>
+#if FCL_MINOR_VERSION == 5
+    typedef fcl::Vec3f FCL_Vec3;
+    typedef fcl::Quaternion3f FCL_Quaternion;
+#else
+    typedef fcl::Vector3f FCL_Vec3;
+    typedef fcl::Quaternionf FCL_Quaternion;
+#endif
+
 #include "cob_obstacle_distance/marker_shapes/marker_shapes.hpp"
 
 /* BEGIN MarkerShape ********************************************************************************************/
@@ -115,16 +124,22 @@ inline visualization_msgs::Marker MarkerShape<T>::getMarker()
 
 
 template <typename T>
-fcl::CollisionObject MarkerShape<T>::getCollisionObject() const
+FCL_CollisionObject MarkerShape<T>::getCollisionObject() const
 {
-    fcl::Transform3f x(fcl::Quaternion3f(this->marker_.pose.orientation.w,
-                                         this->marker_.pose.orientation.x,
-                                         this->marker_.pose.orientation.y,
-                                         this->marker_.pose.orientation.z),
-                       fcl::Vec3f(this->marker_.pose.position.x,
-                                  this->marker_.pose.position.y,
-                                  this->marker_.pose.position.z));
-    fcl::CollisionObject cobj(this->ptr_fcl_bvh_, x);
+    // FIXME
+    // fcl::Transform3f x(FCL_Quaternion(this->marker_.pose.orientation.w,
+    //                                   this->marker_.pose.orientation.x,
+    //                                   this->marker_.pose.orientation.y,
+    //                                   this->marker_.pose.orientation.z),
+    //                     FCL_Vec3(this->marker_.pose.position.x,
+    //                              this->marker_.pose.position.y,
+    //                              this->marker_.pose.position.z));
+    fcl::Transform3f x(FCL_Quaternion(this->marker_.pose.orientation.w,
+                                      this->marker_.pose.orientation.x,
+                                      this->marker_.pose.orientation.y,
+                                      this->marker_.pose.orientation.z));
+
+    FCL_CollisionObject cobj(this->ptr_fcl_bvh_, x);
     return cobj;
 }
 
