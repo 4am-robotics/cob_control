@@ -2,6 +2,14 @@
 Changelog for package cob_twist_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#254 <https://github.com/ipa320/cob_control/issues/254>`_ from mikaelarguedas/python3-six
+  ROS_PYTHON_VERSION conditional dependency for python-six
+* mark exec_depend
+* ROS_PYTHON_VERSION conditional dependency for python-six
+* Contributors: Felix Messmer, Mikael Arguedas, fmessmer
+
 0.8.13 (2021-04-06)
 -------------------
 

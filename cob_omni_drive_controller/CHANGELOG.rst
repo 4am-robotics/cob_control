@@ -2,6 +2,9 @@
 Changelog for package cob_omni_drive_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.8.13 (2021-04-06)
 -------------------
 * Merge pull request `#251 <https://github.com/ipa320/cob_control/issues/251>`_ from fmessmer/melodic/TF_REPEATED_DATA

@@ -2,6 +2,9 @@
 Changelog for package cob_hardware_emulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.8.13 (2021-04-06)
 -------------------
 * Merge pull request `#253 <https://github.com/ipa320/cob_control/issues/253>`_ from floweisshardt/feature/emulator_move_base_melodic
