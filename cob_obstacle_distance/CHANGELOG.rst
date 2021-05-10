@@ -2,8 +2,8 @@
 Changelog for package cob_obstacle_distance
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.8.14 (2021-05-10)
+-------------------
 * Merge pull request `#255 <https://github.com/ipa320/cob_control/issues/255>`_ from fmessmer/fcl_migration
   fcl noetic compatibility
 * comment broken bits
