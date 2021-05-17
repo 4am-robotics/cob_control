@@ -2,6 +2,9 @@
 Changelog for package cob_base_controller_utils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.8.14 (2021-05-10)
 -------------------
 

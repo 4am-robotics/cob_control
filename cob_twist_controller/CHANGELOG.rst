@@ -2,6 +2,9 @@
 Changelog for package cob_twist_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.8.14 (2021-05-10)
 -------------------
 * Merge pull request `#254 <https://github.com/ipa320/cob_control/issues/254>`_ from mikaelarguedas/python3-six

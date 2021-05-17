@@ -2,6 +2,13 @@
 Changelog for package cob_hardware_emulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#257 <https://github.com/ipa320/cob_control/issues/257>`_ from fmessmer/fix_emulated_fjt_melodic
+  [melodic] fix emulated fjt
+* never skip last traj point
+* Contributors: Felix Messmer, fmessmer
+
 0.8.14 (2021-05-10)
 -------------------
 
