@@ -72,14 +72,14 @@ class EmulationFollowJointTrajectory(object):
             nr_points_dof = len(self.joint_names)
 
             # for all points in the desired trajectory
-            for point in goal_sorted.trajectory.points:
+            for p_idx, point in enumerate(goal_sorted.trajectory.points):
 
                 if len(point.positions) != nr_points_dof:
                     self.as_fjta.set_aborted()
                     return
 
                 point_time_delta = point.time_from_start - time_since_start_of_previous_point
-                if point_time_delta.to_sec() < self.sample_rate_dur_secs:
+                if not p_idx == len(goal_sorted.trajectory.points)-1 and point_time_delta.to_sec() < self.sample_rate_dur_secs:
                     rospy.logwarn("current trajectory point has time_delta smaller than sample_rate: {} < {}! Skipping".format(point_time_delta.to_sec(), self.sample_rate_dur_secs))
                     continue
 
