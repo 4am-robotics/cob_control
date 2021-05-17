@@ -2,8 +2,8 @@
 Changelog for package cob_hardware_emulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.14 (2021-05-17)
+-------------------
 * Merge pull request `#258 <https://github.com/ipa320/cob_control/issues/258>`_ from fmessmer/fix_emulated_fjt_kinetic
   [kinetic] fix emulated fjt
 * never skip last traj point
