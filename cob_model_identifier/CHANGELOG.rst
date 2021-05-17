@@ -2,6 +2,9 @@
 Changelog for package cob_model_identifier
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.7.13 (2021-04-06)
 -------------------
 * Merge pull request `#246 <https://github.com/ipa320/cob_control/issues/246>`_ from fmessmer/fix_catkin_lint_kinetic
