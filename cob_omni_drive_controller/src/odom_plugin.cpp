@@ -129,7 +129,7 @@ private:
     ros::Timer publish_timer_;
     nav_msgs::Odometry odom_;
     bool reset_;
-    bool invert_odom_ = true;
+    bool invert_odom_ = false;
     boost::mutex mutex_;
     geometry_msgs::TransformStamped odom_tf_;
     ros::Time stop_time_;
