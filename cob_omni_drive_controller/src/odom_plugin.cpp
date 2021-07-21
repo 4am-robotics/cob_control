@@ -157,7 +157,10 @@ private:
                 odom_tf_.transform.translation.x = odom_.pose.pose.position.x;
                 odom_tf_.transform.translation.y = odom_.pose.pose.position.y;
                 odom_tf_.transform.rotation = odom_.pose.pose.orientation;
-
+                tf::Transform transform;
+                tf::transformMsgToTF(odom_tf_.transform, transform);
+                geometry_msgs::Transform inverted_transform_msg;
+                tf::transformTFToMsg(transform.inverse(), odom_tf_.transform);
                 // publish the transform (for debugging, conflicts with robot-pose-ekf)
                 tf_broadcast_odometry_->sendTransform(odom_tf_);
             }
