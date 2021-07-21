@@ -70,7 +70,9 @@ public:
             tf_broadcast_odometry_.reset(new tf::TransformBroadcaster);
         }
 
-        publish_timer_ = controller_nh.createTimer(ros::Duration(1/publish_rate), &OdometryController::publish, this);
+        controller_nh.getParam("invert_odom", invert_odom_);
+
+        publish_timer_ = controller_nh.createTimer(ros::Duration(1 / publish_rate), &OdometryController::publish, this);
         service_reset_ = controller_nh.advertiseService("reset_odometry", &OdometryController::srv_reset, this);
 
         return true;
@@ -127,6 +129,7 @@ private:
     ros::Timer publish_timer_;
     nav_msgs::Odometry odom_;
     bool reset_;
+    bool invert_odom_ = true;
     boost::mutex mutex_;
     geometry_msgs::TransformStamped odom_tf_;
     ros::Time stop_time_;
@@ -157,10 +160,12 @@ private:
                 odom_tf_.transform.translation.x = odom_.pose.pose.position.x;
                 odom_tf_.transform.translation.y = odom_.pose.pose.position.y;
                 odom_tf_.transform.rotation = odom_.pose.pose.orientation;
-                tf::Transform transform;
-                tf::transformMsgToTF(odom_tf_.transform, transform);
-                geometry_msgs::Transform inverted_transform_msg;
-                tf::transformTFToMsg(transform.inverse(), odom_tf_.transform);
+                if (invert_odom_){
+                    tf::Transform transform;
+                    tf::transformMsgToTF(odom_tf_.transform, transform);
+                    geometry_msgs::Transform inverted_transform_msg;
+                    tf::transformTFToMsg(transform.inverse(), odom_tf_.transform);
+                }
                 // publish the transform (for debugging, conflicts with robot-pose-ekf)
                 tf_broadcast_odometry_->sendTransform(odom_tf_);
             }
