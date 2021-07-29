@@ -70,7 +70,7 @@ public:
             tf_broadcast_odometry_.reset(new tf::TransformBroadcaster);
         }
 
-        controller_nh.getParam("invert_odom", invert_odom_);
+        controller_nh.getParam("invert_odom_tf", invert_odom_tf_);
 
         publish_timer_ = controller_nh.createTimer(ros::Duration(1 / publish_rate), &OdometryController::publish, this);
         service_reset_ = controller_nh.advertiseService("reset_odometry", &OdometryController::srv_reset, this);
@@ -129,7 +129,7 @@ private:
     ros::Timer publish_timer_;
     nav_msgs::Odometry odom_;
     bool reset_;
-    bool invert_odom_ = false;
+    bool invert_odom_tf_ = false;
     boost::mutex mutex_;
     std::string frame_id_, child_frame_id_;
     geometry_msgs::TransformStamped odom_tf_;
@@ -161,7 +161,7 @@ private:
                 odom_tf_.transform.translation.x = odom_.pose.pose.position.x;
                 odom_tf_.transform.translation.y = odom_.pose.pose.position.y;
                 odom_tf_.transform.rotation = odom_.pose.pose.orientation;
-                if (invert_odom_){
+                if (invert_odom_tf_){
                     odom_tf_.header.frame_id = child_frame_id_;
                     odom_tf_.child_frame_id = frame_id_;
                     tf::Transform transform;
