@@ -51,12 +51,12 @@ public:
             return false;
         }
 
-        const std::string frame_id = controller_nh.param("frame_id", std::string("odom"));
-        const std::string child_frame_id = controller_nh.param("child_frame_id", std::string("base_footprint"));
+        frame_id_ = controller_nh.param("frame_id", std::string("odom"));
+        child_frame_id_ = controller_nh.param("child_frame_id", std::string("base_footprint"));
         const double cov_pose = controller_nh.param("cov_pose", 0.1);
         const double cov_twist = controller_nh.param("cov_twist", 0.1);
 
-        odom_tracker_.reset(new OdometryTracker(frame_id, child_frame_id, cov_pose, cov_twist));
+        odom_tracker_.reset(new OdometryTracker(frame_id_, child_frame_id_, cov_pose, cov_twist));
         odom_ = odom_tracker_->getOdometry();
 
         topic_pub_odometry_ = controller_nh.advertise<nav_msgs::Odometry>("odometry", 1);
@@ -65,12 +65,14 @@ public:
         controller_nh.getParam("broadcast_tf", broadcast_tf);
 
         if(broadcast_tf){
-            odom_tf_.header.frame_id = frame_id;
-            odom_tf_.child_frame_id = child_frame_id;
+            odom_tf_.header.frame_id = frame_id_;
+            odom_tf_.child_frame_id = child_frame_id_;
             tf_broadcast_odometry_.reset(new tf::TransformBroadcaster);
         }
 
-        publish_timer_ = controller_nh.createTimer(ros::Duration(1/publish_rate), &OdometryController::publish, this);
+        controller_nh.getParam("invert_odom_tf", invert_odom_tf_);
+
+        publish_timer_ = controller_nh.createTimer(ros::Duration(1 / publish_rate), &OdometryController::publish, this);
         service_reset_ = controller_nh.advertiseService("reset_odometry", &OdometryController::srv_reset, this);
 
         return true;
@@ -127,7 +129,9 @@ private:
     ros::Timer publish_timer_;
     nav_msgs::Odometry odom_;
     bool reset_;
+    bool invert_odom_tf_ = false;
     boost::mutex mutex_;
+    std::string frame_id_, child_frame_id_;
     geometry_msgs::TransformStamped odom_tf_;
     ros::Time stop_time_;
 
@@ -157,7 +161,13 @@ private:
                 odom_tf_.transform.translation.x = odom_.pose.pose.position.x;
                 odom_tf_.transform.translation.y = odom_.pose.pose.position.y;
                 odom_tf_.transform.rotation = odom_.pose.pose.orientation;
-
+                if (invert_odom_tf_){
+                    odom_tf_.header.frame_id = child_frame_id_;
+                    odom_tf_.child_frame_id = frame_id_;
+                    tf::Transform transform;
+                    tf::transformMsgToTF(odom_tf_.transform, transform);
+                    tf::transformTFToMsg(transform.inverse(), odom_tf_.transform);
+                }
                 // publish the transform (for debugging, conflicts with robot-pose-ekf)
                 tf_broadcast_odometry_->sendTransform(odom_tf_);
             }
