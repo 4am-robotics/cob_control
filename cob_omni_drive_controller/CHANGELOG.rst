@@ -2,8 +2,8 @@
 Changelog for package cob_omni_drive_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.7.15 (2021-10-19)
+-------------------
 * Merge pull request `#260 <https://github.com/ipa320/cob_control/issues/260>`_ from HannesBachter/feature/invert_odom_kinetic
   [kinetic] Feature/invert odom
 * rename to invert_odom_tf
