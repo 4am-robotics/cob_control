@@ -16,6 +16,8 @@
 
 
 #include <string>
+#include <vector>
+#include <algorithm>
 #include <ros/ros.h>
 
 #include <sensor_msgs/JointState.h>
@@ -38,6 +40,7 @@ class DebugEvaluateJointStates
     ros::Subscriber jointstate_sub_;
     ros::Publisher manipulability_pub_;
     ros::Publisher twist_current_pub_;
+    ros::Publisher twist_magnitude_pub_;
 
     std::string chain_base_link_;
     std::string chain_tip_link_;
@@ -83,6 +86,7 @@ public:
         jointstate_sub_ = nh_.subscribe("joint_states", 1, &DebugEvaluateJointStates::jointstateCallback, this);
         manipulability_pub_ = nh_.advertise<std_msgs::Float64> ("debug/manipulability", 1);
         twist_current_pub_ = nh_.advertise<geometry_msgs::Twist> ("debug/twist_current", 1);
+        twist_magnitude_pub_ = nh_.advertise<sensor_msgs::JointState> ("debug/twist_magnitude", 1);
 
         return 0;
     }
@@ -92,20 +96,47 @@ public:
         KDL::JntArray q = KDL::JntArray(chain_.getNrOfJoints());
         KDL::JntArray q_dot = KDL::JntArray(chain_.getNrOfJoints());
 
-        for (unsigned int i = 0; i < msg->name.size(); i++)
+        // //TODO: sort wrt kinematic order
+        // for (unsigned int i = 0; i < msg->name.size(); i++)
+        // {
+        //     q(i) = msg->position[i];
+        //     q_dot(i) = msg->velocity[i];
+        // }
+        for (unsigned int i = 0; i < chain_.getNrOfJoints(); i++)
         {
-            q(i) = msg->position[i];
-            q_dot(i) = msg->velocity[i];
+            std::string joint_name = chain_.getSegment(i).getJoint().getName(); 
+            if (std::find(msg->name.begin(), msg->name.end(), joint_name) != msg->name.end())
+            {
+                unsigned int index = std::distance(msg->name.begin(), std::find(msg->name.begin(), msg->name.end(), joint_name));
+                q(index) = msg->position[index];
+                q_dot(index) = msg->velocity[index];
+            }
+            else 
+            {
+                ROS_ERROR_STREAM("Joint '" << joint_name << "' not found in JointStates");
+                return;
+            }
         }
 
         /// compute current twist
-        KDL::FrameVel FrameVel;
+        std::vector< KDL::FrameVel > v_FrameVel;
         KDL::JntArrayVel jntArrayVel = KDL::JntArrayVel(q, q_dot);
-        if (p_fksolver_vel_->JntToCart(jntArrayVel, FrameVel, -1) >= 0)
+        v_FrameVel.resize(chain_.getNrOfJoints());
+        if (p_fksolver_vel_->JntToCart(jntArrayVel, v_FrameVel, chain_.getNrOfJoints()) >= 0)
         {
+            //last entry is twist of tip_link
             geometry_msgs::Twist twist_msg;
-            tf::twistKDLToMsg(FrameVel.GetTwist(), twist_msg);
+            tf::twistKDLToMsg(v_FrameVel.back().GetTwist(), twist_msg);
             twist_current_pub_.publish(twist_msg);
+
+            //recursively calculate FrameVel magnitudes
+            sensor_msgs::JointState magnitude_msg;
+            for (unsigned int i = 0; i < chain_.getNrOfJoints(); i++)
+            {
+                magnitude_msg.name.push_back(chain_.getSegment(i).getName());
+                magnitude_msg.velocity.push_back(v_FrameVel[i].GetTwist().vel.Norm());
+            }
+            twist_magnitude_pub_.publish(magnitude_msg);
         }
 
         /// compute manipulability
