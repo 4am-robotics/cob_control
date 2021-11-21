@@ -131,6 +131,7 @@ public:
 
             //recursively calculate FrameVel magnitudes
             sensor_msgs::JointState magnitude_msg;
+            magnitude_msg.header.stamp = msg->header.stamp;
             for (unsigned int i = 0; i < chain_.getNrOfJoints(); i++)
             {
                 magnitude_msg.name.push_back(chain_.getSegment(i).getName());
