@@ -116,27 +116,36 @@ public:
         //     q(i) = msg->position[i];
         //     q_dot(i) = msg->velocity[i];
         // }
-        for (unsigned int i = 0; i < chain_.getNrOfJoints(); i++)
+        for (unsigned int i = 0; i < chain_.getNrOfSegments(); i++)
         {
-            std::string joint_name = chain_.getSegment(i).getJoint().getName(); 
-            if (std::find(msg->name.begin(), msg->name.end(), joint_name) != msg->name.end())
+            KDL::Joint joint = chain_.getSegment(i).getJoint();
+            std::string joint_name = joint.getName();
+            if (joint.getType() == KDL::Joint::None)
             {
-                unsigned int index = std::distance(msg->name.begin(), std::find(msg->name.begin(), msg->name.end(), joint_name));
-                q(index) = msg->position[index];
-                q_dot(index) = msg->velocity[index];
+                ROS_DEBUG_STREAM("Skip fixed Joint '" << joint_name);
+                continue;
             }
-            else 
+            else
             {
-                ROS_ERROR_STREAM("Joint '" << joint_name << "' not found in JointStates");
-                return;
+                if (std::find(msg->name.begin(), msg->name.end(), joint_name) != msg->name.end())
+                {
+                    unsigned int index = std::distance(msg->name.begin(), std::find(msg->name.begin(), msg->name.end(), joint_name));
+                    q(index) = msg->position[index];
+                    q_dot(index) = msg->velocity[index];
+                }
+                else
+                {
+                    ROS_ERROR_STREAM("Joint '" << joint_name << "' not found in JointStates");
+                    return;
+                }
             }
         }
 
         /// compute current twist
         std::vector< KDL::FrameVel > v_FrameVel;
         KDL::JntArrayVel jntArrayVel = KDL::JntArrayVel(q, q_dot);
-        v_FrameVel.resize(chain_.getNrOfJoints());
-        if (p_fksolver_vel_->JntToCart(jntArrayVel, v_FrameVel, chain_.getNrOfJoints()) >= 0)
+        v_FrameVel.resize(chain_.getNrOfSegments());
+        if (p_fksolver_vel_->JntToCart(jntArrayVel, v_FrameVel, chain_.getNrOfSegments()) >= 0)
         {
             //last entry is twist of tip_link
             geometry_msgs::Twist twist_msg;
@@ -146,7 +155,7 @@ public:
             //recursively calculate FrameVel magnitudes
             sensor_msgs::JointState magnitude_msg;
             magnitude_msg.header.stamp = msg->header.stamp;
-            for (unsigned int i = 0; i < chain_.getNrOfJoints(); i++)
+            for (unsigned int i = 0; i < chain_.getNrOfSegments(); i++)
             {
                 magnitude_msg.name.push_back(chain_.getSegment(i).getName());
                 magnitude_msg.velocity.push_back(v_FrameVel[i].GetTwist().vel.Norm());
