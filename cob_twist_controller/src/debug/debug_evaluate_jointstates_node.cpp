@@ -79,6 +79,20 @@ public:
             return -4;
         }
 
+        //debug chain
+        ROS_WARN("~~~~~~~~~~~~~ DEBUG CHAIN ~~~~~~~~~~~~~");
+        ROS_WARN_STREAM("NrOfJoints: "<<chain_.getNrOfJoints());
+        ROS_WARN_STREAM("NrOfSegments: "<<chain_.getNrOfSegments());
+        for (unsigned int i = 0; i < chain_.getNrOfSegments(); i++)
+        {
+            KDL::Segment segment = chain_.getSegment(i);
+            ROS_WARN_STREAM("SegmentName: "<<segment.getName());
+            KDL::Joint joint = segment.getJoint();
+            ROS_WARN_STREAM("JointName: "<<joint.getName());
+            ROS_WARN_STREAM("JointType: "<<joint.getTypeName());
+        }
+        ROS_WARN("~~~~~~~~~~~~~ DEBUG CHAIN ~~~~~~~~~~~~~");
+
         p_fksolver_vel_ = new KDL::ChainFkSolverVel_recursive(chain_);
         p_jnt2jac_ = new KDL::ChainJntToJacSolver(chain_);
 
