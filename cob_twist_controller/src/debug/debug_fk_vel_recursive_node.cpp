@@ -34,7 +34,7 @@
 #include <Eigen/Dense>
 #include <kdl_conversions/kdl_msg.h>
 
-class DebugEvaluateJointStates
+class DebugFkVelRecursive
 {
     ros::NodeHandle nh_;
     ros::Subscriber jointstate_sub_;
@@ -97,7 +97,7 @@ public:
         p_jnt2jac_ = new KDL::ChainJntToJacSolver(chain_);
 
         /// initialize ROS interfaces
-        jointstate_sub_ = nh_.subscribe("joint_states", 1, &DebugEvaluateJointStates::jointstateCallback, this);
+        jointstate_sub_ = nh_.subscribe("joint_states", 1, &DebugFkVelRecursive::jointstateCallback, this);
         manipulability_pub_ = nh_.advertise<std_msgs::Float64> ("debug/manipulability", 1);
         twist_current_pub_ = nh_.advertise<geometry_msgs::Twist> ("debug/twist_current", 1);
         twist_magnitude_pub_ = nh_.advertise<sensor_msgs::JointState> ("debug/twist_magnitude", 1);
@@ -178,12 +178,12 @@ public:
 
 int main(int argc, char** argv)
 {
-    ros::init(argc, argv, "debug_evaluate_jointstates_node");
+    ros::init(argc, argv, "debug_fk_vel_recursive_node");
 
-    DebugEvaluateJointStates dejs;
-    if (dejs.init() != 0)
+    DebugFkVelRecursive dfvr;
+    if (dfvr.init() != 0)
     {
-        ROS_ERROR("Failed to initialize DebugEvaluateJointStates.");
+        ROS_ERROR("Failed to initialize DebugFkVelRecursive.");
         return -1;
     }
 

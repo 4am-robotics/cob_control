@@ -73,9 +73,9 @@ add_executable(debug_trajectory_marker_node src/debug/debug_trajectory_marker_no
 add_dependencies(debug_trajectory_marker_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(debug_trajectory_marker_node ${catkin_LIBRARIES})
 
-add_executable(debug_evaluate_jointstates_node src/debug/debug_evaluate_jointstates_node.cpp)
-add_dependencies(debug_evaluate_jointstates_node ${catkin_EXPORTED_TARGETS})
-target_link_libraries(debug_evaluate_jointstates_node ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
+add_executable(debug_fk_vel_recursive_node src/debug/debug_fk_vel_recursive_node.cpp)
+add_dependencies(debug_fk_vel_recursive_node ${catkin_EXPORTED_TARGETS})
+target_link_libraries(debug_fk_vel_recursive_node ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 
 add_executable(test_moving_average_node src/debug/test_moving_average_node.cpp)
 add_dependencies(test_moving_average_node ${catkin_EXPORTED_TARGETS})
@@ -106,7 +106,7 @@ install(TARGETS ${PROJECT_NAME}_node constraint_solvers controller_interfaces da
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-install(TARGETS debug_evaluate_jointstates_node debug_trajectory_marker_node test_moving_average_node test_simpson_integrator_node test_trajectory_command_sine_node test_twist_command_sine_node
+install(TARGETS debug_fk_vel_recursive_node debug_trajectory_marker_node test_moving_average_node test_simpson_integrator_node test_trajectory_command_sine_node test_twist_command_sine_node
  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
