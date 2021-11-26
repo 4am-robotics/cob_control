@@ -21,6 +21,7 @@
 #include <ros/ros.h>
 
 #include <sensor_msgs/JointState.h>
+#include <control_msgs/JointTrajectoryControllerState.h>
 #include <std_msgs/Float64.h>
 #include <geometry_msgs/Twist.h>
 
@@ -37,10 +38,12 @@
 class DebugFkVelRecursive
 {
     ros::NodeHandle nh_;
-    ros::Subscriber jointstate_sub_;
+    ros::Subscriber joint_states_sub_;
+    ros::Subscriber controller_state_sub_;
     ros::Publisher manipulability_pub_;
     ros::Publisher twist_current_pub_;
-    ros::Publisher twist_magnitude_pub_;
+    ros::Publisher twist_magnitude_desired_pub_;
+    ros::Publisher twist_magnitude_actual_pub_;
 
     std::string chain_base_link_;
     std::string chain_tip_link_;
@@ -97,25 +100,22 @@ public:
         p_jnt2jac_ = new KDL::ChainJntToJacSolver(chain_);
 
         /// initialize ROS interfaces
-        jointstate_sub_ = nh_.subscribe("joint_states", 1, &DebugFkVelRecursive::jointstateCallback, this);
+        // joint_states_sub_ = nh_.subscribe("joint_states", 1, &DebugFkVelRecursive::jointstatesCallback, this);  // analyzing controller_state instead
+        controller_state_sub_ = nh_.subscribe("joint_trajectory_controller/state", 1, &DebugFkVelRecursive::controllerstateCallback, this);
         manipulability_pub_ = nh_.advertise<std_msgs::Float64> ("debug/manipulability", 1);
         twist_current_pub_ = nh_.advertise<geometry_msgs::Twist> ("debug/twist_current", 1);
-        twist_magnitude_pub_ = nh_.advertise<sensor_msgs::JointState> ("debug/twist_magnitude", 1);
+        twist_magnitude_desired_pub_ = nh_.advertise<sensor_msgs::JointState> ("debug/twist_magnitude/desired", 1);
+        twist_magnitude_actual_pub_ = nh_.advertise<sensor_msgs::JointState> ("debug/twist_magnitude/actual", 1);
 
         return 0;
     }
 
-    void jointstateCallback(const sensor_msgs::JointState::ConstPtr& msg)
+    void jointstatesCallback(const sensor_msgs::JointState::ConstPtr& msg)
     {
         KDL::JntArray q = KDL::JntArray(chain_.getNrOfJoints());
         KDL::JntArray q_dot = KDL::JntArray(chain_.getNrOfJoints());
 
-        // //TODO: sort wrt kinematic order
-        // for (unsigned int i = 0; i < msg->name.size(); i++)
-        // {
-        //     q(i) = msg->position[i];
-        //     q_dot(i) = msg->velocity[i];
-        // }
+        /// extract q, q_dot from JointStates
         for (unsigned int i = 0; i < chain_.getNrOfSegments(); i++)
         {
             KDL::Joint joint = chain_.getSegment(i).getJoint();
@@ -160,7 +160,7 @@ public:
                 magnitude_msg.name.push_back(chain_.getSegment(i).getName());
                 magnitude_msg.velocity.push_back(v_FrameVel[i].GetTwist().vel.Norm());
             }
-            twist_magnitude_pub_.publish(magnitude_msg);
+            twist_magnitude_actual_pub_.publish(magnitude_msg);
         }
 
         /// compute manipulability
@@ -173,6 +173,73 @@ public:
         manipulability_msg.data = kappa;
         manipulability_pub_.publish(manipulability_msg);
     }
+
+    void controllerstateCallback(const control_msgs::JointTrajectoryControllerState::ConstPtr& msg)
+    {
+        KDL::JntArray q_desired = KDL::JntArray(chain_.getNrOfJoints());
+        KDL::JntArray q_desired_dot = KDL::JntArray(chain_.getNrOfJoints());
+        KDL::JntArray q_actual = KDL::JntArray(chain_.getNrOfJoints());
+        KDL::JntArray q_actual_dot = KDL::JntArray(chain_.getNrOfJoints());
+
+        for (unsigned int i = 0; i < chain_.getNrOfSegments(); i++)
+        {
+            KDL::Joint joint = chain_.getSegment(i).getJoint();
+            std::string joint_name = joint.getName();
+            if (joint.getType() == KDL::Joint::None)
+            {
+                ROS_DEBUG_STREAM("Skip fixed Joint '" << joint_name);
+                continue;
+            }
+            else
+            {
+                if (std::find(msg->joint_names.begin(), msg->joint_names.end(), joint_name) != msg->joint_names.end())
+                {
+                    unsigned int index = std::distance(msg->joint_names.begin(), std::find(msg->joint_names.begin(), msg->joint_names.end(), joint_name));
+                    q_desired(index) = msg->desired.positions[index];
+                    q_desired_dot(index) = msg->desired.velocities[index];
+                    q_actual(index) = msg->actual.positions[index];
+                    q_actual_dot(index) = msg->actual.velocities[index];
+                }
+                else
+                {
+                    ROS_ERROR_STREAM("Joint '" << joint_name << "' not found in JointTrajectoryControllerState");
+                    return;
+                }
+            }
+        }
+
+        /// compute desired twists recursively
+        std::vector< KDL::FrameVel > v_FrameVel_desired;
+        KDL::JntArrayVel jntArrayVel_desired = KDL::JntArrayVel(q_desired, q_desired_dot);
+        v_FrameVel_desired.resize(chain_.getNrOfSegments());
+        if (p_fksolver_vel_->JntToCart(jntArrayVel_desired, v_FrameVel_desired, chain_.getNrOfSegments()) >= 0)
+        {
+            sensor_msgs::JointState magnitude_desired_msg;
+            magnitude_desired_msg.header.stamp = msg->header.stamp;
+            for (unsigned int i = 0; i < chain_.getNrOfSegments(); i++)
+            {
+                magnitude_desired_msg.name.push_back(chain_.getSegment(i).getName());
+                magnitude_desired_msg.velocity.push_back(v_FrameVel_desired[i].GetTwist().vel.Norm());
+            }
+            twist_magnitude_desired_pub_.publish(magnitude_desired_msg);
+        }
+        /// compute actual twists recursively
+        std::vector< KDL::FrameVel > v_FrameVel_actual;
+        KDL::JntArrayVel jntArrayVel_actual = KDL::JntArrayVel(q_actual, q_actual_dot);
+        v_FrameVel_actual.resize(chain_.getNrOfSegments());
+        if (p_fksolver_vel_->JntToCart(jntArrayVel_actual, v_FrameVel_actual, chain_.getNrOfSegments()) >= 0)
+        {
+            sensor_msgs::JointState magnitude_actual_msg;
+            magnitude_actual_msg.header.stamp = msg->header.stamp;
+            for (unsigned int i = 0; i < chain_.getNrOfSegments(); i++)
+            {
+                magnitude_actual_msg.name.push_back(chain_.getSegment(i).getName());
+                magnitude_actual_msg.velocity.push_back(v_FrameVel_actual[i].GetTwist().vel.Norm());
+            }
+            twist_magnitude_actual_pub_.publish(magnitude_actual_msg);
+        }
+    }
+
 };
 
 
