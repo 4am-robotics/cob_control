@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="component"/>
+  <arg name="chain_base_link"/>
+  <arg name="chain_tip_link"/>
+
+  <group ns="$(arg component)">
+    <param name="chain_base_link" type="str" value="$(arg chain_base_link)"/>
+    <param name="chain_tip_link" type="str" value="$(arg chain_tip_link)"/>
+    <node name="debug_fk_vel_recursive_node" pkg="cob_twist_controller" type="debug_fk_vel_recursive_node" cwd="node" respawn="false" output="screen"/>
+  </group>
+
+</launch>

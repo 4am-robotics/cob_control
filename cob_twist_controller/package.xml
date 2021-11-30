@@ -31,6 +31,7 @@
   <depend>cmake_modules</depend>
   <depend>cob_control_msgs</depend>
   <depend>cob_srvs</depend>
+  <depend>control_msgs</depend>
   <depend>dynamic_reconfigure</depend>
   <depend>eigen_conversions</depend>
   <depend>eigen</depend>

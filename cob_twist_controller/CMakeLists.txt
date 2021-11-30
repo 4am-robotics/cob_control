@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(cob_twist_controller)
 
-find_package(catkin REQUIRED COMPONENTS cmake_modules cob_control_msgs cob_srvs dynamic_reconfigure eigen_conversions geometry_msgs kdl_conversions kdl_parser nav_msgs pluginlib roscpp roslint sensor_msgs std_msgs tf tf_conversions trajectory_msgs urdf visualization_msgs)
+find_package(catkin REQUIRED COMPONENTS cmake_modules cob_control_msgs cob_srvs control_msgs dynamic_reconfigure eigen_conversions geometry_msgs kdl_conversions kdl_parser nav_msgs pluginlib roscpp roslint sensor_msgs std_msgs tf tf_conversions trajectory_msgs urdf visualization_msgs)
 
 find_package(Boost REQUIRED COMPONENTS thread)
 
@@ -17,7 +17,7 @@ generate_dynamic_reconfigure_options(
 )
 
 catkin_package(
-  CATKIN_DEPENDS cob_control_msgs cob_srvs dynamic_reconfigure eigen_conversions geometry_msgs kdl_conversions kdl_parser nav_msgs pluginlib roscpp sensor_msgs std_msgs tf tf_conversions trajectory_msgs urdf visualization_msgs
+  CATKIN_DEPENDS cob_control_msgs cob_srvs control_msgs dynamic_reconfigure eigen_conversions geometry_msgs kdl_conversions kdl_parser nav_msgs pluginlib roscpp sensor_msgs std_msgs tf tf_conversions trajectory_msgs urdf visualization_msgs
   DEPENDS Boost
   INCLUDE_DIRS include
   LIBRARIES damping_methods inv_calculations constraint_solvers limiters controller_interfaces kinematic_extensions inverse_differential_kinematics_solver twist_controller
@@ -73,9 +73,9 @@ add_executable(debug_trajectory_marker_node src/debug/debug_trajectory_marker_no
 add_dependencies(debug_trajectory_marker_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(debug_trajectory_marker_node ${catkin_LIBRARIES})
 
-add_executable(debug_evaluate_jointstates_node src/debug/debug_evaluate_jointstates_node.cpp)
-add_dependencies(debug_evaluate_jointstates_node ${catkin_EXPORTED_TARGETS})
-target_link_libraries(debug_evaluate_jointstates_node ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
+add_executable(debug_fk_vel_recursive_node src/debug/debug_fk_vel_recursive_node.cpp)
+add_dependencies(debug_fk_vel_recursive_node ${catkin_EXPORTED_TARGETS})
+target_link_libraries(debug_fk_vel_recursive_node ${catkin_LIBRARIES} ${orocos_kdl_LIBRARIES})
 
 add_executable(test_moving_average_node src/debug/test_moving_average_node.cpp)
 add_dependencies(test_moving_average_node ${catkin_EXPORTED_TARGETS})
@@ -106,7 +106,7 @@ install(TARGETS ${PROJECT_NAME}_node constraint_solvers controller_interfaces da
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-install(TARGETS debug_evaluate_jointstates_node debug_trajectory_marker_node test_moving_average_node test_simpson_integrator_node test_trajectory_command_sine_node test_twist_command_sine_node
+install(TARGETS debug_fk_vel_recursive_node debug_trajectory_marker_node test_moving_average_node test_simpson_integrator_node test_trajectory_command_sine_node test_twist_command_sine_node
  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
