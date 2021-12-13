@@ -25,5 +25,6 @@ catkin_install_python(PROGRAMS
   scripts/emulation_base.py
   scripts/emulation_clock.py
   scripts/emulation_follow_joint_trajectory.py
+  scripts/emulation_nav.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
