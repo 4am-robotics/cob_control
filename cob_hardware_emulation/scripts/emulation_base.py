@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import argparse
 import copy
 import math
 
@@ -11,7 +12,7 @@ from nav_msgs.msg import Odometry
 from std_srvs.srv import Trigger, TriggerRequest, TriggerResponse
 
 class EmulationBase(object):
-    def __init__(self):
+    def __init__(self, odom_frame):
         # this node emulates the controllers of a base including twist_controller and odometry_controller
         #
         # interfaces
@@ -19,10 +20,12 @@ class EmulationBase(object):
         #   - /base/twist_controller/command [geometry_msgs/Twist]
         # - publishers:
         #   - /base/odometry_controller/odometry [nav_msgs/Odometry]
-        #   - tf (odom_combined --> base_footprint)
+        #   - tf (odom_frame --> base_footprint)
 
         # TODO
         # - speed factor
+
+        self.odom_frame_ = odom_frame
 
         rospy.Subscriber("/base/twist_controller/command", Twist, self.twist_callback, queue_size=1)
         self.pub_odom = rospy.Publisher("/base/odometry_controller/odometry", Odometry, queue_size=1)
@@ -35,7 +38,7 @@ class EmulationBase(object):
         self.timestamp_last_twist = rospy.Time(0)
 
         self.odom = Odometry()
-        self.odom.header.frame_id = "odom_combined"
+        self.odom.header.frame_id = self.odom_frame_
         self.odom.child_frame_id = "base_footprint"
         self.odom.pose.pose.orientation.w = 1 # initialize orientation with a valid quaternion
 
@@ -87,10 +90,10 @@ class EmulationBase(object):
         self.pub_odom.publish(odom)
 
         # publish tf
-        # pub base_footprint --> odom_combined
+        # pub base_footprint --> odom_frame
         t_odom = TransformStamped()
         t_odom.header.stamp = rospy.Time.now()
-        t_odom.header.frame_id = "odom_combined"
+        t_odom.header.frame_id = self.odom_frame_
         t_odom.child_frame_id = "base_footprint"
         t_odom.transform.translation = self.odom.pose.pose.position
         t_odom.transform.rotation = self.odom.pose.pose.orientation
@@ -100,6 +103,10 @@ class EmulationBase(object):
         self.br.sendTransform(transforms)
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(conflict_handler='resolve',
+                                     description="Tool for emulating base by publishing odometry and propagating base_footprint.")
+    parser.add_argument('-o', '--odom_frame', help='odom frame name (default: \'odom_combined\')', default='odom_combined')
+    argparse_result = parser.parse_args()
     rospy.init_node('emulation_base')
-    EmulationBase()
+    EmulationBase(argparse_result.odom_frame)
     rospy.spin()

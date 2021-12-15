@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import actionlib
+import argparse
 import rospy
 import tf
 import tf2_ros
@@ -10,14 +11,14 @@ from geometry_msgs.msg import PoseWithCovarianceStamped, Quaternion
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseResult
 
 class EmulationNav(object):
-    def __init__(self):
+    def __init__(self, odom_frame):
         # this node emulates a very basic navigation including move_base action and localization
         #
         # interfaces
         # - subscribers:
         #   - /initialpose [geometry_msgs/PoseWithCovarianceStamped]
         # - publishers:
-        #   - tf (map --> odom_combined)
+        #   - tf (map --> odom_frame)
         # - actions:
         #   - move_base [move_base_msgs/MoveBaseAction] (optional)
 
@@ -25,6 +26,8 @@ class EmulationNav(object):
         # TODO
         # - speed factor
         # - handle cancel on move_base action
+
+        self.odom_frame_ = odom_frame
 
         rospy.Subscriber("/initialpose", PoseWithCovarianceStamped, self.initalpose_callback, queue_size=1)
         self.br = tf2_ros.TransformBroadcaster()
@@ -74,11 +77,11 @@ class EmulationNav(object):
 
     def timer_cb(self, event):
         # publish tf
-        # pub odom_combined --> map
+        # pub odom_frame --> map
         t_loc = TransformStamped()
         t_loc.header.stamp = rospy.Time.now()
         t_loc.header.frame_id = "map"
-        t_loc.child_frame_id = "odom_combined"
+        t_loc.child_frame_id = self.odom_frame_
         t_loc.transform = self.initial_pose
 
         transforms = [t_loc]
@@ -129,6 +132,10 @@ class EmulationNav(object):
         # ac_move_base.wait_for_result() # no need to wait for the result as this is the topic interface to move_base without feedback
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(conflict_handler='resolve',
+                                     description="Tool for emulating nav by providing localization and move base interface")
+    parser.add_argument('-o', '--odom_frame', help='odom frame name (default: \'odom_combined\')', default='odom_combined')
+    argparse_result = parser.parse_args()
     rospy.init_node('emulation_nav')
-    EmulationNav()
+    EmulationNav(argparse_result.odom_frame)
     rospy.spin()
