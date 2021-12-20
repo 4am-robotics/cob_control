@@ -132,10 +132,10 @@ class EmulationNav(object):
         # ac_move_base.wait_for_result() # no need to wait for the result as this is the topic interface to move_base without feedback
 
 if __name__ == '__main__':
+    rospy.init_node('emulation_nav')
     parser = argparse.ArgumentParser(conflict_handler='resolve',
                                      description="Tool for emulating nav by providing localization and move base interface")
     parser.add_argument('-o', '--odom_frame', help='odom frame name (default: \'odom_combined\')', default='odom_combined')
-    argparse_result = parser.parse_args()
-    rospy.init_node('emulation_nav')
-    EmulationNav(argparse_result.odom_frame)
+    args, unknown = parser.parse_known_args()
+    EmulationNav(args.odom_frame)
     rospy.spin()

@@ -103,10 +103,10 @@ class EmulationBase(object):
         self.br.sendTransform(transforms)
 
 if __name__ == '__main__':
+    rospy.init_node('emulation_base')
     parser = argparse.ArgumentParser(conflict_handler='resolve',
                                      description="Tool for emulating base by publishing odometry and propagating base_footprint.")
     parser.add_argument('-o', '--odom_frame', help='odom frame name (default: \'odom_combined\')', default='odom_combined')
-    argparse_result = parser.parse_args()
-    rospy.init_node('emulation_base')
-    EmulationBase(argparse_result.odom_frame)
+    args, unknown = parser.parse_known_args()
+    EmulationBase(args.odom_frame)
     rospy.spin()
