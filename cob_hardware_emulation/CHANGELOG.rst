@@ -2,8 +2,8 @@
 Changelog for package cob_hardware_emulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.8.17 (2021-12-23)
+-------------------
 * Merge pull request `#265 <https://github.com/ipa320/cob_control/issues/265>`_ from fmessmer/fix/emulation_argparse
   fixup emulation argparse
 * fixup emulation argparse
