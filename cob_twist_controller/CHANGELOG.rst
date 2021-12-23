@@ -2,6 +2,20 @@
 Changelog for package cob_twist_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#262 <https://github.com/ipa320/cob_control/issues/262>`_ from fmessmer/debug_cart_vel_recursive
+  publish cart vel magnitudes for frames of chain
+* fix catkin_lint
+* calculate fk_vel_recursive based on joint_trajectory_controller state for both desired and actual joint states
+* rename debug node
+* fix getNrOfJoints vs getNrOfSegments and fixed joint handling
+* debug chain
+* provide launch file for debug_evaluate_jointstates
+* fill header.stamp in twist_magnitude msg
+* extend debug_evaluate_jointstates_node to recursively publish cart vel magnitudes for frames of chain
+* Contributors: Felix Messmer, fmessmer
+
 0.8.16 (2021-10-19)
 -------------------
 
