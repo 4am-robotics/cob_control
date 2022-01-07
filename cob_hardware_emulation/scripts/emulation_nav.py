@@ -56,17 +56,17 @@ class EmulationNav(object):
         rospy.loginfo("Emulation for navigation running")
 
         # Optional move_base action
-        self.move_base_mode = rospy.get_param("~move_base_mode", None)
-        if self.move_base_mode == None:
+        self._move_base_mode = rospy.get_param("~move_base_mode", None)
+        if self._move_base_mode == None:
             rospy.loginfo("Emulation running without move_base")
-        elif self.move_base_mode == "beam" or self.move_base_mode == "linear_nav":
-            self.move_base_action_name = "/move_base"
-            rospy.Subscriber(self.move_base_action_name + "_simple/goal", PoseStamped, self.move_base_simple_callback, queue_size=1)
-            self.as_move_base = actionlib.SimpleActionServer(self.move_base_action_name, MoveBaseAction, execute_cb=self.move_base_cb, auto_start = False)
-            self.as_move_base.start()
-            rospy.loginfo("Emulation running for action %s of type MoveBaseAction with mode '%s'"%(self.move_base_action_name, self.move_base_mode))
+        elif self._move_base_mode == "beam" or self._move_base_mode == "linear_nav":
+            self._move_base_action_name = "/move_base"
+            rospy.Subscriber(self._move_base_action_name + "_simple/goal", PoseStamped, self._move_base_simple_callback, queue_size=1)
+            self._as_move_base = actionlib.SimpleActionServer(self._move_base_action_name, MoveBaseAction, execute_cb=self._move_base_cb, auto_start = False)
+            self._as_move_base.start()
+            rospy.loginfo("Emulation running for action %s of type MoveBaseAction with mode '%s'"%(self._move_base_action_name, self._move_base_mode))
         else:
-            rospy.logwarn("Emulation running without move_base due to invalid value for parameter move_base_mode: '%s'", self.move_base_mode)
+            rospy.logwarn("Emulation running without move_base due to invalid value for parameter move_base_mode: '%s'", self._move_base_mode)
 
     def initalpose_callback(self, msg):
         rospy.loginfo("Got initialpose, updating %s transformation.", self._odom_frame)
@@ -117,16 +117,16 @@ class EmulationNav(object):
         pwcs = PoseWithCovarianceStamped()
         pwcs.header = goal.target_pose.header
         pwcs.pose.pose = goal.target_pose.pose
-        if self.move_base_mode == "beam":
+        if self._move_base_mode == "beam":
             rospy.loginfo("move_base: beaming robot to new goal")
             self.initalpose_callback(pwcs)
-        elif self.move_base_mode == "linear_nav":
+        elif self._move_base_mode == "linear_nav":
             move_base_linear_action_name = "/move_base_linear"
             ac_move_base_linear = actionlib.SimpleActionClient(move_base_linear_action_name, MoveBaseAction)
             rospy.loginfo("Waiting for ActionServer: %s", move_base_linear_action_name)
             if not ac_move_base_linear.wait_for_server(rospy.Duration(1)):
                 rospy.logerr("Emulator move_base failed because move_base_linear action server is not available")
-                self.as_move_base.set_aborted()
+                self._as_move_base.set_aborted()
                 return
             rospy.loginfo("send goal to %s", move_base_linear_action_name)
             ac_move_base_linear.send_goal(goal)
@@ -135,24 +135,24 @@ class EmulationNav(object):
             ac_move_base_linear_result = ac_move_base_linear.get_result()
             if ac_move_base_linear_status != GoalStatus.SUCCEEDED:
                 rospy.logerr("Emulator move_base failed because move_base_linear failed")
-                self.as_move_base.set_aborted()
+                self._as_move_base.set_aborted()
                 return
         else:
             rospy.logerr("Invalid move_base_action_mode")
-            self.as_move_base.set_aborted()
+            self._as_move_base.set_aborted()
             return
         rospy.loginfo("Emulator move_base succeeded")
-        self.as_move_base.set_succeeded(MoveBaseResult())
+        self._as_move_base.set_succeeded(MoveBaseResult())
 
     def move_base_simple_callback(self, msg):
         goal = MoveBaseGoal()
         goal.target_pose = msg
-        ac_move_base = actionlib.SimpleActionClient(self.move_base_action_name, MoveBaseAction)
-        rospy.loginfo("Waiting for ActionServer: %s", self.move_base_action_name)
+        ac_move_base = actionlib.SimpleActionClient(self._move_base_action_name, MoveBaseAction)
+        rospy.loginfo("Waiting for ActionServer: %s", self._move_base_action_name)
         if not ac_move_base.wait_for_server(rospy.Duration(1)):
             rospy.logerr("Emulator move_base simple failed because move_base action server is not available")
             return
-        rospy.loginfo("send goal to %s", self.move_base_action_name)
+        rospy.loginfo("send goal to %s", self._move_base_action_name)
         ac_move_base.send_goal(goal)
         # ac_move_base.wait_for_result() # no need to wait for the result as this is the topic interface to move_base without feedback
 
