@@ -23,7 +23,6 @@ class EmulationOdomLaser(object):
 
         # TODO
         # - speed factor
-        # - handle cancel on move_base action
 
         self._odom_frame = odom_frame
 
@@ -93,7 +92,7 @@ class EmulationOdomLaser(object):
 if __name__ == '__main__':
     rospy.init_node('emulation_odom_laser')
     parser = argparse.ArgumentParser(conflict_handler='resolve',
-                                     description="Tool for emulating nav by providing localization and move base interface")
+                                     description="Tool for emulating laser odom based on the odometry from the base controller")
     parser.add_argument('-o', '--odom_frame', help='odom frame name (default: \'odom_combined\')', default='odom_combined')
     args, unknown = parser.parse_known_args()
     rospy.loginfo("emulation_odom_laser running!")

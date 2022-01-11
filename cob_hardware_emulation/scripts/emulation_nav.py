@@ -61,8 +61,8 @@ class EmulationNav(object):
             rospy.loginfo("Emulation running without move_base")
         elif self._move_base_mode == "beam" or self._move_base_mode == "linear_nav":
             self._move_base_action_name = "/move_base"
-            rospy.Subscriber(self._move_base_action_name + "_simple/goal", PoseStamped, self._move_base_simple_callback, queue_size=1)
-            self._as_move_base = actionlib.SimpleActionServer(self._move_base_action_name, MoveBaseAction, execute_cb=self._move_base_cb, auto_start = False)
+            rospy.Subscriber(self._move_base_action_name + "_simple/goal", PoseStamped, self.move_base_simple_callback, queue_size=1)
+            self._as_move_base = actionlib.SimpleActionServer(self._move_base_action_name, MoveBaseAction, execute_cb=self.move_base_cb, auto_start = False)
             self._as_move_base.start()
             rospy.loginfo("Emulation running for action %s of type MoveBaseAction with mode '%s'"%(self._move_base_action_name, self._move_base_mode))
         else:
