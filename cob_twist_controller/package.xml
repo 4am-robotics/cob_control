@@ -4,7 +4,7 @@
   schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>cob_twist_controller</name>
-  <version>0.8.17</version>
+  <version>0.8.18</version>
   <description>
   The main purpose of the cob_twist_controller is to convert target twists into joint velocities. 
   Therefore it makes use of several implemented inverse kinematics approaches at the first order differential level. 
