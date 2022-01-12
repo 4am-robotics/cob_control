@@ -26,5 +26,6 @@ catkin_install_python(PROGRAMS
   scripts/emulation_clock.py
   scripts/emulation_follow_joint_trajectory.py
   scripts/emulation_nav.py
+  scripts/emulation_odom_laser.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
