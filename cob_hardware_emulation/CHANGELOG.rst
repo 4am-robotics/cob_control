@@ -2,6 +2,19 @@
 Changelog for package cob_hardware_emulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#266 <https://github.com/ipa320/cob_control/issues/266>`_ from HannesBachter/fix/emulation
+  fix initialpose and add laser odom in emulation
+* fix some typos
+* add emulation_odom_laser to CMakeLists
+* generate odom laser from odom (not from twist)
+* publish odom->base in emulation_odom_laser
+* add emulation for laser odom
+* harmonize variables (add leading underscore)
+* fix initialpose handling in emulation
+* Contributors: Felix Messmer, HannesBachter
+
 0.8.17 (2021-12-23)
 -------------------
 * Merge pull request `#265 <https://github.com/ipa320/cob_control/issues/265>`_ from fmessmer/fix/emulation_argparse

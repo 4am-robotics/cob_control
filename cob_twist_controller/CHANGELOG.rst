@@ -2,6 +2,9 @@
 Changelog for package cob_twist_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.8.17 (2021-12-23)
 -------------------
 * Merge pull request `#262 <https://github.com/ipa320/cob_control/issues/262>`_ from fmessmer/debug_cart_vel_recursive
