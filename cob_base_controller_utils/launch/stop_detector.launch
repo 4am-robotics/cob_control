@@ -1,0 +1,12 @@
+<launch>
+  <arg name="timeout" default="10.0" />
+  <arg name="threshold" default="0.001" />
+  <arg name="component_name" default="base" />
+  
+  <group ns="$(arg component_name)">
+    <node pkg="cob_base_controller_utils" type="cob_stop_detector" name="stop_detector">
+        <param name="timeout" type="double" value="$(arg timeout)"/>
+        <param name="threshold" type="double" value="$(arg threshold)"/>
+    </node>
+  </group>
+</launch>

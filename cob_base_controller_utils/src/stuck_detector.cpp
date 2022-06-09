@@ -74,12 +74,13 @@ int main(int argc, char* argv[])
     g_stop_requested = false;
     g_timeout = ros::Duration(timeout);
 
-    ros::Subscriber status_sub = nh.subscribe("twist_controller/wheel_commands", 10, commandsCallback);
     if(g_shutdown){
         g_stop_client = nh.serviceClient<std_srvs::Trigger>("driver/shutdown");
     }else{
         g_stop_client = nh.serviceClient<std_srvs::Trigger>("driver/halt");
     }
+    g_stop_client.waitForExistence();
+    ros::Subscriber status_sub = nh.subscribe("twist_controller/wheel_commands", 10, commandsCallback);
 
     ros::spin();
     return 0;
