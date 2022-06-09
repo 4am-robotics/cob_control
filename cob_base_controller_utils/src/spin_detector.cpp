@@ -80,6 +80,7 @@ int main(int argc, char* argv[])
     }else{
         g_stop_client = nh.serviceClient<std_srvs::Trigger>("driver/halt");
     }
+    g_stop_client.waitForExistence();
 
     ros::spin();
     return 0;

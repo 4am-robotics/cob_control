@@ -103,6 +103,8 @@ int main(int argc, char* argv[])
 
     g_halt_client = nh.serviceClient<std_srvs::Trigger>("driver/halt");
     g_recover_client = nh.serviceClient<std_srvs::Trigger>("driver/recover");
+    g_halt_client.waitForExistence();
+    g_recover_client.waitForExistence();
     g_halt_timer = nh.createTimer(g_timeout, haltCallback, true, false); //oneshot=true, auto_start=false
     g_silence_timer = nh.createTimer(ros::Duration(0.1), silenceCallback, false, true); //oneshot=false, auto_start=true
     ros::Subscriber command_sub = nh.subscribe("twist_controller/command", 10, commandsCallback);
