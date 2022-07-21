@@ -14,27 +14,56 @@
  * limitations under the License.
  */
 
-
+#include <string>
+#include <vector>
+#include <ros/ros.h>
 #include <std_srvs/Trigger.h>
 #include <geometry_msgs/Twist.h>
-#include <ros/ros.h>
+#include <controller_manager_msgs/SwitchController.h>
 
 ros::ServiceClient g_halt_client;
 ros::ServiceClient g_recover_client;
+ros::ServiceClient g_switch_client;
 ros::Timer g_halt_timer;
 ros::Timer g_silence_timer;
 ros::Time g_last_received;
 ros::Duration g_timeout;
 double g_threshold;
 bool g_recovered;
+std::vector<std::string> g_controller_spawn;
 
+
+void switch_controller(){
+    controller_manager_msgs::SwitchController switch_srv;
+    switch_srv.request.start_controllers = g_controller_spawn;
+    switch_srv.request.strictness = 1;  // BEST_EFFORT
+    //switch_srv.request.strictness = 2;  // STRICT
+
+    if (g_switch_client.call(switch_srv))
+    {
+        if (switch_srv.response.ok)
+        {
+            ROS_INFO("Successfully switched controllers");
+        }
+        else
+        {
+            ROS_ERROR("Could not switch controllers");
+        }
+    }
+    else
+    {
+        ROS_ERROR("ServiceCall failed: switch_controller");
+    }
+}
 
 void recover(){
     std_srvs::Trigger srv;
     ROS_ERROR("RECOVER");
     g_recover_client.call(srv);
+    switch_controller();
     g_recovered=srv.response.success;
 }
+
 
 void commandsCallback(const geometry_msgs::Twist::ConstPtr& msg){
     g_last_received = ros::Time::now();
@@ -97,12 +126,18 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    if(!nh_priv.getParam("controller_spawn", g_controller_spawn)){
+        ROS_ERROR("Please provide controllers to spawn after recover");
+        return 1;
+    }
+
     g_recovered = true;
     g_last_received = ros::Time::now();
     g_timeout = ros::Duration(timeout);
 
     g_halt_client = nh.serviceClient<std_srvs::Trigger>("driver/halt");
     g_recover_client = nh.serviceClient<std_srvs::Trigger>("driver/recover");
+    g_switch_client = nh.serviceClient<controller_manager_msgs::SwitchController>("controller_manager/switch_controller");
     g_halt_client.waitForExistence();
     g_recover_client.waitForExistence();
     g_halt_timer = nh.createTimer(g_timeout, haltCallback, true, false); //oneshot=true, auto_start=false
