@@ -126,20 +126,17 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    if(!nh_priv.getParam("controller_spawn", g_controller_spawn)){
-        ROS_ERROR("Please provide controllers to spawn after recover");
-        return 1;
-    }
-
     g_recovered = true;
     g_last_received = ros::Time::now();
     g_timeout = ros::Duration(timeout);
+    g_controller_spawn = {"joint_state_controller", "twist_controller", "odometry_controller"};
 
     g_halt_client = nh.serviceClient<std_srvs::Trigger>("driver/halt");
     g_recover_client = nh.serviceClient<std_srvs::Trigger>("driver/recover");
     g_switch_client = nh.serviceClient<controller_manager_msgs::SwitchController>("controller_manager/switch_controller");
     g_halt_client.waitForExistence();
     g_recover_client.waitForExistence();
+    g_switch_client.waitForExistence();
     g_halt_timer = nh.createTimer(g_timeout, haltCallback, true, false); //oneshot=true, auto_start=false
     g_silence_timer = nh.createTimer(ros::Duration(0.1), silenceCallback, false, true); //oneshot=false, auto_start=true
     ros::Subscriber command_sub = nh.subscribe("twist_controller/command", 10, commandsCallback);
