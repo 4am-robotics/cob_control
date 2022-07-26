@@ -129,7 +129,7 @@ int main(int argc, char* argv[])
     g_recovered = true;
     g_last_received = ros::Time::now();
     g_timeout = ros::Duration(timeout);
-    g_controller_spawn = {"joint_state_controller", "twist_controller", "odometry_controller"};
+    g_controller_spawn = {"joint_state_controller", "twist_controller"};
 
     g_halt_client = nh.serviceClient<std_srvs::Trigger>("driver/halt");
     g_recover_client = nh.serviceClient<std_srvs::Trigger>("driver/recover");
