@@ -2,6 +2,9 @@
 Changelog for package cob_hardware_emulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.8.18 (2022-01-12)
 -------------------
 * Merge pull request `#266 <https://github.com/ipa320/cob_control/issues/266>`_ from HannesBachter/fix/emulation

@@ -2,6 +2,21 @@
 Changelog for package cob_base_controller_utils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#269 <https://github.com/ipa320/cob_control/issues/269>`_ from fmessmer/fix/switch_recover
+  start controllers after recover
+* do not switch/restart odometry_controller
+* fixup controller_spawn
+* start controllers after recover
+* Merge pull request `#268 <https://github.com/ipa320/cob_control/issues/268>`_ from fmessmer/feature/stop_detector
+  feature stop detector
+* only subscribe once everything is set up
+* wait for required services
+* add missing launch files
+* add stop_detector
+* Contributors: Felix Messmer, fmessmer
+
 0.8.18 (2022-01-12)
 -------------------
 
