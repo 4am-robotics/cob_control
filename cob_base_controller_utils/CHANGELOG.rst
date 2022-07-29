@@ -2,8 +2,8 @@
 Changelog for package cob_base_controller_utils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.8.19 (2022-07-29)
+-------------------
 * Merge pull request `#269 <https://github.com/ipa320/cob_control/issues/269>`_ from fmessmer/fix/switch_recover
   start controllers after recover
 * do not switch/restart odometry_controller
