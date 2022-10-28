@@ -29,6 +29,7 @@ ros::Timer g_silence_timer;
 ros::Duration g_timeout;
 double g_threshold;
 bool g_recovered;
+bool g_recovering;
 std::vector<std::string> g_controller_spawn;
 
 
@@ -56,11 +57,13 @@ void switch_controller(){
 }
 
 void recover(){
+    g_recovering = true;
     std_srvs::Trigger srv;
     ROS_INFO("Recovering");
     g_recover_client.call(srv);
     switch_controller();
     g_recovered = srv.response.success;
+    g_recovering = false;
 }
 
 /**
@@ -79,7 +82,7 @@ void commandsCallback(const geometry_msgs::Twist::ConstPtr& msg){
         fabs(msg->angular.y) >= g_threshold ||
         fabs(msg->angular.z) >= g_threshold) {
         g_halt_timer.stop();
-        if (!g_recovered) {
+        if (!g_recovered && !g_recovering) {
             recover();
         }
         ROS_DEBUG("Robot is moving, restarting halt timer");
@@ -113,6 +116,7 @@ int main(int argc, char* argv[])
     }
 
     g_recovered = true;
+    g_recovering = false;
     g_timeout = ros::Duration(timeout);
     g_controller_spawn = {"joint_state_controller", "twist_controller"};
 
