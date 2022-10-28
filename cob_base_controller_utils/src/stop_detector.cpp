@@ -80,7 +80,7 @@ void commandsCallback(const geometry_msgs::Twist::ConstPtr& msg){
         fabs(msg->angular.z) >= g_threshold) {
         g_halt_timer.stop();
         if (!g_recovered) {
-          recover();
+            recover();
         }
         ROS_DEBUG("Robot is moving, restarting halt timer");
         g_halt_timer.start();
@@ -90,7 +90,7 @@ void commandsCallback(const geometry_msgs::Twist::ConstPtr& msg){
 void haltCallback(const ros::TimerEvent&){
     g_recovered = false;
     std_srvs::Trigger srv;
-    ROS_WARN_STREAM("Halt, no movement commands received for " << g_timeout << " seconds");
+    ROS_INFO_STREAM("Halt, no movement commands received for " << g_timeout << " seconds");
     g_halt_client.call(srv);
 }
 
