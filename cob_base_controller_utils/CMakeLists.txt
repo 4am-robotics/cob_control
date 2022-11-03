@@ -33,6 +33,10 @@ add_executable(cob_stuck_detector src/stuck_detector.cpp)
 add_dependencies(cob_stuck_detector ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cob_stuck_detector ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
+add_executable(cob_halt_detector src/halt_detector.cpp)
+add_dependencies(cob_halt_detector ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(cob_halt_detector ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
 ### INSTALL ###
 install(TARGETS cob_spin_detector cob_stop_detector cob_stuck_detector
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

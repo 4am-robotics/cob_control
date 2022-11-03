@@ -1,0 +1,18 @@
+<launch>
+  <arg name="stop_timeout" default="10.0" />
+  <arg name="stop_threshold" default="0.001" />
+  <arg name="stuck_timeout" default="1.0" />
+  <arg name="stuck_threshold" default="1.57" />
+  <arg name="recover_after_stuck_timeout" default="3.0" />
+  <arg name="component_name" default="base" />
+
+  <group ns="$(arg component_name)">
+    <node pkg="cob_base_controller_utils" type="cob_halt_detector" name="halt_detector" output="screen">
+        <param name="stop_timeout" type="double" value="$(arg stop_timeout)"/>
+        <param name="stop_threshold" type="double" value="$(arg stop_threshold)"/>
+        <param name="stuck_timeout" type="double" value="$(arg stuck_timeout)"/>
+        <param name="stuck_threshold" type="double" value="$(arg stuck_threshold)"/>
+        <param name="recover_after_stuck_timeout" type="double" value="$(arg recover_after_stuck_timeout)"/>
+    </node>
+  </group>
+</launch>
