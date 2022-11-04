@@ -127,6 +127,7 @@ void wheelCommandsCallback(const cob_base_controller_utils::WheelCommands::Const
   bool exceeded = false;
   for (size_t i = 0; i < msg->steer_target_error.size(); ++i) {
     if (fabs(msg->steer_target_error[i]) >= g_stuck_threshold) {
+      ROS_WARN_STREAM("Wheel " << i << " exceeded stuck threshold");
       exceeded = true;
     }
   }
