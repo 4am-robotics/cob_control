@@ -28,7 +28,7 @@ std::vector<std::string> g_controller_spawn;
 ros::Duration g_stop_timeout;
 ros::Duration g_stuck_timeout;
 ros::Duration g_recover_after_stuck_timeout;
-ros::Time g_last_wheel_commands_ok;
+std::vector<ros::Time> g_last_wheel_commands_ok;
 ros::Timer g_stop_timer;
 ros::Timer g_recover_after_stuck_timer;
 double g_stuck_threshold;
@@ -119,28 +119,31 @@ void recoverAfterStuckCallback(const ros::TimerEvent&) {
 void wheelCommandsCallback(const cob_base_controller_utils::WheelCommands::ConstPtr& msg) {
 
   // Initialize last timestamp
-  if (g_last_wheel_commands_ok == ros::Time(0)) {
-    g_last_wheel_commands_ok = msg->header.stamp;
+  if (g_last_wheel_commands_ok.size() == 0) {
+    g_last_wheel_commands_ok.resize(msg->steer_target_error.size(), msg->header.stamp);
   }
 
-  // Check if at least one wheel exceeds threshold
-  bool exceeded = false;
+  // Check if a wheel exceeds threshold
   for (size_t i = 0; i < msg->steer_target_error.size(); ++i) {
-    if (fabs(msg->steer_target_error[i]) >= g_stuck_threshold) {
+    if (fabs(msg->steer_target_error[i]) < g_stuck_threshold) {
+      g_last_wheel_commands_ok[i] = msg->header.stamp;
+    }
+    else {
       ROS_WARN_STREAM("Wheel " << i << " exceeded stuck threshold");
-      exceeded = true;
     }
   }
 
-  // Store current time if not exceeded
-  if (!exceeded) {
-    g_last_wheel_commands_ok = msg->header.stamp;
+  // Check if a wheel exceeds timeout
+  bool exceeded = false;
+  for (size_t i = 0; i < g_last_wheel_commands_ok.size(); ++i) {
+    if ((msg->header.stamp - g_last_wheel_commands_ok[i]) >= g_stuck_timeout) {
+      exceeded = true;
+      ROS_ERROR_STREAM("Wheel " << i << " exceeded stuck threshold and timeout");
+    }
   }
-  // Halt if allowed and timeout is reached
-  else if (!g_is_stuck &&
-           !g_is_stopped &&
-           g_stuck_possible &&
-           (msg->header.stamp - g_last_wheel_commands_ok) >= g_stuck_timeout) {
+
+  // Halt if exceeded and allowed
+  if (exceeded && !g_is_stuck && !g_is_stopped && g_stuck_possible) {
     g_is_stuck = true;
     g_stuck_possible = false;
     g_recover_after_stuck_timer.stop();
@@ -219,7 +222,7 @@ int main(int argc, char* argv[])
 
   g_controller_spawn = {"joint_state_controller", "twist_controller"};
 
-  g_last_wheel_commands_ok = ros::Time(0);
+  g_last_wheel_commands_ok = {};
   g_recovering = false;
   g_is_stopped = false;
   g_is_stuck = false;
