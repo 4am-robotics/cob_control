@@ -21,6 +21,10 @@ catkin_package(
 
 include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
+add_executable(cob_halt_detector src/halt_detector.cpp)
+add_dependencies(cob_halt_detector ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(cob_halt_detector ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
 add_executable(cob_spin_detector src/spin_detector.cpp)
 add_dependencies(cob_spin_detector ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 target_link_libraries(cob_spin_detector ${catkin_LIBRARIES} ${Boost_LIBRARIES})
@@ -34,7 +38,7 @@ add_dependencies(cob_stuck_detector ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin
 target_link_libraries(cob_stuck_detector ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 ### INSTALL ###
-install(TARGETS cob_spin_detector cob_stop_detector cob_stuck_detector
+install(TARGETS cob_halt_detector cob_spin_detector cob_stop_detector cob_stuck_detector
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

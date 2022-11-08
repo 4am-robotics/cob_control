@@ -26,10 +26,10 @@ ros::ServiceClient g_recover_client;
 ros::ServiceClient g_switch_client;
 ros::Timer g_halt_timer;
 ros::Timer g_silence_timer;
-ros::Time g_last_received;
 ros::Duration g_timeout;
 double g_threshold;
 bool g_recovered;
+bool g_recovering;
 std::vector<std::string> g_controller_spawn;
 
 
@@ -57,55 +57,44 @@ void switch_controller(){
 }
 
 void recover(){
+    g_recovering = true;
     std_srvs::Trigger srv;
-    ROS_ERROR("RECOVER");
+    ROS_INFO("Recovering");
     g_recover_client.call(srv);
     switch_controller();
-    g_recovered=srv.response.success;
+    g_recovered = srv.response.success;
+    g_recovering = false;
 }
 
-
+/**
+ * Callback for command twists.
+ *
+ * Restarts the halt_timer if twist exceeds the threshold. Additionally recovers
+ * the base if a twist exceeds the threshold and the base ist not yet recovered.
+ *
+ * @param msg Twist message.
+ */
 void commandsCallback(const geometry_msgs::Twist::ConstPtr& msg){
-    g_last_received = ros::Time::now();
-
-    if(fabs(msg->linear.x)<g_threshold &&
-       fabs(msg->linear.y)<g_threshold &&
-       fabs(msg->linear.z)<g_threshold &&
-       fabs(msg->angular.x)<g_threshold &&
-       fabs(msg->angular.y)<g_threshold &&
-       fabs(msg->angular.z)<g_threshold){
-        if(g_recovered){
-            ROS_WARN_THROTTLE(1.0, "stopped, starting halt_timer");
-            g_halt_timer.start();
-        }else{
-            ROS_DEBUG_THROTTLE(1.0, "stopped - but not active");
-        }
-    }else{
-        ROS_DEBUG_THROTTLE(1.0, "moving...");
+    if (fabs(msg->linear.x) >= g_threshold ||
+        fabs(msg->linear.y) >= g_threshold ||
+        fabs(msg->linear.z) >= g_threshold ||
+        fabs(msg->angular.x) >= g_threshold ||
+        fabs(msg->angular.y) >= g_threshold ||
+        fabs(msg->angular.z) >= g_threshold) {
         g_halt_timer.stop();
-        if(!g_recovered){
+        if (!g_recovered && !g_recovering) {
             recover();
         }
+        ROS_DEBUG("Robot is moving, restarting halt timer");
+        g_halt_timer.start();
     }
 }
 
 void haltCallback(const ros::TimerEvent&){
-    g_halt_timer.stop();  //prevent another call
+    g_recovered = false;
     std_srvs::Trigger srv;
-    ROS_ERROR("HALT");
+    ROS_INFO_STREAM("Halt, no movement commands received for " << g_timeout << " seconds");
     g_halt_client.call(srv);
-    g_recovered=false;
-}
-
-void silenceCallback(const ros::TimerEvent&){
-    if(ros::Time::now()-g_last_received>g_timeout){
-        if(g_recovered){
-            ROS_WARN_THROTTLE(1.0, "silence - calling haltCallback");
-            haltCallback(ros::TimerEvent());
-        }else{
-            ROS_DEBUG_THROTTLE(1.0, "silence - but not active");
-        }
-    }
 }
 
 int main(int argc, char* argv[])
@@ -127,7 +116,7 @@ int main(int argc, char* argv[])
     }
 
     g_recovered = true;
-    g_last_received = ros::Time::now();
+    g_recovering = false;
     g_timeout = ros::Duration(timeout);
     g_controller_spawn = {"joint_state_controller", "twist_controller"};
 
@@ -138,7 +127,6 @@ int main(int argc, char* argv[])
     g_recover_client.waitForExistence();
     g_switch_client.waitForExistence();
     g_halt_timer = nh.createTimer(g_timeout, haltCallback, true, false); //oneshot=true, auto_start=false
-    g_silence_timer = nh.createTimer(ros::Duration(0.1), silenceCallback, false, true); //oneshot=false, auto_start=true
     ros::Subscriber command_sub = nh.subscribe("twist_controller/command", 10, commandsCallback);
 
     ros::spin();
