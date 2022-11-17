@@ -2,8 +2,8 @@
 Changelog for package cob_base_controller_utils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.8.20 (2022-11-17)
+-------------------
 * Merge pull request `#271 <https://github.com/ipa320/cob_control/issues/271>`_ from Deleh/feature/halt_detector
   Add `halt_detector`
 * track stuck thresholds per wheel
