@@ -2,6 +2,9 @@
 Changelog for package cob_obstacle_distance
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.8.19 (2022-07-29)
 -------------------
 

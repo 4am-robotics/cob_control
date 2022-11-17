@@ -2,6 +2,19 @@
 Changelog for package cob_base_controller_utils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#271 <https://github.com/ipa320/cob_control/issues/271>`_ from Deleh/feature/halt_detector
+  Add `halt_detector`
+* track stuck thresholds per wheel
+* add install tag for cob_halt_detector
+* add warning if wheel exceeds stuck threshold
+* add halt_detector
+* add recovering check
+* use ROS_INFO_STREAM
+* simplify stop detector
+* Contributors: Denis Lehmann, Felix Messmer
+
 0.8.19 (2022-07-29)
 -------------------
 * Merge pull request `#269 <https://github.com/ipa320/cob_control/issues/269>`_ from fmessmer/fix/switch_recover
