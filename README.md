@@ -11,7 +11,7 @@ cob_control
 
 ## Travis - Continuous Integration
 
-Status: [![Build Status](https://travis-ci.com/ipa320/cob_control.svg?branch=melodic_dev)](https://travis-ci.com/ipa320/cob_control)
+Status: [![Build Status](https://app.travis-ci.com/ipa320/cob_control.svg?branch=melodic_dev)](https://app.travis-ci.com/ipa320/cob_control)
 
 ## ROS Buildfarm
 
