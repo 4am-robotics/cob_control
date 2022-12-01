@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(cob_base_controller_utils)
 
-find_package(catkin REQUIRED COMPONENTS controller_manager_msgs geometry_msgs message_generation nav_msgs roscpp std_msgs std_srvs tf tf2 urdf)
+find_package(catkin REQUIRED COMPONENTS controller_manager_msgs diagnostic_msgs geometry_msgs message_generation nav_msgs roscpp std_msgs std_srvs tf tf2 urdf)
 
 find_package(Boost REQUIRED COMPONENTS thread)
 
@@ -14,7 +14,7 @@ add_message_files(
 generate_messages(DEPENDENCIES std_msgs)
 
 catkin_package(
-  CATKIN_DEPENDS controller_manager_msgs geometry_msgs message_runtime nav_msgs roscpp std_msgs std_srvs tf tf2 urdf
+  CATKIN_DEPENDS controller_manager_msgs diagnostic_msgs geometry_msgs message_runtime nav_msgs roscpp std_msgs std_srvs tf tf2 urdf
   DEPENDS Boost
   INCLUDE_DIRS include
 )

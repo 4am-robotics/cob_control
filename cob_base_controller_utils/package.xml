@@ -17,6 +17,7 @@
   <exec_depend>message_runtime</exec_depend>
   
   <depend>controller_manager_msgs</depend>
+  <depend>diagnostic_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>roscpp</depend>

@@ -7,6 +7,7 @@
   <arg name="component_name" default="base" />
 
   <group ns="$(arg component_name)">
+    <rosparam param="halt_detector/diagnostic_recovery_trigger">['ff20#0']</rosparam>
     <node pkg="cob_base_controller_utils" type="cob_halt_detector" name="halt_detector" output="screen">
         <param name="stop_timeout" type="double" value="$(arg stop_timeout)"/>
         <param name="stop_threshold" type="double" value="$(arg stop_threshold)"/>
