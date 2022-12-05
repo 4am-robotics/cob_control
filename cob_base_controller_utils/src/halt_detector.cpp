@@ -134,7 +134,7 @@ bool containsSubstring(std::string string, std::string substring) {
  * @param msg DiagnosticArray message.
  */
 void diagnosticsAggCallback(const diagnostic_msgs::DiagnosticArray::ConstPtr& msg) {
-  for (size_t i = 0; i < msg->status.size(); ++i) {
+  for (size_t i = 0; i < msg->status.size(); i++) {
 
     // Get status with name containing 'base' and 'wheel' or 'base' and 'rotation'
     if (msg->status[i].level > diagnostic_msgs::DiagnosticStatus::WARN &&
@@ -145,11 +145,16 @@ void diagnosticsAggCallback(const diagnostic_msgs::DiagnosticArray::ConstPtr& ms
       for (size_t j = 0; j < msg->status[i].values.size(); j++) {
 
         // Check if error value is in trigger list and recover eventually
-        if (msg->status[i].values[j].key == "errors" &&
-            std::find(std::begin(g_diagnostic_recovery_trigger), std::end(g_diagnostic_recovery_trigger), msg->status[i].values[j].value) != std::end(g_diagnostic_recovery_trigger)) {
-          if (!g_is_stuck && !g_is_stopped && ros::Time::now() - g_last_diagnostic_recover_timestamp >= ros::Duration(2.0)) {
+        if (msg->status[i].values[j].key == "errors") {
+          bool error = false;
+          for (int k = 0; k < g_diagnostic_recovery_trigger.size(); k++) {
+            if (containsSubstring(msg->status[i].values[j].value, g_diagnostic_recovery_trigger[k])) {
+              error = true;
+            }
+          }
+          if (error && !g_is_stuck && !g_is_stopped && ros::Time::now() - g_last_diagnostic_recover_timestamp >= ros::Duration(2.0)) {
+            ROS_INFO("Recovering from diagnostic error");
             recover();
-            ROS_INFO("Recovered from diagnostic error");
             g_last_diagnostic_recover_timestamp = ros::Time::now();
           }
         }
@@ -271,9 +276,11 @@ int main(int argc, char* argv[])
   g_recover_after_stuck_timeout = ros::Duration(timeout);
 
   ros::Subscriber diagnostics_agg_sub;
-  if (nh.hasParam("diagnostic_recovery_trigger")) {
+  if (nh_priv.hasParam("diagnostic_recovery_trigger")) {
     nh_priv.getParam("diagnostic_recovery_trigger", g_diagnostic_recovery_trigger);
-    diagnostics_agg_sub = nh.subscribe("/diagnostics_agg", 10, diagnosticsAggCallback);
+    if (g_diagnostic_recovery_trigger.size() > 0) {
+      diagnostics_agg_sub = nh.subscribe("/diagnostics_agg", 10, diagnosticsAggCallback);
+    }
   }
   g_last_diagnostic_recover_timestamp = ros::Time(0);
 
@@ -281,7 +288,7 @@ int main(int argc, char* argv[])
 
   g_last_wheel_commands_ok = {};
   g_recovering = false;
-  g_is_stopped = true;
+  g_is_stopped = false;
   g_is_stuck = false;
   g_stuck_possible = true;
 
