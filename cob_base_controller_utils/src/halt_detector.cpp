@@ -136,10 +136,11 @@ bool containsSubstring(std::string string, std::string substring) {
 void diagnosticsAggCallback(const diagnostic_msgs::DiagnosticArray::ConstPtr& msg) {
   for (size_t i = 0; i < msg->status.size(); ++i) {
 
-    // Get status with name containing 'base' and 'wheel'
+    // Get status with name containing 'base' and 'wheel' or 'base' and 'rotation'
     if (msg->status[i].level > diagnostic_msgs::DiagnosticStatus::WARN &&
         containsSubstring(msg->status[i].name, "base") &&
-        containsSubstring(msg->status[i].name, "wheel")) {
+        (containsSubstring(msg->status[i].name, "wheel") ||
+         containsSubstring(msg->status[i].name, "rotation"))) {
 
       for (size_t j = 0; j < msg->status[i].values.size(); j++) {
 
