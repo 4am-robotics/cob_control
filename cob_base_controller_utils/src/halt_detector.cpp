@@ -179,7 +179,7 @@ void wheelCommandsCallback(const cob_base_controller_utils::WheelCommands::Const
       g_last_wheel_commands_ok[i] = msg->header.stamp;
     }
     else {
-      ROS_WARN_STREAM("Wheel " << i << " exceeded stuck threshold");
+      ROS_DEBUG_STREAM("Wheel " << i << " exceeded stuck threshold");
     }
   }
 
