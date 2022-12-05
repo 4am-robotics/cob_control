@@ -1,0 +1,8 @@
+diagnostic_recovery_trigger: []
+
+stop_timeout: 10.0
+stop_threshold: 0.001
+
+stuck_timeout: 1.0
+stuck_threshold: 1.57
+recover_after_stuck_timeout: 3.0
