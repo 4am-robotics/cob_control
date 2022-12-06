@@ -18,6 +18,7 @@
 #include <ros/ros.h>
 #include <cob_base_controller_utils/WheelCommands.h>
 #include <controller_manager_msgs/SwitchController.h>
+#include <diagnostic_msgs/DiagnosticArray.h>
 #include <geometry_msgs/Twist.h>
 #include <std_srvs/Trigger.h>
 
@@ -29,6 +30,7 @@ ros::Duration g_stop_timeout;
 ros::Duration g_stuck_timeout;
 ros::Duration g_recover_after_stuck_timeout;
 std::vector<ros::Time> g_last_wheel_commands_ok;
+ros::Time g_last_diagnostic_recover_timestamp;
 ros::Timer g_stop_timer;
 ros::Timer g_recover_after_stuck_timer;
 double g_stuck_threshold;
@@ -37,6 +39,8 @@ bool g_recovering;
 bool g_is_stopped;
 bool g_is_stuck;
 bool g_stuck_possible;
+std::vector<std::string> g_diagnostic_recovery_trigger;
+
 
 
 /**
@@ -107,6 +111,57 @@ void recoverAfterStuckCallback(const ros::TimerEvent&) {
   g_stuck_possible = true;
 }
 
+/**
+ * Checks if a substring is present in a string.
+ *
+ * @param string String which is checked.
+ * @param substring String which is searched.
+ * @returns Tue if substring is present, false otherwise.
+ */
+bool containsSubstring(std::string string, std::string substring) {
+  if (std::strstr(string.c_str(), substring.c_str())) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+/**
+ * Callback for diagnostic aggregation.
+ *
+ * Recovers on diagnostic errors if currently not stopped or stuck.
+ *
+ * @param msg DiagnosticArray message.
+ */
+void diagnosticsAggCallback(const diagnostic_msgs::DiagnosticArray::ConstPtr& msg) {
+  for (size_t i = 0; i < msg->status.size(); i++) {
+
+    // Get status with name containing 'base' and 'wheel' or 'base' and 'rotation'
+    if (msg->status[i].level > diagnostic_msgs::DiagnosticStatus::WARN &&
+        containsSubstring(msg->status[i].name, "base") &&
+        (containsSubstring(msg->status[i].name, "wheel") ||
+         containsSubstring(msg->status[i].name, "rotation"))) {
+
+      for (size_t j = 0; j < msg->status[i].values.size(); j++) {
+
+        // Check if error value is in trigger list and recover eventually
+        if (msg->status[i].values[j].key == "errors") {
+          bool error = false;
+          for (int k = 0; k < g_diagnostic_recovery_trigger.size(); k++) {
+            if (containsSubstring(msg->status[i].values[j].value, g_diagnostic_recovery_trigger[k])) {
+              error = true;
+            }
+          }
+          if (error && !g_is_stuck && !g_is_stopped && ros::Time::now() - g_last_diagnostic_recover_timestamp >= ros::Duration(2.0)) {
+            ROS_INFO("Recovering from diagnostic error");
+            recover();
+            g_last_diagnostic_recover_timestamp = ros::Time::now();
+          }
+        }
+      }
+    }
+  }
+}
 
 /**
  * Callback for wheel commands.
@@ -129,7 +184,7 @@ void wheelCommandsCallback(const cob_base_controller_utils::WheelCommands::Const
       g_last_wheel_commands_ok[i] = msg->header.stamp;
     }
     else {
-      ROS_WARN_STREAM("Wheel " << i << " exceeded stuck threshold");
+      ROS_DEBUG_STREAM("Wheel " << i << " exceeded stuck threshold");
     }
   }
 
@@ -202,23 +257,32 @@ int main(int argc, char* argv[])
   }
 
   double timeout;
-  if(!nh_priv.getParam("stop_timeout", timeout) || timeout <= 0.0){
+  if (!nh_priv.getParam("stop_timeout", timeout) || timeout <= 0.0) {
     ROS_ERROR("Please provide valid stop timeout");
     return 1;
   }
   g_stop_timeout = ros::Duration(timeout);
 
-  if(!nh_priv.getParam("stuck_timeout", timeout) || timeout <= 0.0){
+  if (!nh_priv.getParam("stuck_timeout", timeout) || timeout <= 0.0) {
     ROS_ERROR("Please provide valid stuck timeout");
     return 1;
   }
   g_stuck_timeout = ros::Duration(timeout);
 
-  if(!nh_priv.getParam("recover_after_stuck_timeout", timeout) || timeout <= 0.0){
+  if (!nh_priv.getParam("recover_after_stuck_timeout", timeout) || timeout <= 0.0) {
     ROS_ERROR("Please provide valid timeout for recovering after stuck");
     return 1;
   }
   g_recover_after_stuck_timeout = ros::Duration(timeout);
+
+  ros::Subscriber diagnostics_agg_sub;
+  if (nh_priv.hasParam("diagnostic_recovery_trigger")) {
+    nh_priv.getParam("diagnostic_recovery_trigger", g_diagnostic_recovery_trigger);
+    if (g_diagnostic_recovery_trigger.size() > 0) {
+      diagnostics_agg_sub = nh.subscribe("/diagnostics_agg", 10, diagnosticsAggCallback);
+    }
+  }
+  g_last_diagnostic_recover_timestamp = ros::Time(0);
 
   g_controller_spawn = {"joint_state_controller", "twist_controller"};
 
