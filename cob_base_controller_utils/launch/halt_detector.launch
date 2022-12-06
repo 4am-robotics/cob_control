@@ -1,8 +1,9 @@
 <launch>
-  <arg name="config_file" default="$(find cob_base_controller_utils)/config/halt_detector.yaml" />
+  <arg name="config_file"/>
   <arg name="component_name" default="base" />
   <group ns="$(arg component_name)">
-    <rosparam command="load" ns="halt_detector" file="$(arg config_file)" />
-    <node pkg="cob_base_controller_utils" type="cob_halt_detector" name="halt_detector" output="screen" />
+    <node pkg="cob_base_controller_utils" type="cob_halt_detector" name="halt_detector" output="screen">
+        <rosparam command="load" file="$(arg config_file)" />
+    </node>
   </group>
 </launch>
