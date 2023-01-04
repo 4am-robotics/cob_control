@@ -2,8 +2,8 @@
 Changelog for package cob_base_controller_utils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.8.21 (2023-01-04)
+-------------------
 * Merge pull request `#272 <https://github.com/ipa320/cob_control/issues/272>`_ from Deleh/feature/diagnostic_recovery
   [WIP] Add recover from diagnostic errors
 * remove yaml. yaml should be placed in X_hardware_config
