@@ -2,6 +2,18 @@
 Changelog for package cob_base_controller_utils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#272 <https://github.com/ipa320/cob_control/issues/272>`_ from Deleh/feature/diagnostic_recovery
+  [WIP] Add recover from diagnostic errors
+* remove yaml. yaml should be placed in X_hardware_config
+* enhance recover from diagnostics
+* set stuck threshold log level to debug
+* also check rotation joints
+* use config file for halt detector
+* add recover from diagnostic errors
+* Contributors: Denis Lehmann, Florian Weisshardt, floweisshardt
+
 0.8.20 (2022-11-17)
 -------------------
 * Merge pull request `#271 <https://github.com/ipa320/cob_control/issues/271>`_ from Deleh/feature/halt_detector

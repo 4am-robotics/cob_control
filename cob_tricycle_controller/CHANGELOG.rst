@@ -2,6 +2,9 @@
 Changelog for package cob_tricycle_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.8.20 (2022-11-17)
 -------------------
 
