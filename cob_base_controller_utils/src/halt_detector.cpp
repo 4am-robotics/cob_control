@@ -129,7 +129,7 @@ bool containsSubstring(std::string string, std::string substring) {
 /**
  * Callback for diagnostic aggregation.
  *
- * Recovers on diagnostic errors if currently not stopped or stuck.
+ * Recovers on diagnostic errors if currently not stuck.
  *
  * @param msg DiagnosticArray message.
  */
@@ -152,10 +152,12 @@ void diagnosticsAggCallback(const diagnostic_msgs::DiagnosticArray::ConstPtr& ms
               error = true;
             }
           }
-          if (error && !g_is_stuck && !g_is_stopped && ros::Time::now() - g_last_diagnostic_recover_timestamp >= ros::Duration(2.0)) {
+          if (error && !g_is_stuck && ros::Time::now() - g_last_diagnostic_recover_timestamp >= ros::Duration(2.0)) {
             ROS_INFO("Recovering from diagnostic error");
+            g_stop_timer.stop();
             recover();
             g_last_diagnostic_recover_timestamp = ros::Time::now();
+            g_stop_timer.start();
           }
         }
       }
