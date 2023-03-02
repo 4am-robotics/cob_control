@@ -17,7 +17,7 @@ class EmulationOdomLaser(object):
         # - subscribers:
         #   - /base/odometry_controller/odometry [nav_msgs/Odometry]
         # - publishers:
-        #   - /scan_odom_node/scan_odom/scan_matcher_odom [nav_msgs/Odometry]
+        #   - /scan_odom_node/scan_odom/odometry [nav_msgs/Odometry]
         #   - tf (map --> odom_frame)
 
 
@@ -27,7 +27,7 @@ class EmulationOdomLaser(object):
         self._odom_frame = odom_frame
 
         rospy.Subscriber("/base/odometry_controller/odometry", Odometry, self.odometry_callback, queue_size=1)
-        self._odom_publisher = rospy.Publisher("/scan_odom_node/scan_odom/scan_matcher_odom", Odometry, queue_size=1)
+        self._odom_publisher = rospy.Publisher("/scan_odom_node/scan_odom/odometry", Odometry, queue_size=1)
 
         self._transform_broadcaster = tf2_ros.TransformBroadcaster()
 
