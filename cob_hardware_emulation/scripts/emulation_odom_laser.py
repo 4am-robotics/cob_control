@@ -3,7 +3,7 @@
 import argparse
 import rospy
 import tf2_ros
-from geometry_msgs.msg import Twist, TransformStamped
+from geometry_msgs.msg import TransformStamped
 from nav_msgs.msg import Odometry
 
 class EmulationOdomLaser(object):
