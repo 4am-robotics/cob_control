@@ -51,7 +51,7 @@ class EmulationNav(object):
         quat = tf.transformations.quaternion_from_euler(0, 0, initialpose[2])
         self._odom_transform.rotation = Quaternion(*quat)
 
-        rospy.Timer(rospy.Duration(0.1), self.timer_cb)
+        rospy.Timer(rospy.Duration(0.04), self.timer_cb)
 
         rospy.loginfo("Emulation for navigation running")
 
