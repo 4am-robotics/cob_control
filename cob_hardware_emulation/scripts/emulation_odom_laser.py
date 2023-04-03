@@ -45,7 +45,7 @@ class EmulationOdomLaser(object):
         # publish tf
         # pub base_footprint --> odom_frame
         t_odom = TransformStamped()
-        t_odom.header.stamp = self._odom.header.stamp
+        t_odom.header.stamp = rospy.Time.now()
         t_odom.header.frame_id = self._odom_frame
         t_odom.child_frame_id = "base_footprint"
         t_odom.transform.translation = self._odom.pose.pose.position
