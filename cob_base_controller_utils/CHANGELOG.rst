@@ -2,6 +2,13 @@
 Changelog for package cob_base_controller_utils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#273 <https://github.com/ipa320/cob_control/issues/273>`_ from Deleh/fix/recover_diagnostics_when_stopped
+  Recover on Diagnostics When Stopped
+* recover on diagnostics when stopped
+* Contributors: Denis Lehmann, Felix Messmer
+
 0.8.21 (2023-01-04)
 -------------------
 * Merge pull request `#272 <https://github.com/ipa320/cob_control/issues/272>`_ from Deleh/feature/diagnostic_recovery

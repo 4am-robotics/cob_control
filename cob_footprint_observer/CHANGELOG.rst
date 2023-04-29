@@ -2,6 +2,9 @@
 Changelog for package cob_footprint_observer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.8.21 (2023-01-04)
 -------------------
 

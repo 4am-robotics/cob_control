@@ -2,6 +2,21 @@
 Changelog for package cob_hardware_emulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#276 <https://github.com/ipa320/cob_control/issues/276>`_ from fmessmer/fix/emulation_odom_laser
+  publish odom_laser tf with current time
+* publish odom_laser tf with current time
+* Merge pull request `#275 <https://github.com/ipa320/cob_control/issues/275>`_ from FrederikPlahl/fix/odom_laser
+  Fix emulation bug in transform odom -> base_footprint
+* remove obsolete import
+* Change frequency
+* Fix tf publishing bug
+* Merge pull request `#274 <https://github.com/ipa320/cob_control/issues/274>`_ from HannesBachter/fix/rename_scan_odom
+  rename scan odom to /scan_odom_node/scan_odom/odometry
+* rename scan odom to /scan_odom_node/scan_odom/odometry
+* Contributors: Felix Messmer, FrederikPlahl, HannesBachter, fmessmer
+
 0.8.21 (2023-01-04)
 -------------------
 

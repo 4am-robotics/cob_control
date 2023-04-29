@@ -2,6 +2,9 @@
 Changelog for package cob_control_mode_adapter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.8.21 (2023-01-04)
 -------------------
 
