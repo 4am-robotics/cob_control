@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>cob_tricycle_controller</name>
-  <version>0.8.21</version>
+  <version>0.8.22</version>
   <description>The cob_omni_drive_controller package provides a ros_controller plugin for the Care-O-bot tricycle base platform.</description>
 
   <author email="felix.messmer@mojin-robotics.de">Felix Messmer</author>

@@ -2,8 +2,8 @@
 Changelog for package cob_hardware_emulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.8.22 (2023-04-29)
+-------------------
 * Merge pull request `#276 <https://github.com/ipa320/cob_control/issues/276>`_ from fmessmer/fix/emulation_odom_laser
   publish odom_laser tf with current time
 * publish odom_laser tf with current time

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>cob_mecanum_controller</name>
-  <version>0.8.21</version>
+  <version>0.8.22</version>
   <description>
     The cob_mecanum_controller_node provides a lightweight base controller for mecanum drive robots. 
     The out/input for the wheel command/state are wheel velocities in rad/s for the wheels 
