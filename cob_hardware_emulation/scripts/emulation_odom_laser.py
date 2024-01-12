@@ -23,9 +23,6 @@ class EmulationOdomLaser(object):
 
         self._odom_frame = odom_frame
 
-        rospy.Subscriber("/base/odometry_controller/odometry", Odometry, self.odometry_callback, queue_size=1)
-        self._odom_publisher = rospy.Publisher("/scan_odom_node/scan_odom/odometry", Odometry, queue_size=1)
-
         self._transform_broadcaster = tf2_ros.TransformBroadcaster()
 
         self._odom = Odometry()
@@ -33,6 +30,8 @@ class EmulationOdomLaser(object):
         self._odom.child_frame_id = "base_footprint"
         self._odom.pose.pose.orientation.w = 1 # initialize orientation with a valid quaternion
 
+        self._odom_publisher = rospy.Publisher("/scan_odom_node/scan_odom/odometry", Odometry, queue_size=1)
+        rospy.Subscriber("/base/odometry_controller/odometry", Odometry, self.odometry_callback, queue_size=1)
         rospy.loginfo("Emulation for laser odometry running")
 
     def odometry_callback(self, msg):
