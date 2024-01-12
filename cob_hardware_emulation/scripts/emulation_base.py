@@ -27,9 +27,6 @@ class EmulationBase(object):
 
         self.odom_frame_ = odom_frame
 
-        rospy.Subscriber("/base/twist_controller/command", Twist, self.twist_callback, queue_size=1)
-        self.pub_odom = rospy.Publisher("/base/odometry_controller/odometry", Odometry, queue_size=1)
-        rospy.Service("/base/odometry_controller/reset_odometry", Trigger, self.reset_odometry)
         self.br = tf2_ros.TransformBroadcaster()
 
         self.timestamp_last_update = rospy.Time.now()
@@ -42,6 +39,9 @@ class EmulationBase(object):
         self.odom.child_frame_id = "base_footprint"
         self.odom.pose.pose.orientation.w = 1 # initialize orientation with a valid quaternion
 
+        self.pub_odom = rospy.Publisher("/base/odometry_controller/odometry", Odometry, queue_size=1)
+        rospy.Subscriber("/base/twist_controller/command", Twist, self.twist_callback, queue_size=1)
+        rospy.Service("/base/odometry_controller/reset_odometry", Trigger, self.reset_odometry)
         rospy.Timer(rospy.Duration(0.1), self.timer_cb)
 
         rospy.loginfo("Emulation for base running")

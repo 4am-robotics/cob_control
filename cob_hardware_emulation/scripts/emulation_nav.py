@@ -34,7 +34,6 @@ class EmulationNav(object):
         self._listener = tf2_ros.TransformListener(self._buffer)
         self._transform_broadcaster = tf2_ros.TransformBroadcaster()
 
-        rospy.Subscriber("/initialpose", PoseWithCovarianceStamped, self.initalpose_callback, queue_size=1)
         initialpose = rospy.get_param("~initialpose", None)
         if type(initialpose) == list:
             rospy.loginfo("using initialpose from parameter server: %s", str(initialpose))
@@ -51,6 +50,7 @@ class EmulationNav(object):
         quat = tf.transformations.quaternion_from_euler(0, 0, initialpose[2])
         self._odom_transform.rotation = Quaternion(*quat)
 
+        rospy.Subscriber("/initialpose", PoseWithCovarianceStamped, self.initalpose_callback, queue_size=1)
         rospy.Timer(rospy.Duration(0.04), self.timer_cb)
 
         rospy.loginfo("Emulation for navigation running")
@@ -67,6 +67,7 @@ class EmulationNav(object):
             rospy.loginfo("Emulation running for action %s of type MoveBaseAction with mode '%s'"%(self._move_base_action_name, self._move_base_mode))
         else:
             rospy.logwarn("Emulation running without move_base due to invalid value for parameter move_base_mode: '%s'", self._move_base_mode)
+
 
     def initalpose_callback(self, msg):
         rospy.loginfo("Got initialpose, updating %s transformation.", self._odom_frame)
