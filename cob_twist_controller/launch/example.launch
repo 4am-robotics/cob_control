@@ -2,7 +2,7 @@
 <launch>
 
   <!-- send lwa4p_extended urdf to param server -->
-  <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find schunk_lwa4p_extended)/urdf/robot.urdf.xacro'" />
+  <param name="robot_description" command="$(find xacro)/xacro '$(find schunk_lwa4p_extended)/urdf/robot.urdf.xacro'" />
 
   <!-- robot state publisher -->
   <node ns="arm" name="joint_states_relay" pkg="topic_tools" type="relay" args="joint_states /joint_states" cwd="node" respawn="true" output="screen"/>
