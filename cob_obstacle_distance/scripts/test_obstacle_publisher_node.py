@@ -64,8 +64,8 @@ if __name__ == "__main__":
     y = CollisionObject()
     y.id = "Funny Mesh"
     y.header.frame_id = root_frame
-    # y.type.db = "package://cob_gazebo_objects/Media/models/milk.dae"
-    y.type.db = "package://cob_gazebo_objects/Media/models/cabinet_ikea_kallax_4x2.stl"
+    # y.type.db = "package://mojin_gazebo_objects/Media/models/milk.dae"
+    y.type.db = "package://mojin_gazebo_objects/Media/models/cabinet_ikea_kallax_4x2.stl"
     # y.type.db = "package://cob_twist_controller/files/torus_0_25_inner_rad.stl"
     y.operation = CollisionObject.ADD
     # y.operation = CollisionObject.REMOVE

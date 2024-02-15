@@ -65,7 +65,7 @@ if __name__=="__main__":
     y = CollisionObject()
     y.id = "Funny Mesh"
     y.header.frame_id = frame_id
-    y.type.db = "package://cob_gazebo_objects/Media/models/milk.dae"
+    y.type.db = "package://mojin_gazebo_objects/Media/models/milk.dae"
     y.operation = CollisionObject.ADD
 
     pose = Pose()

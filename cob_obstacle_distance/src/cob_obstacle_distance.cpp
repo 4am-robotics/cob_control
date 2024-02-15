@@ -89,7 +89,7 @@ void addTestObstacles(DistanceManager& dm)
     FCL_Box b(0.1, 0.1, 0.1);  // Take care the nearest point for collision is one of the eight corners!!! This might lead to jittering
 
     PtrIMarkerShape_t sptr_Bvh(new MarkerShape<BVH_RSS_t>(dm.getRootFrame(),
-                                                          "package://cob_gazebo_objects/Media/models/milk.dae",
+                                                          "package://mojin_gazebo_objects/Media/models/milk.dae",
                                                            -0.35,
                                                            -0.35,
                                                             0.8));
