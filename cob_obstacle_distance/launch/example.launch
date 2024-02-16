@@ -2,7 +2,7 @@
 <launch>
 
   <!-- send lwa4p_extended urdf to param server -->
-  <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find schunk_lwa4p_extended)/urdf/robot.urdf.xacro'" />
+  <param name="robot_description" command="$(find xacro)/xacro '$(find schunk_lwa4p_extended)/urdf/robot.urdf.xacro'" />
 
   <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" >
     <param name="use_gui" value="true"/>
