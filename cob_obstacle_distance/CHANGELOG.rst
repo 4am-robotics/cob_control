@@ -2,6 +2,14 @@
 Changelog for package cob_obstacle_distance
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#281 <https://github.com/4am-robotics/cob_control/issues/281>`_ from fmessmer/feature/optimize_workspace
+  optimize workspace
+* use mojin_gazebo_objects
+* remove --inorder args
+* Contributors: Felix Messmer, fmessmer
+
 0.8.22 (2023-04-29)
 -------------------
 

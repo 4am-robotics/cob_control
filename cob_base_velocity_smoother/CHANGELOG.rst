@@ -2,6 +2,9 @@
 Changelog for package cob_base_velocity_smoother
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.8.22 (2023-04-29)
 -------------------
 

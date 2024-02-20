@@ -2,6 +2,9 @@
 Changelog for package cob_base_controller_utils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.8.22 (2023-04-29)
 -------------------
 * Merge pull request `#273 <https://github.com/ipa320/cob_control/issues/273>`_ from Deleh/fix/recover_diagnostics_when_stopped

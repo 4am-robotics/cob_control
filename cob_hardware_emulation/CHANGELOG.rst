@@ -2,6 +2,13 @@
 Changelog for package cob_hardware_emulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#279 <https://github.com/4am-robotics/cob_control/issues/279>`_ from fmessmer/fix/emulation
+  reliable start
+* reliable start
+* Contributors: Felix Messmer, fmessmer
+
 0.8.22 (2023-04-29)
 -------------------
 * Merge pull request `#276 <https://github.com/ipa320/cob_control/issues/276>`_ from fmessmer/fix/emulation_odom_laser
