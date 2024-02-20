@@ -4,7 +4,7 @@
   schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>cob_frame_tracker</name>
-  <version>0.8.22</version>
+  <version>0.8.23</version>
   <description>The cob_frame_tracker package contains nodes that publish Twist commands based on the distance to the desired tf frame target.</description>
 
   <maintainer email="felixmessmer@gmail.com">Felix Messmer</maintainer>

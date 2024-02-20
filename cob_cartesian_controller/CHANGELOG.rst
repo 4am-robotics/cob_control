@@ -2,8 +2,8 @@
 Changelog for package cob_cartesian_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.8.23 (2024-02-20)
+-------------------
 * Merge pull request `#281 <https://github.com/4am-robotics/cob_control/issues/281>`_ from fmessmer/feature/optimize_workspace
   optimize workspace
 * remove --inorder args

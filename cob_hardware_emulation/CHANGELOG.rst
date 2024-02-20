@@ -2,8 +2,8 @@
 Changelog for package cob_hardware_emulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.8.23 (2024-02-20)
+-------------------
 * Merge pull request `#279 <https://github.com/4am-robotics/cob_control/issues/279>`_ from fmessmer/fix/emulation
   reliable start
 * reliable start
