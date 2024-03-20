@@ -21,15 +21,14 @@
   <depend>dynamic_reconfigure</depend>
   <depend>eigen_conversions</depend>
   <depend>eigen</depend>
-  <depend condition="$ROS_DISTRO != noetic">libfcl-dev</depend>
-  <depend condition="$ROS_DISTRO == noetic">fcl</depend>
+  <depend>fcl</depend>
   <depend>geometry_msgs</depend>
   <depend>kdl_conversions</depend>
   <depend>kdl_parser</depend>
+  <depend>libccd-dev</depend>
+  <depend>libfcl-dev</depend>
+  <depend>liborocos-kdl-dev</depend>
   <depend>moveit_msgs</depend>
-  <depend condition="$ROS_DISTRO == melodic">orocos_kdl</depend>
-  <depend condition="$ROS_DISTRO == noetic">liborocos-kdl-dev</depend>
-  <depend condition="$ROS_DISTRO == noetic">liborocos-kdl</depend>
   <depend>pkg-config</depend>
   <depend>roscpp</depend>
   <depend>roslib</depend>
