@@ -23,7 +23,6 @@
   <exec_depend>cob_hardware_emulation</exec_depend>
   <exec_depend>cob_obstacle_distance</exec_depend>
   <exec_depend>cob_omni_drive_controller</exec_depend>
-  <exec_depend>cob_trajectory_controller</exec_depend>
   <exec_depend>cob_tricycle_controller</exec_depend>
   <exec_depend>cob_twist_controller</exec_depend>
 
