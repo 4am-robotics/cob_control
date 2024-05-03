@@ -18,9 +18,12 @@ jobs:
       CATKIN_LINT: pedantic
       CATKIN_LINT_ARGS: '--ignore description_boilerplate'
       CMAKE_ARGS: -DCMAKE_BUILD_TYPE=Release
+      DOCKER_IMAGE: 'ghcr.io/mojin-robotics/mojin-ros:amr-full'  # use DOCKER_IMAGE to speedup install_*_dependencies steps
       PYLINT_ARGS: '--output-format=parseable --errors-only'
       PYLINT_CHECK: true
       ROS_REPO: main
+      SECRET_AVAILABLE: ${{secrets.GITHUBPAT}}
+      UNDERLAY: '/opt/node'  # use navigation binaries instead of substitutes
 
     strategy:
       matrix:
@@ -34,6 +37,14 @@ jobs:
           lfs: true
           ssh-known-hosts: ''
 
+      - uses: docker/login-action@v3
+        if: ${{ env.SECRET_AVAILABLE }} # prevents failure notifications if secret GITHUBPAT is not available
+        with:
+          registry: ghcr.io
+          username: mojin-robotics-ci
+          password: ${{ secrets.GITHUBPAT }}
+
       - uses: ros-industrial/industrial_ci@master
+        if: ${{ env.SECRET_AVAILABLE }} # prevents failure notifications if secret GITHUBPAT is not available
         with:
           config: ${{toJSON(matrix)}}
