@@ -9,7 +9,7 @@ import tf2_ros
 from actionlib_msgs.msg import GoalStatus
 from geometry_msgs.msg import Transform, TransformStamped, PoseStamped
 from geometry_msgs.msg import PoseWithCovarianceStamped, Quaternion
-from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseResult
+from ipa_navigation_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseResult
 
 class EmulationNav(object):
     def __init__(self, odom_frame):
@@ -21,7 +21,7 @@ class EmulationNav(object):
         # - publishers:
         #   - tf (map --> odom_frame)
         # - actions:
-        #   - move_base [move_base_msgs/MoveBaseAction] (optional)
+        #   - move_base [ipa_navigation_msgs/MoveBaseAction] (optional)
 
 
         # TODO
