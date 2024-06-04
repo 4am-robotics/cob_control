@@ -9,7 +9,9 @@ import tf2_ros
 from actionlib_msgs.msg import GoalStatus
 from geometry_msgs.msg import Transform, TransformStamped, PoseStamped
 from geometry_msgs.msg import PoseWithCovarianceStamped, Quaternion
+from ipa_navigation_msgs.msg import LTSNGStatus
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal, MoveBaseResult
+from std_msgs.msg import Header
 
 class EmulationNav(object):
     def __init__(self, odom_frame):
@@ -20,6 +22,7 @@ class EmulationNav(object):
         #   - /initialpose [geometry_msgs/PoseWithCovarianceStamped]
         # - publishers:
         #   - tf (map --> odom_frame)
+        #   - /lts_ng/lts_status
         # - actions:
         #   - move_base [move_base_msgs/MoveBaseAction] (optional)
 
@@ -50,6 +53,7 @@ class EmulationNav(object):
         quat = tf.transformations.quaternion_from_euler(0, 0, initialpose[2])
         self._odom_transform.rotation = Quaternion(*quat)
 
+        self._lts_status_pub = rospy.Publisher("/lts_ng/lts_status", LTSNGStatus, queue_size=1)
         rospy.Subscriber("/initialpose", PoseWithCovarianceStamped, self.initalpose_callback, queue_size=1)
         rospy.Timer(rospy.Duration(0.04), self.timer_cb)
 
@@ -102,16 +106,26 @@ class EmulationNav(object):
             return
 
     def timer_cb(self, event):
+        header = Header()
+        header.stamp = rospy.Time.now()
+        header.frame_id = "map"
+
+        # publish lts_status
+        lts_status = LTSNGStatus()
+        lts_status.header = header
+        lts_status.state = LTSNGStatus.STATE_TRACKING
+        # TODO: only setting minimal required message fields for now - to be extended later
+
         # publish tf
         # pub odom_frame --> map
         t_loc = TransformStamped()
-        t_loc.header.stamp = rospy.Time.now()
-        t_loc.header.frame_id = "map"
+        t_loc.header = header
         t_loc.child_frame_id = self._odom_frame
         t_loc.transform = self._odom_transform
 
         transforms = [t_loc]
 
+        self._lts_status_pub.publish(lts_status)
         self._transform_broadcaster.sendTransform(transforms)
 
     def move_base_cb(self, goal):

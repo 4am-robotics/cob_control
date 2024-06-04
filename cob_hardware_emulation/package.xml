@@ -17,10 +17,12 @@
   <exec_depend>actionlib</exec_depend>
   <exec_depend>actionlib_msgs</exec_depend>
   <exec_depend>control_msgs</exec_depend>
+  <exec_depend>ipa_navigation_msgs</exec_depend>
   <exec_depend>move_base_msgs</exec_depend>
   <exec_depend>nav_msgs</exec_depend>
   <exec_depend>rospy</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
   <exec_depend>std_srvs</exec_depend>
   <exec_depend>tf_conversions</exec_depend>
   <exec_depend>tf2_ros</exec_depend>
