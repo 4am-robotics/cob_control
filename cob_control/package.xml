@@ -15,7 +15,6 @@
   <exec_depend>cob_base_velocity_smoother</exec_depend>
   <exec_depend>cob_collision_velocity_filter</exec_depend>
   <exec_depend>cob_footprint_observer</exec_depend>
-  <exec_depend>cob_hardware_emulation</exec_depend>
 
   <export>
     <metapackage/>
